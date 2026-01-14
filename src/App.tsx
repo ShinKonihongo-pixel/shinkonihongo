@@ -16,14 +16,23 @@ import { SettingsPage } from './components/pages/settings-page';
 import { AdminPage } from './components/pages/admin-page';
 import { JLPTPage } from './components/pages/jlpt-page';
 import { ChatPage } from './components/pages/chat-page';
+import { KaiwaPage } from './components/pages/kaiwa-page';
+import { LecturePage } from './components/pages/lecture-page';
+import { LectureEditorPage } from './components/pages/lecture-editor-page';
+import { ProgressPage } from './components/pages/progress-page';
 import { useJLPTQuestions } from './hooks/use-jlpt-questions';
 import { useUserHistory } from './hooks/use-user-history';
+import { useProgress } from './hooks/use-progress';
+import { useNotifications } from './hooks/use-notifications';
+import { useOffline } from './hooks/use-offline';
+import { OfflineIndicator } from './components/common/offline-indicator';
 import './App.css';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [initialFilterLevel, setInitialFilterLevel] = useState<JLPTLevel | 'all'>('all');
   const [initialJoinCode, setInitialJoinCode] = useState<string | null>(null);
+  const [editingLectureId, setEditingLectureId] = useState<string | undefined>(undefined);
 
   // Handle URL parameters for quiz game join (QR code scanning)
   useEffect(() => {
@@ -52,7 +61,15 @@ function App() {
     updateDisplayName,
     updateAvatar,
     updateProfileBackground,
+    updateVipExpiration,
   } = useAuth();
+
+  // Reset to home page when user logs in
+  useEffect(() => {
+    if (isLoggedIn) {
+      setCurrentPage('home');
+    }
+  }, [isLoggedIn]);
 
   // User history
   const {
@@ -99,28 +116,45 @@ function App() {
     getQuestionsByFolder,
   } = useJLPTQuestions();
 
-  // Check if user is VIP (can see locked lessons)
+  // Check if user is VIP (can access locked lessons)
   const isVip = currentUser?.role === 'vip_user';
-  const canSeeLocked = isAdmin || isVip;
+  const canAccessLocked = isAdmin || isVip;
 
-  // Filter locked lessons for non-admin and non-VIP users
+  // For admin/study pages, filter locked lessons for non-admin and non-VIP users
   const filteredGetLessonsByLevel = useMemo(() => {
     return (level: JLPTLevel): Lesson[] => {
       const lessonList = getLessonsByLevel(level);
-      if (canSeeLocked) return lessonList;
+      if (canAccessLocked) return lessonList;
       return lessonList.filter(l => !l.isLocked);
     };
-  }, [getLessonsByLevel, canSeeLocked]);
+  }, [getLessonsByLevel, canAccessLocked]);
 
   const filteredGetChildLessons = useMemo(() => {
     return (parentId: string): Lesson[] => {
       const lessonList = getChildLessons(parentId);
-      if (canSeeLocked) return lessonList;
+      if (canAccessLocked) return lessonList;
       return lessonList.filter(l => !l.isLocked);
     };
-  }, [getChildLessons, canSeeLocked]);
+  }, [getChildLessons, canAccessLocked]);
 
   const statsByLevel = getStatsByLevel();
+
+  // Progress tracking
+  const progress = useProgress(
+    studySessions,
+    gameSessions,
+    jlptSessions,
+    userStats,
+    cards,
+    settings.weeklyCardsTarget || 50,
+    settings.weeklyMinutesTarget || 60
+  );
+
+  // Notifications (runs in background, checking for due cards)
+  useNotifications(cards);
+
+  // Offline support
+  const offline = useOffline(cards, lessons);
 
   // Show login page if not logged in
   if (!isLoggedIn) {
@@ -138,6 +172,13 @@ function App() {
         onNavigate={setCurrentPage}
         currentUser={currentUser}
         onLogout={logout}
+      />
+
+      {/* Offline status indicator */}
+      <OfflineIndicator
+        isOnline={offline.isOnline}
+        isSyncing={offline.isSyncing}
+        offlineCardCount={offline.offlineCardCount}
       />
 
       <main className="main-content">
@@ -163,8 +204,10 @@ function App() {
               setInitialFilterLevel(level);
               setCurrentPage('study');
             }}
-            getLessonsByLevel={filteredGetLessonsByLevel}
-            getChildLessons={filteredGetChildLessons}
+            getLessonsByLevel={getLessonsByLevel}
+            getChildLessons={getChildLessons}
+            canAccessLocked={canAccessLocked}
+            isAdmin={isAdmin}
             jlptQuestionCount={jlptQuestions.length}
             onPracticeJLPT={() => setCurrentPage('jlpt')}
           />
@@ -206,6 +249,13 @@ function App() {
           />
         )}
 
+        {currentPage === 'progress' && (
+          <ProgressPage
+            progress={progress}
+            onStartStudy={() => setCurrentPage('study')}
+          />
+        )}
+
         {currentPage === 'settings' && (
           <SettingsPage
             settings={settings}
@@ -243,6 +293,23 @@ function App() {
             themePresets={THEME_PRESETS}
             onApplyThemePreset={applyPreset}
             onResetTheme={resetTheme}
+            // Export/Import
+            flashcards={cards}
+            lessons={lessons}
+            onImportData={async (data) => {
+              // Import flashcards (add new ones)
+              for (const card of data.flashcards) {
+                await addCard({
+                  vocabulary: card.vocabulary,
+                  kanji: card.kanji,
+                  sinoVietnamese: card.sinoVietnamese,
+                  meaning: card.meaning,
+                  examples: card.examples,
+                  jlptLevel: card.jlptLevel,
+                  lessonId: card.lessonId,
+                });
+              }
+            }}
           />
         )}
 
@@ -268,6 +335,7 @@ function App() {
             currentUserId={currentUser.id}
             onUpdateUserRole={updateUserRole}
             onDeleteUser={deleteUser}
+            onUpdateVipExpiration={updateVipExpiration}
             onRegister={register}
             onToggleLock={toggleLock}
             getLessonsByLevel={getLessonsByLevel}
@@ -279,6 +347,29 @@ function App() {
           <JLPTPage
             questions={jlptQuestions}
             onSaveJLPTSession={addJLPTSession}
+          />
+        )}
+
+        {currentPage === 'kaiwa' && currentUser && canAccessLocked && (
+          <KaiwaPage settings={settings} />
+        )}
+
+        {currentPage === 'lectures' && (
+          <LecturePage
+            onNavigateToEditor={(lectureId) => {
+              setEditingLectureId(lectureId);
+              setCurrentPage('lecture-editor');
+            }}
+          />
+        )}
+
+        {currentPage === 'lecture-editor' && isAdmin && (
+          <LectureEditorPage
+            lectureId={editingLectureId}
+            onBack={() => {
+              setEditingLectureId(undefined);
+              setCurrentPage('lectures');
+            }}
           />
         )}
 

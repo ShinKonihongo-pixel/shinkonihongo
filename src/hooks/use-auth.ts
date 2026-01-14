@@ -224,6 +224,44 @@ export function useAuth() {
     }
   }, [currentUser]);
 
+  // Update VIP expiration date
+  const updateVipExpiration = useCallback(async (userId: string, expirationDate: string | undefined) => {
+    try {
+      await firestoreService.updateUser(userId, { vipExpirationDate: expirationDate || undefined });
+    } catch (err) {
+      console.error('Error updating VIP expiration:', err);
+    }
+  }, []);
+
+  // Check and convert expired VIP users to regular users
+  useEffect(() => {
+    const checkExpiredVips = async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      for (const user of users) {
+        if (user.role === 'vip_user' && user.vipExpirationDate) {
+          const expirationDate = new Date(user.vipExpirationDate);
+          expirationDate.setHours(0, 0, 0, 0);
+
+          if (expirationDate < today) {
+            // VIP has expired, convert to regular user
+            try {
+              await firestoreService.updateUser(user.id, { role: 'user' });
+              console.log(`VIP expired for user ${user.username}, converted to regular user`);
+            } catch (err) {
+              console.error('Error converting expired VIP:', err);
+            }
+          }
+        }
+      }
+    };
+
+    if (users.length > 0) {
+      checkExpiredVips();
+    }
+  }, [users]);
+
   return {
     currentUser,
     users,
@@ -240,5 +278,6 @@ export function useAuth() {
     updateDisplayName,
     updateAvatar,
     updateProfileBackground,
+    updateVipExpiration,
   };
 }

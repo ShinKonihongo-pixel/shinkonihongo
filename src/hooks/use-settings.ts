@@ -1,6 +1,7 @@
 // Hook for managing app settings with localStorage persistence
 
 import { useState, useCallback, useEffect } from 'react';
+import type { JapaneseVoiceGender, JLPTLevel, ConversationStyle } from '../types/kaiwa';
 
 export type CardBackgroundType = 'gradient' | 'solid' | 'image';
 
@@ -23,6 +24,11 @@ export interface AppSettings {
   vocabularyFontSize: number;
   sinoVietnameseFontSize: number;
   meaningFontSize: number;
+  // Mobile font sizes
+  mobileKanjiFontSize: number;
+  mobileVocabularyFontSize: number;
+  mobileSinoVietnameseFontSize: number;
+  mobileMeaningFontSize: number;
 
   // Field visibility
   showVocabulary: boolean;
@@ -43,6 +49,20 @@ export interface AppSettings {
   // Game settings
   gameQuestionContent: GameQuestionContent;
   gameAnswerContent: GameAnswerContent;
+
+  // Kaiwa (conversation) settings
+  kaiwaVoiceGender: JapaneseVoiceGender;
+  kaiwaVoiceRate: number;
+  kaiwaAutoSpeak: boolean;
+  kaiwaShowSuggestions: boolean;
+  kaiwaShowFurigana: boolean;
+  kaiwaDefaultLevel: JLPTLevel;
+  kaiwaDefaultStyle: ConversationStyle;
+  kaiwaShowTranslation: boolean;
+
+  // Weekly goals
+  weeklyCardsTarget: number;
+  weeklyMinutesTarget: number;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -52,6 +72,11 @@ const DEFAULT_SETTINGS: AppSettings = {
   vocabularyFontSize: 28,
   sinoVietnameseFontSize: 32,
   meaningFontSize: 24,
+  // Mobile font sizes (smaller defaults for mobile screens)
+  mobileKanjiFontSize: 120,
+  mobileVocabularyFontSize: 20,
+  mobileSinoVietnameseFontSize: 22,
+  mobileMeaningFontSize: 18,
   showVocabulary: true,
   showSinoVietnamese: true,
   showMeaning: true,
@@ -66,6 +91,18 @@ const DEFAULT_SETTINGS: AppSettings = {
   // Game defaults: question = kanji, answer = vocabulary + meaning
   gameQuestionContent: 'kanji',
   gameAnswerContent: 'vocabulary_meaning',
+  // Kaiwa defaults
+  kaiwaVoiceGender: 'female',
+  kaiwaVoiceRate: 1.0,
+  kaiwaAutoSpeak: true,
+  kaiwaShowSuggestions: true,
+  kaiwaShowFurigana: true,
+  kaiwaDefaultLevel: 'N5',
+  kaiwaDefaultStyle: 'polite',
+  kaiwaShowTranslation: true,
+  // Weekly goals
+  weeklyCardsTarget: 50,
+  weeklyMinutesTarget: 60,
 };
 
 const STORAGE_KEY = 'flashcard-settings';

@@ -1,9 +1,22 @@
 // Settings page component with tabs: General Settings and Personal Info
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { AppSettings, CardBackgroundType, GameQuestionContent, GameAnswerContent, GlobalTheme } from '../../hooks/use-settings';
 import type { CurrentUser, StudySession, GameSession, JLPTSession, UserStats } from '../../types/user';
+import type { Flashcard, Lesson } from '../../types/flashcard';
 import { calculateUserLevel } from '../../types/user';
+import { ExportImportModal } from '../common/export-import-modal';
+import type { ExportData } from '../../lib/data-export';
+
+type DeviceType = 'desktop' | 'tablet' | 'mobile';
+
+// Detect current device type based on screen width
+function getDeviceType(): DeviceType {
+  const width = window.innerWidth;
+  if (width > 1024) return 'desktop';
+  if (width >= 768) return 'tablet';
+  return 'mobile';
+}
 
 type SettingsTab = 'general' | 'profile';
 
@@ -35,6 +48,10 @@ interface SettingsPageProps {
   themePresets?: ThemePreset[];
   onApplyThemePreset?: (preset: ThemePreset) => void;
   onResetTheme?: () => void;
+  // Export/Import props
+  flashcards?: Flashcard[];
+  lessons?: Lesson[];
+  onImportData?: (data: ExportData) => Promise<void>;
 }
 
 // Avatar options (emojis)
@@ -140,9 +157,26 @@ export function SettingsPage({
   themePresets = [],
   onApplyThemePreset,
   onResetTheme,
+  flashcards = [],
+  lessons = [],
+  onImportData,
 }: SettingsPageProps) {
   // Tab state
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
+  const [showExportModal, setShowExportModal] = useState(false);
+
+  // Device type for font size preview
+  const [selectedDevice, setSelectedDevice] = useState<DeviceType>(getDeviceType);
+
+  // Auto-detect device on resize
+  useEffect(() => {
+    const handleResize = () => setSelectedDevice(getDeviceType());
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Font size multiplier based on device type
+  const fontSizeMultiplier = selectedDevice === 'desktop' ? 1 : selectedDevice === 'tablet' ? 0.7 : 0.5;
 
   // Profile form states
   const [displayName, setDisplayName] = useState(currentUser?.displayName || '');
@@ -376,6 +410,22 @@ export function SettingsPage({
             <h3>Kích thước chữ</h3>
 
             <div className="setting-item">
+              <label>Thiết bị xem trước</label>
+              <div className="setting-control">
+                <select
+                  value={selectedDevice}
+                  onChange={(e) => setSelectedDevice(e.target.value as DeviceType)}
+                  className="font-select"
+                >
+                  <option value="desktop">🖥️ Máy tính</option>
+                  <option value="tablet">📱 iPad</option>
+                  <option value="mobile">📲 Điện thoại</option>
+                </select>
+                <span className="setting-value device-multiplier">×{fontSizeMultiplier}</span>
+              </div>
+            </div>
+
+            <div className="setting-item">
               <label>Kanji (mặt trước)</label>
               <div className="setting-control">
                 <input
@@ -386,7 +436,10 @@ export function SettingsPage({
                   value={settings.kanjiFontSize}
                   onChange={(e) => onUpdateSetting('kanjiFontSize', Number(e.target.value))}
                 />
-                <span className="setting-value">{settings.kanjiFontSize}px</span>
+                <span className="setting-value">
+                  {Math.round(settings.kanjiFontSize * fontSizeMultiplier)}px
+                  {selectedDevice !== 'desktop' && <span className="original-size">({settings.kanjiFontSize})</span>}
+                </span>
               </div>
             </div>
 
@@ -401,7 +454,10 @@ export function SettingsPage({
                   value={settings.sinoVietnameseFontSize}
                   onChange={(e) => onUpdateSetting('sinoVietnameseFontSize', Number(e.target.value))}
                 />
-                <span className="setting-value">{settings.sinoVietnameseFontSize}px</span>
+                <span className="setting-value">
+                  {Math.round(settings.sinoVietnameseFontSize * fontSizeMultiplier)}px
+                  {selectedDevice !== 'desktop' && <span className="original-size">({settings.sinoVietnameseFontSize})</span>}
+                </span>
               </div>
             </div>
 
@@ -416,7 +472,10 @@ export function SettingsPage({
                   value={settings.vocabularyFontSize}
                   onChange={(e) => onUpdateSetting('vocabularyFontSize', Number(e.target.value))}
                 />
-                <span className="setting-value">{settings.vocabularyFontSize}px</span>
+                <span className="setting-value">
+                  {Math.round(settings.vocabularyFontSize * fontSizeMultiplier)}px
+                  {selectedDevice !== 'desktop' && <span className="original-size">({settings.vocabularyFontSize})</span>}
+                </span>
               </div>
             </div>
 
@@ -431,7 +490,10 @@ export function SettingsPage({
                   value={settings.meaningFontSize}
                   onChange={(e) => onUpdateSetting('meaningFontSize', Number(e.target.value))}
                 />
-                <span className="setting-value">{settings.meaningFontSize}px</span>
+                <span className="setting-value">
+                  {Math.round(settings.meaningFontSize * fontSizeMultiplier)}px
+                  {selectedDevice !== 'desktop' && <span className="original-size">({settings.meaningFontSize})</span>}
+                </span>
               </div>
             </div>
           </section>
@@ -581,6 +643,155 @@ export function SettingsPage({
                   </span>
                 </div>
               </div>
+            </div>
+          </section>
+
+          {/* Kaiwa (Conversation) Settings */}
+          <section className="settings-section">
+            <h3>Cài đặt hội thoại (会話)</h3>
+            <p className="settings-description">Cài đặt cho tính năng luyện hội thoại tiếng Nhật (chỉ VIP và Admin)</p>
+
+            <div className="setting-item">
+              <label>Giọng nói</label>
+              <div className="setting-control">
+                <select
+                  value={settings.kaiwaVoiceGender}
+                  onChange={(e) => onUpdateSetting('kaiwaVoiceGender', e.target.value as 'male' | 'female')}
+                  className="font-select"
+                >
+                  <option value="female">Nữ (女性)</option>
+                  <option value="male">Nam (男性)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="setting-item">
+              <label>Tốc độ nói: {settings.kaiwaVoiceRate.toFixed(1)}x</label>
+              <div className="setting-control">
+                <input
+                  type="range"
+                  min="0.5"
+                  max="2"
+                  step="0.1"
+                  value={settings.kaiwaVoiceRate}
+                  onChange={(e) => onUpdateSetting('kaiwaVoiceRate', parseFloat(e.target.value))}
+                />
+                <span className="setting-value">{settings.kaiwaVoiceRate.toFixed(1)}x</span>
+              </div>
+            </div>
+
+            <div className="setting-item">
+              <label>Tự động đọc phản hồi</label>
+              <label className="toggle">
+                <input
+                  type="checkbox"
+                  checked={settings.kaiwaAutoSpeak}
+                  onChange={(e) => onUpdateSetting('kaiwaAutoSpeak', e.target.checked)}
+                />
+                <span className="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div className="setting-item">
+              <label>Hiện gợi ý trả lời</label>
+              <label className="toggle">
+                <input
+                  type="checkbox"
+                  checked={settings.kaiwaShowSuggestions}
+                  onChange={(e) => onUpdateSetting('kaiwaShowSuggestions', e.target.checked)}
+                />
+                <span className="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div className="setting-item">
+              <label>Hiện bản dịch tiếng Việt</label>
+              <label className="toggle">
+                <input
+                  type="checkbox"
+                  checked={settings.kaiwaShowTranslation}
+                  onChange={(e) => onUpdateSetting('kaiwaShowTranslation', e.target.checked)}
+                />
+                <span className="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div className="setting-item">
+              <label>Cấp độ mặc định</label>
+              <div className="setting-control">
+                <select
+                  value={settings.kaiwaDefaultLevel}
+                  onChange={(e) => onUpdateSetting('kaiwaDefaultLevel', e.target.value as 'N5' | 'N4' | 'N3' | 'N2' | 'N1')}
+                  className="font-select"
+                >
+                  <option value="N5">N5 (Sơ cấp)</option>
+                  <option value="N4">N4</option>
+                  <option value="N3">N3</option>
+                  <option value="N2">N2</option>
+                  <option value="N1">N1 (Cao cấp)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="setting-item">
+              <label>Phong cách nói mặc định</label>
+              <div className="setting-control">
+                <select
+                  value={settings.kaiwaDefaultStyle}
+                  onChange={(e) => onUpdateSetting('kaiwaDefaultStyle', e.target.value as 'casual' | 'polite' | 'formal')}
+                  className="font-select"
+                >
+                  <option value="casual">Thân mật (タメ口)</option>
+                  <option value="polite">Lịch sự (です/ます)</option>
+                  <option value="formal">Trang trọng (敬語)</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          {/* Weekly Goals & Notifications */}
+          <section className="settings-section">
+            <h3>Mục tiêu tuần & Thông báo</h3>
+            <p className="settings-description">Đặt mục tiêu học tập và nhận nhắc nhở ôn bài</p>
+
+            <div className="setting-item">
+              <label>Mục tiêu thẻ/tuần: {settings.weeklyCardsTarget}</label>
+              <div className="setting-control">
+                <input
+                  type="range"
+                  min="10"
+                  max="200"
+                  step="10"
+                  value={settings.weeklyCardsTarget}
+                  onChange={(e) => onUpdateSetting('weeklyCardsTarget', parseInt(e.target.value))}
+                />
+                <span className="setting-value">{settings.weeklyCardsTarget} thẻ</span>
+              </div>
+            </div>
+
+            <div className="setting-item">
+              <label>Mục tiêu thời gian/tuần: {settings.weeklyMinutesTarget} phút</label>
+              <div className="setting-control">
+                <input
+                  type="range"
+                  min="15"
+                  max="300"
+                  step="15"
+                  value={settings.weeklyMinutesTarget}
+                  onChange={(e) => onUpdateSetting('weeklyMinutesTarget', parseInt(e.target.value))}
+                />
+                <span className="setting-value">{settings.weeklyMinutesTarget} phút</span>
+              </div>
+            </div>
+
+            <div className="setting-item">
+              <label>Sao lưu & Khôi phục dữ liệu</label>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowExportModal(true)}
+              >
+                📦 Xuất / Nhập dữ liệu
+              </button>
             </div>
           </section>
 
@@ -931,6 +1142,20 @@ export function SettingsPage({
         <div className="settings-tab-content">
           <p className="settings-not-logged-in">Vui lòng đăng nhập để xem thông tin cá nhân.</p>
         </div>
+      )}
+
+      {/* Export/Import Modal */}
+      {onImportData && (
+        <ExportImportModal
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          flashcards={flashcards}
+          lessons={lessons}
+          studySessions={studySessions}
+          gameSessions={gameSessions}
+          jlptSessions={jlptSessions}
+          onImport={onImportData}
+        />
       )}
     </div>
   );

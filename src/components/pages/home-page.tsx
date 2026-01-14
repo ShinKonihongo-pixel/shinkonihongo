@@ -18,6 +18,8 @@ interface HomePageProps {
   onCustomStudy: (selection: StudySelection) => void;
   getLessonsByLevel: (level: JLPTLevel) => Lesson[];
   getChildLessons: (parentId: string) => Lesson[];
+  canAccessLocked?: boolean;
+  isAdmin?: boolean;
   jlptQuestionCount?: number;
   onPracticeJLPT?: () => void;
 }
@@ -33,6 +35,8 @@ export function HomePage({
   onCustomStudy,
   getLessonsByLevel,
   getChildLessons,
+  canAccessLocked = false,
+  isAdmin = false,
   jlptQuestionCount = 0,
   onPracticeJLPT,
 }: HomePageProps) {
@@ -148,8 +152,9 @@ export function HomePage({
                       return (
                         <div key={lesson.id} className="parent-lesson-group">
                           <div
-                            className="category-row clickable"
+                            className={`category-row ${lesson.isLocked && !canAccessLocked ? 'locked' : 'clickable'}`}
                             onClick={() => {
+                              if (lesson.isLocked && !canAccessLocked) return;
                               if (hasChildren) {
                                 setExpandedParent(isParentExpanded ? null : lesson.id);
                               } else if (getCardCountByLessonRecursive(lesson.id) > 0) {
@@ -161,22 +166,30 @@ export function HomePage({
                               {hasChildren ? (isParentExpanded ? '▼' : '▶') : '•'}
                             </span>
                             <span className="category-name">{lesson.name}</span>
+                            {lesson.isLocked && !canAccessLocked && <span className="lock-icon">🔒</span>}
                             <span className="category-count">({getCardCountByLessonRecursive(lesson.id)})</span>
                           </div>
 
                           {isParentExpanded && hasChildren && (
                             <div className="child-lesson-list">
-                              {childLessons.map(child => (
-                                <div
-                                  key={child.id}
-                                  className="category-row child clickable"
-                                  onClick={() => getCardCountByLesson(child.id) > 0 && onStudyByLevel(level)}
-                                >
-                                  <span className="expand-btn">•</span>
-                                  <span className="category-name">{child.name}</span>
-                                  <span className="category-count">({getCardCountByLesson(child.id)})</span>
-                                </div>
-                              ))}
+                              {childLessons.map(child => {
+                                const isChildLocked = child.isLocked && !canAccessLocked;
+                                return (
+                                  <div
+                                    key={child.id}
+                                    className={`category-row child ${isChildLocked ? 'locked' : 'clickable'}`}
+                                    onClick={() => {
+                                      if (isChildLocked) return;
+                                      getCardCountByLesson(child.id) > 0 && onStudyByLevel(level);
+                                    }}
+                                  >
+                                    <span className="expand-btn">•</span>
+                                    <span className="category-name">{child.name}</span>
+                                    {isChildLocked && <span className="lock-icon">🔒</span>}
+                                    <span className="category-count">({getCardCountByLesson(child.id)})</span>
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
                         </div>
@@ -296,9 +309,11 @@ export function HomePage({
         >
           Bắt đầu học
         </button>
-        <button className="btn btn-large btn-secondary" onClick={onManageCards}>
-          Quản lý thẻ
-        </button>
+        {isAdmin && (
+          <button className="btn btn-large btn-secondary" onClick={onManageCards}>
+            Quản lý thẻ
+          </button>
+        )}
       </div>
     </div>
   );

@@ -13,6 +13,7 @@ export function LoginPage({ onLogin, onRegister }: LoginPageProps) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,14 +29,21 @@ export function LoginPage({ onLogin, onRegister }: LoginPageProps) {
         setError(result.error || 'Đăng ký thất bại');
         return;
       }
-      // Auto login after register
-      onLogin(username, password);
+      // Show success modal
+      setShowSuccessModal(true);
     } else {
       const result = onLogin(username, password);
       if (!result.success) {
         setError(result.error || 'Đăng nhập thất bại');
       }
     }
+  };
+
+  const handleGoToLogin = () => {
+    setShowSuccessModal(false);
+    setIsRegisterMode(false);
+    setPassword('');
+    setConfirmPassword('');
   };
 
   return (
@@ -110,6 +118,19 @@ export function LoginPage({ onLogin, onRegister }: LoginPageProps) {
           </p>
         )}
       </div>
+
+      {showSuccessModal && (
+        <div className="modal-overlay">
+          <div className="modal-content success-modal">
+            <div className="success-icon">✓</div>
+            <h3 className="modal-title">Đăng ký thành công!</h3>
+            <p className="modal-message">Tài khoản của bạn đã được tạo. Hãy đăng nhập để bắt đầu.</p>
+            <button className="btn btn-primary btn-full" onClick={handleGoToLogin}>
+              Đăng nhập ngay
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

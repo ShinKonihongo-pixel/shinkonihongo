@@ -11,6 +11,7 @@ interface AdminPageProps {
   currentUserId: string;
   onUpdateUserRole: (userId: string, role: UserRole) => void;
   onDeleteUser: (userId: string) => void;
+  onUpdateVipExpiration: (userId: string, expirationDate: string | undefined) => void;
   onRegister: (username: string, password: string, role: UserRole) => Promise<{ success: boolean; error?: string }>;
   onToggleLock: (lessonId: string) => void;
   getLessonsByLevel: (level: JLPTLevel) => Lesson[];
@@ -25,6 +26,7 @@ export function AdminPage({
   currentUserId,
   onUpdateUserRole,
   onDeleteUser,
+  onUpdateVipExpiration,
   onRegister,
   onToggleLock,
   getLessonsByLevel,
@@ -47,8 +49,8 @@ export function AdminPage({
       setNewUsername('');
       setNewPassword('');
       setNewRole('user');
-      setShowAddUser(false);
       setError('');
+      setShowAddUser(false);
     } else {
       setError(result.error || 'Thêm user thất bại');
     }
@@ -75,7 +77,7 @@ export function AdminPage({
           className={`tab-btn ${activeTab === 'lessons' ? 'active' : ''}`}
           onClick={() => setActiveTab('lessons')}
         >
-          Khóa bài học
+          Quản lí bài học
         </button>
       </div>
 
@@ -91,35 +93,37 @@ export function AdminPage({
           </div>
 
           {showAddUser && (
-            <form className="add-user-form" onSubmit={handleAddUser}>
-              <div className="form-row">
-                <input
-                  type="text"
-                  placeholder="Tên đăng nhập"
-                  value={newUsername}
-                  onChange={(e) => setNewUsername(e.target.value)}
-                  required
-                />
-                <input
-                  type="password"
-                  placeholder="Mật khẩu"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                />
-                <select
-                  value={newRole}
-                  onChange={(e) => setNewRole(e.target.value as UserRole)}
-                >
-                  <option value="user">User</option>
-                  <option value="vip_user">VIP User</option>
-                  {isSuperAdmin && <option value="admin">Admin</option>}
-                  {isSuperAdmin && <option value="super_admin">Super Admin</option>}
-                </select>
-                <button type="submit" className="btn btn-primary">Thêm</button>
-              </div>
-              {error && <p className="error-message">{error}</p>}
-            </form>
+            <div className="admin-add-user">
+              <form className="add-user-form" onSubmit={handleAddUser}>
+                <div className="form-row">
+                  <input
+                    type="text"
+                    placeholder="Tên đăng nhập"
+                    value={newUsername}
+                    onChange={(e) => setNewUsername(e.target.value)}
+                    required
+                  />
+                  <input
+                    type="password"
+                    placeholder="Mật khẩu"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                  />
+                  <select
+                    value={newRole}
+                    onChange={(e) => setNewRole(e.target.value as UserRole)}
+                  >
+                    <option value="user">User</option>
+                    {isSuperAdmin && <option value="vip_user">VIP User</option>}
+                    {isSuperAdmin && <option value="admin">Admin</option>}
+                    {isSuperAdmin && <option value="super_admin">Super Admin</option>}
+                  </select>
+                  <button type="submit" className="btn btn-primary">Thêm</button>
+                </div>
+                {error && <p className="error-message">{error}</p>}
+              </form>
+            </div>
           )}
 
           <table className="users-table">
@@ -127,6 +131,7 @@ export function AdminPage({
               <tr>
                 <th>Tên đăng nhập</th>
                 <th>Quyền</th>
+                <th>Ngày hữu hạn VIP</th>
                 <th>Ngày tạo</th>
                 <th>Hành động</th>
               </tr>
@@ -134,51 +139,69 @@ export function AdminPage({
             <tbody>
               {visibleUsers.map(user => {
                 const isCurrentUser = user.id === currentUserId;
+                const isProtectedSuperAdmin = user.id === 'superadmin'; // Protected super admin cannot be modified
 
-                // Super admin can manage everyone except themselves
-                // Admin can only manage users (not admin or super_admin)
-                const canChangeRole = !isCurrentUser && (
-                  isSuperAdmin || // Super admin can change anyone except self
-                  user.role === 'user' // Admin can only change users
-                );
+                // Only super_admin can change roles, except:
+                // - Cannot change own role
+                // - Cannot change the protected superadmin account
+                const canChangeRole = isSuperAdmin && !isCurrentUser && !isProtectedSuperAdmin;
 
                 // Same logic for delete
-                const canDelete = !isCurrentUser && (
-                  isSuperAdmin || // Super admin can delete anyone except self
+                const canDelete = !isCurrentUser && !isProtectedSuperAdmin && (
+                  isSuperAdmin || // Super admin can delete anyone except self and protected
                   user.role === 'user' // Admin can only delete users
                 );
 
+                // Check if VIP is expired
+                const isVipExpired = user.role === 'vip_user' && user.vipExpirationDate &&
+                  new Date(user.vipExpirationDate) < new Date();
+
                 return (
-                  <tr key={user.id}>
+                  <tr key={user.id} className={isVipExpired ? 'vip-expired' : ''}>
                     <td>{user.username}</td>
                     <td>
-                      {canChangeRole ? (
-                        <select
-                          value={user.role}
-                          onChange={(e) => onUpdateUserRole(user.id, e.target.value as UserRole)}
-                          className="role-select"
-                        >
-                          <option value="user">User</option>
-                          <option value="vip_user">VIP User</option>
-                          {isSuperAdmin && <option value="admin">Admin</option>}
-                          {isSuperAdmin && <option value="super_admin">Super Admin</option>}
-                        </select>
+                      <span className={`role-badge role-${user.role}`}>
+                        {user.role === 'super_admin' ? 'Super Admin' : user.role === 'admin' ? 'Admin' : user.role === 'vip_user' ? 'VIP' : 'User'}
+                      </span>
+                      {isVipExpired && <span className="expired-badge">Hết hạn</span>}
+                    </td>
+                    <td>
+                      {(user.role === 'vip_user' || canChangeRole) ? (
+                        <input
+                          type="date"
+                          value={user.vipExpirationDate || ''}
+                          onChange={(e) => onUpdateVipExpiration(user.id, e.target.value || undefined)}
+                          className="expiration-input"
+                          disabled={!canChangeRole}
+                        />
                       ) : (
-                        <span className={`role-badge role-${user.role}`}>
-                          {user.role === 'super_admin' ? 'Super Admin' : user.role === 'admin' ? 'Admin' : user.role === 'vip_user' ? 'VIP' : 'User'}
-                        </span>
+                        <span className="no-expiration">-</span>
                       )}
                     </td>
                     <td>{user.createdAt}</td>
                     <td>
-                      {canDelete && (
-                        <button
-                          className="btn btn-danger btn-small"
-                          onClick={() => setDeleteUserTarget(user)}
-                        >
-                          Xóa
-                        </button>
-                      )}
+                      <div className="action-buttons-row">
+                        {canChangeRole && (
+                          <select
+                            value={user.role}
+                            onChange={(e) => onUpdateUserRole(user.id, e.target.value as UserRole)}
+                            className="role-select"
+                          >
+                            <option value="user">User</option>
+                            <option value="vip_user">VIP User</option>
+                            <option value="admin">Admin</option>
+                            <option value="super_admin">Super Admin</option>
+                          </select>
+                        )}
+                        {canDelete && (
+                          <button
+                            className="btn btn-danger btn-small"
+                            onClick={() => setDeleteUserTarget(user)}
+                          >
+                            Xóa
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

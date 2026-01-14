@@ -1,5 +1,6 @@
 // Flashcard display component with flip animation
 
+import React from 'react';
 import type { Flashcard } from '../../types/flashcard';
 import type { AppSettings } from '../../hooks/use-settings';
 import { useTextToSpeech } from '../../hooks/use-text-to-speech';
@@ -23,6 +24,10 @@ const defaultSettings: AppSettings = {
   vocabularyFontSize: 28,
   sinoVietnameseFontSize: 32,
   meaningFontSize: 24,
+  mobileKanjiFontSize: 120,
+  mobileVocabularyFontSize: 20,
+  mobileSinoVietnameseFontSize: 22,
+  mobileMeaningFontSize: 18,
   showVocabulary: true,
   showSinoVietnamese: true,
   showMeaning: true,
@@ -35,7 +40,32 @@ const defaultSettings: AppSettings = {
   cardBackgroundImage: '',
   gameQuestionContent: 'kanji',
   gameAnswerContent: 'vocabulary_meaning',
+  // Kaiwa defaults
+  kaiwaVoiceGender: 'female',
+  kaiwaVoiceRate: 1.0,
+  kaiwaAutoSpeak: true,
+  kaiwaShowSuggestions: true,
+  kaiwaShowFurigana: true,
+  kaiwaDefaultLevel: 'N5',
+  kaiwaDefaultStyle: 'polite',
+  kaiwaShowTranslation: true,
+  // Weekly goals
+  weeklyCardsTarget: 50,
+  weeklyMinutesTarget: 60,
 };
+
+// Check if current screen is mobile
+function useIsMobile() {
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
+
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return isMobile;
+}
 
 // Get background style based on settings
 function getCardBackgroundStyle(settings: AppSettings): React.CSSProperties {
@@ -68,7 +98,23 @@ export function FlashcardItem({
   lessonName,
 }: FlashcardItemProps) {
   const { speak, isSpeaking } = useTextToSpeech();
+  const isMobile = useIsMobile();
   const kanjiText = card.kanji || card.vocabulary;
+
+  // Get font sizes based on screen size (auto scale down 50% on mobile)
+  const mobileScale = 0.5;
+  const kanjiFontSize = isMobile
+    ? Math.max(settings.kanjiFontSize * mobileScale, 80)
+    : settings.kanjiFontSize;
+  const vocabularyFontSize = isMobile
+    ? Math.max(settings.vocabularyFontSize * mobileScale, 14)
+    : settings.vocabularyFontSize;
+  const sinoVietnameseFontSize = isMobile
+    ? Math.max(settings.sinoVietnameseFontSize * mobileScale, 14)
+    : settings.sinoVietnameseFontSize;
+  const meaningFontSize = isMobile
+    ? Math.max(settings.meaningFontSize * mobileScale, 12)
+    : settings.meaningFontSize;
 
   // Speak the vocabulary (use vocabulary for correct pronunciation)
   const handleSpeak = (e: React.MouseEvent) => {
@@ -92,14 +138,7 @@ export function FlashcardItem({
         <div className="flashcard-face flashcard-front" style={getCardBackgroundStyle(settings)}>
           <span className="jlpt-badge">{levelBadge}</span>
           <div className="card-content">
-            <button
-              className={`speak-btn ${isSpeaking ? 'speaking' : ''}`}
-              onClick={handleSpeak}
-              title="Nghe phát âm"
-            >
-              🔊
-            </button>
-            <div className="kanji" style={{ fontSize: `${settings.kanjiFontSize}px`, fontFamily: `"${settings.kanjiFont}", serif`, fontWeight: settings.kanjiBold ? 900 : 400 }}>
+            <div className="kanji" style={{ fontSize: `${kanjiFontSize}px`, fontFamily: `"${settings.kanjiFont}", serif`, fontWeight: settings.kanjiBold ? 900 : 400 }}>
               {kanjiText}
             </div>
           </div>
@@ -110,25 +149,27 @@ export function FlashcardItem({
         <div className="flashcard-face flashcard-back">
           <span className="jlpt-badge">{levelBadge}</span>
           <div className="card-content">
-            <button
-              className={`speak-btn ${isSpeaking ? 'speaking' : ''}`}
-              onClick={handleSpeak}
-              title="Nghe phát âm"
-            >
-              🔊
-            </button>
             {settings.showSinoVietnamese && card.sinoVietnamese && (
-              <div className="sino-vietnamese" style={{ fontSize: `${settings.sinoVietnameseFontSize}px` }}>
+              <div className="sino-vietnamese" style={{ fontSize: `${sinoVietnameseFontSize}px` }}>
                 {card.sinoVietnamese}
               </div>
             )}
             {settings.showVocabulary && (
-              <div className="vocabulary" style={{ fontSize: `${settings.vocabularyFontSize}px` }}>
-                {card.vocabulary}
+              <div className="vocabulary-with-speaker">
+                <div className="vocabulary" style={{ fontSize: `${vocabularyFontSize}px` }}>
+                  {card.vocabulary}
+                </div>
+                <button
+                  className={`speak-btn ${isSpeaking ? 'speaking' : ''}`}
+                  onClick={handleSpeak}
+                  title="Nghe phát âm"
+                >
+                  🔊
+                </button>
               </div>
             )}
             {settings.showMeaning && (
-              <div className="meaning" style={{ fontSize: `${settings.meaningFontSize}px` }}>
+              <div className="meaning" style={{ fontSize: `${meaningFontSize}px` }}>
                 {card.meaning}
               </div>
             )}

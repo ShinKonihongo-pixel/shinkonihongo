@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { CurrentUser } from '../../types/user';
 
-export type Page = 'home' | 'cards' | 'study' | 'quiz' | 'jlpt' | 'chat' | 'settings' | 'admin';
+export type Page = 'home' | 'cards' | 'study' | 'progress' | 'quiz' | 'jlpt' | 'kaiwa' | 'lectures' | 'lecture-editor' | 'chat' | 'settings' | 'admin';
 
 // Helper to get role display name
 const getRoleBadge = (role: string): { label: string; className: string } | null => {
@@ -35,58 +35,99 @@ export function Header({ currentPage, onNavigate, currentUser, onLogout }: Heade
       <div className="header-top">
         <h1 className="header-title">日本語 Flashcards</h1>
         <nav className={`nav ${menuOpen ? 'nav-open' : ''}`}>
-        <button
-          className={`nav-btn ${currentPage === 'home' ? 'active' : ''}`}
-          onClick={() => handleNavigate('home')}
-        >
-          Trang chủ
-        </button>
-        {(currentUser?.role === 'admin' || currentUser?.role === 'super_admin') && (
+          {/* User info and logout at top of mobile menu */}
+          {currentUser && (
+            <div className="nav-user-section">
+              <div className="nav-user-info">
+                <div className="user-avatar-small">
+                  {currentUser.avatar || (currentUser.displayName || currentUser.username).charAt(0).toUpperCase()}
+                </div>
+                <span className="username">
+                  {currentUser.displayName || currentUser.username}
+                  {getRoleBadge(currentUser.role) && (
+                    <span className={getRoleBadge(currentUser.role)!.className}>
+                      {getRoleBadge(currentUser.role)!.label}
+                    </span>
+                  )}
+                </span>
+              </div>
+              <button className="nav-btn nav-logout-btn" onClick={onLogout}>
+                Đăng xuất
+              </button>
+            </div>
+          )}
           <button
-            className={`nav-btn ${currentPage === 'cards' ? 'active' : ''}`}
-            onClick={() => handleNavigate('cards')}
+            className={`nav-btn ${currentPage === 'home' ? 'active' : ''}`}
+            onClick={() => handleNavigate('home')}
           >
-            Quản Lí
+            Trang chủ
           </button>
-        )}
-        <button
-          className={`nav-btn ${currentPage === 'study' ? 'active' : ''}`}
-          onClick={() => handleNavigate('study')}
-        >
-          Học
-        </button>
-        <button
-          className={`nav-btn ${currentPage === 'quiz' ? 'active' : ''}`}
-          onClick={() => handleNavigate('quiz')}
-        >
-          Game
-        </button>
-        <button
-          className={`nav-btn ${currentPage === 'jlpt' ? 'active' : ''}`}
-          onClick={() => handleNavigate('jlpt')}
-        >
-          JLPT
-        </button>
-        <button
-          className={`nav-btn ${currentPage === 'chat' ? 'active' : ''}`}
-          onClick={() => handleNavigate('chat')}
-        >
-          Thảo luận
-        </button>
-        <button
-          className={`nav-btn ${currentPage === 'settings' ? 'active' : ''}`}
-          onClick={() => handleNavigate('settings')}
-        >
-          Cài đặt
-        </button>
-        {(currentUser?.role === 'admin' || currentUser?.role === 'super_admin') && (
+          {(currentUser?.role === 'admin' || currentUser?.role === 'super_admin') && (
+            <button
+              className={`nav-btn ${currentPage === 'cards' ? 'active' : ''}`}
+              onClick={() => handleNavigate('cards')}
+            >
+              Quản Lí
+            </button>
+          )}
           <button
-            className={`nav-btn ${currentPage === 'admin' ? 'active' : ''}`}
-            onClick={() => handleNavigate('admin')}
+            className={`nav-btn ${currentPage === 'study' ? 'active' : ''}`}
+            onClick={() => handleNavigate('study')}
           >
-            Admin
+            Học
           </button>
-        )}
+          <button
+            className={`nav-btn ${currentPage === 'progress' ? 'active' : ''}`}
+            onClick={() => handleNavigate('progress')}
+          >
+            Tiến độ
+          </button>
+          <button
+            className={`nav-btn ${currentPage === 'quiz' ? 'active' : ''}`}
+            onClick={() => handleNavigate('quiz')}
+          >
+            Game
+          </button>
+          <button
+            className={`nav-btn ${currentPage === 'jlpt' ? 'active' : ''}`}
+            onClick={() => handleNavigate('jlpt')}
+          >
+            JLPT
+          </button>
+          <button
+            className={`nav-btn ${currentPage === 'lectures' ? 'active' : ''}`}
+            onClick={() => handleNavigate('lectures')}
+          >
+            Bài giảng
+          </button>
+          {(currentUser?.role === 'vip_user' || currentUser?.role === 'admin' || currentUser?.role === 'super_admin') && (
+            <button
+              className={`nav-btn ${currentPage === 'kaiwa' ? 'active' : ''}`}
+              onClick={() => handleNavigate('kaiwa')}
+            >
+              会話
+            </button>
+          )}
+          <button
+            className={`nav-btn ${currentPage === 'chat' ? 'active' : ''}`}
+            onClick={() => handleNavigate('chat')}
+          >
+            Thảo luận
+          </button>
+          <button
+            className={`nav-btn ${currentPage === 'settings' ? 'active' : ''}`}
+            onClick={() => handleNavigate('settings')}
+          >
+            Cài đặt
+          </button>
+          {(currentUser?.role === 'admin' || currentUser?.role === 'super_admin') && (
+            <button
+              className={`nav-btn ${currentPage === 'admin' ? 'active' : ''}`}
+              onClick={() => handleNavigate('admin')}
+            >
+              Admin
+            </button>
+          )}
         </nav>
         <button
           className="hamburger-btn"
@@ -100,8 +141,9 @@ export function Header({ currentPage, onNavigate, currentUser, onLogout }: Heade
           </span>
         </button>
       </div>
+      {/* Desktop user info */}
       {currentUser && (
-        <div className="user-info">
+        <div className="user-info desktop-user-info">
           <div className="user-avatar-small">
             {currentUser.avatar || (currentUser.displayName || currentUser.username).charAt(0).toUpperCase()}
           </div>

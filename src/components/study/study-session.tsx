@@ -1,8 +1,22 @@
 // Study session component with spaced repetition
 
+import { useState, useEffect } from 'react';
 import type { Flashcard, JLPTLevel, MemorizationStatus, DifficultyLevel } from '../../types/flashcard';
 import type { AppSettings } from '../../hooks/use-settings';
 import { FlashcardItem } from '../flashcard/flashcard-item';
+
+// Check if current screen is mobile
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return isMobile;
+}
 
 interface StudySessionProps {
   currentCard: Flashcard | undefined;
@@ -70,44 +84,95 @@ export function StudySession({
   canGoPrev,
   settings,
 }: StudySessionProps) {
+  const isMobile = useIsMobile();
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  // Handle memorization button click - toggle on/off
+  const handleMemorizationClick = (status: MemorizationStatus) => {
+    if (currentCard?.memorizationStatus === status) {
+      onSetMemorization('unset');
+    } else {
+      onSetMemorization(status);
+    }
+  };
+
+  // Handle difficulty button click - toggle on/off
+  const handleDifficultyClick = (level: DifficultyLevel) => {
+    if (currentCard?.difficultyLevel === level) {
+      onSetDifficulty('unset');
+    } else {
+      onSetDifficulty(level);
+    }
+  };
+
+  // Minimum swipe distance (in px)
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe && canGoNext) {
+      onNext();
+    } else if (isRightSwipe && canGoPrev) {
+      onPrev();
+    }
+  };
+
   if (!currentCard) {
     return (
       <div className="study-empty">
         <h2>🎉 Không có thẻ nào cần ôn!</h2>
         <p>Bạn đã hoàn thành tất cả các thẻ đến hạn hôm nay hoặc không có thẻ phù hợp với bộ lọc.</p>
-        <div className="filter-bar-inline" style={{ justifyContent: 'center' }}>
-          <span>JLPT:</span>
-          {JLPT_LEVELS.map(level => (
-            <button
-              key={level}
-              className={`filter-btn ${filterLevel === level ? 'active' : ''}`}
-              onClick={() => onFilterChange(level)}
-            >
-              {level === 'all' ? 'Tất cả' : level}
-            </button>
-          ))}
-          <span className="filter-separator">|</span>
-          <span>Trạng thái:</span>
-          {MEMORIZATION_OPTIONS.map(opt => (
-            <button
-              key={opt.value}
-              className={`filter-btn ${filterMemorization === opt.value ? 'active' : ''}`}
-              onClick={() => onFilterMemorizationChange(opt.value)}
-            >
-              {opt.label}
-            </button>
-          ))}
-          <span className="filter-separator">|</span>
-          <span>Độ khó:</span>
-          {DIFFICULTY_OPTIONS.map(opt => (
-            <button
-              key={opt.value}
-              className={`filter-btn ${filterDifficulty === opt.value ? 'active' : ''}`}
-              onClick={() => onFilterDifficultyChange(opt.value)}
-            >
-              {opt.label}
-            </button>
-          ))}
+        <div className="filter-bar-inline">
+          <span className="filter-label">JLPT:</span>
+          <select
+            value={filterLevel}
+            onChange={(e) => onFilterChange(e.target.value as typeof filterLevel)}
+            className="filter-select"
+          >
+            {JLPT_LEVELS.map(level => (
+              <option key={level} value={level}>
+                {level === 'all' ? 'Tất cả' : level}
+              </option>
+            ))}
+          </select>
+          <span className="filter-label">Trạng thái:</span>
+          <select
+            value={filterMemorization}
+            onChange={(e) => onFilterMemorizationChange(e.target.value as typeof filterMemorization)}
+            className="filter-select"
+          >
+            {MEMORIZATION_OPTIONS.map(opt => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <span className="filter-label">Độ khó:</span>
+          <select
+            value={filterDifficulty}
+            onChange={(e) => onFilterDifficultyChange(e.target.value as typeof filterDifficulty)}
+            className="filter-select"
+          >
+            {DIFFICULTY_OPTIONS.map(opt => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
     );
@@ -116,40 +181,44 @@ export function StudySession({
   return (
     <div className="study-session">
       <div className="study-header">
-        <div className="filter-bar-inline">
-          <span>JLPT:</span>
-          {JLPT_LEVELS.map(level => (
-            <button
-              key={level}
-              className={`filter-btn ${filterLevel === level ? 'active' : ''}`}
-              onClick={() => onFilterChange(level)}
-            >
-              {level === 'all' ? 'Tất cả' : level}
-            </button>
-          ))}
-          <span className="filter-separator">|</span>
-          <span>Trạng thái:</span>
-          {MEMORIZATION_OPTIONS.map(opt => (
-            <button
-              key={opt.value}
-              className={`filter-btn ${filterMemorization === opt.value ? 'active' : ''}`}
-              onClick={() => onFilterMemorizationChange(opt.value)}
-            >
-              {opt.label}
-            </button>
-          ))}
-          <span className="filter-separator">|</span>
-          <span>Độ khó:</span>
-          {DIFFICULTY_OPTIONS.map(opt => (
-            <button
-              key={opt.value}
-              className={`filter-btn ${filterDifficulty === opt.value ? 'active' : ''}`}
-              onClick={() => onFilterDifficultyChange(opt.value)}
-            >
-              {opt.label}
-            </button>
-          ))}
-          <span className="filter-separator">|</span>
+        {/* Desktop: select dropdowns */}
+        <div className="filter-bar-inline filter-desktop">
+          <span className="filter-label">JLPT:</span>
+          <select
+            value={filterLevel}
+            onChange={(e) => onFilterChange(e.target.value as typeof filterLevel)}
+            className="filter-select"
+          >
+            {JLPT_LEVELS.map(level => (
+              <option key={level} value={level}>
+                {level === 'all' ? 'Tất cả' : level}
+              </option>
+            ))}
+          </select>
+          <span className="filter-label">Trạng thái:</span>
+          <select
+            value={filterMemorization}
+            onChange={(e) => onFilterMemorizationChange(e.target.value as typeof filterMemorization)}
+            className="filter-select"
+          >
+            {MEMORIZATION_OPTIONS.map(opt => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <span className="filter-label">Độ khó:</span>
+          <select
+            value={filterDifficulty}
+            onChange={(e) => onFilterDifficultyChange(e.target.value as typeof filterDifficulty)}
+            className="filter-select"
+          >
+            {DIFFICULTY_OPTIONS.map(opt => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
           <button
             className="filter-btn shuffle-btn"
             onClick={onShuffle}
@@ -166,33 +235,108 @@ export function StudySession({
             ↺ Reset
           </button>
         </div>
+
+        {/* Mobile/Tablet: select dropdowns */}
+        <div className="filter-bar-mobile">
+          <div className="filter-group">
+            <span className="filter-label">JLPT:</span>
+            <select
+              value={filterLevel}
+              onChange={(e) => onFilterChange(e.target.value as typeof filterLevel)}
+              className="filter-select"
+            >
+              {JLPT_LEVELS.map(level => (
+                <option key={level} value={level}>
+                  {level === 'all' ? 'Tất cả' : level}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="filter-group">
+            <span className="filter-label">Trạng thái:</span>
+            <select
+              value={filterMemorization}
+              onChange={(e) => onFilterMemorizationChange(e.target.value as typeof filterMemorization)}
+              className="filter-select"
+            >
+              {MEMORIZATION_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="filter-group">
+            <span className="filter-label">Độ khó:</span>
+            <select
+              value={filterDifficulty}
+              onChange={(e) => onFilterDifficultyChange(e.target.value as typeof filterDifficulty)}
+              className="filter-select"
+            >
+              {DIFFICULTY_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="filter-actions-mobile">
+            <button
+              className="filter-btn shuffle-btn"
+              onClick={onShuffle}
+              title="Xáo trộn thẻ"
+            >
+              🔀 Xáo trộn
+            </button>
+            <button
+              className="filter-btn reset-btn"
+              onClick={onResetOrder}
+              title="Về thứ tự gốc"
+              disabled={!isShuffled}
+            >
+              ↺ Reset
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="study-card-area">
+      <div
+        className="study-card-area"
+        onTouchStart={isMobile ? onTouchStart : undefined}
+        onTouchMove={isMobile ? onTouchMove : undefined}
+        onTouchEnd={isMobile ? onTouchEnd : undefined}
+      >
         <div className="card-navigation">
-          <button
-            className="card-nav-btn"
-            onClick={onPrev}
-            disabled={!canGoPrev}
-            title="Từ trước"
-          >
-            &lt;
-          </button>
+          {!isMobile && (
+            <button
+              className="card-nav-btn"
+              onClick={onPrev}
+              disabled={!canGoPrev}
+              title="Từ trước"
+            >
+              &lt;
+            </button>
+          )}
           <FlashcardItem
             card={currentCard}
             isFlipped={isFlipped}
             onFlip={onFlip}
             settings={settings}
           />
-          <button
-            className="card-nav-btn"
-            onClick={onNext}
-            disabled={!canGoNext}
-            title="Từ tiếp"
-          >
-            &gt;
-          </button>
+          {!isMobile && (
+            <button
+              className="card-nav-btn"
+              onClick={onNext}
+              disabled={!canGoNext}
+              title="Từ tiếp"
+            >
+              &gt;
+            </button>
+          )}
         </div>
+        {isMobile && (
+          <p className="swipe-hint">← Vuốt để chuyển thẻ →</p>
+        )}
       </div>
 
       {/* Footer: Memorization, Difficulty buttons and card counter */}
@@ -201,13 +345,13 @@ export function StudySession({
           <span>Trạng thái:</span>
           <button
             className={`memo-btn memorized ${currentCard.memorizationStatus === 'memorized' ? 'active' : ''}`}
-            onClick={() => onSetMemorization('memorized')}
+            onClick={() => handleMemorizationClick('memorized')}
           >
             ✓ Đã thuộc
           </button>
           <button
             className={`memo-btn not-memorized ${currentCard.memorizationStatus === 'not_memorized' ? 'active' : ''}`}
-            onClick={() => onSetMemorization('not_memorized')}
+            onClick={() => handleMemorizationClick('not_memorized')}
           >
             ✗ Chưa thuộc
           </button>
@@ -217,19 +361,19 @@ export function StudySession({
           <span>Độ khó:</span>
           <button
             className={`diff-btn hard ${currentCard.difficultyLevel === 'hard' ? 'active' : ''}`}
-            onClick={() => onSetDifficulty('hard')}
+            onClick={() => handleDifficultyClick('hard')}
           >
             Khó nhớ
           </button>
           <button
             className={`diff-btn medium ${currentCard.difficultyLevel === 'medium' ? 'active' : ''}`}
-            onClick={() => onSetDifficulty('medium')}
+            onClick={() => handleDifficultyClick('medium')}
           >
             Vừa
           </button>
           <button
             className={`diff-btn easy ${currentCard.difficultyLevel === 'easy' ? 'active' : ''}`}
-            onClick={() => onSetDifficulty('easy')}
+            onClick={() => handleDifficultyClick('easy')}
           >
             Dễ nhớ
           </button>

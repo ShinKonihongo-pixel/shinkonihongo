@@ -11,6 +11,7 @@ export interface User {
   displayName?: string; // Optional display name
   avatar?: string; // Avatar URL or emoji
   profileBackground?: string; // Profile background gradient/color
+  vipExpirationDate?: string; // VIP expiration date (YYYY-MM-DD), auto convert to user when expired
   createdAt: string;
 }
 
