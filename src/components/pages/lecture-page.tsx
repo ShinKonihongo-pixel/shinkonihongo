@@ -1,4 +1,4 @@
-// Lecture list page - view all published lectures
+// Lecture page - slideshow presentation for students
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLectures, useSlides, useLectureView } from '../../hooks/use-lectures';
@@ -16,7 +16,7 @@ interface LecturePageProps {
 
 export function LecturePage({ onNavigateToEditor }: LecturePageProps) {
   const { currentUser, isAdmin } = useAuth();
-  const { lectures, loading, deleteLecture } = useLectures(isAdmin);
+  const { lectures, loading } = useLectures(false); // Only published lectures for students
 
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedLecture, setSelectedLecture] = useState<Lecture | null>(null);
@@ -57,8 +57,17 @@ export function LecturePage({ onNavigateToEditor }: LecturePageProps) {
     currentUser?.id || null
   );
 
-  // Filter lectures
+  // Check if user can see hidden lectures (creator or super_admin)
+  const isSuperAdmin = currentUser?.role === 'super_admin';
+  const canSeeHiddenLecture = (lecture: Lecture): boolean => {
+    if (isSuperAdmin) return true;
+    return lecture.authorId === currentUser?.id;
+  };
+
+  // Filter lectures (also filter hidden lectures)
   const filteredLectures = lectures.filter((lecture) => {
+    // Filter hidden lectures - only show to creator or super_admin
+    if (lecture.isHidden && !canSeeHiddenLecture(lecture)) return false;
     const matchLevel = filterLevel === 'all' || lecture.jlptLevel === filterLevel;
     const matchSearch =
       !searchQuery ||
@@ -102,27 +111,6 @@ export function LecturePage({ onNavigateToEditor }: LecturePageProps) {
     }
     setResumePrompt(null);
     setCurrentSlideIndex(0);
-  };
-
-  // Handle edit
-  const handleEdit = (lecture: Lecture) => {
-    if (onNavigateToEditor) {
-      onNavigateToEditor(lecture.id);
-    }
-  };
-
-  // Handle create new
-  const handleCreate = () => {
-    if (onNavigateToEditor) {
-      onNavigateToEditor();
-    }
-  };
-
-  // Handle delete
-  const handleDelete = async (lecture: Lecture) => {
-    if (window.confirm(`Xoá bài giảng "${lecture.title}"?`)) {
-      await deleteLecture(lecture.id);
-    }
   };
 
   // Slide navigation with transition direction
@@ -447,20 +435,12 @@ export function LecturePage({ onNavigateToEditor }: LecturePageProps) {
     return <div className="loading-state">Đang tải...</div>;
   }
 
-  // List view
+  // List view - students only see published lectures
   if (viewMode === 'list') {
     return (
       <div className="lecture-page">
         <div className="lecture-header">
           <h1>Bài giảng</h1>
-          {isAdmin && (
-            <button
-              className="btn btn-primary"
-              onClick={handleCreate}
-            >
-              + Tạo bài giảng
-            </button>
-          )}
         </div>
 
         <div className="lecture-filters">
@@ -496,9 +476,7 @@ export function LecturePage({ onNavigateToEditor }: LecturePageProps) {
                 key={lecture.id}
                 lecture={lecture}
                 onClick={() => handleSelectLecture(lecture)}
-                onEdit={() => handleEdit(lecture)}
-                onDelete={() => handleDelete(lecture)}
-                showActions={isAdmin}
+                showActions={false}
               />
             ))}
           </div>
@@ -630,7 +608,7 @@ export function LecturePage({ onNavigateToEditor }: LecturePageProps) {
 
         {/* Slide content with transition */}
         <div className={`presentation-slide ${slideDirection ? `animate-${slideDirection}` : ''} ${showNotes ? 'with-notes' : ''}`}>
-          {currentSlide && <SlideRenderer slide={currentSlide} isPresenting={true} />}
+          {currentSlide && <SlideRenderer slide={currentSlide} isPresenting={true} slideKey={currentSlideIndex} />}
         </div>
 
         {/* Presenter notes panel */}
@@ -840,7 +818,7 @@ export function LecturePage({ onNavigateToEditor }: LecturePageProps) {
               onTouchEnd={handleTouchEnd}
             >
               <div className={`slide-content ${slideDirection ? `animate-${slideDirection}` : ''}`}>
-                {currentSlide && <SlideRenderer slide={currentSlide} />}
+                {currentSlide && <SlideRenderer slide={currentSlide} slideKey={currentSlideIndex} />}
               </div>
               {/* Click hint areas */}
               <div className="click-area-left" />

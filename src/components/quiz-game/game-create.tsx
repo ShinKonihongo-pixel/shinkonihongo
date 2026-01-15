@@ -45,10 +45,30 @@ export function GameCreate({
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [totalRounds, setTotalRounds] = useState(20);
   const [timePerQuestion, setTimePerQuestion] = useState(15);
+  const [specialRoundEvery, setSpecialRoundEvery] = useState(5);
   const [expandedLevel, setExpandedLevel] = useState<JLPTLevel | null>(null);
 
   // Count available cards from selected lessons
   const availableCards = flashcards.filter(c => selectedLessons.includes(c.lessonId)).length;
+
+  // Get all lessons for lookup
+  const allLessonsMap = useMemo(() => {
+    const map = new Map<string, string>();
+    JLPT_LEVELS.forEach(level => {
+      const lessons = getLessonsByLevel(level);
+      lessons.forEach(lesson => {
+        map.set(lesson.id, lesson.name);
+        const children = getChildLessons(lesson.id);
+        children.forEach(child => map.set(child.id, child.name));
+      });
+    });
+    return map;
+  }, [getLessonsByLevel, getChildLessons]);
+
+  // Get selected lesson names
+  const selectedLessonNames = useMemo(() => {
+    return selectedLessons.map(id => allLessonsMap.get(id) || id).slice(0, 5);
+  }, [selectedLessons, allLessonsMap]);
 
   // Count available JLPT questions based on filters
   const availableJLPTQuestions = useMemo(() => {
@@ -122,10 +142,12 @@ export function GameCreate({
         title: title || 'Đại Chiến N5',
         source: 'flashcards',
         lessonIds: selectedLessons,
+        lessonNames: selectedLessonNames,
         totalRounds: actualRounds,
         timePerQuestion,
         questionContent: gameSettings.gameQuestionContent,
         answerContent: gameSettings.gameAnswerContent,
+        settings: { specialRoundEvery },
       });
     } else {
       if (availableJLPTQuestions < 4) {
@@ -140,6 +162,7 @@ export function GameCreate({
         jlptCategories: selectedCategories.length > 0 ? selectedCategories : undefined,
         totalRounds: actualRounds,
         timePerQuestion,
+        settings: { specialRoundEvery },
       });
     }
   };
@@ -197,6 +220,16 @@ export function GameCreate({
 
                   if (levelLessons.length === 0) return null;
 
+                  // Check if all lessons in this level are selected
+                  const allLessonIdsInLevel: string[] = [];
+                  levelLessons.forEach(lesson => {
+                    allLessonIdsInLevel.push(lesson.id);
+                    const children = getChildLessons(lesson.id);
+                    children.forEach(child => allLessonIdsInLevel.push(child.id));
+                  });
+                  const allSelected = allLessonIdsInLevel.length > 0 &&
+                    allLessonIdsInLevel.every(id => selectedLessons.includes(id));
+
                   return (
                     <div key={level} className="lesson-level">
                       <div
@@ -207,13 +240,13 @@ export function GameCreate({
                         <span className="level-name">{level}</span>
                         <button
                           type="button"
-                          className="btn btn-small btn-outline"
+                          className={`btn btn-small ${allSelected ? 'btn-primary' : 'btn-outline'}`}
                           onClick={(e) => {
                             e.stopPropagation();
                             handleSelectAllInLevel(level);
                           }}
                         >
-                          Chọn tất cả
+                          {allSelected ? '✓ Đã chọn' : 'Chọn tất cả'}
                         </button>
                       </div>
 
@@ -335,6 +368,20 @@ export function GameCreate({
               />
               <small>5-30 giây</small>
             </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="special">Câu đặc biệt (mỗi N câu)</label>
+            <input
+              type="number"
+              id="special"
+              value={specialRoundEvery}
+              onChange={(e) => setSpecialRoundEvery(Math.max(1, Math.min(20, parseInt(e.target.value) || 5)))}
+              min={1}
+              max={20}
+              className="form-input"
+            />
+            <small>Câu {specialRoundEvery}, {specialRoundEvery * 2}, {specialRoundEvery * 3}... sẽ là câu đặc biệt (có power-up)</small>
           </div>
 
           {error && <p className="error-message">{error}</p>}

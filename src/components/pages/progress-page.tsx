@@ -1,6 +1,7 @@
 // Progress tracking dashboard page
 
 import type { ProgressSummary } from '../../types/progress';
+import { Flame, Snowflake, BookOpen, Clock, Target, CheckCircle, BarChart3, TrendingUp } from 'lucide-react';
 
 interface ProgressPageProps {
   progress: ProgressSummary;
@@ -38,7 +39,7 @@ export function ProgressPage({ progress, onStartStudy }: ProgressPageProps) {
         </div>
 
         <div className="progress-streak-card">
-          <div className="streak-flame">{streak.isActiveToday ? '🔥' : '❄️'}</div>
+          <div className="streak-flame">{streak.isActiveToday ? <Flame size={32} color="#ff6b35" /> : <Snowflake size={32} color="#74b9ff" />}</div>
           <div className="streak-info">
             <span className="streak-count">{streak.currentStreak}</span>
             <span className="streak-label">ngày liên tiếp</span>
@@ -63,7 +64,7 @@ export function ProgressPage({ progress, onStartStudy }: ProgressPageProps) {
         <div className="weekly-goals">
           <div className="goal-item">
             <div className="goal-header">
-              <span className="goal-icon">📚</span>
+              <span className="goal-icon"><BookOpen size={18} /></span>
               <span className="goal-title">Thẻ đã học</span>
               <span className="goal-count">
                 {weeklyGoal.cardsCompleted}/{weeklyGoal.cardsTarget}
@@ -79,7 +80,7 @@ export function ProgressPage({ progress, onStartStudy }: ProgressPageProps) {
 
           <div className="goal-item">
             <div className="goal-header">
-              <span className="goal-icon">⏱️</span>
+              <span className="goal-icon"><Clock size={18} /></span>
               <span className="goal-title">Thời gian học</span>
               <span className="goal-count">
                 {weeklyGoal.minutesCompleted}/{weeklyGoal.minutesTarget} phút
@@ -122,7 +123,7 @@ export function ProgressPage({ progress, onStartStudy }: ProgressPageProps) {
           })}
         </div>
         <div className="activity-legend">
-          <span>📊 Tổng hoạt động (thẻ + JLPT + game)</span>
+          <span><BarChart3 size={14} /> Tổng hoạt động (thẻ + JLPT + game)</span>
         </div>
       </div>
 
@@ -175,17 +176,17 @@ export function ProgressPage({ progress, onStartStudy }: ProgressPageProps) {
         <h3>Thống kê nhanh</h3>
         <div className="quick-stats">
           <div className="stat-card">
-            <span className="stat-icon">📚</span>
+            <span className="stat-icon"><BookOpen size={20} /></span>
             <span className="stat-value">{levelProgress.reduce((s, l) => s + l.totalCards, 0)}</span>
             <span className="stat-label">Tổng số thẻ</span>
           </div>
           <div className="stat-card">
-            <span className="stat-icon">✅</span>
+            <span className="stat-icon"><CheckCircle size={20} /></span>
             <span className="stat-value">{levelProgress.reduce((s, l) => s + l.memorized, 0)}</span>
             <span className="stat-label">Đã thuộc</span>
           </div>
           <div className="stat-card">
-            <span className="stat-icon">🎯</span>
+            <span className="stat-icon"><Target size={20} /></span>
             <span className="stat-value">
               {Math.round(
                 (levelProgress.reduce((s, l) => s + l.memorized, 0) /
@@ -195,7 +196,7 @@ export function ProgressPage({ progress, onStartStudy }: ProgressPageProps) {
             <span className="stat-label">Tỷ lệ thuộc</span>
           </div>
           <div className="stat-card">
-            <span className="stat-icon">📖</span>
+            <span className="stat-icon"><TrendingUp size={20} /></span>
             <span className="stat-value">{levelProgress.reduce((s, l) => s + l.learning, 0)}</span>
             <span className="stat-label">Đang học</span>
           </div>

@@ -1,17 +1,19 @@
 // Hook for lectures/slideshow management
 
 import { useState, useEffect, useCallback } from 'react';
-import type { Lecture, LectureFormData, Slide, SlideFormData } from '../types/lecture';
+import type { Lecture, LectureFormData, Slide, SlideFormData, LectureFolder } from '../types/lecture';
+import type { JLPTLevel } from '../types/flashcard';
 import * as lectureService from '../services/lecture-firestore';
 
 export function useLectures(isAdmin: boolean = false) {
   const [lectures, setLectures] = useState<Lecture[]>([]);
+  const [lectureFolders, setLectureFolders] = useState<LectureFolder[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Subscribe to lectures (all for admin, published only for users)
   useEffect(() => {
     setLoading(true);
-    const unsubscribe = isAdmin
+    const unsubscribeLectures = isAdmin
       ? lectureService.subscribeToLectures((data) => {
           setLectures(data);
           setLoading(false);
@@ -21,7 +23,17 @@ export function useLectures(isAdmin: boolean = false) {
           setLoading(false);
         });
 
-    return () => unsubscribe();
+    // Subscribe to folders (only for admin)
+    const unsubscribeFolders = isAdmin
+      ? lectureService.subscribeToLectureFolders((data) => {
+          setLectureFolders(data);
+        })
+      : () => {};
+
+    return () => {
+      unsubscribeLectures();
+      if (isAdmin) unsubscribeFolders();
+    };
   }, [isAdmin]);
 
   // Create lecture
@@ -63,6 +75,20 @@ export function useLectures(isAdmin: boolean = false) {
     }
   }, []);
 
+  // Toggle hide status (creator/super_admin only)
+  const toggleHide = useCallback(async (id: string): Promise<boolean> => {
+    const lecture = lectures.find(l => l.id === id);
+    if (!lecture) return false;
+
+    try {
+      await lectureService.updateLecture(id, { isHidden: !lecture.isHidden });
+      return true;
+    } catch (err) {
+      console.error('Error toggling hide:', err);
+      return false;
+    }
+  }, [lectures]);
+
   // Get lecture by ID
   const getLecture = useCallback(async (id: string): Promise<Lecture | null> => {
     try {
@@ -73,13 +99,71 @@ export function useLectures(isAdmin: boolean = false) {
     }
   }, []);
 
+  // Folder management
+  const addFolder = useCallback(async (
+    name: string,
+    level: JLPTLevel,
+    createdBy: string
+  ): Promise<LectureFolder | null> => {
+    try {
+      return await lectureService.addLectureFolder(name, level, createdBy);
+    } catch (err) {
+      console.error('Error adding folder:', err);
+      return null;
+    }
+  }, []);
+
+  const updateFolder = useCallback(async (
+    id: string,
+    data: Partial<LectureFolder>
+  ): Promise<boolean> => {
+    try {
+      await lectureService.updateLectureFolder(id, data);
+      return true;
+    } catch (err) {
+      console.error('Error updating folder:', err);
+      return false;
+    }
+  }, []);
+
+  const deleteFolder = useCallback(async (id: string): Promise<boolean> => {
+    try {
+      await lectureService.deleteLectureFolder(id);
+      return true;
+    } catch (err) {
+      console.error('Error deleting folder:', err);
+      return false;
+    }
+  }, []);
+
+  // Helper functions
+  const getFoldersByLevel = useCallback((level: JLPTLevel): LectureFolder[] => {
+    return lectureService.getLectureFoldersByLevel(lectureFolders, level);
+  }, [lectureFolders]);
+
+  const getLecturesByFolder = useCallback((folderId: string): Lecture[] => {
+    return lectureService.getLecturesByFolder(lectures, folderId);
+  }, [lectures]);
+
+  const getLecturesByLevel = useCallback((level: JLPTLevel): Lecture[] => {
+    return lectureService.getLecturesByLevel(lectures, level);
+  }, [lectures]);
+
   return {
     lectures,
+    lectureFolders,
     loading,
     createLecture,
     updateLecture,
     deleteLecture,
+    toggleHide,
     getLecture,
+    addFolder,
+    updateFolder,
+    deleteFolder,
+    getFoldersByLevel,
+    getLecturesByFolder,
+    getLecturesByLevel,
   };
 }
 

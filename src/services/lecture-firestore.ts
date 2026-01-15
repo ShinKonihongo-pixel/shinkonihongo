@@ -16,13 +16,15 @@ import {
   increment,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import type { Lecture, LectureFormData, Slide, SlideFormData, LectureView } from '../types/lecture';
+import type { Lecture, LectureFormData, Slide, SlideFormData, LectureView, LectureFolder } from '../types/lecture';
+import type { JLPTLevel } from '../types/flashcard';
 
 // Collection names
 const COLLECTIONS = {
   LECTURES: 'lectures',
   SLIDES: 'slides',
   LECTURE_VIEWS: 'lectureViews',
+  LECTURE_FOLDERS: 'lectureFolders',
 } as const;
 
 function getNowISO(): string {
@@ -80,6 +82,7 @@ export async function addLecture(
     ...data,
     authorId,
     authorName,
+    isHidden: false,
     createdAt: now,
     updatedAt: now,
     slideCount: 0,
@@ -246,4 +249,78 @@ export async function getLectureViewsByUser(userId: string): Promise<LectureView
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LectureView));
+}
+
+// ============ LECTURE FOLDERS ============
+
+export function subscribeToLectureFolders(callback: (folders: LectureFolder[]) => void): Unsubscribe {
+  const q = query(
+    collection(db, COLLECTIONS.LECTURE_FOLDERS),
+    orderBy('order', 'asc')
+  );
+  return onSnapshot(q, (snapshot) => {
+    const folders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LectureFolder));
+    callback(folders);
+  });
+}
+
+export async function addLectureFolder(
+  name: string,
+  jlptLevel: JLPTLevel,
+  createdBy: string
+): Promise<LectureFolder> {
+  // Get current max order for this level (avoid composite index by filtering in JS)
+  const q = query(
+    collection(db, COLLECTIONS.LECTURE_FOLDERS),
+    where('jlptLevel', '==', jlptLevel)
+  );
+  const snapshot = await getDocs(q);
+  const existingFolders = snapshot.docs.map(doc => doc.data());
+  const maxOrder = existingFolders.length > 0
+    ? Math.max(...existingFolders.map(f => f.order || 0)) + 1
+    : 0;
+
+  const newFolder: Omit<LectureFolder, 'id'> = {
+    name,
+    jlptLevel,
+    createdBy,
+    createdAt: getNowISO(),
+    order: maxOrder,
+  };
+  const docRef = await addDoc(collection(db, COLLECTIONS.LECTURE_FOLDERS), newFolder);
+  return { id: docRef.id, ...newFolder };
+}
+
+export async function updateLectureFolder(id: string, data: Partial<LectureFolder>): Promise<void> {
+  const docRef = doc(db, COLLECTIONS.LECTURE_FOLDERS, id);
+  await updateDoc(docRef, data);
+}
+
+export async function deleteLectureFolder(id: string): Promise<void> {
+  // First, update all lectures in this folder to remove folderId
+  const lecturesQuery = query(
+    collection(db, COLLECTIONS.LECTURES),
+    where('folderId', '==', id)
+  );
+  const lecturesSnapshot = await getDocs(lecturesQuery);
+  const updatePromises = lecturesSnapshot.docs.map(doc =>
+    updateDoc(doc.ref, { folderId: null })
+  );
+  await Promise.all(updatePromises);
+
+  // Delete the folder
+  const docRef = doc(db, COLLECTIONS.LECTURE_FOLDERS, id);
+  await deleteDoc(docRef);
+}
+
+export function getLectureFoldersByLevel(folders: LectureFolder[], level: JLPTLevel): LectureFolder[] {
+  return folders.filter(f => f.jlptLevel === level).sort((a, b) => a.order - b.order);
+}
+
+export function getLecturesByFolder(lectures: Lecture[], folderId: string): Lecture[] {
+  return lectures.filter(l => l.folderId === folderId);
+}
+
+export function getLecturesByLevel(lectures: Lecture[], level: JLPTLevel): Lecture[] {
+  return lectures.filter(l => l.jlptLevel === level);
 }

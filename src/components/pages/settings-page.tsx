@@ -621,6 +621,36 @@ export function SettingsPage({
               </div>
             </div>
 
+            <div className="setting-item">
+              <label>Cỡ chữ câu hỏi (rem)</label>
+              <div className="setting-control">
+                <input
+                  type="range"
+                  min="2"
+                  max="15"
+                  step="0.5"
+                  value={settings.gameQuestionFontSize}
+                  onChange={(e) => onUpdateSetting('gameQuestionFontSize', Number(e.target.value))}
+                />
+                <span className="setting-value">{settings.gameQuestionFontSize}rem</span>
+              </div>
+            </div>
+
+            <div className="setting-item">
+              <label>Cỡ chữ đáp án (rem)</label>
+              <div className="setting-control">
+                <input
+                  type="range"
+                  min="0.8"
+                  max="3"
+                  step="0.1"
+                  value={settings.gameAnswerFontSize}
+                  onChange={(e) => onUpdateSetting('gameAnswerFontSize', Number(e.target.value))}
+                />
+                <span className="setting-value">{settings.gameAnswerFontSize}rem</span>
+              </div>
+            </div>
+
             <div className="game-settings-preview">
               <div className="preview-label">Xem trước:</div>
               <div className="preview-content">
@@ -799,35 +829,100 @@ export function SettingsPage({
           {isSuperAdmin && theme && (
             <section className="settings-section theme-section">
               <h3>Màu chủ đạo (Toàn trang web)</h3>
-              <p className="settings-description">Chỉ Super Admin mới có thể thay đổi</p>
+              <p className="settings-description">Chỉ Super Admin mới có thể thay đổi. Màu này sẽ áp dụng cho tất cả người dùng.</p>
 
               <div className="theme-current">
-                <span>Màu hiện tại:</span>
-                <div
-                  className="theme-color-preview"
-                  style={{ background: theme.primaryColor }}
-                />
-                <span className="theme-color-value">{theme.primaryColor}</span>
+                <span>Đang sử dụng:</span>
+                <div className="theme-current-preview">
+                  <div
+                    className="theme-color-preview"
+                    style={{ background: theme.primaryColor }}
+                  />
+                  <div
+                    className="theme-gradient-preview"
+                    style={{ background: theme.bodyGradient }}
+                  />
+                </div>
               </div>
 
-              <div className="theme-presets">
-                <label>Chọn theme:</label>
+              {/* Classic & Professional */}
+              <div className="theme-category">
+                <span className="theme-category-label">Cổ điển</span>
                 <div className="theme-preset-grid">
-                  {themePresets.map((preset) => (
+                  {themePresets.slice(0, 4).map((preset) => (
                     <button
                       key={preset.name}
                       className={`theme-preset-btn ${theme.primaryColor === preset.primary ? 'active' : ''}`}
                       onClick={() => onApplyThemePreset?.(preset)}
                       title={preset.name}
                     >
-                      <div
-                        className="theme-preset-color"
-                        style={{ background: preset.primary }}
-                      />
-                      <div
-                        className="theme-preset-gradient"
-                        style={{ background: preset.gradient }}
-                      />
+                      <div className="theme-preset-colors">
+                        <div className="theme-preset-primary" style={{ background: preset.primary }} />
+                        <div className="theme-preset-gradient" style={{ background: preset.gradient }} />
+                      </div>
+                      <span className="theme-preset-name">{preset.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Modern & Trendy */}
+              <div className="theme-category">
+                <span className="theme-category-label">Hiện đại</span>
+                <div className="theme-preset-grid">
+                  {themePresets.slice(4, 8).map((preset) => (
+                    <button
+                      key={preset.name}
+                      className={`theme-preset-btn ${theme.primaryColor === preset.primary ? 'active' : ''}`}
+                      onClick={() => onApplyThemePreset?.(preset)}
+                      title={preset.name}
+                    >
+                      <div className="theme-preset-colors">
+                        <div className="theme-preset-primary" style={{ background: preset.primary }} />
+                        <div className="theme-preset-gradient" style={{ background: preset.gradient }} />
+                      </div>
+                      <span className="theme-preset-name">{preset.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Dark & Elegant */}
+              <div className="theme-category">
+                <span className="theme-category-label">Tối & Sang trọng</span>
+                <div className="theme-preset-grid">
+                  {themePresets.slice(8, 12).map((preset) => (
+                    <button
+                      key={preset.name}
+                      className={`theme-preset-btn ${theme.primaryColor === preset.primary ? 'active' : ''}`}
+                      onClick={() => onApplyThemePreset?.(preset)}
+                      title={preset.name}
+                    >
+                      <div className="theme-preset-colors">
+                        <div className="theme-preset-primary" style={{ background: preset.primary }} />
+                        <div className="theme-preset-gradient" style={{ background: preset.gradient }} />
+                      </div>
+                      <span className="theme-preset-name">{preset.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Nature & Soft */}
+              <div className="theme-category">
+                <span className="theme-category-label">Tự nhiên & Nhẹ nhàng</span>
+                <div className="theme-preset-grid">
+                  {themePresets.slice(12, 16).map((preset) => (
+                    <button
+                      key={preset.name}
+                      className={`theme-preset-btn ${theme.primaryColor === preset.primary ? 'active' : ''}`}
+                      onClick={() => onApplyThemePreset?.(preset)}
+                      title={preset.name}
+                    >
+                      <div className="theme-preset-colors">
+                        <div className="theme-preset-primary" style={{ background: preset.primary }} />
+                        <div className="theme-preset-gradient" style={{ background: preset.gradient }} />
+                      </div>
                       <span className="theme-preset-name">{preset.name}</span>
                     </button>
                   ))}
@@ -835,7 +930,7 @@ export function SettingsPage({
               </div>
 
               <button className="btn btn-secondary btn-small" onClick={onResetTheme}>
-                Khôi phục theme mặc định
+                Khôi phục mặc định
               </button>
             </section>
           )}

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { Flashcard, JLPTLevel } from '../../types/flashcard';
 import { ConfirmModal } from '../ui/confirm-modal';
+import { Edit3, Trash2 } from 'lucide-react';
 
 interface FlashcardListProps {
   cards: Flashcard[];
@@ -79,12 +80,12 @@ export function FlashcardList({ cards, onEdit, onDelete, canEdit, canDelete }: F
               <div className="card-item-actions">
                 {(!canEdit || canEdit(card)) && (
                   <button className="btn-icon" onClick={() => onEdit(card)} title="Sửa">
-                    ✏️
+                    <Edit3 size={16} />
                   </button>
                 )}
                 {(!canDelete || canDelete(card)) && (
                   <button className="btn-icon" onClick={() => handleDeleteClick(card)} title="Xóa">
-                    🗑️
+                    <Trash2 size={16} />
                   </button>
                 )}
               </div>

@@ -18,8 +18,14 @@ function getDateNDaysAgo(n: number): string {
   return date.toISOString().split('T')[0];
 }
 
+// Normalize date to YYYY-MM-DD format (handles both ISO timestamps and date strings)
+function normalizeDate(dateStr: string): string {
+  return dateStr.split('T')[0];
+}
+
 function isDateInRange(date: string, startDate: string, endDate: string): boolean {
-  return date >= startDate && date <= endDate;
+  const normalizedDate = normalizeDate(date);
+  return normalizedDate >= startDate && normalizedDate <= endDate;
 }
 
 // Calculate daily activity for the last N days
@@ -49,7 +55,8 @@ function calculateDailyActivity(
   // Aggregate study sessions
   studySessions.forEach(session => {
     if (isDateInRange(session.date, startDate, today)) {
-      const activity = activityMap.get(session.date);
+      const sessionDate = normalizeDate(session.date);
+      const activity = activityMap.get(sessionDate);
       if (activity) {
         activity.cardsStudied += session.cardsStudied;
         activity.minutesStudied += Math.round(session.duration / 60);
@@ -60,7 +67,8 @@ function calculateDailyActivity(
   // Aggregate game sessions
   gameSessions.forEach(session => {
     if (isDateInRange(session.date, startDate, today)) {
-      const activity = activityMap.get(session.date);
+      const sessionDate = normalizeDate(session.date);
+      const activity = activityMap.get(sessionDate);
       if (activity) {
         activity.gamesPlayed += 1;
       }
@@ -70,7 +78,8 @@ function calculateDailyActivity(
   // Aggregate JLPT sessions
   jlptSessions.forEach(session => {
     if (isDateInRange(session.date, startDate, today)) {
-      const activity = activityMap.get(session.date);
+      const sessionDate = normalizeDate(session.date);
+      const activity = activityMap.get(sessionDate);
       if (activity) {
         activity.jlptPracticed += session.totalQuestions;
       }
@@ -88,11 +97,11 @@ function calculateStreak(
 ): StreakInfo {
   const today = getTodayISO();
 
-  // Get all unique dates with activity
+  // Get all unique dates with activity (normalized to YYYY-MM-DD)
   const activeDates = new Set<string>();
-  studySessions.forEach(s => activeDates.add(s.date));
-  gameSessions.forEach(s => activeDates.add(s.date));
-  jlptSessions.forEach(s => activeDates.add(s.date));
+  studySessions.forEach(s => activeDates.add(normalizeDate(s.date)));
+  gameSessions.forEach(s => activeDates.add(normalizeDate(s.date)));
+  jlptSessions.forEach(s => activeDates.add(normalizeDate(s.date)));
 
   const sortedDates = Array.from(activeDates).sort((a, b) => b.localeCompare(a)); // descending
 
@@ -190,7 +199,7 @@ function calculateWeeklyGoal(
   monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
   const mondayISO = monday.toISOString().split('T')[0];
 
-  const weekSessions = studySessions.filter(s => s.date >= mondayISO);
+  const weekSessions = studySessions.filter(s => normalizeDate(s.date) >= mondayISO);
   const cardsCompleted = weekSessions.reduce((sum, s) => sum + s.cardsStudied, 0);
   const minutesCompleted = Math.round(weekSessions.reduce((sum, s) => sum + s.duration, 0) / 60);
 

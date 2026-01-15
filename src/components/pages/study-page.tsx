@@ -66,7 +66,7 @@ export function StudyPage({ cards, updateCard, onGoHome, initialFilterLevel = 'a
       sessionSaved.current = true;
       const duration = Math.floor((Date.now() - sessionStartTime.current) / 1000);
       onSaveStudySession({
-        date: new Date().toISOString(),
+        date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
         cardsStudied: stats.cardsStudied,
         correctCount: stats.correctCount,
         duration,

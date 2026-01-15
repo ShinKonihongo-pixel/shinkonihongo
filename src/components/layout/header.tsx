@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { CurrentUser } from '../../types/user';
 
-export type Page = 'home' | 'cards' | 'study' | 'progress' | 'quiz' | 'jlpt' | 'kaiwa' | 'lectures' | 'lecture-editor' | 'chat' | 'settings' | 'admin';
+export type Page = 'home' | 'cards' | 'study' | 'progress' | 'quiz' | 'jlpt' | 'kaiwa' | 'lectures' | 'lecture-editor' | 'chat' | 'settings';
 
 // Helper to get role display name
 const getRoleBadge = (role: string): { label: string; className: string } | null => {
@@ -109,25 +109,11 @@ export function Header({ currentPage, onNavigate, currentUser, onLogout }: Heade
             </button>
           )}
           <button
-            className={`nav-btn ${currentPage === 'chat' ? 'active' : ''}`}
-            onClick={() => handleNavigate('chat')}
-          >
-            Thảo luận
-          </button>
-          <button
             className={`nav-btn ${currentPage === 'settings' ? 'active' : ''}`}
             onClick={() => handleNavigate('settings')}
           >
             Cài đặt
           </button>
-          {(currentUser?.role === 'admin' || currentUser?.role === 'super_admin') && (
-            <button
-              className={`nav-btn ${currentPage === 'admin' ? 'active' : ''}`}
-              onClick={() => handleNavigate('admin')}
-            >
-              Admin
-            </button>
-          )}
         </nav>
         <button
           className="hamburger-btn"

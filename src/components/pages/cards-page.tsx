@@ -1,15 +1,21 @@
 // Cards management page with Level → Parent Lesson → Child Lesson → Flashcard structure
-// Also includes JLPT question management
+// Also includes JLPT question management, user management, lesson locking, and lectures
 
 import { useState } from 'react';
 import type { Flashcard, FlashcardFormData, Lesson, JLPTLevel } from '../../types/flashcard';
-import type { CurrentUser } from '../../types/user';
+import type { CurrentUser, User, UserRole } from '../../types/user';
 import type { JLPTQuestion, JLPTQuestionFormData, JLPTLevel as JLPTQuestionLevel, QuestionCategory, JLPTAnswer, JLPTFolder } from '../../types/jlpt-question';
+import type { Lecture, LectureFolder } from '../../types/lecture';
+import type { KaiwaDefaultQuestion, KaiwaQuestionFormData, KaiwaFolder } from '../../types/kaiwa-question';
+import type { JLPTLevel as KaiwaJLPTLevel, ConversationTopic, ConversationStyle } from '../../types/kaiwa';
+import { CONVERSATION_TOPICS, CONVERSATION_STYLES } from '../../constants/kaiwa';
 import { FlashcardForm } from '../flashcard/flashcard-form';
 import { FlashcardList } from '../flashcard/flashcard-list';
 import { ConfirmModal } from '../ui/confirm-modal';
+import { useLectures } from '../../hooks/use-lectures';
+import { LectureCard } from '../lecture/lecture-card';
 
-type ManagementTab = 'flashcards' | 'jlpt';
+type ManagementTab = 'flashcards' | 'lectures' | 'jlpt' | 'kaiwa' | 'users';
 
 interface CardsPageProps {
   cards: Flashcard[];
@@ -33,6 +39,28 @@ interface CardsPageProps {
   onDeleteJLPTFolder: (id: string) => Promise<void>;
   getFoldersByLevelAndCategory: (level: JLPTQuestionLevel, category: QuestionCategory) => JLPTFolder[];
   getQuestionsByFolder: (folderId: string) => JLPTQuestion[];
+  // User management props
+  users: User[];
+  onUpdateUserRole: (userId: string, role: UserRole) => void;
+  onDeleteUser: (userId: string) => void;
+  onUpdateVipExpiration: (userId: string, expirationDate: string | undefined) => void;
+  onRegister: (username: string, password: string, role: UserRole, createdBy?: string) => Promise<{ success: boolean; error?: string }>;
+  // Lesson locking/hiding props
+  onToggleLock: (lessonId: string) => void;
+  onToggleHide: (lessonId: string) => void;
+  // Lecture management props
+  onNavigateToLectureEditor?: (lectureId?: string, folderId?: string, level?: JLPTLevel) => void;
+  // Kaiwa default questions management props
+  kaiwaQuestions?: KaiwaDefaultQuestion[];
+  kaiwaFolders?: KaiwaFolder[];
+  onAddKaiwaQuestion?: (data: KaiwaQuestionFormData, createdBy?: string) => Promise<KaiwaDefaultQuestion>;
+  onUpdateKaiwaQuestion?: (id: string, data: Partial<KaiwaDefaultQuestion>) => Promise<void>;
+  onDeleteKaiwaQuestion?: (id: string) => Promise<void>;
+  onAddKaiwaFolder?: (name: string, level: KaiwaJLPTLevel, topic: ConversationTopic, createdBy?: string) => Promise<KaiwaFolder>;
+  onUpdateKaiwaFolder?: (id: string, data: Partial<KaiwaFolder>) => Promise<void>;
+  onDeleteKaiwaFolder?: (id: string) => Promise<void>;
+  getFoldersByLevelAndTopic?: (level: KaiwaJLPTLevel, topic: ConversationTopic) => KaiwaFolder[];
+  getQuestionsByKaiwaFolder?: (folderId: string) => KaiwaDefaultQuestion[];
 }
 
 const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
@@ -51,7 +79,15 @@ type JLPTNavState =
   | { type: 'category'; level: JLPTQuestionLevel; category: QuestionCategory; categoryLabel: string }
   | { type: 'folder'; level: JLPTQuestionLevel; category: QuestionCategory; categoryLabel: string; folderId: string; folderName: string };
 
+// Kaiwa Navigation state: root → level → topic → folder → questions
+type KaiwaNavState =
+  | { type: 'root' }
+  | { type: 'level'; level: KaiwaJLPTLevel }
+  | { type: 'topic'; level: KaiwaJLPTLevel; topic: ConversationTopic; topicLabel: string }
+  | { type: 'folder'; level: KaiwaJLPTLevel; topic: ConversationTopic; topicLabel: string; folderId: string; folderName: string };
+
 const JLPT_QUESTION_LEVELS: JLPTQuestionLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
+const KAIWA_LEVELS: KaiwaJLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 const QUESTION_CATEGORIES: { value: QuestionCategory; label: string }[] = [
   { value: 'vocabulary', label: 'Từ vựng' },
   { value: 'grammar', label: 'Ngữ pháp' },
@@ -86,9 +122,139 @@ export function CardsPage({
   onDeleteJLPTFolder,
   getFoldersByLevelAndCategory,
   getQuestionsByFolder,
+  // New props for user, lesson locking/hiding, and lectures management
+  users,
+  onUpdateUserRole,
+  onDeleteUser,
+  onUpdateVipExpiration,
+  onRegister,
+  onToggleLock,
+  onToggleHide,
+  onNavigateToLectureEditor,
+  // Kaiwa management props
+  kaiwaQuestions = [],
+  kaiwaFolders = [],
+  onAddKaiwaQuestion,
+  onUpdateKaiwaQuestion,
+  onDeleteKaiwaQuestion,
+  onAddKaiwaFolder,
+  onUpdateKaiwaFolder,
+  onDeleteKaiwaFolder,
+  getFoldersByLevelAndTopic,
+  getQuestionsByKaiwaFolder,
 }: CardsPageProps) {
   const isSuperAdmin = currentUser.role === 'super_admin';
   const [activeTab, setActiveTab] = useState<ManagementTab>('flashcards');
+
+  // User management state
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newRole, setNewRole] = useState<UserRole>('user');
+  const [userError, setUserError] = useState('');
+  const [deleteUserTarget, setDeleteUserTarget] = useState<User | null>(null);
+
+  // Lectures management state with folder navigation
+  const {
+    lectures,
+    loading: lecturesLoading,
+    deleteLecture,
+    toggleHide: toggleLectureHide,
+    addFolder: addLectureFolder,
+    updateFolder: updateLectureFolder,
+    deleteFolder: deleteLectureFolderAction,
+    getFoldersByLevel: getLectureFoldersByLevel,
+    getLecturesByFolder,
+  } = useLectures(true);
+  const [deleteLectureTarget, setDeleteLectureTarget] = useState<Lecture | null>(null);
+  const [deleteLectureFolderTarget, setDeleteLectureFolderTarget] = useState<LectureFolder | null>(null);
+
+  // Lecture navigation state (similar to flashcards)
+  type LectureNavState =
+    | { type: 'root' }
+    | { type: 'level'; level: JLPTLevel }
+    | { type: 'folder'; level: JLPTLevel; folderId: string; folderName: string };
+  const [lectureNavState, setLectureNavState] = useState<LectureNavState>({ type: 'root' });
+  const [addingLectureFolder, setAddingLectureFolder] = useState(false);
+  const [newLectureFolderName, setNewLectureFolderName] = useState('');
+  const [editingLectureFolderId, setEditingLectureFolderId] = useState<string | null>(null);
+  const [editingLectureFolderName, setEditingLectureFolderName] = useState('');
+
+  // Lecture breadcrumb
+  const lectureBreadcrumb = (() => {
+    const crumbs = ['Bài giảng'];
+    if (lectureNavState.type === 'level' || lectureNavState.type === 'folder') {
+      crumbs.push(lectureNavState.level);
+    }
+    if (lectureNavState.type === 'folder') {
+      crumbs.push(lectureNavState.folderName);
+    }
+    return crumbs;
+  })();
+
+  // Lecture folder handlers
+  const handleAddLectureFolder = async () => {
+    if (!newLectureFolderName.trim() || lectureNavState.type !== 'level') return;
+    await addLectureFolder(newLectureFolderName.trim(), lectureNavState.level, currentUser.id);
+    setNewLectureFolderName('');
+    setAddingLectureFolder(false);
+  };
+
+  const handleUpdateLectureFolder = async (folderId: string) => {
+    if (!editingLectureFolderName.trim()) return;
+    await updateLectureFolder(folderId, { name: editingLectureFolderName.trim() });
+    setEditingLectureFolderId(null);
+    setEditingLectureFolderName('');
+  };
+
+  const goBackLecture = () => {
+    if (lectureNavState.type === 'folder') {
+      setLectureNavState({ type: 'level', level: lectureNavState.level });
+    } else if (lectureNavState.type === 'level') {
+      setLectureNavState({ type: 'root' });
+    }
+  };
+
+  // Get lecture count by level
+  const getLectureCountByLevel = (level: JLPTLevel) => {
+    return lectures.filter(l => l.jlptLevel === level).length;
+  };
+
+  // Get lecture count by folder
+  const getLectureCountByFolder = (folderId: string) => {
+    return lectures.filter(l => l.folderId === folderId).length;
+  };
+
+  // Can modify lecture folder
+  const canModifyLectureFolder = (folder: LectureFolder) => {
+    if (isSuperAdmin) return true;
+    return folder.createdBy === currentUser.id;
+  };
+
+  // Check if user can hide a lecture (super_admin or creator)
+  const canHideLecture = (lecture: Lecture) => {
+    if (isSuperAdmin) return true;
+    return lecture.authorId === currentUser.id;
+  };
+
+  // Filter users (Super Admin sees all, Admin sees only users and VIP)
+  const visibleUsers = isSuperAdmin
+    ? users
+    : users.filter(u => u.role === 'user' || u.role === 'vip_user');
+
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const result = await onRegister(newUsername, newPassword, newRole, currentUser.id);
+    if (result.success) {
+      setNewUsername('');
+      setNewPassword('');
+      setNewRole('user');
+      setUserError('');
+      setShowAddUser(false);
+    } else {
+      setUserError(result.error || 'Thêm user thất bại');
+    }
+  };
 
   // Check if user can edit/delete a lesson (super_admin can modify all, admin only own)
   const canModifyLesson = (lesson: Lesson) => {
@@ -129,6 +295,27 @@ export function CardsPage({
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
   const [editingFolderName, setEditingFolderName] = useState('');
   const [deleteFolderTarget, setDeleteFolderTarget] = useState<JLPTFolder | null>(null);
+
+  // Kaiwa Question state
+  const [kaiwaNavState, setKaiwaNavState] = useState<KaiwaNavState>({ type: 'root' });
+  const [isAddingKaiwaQuestion, setIsAddingKaiwaQuestion] = useState(false);
+  const [editingKaiwaQuestionId, setEditingKaiwaQuestionId] = useState<string | null>(null);
+  const [kaiwaQuestionFormData, setKaiwaQuestionFormData] = useState<KaiwaQuestionFormData>({
+    level: 'N5',
+    topic: 'greetings',
+    questionJa: '',
+    questionVi: '',
+    situationContext: '',
+    suggestedAnswers: ['', ''],
+    style: 'polite',
+  });
+  // Kaiwa Folder state
+  const [isAddingKaiwaFolder, setIsAddingKaiwaFolder] = useState(false);
+  const [newKaiwaFolderName, setNewKaiwaFolderName] = useState('');
+  const [editingKaiwaFolderId, setEditingKaiwaFolderId] = useState<string | null>(null);
+  const [editingKaiwaFolderName, setEditingKaiwaFolderName] = useState('');
+  const [deleteKaiwaFolderTarget, setDeleteKaiwaFolderTarget] = useState<KaiwaFolder | null>(null);
+  const [deleteKaiwaQuestionTarget, setDeleteKaiwaQuestionTarget] = useState<KaiwaDefaultQuestion | null>(null);
 
   const getCurrentLevel = (): JLPTLevel | null => {
     if (navState.type === 'root') return null;
@@ -340,6 +527,178 @@ export function CardsPage({
     setQuestionFormData({ ...questionFormData, answers: newAnswers });
   };
 
+  // ============ KAIWA HANDLERS ============
+
+  // Kaiwa permission check
+  const canModifyKaiwaQuestion = (question: KaiwaDefaultQuestion) => {
+    if (isSuperAdmin) return true;
+    return question.createdBy === currentUser.id;
+  };
+
+  const canModifyKaiwaFolder = (folder: KaiwaFolder) => {
+    if (isSuperAdmin) return true;
+    return folder.createdBy === currentUser.id;
+  };
+
+  // Kaiwa question counts
+  const getKaiwaQuestionCountByLevel = (level: KaiwaJLPTLevel) =>
+    kaiwaQuestions.filter(q => q.level === level).length;
+
+  const getKaiwaQuestionCountByTopic = (level: KaiwaJLPTLevel, topic: ConversationTopic) =>
+    kaiwaQuestions.filter(q => q.level === level && q.topic === topic).length;
+
+  const getKaiwaQuestionCountByFolder = (folderId: string) =>
+    kaiwaQuestions.filter(q => q.folderId === folderId).length;
+
+  // Get Kaiwa questions for current view
+  const getKaiwaQuestionsForCurrentView = (): KaiwaDefaultQuestion[] => {
+    if (kaiwaNavState.type === 'folder' && getQuestionsByKaiwaFolder) {
+      return getQuestionsByKaiwaFolder(kaiwaNavState.folderId);
+    }
+    // In topic view without folders, show questions without folderId
+    if (kaiwaNavState.type === 'topic' && getFoldersByLevelAndTopic) {
+      const folders = getFoldersByLevelAndTopic(kaiwaNavState.level, kaiwaNavState.topic);
+      if (folders.length === 0) {
+        return kaiwaQuestions.filter(
+          q => q.level === kaiwaNavState.level && q.topic === kaiwaNavState.topic && !q.folderId
+        );
+      }
+    }
+    return [];
+  };
+
+  // Get Kaiwa folders for current topic
+  const getKaiwaFoldersForCurrentView = (): KaiwaFolder[] => {
+    if (kaiwaNavState.type !== 'topic' || !getFoldersByLevelAndTopic) return [];
+    return getFoldersByLevelAndTopic(kaiwaNavState.level, kaiwaNavState.topic);
+  };
+
+  // Check if topic has folders
+  const kaiwaTopicHasFolders = (): boolean => {
+    if (kaiwaNavState.type !== 'topic' || !getFoldersByLevelAndTopic) return false;
+    return getFoldersByLevelAndTopic(kaiwaNavState.level, kaiwaNavState.topic).length > 0;
+  };
+
+  // Kaiwa breadcrumb
+  const getKaiwaBreadcrumb = (): string[] => {
+    const crumbs: string[] = ['Tất cả'];
+    if (kaiwaNavState.type === 'level') crumbs.push(kaiwaNavState.level);
+    if (kaiwaNavState.type === 'topic') crumbs.push(kaiwaNavState.level, kaiwaNavState.topicLabel);
+    if (kaiwaNavState.type === 'folder') crumbs.push(kaiwaNavState.level, kaiwaNavState.topicLabel, kaiwaNavState.folderName);
+    return crumbs;
+  };
+
+  // Kaiwa go back
+  const kaiwaGoBack = () => {
+    if (kaiwaNavState.type === 'level') {
+      setKaiwaNavState({ type: 'root' });
+    } else if (kaiwaNavState.type === 'topic') {
+      setKaiwaNavState({ type: 'level', level: kaiwaNavState.level });
+    } else if (kaiwaNavState.type === 'folder') {
+      setKaiwaNavState({
+        type: 'topic',
+        level: kaiwaNavState.level,
+        topic: kaiwaNavState.topic,
+        topicLabel: kaiwaNavState.topicLabel,
+      });
+    }
+    setIsAddingKaiwaQuestion(false);
+    setEditingKaiwaQuestionId(null);
+  };
+
+  // Kaiwa folder handlers
+  const handleAddKaiwaFolder = async () => {
+    if (!newKaiwaFolderName.trim() || kaiwaNavState.type !== 'topic' || !onAddKaiwaFolder) return;
+    await onAddKaiwaFolder(newKaiwaFolderName.trim(), kaiwaNavState.level, kaiwaNavState.topic, currentUser.id);
+    setNewKaiwaFolderName('');
+    setIsAddingKaiwaFolder(false);
+  };
+
+  const handleUpdateKaiwaFolder = async (id: string) => {
+    if (editingKaiwaFolderName.trim() && onUpdateKaiwaFolder) {
+      await onUpdateKaiwaFolder(id, { name: editingKaiwaFolderName.trim() });
+      setEditingKaiwaFolderId(null);
+      setEditingKaiwaFolderName('');
+    }
+  };
+
+  // Kaiwa question handlers
+  const resetKaiwaQuestionForm = () => {
+    setKaiwaQuestionFormData({
+      level: 'N5',
+      topic: 'greetings',
+      questionJa: '',
+      questionVi: '',
+      situationContext: '',
+      suggestedAnswers: ['', ''],
+      style: 'polite',
+    });
+  };
+
+  const handleAddKaiwaQuestion = async () => {
+    if (!kaiwaQuestionFormData.questionJa.trim() || !onAddKaiwaQuestion) return;
+    // Set current context from navigation
+    const formData = { ...kaiwaQuestionFormData };
+    if (kaiwaNavState.type === 'topic') {
+      formData.level = kaiwaNavState.level;
+      formData.topic = kaiwaNavState.topic;
+    } else if (kaiwaNavState.type === 'folder') {
+      formData.level = kaiwaNavState.level;
+      formData.topic = kaiwaNavState.topic;
+      formData.folderId = kaiwaNavState.folderId;
+    }
+    // Filter empty suggested answers
+    formData.suggestedAnswers = formData.suggestedAnswers?.filter(a => a.trim()) || [];
+    await onAddKaiwaQuestion(formData, currentUser.id);
+    resetKaiwaQuestionForm();
+    setIsAddingKaiwaQuestion(false);
+  };
+
+  const handleEditKaiwaQuestion = (question: KaiwaDefaultQuestion) => {
+    setEditingKaiwaQuestionId(question.id);
+    setKaiwaQuestionFormData({
+      level: question.level,
+      topic: question.topic,
+      folderId: question.folderId,
+      questionJa: question.questionJa,
+      questionVi: question.questionVi || '',
+      situationContext: question.situationContext || '',
+      suggestedAnswers: question.suggestedAnswers?.length ? [...question.suggestedAnswers] : ['', ''],
+      style: question.style,
+    });
+  };
+
+  const handleUpdateKaiwaQuestion = async () => {
+    if (!editingKaiwaQuestionId || !onUpdateKaiwaQuestion) return;
+    const formData = { ...kaiwaQuestionFormData };
+    formData.suggestedAnswers = formData.suggestedAnswers?.filter(a => a.trim()) || [];
+    await onUpdateKaiwaQuestion(editingKaiwaQuestionId, formData);
+    resetKaiwaQuestionForm();
+    setEditingKaiwaQuestionId(null);
+  };
+
+  const handleCancelKaiwaQuestion = () => {
+    resetKaiwaQuestionForm();
+    setIsAddingKaiwaQuestion(false);
+    setEditingKaiwaQuestionId(null);
+  };
+
+  const handleKaiwaSuggestedAnswerChange = (index: number, value: string) => {
+    const newAnswers = [...(kaiwaQuestionFormData.suggestedAnswers || ['', ''])];
+    newAnswers[index] = value;
+    setKaiwaQuestionFormData({ ...kaiwaQuestionFormData, suggestedAnswers: newAnswers });
+  };
+
+  const addKaiwaSuggestedAnswer = () => {
+    const newAnswers = [...(kaiwaQuestionFormData.suggestedAnswers || []), ''];
+    setKaiwaQuestionFormData({ ...kaiwaQuestionFormData, suggestedAnswers: newAnswers });
+  };
+
+  const removeKaiwaSuggestedAnswer = (index: number) => {
+    const newAnswers = (kaiwaQuestionFormData.suggestedAnswers || []).filter((_, i) => i !== index);
+    setKaiwaQuestionFormData({ ...kaiwaQuestionFormData, suggestedAnswers: newAnswers });
+  };
+
   // Count cards
   const getCardCountByLevel = (level: JLPTLevel) => cards.filter(c => c.jlptLevel === level).length;
   const getCardCountByLesson = (lessonId: string) => cards.filter(c => c.lessonId === lessonId).length;
@@ -415,13 +774,31 @@ export function CardsPage({
             className={`tab-btn ${activeTab === 'flashcards' ? 'active' : ''}`}
             onClick={() => setActiveTab('flashcards')}
           >
-            Cấp Độ
+            Flash Card
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'lectures' ? 'active' : ''}`}
+            onClick={() => setActiveTab('lectures')}
+          >
+            Bài giảng ({lectures.length})
           </button>
           <button
             className={`tab-btn ${activeTab === 'jlpt' ? 'active' : ''}`}
             onClick={() => setActiveTab('jlpt')}
           >
             JLPT
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'kaiwa' ? 'active' : ''}`}
+            onClick={() => setActiveTab('kaiwa')}
+          >
+            Kaiwa ({kaiwaQuestions.length})
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
+            onClick={() => setActiveTab('users')}
+          >
+            Tài khoản ({visibleUsers.length})
           </button>
         </div>
       </div>
@@ -524,6 +901,24 @@ export function CardsPage({
                     lessonName: lesson.name,
                   })}
                 >
+                  {canModifyLesson(lesson) && (
+                    <>
+                      <button
+                        className={`lock-btn ${lesson.isLocked ? 'locked' : ''}`}
+                        onClick={(e) => { e.stopPropagation(); onToggleLock(lesson.id); }}
+                        title={lesson.isLocked ? 'Mở khóa' : 'Khóa'}
+                      >
+                        {lesson.isLocked ? '🔒' : '🔓'}
+                      </button>
+                      <button
+                        className={`hide-btn ${lesson.isHidden ? 'hidden' : ''}`}
+                        onClick={(e) => { e.stopPropagation(); onToggleHide(lesson.id); }}
+                        title={lesson.isHidden ? 'Hiện' : 'Ẩn'}
+                      >
+                        {lesson.isHidden ? '👁️‍🗨️' : '👁️'}
+                      </button>
+                    </>
+                  )}
                   <span className="folder-icon">📂</span>
                   {editingLessonId === lesson.id ? (
                     <input
@@ -552,6 +947,8 @@ export function CardsPage({
                     </span>
                   )}
                   <span className="folder-count">({getCardCountByLessonRecursive(lesson.id)} thẻ)</span>
+                  {lesson.isLocked && <span className="locked-badge">Đã khóa</span>}
+                  {lesson.isHidden && <span className="hidden-badge">Đã ẩn</span>}
                   {canModifyLesson(lesson) && (
                     <>
                       <button
@@ -594,6 +991,24 @@ export function CardsPage({
                     lessonName: lesson.name,
                   })}
                 >
+                  {canModifyLesson(lesson) && (
+                    <>
+                      <button
+                        className={`lock-btn ${lesson.isLocked ? 'locked' : ''}`}
+                        onClick={(e) => { e.stopPropagation(); onToggleLock(lesson.id); }}
+                        title={lesson.isLocked ? 'Mở khóa' : 'Khóa'}
+                      >
+                        {lesson.isLocked ? '🔒' : '🔓'}
+                      </button>
+                      <button
+                        className={`hide-btn ${lesson.isHidden ? 'hidden' : ''}`}
+                        onClick={(e) => { e.stopPropagation(); onToggleHide(lesson.id); }}
+                        title={lesson.isHidden ? 'Hiện' : 'Ẩn'}
+                      >
+                        {lesson.isHidden ? '👁️‍🗨️' : '👁️'}
+                      </button>
+                    </>
+                  )}
                   <span className="folder-icon">📄</span>
                   {editingLessonId === lesson.id ? (
                     <input
@@ -622,6 +1037,8 @@ export function CardsPage({
                     </span>
                   )}
                   <span className="folder-count">({getCardCountByLesson(lesson.id)} thẻ)</span>
+                  {lesson.isLocked && <span className="locked-badge">Đã khóa</span>}
+                  {lesson.isHidden && <span className="hidden-badge">Đã ẩn</span>}
                   {canModifyLesson(lesson) && (
                     <>
                       <button
@@ -1046,6 +1463,644 @@ export function CardsPage({
         </div>
       )}
 
+      {/* Kaiwa Default Questions Management Tab */}
+      {activeTab === 'kaiwa' && (
+        <div className="jlpt-management">
+          <div className="breadcrumb">
+            {getKaiwaBreadcrumb().map((crumb, idx) => (
+              <span key={idx}>
+                {idx > 0 && ' / '}
+                <span
+                  className={idx === getKaiwaBreadcrumb().length - 1 ? 'current' : 'clickable'}
+                  onClick={() => idx === 0 && setKaiwaNavState({ type: 'root' })}
+                >
+                  {crumb}
+                </span>
+              </span>
+            ))}
+          </div>
+
+          {kaiwaNavState.type !== 'root' && (
+            <button className="btn btn-back" onClick={kaiwaGoBack}>← Quay lại</button>
+          )}
+
+          {/* Root: Show levels */}
+          {kaiwaNavState.type === 'root' && (
+            <div className="level-grid">
+              {KAIWA_LEVELS.map(level => (
+                <div
+                  key={level}
+                  className="level-card"
+                  onClick={() => setKaiwaNavState({ type: 'level', level })}
+                >
+                  <span className="level-name">{level}</span>
+                  <span className="level-count">{getKaiwaQuestionCountByLevel(level)} câu</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Level: Show topics */}
+          {kaiwaNavState.type === 'level' && (
+            <div className="category-grid">
+              {CONVERSATION_TOPICS.filter(t => t.value !== 'free').map(topic => (
+                <div
+                  key={topic.value}
+                  className="category-card"
+                  onClick={() => setKaiwaNavState({
+                    type: 'topic',
+                    level: kaiwaNavState.level,
+                    topic: topic.value,
+                    topicLabel: topic.label,
+                  })}
+                >
+                  <span className="category-icon">{topic.icon}</span>
+                  <span className="category-name">{topic.label}</span>
+                  <span className="category-count">
+                    {getKaiwaQuestionCountByTopic(kaiwaNavState.level, topic.value)} câu
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Topic: Show folders and questions */}
+          {kaiwaNavState.type === 'topic' && (
+            <div className="folder-view">
+              <div className="folder-actions">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setIsAddingKaiwaFolder(true)}
+                >
+                  + Tạo thư mục
+                </button>
+                {!kaiwaTopicHasFolders() && (
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => setIsAddingKaiwaQuestion(true)}
+                  >
+                    + Tạo câu hỏi
+                  </button>
+                )}
+              </div>
+
+              {isAddingKaiwaFolder && (
+                <div className="add-category-inline">
+                  <input
+                    type="text"
+                    className="category-input"
+                    placeholder="Tên thư mục..."
+                    value={newKaiwaFolderName}
+                    onChange={(e) => setNewKaiwaFolderName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleAddKaiwaFolder();
+                      if (e.key === 'Escape') { setIsAddingKaiwaFolder(false); setNewKaiwaFolderName(''); }
+                    }}
+                    autoFocus
+                  />
+                  <button className="btn btn-primary btn-small" onClick={handleAddKaiwaFolder}>Thêm</button>
+                  <button className="btn btn-secondary btn-small" onClick={() => { setIsAddingKaiwaFolder(false); setNewKaiwaFolderName(''); }}>Hủy</button>
+                </div>
+              )}
+
+              {/* Folders list */}
+              {getKaiwaFoldersForCurrentView().length > 0 && (
+                <div className="folder-list">
+                  {getKaiwaFoldersForCurrentView().map(folder => (
+                    <div key={folder.id} className="folder-item">
+                      {editingKaiwaFolderId === folder.id ? (
+                        <div className="folder-edit">
+                          <input
+                            type="text"
+                            value={editingKaiwaFolderName}
+                            onChange={(e) => setEditingKaiwaFolderName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleUpdateKaiwaFolder(folder.id);
+                              if (e.key === 'Escape') { setEditingKaiwaFolderId(null); setEditingKaiwaFolderName(''); }
+                            }}
+                            autoFocus
+                          />
+                          <button className="btn btn-primary btn-small" onClick={() => handleUpdateKaiwaFolder(folder.id)}>Lưu</button>
+                          <button className="btn btn-secondary btn-small" onClick={() => { setEditingKaiwaFolderId(null); setEditingKaiwaFolderName(''); }}>Hủy</button>
+                        </div>
+                      ) : (
+                        <>
+                          <div
+                            className="folder-info"
+                            onClick={() => setKaiwaNavState({
+                              type: 'folder',
+                              level: kaiwaNavState.level,
+                              topic: kaiwaNavState.topic,
+                              topicLabel: kaiwaNavState.topicLabel,
+                              folderId: folder.id,
+                              folderName: folder.name,
+                            })}
+                          >
+                            <span className="folder-icon">📁</span>
+                            <span className="folder-name">{folder.name}</span>
+                            <span className="folder-count">{getKaiwaQuestionCountByFolder(folder.id)} câu</span>
+                          </div>
+                          {canModifyKaiwaFolder(folder) && (
+                            <div className="folder-actions-inline">
+                              <button
+                                className="btn btn-small"
+                                onClick={(e) => { e.stopPropagation(); setEditingKaiwaFolderId(folder.id); setEditingKaiwaFolderName(folder.name); }}
+                              >
+                                Sửa
+                              </button>
+                              <button
+                                className="btn btn-danger btn-small"
+                                onClick={(e) => { e.stopPropagation(); setDeleteKaiwaFolderTarget(folder); }}
+                              >
+                                Xóa
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Questions without folder */}
+              {!kaiwaTopicHasFolders() && getKaiwaQuestionsForCurrentView().length > 0 && (
+                <div className="kaiwa-questions-list">
+                  {getKaiwaQuestionsForCurrentView().map(question => (
+                    <div key={question.id} className="kaiwa-question-item">
+                      <div className="kaiwa-question-content">
+                        <div className="kaiwa-question-ja">{question.questionJa}</div>
+                        {question.questionVi && <div className="kaiwa-question-vi">{question.questionVi}</div>}
+                        <div className="kaiwa-question-meta">
+                          <span className="meta-badge">{question.style === 'casual' ? 'タメ口' : question.style === 'polite' ? 'です/ます' : '敬語'}</span>
+                          {question.situationContext && <span className="meta-context">{question.situationContext}</span>}
+                        </div>
+                      </div>
+                      {canModifyKaiwaQuestion(question) && (
+                        <div className="kaiwa-question-actions">
+                          <button className="btn btn-small" onClick={() => handleEditKaiwaQuestion(question)}>Sửa</button>
+                          <button className="btn btn-danger btn-small" onClick={() => setDeleteKaiwaQuestionTarget(question)}>Xóa</button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Folder: Show questions in folder */}
+          {kaiwaNavState.type === 'folder' && (
+            <div className="folder-view">
+              <div className="folder-actions">
+                <button
+                  className="btn btn-primary"
+                  onClick={() => setIsAddingKaiwaQuestion(true)}
+                >
+                  + Tạo câu hỏi
+                </button>
+              </div>
+
+              <div className="kaiwa-questions-list">
+                {getKaiwaQuestionsForCurrentView().map(question => (
+                  <div key={question.id} className="kaiwa-question-item">
+                    <div className="kaiwa-question-content">
+                      <div className="kaiwa-question-ja">{question.questionJa}</div>
+                      {question.questionVi && <div className="kaiwa-question-vi">{question.questionVi}</div>}
+                      <div className="kaiwa-question-meta">
+                        <span className="meta-badge">{question.style === 'casual' ? 'タメ口' : question.style === 'polite' ? 'です/ます' : '敬語'}</span>
+                        {question.situationContext && <span className="meta-context">{question.situationContext}</span>}
+                      </div>
+                      {question.suggestedAnswers && question.suggestedAnswers.length > 0 && (
+                        <div className="kaiwa-suggested-answers">
+                          <span className="answers-label">Gợi ý trả lời:</span>
+                          {question.suggestedAnswers.map((answer, idx) => (
+                            <span key={idx} className="answer-item">{answer}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {canModifyKaiwaQuestion(question) && (
+                      <div className="kaiwa-question-actions">
+                        <button className="btn btn-small" onClick={() => handleEditKaiwaQuestion(question)}>Sửa</button>
+                        <button className="btn btn-danger btn-small" onClick={() => setDeleteKaiwaQuestionTarget(question)}>Xóa</button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Add/Edit Question Form */}
+          {(isAddingKaiwaQuestion || editingKaiwaQuestionId) && (
+            <div className="kaiwa-question-form">
+              <h3>{editingKaiwaQuestionId ? 'Sửa câu hỏi' : 'Thêm câu hỏi mới'}</h3>
+
+              <div className="form-group">
+                <label>Câu hỏi (tiếng Nhật) *</label>
+                <textarea
+                  value={kaiwaQuestionFormData.questionJa}
+                  onChange={(e) => setKaiwaQuestionFormData({ ...kaiwaQuestionFormData, questionJa: e.target.value })}
+                  placeholder="Nhập câu hỏi tiếng Nhật..."
+                  rows={2}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Dịch nghĩa (tiếng Việt)</label>
+                <input
+                  type="text"
+                  value={kaiwaQuestionFormData.questionVi}
+                  onChange={(e) => setKaiwaQuestionFormData({ ...kaiwaQuestionFormData, questionVi: e.target.value })}
+                  placeholder="Nhập dịch nghĩa..."
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Ngữ cảnh tình huống</label>
+                <input
+                  type="text"
+                  value={kaiwaQuestionFormData.situationContext}
+                  onChange={(e) => setKaiwaQuestionFormData({ ...kaiwaQuestionFormData, situationContext: e.target.value })}
+                  placeholder="Mô tả tình huống (ví dụ: Ở cửa hàng, hỏi giá sản phẩm)"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Phong cách nói</label>
+                <select
+                  value={kaiwaQuestionFormData.style}
+                  onChange={(e) => setKaiwaQuestionFormData({ ...kaiwaQuestionFormData, style: e.target.value as ConversationStyle })}
+                >
+                  {CONVERSATION_STYLES.map(s => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Gợi ý trả lời</label>
+                {(kaiwaQuestionFormData.suggestedAnswers || []).map((answer, idx) => (
+                  <div key={idx} className="suggested-answer-row">
+                    <input
+                      type="text"
+                      value={answer}
+                      onChange={(e) => handleKaiwaSuggestedAnswerChange(idx, e.target.value)}
+                      placeholder={`Gợi ý ${idx + 1}...`}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-danger btn-small"
+                      onClick={() => removeKaiwaSuggestedAnswer(idx)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-small"
+                  onClick={addKaiwaSuggestedAnswer}
+                >
+                  + Thêm gợi ý
+                </button>
+              </div>
+
+              <div className="form-actions">
+                <button
+                  className="btn btn-primary"
+                  onClick={editingKaiwaQuestionId ? handleUpdateKaiwaQuestion : handleAddKaiwaQuestion}
+                >
+                  {editingKaiwaQuestionId ? 'Cập nhật' : 'Thêm'}
+                </button>
+                <button className="btn btn-secondary" onClick={handleCancelKaiwaQuestion}>Hủy</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Users Management Tab */}
+      {activeTab === 'users' && (
+        <div className="admin-users">
+          <div className="admin-actions">
+            <button
+              className="btn btn-primary"
+              onClick={() => setShowAddUser(!showAddUser)}
+            >
+              {showAddUser ? 'Hủy' : '+ Thêm người dùng'}
+            </button>
+          </div>
+
+          {showAddUser && (
+            <div className="admin-add-user">
+              <form className="add-user-form" onSubmit={handleAddUser}>
+                <div className="form-row">
+                  <input
+                    type="text"
+                    placeholder="Tên đăng nhập"
+                    value={newUsername}
+                    onChange={(e) => setNewUsername(e.target.value)}
+                    required
+                  />
+                  <input
+                    type="password"
+                    placeholder="Mật khẩu"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                  />
+                  <select
+                    value={newRole}
+                    onChange={(e) => setNewRole(e.target.value as UserRole)}
+                  >
+                    <option value="user">User</option>
+                    {isSuperAdmin && <option value="vip_user">VIP User</option>}
+                    {isSuperAdmin && <option value="admin">Admin</option>}
+                    {isSuperAdmin && <option value="super_admin">Super Admin</option>}
+                  </select>
+                  <button type="submit" className="btn btn-primary">Thêm</button>
+                </div>
+                {userError && <p className="error-message">{userError}</p>}
+              </form>
+            </div>
+          )}
+
+          <table className="users-table">
+            <thead>
+              <tr>
+                <th>Tên đăng nhập</th>
+                <th>Quyền</th>
+                <th>Ngày hữu hạn</th>
+                <th>Ngày tạo</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleUsers.map(user => {
+                const isCurrentUser = user.id === currentUser.id;
+                const isProtectedSuperAdmin = user.id === 'superadmin';
+                const canChangeRole = isSuperAdmin && !isCurrentUser && !isProtectedSuperAdmin;
+                const canDelete = !isCurrentUser && !isProtectedSuperAdmin && (
+                  isSuperAdmin || (currentUser.role === 'admin' && user.createdBy === currentUser.id)
+                );
+                const isVipExpired = user.role === 'vip_user' && user.vipExpirationDate &&
+                  new Date(user.vipExpirationDate) < new Date();
+
+                return (
+                  <tr key={user.id} className={isVipExpired ? 'vip-expired' : ''}>
+                    <td>{user.username}</td>
+                    <td>
+                      <span className={`role-badge role-${user.role}`}>
+                        {user.role === 'super_admin' ? 'Super Admin' : user.role === 'admin' ? 'Admin' : user.role === 'vip_user' ? 'VIP' : 'User'}
+                      </span>
+                      {isVipExpired && <span className="expired-badge">Hết hạn</span>}
+                    </td>
+                    <td>
+                      {(user.role === 'vip_user' || canChangeRole) ? (
+                        <input
+                          type="date"
+                          value={user.vipExpirationDate || ''}
+                          onChange={(e) => onUpdateVipExpiration(user.id, e.target.value || undefined)}
+                          className="expiration-input"
+                          disabled={!canChangeRole}
+                        />
+                      ) : (
+                        <span className="no-expiration">-</span>
+                      )}
+                    </td>
+                    <td>{user.createdAt}</td>
+                    <td>
+                      <div className="action-buttons-row">
+                        {canChangeRole && (
+                          <select
+                            value={user.role}
+                            onChange={(e) => onUpdateUserRole(user.id, e.target.value as UserRole)}
+                            className="role-select"
+                          >
+                            <option value="user">User</option>
+                            <option value="vip_user">VIP User</option>
+                            <option value="admin">Admin</option>
+                            <option value="super_admin">Super Admin</option>
+                          </select>
+                        )}
+                        {canDelete && (
+                          <button
+                            className="btn btn-danger btn-small"
+                            onClick={() => setDeleteUserTarget(user)}
+                          >
+                            Xóa
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Lectures Management Tab - Folder Navigation Structure */}
+      {activeTab === 'lectures' && (
+        <>
+          <div className="breadcrumb">
+            {lectureBreadcrumb.map((crumb, idx) => (
+              <span key={idx}>
+                {idx > 0 && ' / '}
+                <span
+                  className={idx === lectureBreadcrumb.length - 1 ? 'current' : 'clickable'}
+                  onClick={() => idx === 0 && setLectureNavState({ type: 'root' })}
+                >
+                  {crumb}
+                </span>
+              </span>
+            ))}
+          </div>
+
+          {lectureNavState.type !== 'root' && (
+            <button className="btn btn-back" onClick={goBackLecture}>← Quay lại</button>
+          )}
+
+          {!addingLectureFolder && (
+            <div className="folder-actions">
+              {lectureNavState.type === 'folder' && (
+                <button className="btn btn-primary" onClick={() => onNavigateToLectureEditor?.(undefined, lectureNavState.folderId, lectureNavState.level)}>
+                  + Tạo bài giảng
+                </button>
+              )}
+              {lectureNavState.type === 'level' && (
+                <button className="btn btn-secondary" onClick={() => setAddingLectureFolder(true)}>
+                  + Tạo thư mục
+                </button>
+              )}
+            </div>
+          )}
+
+          {addingLectureFolder && (
+            <div className="add-category-inline">
+              <input
+                type="text"
+                className="category-input"
+                placeholder="Tên thư mục..."
+                value={newLectureFolderName}
+                onChange={(e) => setNewLectureFolderName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAddLectureFolder();
+                  if (e.key === 'Escape') { setAddingLectureFolder(false); setNewLectureFolderName(''); }
+                }}
+                autoFocus
+              />
+              <button className="btn btn-primary" onClick={handleAddLectureFolder}>Lưu</button>
+              <button className="btn btn-cancel" onClick={() => { setAddingLectureFolder(false); setNewLectureFolderName(''); }}>Hủy</button>
+            </div>
+          )}
+
+          {lecturesLoading ? (
+            <div className="loading-state">Đang tải...</div>
+          ) : (
+            <div className="folder-content">
+              {/* Root: show JLPT levels */}
+              {lectureNavState.type === 'root' && (
+                <div className="folder-list">
+                  {JLPT_LEVELS.map(level => (
+                    <div
+                      key={level}
+                      className="folder-item"
+                      onClick={() => setLectureNavState({ type: 'level', level })}
+                    >
+                      <span className="folder-icon">📁</span>
+                      <span className="folder-name">{level}</span>
+                      <span className="folder-count">({getLectureCountByLevel(level)} bài giảng)</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Level: show folders */}
+              {lectureNavState.type === 'level' && (
+                <div className="folder-list">
+                  {getLectureFoldersByLevel(lectureNavState.level).map(folder => (
+                    <div
+                      key={folder.id}
+                      className="folder-item"
+                      onClick={() => setLectureNavState({
+                        type: 'folder',
+                        level: lectureNavState.level,
+                        folderId: folder.id,
+                        folderName: folder.name,
+                      })}
+                    >
+                      <span className="folder-icon">📂</span>
+                      {editingLectureFolderId === folder.id ? (
+                        <input
+                          type="text"
+                          className="edit-input inline"
+                          value={editingLectureFolderName}
+                          onChange={(e) => setEditingLectureFolderName(e.target.value)}
+                          onBlur={() => handleUpdateLectureFolder(folder.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleUpdateLectureFolder(folder.id);
+                            if (e.key === 'Escape') { setEditingLectureFolderId(null); setEditingLectureFolderName(''); }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          autoFocus
+                        />
+                      ) : (
+                        <span
+                          className="folder-name"
+                          onDoubleClick={(e) => {
+                            e.stopPropagation();
+                            setEditingLectureFolderId(folder.id);
+                            setEditingLectureFolderName(folder.name);
+                          }}
+                        >
+                          {folder.name}
+                        </span>
+                      )}
+                      <span className="folder-count">({getLectureCountByFolder(folder.id)} bài giảng)</span>
+                      {canModifyLectureFolder(folder) && (
+                        <>
+                          <button
+                            className="edit-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingLectureFolderId(folder.id);
+                              setEditingLectureFolderName(folder.name);
+                            }}
+                            title="Sửa tên"
+                          >✎</button>
+                          <button
+                            className="delete-btn"
+                            onClick={(e) => { e.stopPropagation(); setDeleteLectureFolderTarget(folder); }}
+                            title="Xóa"
+                          >×</button>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                  {getLectureFoldersByLevel(lectureNavState.level).length === 0 && (
+                    <p className="empty-message">Chưa có thư mục nào. Nhấn "+ Tạo thư mục" để thêm.</p>
+                  )}
+                </div>
+              )}
+
+              {/* Folder: show lectures */}
+              {lectureNavState.type === 'folder' && (
+                <div className="lecture-grid" style={{ marginTop: '1rem' }}>
+                  {getLecturesByFolder(lectureNavState.folderId).length === 0 ? (
+                    <p className="empty-message">Chưa có bài giảng nào. Nhấn "+ Tạo bài giảng" để thêm.</p>
+                  ) : (
+                    getLecturesByFolder(lectureNavState.folderId).map((lecture) => (
+                      <LectureCard
+                        key={lecture.id}
+                        lecture={lecture}
+                        onClick={() => onNavigateToLectureEditor?.(lecture.id)}
+                        onEdit={() => onNavigateToLectureEditor?.(lecture.id)}
+                        onDelete={() => setDeleteLectureTarget(lecture)}
+                        onHide={() => toggleLectureHide(lecture.id)}
+                        showActions={true}
+                        canHide={canHideLecture(lecture)}
+                      />
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      <ConfirmModal
+        isOpen={deleteUserTarget !== null}
+        title="Xác nhận xóa người dùng"
+        message={`Bạn có chắc muốn xóa người dùng "${deleteUserTarget?.username || ''}"?`}
+        confirmText="Xóa"
+        onConfirm={() => {
+          if (deleteUserTarget) {
+            onDeleteUser(deleteUserTarget.id);
+            setDeleteUserTarget(null);
+          }
+        }}
+        onCancel={() => setDeleteUserTarget(null)}
+      />
+
+      <ConfirmModal
+        isOpen={deleteLectureTarget !== null}
+        title="Xác nhận xóa bài giảng"
+        message={`Bạn có chắc muốn xóa bài giảng "${deleteLectureTarget?.title || ''}"?`}
+        confirmText="Xóa"
+        onConfirm={async () => {
+          if (deleteLectureTarget) {
+            await deleteLecture(deleteLectureTarget.id);
+            setDeleteLectureTarget(null);
+          }
+        }}
+        onCancel={() => setDeleteLectureTarget(null)}
+      />
+
       <ConfirmModal
         isOpen={deleteLessonTarget !== null}
         title="Xác nhận xóa bài học"
@@ -1072,6 +2127,48 @@ export function CardsPage({
           }
         }}
         onCancel={() => setDeleteFolderTarget(null)}
+      />
+
+      <ConfirmModal
+        isOpen={deleteLectureFolderTarget !== null}
+        title="Xác nhận xóa thư mục bài giảng"
+        message={`Bạn có chắc muốn xóa thư mục "${deleteLectureFolderTarget?.name || ''}"? Các bài giảng bên trong sẽ không bị xóa.`}
+        confirmText="Xóa"
+        onConfirm={async () => {
+          if (deleteLectureFolderTarget) {
+            await deleteLectureFolderAction(deleteLectureFolderTarget.id);
+            setDeleteLectureFolderTarget(null);
+          }
+        }}
+        onCancel={() => setDeleteLectureFolderTarget(null)}
+      />
+
+      <ConfirmModal
+        isOpen={deleteKaiwaFolderTarget !== null}
+        title="Xác nhận xóa thư mục Kaiwa"
+        message={`Bạn có chắc muốn xóa thư mục "${deleteKaiwaFolderTarget?.name || ''}"? Tất cả câu hỏi bên trong cũng sẽ bị xóa.`}
+        confirmText="Xóa"
+        onConfirm={async () => {
+          if (deleteKaiwaFolderTarget && onDeleteKaiwaFolder) {
+            await onDeleteKaiwaFolder(deleteKaiwaFolderTarget.id);
+            setDeleteKaiwaFolderTarget(null);
+          }
+        }}
+        onCancel={() => setDeleteKaiwaFolderTarget(null)}
+      />
+
+      <ConfirmModal
+        isOpen={deleteKaiwaQuestionTarget !== null}
+        title="Xác nhận xóa câu hỏi"
+        message={`Bạn có chắc muốn xóa câu hỏi này?`}
+        confirmText="Xóa"
+        onConfirm={async () => {
+          if (deleteKaiwaQuestionTarget && onDeleteKaiwaQuestion) {
+            await onDeleteKaiwaQuestion(deleteKaiwaQuestionTarget.id);
+            setDeleteKaiwaQuestionTarget(null);
+          }
+        }}
+        onCancel={() => setDeleteKaiwaQuestionTarget(null)}
       />
     </div>
   );

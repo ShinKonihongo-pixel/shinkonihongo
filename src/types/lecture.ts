@@ -35,6 +35,31 @@ export interface SlideElement {
   };
 }
 
+// Animation types for slide elements
+export type SlideAnimation =
+  | 'none'
+  | 'fade-in'
+  | 'fade-out'
+  | 'slide-left'
+  | 'slide-right'
+  | 'slide-up'
+  | 'slide-down'
+  | 'zoom-in'
+  | 'zoom-out'
+  | 'bounce'
+  | 'rotate';
+
+// Transition types for page navigation
+export type SlideTransition =
+  | 'none'
+  | 'fade'
+  | 'slide-horizontal'
+  | 'slide-vertical'
+  | 'zoom'
+  | 'flip'
+  | 'cube'
+  | 'dissolve';
+
 // Individual slide
 export interface Slide {
   id: string;
@@ -46,6 +71,19 @@ export interface Slide {
   backgroundColor?: string;
   backgroundImage?: string;
   notes?: string; // Speaker notes (not shown in presentation)
+  animation?: SlideAnimation; // Animation for slide content
+  transition?: SlideTransition; // Transition when navigating to this slide
+  animationDuration?: number; // Duration in ms (default 500)
+}
+
+// Lecture folder (similar to Lesson for flashcards)
+export interface LectureFolder {
+  id: string;
+  name: string;
+  jlptLevel: JLPTLevel;
+  createdBy: string;
+  createdAt: string;
+  order: number;
 }
 
 // Lecture (collection of slides)
@@ -57,7 +95,9 @@ export interface Lecture {
   authorId: string;
   authorName: string;
   jlptLevel: JLPTLevel;
+  folderId?: string; // Optional folder grouping
   isPublished: boolean;
+  isHidden: boolean;  // Ẩn bài giảng (chỉ creator/super_admin thấy)
   createdAt: string;
   updatedAt: string;
   slideCount: number;
@@ -71,6 +111,7 @@ export interface LectureFormData {
   description?: string;
   coverImage?: string;
   jlptLevel: JLPTLevel;
+  folderId?: string;
   isPublished: boolean;
   tags?: string[];
 }
@@ -83,6 +124,9 @@ export interface SlideFormData {
   backgroundColor?: string;
   backgroundImage?: string;
   notes?: string;
+  animation?: SlideAnimation;
+  transition?: SlideTransition;
+  animationDuration?: number;
 }
 
 // View tracking

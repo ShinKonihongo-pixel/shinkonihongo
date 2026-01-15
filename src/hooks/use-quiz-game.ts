@@ -19,6 +19,8 @@ interface UseQuizGameOptions {
 export function useQuizGame({ playerId, playerName }: UseQuizGameOptions) {
   const [game, setGame] = useState<QuizGame | null>(null);
   const [gameResults, setGameResults] = useState<GameResults | null>(null);
+  const [availableRooms, setAvailableRooms] = useState<QuizGame[]>([]);
+  const [loadingRooms, setLoadingRooms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -197,6 +199,61 @@ export function useQuizGame({ playerId, playerName }: UseQuizGameOptions) {
     setError(null);
   }, []);
 
+  // Fetch available rooms
+  const fetchAvailableRooms = useCallback(async () => {
+    setLoadingRooms(true);
+    try {
+      const rooms = await gameService.getAvailableRooms();
+      setAvailableRooms(rooms);
+    } catch (err) {
+      console.error('Error fetching rooms:', err);
+    } finally {
+      setLoadingRooms(false);
+    }
+  }, []);
+
+  // Subscribe to available rooms (real-time)
+  const subscribeToRooms = useCallback((callback?: (rooms: QuizGame[]) => void) => {
+    setLoadingRooms(true);
+    const unsubscribe = gameService.subscribeToAvailableRooms((rooms) => {
+      setAvailableRooms(rooms);
+      setLoadingRooms(false);
+      callback?.(rooms);
+    });
+    return unsubscribe;
+  }, []);
+
+  // Join game by ID directly
+  const joinGameById = useCallback(async (gameId: string): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const targetGame = await gameService.getGame(gameId);
+      if (!targetGame) {
+        setError('Phòng không tồn tại');
+        return false;
+      }
+      const { game: joinedGame, error: joinError } = await gameService.joinGame(
+        targetGame.code,
+        playerId,
+        playerName
+      );
+
+      if (joinError) {
+        setError(joinError);
+        return false;
+      }
+
+      setGame(joinedGame);
+      return true;
+    } catch (err) {
+      setError('Không thể tham gia game');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [playerId, playerName]);
+
   // Computed values
   const isHost = game?.hostId === playerId;
   const currentPlayer = game?.players[playerId] || null;
@@ -210,6 +267,8 @@ export function useQuizGame({ playerId, playerName }: UseQuizGameOptions) {
     // State
     game,
     gameResults,
+    availableRooms,
+    loadingRooms,
     loading,
     error,
 
@@ -223,6 +282,7 @@ export function useQuizGame({ playerId, playerName }: UseQuizGameOptions) {
     // Actions
     createGame,
     joinGame,
+    joinGameById,
     leaveGame,
     kickPlayer,
     startGame,
@@ -233,6 +293,8 @@ export function useQuizGame({ playerId, playerName }: UseQuizGameOptions) {
     continueFromLeaderboard,
     usePowerUp,
     resetGame,
+    fetchAvailableRooms,
+    subscribeToRooms,
     setError,
   };
 }

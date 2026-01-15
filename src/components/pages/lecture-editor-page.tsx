@@ -1,10 +1,10 @@
 // Lecture editor page - create and edit lectures (admin only)
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../hooks/use-auth';
 import { useLectures, useSlides } from '../../hooks/use-lectures';
-import { SlideRenderer } from '../lecture/slide-renderer';
-import type { LectureFormData, SlideFormData, SlideElement, SlideLayout } from '../../types/lecture';
+import { SlideEditorCanvas } from '../lecture/slide-editor-canvas';
+import type { LectureFormData, SlideFormData, SlideElement, SlideLayout, SlideAnimation, SlideTransition } from '../../types/lecture';
 import type { JLPTLevel } from '../../types/flashcard';
 
 const SLIDE_LAYOUTS: { value: SlideLayout; label: string }[] = [
@@ -14,6 +14,31 @@ const SLIDE_LAYOUTS: { value: SlideLayout; label: string }[] = [
   { value: 'image-left', label: 'Ảnh trái' },
   { value: 'image-right', label: 'Ảnh phải' },
   { value: 'full-media', label: 'Toàn màn hình' },
+];
+
+const SLIDE_ANIMATIONS: { value: SlideAnimation; label: string }[] = [
+  { value: 'none', label: 'Không có' },
+  { value: 'fade-in', label: 'Mờ dần vào' },
+  { value: 'fade-out', label: 'Mờ dần ra' },
+  { value: 'slide-left', label: 'Trượt trái' },
+  { value: 'slide-right', label: 'Trượt phải' },
+  { value: 'slide-up', label: 'Trượt lên' },
+  { value: 'slide-down', label: 'Trượt xuống' },
+  { value: 'zoom-in', label: 'Phóng to' },
+  { value: 'zoom-out', label: 'Thu nhỏ' },
+  { value: 'bounce', label: 'Nảy' },
+  { value: 'rotate', label: 'Xoay' },
+];
+
+const SLIDE_TRANSITIONS: { value: SlideTransition; label: string }[] = [
+  { value: 'none', label: 'Không có' },
+  { value: 'fade', label: 'Mờ dần' },
+  { value: 'slide-horizontal', label: 'Trượt ngang' },
+  { value: 'slide-vertical', label: 'Trượt dọc' },
+  { value: 'zoom', label: 'Phóng to' },
+  { value: 'flip', label: 'Lật' },
+  { value: 'cube', label: 'Khối 3D' },
+  { value: 'dissolve', label: 'Tan biến' },
 ];
 
 const FONT_SIZES = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '36px', '48px', '64px'];
@@ -26,10 +51,12 @@ function generateId(): string {
 
 interface LectureEditorPageProps {
   lectureId?: string;
+  initialFolderId?: string;
+  initialLevel?: JLPTLevel;
   onBack: () => void;
 }
 
-export function LectureEditorPage({ lectureId, onBack }: LectureEditorPageProps) {
+export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, onBack }: LectureEditorPageProps) {
   const { currentUser, isAdmin } = useAuth();
   const { getLecture, createLecture, updateLecture } = useLectures(true);
   const [currentLectureId, setCurrentLectureId] = useState<string | null>(lectureId || null);
@@ -37,12 +64,13 @@ export function LectureEditorPage({ lectureId, onBack }: LectureEditorPageProps)
 
   const isNew = !currentLectureId || currentLectureId === 'new';
 
-  // Lecture form state
+  // Lecture form state - pre-fill with folder info if creating new
   const [lectureForm, setLectureForm] = useState<LectureFormData>({
     title: '',
     description: '',
     coverImage: '',
-    jlptLevel: 'N5',
+    jlptLevel: initialLevel || 'N5',
+    folderId: initialFolderId,
     isPublished: false,
   });
 
@@ -52,6 +80,7 @@ export function LectureEditorPage({ lectureId, onBack }: LectureEditorPageProps)
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
 
   // Load existing lecture
   useEffect(() => {
@@ -120,6 +149,9 @@ export function LectureEditorPage({ lectureId, onBack }: LectureEditorPageProps)
     }
   };
 
+  // Background image upload ref
+  const bgImageInputRef = useRef<HTMLInputElement>(null);
+
   // Add new slide
   const handleAddSlide = async () => {
     if (!currentLectureId || currentLectureId === 'new') {
@@ -132,6 +164,9 @@ export function LectureEditorPage({ lectureId, onBack }: LectureEditorPageProps)
       title: `Slide ${slides.length + 1}`,
       elements: [],
       backgroundColor: '#ffffff',
+      animation: 'none',
+      transition: 'fade',
+      animationDuration: 500,
     };
 
     const slide = await addSlide(newSlideData);
@@ -153,7 +188,29 @@ export function LectureEditorPage({ lectureId, onBack }: LectureEditorPageProps)
       backgroundColor: slide.backgroundColor || '#ffffff',
       backgroundImage: slide.backgroundImage,
       notes: slide.notes,
+      animation: slide.animation || 'none',
+      transition: slide.transition || 'fade',
+      animationDuration: slide.animationDuration || 500,
     });
+  };
+
+  // Handle background image upload
+  const handleBgImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingSlide) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      setEditingSlide({ ...editingSlide, backgroundImage: base64 });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Remove background image
+  const handleRemoveBgImage = () => {
+    if (!editingSlide) return;
+    setEditingSlide({ ...editingSlide, backgroundImage: undefined });
   };
 
   // Update slide
@@ -345,51 +402,101 @@ export function LectureEditorPage({ lectureId, onBack }: LectureEditorPageProps)
           </div>
         </div>
 
-        {/* Slides editor */}
-        {currentLectureId && currentLectureId !== 'new' && (
-          <div className="slides-editor">
-            <div className="slides-sidebar">
-              <div className="slides-header">
-                <h3>Slides ({slides.length})</h3>
-                <button className="btn btn-add" onClick={handleAddSlide}>
-                  + Thêm slide
-                </button>
-              </div>
-              <div className="slides-list">
-                {slides.map((slide, index) => (
-                  <div
-                    key={slide.id}
-                    className={`slide-item ${selectedSlideIndex === index ? 'active' : ''}`}
-                    onClick={() => handleSelectSlide(index)}
-                  >
-                    <span className="slide-number">{index + 1}</span>
-                    <span className="slide-name">{slide.title || 'Untitled'}</span>
-                    <div className="slide-item-actions">
-                      <button
-                        className="btn-icon-small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          duplicateSlide(slide.id);
-                        }}
-                        title="Nhân đôi"
-                      >
-                        📋
-                      </button>
-                      <button
-                        className="btn-delete-small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteSlide(index);
-                        }}
-                        title="Xóa"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+        {/* Slides editor - always show */}
+        <div className="slides-editor">
+          <div className="slides-sidebar">
+            <div className="slides-header">
+              <h3>Slides ({slides.length})</h3>
+              <button
+                className="btn btn-add"
+                onClick={handleAddSlide}
+                disabled={isNew}
+                title={isNew ? 'Lưu bài giảng trước' : 'Thêm slide mới'}
+              >
+                + Thêm slide
+              </button>
             </div>
+
+            {/* Show message if lecture not saved */}
+            {isNew && (
+              <div className="slides-empty-message">
+                <p>Lưu bài giảng trước để thêm slides</p>
+              </div>
+            )}
+
+            {/* Show slides list */}
+            {!isNew && (
+              <div className="slides-list">
+                {slides.length === 0 ? (
+                  <div className="slides-empty-message">
+                    <p>Chưa có slide nào</p>
+                    <p className="hint">Nhấn "+ Thêm slide" để bắt đầu</p>
+                  </div>
+                ) : (
+                  slides.map((slide, index) => (
+                    <div
+                      key={slide.id}
+                      className={`slide-thumbnail-item ${selectedSlideIndex === index ? 'active' : ''}`}
+                      onClick={() => handleSelectSlide(index)}
+                    >
+                      <div className="slide-thumbnail-number">{index + 1}</div>
+                      <div className="slide-thumbnail-preview">
+                        <div
+                          className="slide-mini-preview"
+                          style={{
+                            backgroundColor: slide.backgroundColor || '#ffffff',
+                            backgroundImage: slide.backgroundImage ? `url(${slide.backgroundImage})` : undefined,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                          }}
+                        >
+                          {slide.title && (
+                            <div className="slide-mini-title">{slide.title}</div>
+                          )}
+                          {slide.elements.slice(0, 2).map((el) => (
+                            <div key={el.id} className="slide-mini-element">
+                              {el.type === 'text' ? el.content.substring(0, 20) : `[${el.type}]`}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="slide-thumbnail-info">
+                        <span className="slide-thumbnail-name">{slide.title || 'Untitled'}</span>
+                        {slide.transition && slide.transition !== 'none' && (
+                          <span className="slide-effect-badge" title="Có hiệu ứng chuyển trang">T</span>
+                        )}
+                        {slide.animation && slide.animation !== 'none' && (
+                          <span className="slide-effect-badge" title="Có hiệu ứng animation">A</span>
+                        )}
+                      </div>
+                      <div className="slide-thumbnail-actions">
+                        <button
+                          className="btn-icon-small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            duplicateSlide(slide.id);
+                          }}
+                          title="Nhân đôi"
+                        >
+                          📋
+                        </button>
+                        <button
+                          className="btn-delete-small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteSlide(index);
+                          }}
+                          title="Xóa"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
 
             <div className="slide-editor-main">
               {editingSlide ? (
@@ -510,6 +617,7 @@ export function LectureEditorPage({ lectureId, onBack }: LectureEditorPageProps)
 
                   {/* Slide settings */}
                   <div className="slide-settings">
+                    {/* Row 1: Layout, Title */}
                     <div className="form-row">
                       <div className="form-group">
                         <label>Layout</label>
@@ -530,8 +638,12 @@ export function LectureEditorPage({ lectureId, onBack }: LectureEditorPageProps)
                           onChange={(e) => setEditingSlide({ ...editingSlide, title: e.target.value })}
                         />
                       </div>
+                    </div>
+
+                    {/* Row 2: Background color & image */}
+                    <div className="form-row">
                       <div className="form-group">
-                        <label>Màu nền slide</label>
+                        <label>Màu nền</label>
                         <div className="color-picker">
                           {BG_COLORS.map(color => (
                             <button
@@ -550,70 +662,86 @@ export function LectureEditorPage({ lectureId, onBack }: LectureEditorPageProps)
                           ))}
                         </div>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Slide preview */}
-                  <div className="slide-preview">
-                    <SlideRenderer
-                      slide={{
-                        id: slides[selectedSlideIndex!]?.id || 'preview',
-                        lectureId: currentLectureId,
-                        order: selectedSlideIndex || 0,
-                        ...editingSlide,
-                      }}
-                    />
-                  </div>
-
-                  {/* Elements list */}
-                  <div className="elements-panel">
-                    <h4>Các phần tử ({editingSlide.elements.length})</h4>
-                    <div className="elements-list">
-                      {editingSlide.elements.map((element) => (
-                        <div
-                          key={element.id}
-                          className={`element-edit-item ${selectedElementId === element.id ? 'selected' : ''}`}
-                          onClick={() => setSelectedElementId(element.id)}
-                        >
-                          <span className="element-type-badge">{element.type}</span>
-                          {element.type === 'text' ? (
-                            <textarea
-                              value={element.content}
-                              onChange={(e) => updateElement(element.id, { content: e.target.value })}
-                              onClick={(e) => e.stopPropagation()}
-                              rows={2}
-                              placeholder="Nhập nội dung..."
-                            />
-                          ) : (
-                            <input
-                              type="text"
-                              value={element.content}
-                              onChange={(e) => updateElement(element.id, { content: e.target.value })}
-                              onClick={(e) => e.stopPropagation()}
-                              placeholder={`Nhập URL ${element.type}...`}
-                            />
-                          )}
+                      <div className="form-group">
+                        <label>Ảnh nền</label>
+                        <div className="bg-image-controls">
+                          <input
+                            type="file"
+                            ref={bgImageInputRef}
+                            accept="image/*"
+                            onChange={handleBgImageUpload}
+                            style={{ display: 'none' }}
+                          />
                           <button
-                            className="btn-delete-small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteElement(element.id);
-                            }}
+                            className="btn btn-small btn-secondary"
+                            onClick={() => bgImageInputRef.current?.click()}
                           >
-                            ×
+                            Upload ảnh
                           </button>
+                          {editingSlide.backgroundImage && (
+                            <>
+                              <div className="bg-image-preview">
+                                <img src={editingSlide.backgroundImage} alt="Background" />
+                              </div>
+                              <button
+                                className="btn btn-small btn-danger"
+                                onClick={handleRemoveBgImage}
+                              >
+                                Xóa ảnh
+                              </button>
+                            </>
+                          )}
                         </div>
-                      ))}
-                      {editingSlide.elements.length === 0 && (
-                        <p className="empty-hint">Sử dụng thanh công cụ phía trên để thêm nội dung</p>
-                      )}
+                      </div>
                     </div>
+
+                    {/* Row 3: Animation & Transition */}
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Hiệu ứng nội dung</label>
+                        <select
+                          value={editingSlide.animation || 'none'}
+                          onChange={(e) => setEditingSlide({ ...editingSlide, animation: e.target.value as SlideAnimation })}
+                        >
+                          {SLIDE_ANIMATIONS.map((a) => (
+                            <option key={a.value} value={a.value}>{a.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Hiệu ứng chuyển trang</label>
+                        <select
+                          value={editingSlide.transition || 'fade'}
+                          onChange={(e) => setEditingSlide({ ...editingSlide, transition: e.target.value as SlideTransition })}
+                        >
+                          {SLIDE_TRANSITIONS.map((t) => (
+                            <option key={t.value} value={t.value}>{t.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Thời lượng (ms)</label>
+                        <input
+                          type="number"
+                          min={100}
+                          max={3000}
+                          step={100}
+                          value={editingSlide.animationDuration || 500}
+                          onChange={(e) => setEditingSlide({ ...editingSlide, animationDuration: parseInt(e.target.value) || 500 })}
+                        />
+                      </div>
+                    </div>
+
                   </div>
+
+                  {/* Professional Slide Editor Canvas */}
+                  <SlideEditorCanvas
+                    slide={editingSlide}
+                    onChange={setEditingSlide}
+                    onSave={handleUpdateSlide}
+                  />
 
                   <div className="slide-actions">
-                    <button className="btn btn-primary" onClick={handleUpdateSlide}>
-                      Lưu slide
-                    </button>
                     <button
                       className="btn btn-secondary"
                       onClick={() => {
@@ -622,24 +750,23 @@ export function LectureEditorPage({ lectureId, onBack }: LectureEditorPageProps)
                         setSelectedElementId(null);
                       }}
                     >
-                      Huỷ
+                      Huỷ chỉnh sửa
                     </button>
                   </div>
                 </>
               ) : (
                 <div className="no-slide-selected">
-                  <p>Chọn slide để chỉnh sửa hoặc thêm slide mới</p>
+                  {isNew ? (
+                    <p>Lưu bài giảng trước để thêm slides</p>
+                  ) : slides.length === 0 ? (
+                    <p>Nhấn "+ Thêm slide" để bắt đầu</p>
+                  ) : (
+                    <p>Chọn slide để chỉnh sửa</p>
+                  )}
                 </div>
               )}
             </div>
-          </div>
-        )}
-
-        {(!currentLectureId || currentLectureId === 'new') && (
-          <div className="save-first-message">
-            <p>Lưu bài giảng trước để thêm slides</p>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

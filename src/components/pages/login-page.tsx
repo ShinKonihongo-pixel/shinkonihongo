@@ -1,6 +1,7 @@
 // Login page component
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Check } from 'lucide-react';
 
 interface LoginPageProps {
   onLogin: (username: string, password: string) => { success: boolean; error?: string };
@@ -15,9 +16,13 @@ export function LoginPage({ onLogin, onRegister }: LoginPageProps) {
   const [error, setError] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  // Auto-clear error when inputs change
+  useEffect(() => {
+    if (error) setError('');
+  }, [username, password, confirmPassword, isRegisterMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
 
     if (isRegisterMode) {
       if (password !== confirmPassword) {
@@ -103,10 +108,7 @@ export function LoginPage({ onLogin, onRegister }: LoginPageProps) {
           <button
             type="button"
             className="btn-link"
-            onClick={() => {
-              setIsRegisterMode(!isRegisterMode);
-              setError('');
-            }}
+            onClick={() => setIsRegisterMode(!isRegisterMode)}
           >
             {isRegisterMode ? 'Đăng nhập' : 'Đăng ký'}
           </button>
@@ -122,7 +124,7 @@ export function LoginPage({ onLogin, onRegister }: LoginPageProps) {
       {showSuccessModal && (
         <div className="modal-overlay">
           <div className="modal-content success-modal">
-            <div className="success-icon">✓</div>
+            <div className="success-icon"><Check size={32} /></div>
             <h3 className="modal-title">Đăng ký thành công!</h3>
             <p className="modal-message">Tài khoản của bạn đã được tạo. Hãy đăng nhập để bắt đầu.</p>
             <button className="btn btn-primary btn-full" onClick={handleGoToLogin}>

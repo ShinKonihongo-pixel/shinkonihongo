@@ -47,6 +47,7 @@ export function migrateN5ToKanji(): void {
       parentId: null,
       order: 1,
       isLocked: false,
+      isHidden: false,
     };
     categories.push(bai1Category);
   }
@@ -64,6 +65,7 @@ export function migrateN5ToKanji(): void {
       parentId: bai1Category.id,
       order: 1,
       isLocked: false,
+      isHidden: false,
     };
     categories.push(kanjiSubCategory);
   }

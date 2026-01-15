@@ -90,7 +90,8 @@ export function useAuth() {
   const register = useCallback(async (
     username: string,
     password: string,
-    role: UserRole = 'user'
+    role: UserRole = 'user',
+    createdBy?: string
   ): Promise<{ success: boolean; error?: string }> => {
     if (users.find(u => u.username === username)) {
       return { success: false, error: 'Tên đăng nhập đã tồn tại' };
@@ -107,6 +108,7 @@ export function useAuth() {
         username,
         password,
         role,
+        createdBy,
         createdAt: new Date().toISOString().split('T')[0],
       };
       await firestoreService.addUser(newUserData);

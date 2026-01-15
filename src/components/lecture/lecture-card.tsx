@@ -7,7 +7,9 @@ interface LectureCardProps {
   onClick: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  onHide?: () => void;
   showActions?: boolean;
+  canHide?: boolean; // Only show hide button for creator/super_admin
 }
 
 export function LectureCard({
@@ -15,7 +17,9 @@ export function LectureCard({
   onClick,
   onEdit,
   onDelete,
+  onHide,
   showActions = false,
+  canHide = false,
 }: LectureCardProps) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -36,6 +40,9 @@ export function LectureCard({
         {!lecture.isPublished && (
           <span className="lecture-draft-badge">Nháp</span>
         )}
+        {lecture.isHidden && (
+          <span className="lecture-hidden-badge">Đã ẩn</span>
+        )}
       </div>
       <div className="lecture-card-content">
         <h3 className="lecture-card-title">{lecture.title}</h3>
@@ -54,6 +61,11 @@ export function LectureCard({
       </div>
       {showActions && (
         <div className="lecture-card-actions" onClick={(e) => e.stopPropagation()}>
+          {canHide && onHide && (
+            <button className="btn btn-hide" onClick={onHide} title={lecture.isHidden ? 'Hiện' : 'Ẩn'}>
+              {lecture.isHidden ? '👁️‍🗨️' : '👁️'}
+            </button>
+          )}
           <button className="btn btn-edit" onClick={onEdit}>
             Sửa
           </button>

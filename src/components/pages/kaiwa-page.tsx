@@ -3,32 +3,64 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { AppSettings } from '../../hooks/use-settings';
 import type { KaiwaMessage, KaiwaContext, JLPTLevel, ConversationStyle, ConversationTopic, PronunciationResult, AnswerTemplate, SuggestedAnswer } from '../../types/kaiwa';
+import type { KaiwaDefaultQuestion, KaiwaFolder } from '../../types/kaiwa-question';
 import { useSpeech, comparePronunciation } from '../../hooks/use-speech';
 import { useGroq } from '../../hooks/use-groq';
 import { JLPT_LEVELS, CONVERSATION_STYLES, CONVERSATION_TOPICS, getStyleDisplay } from '../../constants/kaiwa';
-import { KaiwaMessageItem, KaiwaPracticeModal, KaiwaAnalysisModal, KaiwaAnswerTemplate } from '../kaiwa';
+import { KaiwaMessageItem, KaiwaPracticeModal, KaiwaAnalysisModal, KaiwaAnswerTemplate, KaiwaSuggestionsBox } from '../kaiwa';
 import type { VocabularyHint } from '../../types/kaiwa';
 import { removeFurigana } from '../../lib/furigana-utils';
 import { FuriganaText } from '../common/furigana-text';
-
-// Quick response phrases for common replies
-const QUICK_PHRASES = [
-  { text: 'はい', label: 'Vâng' },
-  { text: 'いいえ', label: 'Không' },
-  { text: 'そうですね', label: 'Đúng vậy' },
-  { text: 'わかりました', label: 'Hiểu rồi' },
-  { text: 'もう一度お願いします', label: 'Nói lại' },
-  { text: 'ちょっと待ってください', label: 'Chờ chút' },
-];
+import {
+  Lightbulb,
+  MessageCircle,
+  HelpCircle,
+  Mic,
+  Volume2,
+  Copy,
+  Trash2,
+  X,
+  Send,
+  Turtle,
+  Bookmark,
+  BookmarkCheck,
+  RefreshCw,
+  Clock,
+  ChevronRight,
+  Folder,
+  FileText,
+  ArrowLeft,
+  ListChecks,
+} from 'lucide-react';
 
 interface KaiwaPageProps {
   settings: AppSettings;
+  defaultQuestions?: KaiwaDefaultQuestion[];
+  kaiwaFolders?: KaiwaFolder[];
+  getFoldersByLevelAndTopic?: (level: JLPTLevel, topic: ConversationTopic) => KaiwaFolder[];
+  getQuestionsByFolder?: (folderId: string) => KaiwaDefaultQuestion[];
+  getQuestionsByLevelAndTopic?: (level: JLPTLevel, topic: ConversationTopic) => KaiwaDefaultQuestion[];
 }
 
-export function KaiwaPage({ settings }: KaiwaPageProps) {
+// Navigation state for question selector
+type QuestionSelectorState =
+  | { type: 'hidden' }
+  | { type: 'level' }
+  | { type: 'topic'; level: JLPTLevel }
+  | { type: 'list'; level: JLPTLevel; topic: ConversationTopic; folderId?: string; folderName?: string };
+
+export function KaiwaPage({
+  settings,
+  defaultQuestions = [],
+  kaiwaFolders = [],
+  getFoldersByLevelAndTopic,
+  getQuestionsByFolder,
+  getQuestionsByLevelAndTopic,
+}: KaiwaPageProps) {
   // Conversation state
   const [messages, setMessages] = useState<KaiwaMessage[]>([]);
   const [answerTemplate, setAnswerTemplate] = useState<AnswerTemplate | null>(null);
+  const [suggestedAnswers, setSuggestedAnswers] = useState<SuggestedAnswer[]>([]);
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [inputText, setInputText] = useState('');
   const [isStarted, setIsStarted] = useState(false);
@@ -50,12 +82,17 @@ export function KaiwaPage({ settings }: KaiwaPageProps) {
   const [showFurigana, setShowFurigana] = useState(settings.kaiwaShowFurigana);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const [speakingMode, setSpeakingMode] = useState<'normal' | 'slow' | null>(null);
-  const [showQuickPhrases, setShowQuickPhrases] = useState(false);
+  const [showSuggestionTabs, setShowSuggestionTabs] = useState(true);
+  const [activeSuggestionTab, setActiveSuggestionTab] = useState<'template' | 'answers' | 'questions' | null>(null);
   const [fontSize, setFontSize] = useState(() => {
     const saved = localStorage.getItem('kaiwaFontSize');
     return saved ? parseInt(saved, 10) : 16;
   });
   const [showSavedPanel, setShowSavedPanel] = useState(false);
+
+  // Default question selector state
+  const [questionSelectorState, setQuestionSelectorState] = useState<QuestionSelectorState>({ type: 'hidden' });
+  const [selectedDefaultQuestion, setSelectedDefaultQuestion] = useState<KaiwaDefaultQuestion | null>(null);
 
   // Analysis state
   const [analysisText, setAnalysisText] = useState<string | null>(null);
@@ -162,7 +199,24 @@ export function KaiwaPage({ settings }: KaiwaPageProps) {
     setSavedSentences([]);
     groq.clearConversation();
 
-    const response = await groq.startConversation(getContext());
+    // If a default question is selected, use its context
+    const contextToUse = getContext();
+    if (selectedDefaultQuestion) {
+      contextToUse.level = selectedDefaultQuestion.level;
+      contextToUse.style = selectedDefaultQuestion.style;
+      contextToUse.topic = selectedDefaultQuestion.topic;
+    }
+
+    // Start conversation with optional default question
+    const response = await groq.startConversation(
+      contextToUse,
+      selectedDefaultQuestion ? {
+        questionJa: selectedDefaultQuestion.questionJa,
+        questionVi: selectedDefaultQuestion.questionVi,
+        situationContext: selectedDefaultQuestion.situationContext,
+        suggestedAnswers: selectedDefaultQuestion.suggestedAnswers,
+      } : undefined
+    );
     if (response) {
       const assistantMessage: KaiwaMessage = {
         id: `msg-${Date.now()}`,
@@ -173,6 +227,9 @@ export function KaiwaPage({ settings }: KaiwaPageProps) {
       setMessages([assistantMessage]);
       if (response.answerTemplate) {
         setAnswerTemplate(response.answerTemplate);
+      }
+      if (response.suggestions) {
+        setSuggestedAnswers(response.suggestions);
       }
       if (response.suggestedQuestions) {
         setSuggestedQuestions(response.suggestedQuestions);
@@ -193,7 +250,9 @@ export function KaiwaPage({ settings }: KaiwaPageProps) {
     setMessages(prev => [...prev, userMessage]);
     setInputText('');
     setAnswerTemplate(null);
+    setSuggestedAnswers([]);
     setSuggestedQuestions([]);
+    setActiveSuggestionTab(null);
 
     const response = await groq.sendMessage(text.trim(), getContext());
     if (response) {
@@ -206,6 +265,9 @@ export function KaiwaPage({ settings }: KaiwaPageProps) {
       setMessages(prev => [...prev, assistantMessage]);
       if (response.answerTemplate) {
         setAnswerTemplate(response.answerTemplate);
+      }
+      if (response.suggestions) {
+        setSuggestedAnswers(response.suggestions);
       }
       if (response.suggestedQuestions) {
         setSuggestedQuestions(response.suggestedQuestions);
@@ -224,12 +286,15 @@ export function KaiwaPage({ settings }: KaiwaPageProps) {
     setStartTime(null);
     setMessages([]);
     setAnswerTemplate(null);
+    setSuggestedAnswers([]);
     setSuggestedQuestions([]);
     setSavedSentences([]);
     setIsPracticeMode(false);
     setSelectedSuggestion(null);
     setPronunciationResult(null);
-    setShowQuickPhrases(false);
+    setActiveSuggestionTab(null);
+    setSelectedDefaultQuestion(null);
+    setQuestionSelectorState({ type: 'hidden' });
     speech.stopSpeaking();
     groq.clearConversation();
   };
@@ -249,18 +314,65 @@ export function KaiwaPage({ settings }: KaiwaPageProps) {
   // Handle vocabulary hint selection - fill template pattern with selected word
   const handleSelectHint = (hint: VocabularyHint) => {
     if (answerTemplate) {
-      // Replace ... with the selected word (remove furigana for input)
-      const cleanPattern = removeFurigana(answerTemplate.pattern);
       const cleanWord = removeFurigana(hint.word);
-      const filledText = cleanPattern.replace('...', cleanWord);
-      setInputText(filledText);
+
+      // If input already has content, find next unfilled blank and replace
+      if (inputText.trim()) {
+        // Check for numbered blanks ①②③ first
+        const blankMarkers = ['①', '②', '③', '④', '⑤'];
+        let filled = false;
+        let newText = inputText;
+
+        for (const marker of blankMarkers) {
+          if (newText.includes(marker)) {
+            newText = newText.replace(marker, cleanWord);
+            filled = true;
+            break;
+          }
+        }
+
+        // If no numbered blank, try ... placeholder
+        if (!filled && newText.includes('...')) {
+          newText = newText.replace('...', cleanWord);
+        }
+
+        setInputText(newText);
+      } else {
+        // Start fresh with template pattern
+        const cleanPattern = removeFurigana(answerTemplate.pattern);
+        // Replace first blank (①, ②, ③ or ...)
+        let filledText = cleanPattern;
+        const blankMarkers = ['①', '②', '③', '④', '⑤', '...'];
+
+        for (const marker of blankMarkers) {
+          if (filledText.includes(marker)) {
+            filledText = filledText.replace(marker, cleanWord);
+            break;
+          }
+        }
+
+        setInputText(filledText);
+      }
     }
   };
 
-  // Handle suggested question click - fill input (not auto-send)
+  // Handle suggested answer click - fill input
+  const handleSuggestedAnswer = (answer: string) => {
+    // Remove strategy labels like 【直接＋理由】 and furigana
+    const cleanAnswer = removeFurigana(answer.replace(/【[^】]+】/g, '').trim());
+    setInputText(cleanAnswer);
+  };
+
+  // Handle suggested question click - append to input if has content, otherwise replace
   const handleSuggestedQuestion = (question: string) => {
-    const cleanQuestion = removeFurigana(question);
-    setInputText(cleanQuestion);
+    // Remove strategy labels and furigana
+    const cleanQuestion = removeFurigana(question.replace(/【[^】]+】/g, '').trim());
+    if (inputText.trim()) {
+      // Append to existing input
+      setInputText(prev => prev.trim() + ' ' + cleanQuestion);
+    } else {
+      setInputText(cleanQuestion);
+    }
   };
 
   // Speak message with tracking
@@ -311,66 +423,265 @@ export function KaiwaPage({ settings }: KaiwaPageProps) {
     setPronunciationResult(null);
   };
 
+  // Helper function to get questions for current selector state
+  const getQuestionsForSelector = (): KaiwaDefaultQuestion[] => {
+    if (questionSelectorState.type !== 'list') return [];
+    if (questionSelectorState.folderId && getQuestionsByFolder) {
+      return getQuestionsByFolder(questionSelectorState.folderId);
+    }
+    if (getQuestionsByLevelAndTopic) {
+      return getQuestionsByLevelAndTopic(questionSelectorState.level, questionSelectorState.topic);
+    }
+    return [];
+  };
+
+  // Helper function to get folders for current selector state
+  const getFoldersForSelector = (): KaiwaFolder[] => {
+    if (questionSelectorState.type !== 'list') return [];
+    if (getFoldersByLevelAndTopic) {
+      return getFoldersByLevelAndTopic(questionSelectorState.level, questionSelectorState.topic);
+    }
+    return [];
+  };
+
   // Render start screen
   if (!isStarted) {
+    // Check if there are any default questions
+    const hasDefaultQuestions = defaultQuestions.length > 0;
+
     return (
-      <div className="kaiwa-page">
+      <div className="kaiwa-page kaiwa-page-start">
+        <div className="kaiwa-container">
         <div className="kaiwa-start-screen">
           <h2>会話練習 - Luyện Hội Thoại</h2>
           <p className="kaiwa-description">
             Luyện tập hội thoại tiếng Nhật với trợ lý AI. Bạn có thể nói hoặc gõ để trả lời.
           </p>
 
-          <div className="kaiwa-setup">
-            <div className="kaiwa-setup-row">
-              <div className="kaiwa-setup-item">
-                <label>Cấp độ JLPT</label>
-                <select value={level} onChange={e => setLevel(e.target.value as JLPTLevel)}>
-                  {JLPT_LEVELS.map(l => (
-                    <option key={l.value} value={l.value}>{l.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="kaiwa-setup-item">
-                <label>Phong cách nói</label>
-                <select value={style} onChange={e => setStyle(e.target.value as ConversationStyle)}>
-                  {CONVERSATION_STYLES.map(s => (
-                    <option key={s.value} value={s.value}>{s.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="kaiwa-setup-item kaiwa-topic-section">
-              <label>Chủ đề hội thoại</label>
-              <div className="kaiwa-topic-grid">
-                {CONVERSATION_TOPICS.map(t => (
+          {/* Default question selector section */}
+          {hasDefaultQuestions && (
+            <div className="kaiwa-question-selector-section">
+              <div className="kaiwa-selector-header">
+                <button
+                  className={`kaiwa-mode-btn ${questionSelectorState.type !== 'hidden' ? 'active' : ''}`}
+                  onClick={() => setQuestionSelectorState(
+                    questionSelectorState.type === 'hidden' ? { type: 'level' } : { type: 'hidden' }
+                  )}
+                >
+                  <ListChecks size={18} />
+                  {questionSelectorState.type === 'hidden' ? 'Chọn câu hỏi mặc định' : 'Ẩn danh sách'}
+                </button>
+                {selectedDefaultQuestion && (
                   <button
-                    key={t.value}
-                    className={`kaiwa-topic-btn ${topic === t.value ? 'active' : ''}`}
-                    onClick={() => setTopic(t.value)}
+                    className="kaiwa-clear-selection-btn"
+                    onClick={() => {
+                      setSelectedDefaultQuestion(null);
+                      setQuestionSelectorState({ type: 'hidden' });
+                    }}
                   >
-                    <span className="topic-icon">{t.icon}</span>
-                    <span className="topic-label">{t.label}</span>
+                    <X size={14} /> Bỏ chọn
                   </button>
-                ))}
+                )}
+              </div>
+
+              {/* Selected question preview */}
+              {selectedDefaultQuestion && (
+                <div className="kaiwa-selected-question-preview">
+                  <div className="selected-question-badges">
+                    <span className="badge">{selectedDefaultQuestion.level}</span>
+                    <span className="badge">{CONVERSATION_TOPICS.find(t => t.value === selectedDefaultQuestion.topic)?.label}</span>
+                    <span className="badge">{CONVERSATION_STYLES.find(s => s.value === selectedDefaultQuestion.style)?.label}</span>
+                  </div>
+                  <p className="selected-question-text">{selectedDefaultQuestion.questionJa}</p>
+                  {selectedDefaultQuestion.questionVi && (
+                    <p className="selected-question-vi">{selectedDefaultQuestion.questionVi}</p>
+                  )}
+                  {selectedDefaultQuestion.situationContext && (
+                    <p className="selected-question-context">📍 {selectedDefaultQuestion.situationContext}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Question selector navigation */}
+              {questionSelectorState.type !== 'hidden' && (
+                <div className="kaiwa-question-selector">
+                  {/* Breadcrumb */}
+                  <div className="selector-breadcrumb">
+                    {questionSelectorState.type === 'level' && (
+                      <span>Chọn cấp độ</span>
+                    )}
+                    {questionSelectorState.type === 'topic' && (
+                      <>
+                        <button onClick={() => setQuestionSelectorState({ type: 'level' })}>
+                          <ArrowLeft size={14} />
+                        </button>
+                        <span>{questionSelectorState.level}</span>
+                        <ChevronRight size={14} />
+                        <span>Chọn chủ đề</span>
+                      </>
+                    )}
+                    {questionSelectorState.type === 'list' && (
+                      <>
+                        <button onClick={() => setQuestionSelectorState({ type: 'topic', level: questionSelectorState.level })}>
+                          <ArrowLeft size={14} />
+                        </button>
+                        <span>{questionSelectorState.level}</span>
+                        <ChevronRight size={14} />
+                        <span>{CONVERSATION_TOPICS.find(t => t.value === questionSelectorState.topic)?.label}</span>
+                        {questionSelectorState.folderName && (
+                          <>
+                            <ChevronRight size={14} />
+                            <span>{questionSelectorState.folderName}</span>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {/* Level selection */}
+                  {questionSelectorState.type === 'level' && (
+                    <div className="selector-grid levels">
+                      {JLPT_LEVELS.map(l => (
+                        <button
+                          key={l.value}
+                          className="selector-item level"
+                          onClick={() => setQuestionSelectorState({ type: 'topic', level: l.value })}
+                        >
+                          {l.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Topic selection */}
+                  {questionSelectorState.type === 'topic' && (
+                    <div className="selector-grid topics">
+                      {CONVERSATION_TOPICS.filter(t => t.value !== 'free').map(t => (
+                        <button
+                          key={t.value}
+                          className="selector-item topic"
+                          onClick={() => setQuestionSelectorState({
+                            type: 'list',
+                            level: questionSelectorState.level,
+                            topic: t.value,
+                          })}
+                        >
+                          <span className="topic-icon">{t.icon}</span>
+                          <span className="topic-label">{t.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Question list */}
+                  {questionSelectorState.type === 'list' && (
+                    <div className="selector-question-list">
+                      {/* Show folders if not inside a folder */}
+                      {!questionSelectorState.folderId && getFoldersForSelector().length > 0 && (
+                        <div className="selector-folders">
+                          {getFoldersForSelector().map(folder => (
+                            <button
+                              key={folder.id}
+                              className="selector-folder-btn"
+                              onClick={() => setQuestionSelectorState({
+                                ...questionSelectorState,
+                                folderId: folder.id,
+                                folderName: folder.name,
+                              })}
+                            >
+                              <Folder size={16} />
+                              <span>{folder.name}</span>
+                              <ChevronRight size={14} />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Show questions */}
+                      <div className="selector-questions">
+                        {getQuestionsForSelector().map(q => (
+                          <button
+                            key={q.id}
+                            className={`selector-question-btn ${selectedDefaultQuestion?.id === q.id ? 'selected' : ''}`}
+                            onClick={() => {
+                              setSelectedDefaultQuestion(q);
+                              setLevel(q.level);
+                              setStyle(q.style);
+                              setTopic(q.topic);
+                              setQuestionSelectorState({ type: 'hidden' });
+                            }}
+                          >
+                            <FileText size={14} />
+                            <div className="question-content">
+                              <span className="question-ja">{q.questionJa}</span>
+                              {q.questionVi && <span className="question-vi">{q.questionVi}</span>}
+                            </div>
+                          </button>
+                        ))}
+                        {getQuestionsForSelector().length === 0 && (
+                          <p className="no-questions">Chưa có câu hỏi nào trong mục này</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Free conversation setup (only show if no default question selected) */}
+          {!selectedDefaultQuestion && (
+            <div className="kaiwa-setup">
+              <div className="kaiwa-setup-row">
+                <div className="kaiwa-setup-item">
+                  <label>Cấp độ JLPT</label>
+                  <select value={level} onChange={e => setLevel(e.target.value as JLPTLevel)}>
+                    {JLPT_LEVELS.map(l => (
+                      <option key={l.value} value={l.value}>{l.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="kaiwa-setup-item">
+                  <label>Phong cách nói</label>
+                  <select value={style} onChange={e => setStyle(e.target.value as ConversationStyle)}>
+                    {CONVERSATION_STYLES.map(s => (
+                      <option key={s.value} value={s.value}>{s.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="kaiwa-setup-item kaiwa-topic-section">
+                <label>Chủ đề hội thoại</label>
+                <div className="kaiwa-topic-grid">
+                  {CONVERSATION_TOPICS.map(t => (
+                    <button
+                      key={t.value}
+                      className={`kaiwa-topic-btn ${topic === t.value ? 'active' : ''}`}
+                      onClick={() => setTopic(t.value)}
+                    >
+                      <span className="topic-icon">{t.icon}</span>
+                      <span className="topic-label">{t.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
+          )}
 
-            <div className="kaiwa-setup-item kaiwa-options-row">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={slowMode}
-                  onChange={e => setSlowMode(e.target.checked)}
-                />
-                Chế độ chậm (luyện nghe)
-              </label>
-              <span className="kaiwa-voice-info">
-                Giọng: {settings.kaiwaVoiceGender === 'female' ? 'Nữ' : 'Nam'}
-              </span>
-            </div>
+          <div className="kaiwa-setup-item kaiwa-options-row">
+            <label>
+              <input
+                type="checkbox"
+                checked={slowMode}
+                onChange={e => setSlowMode(e.target.checked)}
+              />
+              Chế độ chậm (luyện nghe)
+            </label>
+            <span className="kaiwa-voice-info">
+              Giọng: {settings.kaiwaVoiceGender === 'female' ? 'Nữ' : 'Nam'}
+            </span>
           </div>
 
           {!speech.recognitionSupported && (
@@ -380,8 +691,9 @@ export function KaiwaPage({ settings }: KaiwaPageProps) {
           )}
 
           <button className="btn btn-primary btn-large" onClick={handleStart}>
-            Bắt đầu hội thoại
+            {selectedDefaultQuestion ? 'Bắt đầu với câu hỏi đã chọn' : 'Bắt đầu hội thoại'}
           </button>
+        </div>
         </div>
       </div>
     );
@@ -393,6 +705,7 @@ export function KaiwaPage({ settings }: KaiwaPageProps) {
   // Render conversation screen
   return (
     <div className="kaiwa-page">
+      <div className="kaiwa-container">
       <div className="kaiwa-header">
         <div className="kaiwa-header-left">
           <h2>会話練習</h2>
@@ -404,15 +717,15 @@ export function KaiwaPage({ settings }: KaiwaPageProps) {
         </div>
         <div className="kaiwa-header-center">
           <div className="kaiwa-stats">
-            <span className="kaiwa-stat" title="Số lượt trao đổi">💬 {conversationStats.exchanges}</span>
-            <span className="kaiwa-stat" title="Thời gian">⏱️ {conversationStats.duration}m</span>
+            <span className="kaiwa-stat" title="Số lượt trao đổi"><MessageCircle size={14} /> {conversationStats.exchanges}</span>
+            <span className="kaiwa-stat" title="Thời gian"><Clock size={14} /> {conversationStats.duration}m</span>
             {savedSentences.length > 0 && (
               <button
                 className={`kaiwa-stat saved ${showSavedPanel ? 'active' : ''}`}
                 onClick={() => setShowSavedPanel(!showSavedPanel)}
                 title="Xem câu đã lưu"
               >
-                ⭐ {savedSentences.length}
+                <Bookmark size={14} /> {savedSentences.length}
               </button>
             )}
           </div>
@@ -424,14 +737,14 @@ export function KaiwaPage({ settings }: KaiwaPageProps) {
             disabled={groq.isLoading}
             title="Bắt đầu lại từ đầu"
           >
-            🔄 Lại từ đầu
+            <RefreshCw size={14} /> Lại từ đầu
           </button>
           <button
             className={`kaiwa-slow-btn ${slowMode ? 'active' : ''}`}
             onClick={() => setSlowMode(!slowMode)}
             title={slowMode ? 'Tắt chế độ chậm' : 'Bật chế độ chậm'}
           >
-            🐢 {slowMode ? 'Chậm' : 'Thường'}
+            <Turtle size={14} /> {slowMode ? 'Chậm' : 'Thường'}
           </button>
           <button
             className={`kaiwa-furigana-btn ${showFurigana ? 'active' : ''}`}
@@ -457,7 +770,7 @@ export function KaiwaPage({ settings }: KaiwaPageProps) {
               A+
             </button>
           </div>
-          <button className="btn btn-secondary btn-small" onClick={handleEnd}>
+          <button className="btn btn-danger btn-small kaiwa-end-btn" onClick={handleEnd}>
             Kết thúc
           </button>
         </div>
@@ -522,8 +835,8 @@ export function KaiwaPage({ settings }: KaiwaPageProps) {
       {showSavedPanel && savedSentences.length > 0 && (
         <div className="kaiwa-saved-panel">
           <div className="kaiwa-saved-header">
-            <h3>⭐ Câu đã lưu ({savedSentences.length})</h3>
-            <button className="kaiwa-saved-close" onClick={() => setShowSavedPanel(false)}>✕</button>
+            <h3><BookmarkCheck size={16} /> Câu đã lưu ({savedSentences.length})</h3>
+            <button className="kaiwa-saved-close" onClick={() => setShowSavedPanel(false)}><X size={16} /></button>
           </div>
           <div className="kaiwa-saved-list">
             {savedSentences.map((sentence, idx) => (
@@ -537,7 +850,7 @@ export function KaiwaPage({ settings }: KaiwaPageProps) {
                     onClick={() => speech.speak(removeFurigana(sentence), { rate: getSpeechRate() })}
                     title="Nghe"
                   >
-                    🔊
+                    <Volume2 size={14} />
                   </button>
                   <button
                     className="kaiwa-saved-btn"
@@ -546,14 +859,14 @@ export function KaiwaPage({ settings }: KaiwaPageProps) {
                     }}
                     title="Sao chép"
                   >
-                    📋
+                    <Copy size={14} />
                   </button>
                   <button
                     className="kaiwa-saved-btn delete"
                     onClick={() => setSavedSentences(prev => prev.filter((_, i) => i !== idx))}
                     title="Xóa"
                   >
-                    🗑️
+                    <Trash2 size={14} />
                   </button>
                 </div>
               </div>
@@ -562,36 +875,89 @@ export function KaiwaPage({ settings }: KaiwaPageProps) {
         </div>
       )}
 
-      {/* Bottom section: template + questions + input */}
+      {/* Bottom section: tabs + input */}
       <div className="kaiwa-bottom-section">
-        {/* Answer Template with vocabulary hints */}
-        {answerTemplate && !isPracticeMode && (
-          <KaiwaAnswerTemplate
-            template={answerTemplate}
-            showFurigana={showFurigana}
-            onSelectHint={handleSelectHint}
-          />
-        )}
+        {/* Suggestion tabs - controlled by button in input area */}
+        {!isPracticeMode && showSuggestionTabs && (answerTemplate || suggestedAnswers.length > 0 || suggestedQuestions.length > 0) && (
+          <div className="kaiwa-suggestion-tabs">
+            <div className="kaiwa-tabs-row">
+                {answerTemplate && (
+                  <button
+                    className={`kaiwa-tab-btn ${activeSuggestionTab === 'template' ? 'active' : ''}`}
+                    onClick={() => setActiveSuggestionTab(activeSuggestionTab === 'template' ? null : 'template')}
+                  >
+                    <span className="tab-icon"><Lightbulb size={16} /></span>
+                    <span className="tab-label">Gợi ý trả lời</span>
+                  </button>
+                )}
+                {suggestedAnswers.length > 0 && (
+                  <button
+                    className={`kaiwa-tab-btn ${activeSuggestionTab === 'answers' ? 'active' : ''}`}
+                    onClick={() => setActiveSuggestionTab(activeSuggestionTab === 'answers' ? null : 'answers')}
+                  >
+                    <span className="tab-icon"><MessageCircle size={16} /></span>
+                    <span className="tab-label">Câu trả lời mẫu</span>
+                  </button>
+                )}
+                {suggestedQuestions.length > 0 && (
+                  <button
+                    className={`kaiwa-tab-btn ${activeSuggestionTab === 'questions' ? 'active' : ''}`}
+                    onClick={() => setActiveSuggestionTab(activeSuggestionTab === 'questions' ? null : 'questions')}
+                  >
+                    <span className="tab-icon"><HelpCircle size={16} /></span>
+                    <span className="tab-label">Gợi ý câu hỏi</span>
+                  </button>
+                )}
+              </div>
 
-        {/* Suggested questions to ask AI back */}
-        {suggestedQuestions.length > 0 && !isPracticeMode && (
-          <div className="kaiwa-questions-box">
-            <div className="kaiwa-questions-header">
-              <span className="kaiwa-questions-icon">❓</span>
-              <span className="kaiwa-questions-title">Hỏi lại AI</span>
-            </div>
-            <div className="kaiwa-questions-list">
-              {suggestedQuestions.map((question, idx) => (
-                <button
-                  key={idx}
-                  className="kaiwa-question-btn"
-                  onClick={() => handleSuggestedQuestion(question)}
-                  disabled={groq.isLoading}
-                >
-                  <FuriganaText text={question} showFurigana={showFurigana} />
-                </button>
-              ))}
-            </div>
+            {/* Tab content - only show when tabs are visible */}
+            {showSuggestionTabs && (
+              <>
+                {activeSuggestionTab === 'template' && answerTemplate && (
+                  <div className="kaiwa-tab-content">
+                    <KaiwaAnswerTemplate
+                      template={answerTemplate}
+                      showFurigana={showFurigana}
+                      onSelectHint={handleSelectHint}
+                    />
+                  </div>
+                )}
+
+                {activeSuggestionTab === 'answers' && suggestedAnswers.length > 0 && (
+                  <div className="kaiwa-tab-content">
+                    <div className="kaiwa-suggestions-list">
+                      {suggestedAnswers.map((suggestion) => (
+                        <button
+                          key={suggestion.id}
+                          className={`kaiwa-suggestion-btn ${inputText.includes(removeFurigana(suggestion.text.replace(/【[^】]+】/g, '').trim()).substring(0, 20)) ? 'selected' : ''}`}
+                          onClick={() => handleSuggestedAnswer(suggestion.text)}
+                          disabled={groq.isLoading}
+                        >
+                          <FuriganaText text={suggestion.text} showFurigana={showFurigana} />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {activeSuggestionTab === 'questions' && suggestedQuestions.length > 0 && (
+                  <div className="kaiwa-tab-content">
+                    <div className="kaiwa-questions-list">
+                      {suggestedQuestions.map((question, idx) => (
+                        <button
+                          key={idx}
+                          className="kaiwa-question-btn"
+                          onClick={() => handleSuggestedQuestion(question)}
+                          disabled={groq.isLoading}
+                        >
+                          <FuriganaText text={question} showFurigana={showFurigana} />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
 
@@ -599,35 +965,19 @@ export function KaiwaPage({ settings }: KaiwaPageProps) {
         {(groq.error || speech.error) && (
           <div className="kaiwa-error">
             {groq.error || speech.error}
-            <button onClick={() => { groq.clearError(); speech.clearError(); }}>✕</button>
-          </div>
-        )}
-
-        {/* Quick phrases toggle */}
-        {showQuickPhrases && (
-          <div className="kaiwa-quick-phrases">
-            {QUICK_PHRASES.map((phrase, idx) => (
-              <button
-                key={idx}
-                className="kaiwa-quick-btn"
-                onClick={() => handleSend(phrase.text)}
-                disabled={groq.isLoading}
-              >
-                <span className="quick-jp">{phrase.text}</span>
-                <span className="quick-vi">{phrase.label}</span>
-              </button>
-            ))}
+            <button onClick={() => { groq.clearError(); speech.clearError(); }}><X size={16} /></button>
           </div>
         )}
 
         {/* Input controls */}
         <div className="kaiwa-controls">
           <button
-            className={`kaiwa-quick-toggle ${showQuickPhrases ? 'active' : ''}`}
-            onClick={() => setShowQuickPhrases(!showQuickPhrases)}
-            title="Câu nói nhanh"
+            className={`kaiwa-quick-toggle ${showSuggestionTabs ? 'active' : ''}`}
+            onClick={() => setShowSuggestionTabs(!showSuggestionTabs)}
+            title="Gợi ý"
+            disabled={!answerTemplate && suggestedAnswers.length === 0 && suggestedQuestions.length === 0}
           >
-            ⚡
+            <Lightbulb size={18} />
           </button>
 
           {speech.recognitionSupported && (
@@ -636,7 +986,7 @@ export function KaiwaPage({ settings }: KaiwaPageProps) {
               onClick={handleMicClick}
               disabled={groq.isLoading}
             >
-              {speech.isListening ? '🔴' : '🎤'}
+              <Mic size={18} />
             </button>
           )}
 
@@ -660,17 +1010,18 @@ export function KaiwaPage({ settings }: KaiwaPageProps) {
             onClick={() => handleSend(inputText)}
             disabled={!inputText.trim() || groq.isLoading}
           >
-            Gửi
+            <Send size={18} />
           </button>
         </div>
 
         {/* Voice status */}
         {(speech.isListening || speech.isSpeaking) && (
           <div className="kaiwa-status">
-            {speech.isListening && <span className="status-listening">🎤 Đang nghe...</span>}
-            {speech.isSpeaking && <span className="status-speaking">🔊 Đang nói...</span>}
+            {speech.isListening && <span className="status-listening"><Mic size={14} /> Đang nghe...</span>}
+            {speech.isSpeaking && <span className="status-speaking"><Volume2 size={14} /> Đang nói...</span>}
           </div>
         )}
+      </div>
       </div>
     </div>
   );

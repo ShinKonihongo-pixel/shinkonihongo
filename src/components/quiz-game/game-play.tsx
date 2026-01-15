@@ -17,6 +17,8 @@ interface GamePlayProps {
   onContinueFromLeaderboard: () => Promise<void>;
   onUsePowerUp: (type: PowerUpType, targetId?: string) => Promise<boolean>;
   onLeaveGame: () => Promise<void>;
+  gameQuestionFontSize?: number;
+  gameAnswerFontSize?: number;
 }
 
 export function GamePlay({
@@ -32,6 +34,8 @@ export function GamePlay({
   onContinueFromLeaderboard,
   onUsePowerUp,
   onLeaveGame,
+  gameQuestionFontSize = 8,
+  gameAnswerFontSize = 1.1,
 }: GamePlayProps) {
   const [timeLeft, setTimeLeft] = useState(currentQuestion.timeLimit);
   const [selectedPowerUp, setSelectedPowerUp] = useState<PowerUpType | null>(null);
@@ -180,21 +184,25 @@ export function GamePlay({
 
     return (
       <div className="quiz-game-page">
+        {/* Timer centered at top */}
+        <div className={`game-timer-center ${timeLeft <= 5 ? 'timer-warning' : ''}`}>
+          {effectiveTime}
+          {hasTimeFreeze && <span className="time-bonus">+5s</span>}
+        </div>
+
         <div className="game-question">
-          <div className="question-header">
+          <div className="question-header-combined">
             <span className="round-info">
               Câu {game.currentRound + 1}/{game.totalRounds}
               {currentQuestion.isSpecialRound && <span className="special-badge">Special!</span>}
             </span>
-            <div className={`timer ${timeLeft <= 5 ? 'timer-warning' : ''}`}>
-              {effectiveTime}s
-              {hasTimeFreeze && <span className="time-bonus">+5s</span>}
-            </div>
             <span className="score-info">Điểm: {currentPlayer?.score || 0}</span>
           </div>
 
           <div className="question-content">
-            <h2 className="question-text">{currentQuestion.question}</h2>
+            <h2 className="question-text" style={{ fontSize: `${gameQuestionFontSize}rem` }}>
+              {currentQuestion.question}
+            </h2>
           </div>
 
           {isBlocked ? (
@@ -210,6 +218,7 @@ export function GamePlay({
                     currentPlayer?.currentAnswer === index ? 'selected' : ''
                   } ${hasAnswered ? 'disabled' : ''}`}
                   onClick={() => !hasAnswered && onSubmitAnswer(index)}
+                  style={{ fontSize: `${gameAnswerFontSize}rem` }}
                   disabled={hasAnswered}
                 >
                   {option}

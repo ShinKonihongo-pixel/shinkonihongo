@@ -12,6 +12,7 @@ export interface User {
   avatar?: string; // Avatar URL or emoji
   profileBackground?: string; // Profile background gradient/color
   vipExpirationDate?: string; // VIP expiration date (YYYY-MM-DD), auto convert to user when expired
+  createdBy?: string; // ID of admin who created this user
   createdAt: string;
 }
 

@@ -1,9 +1,12 @@
-// Admin dashboard for user management and lesson locking
+// Admin dashboard for user management, lesson locking, and lecture management
 
 import { useState } from 'react';
 import type { User, UserRole } from '../../types/user';
 import type { Lesson, JLPTLevel } from '../../types/flashcard';
+import type { Lecture } from '../../types/lecture';
 import { ConfirmModal } from '../ui/confirm-modal';
+import { useLectures } from '../../hooks/use-lectures';
+import { LectureCard } from '../lecture/lecture-card';
 
 interface AdminPageProps {
   users: User[];
@@ -16,6 +19,7 @@ interface AdminPageProps {
   onToggleLock: (lessonId: string) => void;
   getLessonsByLevel: (level: JLPTLevel) => Lesson[];
   getChildLessons: (parentId: string) => Lesson[];
+  onNavigateToLectureEditor?: (lectureId?: string) => void;
 }
 
 const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
@@ -31,9 +35,26 @@ export function AdminPage({
   onToggleLock,
   getLessonsByLevel,
   getChildLessons,
+  onNavigateToLectureEditor,
 }: AdminPageProps) {
   const isSuperAdmin = currentUserRole === 'super_admin';
-  const [activeTab, setActiveTab] = useState<'users' | 'lessons'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'lessons' | 'lectures'>('users');
+
+  // Lectures management
+  const { lectures, loading: lecturesLoading, deleteLecture } = useLectures(true);
+  const [deleteLectureTarget, setDeleteLectureTarget] = useState<Lecture | null>(null);
+  const [lectureFilterLevel, setLectureFilterLevel] = useState<JLPTLevel | 'all'>('all');
+  const [lectureSearchQuery, setLectureSearchQuery] = useState('');
+
+  // Filter lectures
+  const filteredLectures = lectures.filter((lecture) => {
+    const matchLevel = lectureFilterLevel === 'all' || lecture.jlptLevel === lectureFilterLevel;
+    const matchSearch =
+      !lectureSearchQuery ||
+      lecture.title.toLowerCase().includes(lectureSearchQuery.toLowerCase()) ||
+      lecture.description?.toLowerCase().includes(lectureSearchQuery.toLowerCase());
+    return matchLevel && matchSearch;
+  });
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -78,6 +99,12 @@ export function AdminPage({
           onClick={() => setActiveTab('lessons')}
         >
           Quản lí bài học
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'lectures' ? 'active' : ''}`}
+          onClick={() => setActiveTab('lectures')}
+        >
+          Quản lí bài giảng ({lectures.length})
         </button>
       </div>
 
@@ -281,6 +308,63 @@ export function AdminPage({
         </div>
       )}
 
+      {activeTab === 'lectures' && (
+        <div className="admin-lectures">
+          <div className="admin-actions">
+            <button
+              className="btn btn-primary"
+              onClick={() => onNavigateToLectureEditor?.()}
+            >
+              + Tạo bài giảng mới
+            </button>
+          </div>
+
+          <div className="lecture-filters" style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
+            <input
+              type="text"
+              placeholder="Tìm kiếm bài giảng..."
+              value={lectureSearchQuery}
+              onChange={(e) => setLectureSearchQuery(e.target.value)}
+              className="search-input"
+              style={{ flex: 1 }}
+            />
+            <select
+              value={lectureFilterLevel}
+              onChange={(e) => setLectureFilterLevel(e.target.value as JLPTLevel | 'all')}
+              className="filter-select"
+            >
+              <option value="all">Tất cả level</option>
+              <option value="N5">N5</option>
+              <option value="N4">N4</option>
+              <option value="N3">N3</option>
+              <option value="N2">N2</option>
+              <option value="N1">N1</option>
+            </select>
+          </div>
+
+          {lecturesLoading ? (
+            <div className="loading-state">Đang tải...</div>
+          ) : filteredLectures.length === 0 ? (
+            <div className="empty-state" style={{ padding: '2rem', textAlign: 'center' }}>
+              <p>Chưa có bài giảng nào</p>
+            </div>
+          ) : (
+            <div className="lecture-grid" style={{ marginTop: '1rem' }}>
+              {filteredLectures.map((lecture) => (
+                <LectureCard
+                  key={lecture.id}
+                  lecture={lecture}
+                  onClick={() => onNavigateToLectureEditor?.(lecture.id)}
+                  onEdit={() => onNavigateToLectureEditor?.(lecture.id)}
+                  onDelete={() => setDeleteLectureTarget(lecture)}
+                  showActions={true}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <ConfirmModal
         isOpen={deleteUserTarget !== null}
         title="Xác nhận xóa người dùng"
@@ -293,6 +377,20 @@ export function AdminPage({
           }
         }}
         onCancel={() => setDeleteUserTarget(null)}
+      />
+
+      <ConfirmModal
+        isOpen={deleteLectureTarget !== null}
+        title="Xác nhận xóa bài giảng"
+        message={`Bạn có chắc muốn xóa bài giảng "${deleteLectureTarget?.title || ''}"?`}
+        confirmText="Xóa"
+        onConfirm={async () => {
+          if (deleteLectureTarget) {
+            await deleteLecture(deleteLectureTarget.id);
+            setDeleteLectureTarget(null);
+          }
+        }}
+        onCancel={() => setDeleteLectureTarget(null)}
       />
     </div>
   );

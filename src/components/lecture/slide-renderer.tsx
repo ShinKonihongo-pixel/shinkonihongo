@@ -1,10 +1,12 @@
 // Slide renderer component for displaying slide content
 
-import type { Slide, SlideElement } from '../../types/lecture';
+import { useEffect, useState, useRef } from 'react';
+import type { Slide, SlideElement, SlideAnimation, SlideTransition } from '../../types/lecture';
 
 interface SlideRendererProps {
   slide: Slide;
   isPresenting?: boolean;
+  slideKey?: string | number; // Used to trigger transition animation on slide change
 }
 
 function ElementRenderer({ element }: { element: SlideElement }) {
@@ -73,7 +75,37 @@ function ElementRenderer({ element }: { element: SlideElement }) {
   }
 }
 
-export function SlideRenderer({ slide, isPresenting = false }: SlideRendererProps) {
+// Helper function to get animation class name
+function getAnimationClass(animation: SlideAnimation | undefined): string {
+  if (!animation || animation === 'none') return '';
+  return `slide-animation-${animation}`;
+}
+
+// Helper function to get transition class name
+function getTransitionClass(transition: SlideTransition | undefined): string {
+  if (!transition || transition === 'none') return '';
+  return `slide-transition-${transition}`;
+}
+
+export function SlideRenderer({ slide, isPresenting = false, slideKey }: SlideRendererProps) {
+  const [isAnimating, setIsAnimating] = useState(false);
+  const prevKeyRef = useRef(slideKey);
+
+  // Trigger animation when slide changes
+  useEffect(() => {
+    if (slideKey !== prevKeyRef.current) {
+      setIsAnimating(true);
+      prevKeyRef.current = slideKey;
+
+      // Reset animation state after animation completes
+      const timeout = setTimeout(() => {
+        setIsAnimating(false);
+      }, (slide.animationDuration || 500) + 100);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [slideKey, slide.animationDuration]);
+
   const containerStyle: React.CSSProperties = {
     position: 'relative',
     width: '100%',
@@ -82,7 +114,9 @@ export function SlideRenderer({ slide, isPresenting = false }: SlideRendererProp
     backgroundImage: slide.backgroundImage ? `url(${slide.backgroundImage})` : undefined,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
-  };
+    '--animation-duration': `${slide.animationDuration || 500}ms`,
+    '--transition-duration': `${slide.animationDuration || 500}ms`,
+  } as React.CSSProperties;
 
   // Layout-specific rendering
   const renderLayout = () => {
@@ -192,12 +226,19 @@ export function SlideRenderer({ slide, isPresenting = false }: SlideRendererProp
     }
   };
 
+  // Build class names for animations
+  const transitionClass = isAnimating ? getTransitionClass(slide.transition) : '';
+  const animationClass = isAnimating ? getAnimationClass(slide.animation) : '';
+
   return (
     <div
-      className={`slide-container ${isPresenting ? 'presenting' : ''}`}
+      className={`slide-container ${isPresenting ? 'presenting' : ''} ${transitionClass}`}
       style={containerStyle}
+      key={slideKey}
     >
-      {renderLayout()}
+      <div className={`slide-content-wrapper ${animationClass}`}>
+        {renderLayout()}
+      </div>
     </div>
   );
 }

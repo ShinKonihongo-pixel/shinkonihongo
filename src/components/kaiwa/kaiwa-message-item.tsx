@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { KaiwaMessage } from '../../types/kaiwa';
 import { FuriganaText } from '../common/furigana-text';
 import { removeFurigana } from '../../lib/furigana-utils';
+import { Volume2, Square, Turtle, BookOpen, Copy, Check, Bookmark, Languages, Bot, User, Loader } from 'lucide-react';
 
 interface KaiwaMessageItemProps {
   message: KaiwaMessage;
@@ -68,7 +69,7 @@ export function KaiwaMessageItem({
   return (
     <div className={`kaiwa-message ${message.role}`}>
       <div className="kaiwa-message-avatar">
-        {isAssistant ? '🤖' : '👤'}
+        {isAssistant ? <Bot size={20} /> : <User size={20} />}
       </div>
       <div className="kaiwa-message-content">
         <p className="kaiwa-message-text" style={{ fontSize: `${fontSize}px` }}>
@@ -88,35 +89,35 @@ export function KaiwaMessageItem({
               disabled={isTranslating}
               title={showTranslation ? 'Ẩn dịch' : 'Dịch nhanh'}
             >
-              {isTranslating ? '⏳' : '🇻🇳'}
+              {isTranslating ? <Loader size={14} className="spin" /> : <Languages size={14} />}
             </button>
             <button
               className={`kaiwa-action-btn ${isSpeakingNormal ? 'active' : ''}`}
               onClick={() => onSpeak(message.id, removeFurigana(message.content), 'normal')}
               title="Nghe"
             >
-              {isSpeakingNormal ? '⏹️' : '🔊'}
+              {isSpeakingNormal ? <Square size={14} /> : <Volume2 size={14} />}
             </button>
             <button
               className={`kaiwa-action-btn ${isSpeakingSlow ? 'active' : ''}`}
               onClick={() => onSpeak(message.id, removeFurigana(message.content), 'slow')}
               title="Nghe chậm"
             >
-              {isSpeakingSlow ? '⏹️' : '🐢'}
+              {isSpeakingSlow ? <Square size={14} /> : <Turtle size={14} />}
             </button>
             <button
               className="kaiwa-action-btn"
               onClick={() => onAnalyze(message.content)}
               title="Phân tích ngữ pháp"
             >
-              📖
+              <BookOpen size={14} />
             </button>
             <button
               className={`kaiwa-action-btn ${copied ? 'active' : ''}`}
               onClick={handleCopy}
               title={copied ? 'Đã sao chép!' : 'Sao chép'}
             >
-              {copied ? '✓' : '📋'}
+              {copied ? <Check size={14} /> : <Copy size={14} />}
             </button>
             {onSaveSentence && (
               <button
@@ -124,7 +125,7 @@ export function KaiwaMessageItem({
                 onClick={() => onSaveSentence(message.content)}
                 title="Lưu câu này"
               >
-                ⭐
+                <Bookmark size={14} />
               </button>
             )}
           </div>

@@ -253,6 +253,10 @@ export async function createGame(
     roundStartTime: null,
     createdAt: new Date().toISOString(),
     settings,
+    // Metadata for display in lobby
+    source: data.source,
+    jlptLevels: data.source === 'jlpt' ? data.jlptLevels : undefined,
+    lessonNames: data.source === 'flashcards' ? data.lessonNames : undefined,
   };
 
   const docRef = await addDoc(collection(db, COLLECTIONS.GAMES), game);
@@ -275,6 +279,28 @@ export async function getGameByCode(code: string): Promise<QuizGame | null> {
   if (snapshot.empty) return null;
   const docSnap = snapshot.docs[0];
   return { id: docSnap.id, ...docSnap.data() } as QuizGame;
+}
+
+// Get all available rooms (waiting status) for joining
+export async function getAvailableRooms(): Promise<QuizGame[]> {
+  const q = query(
+    collection(db, COLLECTIONS.GAMES),
+    where('status', '==', 'waiting')
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as QuizGame));
+}
+
+// Subscribe to available rooms (real-time updates)
+export function subscribeToAvailableRooms(callback: (games: QuizGame[]) => void): Unsubscribe {
+  const q = query(
+    collection(db, COLLECTIONS.GAMES),
+    where('status', '==', 'waiting')
+  );
+  return onSnapshot(q, (snapshot) => {
+    const games = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as QuizGame));
+    callback(games);
+  });
 }
 
 export function subscribeToGame(gameId: string, callback: (game: QuizGame | null) => void): Unsubscribe {
@@ -319,9 +345,9 @@ export async function joinGame(
     return { game, error: 'Game đã đầy' };
   }
 
-  // Check if player already in game
+  // If player already in game, allow rejoin (no error)
   if (game.players[playerId]) {
-    return { game, error: 'Bạn đã trong game' };
+    return { game };
   }
 
   const newPlayer: GamePlayer = {
@@ -500,16 +526,6 @@ export async function nextRound(gameId: string, hostId: string): Promise<void> {
     return;
   }
 
-  // Reset player answers for next round
-  const resetPlayers = { ...game.players };
-  for (const playerId of Object.keys(resetPlayers)) {
-    resetPlayers[playerId] = {
-      ...resetPlayers[playerId],
-      currentAnswer: null,
-      answerTime: null,
-    };
-  }
-
   let nextStatus: GameStatus;
   if (isSpecialRound) {
     nextStatus = 'power_up';
@@ -519,11 +535,24 @@ export async function nextRound(gameId: string, hostId: string): Promise<void> {
     nextStatus = 'question';
   }
 
+  // Only reset player answers if NOT going to power_up phase
+  // Power-up phase needs currentAnswer to check who answered correctly
+  const updatedPlayers = { ...game.players };
+  if (nextStatus !== 'power_up') {
+    for (const playerId of Object.keys(updatedPlayers)) {
+      updatedPlayers[playerId] = {
+        ...updatedPlayers[playerId],
+        currentAnswer: null,
+        answerTime: null,
+      };
+    }
+  }
+
   await updateGame(gameId, {
     status: nextStatus,
     currentRound: nextStatus === 'question' ? game.currentRound + 1 : game.currentRound,
     roundStartTime: nextStatus === 'question' ? Date.now() : null,
-    players: resetPlayers,
+    players: updatedPlayers,
   });
 }
 
@@ -531,10 +560,20 @@ export async function continueFromSpecial(gameId: string, hostId: string): Promi
   const game = await getGame(gameId);
   if (!game || game.hostId !== hostId || game.status !== 'power_up') return;
 
+  // Reset player answers when leaving power-up phase
+  const resetPlayers = { ...game.players };
+  for (const playerId of Object.keys(resetPlayers)) {
+    resetPlayers[playerId] = {
+      ...resetPlayers[playerId],
+      currentAnswer: null,
+      answerTime: null,
+    };
+  }
+
   const showLeaderboard = (game.currentRound + 1) % game.settings.showLeaderboardEvery === 0;
 
   if (showLeaderboard) {
-    await updateGame(gameId, { status: 'leaderboard' });
+    await updateGame(gameId, { status: 'leaderboard', players: resetPlayers });
   } else {
     await startNextQuestion(gameId);
   }

@@ -78,6 +78,10 @@ export interface QuizGame {
   roundStartTime: number | null; // Timestamp khi round bắt đầu
   createdAt: string;
   settings: GameSettings;
+  // Metadata for display
+  source?: GameQuestionSource;  // Nguồn câu hỏi
+  jlptLevels?: string[];        // Các level JLPT đã chọn
+  lessonNames?: string[];       // Tên các bài học đã chọn
 }
 
 export interface GameSettings {
@@ -113,6 +117,7 @@ export interface CreateGameData {
   title: string;
   source: GameQuestionSource;   // Nguồn câu hỏi
   lessonIds: string[];          // Lessons to pick questions from (flashcards)
+  lessonNames?: string[];       // Tên các bài học đã chọn (flashcards)
   jlptLevels?: string[];        // JLPT levels to pick from (jlpt)
   jlptCategories?: string[];    // JLPT categories to pick from (jlpt)
   totalRounds: number;          // 20-50

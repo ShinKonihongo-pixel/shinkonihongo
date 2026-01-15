@@ -1,5 +1,7 @@
 // Analysis modal for Kaiwa - shows translation and grammar breakdown
 
+import { BookOpen, X } from 'lucide-react';
+
 interface KaiwaAnalysisModalProps {
   text: string;
   result: string | null;
@@ -16,7 +18,7 @@ export function KaiwaAnalysisModal({
   return (
     <div className="kaiwa-analysis-overlay">
       <div className="kaiwa-analysis-modal">
-        <h3>📖 Dịch & Phân tích</h3>
+        <h3><BookOpen size={18} /> Dịch & Phân tích</h3>
         <p className="kaiwa-analysis-original">{text}</p>
 
         {isLoading ? (
@@ -33,7 +35,7 @@ export function KaiwaAnalysisModal({
         ) : null}
 
         <button className="kaiwa-analysis-close" onClick={onClose}>
-          ✕
+          <X size={16} />
         </button>
       </div>
     </div>

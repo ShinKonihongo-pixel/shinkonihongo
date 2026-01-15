@@ -1,6 +1,7 @@
 // Pronunciation practice modal for Kaiwa
 
 import type { SuggestedAnswer, PronunciationResult } from '../../types/kaiwa';
+import { Mic, Volume2, X, RefreshCw, Send } from 'lucide-react';
 
 interface KaiwaPracticeModalProps {
   suggestion: SuggestedAnswer;
@@ -34,21 +35,21 @@ export function KaiwaPracticeModal({
         {!result ? (
           <>
             <p className="kaiwa-practice-hint">
-              Nhấn nút 🎤 và nói theo mẫu
+              Nhấn nút <Mic size={14} /> và nói theo mẫu
             </p>
             <div className="kaiwa-practice-actions">
               <button
                 className={`kaiwa-practice-mic ${isListening ? 'listening' : ''}`}
                 onClick={onMicClick}
               >
-                {isListening ? '🔴 Đang nghe...' : '🎤 Bắt đầu nói'}
+                <Mic size={16} /> {isListening ? 'Đang nghe...' : 'Bắt đầu nói'}
               </button>
               <button
                 className="kaiwa-practice-listen"
                 onClick={onListen}
                 disabled={isSpeaking}
               >
-                🔊 Nghe lại
+                <Volume2 size={16} /> Nghe lại
               </button>
             </div>
           </>
@@ -73,17 +74,17 @@ export function KaiwaPracticeModal({
             )}
             <div className="kaiwa-practice-actions">
               <button className="btn btn-secondary" onClick={onRetry}>
-                Thử lại
+                <RefreshCw size={14} /> Thử lại
               </button>
               <button className="btn btn-primary" onClick={onAccept}>
-                Gửi câu trả lời
+                <Send size={14} /> Gửi câu trả lời
               </button>
             </div>
           </div>
         )}
 
         <button className="kaiwa-practice-close" onClick={onClose}>
-          ✕
+          <X size={16} />
         </button>
       </div>
     </div>

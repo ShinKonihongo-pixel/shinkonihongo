@@ -87,7 +87,7 @@ export function JLPTPage({ questions, onSaveJLPTSession }: JLPTPageProps) {
       const duration = Math.floor((Date.now() - sessionStartTime.current) / 1000);
       const correctCount = results.filter(r => r.isCorrect).length;
       onSaveJLPTSession({
-        date: new Date().toISOString(),
+        date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
         level: filterLevel === 'all' ? 'Mixed' : filterLevel,
         category: filterCategory === 'all' ? 'Mixed' : filterCategory,
         correctCount,
@@ -148,6 +148,7 @@ export function JLPTPage({ questions, onSaveJLPTSession }: JLPTPageProps) {
   if (practiceState === 'setup') {
     return (
       <div className="jlpt-page">
+        <div className="jlpt-container">
         <div className="jlpt-practice-setup">
           <h2>Luyện thi JLPT</h2>
           <p className="practice-description">
@@ -208,6 +209,7 @@ export function JLPTPage({ questions, onSaveJLPTSession }: JLPTPageProps) {
             Bắt đầu luyện tập
           </button>
         </div>
+        </div>
       </div>
     );
   }
@@ -216,6 +218,7 @@ export function JLPTPage({ questions, onSaveJLPTSession }: JLPTPageProps) {
   if (practiceState === 'result') {
     return (
       <div className="jlpt-page">
+        <div className="jlpt-container">
         <div className="jlpt-practice-result">
           <h2>Kết quả luyện tập</h2>
 
@@ -286,6 +289,7 @@ export function JLPTPage({ questions, onSaveJLPTSession }: JLPTPageProps) {
             })}
           </div>
         </div>
+        </div>
       </div>
     );
   }
@@ -295,6 +299,7 @@ export function JLPTPage({ questions, onSaveJLPTSession }: JLPTPageProps) {
 
   return (
     <div className="jlpt-page">
+      <div className="jlpt-container">
       <div className="jlpt-practice">
         <div className="practice-header">
           <span className="practice-progress">
@@ -362,6 +367,7 @@ export function JLPTPage({ questions, onSaveJLPTSession }: JLPTPageProps) {
             Dừng lại
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

@@ -46,6 +46,8 @@ export function QuizGamePage({
   const {
     game,
     gameResults,
+    availableRooms,
+    loadingRooms,
     loading,
     error,
     isHost,
@@ -54,6 +56,7 @@ export function QuizGamePage({
     sortedPlayers,
     createGame,
     joinGame,
+    joinGameById,
     leaveGame,
     kickPlayer,
     startGame,
@@ -64,10 +67,24 @@ export function QuizGamePage({
     continueFromLeaderboard,
     usePowerUp,
     resetGame,
+    subscribeToRooms,
   } = useQuizGame({
     playerId: currentUserId,
     playerName: currentUserName,
   });
+
+  // Subscribe to available rooms when in join view
+  useEffect(() => {
+    if (view === 'join' && !game) {
+      const unsubscribe = subscribeToRooms();
+      return () => unsubscribe();
+    }
+  }, [view, game, subscribeToRooms]);
+
+  // Auto-clear join error when code changes or view changes
+  useEffect(() => {
+    if (joinError) setJoinError('');
+  }, [joinCode, view]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-join game when initialJoinCode is provided (from QR code scan)
   useEffect(() => {
@@ -115,8 +132,16 @@ export function QuizGamePage({
       setJoinError('Vui lòng nhập mã game');
       return;
     }
-    setJoinError('');
     const success = await joinGame(joinCode.trim());
+    if (success) {
+      setView('lobby');
+    } else {
+      setJoinError(error || 'Không thể tham gia game');
+    }
+  };
+
+  const handleJoinRoom = async (roomId: string) => {
+    const success = await joinGameById(roomId);
     if (success) {
       setView('lobby');
     } else {
@@ -134,7 +159,6 @@ export function QuizGamePage({
     resetGame();
     setView('menu');
     setJoinCode('');
-    setJoinError('');
   };
 
   // Main menu
@@ -158,7 +182,7 @@ export function QuizGamePage({
               className="btn btn-secondary btn-large"
               onClick={() => setView('join')}
             >
-              Tham gia phòng
+              Sảnh chờ
             </button>
             <button
               className="btn btn-outline"
@@ -183,39 +207,107 @@ export function QuizGamePage({
     );
   }
 
-  // Join game view
+  // Join game view (Sảnh chờ)
   if (currentView === 'join') {
     return (
       <div className="quiz-game-page">
-        <div className="game-join">
-          <h2>Tham gia phòng</h2>
-          <p>Nhập mã phòng để tham gia:</p>
+        <div className="game-lobby-join">
+          <div className="lobby-header">
+            <h2>🎮 Sảnh chờ</h2>
+            <button className="btn btn-outline btn-small" onClick={handleBackToMenu}>
+              ← Quay lại
+            </button>
+          </div>
 
-          <div className="join-form">
-            <input
-              type="text"
-              placeholder="Mã phòng (6 ký tự)"
-              value={joinCode}
-              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-              maxLength={6}
-              className="join-input"
-            />
-            {joinError && <p className="error-message">{joinError}</p>}
-            <div className="join-buttons">
+          {/* Manual Code Entry - Top */}
+          <div className="join-by-code-section top">
+            <div className="join-form-inline">
+              <input
+                type="text"
+                placeholder="Nhập mã phòng (VD: ABC123)"
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                maxLength={6}
+                className="join-input-compact"
+              />
               <button
                 className="btn btn-primary"
                 onClick={handleJoinGame}
-                disabled={loading}
+                disabled={loading || !joinCode.trim()}
               >
-                {loading ? 'Đang tham gia...' : 'Tham gia'}
-              </button>
-              <button
-                className="btn btn-outline"
-                onClick={handleBackToMenu}
-              >
-                Hủy
+                {loading ? '...' : 'Vào'}
               </button>
             </div>
+            {joinError && <p className="error-message">{joinError}</p>}
+          </div>
+
+          {/* Available Rooms List */}
+          <div className="available-rooms-section">
+            <div className="section-header">
+              <h3>Phòng đang chờ</h3>
+              <span className="room-count">{availableRooms.length} phòng</span>
+            </div>
+            {loadingRooms ? (
+              <div className="loading-rooms">
+                <span className="loading-spinner">⏳</span>
+                Đang tải danh sách phòng...
+              </div>
+            ) : availableRooms.length > 0 ? (
+              <div className="room-list">
+                {availableRooms.map((room) => {
+                  const playerCount = Object.keys(room.players).length;
+                  const hostName = Object.values(room.players).find(p => p.isHost)?.name || 'Unknown';
+                  const sourceLabel = room.source === 'jlpt' ? 'JLPT' : 'Flashcards';
+                  const contentDisplay = room.source === 'jlpt' && room.jlptLevels?.length
+                    ? room.jlptLevels.join(', ')
+                    : room.lessonNames?.length
+                      ? room.lessonNames.join(', ') + (room.lessonNames.length < (room.lessonNames?.length || 0) ? '...' : '')
+                      : '';
+                  return (
+                    <button
+                      key={room.id}
+                      className="room-item"
+                      onClick={() => handleJoinRoom(room.id)}
+                      disabled={loading}
+                    >
+                      <div className="room-item-header">
+                        <div className="room-info">
+                          <span className="room-title">{room.title || 'Phòng chơi'}</span>
+                          <div className="room-meta">
+                            <span className="room-code">{room.code}</span>
+                            <span className="room-source">{sourceLabel}</span>
+                          </div>
+                          <span className="room-host">Host: {hostName}</span>
+                        </div>
+                        <span className="room-status-badge">Đang chờ</span>
+                      </div>
+                      {contentDisplay && (
+                        <div className="room-content-info">
+                          <span className="room-content-label">📚 Nội dung:</span>
+                          <span className="room-content-value">{contentDisplay}</span>
+                        </div>
+                      )}
+                      <div className="room-settings">
+                        <span className="room-setting-item">⏱️ {room.timePerQuestion}s/câu</span>
+                        <span className="room-setting-item">👥 {playerCount}/{room.settings.maxPlayers}</span>
+                        <span className="room-setting-item">📝 {room.totalRounds} câu</span>
+                        {room.settings.timeBonus && <span className="room-setting-item bonus">⚡ Bonus</span>}
+                      </div>
+                      <div className="room-join-hint">
+                        <span>Nhấn để tham gia</span>
+                        <span className="join-arrow">→</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="no-rooms">
+                <span className="empty-icon">🏠</span>
+                <p>Chưa có phòng nào đang chờ</p>
+                <p className="empty-hint">Hãy tạo phòng mới hoặc nhập mã phòng ở trên</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -269,6 +361,8 @@ export function QuizGamePage({
         onContinueFromLeaderboard={continueFromLeaderboard}
         onUsePowerUp={usePowerUp}
         onLeaveGame={handleLeaveGame}
+        gameQuestionFontSize={settings.gameQuestionFontSize}
+        gameAnswerFontSize={settings.gameAnswerFontSize}
       />
     );
   }

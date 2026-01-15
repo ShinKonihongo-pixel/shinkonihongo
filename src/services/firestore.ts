@@ -18,6 +18,7 @@ import { db } from '../lib/firebase';
 import type { Flashcard, FlashcardFormData, Lesson } from '../types/flashcard';
 import type { User, StudySession, GameSession, JLPTSession } from '../types/user';
 import type { JLPTQuestion, JLPTQuestionFormData, JLPTFolder } from '../types/jlpt-question';
+import type { KaiwaDefaultQuestion, KaiwaQuestionFormData, KaiwaFolder } from '../types/kaiwa-question';
 import { getDefaultSM2Values } from '../lib/spaced-repetition';
 
 // Collection names
@@ -28,6 +29,8 @@ const COLLECTIONS = {
   SETTINGS: 'settings',
   JLPT_QUESTIONS: 'jlptQuestions',
   JLPT_FOLDERS: 'jlptFolders',
+  KAIWA_QUESTIONS: 'kaiwaQuestions',
+  KAIWA_FOLDERS: 'kaiwaFolders',
   STUDY_SESSIONS: 'studySessions',
   GAME_SESSIONS: 'gameSessions',
   JLPT_SESSIONS: 'jlptSessions',
@@ -287,4 +290,70 @@ export async function getJLPTSessionsByUser(userId: string): Promise<JLPTSession
   const q = query(collection(db, COLLECTIONS.JLPT_SESSIONS), where('userId', '==', userId));
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JLPTSession));
+}
+
+// ============ KAIWA DEFAULT QUESTIONS ============
+
+export function subscribeToKaiwaQuestions(callback: (questions: KaiwaDefaultQuestion[]) => void): Unsubscribe {
+  return onSnapshot(collection(db, COLLECTIONS.KAIWA_QUESTIONS), (snapshot) => {
+    const questions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as KaiwaDefaultQuestion));
+    callback(questions);
+  });
+}
+
+export async function addKaiwaQuestion(data: KaiwaQuestionFormData, createdBy?: string): Promise<KaiwaDefaultQuestion> {
+  const newQuestion: Omit<KaiwaDefaultQuestion, 'id'> = {
+    ...data,
+    createdAt: getTodayISO(),
+    createdBy,
+  };
+  const docRef = await addDoc(collection(db, COLLECTIONS.KAIWA_QUESTIONS), newQuestion);
+  return { id: docRef.id, ...newQuestion } as KaiwaDefaultQuestion;
+}
+
+export async function updateKaiwaQuestion(id: string, data: Partial<KaiwaDefaultQuestion>): Promise<void> {
+  const docRef = doc(db, COLLECTIONS.KAIWA_QUESTIONS, id);
+  await updateDoc(docRef, data);
+}
+
+export async function deleteKaiwaQuestion(id: string): Promise<void> {
+  const docRef = doc(db, COLLECTIONS.KAIWA_QUESTIONS, id);
+  await deleteDoc(docRef);
+}
+
+// ============ KAIWA FOLDERS ============
+
+export function subscribeToKaiwaFolders(callback: (folders: KaiwaFolder[]) => void): Unsubscribe {
+  return onSnapshot(collection(db, COLLECTIONS.KAIWA_FOLDERS), (snapshot) => {
+    const folders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as KaiwaFolder));
+    callback(folders);
+  });
+}
+
+export async function addKaiwaFolder(
+  name: string,
+  level: KaiwaFolder['level'],
+  topic: KaiwaFolder['topic'],
+  createdBy?: string
+): Promise<KaiwaFolder> {
+  const newFolder: Omit<KaiwaFolder, 'id'> = {
+    name,
+    level,
+    topic,
+    order: Date.now(),
+    createdAt: getTodayISO(),
+    createdBy,
+  };
+  const docRef = await addDoc(collection(db, COLLECTIONS.KAIWA_FOLDERS), newFolder);
+  return { id: docRef.id, ...newFolder };
+}
+
+export async function updateKaiwaFolder(id: string, data: Partial<KaiwaFolder>): Promise<void> {
+  const docRef = doc(db, COLLECTIONS.KAIWA_FOLDERS, id);
+  await updateDoc(docRef, data);
+}
+
+export async function deleteKaiwaFolder(id: string): Promise<void> {
+  const docRef = doc(db, COLLECTIONS.KAIWA_FOLDERS, id);
+  await deleteDoc(docRef);
 }

@@ -4,6 +4,7 @@ import React from 'react';
 import type { Flashcard } from '../../types/flashcard';
 import type { AppSettings } from '../../hooks/use-settings';
 import { useTextToSpeech } from '../../hooks/use-text-to-speech';
+import { Volume2 } from 'lucide-react';
 
 interface FlashcardItemProps {
   card: Flashcard;
@@ -40,6 +41,8 @@ const defaultSettings: AppSettings = {
   cardBackgroundImage: '',
   gameQuestionContent: 'kanji',
   gameAnswerContent: 'vocabulary_meaning',
+  gameQuestionFontSize: 8,
+  gameAnswerFontSize: 1.1,
   // Kaiwa defaults
   kaiwaVoiceGender: 'female',
   kaiwaVoiceRate: 1.0,
@@ -164,7 +167,7 @@ export function FlashcardItem({
                   onClick={handleSpeak}
                   title="Nghe phát âm"
                 >
-                  🔊
+                  <Volume2 size={18} />
                 </button>
               </div>
             )}

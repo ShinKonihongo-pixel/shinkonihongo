@@ -9,7 +9,8 @@ export interface Lesson {
   jlptLevel: JLPTLevel;   // Thuộc JLPT level nào
   parentId: string | null; // ID bài học cha (null nếu là bài học gốc)
   order: number;          // Thứ tự sắp xếp
-  isLocked: boolean;      // Khoá bài học (chỉ admin mới xem được)
+  isLocked: boolean;      // Khoá bài học (chỉ VIP/admin mới xem được)
+  isHidden: boolean;      // Ẩn bài học (chỉ creator/super_admin thấy)
   createdBy?: string;     // User ID của người tạo
 }
 

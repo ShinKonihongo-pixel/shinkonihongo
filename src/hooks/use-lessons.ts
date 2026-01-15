@@ -34,6 +34,7 @@ export function useLessons() {
       parentId,
       order: maxOrder + 1,
       isLocked: false,
+      isHidden: false,
       createdBy,
     };
 
@@ -46,7 +47,7 @@ export function useLessons() {
     }
   }, [lessons]);
 
-  // Toggle lock status (admin only)
+  // Toggle lock status (creator/super_admin only)
   const toggleLock = useCallback(async (id: string) => {
     const lesson = lessons.find(l => l.id === id);
     if (!lesson) return;
@@ -55,6 +56,19 @@ export function useLessons() {
       await firestoreService.updateLesson(id, { isLocked: !lesson.isLocked });
     } catch (err) {
       console.error('Error toggling lock:', err);
+      throw err;
+    }
+  }, [lessons]);
+
+  // Toggle hide status (creator/super_admin only)
+  const toggleHide = useCallback(async (id: string) => {
+    const lesson = lessons.find(l => l.id === id);
+    if (!lesson) return;
+
+    try {
+      await firestoreService.updateLesson(id, { isHidden: !lesson.isHidden });
+    } catch (err) {
+      console.error('Error toggling hide:', err);
       throw err;
     }
   }, [lessons]);
@@ -120,5 +134,6 @@ export function useLessons() {
     getLesson,
     reorderLesson,
     toggleLock,
+    toggleHide,
   };
 }

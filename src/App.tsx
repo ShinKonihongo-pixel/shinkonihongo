@@ -6,14 +6,14 @@ import { useFlashcards } from './hooks/use-flashcards';
 import { useLessons } from './hooks/use-lessons';
 import { useSettings, useGlobalTheme, THEME_PRESETS } from './hooks/use-settings';
 import { useAuth } from './hooks/use-auth';
-import { Header, type Page } from './components/layout/header';
+import { type Page } from './components/layout/header';
+import { Sidebar } from './components/layout/sidebar';
 import { LoginPage } from './components/pages/login-page';
 import { HomePage } from './components/pages/home-page';
 import { CardsPage } from './components/pages/cards-page';
 import { StudyPage } from './components/pages/study-page';
 import { QuizGamePage } from './components/pages/quiz-game-page';
 import { SettingsPage } from './components/pages/settings-page';
-import { AdminPage } from './components/pages/admin-page';
 import { JLPTPage } from './components/pages/jlpt-page';
 import { ChatPage } from './components/pages/chat-page';
 import { KaiwaPage } from './components/pages/kaiwa-page';
@@ -21,11 +21,14 @@ import { LecturePage } from './components/pages/lecture-page';
 import { LectureEditorPage } from './components/pages/lecture-editor-page';
 import { ProgressPage } from './components/pages/progress-page';
 import { useJLPTQuestions } from './hooks/use-jlpt-questions';
+import { useKaiwaQuestions } from './hooks/use-kaiwa-questions';
 import { useUserHistory } from './hooks/use-user-history';
 import { useProgress } from './hooks/use-progress';
 import { useNotifications } from './hooks/use-notifications';
 import { useOffline } from './hooks/use-offline';
 import { OfflineIndicator } from './components/common/offline-indicator';
+import { FloatingChatButton } from './components/common/floating-chat-button';
+import { FloatingChatPanel } from './components/common/floating-chat-panel';
 import './App.css';
 
 function App() {
@@ -33,6 +36,10 @@ function App() {
   const [initialFilterLevel, setInitialFilterLevel] = useState<JLPTLevel | 'all'>('all');
   const [initialJoinCode, setInitialJoinCode] = useState<string | null>(null);
   const [editingLectureId, setEditingLectureId] = useState<string | undefined>(undefined);
+  const [editingLectureFolderId, setEditingLectureFolderId] = useState<string | undefined>(undefined);
+  const [editingLectureLevel, setEditingLectureLevel] = useState<JLPTLevel | undefined>(undefined);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Handle URL parameters for quiz game join (QR code scanning)
   useEffect(() => {
@@ -64,12 +71,14 @@ function App() {
     updateVipExpiration,
   } = useAuth();
 
-  // Reset to home page when user logs in
+  // Reset to home page when user logs in (unless joining via QR code)
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isLoggedIn && !initialJoinCode) {
       setCurrentPage('home');
+    } else if (isLoggedIn && initialJoinCode) {
+      setCurrentPage('quiz');
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, initialJoinCode]);
 
   // User history
   const {
@@ -99,6 +108,7 @@ function App() {
     getLessonsByLevel,
     getChildLessons,
     toggleLock,
+    toggleHide: toggleLessonHide,
   } = useLessons();
 
   const { settings, updateSetting, resetSettings } = useSettings();
@@ -116,26 +126,57 @@ function App() {
     getQuestionsByFolder,
   } = useJLPTQuestions();
 
+  const {
+    questions: kaiwaQuestions,
+    folders: kaiwaFolders,
+    addKaiwaQuestion,
+    updateKaiwaQuestion,
+    deleteKaiwaQuestion,
+    addKaiwaFolder,
+    updateKaiwaFolder,
+    deleteKaiwaFolder,
+    getFoldersByLevelAndTopic,
+    getQuestionsByFolder: getQuestionsByKaiwaFolder,
+    getQuestionsByLevelAndTopic,
+  } = useKaiwaQuestions();
+
   // Check if user is VIP (can access locked lessons)
   const isVip = currentUser?.role === 'vip_user';
+  const isSuperAdmin = currentUser?.role === 'super_admin';
   const canAccessLocked = isAdmin || isVip;
 
-  // For admin/study pages, filter locked lessons for non-admin and non-VIP users
+  // Check if user can see hidden lessons (creator or super_admin)
+  const canSeeHiddenLesson = (lesson: Lesson): boolean => {
+    if (isSuperAdmin) return true;
+    return lesson.createdBy === currentUser?.id;
+  };
+
+  // For admin/study pages, filter locked/hidden lessons for non-authorized users
   const filteredGetLessonsByLevel = useMemo(() => {
     return (level: JLPTLevel): Lesson[] => {
       const lessonList = getLessonsByLevel(level);
-      if (canAccessLocked) return lessonList;
-      return lessonList.filter(l => !l.isLocked);
+      return lessonList.filter(l => {
+        // Filter hidden lessons - only show to creator or super_admin
+        if (l.isHidden && !canSeeHiddenLesson(l)) return false;
+        // Filter locked lessons - only show to VIP/admin
+        if (l.isLocked && !canAccessLocked) return false;
+        return true;
+      });
     };
-  }, [getLessonsByLevel, canAccessLocked]);
+  }, [getLessonsByLevel, canAccessLocked, isSuperAdmin, currentUser?.id]);
 
   const filteredGetChildLessons = useMemo(() => {
     return (parentId: string): Lesson[] => {
       const lessonList = getChildLessons(parentId);
-      if (canAccessLocked) return lessonList;
-      return lessonList.filter(l => !l.isLocked);
+      return lessonList.filter(l => {
+        // Filter hidden lessons - only show to creator or super_admin
+        if (l.isHidden && !canSeeHiddenLesson(l)) return false;
+        // Filter locked lessons - only show to VIP/admin
+        if (l.isLocked && !canAccessLocked) return false;
+        return true;
+      });
     };
-  }, [getChildLessons, canAccessLocked]);
+  }, [getChildLessons, canAccessLocked, isSuperAdmin, currentUser?.id]);
 
   const statsByLevel = getStatsByLevel();
 
@@ -166,22 +207,25 @@ function App() {
   }
 
   return (
-    <div className="app">
-      <Header
+    <div className={`app app-with-sidebar ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <Sidebar
         currentPage={currentPage}
         onNavigate={setCurrentPage}
         currentUser={currentUser}
         onLogout={logout}
+        isCollapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
 
-      {/* Offline status indicator */}
-      <OfflineIndicator
-        isOnline={offline.isOnline}
-        isSyncing={offline.isSyncing}
-        offlineCardCount={offline.offlineCardCount}
-      />
+      <div className="main-wrapper">
+        {/* Offline status indicator */}
+        <OfflineIndicator
+          isOnline={offline.isOnline}
+          isSyncing={offline.isSyncing}
+          offlineCardCount={offline.offlineCardCount}
+        />
 
-      <main className="main-content">
+        <main className="main-content">
         {currentPage === 'home' && (
           <HomePage
             statsByLevel={statsByLevel}
@@ -235,6 +279,33 @@ function App() {
             onDeleteJLPTFolder={deleteJLPTFolder}
             getFoldersByLevelAndCategory={getFoldersByLevelAndCategory}
             getQuestionsByFolder={getQuestionsByFolder}
+            // Kaiwa question management props
+            kaiwaQuestions={kaiwaQuestions}
+            kaiwaFolders={kaiwaFolders}
+            onAddKaiwaQuestion={async (data) => { await addKaiwaQuestion(data, currentUser.id); }}
+            onUpdateKaiwaQuestion={updateKaiwaQuestion}
+            onDeleteKaiwaQuestion={deleteKaiwaQuestion}
+            onAddKaiwaFolder={async (name, level, topic) => { await addKaiwaFolder(name, level, topic, currentUser.id); }}
+            onUpdateKaiwaFolder={updateKaiwaFolder}
+            onDeleteKaiwaFolder={deleteKaiwaFolder}
+            getFoldersByLevelAndTopic={getFoldersByLevelAndTopic}
+            getQuestionsByKaiwaFolder={getQuestionsByKaiwaFolder}
+            // User management props
+            users={users}
+            onUpdateUserRole={updateUserRole}
+            onDeleteUser={deleteUser}
+            onUpdateVipExpiration={updateVipExpiration}
+            onRegister={register}
+            // Lesson locking/hiding props
+            onToggleLock={toggleLock}
+            onToggleHide={toggleLessonHide}
+            // Lecture management props
+            onNavigateToLectureEditor={(lectureId, folderId, level) => {
+              setEditingLectureId(lectureId);
+              setEditingLectureFolderId(folderId);
+              setEditingLectureLevel(level);
+              setCurrentPage('lecture-editor');
+            }}
           />
         )}
 
@@ -328,21 +399,6 @@ function App() {
           />
         )}
 
-        {currentPage === 'admin' && isAdmin && currentUser && (
-          <AdminPage
-            users={users}
-            currentUserRole={currentUser.role}
-            currentUserId={currentUser.id}
-            onUpdateUserRole={updateUserRole}
-            onDeleteUser={deleteUser}
-            onUpdateVipExpiration={updateVipExpiration}
-            onRegister={register}
-            onToggleLock={toggleLock}
-            getLessonsByLevel={getLessonsByLevel}
-            getChildLessons={getChildLessons}
-          />
-        )}
-
         {currentPage === 'jlpt' && (
           <JLPTPage
             questions={jlptQuestions}
@@ -351,13 +407,22 @@ function App() {
         )}
 
         {currentPage === 'kaiwa' && currentUser && canAccessLocked && (
-          <KaiwaPage settings={settings} />
+          <KaiwaPage
+            settings={settings}
+            defaultQuestions={kaiwaQuestions}
+            kaiwaFolders={kaiwaFolders}
+            getFoldersByLevelAndTopic={getFoldersByLevelAndTopic}
+            getQuestionsByFolder={getQuestionsByKaiwaFolder}
+            getQuestionsByLevelAndTopic={getQuestionsByLevelAndTopic}
+          />
         )}
 
         {currentPage === 'lectures' && (
           <LecturePage
             onNavigateToEditor={(lectureId) => {
               setEditingLectureId(lectureId);
+              setEditingLectureFolderId(undefined);
+              setEditingLectureLevel(undefined);
               setCurrentPage('lecture-editor');
             }}
           />
@@ -366,9 +431,13 @@ function App() {
         {currentPage === 'lecture-editor' && isAdmin && (
           <LectureEditorPage
             lectureId={editingLectureId}
+            initialFolderId={editingLectureFolderId}
+            initialLevel={editingLectureLevel}
             onBack={() => {
               setEditingLectureId(undefined);
-              setCurrentPage('lectures');
+              setEditingLectureFolderId(undefined);
+              setEditingLectureLevel(undefined);
+              setCurrentPage('cards');
             }}
           />
         )}
@@ -376,7 +445,23 @@ function App() {
         {currentPage === 'chat' && currentUser && (
           <ChatPage currentUser={currentUser} />
         )}
-      </main>
+        </main>
+      </div>
+
+      {/* Floating AI Chat Button and Panel */}
+      {currentUser && (
+        <>
+          <FloatingChatButton
+            onClick={() => setIsChatOpen(!isChatOpen)}
+            isActive={isChatOpen}
+          />
+          <FloatingChatPanel
+            currentUser={currentUser}
+            isOpen={isChatOpen}
+            onClose={() => setIsChatOpen(false)}
+          />
+        </>
+      )}
     </div>
   );
 }
