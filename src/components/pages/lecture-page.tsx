@@ -5,10 +5,10 @@ import { useLectures, useSlides, useLectureView } from '../../hooks/use-lectures
 import { useAuth } from '../../hooks/use-auth';
 import { LectureCard } from '../lecture/lecture-card';
 import { SlideRenderer } from '../lecture/slide-renderer';
-import type { Lecture } from '../../types/lecture';
+import type { Lecture, LectureFolder } from '../../types/lecture';
 import type { JLPTLevel } from '../../types/flashcard';
 
-type ViewMode = 'list' | 'view' | 'present' | 'grid';
+type ViewMode = 'levels' | 'folders' | 'lectures' | 'view' | 'present' | 'grid';
 
 interface LecturePageProps {
   onNavigateToEditor?: (lectureId?: string) => void;
@@ -16,13 +16,19 @@ interface LecturePageProps {
 
 export function LecturePage({ onNavigateToEditor }: LecturePageProps) {
   const { currentUser, isAdmin } = useAuth();
-  const { lectures, loading } = useLectures(false); // Only published lectures for students
+  const { lectures, lectureFolders, loading, getFoldersByLevel, getLecturesByFolder } = useLectures(isAdmin);
 
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  // Navigation state
+  const [viewMode, setViewMode] = useState<ViewMode>('levels');
+  const [selectedLevel, setSelectedLevel] = useState<JLPTLevel | null>(null);
+  const [selectedFolder, setSelectedFolder] = useState<LectureFolder | null>(null);
   const [selectedLecture, setSelectedLecture] = useState<Lecture | null>(null);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [filterLevel, setFilterLevel] = useState<JLPTLevel | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Floating notes state
+  const [showFloatingNotes, setShowFloatingNotes] = useState(true);
+  const [userNotes, setUserNotes] = useState<Record<string, string>>({});  // slideId -> note
 
   // Auto-advance settings
   const [autoAdvance, setAutoAdvance] = useState(false);
@@ -64,16 +70,23 @@ export function LecturePage({ onNavigateToEditor }: LecturePageProps) {
     return lecture.authorId === currentUser?.id;
   };
 
-  // Filter lectures (also filter hidden lectures)
-  const filteredLectures = lectures.filter((lecture) => {
-    // Filter hidden lectures - only show to creator or super_admin
+  // Get visible lectures (filter hidden)
+  const visibleLectures = lectures.filter((lecture) => {
     if (lecture.isHidden && !canSeeHiddenLecture(lecture)) return false;
-    const matchLevel = filterLevel === 'all' || lecture.jlptLevel === filterLevel;
-    const matchSearch =
-      !searchQuery ||
-      lecture.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    return true;
+  });
+
+  // Get folders and lectures for current navigation level
+  const currentFolders = selectedLevel ? getFoldersByLevel(selectedLevel) : [];
+  const currentLectures = selectedFolder
+    ? getLecturesByFolder(selectedFolder.id).filter(l => !l.isHidden || canSeeHiddenLecture(l))
+    : [];
+
+  // Filter lectures by search query
+  const filteredLectures = currentLectures.filter((lecture) => {
+    if (!searchQuery) return true;
+    return lecture.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       lecture.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchLevel && matchSearch;
   });
 
   // Check for saved progress on lecture selection
@@ -188,16 +201,66 @@ export function LecturePage({ onNavigateToEditor }: LecturePageProps) {
   };
 
   // Back to list
+  // Navigate back based on current view
+  const handleBack = () => {
+    if (viewMode === 'view' || viewMode === 'grid') {
+      setSelectedLecture(null);
+      setViewMode('lectures');
+      setCurrentSlideIndex(0);
+    } else if (viewMode === 'lectures') {
+      setSelectedFolder(null);
+      setViewMode('folders');
+    } else if (viewMode === 'folders') {
+      setSelectedLevel(null);
+      setViewMode('levels');
+    }
+  };
+
+  // Navigate to level
+  const handleSelectLevel = (level: JLPTLevel) => {
+    setSelectedLevel(level);
+    setViewMode('folders');
+  };
+
+  // Navigate to folder
+  const handleSelectFolder = (folder: LectureFolder) => {
+    setSelectedFolder(folder);
+    setViewMode('lectures');
+  };
+
+  // Legacy backToList for other parts
   const backToList = () => {
     setSelectedLecture(null);
-    setViewMode('list');
+    setSelectedFolder(null);
+    setSelectedLevel(null);
+    setViewMode('levels');
     setCurrentSlideIndex(0);
+  };
+
+  // Load/save user notes from localStorage
+  useEffect(() => {
+    if (selectedLecture) {
+      const savedNotes = localStorage.getItem(`lecture-notes-${selectedLecture.id}`);
+      if (savedNotes) {
+        setUserNotes(JSON.parse(savedNotes));
+      } else {
+        setUserNotes({});
+      }
+    }
+  }, [selectedLecture?.id]);
+
+  // Save notes when changed
+  const saveUserNote = (slideId: string, note: string) => {
+    if (!selectedLecture) return;
+    const newNotes = { ...userNotes, [slideId]: note };
+    setUserNotes(newNotes);
+    localStorage.setItem(`lecture-notes-${selectedLecture.id}`, JSON.stringify(newNotes));
   };
 
   // Keyboard navigation (PowerPoint-like)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (viewMode === 'list') return;
+      if (viewMode === 'levels' || viewMode === 'folders' || viewMode === 'lectures') return;
 
       // If jump dialog is open, handle it separately
       if (showJumpDialog) {
@@ -362,7 +425,7 @@ export function LecturePage({ onNavigateToEditor }: LecturePageProps) {
 
   // Auto-advance timer
   useEffect(() => {
-    if (!autoAdvance || viewMode === 'list') return;
+    if (!autoAdvance || viewMode === 'levels' || viewMode === 'folders' || viewMode === 'lectures') return;
     if (currentSlideIndex >= currentSlides.length - 1) {
       setAutoAdvance(false);
       return;
@@ -377,7 +440,7 @@ export function LecturePage({ onNavigateToEditor }: LecturePageProps) {
 
   // Save progress to localStorage
   useEffect(() => {
-    if (!selectedLecture || viewMode === 'list') return;
+    if (!selectedLecture || viewMode === 'levels' || viewMode === 'folders' || viewMode === 'lectures') return;
     if (currentSlideIndex > 0) {
       localStorage.setItem(
         `lecture-progress-${selectedLecture.id}`,
@@ -435,12 +498,160 @@ export function LecturePage({ onNavigateToEditor }: LecturePageProps) {
     return <div className="loading-state">Đang tải...</div>;
   }
 
-  // List view - students only see published lectures
-  if (viewMode === 'list') {
+  // JLPT level order and colors
+  const jlptLevels: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
+  const levelColors: Record<JLPTLevel, string> = {
+    N5: '#27ae60',
+    N4: '#3498db',
+    N3: '#9b59b6',
+    N2: '#e67e22',
+    N1: '#e74c3c',
+  };
+  const levelDescriptions: Record<JLPTLevel, string> = {
+    N5: 'Sơ cấp - Cơ bản',
+    N4: 'Sơ cấp - Nâng cao',
+    N3: 'Trung cấp',
+    N2: 'Trung cao cấp',
+    N1: 'Cao cấp',
+  };
+
+  // Count lectures per level
+  const getLectureCountByLevel = (level: JLPTLevel) => {
+    return visibleLectures.filter(l => l.jlptLevel === level).length;
+  };
+
+  // Count folders per level
+  const getFolderCountByLevel = (level: JLPTLevel) => {
+    return lectureFolders.filter(f => f.jlptLevel === level).length;
+  };
+
+  // ============ LEVELS VIEW - Select JLPT Level ============
+  if (viewMode === 'levels') {
     return (
       <div className="lecture-page">
         <div className="lecture-header">
           <h1>Bài giảng</h1>
+          {isAdmin && onNavigateToEditor && (
+            <button className="btn btn-primary" onClick={() => onNavigateToEditor()}>
+              + Tạo bài giảng
+            </button>
+          )}
+        </div>
+
+        <div className="lecture-nav-breadcrumb">
+          <span className="breadcrumb-current">Chọn cấp độ</span>
+        </div>
+
+        <div className="lecture-levels-grid">
+          {jlptLevels.map((level) => {
+            const folderCount = getFolderCountByLevel(level);
+            const lectureCount = getLectureCountByLevel(level);
+
+            return (
+              <div
+                key={level}
+                className="lecture-level-card"
+                style={{ borderColor: levelColors[level] }}
+                onClick={() => handleSelectLevel(level)}
+              >
+                <div className="level-card-header" style={{ backgroundColor: levelColors[level] }}>
+                  <h2>{level}</h2>
+                </div>
+                <div className="level-card-body">
+                  <p className="level-description">{levelDescriptions[level]}</p>
+                  <div className="level-stats">
+                    <span>{folderCount} bài học</span>
+                    <span>{lectureCount} bài giảng</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // ============ FOLDERS VIEW - Select Lesson/Folder ============
+  if (viewMode === 'folders') {
+    return (
+      <div className="lecture-page">
+        <div className="lecture-header">
+          <h1>Bài giảng - {selectedLevel}</h1>
+          {isAdmin && onNavigateToEditor && (
+            <button className="btn btn-primary" onClick={() => onNavigateToEditor()}>
+              + Tạo bài giảng
+            </button>
+          )}
+        </div>
+
+        <div className="lecture-nav-breadcrumb">
+          <button className="breadcrumb-link" onClick={() => handleBack()}>
+            Cấp độ
+          </button>
+          <span className="breadcrumb-separator">›</span>
+          <span className="breadcrumb-current" style={{ color: levelColors[selectedLevel!] }}>
+            {selectedLevel}
+          </span>
+        </div>
+
+        {currentFolders.length === 0 ? (
+          <div className="empty-state">
+            <p>Chưa có bài học nào cho cấp độ {selectedLevel}</p>
+            {isAdmin && <p className="hint">Tạo bài học trong trang quản lý bài giảng</p>}
+          </div>
+        ) : (
+          <div className="lecture-folders-grid">
+            {currentFolders.map((folder, index) => {
+              const lecturesInFolder = getLecturesByFolder(folder.id).filter(l => !l.isHidden || canSeeHiddenLecture(l));
+              return (
+                <div
+                  key={folder.id}
+                  className="lecture-folder-card"
+                  onClick={() => handleSelectFolder(folder)}
+                >
+                  <div className="folder-card-icon">📚</div>
+                  <div className="folder-card-content">
+                    <h3>Bài {index + 1}: {folder.name}</h3>
+                    <span className="folder-lecture-count">{lecturesInFolder.length} bài giảng</span>
+                  </div>
+                  <div className="folder-card-arrow">›</div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ============ LECTURES VIEW - Select Lecture in Folder ============
+  if (viewMode === 'lectures') {
+    return (
+      <div className="lecture-page">
+        <div className="lecture-header">
+          <h1>{selectedFolder?.name}</h1>
+          {isAdmin && onNavigateToEditor && (
+            <button className="btn btn-primary" onClick={() => onNavigateToEditor()}>
+              + Tạo bài giảng
+            </button>
+          )}
+        </div>
+
+        <div className="lecture-nav-breadcrumb">
+          <button className="breadcrumb-link" onClick={() => { setSelectedFolder(null); setSelectedLevel(null); setViewMode('levels'); }}>
+            Cấp độ
+          </button>
+          <span className="breadcrumb-separator">›</span>
+          <button
+            className="breadcrumb-link"
+            style={{ color: levelColors[selectedLevel!] }}
+            onClick={() => handleBack()}
+          >
+            {selectedLevel}
+          </button>
+          <span className="breadcrumb-separator">›</span>
+          <span className="breadcrumb-current">{selectedFolder?.name}</span>
         </div>
 
         <div className="lecture-filters">
@@ -451,23 +662,11 @@ export function LecturePage({ onNavigateToEditor }: LecturePageProps) {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="search-input"
           />
-          <select
-            value={filterLevel}
-            onChange={(e) => setFilterLevel(e.target.value as JLPTLevel | 'all')}
-            className="filter-select"
-          >
-            <option value="all">Tất cả level</option>
-            <option value="N5">N5</option>
-            <option value="N4">N4</option>
-            <option value="N3">N3</option>
-            <option value="N2">N2</option>
-            <option value="N1">N1</option>
-          </select>
         </div>
 
         {filteredLectures.length === 0 ? (
           <div className="empty-state">
-            <p>Chưa có bài giảng nào</p>
+            <p>Chưa có bài giảng nào trong bài học này</p>
           </div>
         ) : (
           <div className="lecture-grid">
@@ -476,7 +675,8 @@ export function LecturePage({ onNavigateToEditor }: LecturePageProps) {
                 key={lecture.id}
                 lecture={lecture}
                 onClick={() => handleSelectLecture(lecture)}
-                showActions={false}
+                showActions={isAdmin}
+                onEdit={isAdmin && onNavigateToEditor ? () => onNavigateToEditor(lecture.id) : undefined}
               />
             ))}
           </div>
@@ -490,7 +690,7 @@ export function LecturePage({ onNavigateToEditor }: LecturePageProps) {
     return (
       <div className="lecture-view">
         <div className="lecture-view-header">
-          <button className="btn btn-back" onClick={backToList}>
+          <button className="btn btn-back" onClick={handleBack}>
             ← Quay lại
           </button>
           <h2>{selectedLecture?.title}</h2>
@@ -701,10 +901,12 @@ export function LecturePage({ onNavigateToEditor }: LecturePageProps) {
 
   // View mode (single lecture with slides)
   const currentSlide = currentSlides[currentSlideIndex];
+  const currentSlideUserNote = currentSlide ? userNotes[currentSlide.id] || '' : '';
+
   return (
     <div className="lecture-view">
       <div className="lecture-view-header">
-        <button className="btn btn-back" onClick={backToList}>
+        <button className="btn btn-back" onClick={handleBack}>
           ← Quay lại
         </button>
         <h2>{selectedLecture?.title}</h2>
@@ -736,7 +938,15 @@ export function LecturePage({ onNavigateToEditor }: LecturePageProps) {
           >
             ⊞ Grid (O)
           </button>
-          {/* Notes toggle - only for teachers */}
+          {/* Floating notes toggle for students */}
+          <button
+            className={`btn btn-secondary ${showFloatingNotes ? 'active' : ''}`}
+            onClick={() => setShowFloatingNotes(!showFloatingNotes)}
+            title="Ghi chú cá nhân"
+          >
+            ✏️ Ghi chú
+          </button>
+          {/* Teacher notes toggle - only for teachers */}
           {isAdmin && (
             <button
               className={`btn btn-secondary ${showNotes ? 'active' : ''}`}
@@ -823,6 +1033,28 @@ export function LecturePage({ onNavigateToEditor }: LecturePageProps) {
               {/* Click hint areas */}
               <div className="click-area-left" />
               <div className="click-area-right" />
+
+              {/* Floating notes panel - overlaid on slide */}
+              {showFloatingNotes && currentSlide && (
+                <div className="floating-notes-panel" onClick={(e) => e.stopPropagation()}>
+                  <div className="floating-notes-header">
+                    <span>✏️ Ghi chú của tôi</span>
+                    <button
+                      className="btn-minimize"
+                      onClick={() => setShowFloatingNotes(false)}
+                      title="Ẩn ghi chú"
+                    >
+                      −
+                    </button>
+                  </div>
+                  <textarea
+                    className="floating-notes-textarea"
+                    placeholder="Ghi chú cho slide này..."
+                    value={currentSlideUserNote}
+                    onChange={(e) => currentSlide && saveUserNote(currentSlide.id, e.target.value)}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Teacher notes panel - only visible to admin */}

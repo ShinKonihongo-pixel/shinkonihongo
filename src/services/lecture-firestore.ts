@@ -147,15 +147,46 @@ export function subscribeToSlides(
   lectureId: string,
   callback: (slides: Slide[]) => void
 ): Unsubscribe {
+  // Try simple query without orderBy first (avoids composite index requirement)
   const q = query(
     collection(db, COLLECTIONS.SLIDES),
-    where('lectureId', '==', lectureId),
-    orderBy('order', 'asc')
+    where('lectureId', '==', lectureId)
   );
-  return onSnapshot(q, (snapshot) => {
-    const slides = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Slide));
-    callback(slides);
-  });
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      // Sort by order in JavaScript instead of Firestore
+      const slides = snapshot.docs
+        .map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            // Ensure elements is always an array
+            elements: Array.isArray(data.elements) ? data.elements : [],
+          } as Slide;
+        })
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+      callback(slides);
+    },
+    (error) => {
+      console.error('Firestore subscribeToSlides error:', error);
+      callback([]);
+    }
+  );
+}
+
+// Remove undefined values from object (Firestore doesn't accept undefined)
+function removeUndefined<T extends Record<string, unknown>>(obj: T): T {
+  const cleaned = {} as T;
+  for (const key in obj) {
+    if (obj[key] !== undefined) {
+      cleaned[key] = obj[key];
+    }
+  }
+  return cleaned;
 }
 
 export async function addSlide(
@@ -163,11 +194,15 @@ export async function addSlide(
   data: SlideFormData,
   order: number
 ): Promise<Slide> {
+  // Clean data - remove undefined fields
+  const cleanedData = removeUndefined(data as Record<string, unknown>) as SlideFormData;
+
   const newSlide: Omit<Slide, 'id'> = {
-    ...data,
+    ...cleanedData,
     lectureId,
     order,
   };
+
   const docRef = await addDoc(collection(db, COLLECTIONS.SLIDES), newSlide);
 
   // Update lecture slide count
@@ -182,7 +217,8 @@ export async function addSlide(
 
 export async function updateSlide(id: string, data: Partial<Slide>): Promise<void> {
   const docRef = doc(db, COLLECTIONS.SLIDES, id);
-  await updateDoc(docRef, data);
+  const cleanedData = removeUndefined(data as Record<string, unknown>);
+  await updateDoc(docRef, cleanedData);
 }
 
 export async function deleteSlide(id: string, lectureId: string): Promise<void> {

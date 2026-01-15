@@ -1,49 +1,129 @@
-// Lecture editor page - create and edit lectures (admin only)
+// Lecture Editor - PowerPoint-like slide editor
+// Layout: Top toolbar → Left sidebar (thumbnails) → Main editor (slide preview)
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../hooks/use-auth';
 import { useLectures, useSlides } from '../../hooks/use-lectures';
-import { SlideEditorCanvas } from '../lecture/slide-editor-canvas';
-import type { LectureFormData, SlideFormData, SlideElement, SlideLayout, SlideAnimation, SlideTransition } from '../../types/lecture';
+import { usePPTX } from '../../hooks/use-pptx';
+import { useGroq } from '../../hooks/use-groq';
+import { PPTXImportModal } from '../lecture/pptx-import-modal';
+import { convertFuriganaToRuby, hasFurigana, removeFurigana } from '../../lib/furigana-utils';
+import type { LectureFormData, SlideFormData, SlideElement, SlideLayout, SlideAnimation, SlideTransition, Lecture, Slide, AdminNote } from '../../types/lecture';
 import type { JLPTLevel } from '../../types/flashcard';
+import type { PPTXImportOptions } from '../../types/pptx';
+import {
+  ArrowLeft,
+  Settings,
+  Download,
+  Upload,
+  Save,
+  StickyNote,
+  Plus,
+  Copy,
+  Clipboard,
+  CopyPlus,
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Type,
+  Image,
+  Video,
+  Volume2,
+  Square,
+  Circle,
+  Minus,
+  ArrowRight,
+  Sparkles,
+  FileText,
+  Trash2,
+  MoveUp,
+  MoveDown,
+  Eye,
+  EyeOff,
+  Palette,
+  LayoutGrid,
+  Wand2,
+  PaintBucket,
+  ImagePlus,
+  X,
+  ChevronDown,
+  Pencil,
+  RotateCcw,
+  Layers,
+  Move,
+  ZoomIn,
+  Check,
+} from 'lucide-react';
 
-const SLIDE_LAYOUTS: { value: SlideLayout; label: string }[] = [
-  { value: 'title', label: 'Tiêu đề' },
-  { value: 'content', label: 'Nội dung' },
-  { value: 'two-column', label: 'Hai cột' },
-  { value: 'image-left', label: 'Ảnh trái' },
-  { value: 'image-right', label: 'Ảnh phải' },
-  { value: 'full-media', label: 'Toàn màn hình' },
+// Constants
+const FONT_SIZES = ['10', '12', '14', '16', '18', '20', '24', '28', '32', '36', '40', '48', '56', '64', '72', '96'];
+const FONT_FAMILIES = [
+  'Arial', 'Arial Black', 'Georgia', 'Times New Roman', 'Verdana', 'Tahoma',
+  'Courier New', 'Comic Sans MS', 'Impact', 'Trebuchet MS', 'Lucida Sans'
+];
+const COLORS = [
+  '#000000', '#ffffff', '#e74c3c', '#e67e22', '#f1c40f', '#2ecc71',
+  '#3498db', '#9b59b6', '#1abc9c', '#34495e', '#95a5a6', '#7f8c8d',
+  '#c0392b', '#d35400', '#f39c12', '#27ae60', '#2980b9', '#8e44ad'
+];
+const HIGHLIGHT_COLORS = [
+  'transparent', '#ffff00', '#00ff00', '#00ffff', '#ff00ff', '#ff0000',
+  '#0000ff', '#ffa500', '#ffb6c1', '#98fb98', '#add8e6', '#dda0dd'
+];
+const LINE_HEIGHTS = ['1', '1.2', '1.5', '1.8', '2', '2.5', '3'];
+const BORDER_WIDTHS = ['0', '1', '2', '3', '4', '5'];
+const BORDER_STYLES = ['solid', 'dashed', 'dotted', 'double'];
+const OPACITIES = ['100', '90', '80', '70', '60', '50', '40', '30', '20', '10'];
+const PADDING_SIZES = ['0', '4', '8', '12', '16', '20', '24', '32'];
+
+// Box background colors (with transparency options)
+const BOX_BACKGROUNDS = [
+  'transparent',
+  '#ffffff', '#f8f9fa', '#e9ecef', '#dee2e6',
+  '#fff3cd', '#d4edda', '#d1ecf1', '#f8d7da', '#e2d5f1',
+  'rgba(255,255,255,0.8)', 'rgba(0,0,0,0.05)', 'rgba(52,152,219,0.1)',
+  'rgba(46,204,113,0.1)', 'rgba(241,196,15,0.2)', 'rgba(231,76,60,0.1)',
 ];
 
-const SLIDE_ANIMATIONS: { value: SlideAnimation; label: string }[] = [
-  { value: 'none', label: 'Không có' },
-  { value: 'fade-in', label: 'Mờ dần vào' },
-  { value: 'fade-out', label: 'Mờ dần ra' },
-  { value: 'slide-left', label: 'Trượt trái' },
-  { value: 'slide-right', label: 'Trượt phải' },
-  { value: 'slide-up', label: 'Trượt lên' },
-  { value: 'slide-down', label: 'Trượt xuống' },
-  { value: 'zoom-in', label: 'Phóng to' },
-  { value: 'zoom-out', label: 'Thu nhỏ' },
-  { value: 'bounce', label: 'Nảy' },
-  { value: 'rotate', label: 'Xoay' },
+// Educational symbols/icons for lectures
+const LECTURE_SYMBOLS = {
+  'Arrows': ['→', '←', '↑', '↓', '↔', '↕', '⇒', '⇐', '⇑', '⇓', '⇔', '➜', '➤', '➡', '⬅', '⬆', '⬇'],
+  'Checkmarks': ['✓', '✔', '✗', '✘', '☑', '☐', '☒', '⊙', '⊛', '◉', '○', '●'],
+  'Stars & Ratings': ['★', '☆', '✩', '✪', '✫', '✬', '✭', '✮', '⭐', '🌟', '💫'],
+  'Numbers': ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩', '❶', '❷', '❸', '❹', '❺'],
+  'Bullets': ['•', '◦', '▪', '▫', '►', '▻', '◆', '◇', '■', '□', '▲', '△', '▼', '▽'],
+  'Math': ['+', '−', '×', '÷', '=', '≠', '≈', '≤', '≥', '<', '>', '±', '∞', '√', '%'],
+  'Hands & Actions': ['👆', '👇', '👈', '👉', '✋', '👍', '👎', '👏', '🤝', '✌️', '☝️'],
+  'Alerts': ['⚠️', '❗', '❓', '❕', '❔', '💡', '📌', '📍', '🔔', '⚡', '🔥', '💥'],
+  'Learning': ['📚', '📖', '📝', '✏️', '📎', '📋', '🎯', '🏆', '💯', '✅', '❌', '⭕'],
+  'Japanese': ['〇', '×', '△', '□', '◎', '※', '♪', '♫', '→', '⇒', '＝', '＋'],
+};
+
+// Quick text templates for lectures
+const TEXT_TEMPLATES = [
+  { label: 'Tiêu đề', content: 'Tiêu đề', style: { fontSize: '36px', fontWeight: 'bold', textAlign: 'center' } },
+  { label: 'Phụ đề', content: 'Phụ đề', style: { fontSize: '24px', fontStyle: 'italic', color: '#7f8c8d' } },
+  { label: 'Bullet point', content: '• Điểm quan trọng', style: { fontSize: '20px' } },
+  { label: 'Ghi chú', content: '※ Ghi chú:', style: { fontSize: '16px', color: '#e67e22', backgroundColor: '#fff3cd', padding: '8px' } },
+  { label: 'Cảnh báo', content: '⚠️ Lưu ý quan trọng', style: { fontSize: '18px', color: '#e74c3c', fontWeight: 'bold' } },
 ];
 
-const SLIDE_TRANSITIONS: { value: SlideTransition; label: string }[] = [
-  { value: 'none', label: 'Không có' },
-  { value: 'fade', label: 'Mờ dần' },
-  { value: 'slide-horizontal', label: 'Trượt ngang' },
-  { value: 'slide-vertical', label: 'Trượt dọc' },
-  { value: 'zoom', label: 'Phóng to' },
-  { value: 'flip', label: 'Lật' },
-  { value: 'cube', label: 'Khối 3D' },
-  { value: 'dissolve', label: 'Tan biến' },
-];
+// Resize handle types
+type ResizeHandle = 'nw' | 'n' | 'ne' | 'w' | 'e' | 'sw' | 's' | 'se';
 
-const FONT_SIZES = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '36px', '48px', '64px'];
-const TEXT_COLORS = ['#000000', '#333333', '#666666', '#ffffff', '#e74c3c', '#3498db', '#27ae60', '#f39c12', '#9b59b6'];
-const BG_COLORS = ['transparent', '#ffffff', '#f5f5f5', '#000000', '#1a1a2e', '#e74c3c', '#3498db', '#27ae60', '#f39c12'];
+// Drag state for element manipulation
+interface DragState {
+  isDragging: boolean;
+  isResizing: boolean;
+  resizeHandle: ResizeHandle | null;
+  startX: number;
+  startY: number;
+  startPosition: { x: number; y: number; width: number; height: number };
+}
 
 function generateId(): string {
   return `el-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -60,11 +140,34 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
   const { currentUser, isAdmin } = useAuth();
   const { getLecture, createLecture, updateLecture } = useLectures(true);
   const [currentLectureId, setCurrentLectureId] = useState<string | null>(lectureId || null);
-  const { slides, addSlide, updateSlide, deleteSlide, duplicateSlide } = useSlides(currentLectureId);
+  const { slides, loading: slidesLoading, addSlide, updateSlide, deleteSlide, duplicateSlide, deleteAllSlides } = useSlides(currentLectureId);
+  const { importPPTX, previewPPTX, importProgress, importError, resetImport, exportPPTX, exportLoading } = usePPTX();
+  const { generateFurigana, isLoading: furiganaLoading } = useGroq();
 
-  const isNew = !currentLectureId || currentLectureId === 'new';
+  // UI State
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showSettingsPanel, setShowSettingsPanel] = useState(false);
+  const [showSymbolPicker, setShowSymbolPicker] = useState(false);
+  const [showFurigana, setShowFurigana] = useState(true); // Toggle furigana display
+  const [activeTab, setActiveTab] = useState<'home' | 'insert' | 'design' | 'transitions'>('home');
+  const [selectedSlideIndex, setSelectedSlideIndex] = useState<number>(0);
+  const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Lecture form state - pre-fill with folder info if creating new
+  // Admin notes state
+  const [textSelection, setTextSelection] = useState<{
+    elementId: string;
+    text: string;
+    startOffset: number;
+    endOffset: number;
+  } | null>(null);
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [noteContent, setNoteContent] = useState('');
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [showAdminNotes, setShowAdminNotes] = useState(true);
+
+  // Lecture form
   const [lectureForm, setLectureForm] = useState<LectureFormData>({
     title: '',
     description: '',
@@ -74,13 +177,30 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
     isPublished: false,
   });
 
-  // Editor state
-  const [selectedSlideIndex, setSelectedSlideIndex] = useState<number | null>(null);
+  // Local editing state for current slide
   const [editingSlide, setEditingSlide] = useState<SlideFormData | null>(null);
-  const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
+  // Drag/resize state
+  const [dragState, setDragState] = useState<DragState>({
+    isDragging: false,
+    isResizing: false,
+    resizeHandle: null,
+    startX: 0,
+    startY: 0,
+    startPosition: { x: 0, y: 0, width: 0, height: 0 },
+  });
+
+  // Clipboard for copy/paste
+  const [clipboard, setClipboard] = useState<SlideElement | null>(null);
+
+  // Inline title editing
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+
+  const isNew = !currentLectureId || currentLectureId === 'new';
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
 
   // Load existing lecture
   useEffect(() => {
@@ -94,11 +214,39 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
             coverImage: lecture.coverImage || '',
             jlptLevel: lecture.jlptLevel,
             isPublished: lecture.isPublished,
+            folderId: lecture.folderId,
           });
         }
       });
     }
   }, [lectureId, getLecture]);
+
+  // Sync selected slide with slides array
+  useEffect(() => {
+    if (slides.length > 0 && selectedSlideIndex >= 0) {
+      const idx = Math.min(selectedSlideIndex, slides.length - 1);
+      const slide = slides[idx];
+
+      if (slide && !hasUnsavedChanges) {
+        setEditingSlide({
+          layout: slide.layout,
+          title: slide.title || '',
+          elements: slide.elements ? [...slide.elements] : [],
+          backgroundColor: slide.backgroundColor || '#ffffff',
+          backgroundImage: slide.backgroundImage,
+          notes: slide.notes,
+          animation: slide.animation || 'none',
+          transition: slide.transition || 'fade',
+          animationDuration: slide.animationDuration || 500,
+        });
+        if (idx !== selectedSlideIndex) {
+          setSelectedSlideIndex(idx);
+        }
+      }
+    } else if (slides.length === 0 && !slidesLoading) {
+      setEditingSlide(null);
+    }
+  }, [slides, selectedSlideIndex, hasUnsavedChanges]);
 
   // Get selected element
   const selectedElement = editingSlide?.elements.find(el => el.id === selectedElementId) || null;
@@ -106,19 +254,14 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
   // Redirect non-admin
   if (!isAdmin) {
     return (
-      <div className="error-page">
+      <div className="ppt-error-page">
         <p>Bạn không có quyền truy cập trang này.</p>
-        <button className="btn" onClick={onBack}>Quay lại</button>
+        <button className="ppt-btn" onClick={onBack}>Quay lại</button>
       </div>
     );
   }
 
-  // Handle lecture form change
-  const handleLectureChange = (field: keyof LectureFormData, value: string | boolean) => {
-    setLectureForm((prev) => ({ ...prev, [field]: value }));
-  };
-
-  // Save lecture
+  // Save lecture metadata
   const handleSaveLecture = async () => {
     if (!lectureForm.title.trim()) {
       setError('Vui lòng nhập tiêu đề bài giảng');
@@ -149,14 +292,25 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
     }
   };
 
-  // Background image upload ref
-  const bgImageInputRef = useRef<HTMLInputElement>(null);
+  // Save current slide
+  const handleSaveSlide = useCallback(async () => {
+    if (!editingSlide || selectedSlideIndex < 0 || selectedSlideIndex >= slides.length) return;
+
+    const slide = slides[selectedSlideIndex];
+    await updateSlide(slide.id, editingSlide);
+    setHasUnsavedChanges(false);
+  }, [editingSlide, selectedSlideIndex, slides, updateSlide]);
 
   // Add new slide
   const handleAddSlide = async () => {
-    if (!currentLectureId || currentLectureId === 'new') {
-      setError('Vui lòng lưu bài giảng trước khi thêm slide');
+    if (!currentLectureId) {
+      setError('Lưu bài giảng trước khi thêm slide');
       return;
+    }
+
+    // Save current slide first if has changes
+    if (hasUnsavedChanges) {
+      await handleSaveSlide();
     }
 
     const newSlideData: SlideFormData = {
@@ -169,605 +323,1897 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
       animationDuration: 500,
     };
 
-    const slide = await addSlide(newSlideData);
-    if (slide) {
-      setSelectedSlideIndex(slides.length);
-      setEditingSlide(newSlideData);
+    const newSlide = await addSlide(newSlideData, slides.length);
+    if (newSlide) {
+      // Wait for Firestore to update, then select new slide
+      // We'll use the next slides.length after the update
+      const newIndex = slides.length; // Will be valid after Firestore updates
+      setTimeout(() => {
+        setSelectedSlideIndex(newIndex);
+        setHasUnsavedChanges(false);
+      }, 300);
     }
   };
 
-  // Select slide for editing
-  const handleSelectSlide = (index: number) => {
+  // Select slide
+  const handleSelectSlide = async (index: number) => {
+    if (hasUnsavedChanges) {
+      await handleSaveSlide();
+    }
+
+    // Get the slide data directly
     const slide = slides[index];
+    if (slide) {
+      setEditingSlide({
+        layout: slide.layout,
+        title: slide.title || '',
+        elements: slide.elements ? [...slide.elements] : [],
+        backgroundColor: slide.backgroundColor || '#ffffff',
+        backgroundImage: slide.backgroundImage,
+        notes: slide.notes,
+        animation: slide.animation || 'none',
+        transition: slide.transition || 'fade',
+        animationDuration: slide.animationDuration || 500,
+      });
+    }
+
     setSelectedSlideIndex(index);
     setSelectedElementId(null);
-    setEditingSlide({
-      layout: slide.layout,
-      title: slide.title || '',
-      elements: slide.elements,
-      backgroundColor: slide.backgroundColor || '#ffffff',
-      backgroundImage: slide.backgroundImage,
-      notes: slide.notes,
-      animation: slide.animation || 'none',
-      transition: slide.transition || 'fade',
-      animationDuration: slide.animationDuration || 500,
-    });
-  };
-
-  // Handle background image upload
-  const handleBgImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !editingSlide) return;
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64 = reader.result as string;
-      setEditingSlide({ ...editingSlide, backgroundImage: base64 });
-    };
-    reader.readAsDataURL(file);
-  };
-
-  // Remove background image
-  const handleRemoveBgImage = () => {
-    if (!editingSlide) return;
-    setEditingSlide({ ...editingSlide, backgroundImage: undefined });
-  };
-
-  // Update slide
-  const handleUpdateSlide = async () => {
-    if (selectedSlideIndex === null || !editingSlide) return;
-
-    const slide = slides[selectedSlideIndex];
-    await updateSlide(slide.id, editingSlide);
-    setEditingSlide(null);
-    setSelectedSlideIndex(null);
-    setSelectedElementId(null);
+    setHasUnsavedChanges(false);
   };
 
   // Delete slide
-  const handleDeleteSlide = async (index: number) => {
+  const handleDeleteSlide = async (index: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm('Xóa slide này?')) return;
+
     const slide = slides[index];
-    if (window.confirm('Xoá slide này?')) {
-      await deleteSlide(slide.id);
-      if (selectedSlideIndex === index) {
-        setSelectedSlideIndex(null);
-        setEditingSlide(null);
-        setSelectedElementId(null);
-      }
+    await deleteSlide(slide.id);
+
+    if (selectedSlideIndex >= slides.length - 1) {
+      setSelectedSlideIndex(Math.max(0, slides.length - 2));
     }
+    setHasUnsavedChanges(false);
   };
 
-  // Add element to slide
+  // Handle PPTX import
+  const handleImportSlides = async (importedSlides: SlideFormData[], mode: PPTXImportOptions['mode']) => {
+    if (!currentLectureId) {
+      setError('Vui lòng lưu bài giảng trước khi import');
+      return;
+    }
+
+    let startOrder = mode === 'replace' ? 0 : slides.length;
+
+    if (mode === 'replace' && slides.length > 0) {
+      await deleteAllSlides?.();
+    }
+
+    // Add each imported slide
+    for (let i = 0; i < importedSlides.length; i++) {
+      try {
+        await addSlide(importedSlides[i], startOrder + i);
+      } catch (err) {
+        console.error(`Error adding slide ${i + 1}:`, err);
+      }
+    }
+
+    // Wait for Firestore to sync, then select first imported slide
+    setTimeout(() => {
+      const firstImportedIndex = mode === 'replace' ? 0 : startOrder;
+      setSelectedSlideIndex(firstImportedIndex);
+      setHasUnsavedChanges(false);
+    }, 500);
+  };
+
+  // Handle export
+  const handleExportPPTX = async () => {
+    if (!currentLectureId || slides.length === 0) return;
+
+    const lecture: Lecture = {
+      id: currentLectureId,
+      title: lectureForm.title || 'Untitled',
+      description: lectureForm.description,
+      coverImage: lectureForm.coverImage,
+      authorId: currentUser!.id,
+      authorName: currentUser!.displayName || currentUser!.username,
+      jlptLevel: lectureForm.jlptLevel,
+      isPublished: lectureForm.isPublished,
+      isHidden: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      slideCount: slides.length,
+      viewCount: 0,
+    };
+
+    await exportPPTX(lecture, slides, { includeNotes: true });
+  };
+
+  // Update editing slide (marks as dirty)
+  const updateEditingSlide = (updates: Partial<SlideFormData>) => {
+    if (!editingSlide) return;
+    setEditingSlide({ ...editingSlide, ...updates });
+    setHasUnsavedChanges(true);
+  };
+
+  // Add element
   const addElement = (type: SlideElement['type']) => {
     if (!editingSlide) return;
 
-    const defaultStyle = {
-      fontSize: '18px',
-      fontWeight: 'normal',
-      color: '#000000',
-      textAlign: 'left',
-      backgroundColor: 'transparent',
-    };
+    let defaultStyle: Record<string, string> | undefined;
+    let defaultPosition = { x: 10, y: 20, width: 80, height: 15 };
+    let defaultContent = '';
+
+    switch (type) {
+      case 'text':
+        defaultContent = 'Nhập nội dung...';
+        defaultStyle = {
+          fontSize: '24px',
+          fontWeight: 'normal',
+          fontStyle: 'normal',
+          color: '#000000',
+          textAlign: 'left',
+          backgroundColor: 'transparent',
+          lineHeight: '1.5',
+        };
+        break;
+      case 'shape':
+        defaultPosition = { x: 20, y: 30, width: 30, height: 20 };
+        defaultStyle = {
+          backgroundColor: '#3498db',
+          borderRadius: '0px',
+          borderWidth: '0px',
+          borderStyle: 'solid',
+          borderColor: '#000000',
+        };
+        break;
+      case 'image':
+      case 'video':
+      case 'audio':
+        defaultPosition = { x: 10, y: 20, width: 60, height: 40 };
+        break;
+    }
 
     const newElement: SlideElement = {
       id: generateId(),
       type,
-      content: type === 'text' ? 'Nhập nội dung...' : '',
-      position: { x: 10, y: 30, width: 80, height: type === 'text' ? 20 : 40 },
-      style: type === 'text' ? defaultStyle : undefined,
+      content: defaultContent,
+      position: defaultPosition,
+      style: defaultStyle,
     };
 
-    setEditingSlide({
-      ...editingSlide,
+    updateEditingSlide({
+      elements: [...editingSlide.elements, newElement],
+    });
+    setSelectedElementId(newElement.id);
+  };
+
+  // Add shape element with specific shape type
+  const addShapeElement = (shapeType: 'rectangle' | 'circle' | 'line' | 'arrow') => {
+    if (!editingSlide) return;
+
+    let position = { x: 20, y: 30, width: 30, height: 20 };
+    let style: Record<string, string> = {
+      backgroundColor: '#3498db',
+      borderWidth: '0px',
+      borderStyle: 'solid',
+      borderColor: '#000000',
+    };
+
+    switch (shapeType) {
+      case 'circle':
+        style.borderRadius = '50%';
+        position = { x: 30, y: 30, width: 20, height: 20 };
+        break;
+      case 'line':
+        position = { x: 10, y: 50, width: 80, height: 0.5 };
+        style = {
+          backgroundColor: '#000000',
+          borderRadius: '0px',
+        };
+        break;
+      case 'arrow':
+        position = { x: 10, y: 50, width: 60, height: 3 };
+        style = {
+          backgroundColor: '#000000',
+          borderRadius: '0px',
+        };
+        break;
+      default:
+        style.borderRadius = '0px';
+    }
+
+    const newElement: SlideElement = {
+      id: generateId(),
+      type: 'shape',
+      content: shapeType,
+      position,
+      style,
+    };
+
+    updateEditingSlide({
       elements: [...editingSlide.elements, newElement],
     });
     setSelectedElementId(newElement.id);
   };
 
   // Update element
-  const updateElement = (elementId: string, updates: Partial<SlideElement>) => {
+  const updateElement = (id: string, updates: Partial<SlideElement>) => {
     if (!editingSlide) return;
-
-    setEditingSlide({
-      ...editingSlide,
-      elements: editingSlide.elements.map((el) =>
-        el.id === elementId ? { ...el, ...updates } : el
+    updateEditingSlide({
+      elements: editingSlide.elements.map(el =>
+        el.id === id ? { ...el, ...updates } : el
       ),
     });
   };
 
   // Update element style
-  const updateElementStyle = (elementId: string, styleUpdates: Record<string, string>) => {
+  const updateElementStyle = (id: string, styleUpdates: Record<string, string>) => {
     if (!editingSlide) return;
-
-    setEditingSlide({
-      ...editingSlide,
-      elements: editingSlide.elements.map((el) =>
-        el.id === elementId ? { ...el, style: { ...el.style, ...styleUpdates } } : el
+    updateEditingSlide({
+      elements: editingSlide.elements.map(el =>
+        el.id === id ? { ...el, style: { ...el.style, ...styleUpdates } } : el
       ),
     });
   };
 
-  // Delete element
-  const deleteElement = (elementId: string) => {
+  // Insert symbol into text element
+  const insertSymbol = (symbol: string) => {
+    if (!selectedElement || selectedElement.type !== 'text') {
+      // Create new text element with symbol
+      if (!editingSlide) return;
+      const newElement: SlideElement = {
+        id: generateId(),
+        type: 'text',
+        content: symbol,
+        position: { x: 40, y: 40, width: 20, height: 15 },
+        style: { fontSize: '48px', textAlign: 'center' },
+      };
+      updateEditingSlide({
+        elements: [...editingSlide.elements, newElement],
+      });
+      setSelectedElementId(newElement.id);
+    } else {
+      // Append symbol to existing text
+      updateElement(selectedElement.id, {
+        content: selectedElement.content + symbol,
+      });
+    }
+    setShowSymbolPicker(false);
+  };
+
+  // Add text with template
+  const addTextTemplate = (template: typeof TEXT_TEMPLATES[0]) => {
+    if (!editingSlide) return;
+    const newElement: SlideElement = {
+      id: generateId(),
+      type: 'text',
+      content: template.content,
+      position: { x: 10, y: 20, width: 80, height: 15 },
+      style: template.style as Record<string, string>,
+    };
+    updateEditingSlide({
+      elements: [...editingSlide.elements, newElement],
+    });
+    setSelectedElementId(newElement.id);
+  };
+
+  // Generate furigana for selected text element
+  const handleGenerateFurigana = useCallback(async () => {
+    if (!selectedElement || selectedElement.type !== 'text') {
+      setError('Vui lòng chọn một element text');
+      return;
+    }
+
+    // Check if already has furigana markup
+    if (hasFurigana(selectedElement.content)) {
+      setError('Text đã có furigana. Xóa furigana trước khi tạo mới.');
+      return;
+    }
+
+    try {
+      const textWithFurigana = await generateFurigana(selectedElement.content);
+      updateElement(selectedElement.id, { content: textWithFurigana });
+    } catch (err) {
+      setError('Lỗi khi tạo furigana. Vui lòng thử lại.');
+      console.error(err);
+    }
+  }, [selectedElement, generateFurigana]);
+
+  // Generate furigana for all text elements in current slide
+  const handleGenerateAllFurigana = useCallback(async () => {
     if (!editingSlide) return;
 
-    setEditingSlide({
-      ...editingSlide,
-      elements: editingSlide.elements.filter((el) => el.id !== elementId),
+    const textElements = editingSlide.elements.filter(
+      el => el.type === 'text' && !hasFurigana(el.content)
+    );
+
+    if (textElements.length === 0) {
+      setError('Không có text element nào cần thêm furigana');
+      return;
+    }
+
+    try {
+      const updatedElements = [...editingSlide.elements];
+      for (const el of textElements) {
+        const index = updatedElements.findIndex(e => e.id === el.id);
+        if (index !== -1) {
+          const textWithFurigana = await generateFurigana(el.content);
+          updatedElements[index] = { ...updatedElements[index], content: textWithFurigana };
+        }
+      }
+      updateEditingSlide({ elements: updatedElements });
+    } catch (err) {
+      setError('Lỗi khi tạo furigana. Vui lòng thử lại.');
+      console.error(err);
+    }
+  }, [editingSlide, generateFurigana, updateEditingSlide]);
+
+  // Remove furigana from selected element
+  const handleRemoveFurigana = useCallback(() => {
+    if (!selectedElement || selectedElement.type !== 'text') {
+      setError('Vui lòng chọn một element text');
+      return;
+    }
+
+    if (!hasFurigana(selectedElement.content)) {
+      setError('Text không có furigana');
+      return;
+    }
+
+    const textWithoutFurigana = removeFurigana(selectedElement.content);
+    updateElement(selectedElement.id, { content: textWithoutFurigana });
+  }, [selectedElement]);
+
+  // Handle text selection for admin notes
+  const handleTextSelect = useCallback((elementId: string) => {
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed || !selection.toString().trim()) {
+      setTextSelection(null);
+      return;
+    }
+
+    const text = selection.toString();
+    const range = selection.getRangeAt(0);
+
+    setTextSelection({
+      elementId,
+      text,
+      startOffset: range.startOffset,
+      endOffset: range.endOffset,
     });
-    if (selectedElementId === elementId) {
-      setSelectedElementId(null);
-    }
-  };
+  }, []);
 
-  // Move element (change position)
-  const moveElement = (elementId: string, direction: 'up' | 'down' | 'left' | 'right', amount: number = 5) => {
+  // Add admin note
+  const addAdminNote = useCallback(() => {
+    if (!textSelection || !noteContent.trim() || !editingSlide || !currentUser) return;
+
+    const element = editingSlide.elements.find(el => el.id === textSelection.elementId);
+    if (!element) return;
+
+    const newNote: AdminNote = {
+      id: `note-${Date.now()}`,
+      selectedText: textSelection.text,
+      noteContent: noteContent.trim(),
+      startOffset: textSelection.startOffset,
+      endOffset: textSelection.endOffset,
+      createdAt: new Date().toISOString(),
+      createdBy: currentUser.displayName || currentUser.username,
+    };
+
+    const updatedNotes = [...(element.adminNotes || []), newNote];
+    updateElement(textSelection.elementId, { adminNotes: updatedNotes });
+
+    setNoteContent('');
+    setShowNoteModal(false);
+    setTextSelection(null);
+  }, [textSelection, noteContent, editingSlide, currentUser, updateElement]);
+
+  // Edit admin note
+  const updateAdminNote = useCallback(() => {
+    if (!editingNoteId || !noteContent.trim() || !editingSlide) return;
+
+    // Find which element has this note
+    const element = editingSlide.elements.find(el =>
+      el.adminNotes?.some(n => n.id === editingNoteId)
+    );
+    if (!element) return;
+
+    const updatedNotes = element.adminNotes?.map(note =>
+      note.id === editingNoteId ? { ...note, noteContent: noteContent.trim() } : note
+    );
+    updateElement(element.id, { adminNotes: updatedNotes });
+
+    setNoteContent('');
+    setEditingNoteId(null);
+    setShowNoteModal(false);
+  }, [editingNoteId, noteContent, editingSlide, updateElement]);
+
+  // Delete admin note
+  const deleteAdminNote = useCallback((elementId: string, noteId: string) => {
+    if (!editingSlide) return;
+    const element = editingSlide.elements.find(el => el.id === elementId);
+    if (!element) return;
+
+    const updatedNotes = element.adminNotes?.filter(n => n.id !== noteId);
+    updateElement(elementId, { adminNotes: updatedNotes });
+  }, [editingSlide, updateElement]);
+
+  // Open note for editing
+  const openNoteForEdit = useCallback((note: AdminNote) => {
+    setEditingNoteId(note.id);
+    setNoteContent(note.noteContent);
+    setShowNoteModal(true);
+  }, []);
+
+  // Delete element
+  const deleteElement = useCallback(() => {
+    if (!editingSlide || !selectedElementId) return;
+    updateEditingSlide({
+      elements: editingSlide.elements.filter(el => el.id !== selectedElementId),
+    });
+    setSelectedElementId(null);
+  }, [editingSlide, selectedElementId]);
+
+  // Copy element to clipboard
+  const copyElement = useCallback(() => {
+    if (!selectedElement) return;
+    setClipboard({ ...selectedElement });
+  }, [selectedElement]);
+
+  // Paste element from clipboard
+  const pasteElement = useCallback(() => {
+    if (!clipboard || !editingSlide) return;
+    const newElement: SlideElement = {
+      ...clipboard,
+      id: generateId(),
+      position: {
+        ...clipboard.position,
+        x: clipboard.position.x + 2,
+        y: clipboard.position.y + 2,
+      },
+    };
+    updateEditingSlide({
+      elements: [...editingSlide.elements, newElement],
+    });
+    setSelectedElementId(newElement.id);
+  }, [clipboard, editingSlide]);
+
+  // Duplicate element
+  const duplicateElement = useCallback(() => {
+    if (!selectedElement || !editingSlide) return;
+    const newElement: SlideElement = {
+      ...selectedElement,
+      id: generateId(),
+      position: {
+        ...selectedElement.position,
+        x: selectedElement.position.x + 2,
+        y: selectedElement.position.y + 2,
+      },
+    };
+    updateEditingSlide({
+      elements: [...editingSlide.elements, newElement],
+    });
+    setSelectedElementId(newElement.id);
+  }, [selectedElement, editingSlide]);
+
+  // Bring element to front
+  const bringToFront = useCallback(() => {
+    if (!selectedElementId || !editingSlide) return;
+    const elements = editingSlide.elements.filter(el => el.id !== selectedElementId);
+    const element = editingSlide.elements.find(el => el.id === selectedElementId);
+    if (element) {
+      updateEditingSlide({ elements: [...elements, element] });
+    }
+  }, [selectedElementId, editingSlide]);
+
+  // Send element to back
+  const sendToBack = useCallback(() => {
+    if (!selectedElementId || !editingSlide) return;
+    const elements = editingSlide.elements.filter(el => el.id !== selectedElementId);
+    const element = editingSlide.elements.find(el => el.id === selectedElementId);
+    if (element) {
+      updateEditingSlide({ elements: [element, ...elements] });
+    }
+  }, [selectedElementId, editingSlide]);
+
+  // Start dragging element
+  const handleDragStart = useCallback((e: React.MouseEvent, elementId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
     const element = editingSlide?.elements.find(el => el.id === elementId);
     if (!element) return;
 
-    const newPosition = { ...element.position };
-    switch (direction) {
-      case 'up': newPosition.y = Math.max(0, newPosition.y - amount); break;
-      case 'down': newPosition.y = Math.min(100 - newPosition.height, newPosition.y + amount); break;
-      case 'left': newPosition.x = Math.max(0, newPosition.x - amount); break;
-      case 'right': newPosition.x = Math.min(100 - newPosition.width, newPosition.x + amount); break;
-    }
-    updateElement(elementId, { position: newPosition });
-  };
+    setSelectedElementId(elementId);
+    setDragState({
+      isDragging: true,
+      isResizing: false,
+      resizeHandle: null,
+      startX: e.clientX,
+      startY: e.clientY,
+      startPosition: { ...element.position },
+    });
+  }, [editingSlide]);
 
-  // Resize element
-  const resizeElement = (elementId: string, dimension: 'width' | 'height', amount: number) => {
+  // Start resizing element
+  const handleResizeStart = useCallback((e: React.MouseEvent, elementId: string, handle: ResizeHandle) => {
+    e.preventDefault();
+    e.stopPropagation();
     const element = editingSlide?.elements.find(el => el.id === elementId);
     if (!element) return;
 
-    const newPosition = { ...element.position };
-    if (dimension === 'width') {
-      newPosition.width = Math.max(10, Math.min(100, newPosition.width + amount));
-    } else {
-      newPosition.height = Math.max(5, Math.min(100, newPosition.height + amount));
+    setSelectedElementId(elementId);
+    setDragState({
+      isDragging: false,
+      isResizing: true,
+      resizeHandle: handle,
+      startX: e.clientX,
+      startY: e.clientY,
+      startPosition: { ...element.position },
+    });
+  }, [editingSlide]);
+
+  // Handle mouse move for drag/resize
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!dragState.isDragging && !dragState.isResizing) return;
+    if (!canvasRef.current || !selectedElementId) return;
+
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const deltaX = ((e.clientX - dragState.startX) / rect.width) * 100;
+    const deltaY = ((e.clientY - dragState.startY) / rect.height) * 100;
+
+    if (dragState.isDragging) {
+      // Move element
+      const newX = Math.max(0, Math.min(100 - dragState.startPosition.width, dragState.startPosition.x + deltaX));
+      const newY = Math.max(0, Math.min(100 - dragState.startPosition.height, dragState.startPosition.y + deltaY));
+      updateElement(selectedElementId, {
+        position: {
+          ...dragState.startPosition,
+          x: newX,
+          y: newY,
+        },
+      });
+    } else if (dragState.isResizing && dragState.resizeHandle) {
+      // Resize element
+      let { x, y, width, height } = dragState.startPosition;
+      const handle = dragState.resizeHandle;
+
+      // Adjust based on handle position
+      if (handle.includes('w')) {
+        const newX = Math.max(0, x + deltaX);
+        const newWidth = width - (newX - x);
+        if (newWidth >= 5) { x = newX; width = newWidth; }
+      }
+      if (handle.includes('e')) {
+        width = Math.max(5, Math.min(100 - x, width + deltaX));
+      }
+      if (handle.includes('n')) {
+        const newY = Math.max(0, y + deltaY);
+        const newHeight = height - (newY - y);
+        if (newHeight >= 5) { y = newY; height = newHeight; }
+      }
+      if (handle.includes('s')) {
+        height = Math.max(5, Math.min(100 - y, height + deltaY));
+      }
+
+      updateElement(selectedElementId, { position: { x, y, width, height } });
     }
-    updateElement(elementId, { position: newPosition });
+  }, [dragState, selectedElementId, updateElement]);
+
+  // Handle mouse up - end drag/resize
+  const handleMouseUp = useCallback(() => {
+    if (dragState.isDragging || dragState.isResizing) {
+      setDragState({
+        isDragging: false,
+        isResizing: false,
+        resizeHandle: null,
+        startX: 0,
+        startY: 0,
+        startPosition: { x: 0, y: 0, width: 0, height: 0 },
+      });
+    }
+  }, [dragState]);
+
+  // Handle image upload for element
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (selectedElementId && selectedElement?.type === 'image') {
+        updateElement(selectedElementId, { content: reader.result as string });
+      } else {
+        // Add new image element
+        const newElement: SlideElement = {
+          id: generateId(),
+          type: 'image',
+          content: reader.result as string,
+          position: { x: 10, y: 20, width: 60, height: 50 },
+        };
+        updateEditingSlide({
+          elements: [...(editingSlide?.elements || []), newElement],
+        });
+        setSelectedElementId(newElement.id);
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger shortcuts when editing text input
+      const target = e.target as HTMLElement;
+      const isEditing = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.contentEditable === 'true';
+
+      if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        handleSaveSlide();
+      }
+      if (e.key === 'Delete' && selectedElementId && !isEditing) {
+        e.preventDefault();
+        deleteElement();
+      }
+      // Copy: Ctrl/Cmd + C
+      if (e.key === 'c' && (e.ctrlKey || e.metaKey) && selectedElementId && !isEditing) {
+        e.preventDefault();
+        copyElement();
+      }
+      // Paste: Ctrl/Cmd + V
+      if (e.key === 'v' && (e.ctrlKey || e.metaKey) && clipboard && !isEditing) {
+        e.preventDefault();
+        pasteElement();
+      }
+      // Duplicate: Ctrl/Cmd + D
+      if (e.key === 'd' && (e.ctrlKey || e.metaKey) && selectedElementId && !isEditing) {
+        e.preventDefault();
+        duplicateElement();
+      }
+      // Escape: Deselect element
+      if (e.key === 'Escape') {
+        setSelectedElementId(null);
+        setIsEditingTitle(false);
+      }
+      // Arrow keys: Move element
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key) && selectedElementId && !isEditing) {
+        e.preventDefault();
+        const element = editingSlide?.elements.find(el => el.id === selectedElementId);
+        if (!element) return;
+        const step = e.shiftKey ? 5 : 1;
+        let { x, y } = element.position;
+        if (e.key === 'ArrowUp') y = Math.max(0, y - step);
+        if (e.key === 'ArrowDown') y = Math.min(100 - element.position.height, y + step);
+        if (e.key === 'ArrowLeft') x = Math.max(0, x - step);
+        if (e.key === 'ArrowRight') x = Math.min(100 - element.position.width, x + step);
+        updateElement(selectedElementId, { position: { ...element.position, x, y } });
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleSaveSlide, selectedElementId, deleteElement, copyElement, pasteElement, duplicateElement, clipboard, editingSlide, updateElement]);
+
+  // Render slide thumbnail
+  const renderThumbnail = (slide: Slide, index: number) => (
+    <div
+      key={slide.id}
+      className={`ppt-thumbnail ${selectedSlideIndex === index ? 'active' : ''}`}
+      onClick={() => handleSelectSlide(index)}
+    >
+      <span className="ppt-thumbnail-num">{index + 1}</span>
+      <div
+        className="ppt-thumbnail-preview"
+        style={{
+          backgroundColor: slide.backgroundColor || '#fff',
+          backgroundImage: slide.backgroundImage ? `url(${slide.backgroundImage})` : undefined,
+          backgroundSize: 'cover',
+        }}
+      >
+        {slide.title && <div className="ppt-thumb-title">{slide.title}</div>}
+        {slide.elements.slice(0, 2).map(el => (
+          <div key={el.id} className="ppt-thumb-element">
+            {el.type === 'text' ? el.content.substring(0, 15) + (el.content.length > 15 ? '...' : '') : `[${el.type}]`}
+          </div>
+        ))}
+      </div>
+      <div className="ppt-thumbnail-actions">
+        <button onClick={(e) => { e.stopPropagation(); duplicateSlide(slide.id); }} title="Nhân đôi">
+          <CopyPlus size={12} />
+        </button>
+        <button onClick={(e) => handleDeleteSlide(index, e)} title="Xóa">
+          <Trash2 size={12} />
+        </button>
+      </div>
+    </div>
+  );
+
+  // Render resize handles for selected element
+  const renderResizeHandles = (elementId: string) => {
+    const handles: ResizeHandle[] = ['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se'];
+    return handles.map(handle => (
+      <div
+        key={handle}
+        className={`ppt-resize-handle ppt-resize-${handle}`}
+        onMouseDown={(e) => handleResizeStart(e, elementId, handle)}
+      />
+    ));
+  };
+
+  // Render element on canvas
+  const renderElement = (element: SlideElement) => {
+    const isSelected = selectedElementId === element.id;
+    const isDraggingThis = dragState.isDragging && isSelected;
+    const isResizingThis = dragState.isResizing && isSelected;
+
+    const style: React.CSSProperties = {
+      position: 'absolute',
+      left: `${element.position.x}%`,
+      top: `${element.position.y}%`,
+      width: `${element.position.width}%`,
+      height: `${element.position.height}%`,
+      ...(element.style || {}),
+      border: isSelected ? '2px solid #3498db' : '1px dashed transparent',
+      cursor: isDraggingThis ? 'grabbing' : isSelected ? 'grab' : 'pointer',
+      boxSizing: 'border-box',
+      overflow: 'hidden',
+      userSelect: isDraggingThis || isResizingThis ? 'none' : 'auto',
+    };
+
+    const handleClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!dragState.isDragging && !dragState.isResizing) {
+        setSelectedElementId(element.id);
+      }
+    };
+
+    // Context menu handler
+    const handleContextMenu = (e: React.MouseEvent) => {
+      e.preventDefault();
+      setSelectedElementId(element.id);
+    };
+
+    if (element.type === 'text') {
+      // Extract box-level styles vs text-level styles
+      const boxBackground = element.style?.boxBackground || 'transparent';
+      const padding = element.style?.padding || '0px';
+      const borderRadius = element.style?.borderRadius || '0px';
+
+      // Apply boxBackground to the container
+      const containerStyle: React.CSSProperties = {
+        ...style,
+        backgroundColor: boxBackground !== 'transparent' ? boxBackground : (element.style?.backgroundColor === 'transparent' ? 'transparent' : undefined),
+        padding,
+        borderRadius,
+      };
+
+      // Text content styles (excluding box-level styles)
+      const textStyle: React.CSSProperties = {
+        width: '100%',
+        height: '100%',
+        outline: 'none',
+        overflow: 'auto',
+        wordWrap: 'break-word',
+        whiteSpace: 'pre-wrap',
+        backgroundColor: element.style?.backgroundColor && element.style.backgroundColor !== 'transparent' && !boxBackground ? element.style.backgroundColor : 'transparent',
+      };
+
+      const hasSelection = textSelection?.elementId === element.id && textSelection.text;
+      const elementNotes = element.adminNotes || [];
+
+      return (
+        <div
+          key={element.id}
+          className={`ppt-element ppt-text-box ${isSelected ? 'selected' : ''}`}
+          style={containerStyle}
+          onClick={handleClick}
+          onMouseDown={(e) => {
+            // Only start drag if not clicking on resize handle
+            if (!(e.target as HTMLElement).classList.contains('ppt-resize-handle')) {
+              handleDragStart(e, element.id);
+            }
+          }}
+          onMouseUp={() => handleTextSelect(element.id)}
+          onContextMenu={handleContextMenu}
+        >
+          {/* Show editable raw text when selected, or furigana-rendered text otherwise */}
+          {isSelected && !dragState.isDragging ? (
+            <div
+              contentEditable
+              suppressContentEditableWarning
+              onBlur={(e) => updateElement(element.id, { content: e.currentTarget.textContent || '' })}
+              style={textStyle}
+            >
+              {element.content}
+            </div>
+          ) : (
+            <div
+              style={textStyle}
+              dangerouslySetInnerHTML={{
+                __html: showFurigana
+                  ? convertFuriganaToRuby(element.content).replace(/\n/g, '<br/>')
+                  : removeFurigana(element.content).replace(/\n/g, '<br/>')
+              }}
+            />
+          )}
+
+          {/* +Note button when text is selected */}
+          {hasSelection && isSelected && (
+            <button
+              className="ppt-add-note-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowNoteModal(true);
+              }}
+              title="Thêm ghi chú admin"
+            >
+              +Note
+            </button>
+          )}
+
+          {/* Admin notes indicators */}
+          {showAdminNotes && elementNotes.length > 0 && (
+            <div className="ppt-admin-notes-container">
+              {elementNotes.map((note, idx) => (
+                <div key={note.id} className="ppt-admin-note" style={{ top: `${idx * 28 + 4}px` }}>
+                  <span className="ppt-admin-note-marker" title={note.selectedText}><StickyNote size={14} /></span>
+                  <div className="ppt-admin-note-popup">
+                    <div className="ppt-admin-note-header">
+                      <span className="ppt-admin-note-text">"{note.selectedText}"</span>
+                      <div className="ppt-admin-note-actions">
+                        <button onClick={() => openNoteForEdit(note)} title="Sửa"><Pencil size={12} /></button>
+                        <button onClick={() => deleteAdminNote(element.id, note.id)} title="Xóa"><Trash2 size={12} /></button>
+                      </div>
+                    </div>
+                    <div className="ppt-admin-note-content">{note.noteContent}</div>
+                    <div className="ppt-admin-note-meta">
+                      {note.createdBy} • {new Date(note.createdAt).toLocaleDateString('vi-VN')}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {isSelected && renderResizeHandles(element.id)}
+        </div>
+      );
+    }
+
+    if (element.type === 'image') {
+      return (
+        <div
+          key={element.id}
+          className={`ppt-element ${isSelected ? 'selected' : ''}`}
+          style={style}
+          onClick={handleClick}
+          onMouseDown={(e) => {
+            if (!(e.target as HTMLElement).classList.contains('ppt-resize-handle')) {
+              handleDragStart(e, element.id);
+            }
+          }}
+          onContextMenu={handleContextMenu}
+        >
+          {element.content ? (
+            <img
+              src={element.content}
+              alt=""
+              style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }}
+              draggable={false}
+            />
+          ) : (
+            <div className="ppt-placeholder">📷 Click để thêm ảnh</div>
+          )}
+          {isSelected && renderResizeHandles(element.id)}
+        </div>
+      );
+    }
+
+    // Shape elements (rectangle, circle, line, arrow)
+    if (element.type === 'shape') {
+      const shapeType = element.content || 'rectangle';
+      let shapeContent: React.ReactNode = null;
+
+      // Arrow head for arrow shape
+      if (shapeType === 'arrow') {
+        shapeContent = (
+          <div
+            style={{
+              position: 'absolute',
+              right: '-8px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: 0,
+              height: 0,
+              borderLeft: '12px solid ' + (element.style?.backgroundColor || '#000'),
+              borderTop: '8px solid transparent',
+              borderBottom: '8px solid transparent',
+            }}
+          />
+        );
+      }
+
+      return (
+        <div
+          key={element.id}
+          className={`ppt-element ppt-shape ppt-shape-${shapeType} ${isSelected ? 'selected' : ''}`}
+          style={style}
+          onClick={handleClick}
+          onMouseDown={(e) => {
+            if (!(e.target as HTMLElement).classList.contains('ppt-resize-handle')) {
+              handleDragStart(e, element.id);
+            }
+          }}
+          onContextMenu={handleContextMenu}
+        >
+          {shapeContent}
+          {isSelected && renderResizeHandles(element.id)}
+        </div>
+      );
+    }
+
+    // Video element
+    if (element.type === 'video') {
+      return (
+        <div
+          key={element.id}
+          className={`ppt-element ${isSelected ? 'selected' : ''}`}
+          style={style}
+          onClick={handleClick}
+          onMouseDown={(e) => {
+            if (!(e.target as HTMLElement).classList.contains('ppt-resize-handle')) {
+              handleDragStart(e, element.id);
+            }
+          }}
+          onContextMenu={handleContextMenu}
+        >
+          {element.content ? (
+            <video
+              src={element.content}
+              style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }}
+              controls
+            />
+          ) : (
+            <div className="ppt-placeholder">🎬 Video URL</div>
+          )}
+          {isSelected && renderResizeHandles(element.id)}
+        </div>
+      );
+    }
+
+    // Audio element
+    if (element.type === 'audio') {
+      return (
+        <div
+          key={element.id}
+          className={`ppt-element ${isSelected ? 'selected' : ''}`}
+          style={{...style, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--light)'}}
+          onClick={handleClick}
+          onMouseDown={(e) => {
+            if (!(e.target as HTMLElement).classList.contains('ppt-resize-handle')) {
+              handleDragStart(e, element.id);
+            }
+          }}
+          onContextMenu={handleContextMenu}
+        >
+          {element.content ? (
+            <audio src={element.content} controls style={{ width: '90%' }} />
+          ) : (
+            <div className="ppt-placeholder">🔊 Audio URL</div>
+          )}
+          {isSelected && renderResizeHandles(element.id)}
+        </div>
+      );
+    }
+
+    // Default fallback
+    return (
+      <div
+        key={element.id}
+        className={`ppt-element ${isSelected ? 'selected' : ''}`}
+        style={style}
+        onClick={handleClick}
+        onMouseDown={(e) => {
+          if (!(e.target as HTMLElement).classList.contains('ppt-resize-handle')) {
+            handleDragStart(e, element.id);
+          }
+        }}
+        onContextMenu={handleContextMenu}
+      >
+        [{element.type}]
+        {isSelected && renderResizeHandles(element.id)}
+      </div>
+    );
   };
 
   return (
-    <div className="lecture-editor-page">
-      <div className="editor-header">
-        <button className="btn btn-back" onClick={onBack}>
-          ← Quay lại
-        </button>
-        <h1>{isNew ? 'Tạo bài giảng mới' : 'Chỉnh sửa bài giảng'}</h1>
-        <button className="btn btn-primary" onClick={handleSaveLecture} disabled={saving}>
-          {saving ? 'Đang lưu...' : 'Lưu'}
-        </button>
-      </div>
+    <div className="ppt-editor">
+      {/* Top Header */}
+      <header className="ppt-header">
+        <div className="ppt-header-left">
+          <button className="ppt-btn ppt-btn-icon" onClick={onBack} title="Quay lại">
+            <ArrowLeft size={18} />
+          </button>
+          <input
+            type="text"
+            className="ppt-title-input"
+            value={lectureForm.title}
+            onChange={(e) => setLectureForm({ ...lectureForm, title: e.target.value })}
+            placeholder="Tiêu đề bài giảng..."
+          />
+          {hasUnsavedChanges && <span className="ppt-unsaved-badge">●</span>}
+        </div>
+        <div className="ppt-header-right">
+          <button className="ppt-btn ppt-btn-ghost" onClick={() => setShowSettingsPanel(!showSettingsPanel)} title="Cài đặt">
+            <Settings size={16} />
+            <span>Cài đặt</span>
+          </button>
+          <button className="ppt-btn ppt-btn-ghost" onClick={() => setShowImportModal(true)} disabled={isNew} title="Import PPTX">
+            <Download size={16} />
+            <span>Import</span>
+          </button>
+          <button className="ppt-btn ppt-btn-ghost" onClick={handleExportPPTX} disabled={slides.length === 0 || exportLoading} title="Export PPTX">
+            <Upload size={16} />
+            <span>{exportLoading ? '...' : 'Export'}</span>
+          </button>
+          <button
+            className={`ppt-btn ppt-btn-ghost ${showAdminNotes ? 'active' : ''}`}
+            onClick={() => setShowAdminNotes(!showAdminNotes)}
+            title="Hiện/ẩn ghi chú admin"
+          >
+            <StickyNote size={16} />
+            <span>Notes</span>
+          </button>
+          <button className="ppt-btn ppt-btn-primary" onClick={handleSaveLecture} disabled={saving}>
+            <Save size={16} />
+            <span>{saving ? 'Đang lưu...' : 'Lưu'}</span>
+          </button>
+        </div>
+      </header>
 
-      {error && <div className="error-message">{error}</div>}
-
-      <div className="editor-content">
-        {/* Lecture metadata form */}
-        <div className="lecture-form">
-          <h3>Thông tin bài giảng</h3>
-          <div className="form-group">
-            <label>Tiêu đề *</label>
-            <input
-              type="text"
-              value={lectureForm.title}
-              onChange={(e) => handleLectureChange('title', e.target.value)}
-              placeholder="Nhập tiêu đề bài giảng"
-            />
-          </div>
-          <div className="form-group">
-            <label>Mô tả</label>
-            <textarea
-              value={lectureForm.description}
-              onChange={(e) => handleLectureChange('description', e.target.value)}
-              placeholder="Mô tả ngắn về bài giảng"
-              rows={3}
-            />
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label>Level JLPT</label>
-              <select
-                value={lectureForm.jlptLevel}
-                onChange={(e) => handleLectureChange('jlptLevel', e.target.value as JLPTLevel)}
-              >
-                <option value="N5">N5</option>
-                <option value="N4">N4</option>
-                <option value="N3">N3</option>
-                <option value="N2">N2</option>
-                <option value="N1">N1</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={lectureForm.isPublished}
-                  onChange={(e) => handleLectureChange('isPublished', e.target.checked)}
-                />
-                Công khai
-              </label>
-            </div>
-          </div>
-          <div className="form-group">
-            <label>Ảnh bìa (URL)</label>
-            <input
-              type="text"
-              value={lectureForm.coverImage}
-              onChange={(e) => handleLectureChange('coverImage', e.target.value)}
-              placeholder="https://..."
-            />
-          </div>
+      {/* Ribbon Toolbar */}
+      <div className="ppt-ribbon">
+        {/* Tabs */}
+        <div className="ppt-ribbon-tabs">
+          <button className={`ppt-tab ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>Home</button>
+          <button className={`ppt-tab ${activeTab === 'insert' ? 'active' : ''}`} onClick={() => setActiveTab('insert')}>Insert</button>
+          <button className={`ppt-tab ${activeTab === 'design' ? 'active' : ''}`} onClick={() => setActiveTab('design')}>Design</button>
+          <button className={`ppt-tab ${activeTab === 'transitions' ? 'active' : ''}`} onClick={() => setActiveTab('transitions')}>Transitions</button>
         </div>
 
-        {/* Slides editor - always show */}
-        <div className="slides-editor">
-          <div className="slides-sidebar">
-            <div className="slides-header">
-              <h3>Slides ({slides.length})</h3>
-              <button
-                className="btn btn-add"
-                onClick={handleAddSlide}
-                disabled={isNew}
-                title={isNew ? 'Lưu bài giảng trước' : 'Thêm slide mới'}
-              >
-                + Thêm slide
-              </button>
-            </div>
-
-            {/* Show message if lecture not saved */}
-            {isNew && (
-              <div className="slides-empty-message">
-                <p>Lưu bài giảng trước để thêm slides</p>
+        {/* Tab Content */}
+        <div className="ppt-ribbon-content">
+          {activeTab === 'home' && (
+            <>
+              {/* Clipboard */}
+              <div className="ppt-ribbon-group">
+                <div className="ppt-ribbon-group-content">
+                  <button className="ppt-ribbon-btn ppt-ribbon-btn-lg" onClick={handleAddSlide} disabled={isNew}>
+                    <Plus size={20} />
+                    <span>Slide</span>
+                  </button>
+                  {selectedElement && (
+                    <>
+                      <button className="ppt-ribbon-btn" onClick={copyElement} title="Ctrl+C">
+                        <Copy size={16} />
+                        <span>Copy</span>
+                      </button>
+                      <button className="ppt-ribbon-btn" onClick={pasteElement} disabled={!clipboard} title="Ctrl+V">
+                        <Clipboard size={16} />
+                        <span>Paste</span>
+                      </button>
+                      <button className="ppt-ribbon-btn" onClick={duplicateElement} title="Ctrl+D">
+                        <CopyPlus size={16} />
+                        <span>Nhân đôi</span>
+                      </button>
+                    </>
+                  )}
+                </div>
+                <span className="ppt-ribbon-group-label">Clipboard</span>
               </div>
-            )}
 
-            {/* Show slides list */}
-            {!isNew && (
-              <div className="slides-list">
-                {slides.length === 0 ? (
-                  <div className="slides-empty-message">
-                    <p>Chưa có slide nào</p>
-                    <p className="hint">Nhấn "+ Thêm slide" để bắt đầu</p>
-                  </div>
-                ) : (
-                  slides.map((slide, index) => (
-                    <div
-                      key={slide.id}
-                      className={`slide-thumbnail-item ${selectedSlideIndex === index ? 'active' : ''}`}
-                      onClick={() => handleSelectSlide(index)}
+              {/* Font */}
+              {selectedElement?.type === 'text' && (
+                <div className="ppt-ribbon-group">
+                  <div className="ppt-ribbon-group-content">
+                    <select
+                      className="ppt-ribbon-select"
+                      value={selectedElement.style?.fontFamily || 'Arial'}
+                      onChange={(e) => updateElementStyle(selectedElement.id, { fontFamily: e.target.value })}
+                      title="Font"
                     >
-                      <div className="slide-thumbnail-number">{index + 1}</div>
-                      <div className="slide-thumbnail-preview">
-                        <div
-                          className="slide-mini-preview"
-                          style={{
-                            backgroundColor: slide.backgroundColor || '#ffffff',
-                            backgroundImage: slide.backgroundImage ? `url(${slide.backgroundImage})` : undefined,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                          }}
-                        >
-                          {slide.title && (
-                            <div className="slide-mini-title">{slide.title}</div>
-                          )}
-                          {slide.elements.slice(0, 2).map((el) => (
-                            <div key={el.id} className="slide-mini-element">
-                              {el.type === 'text' ? el.content.substring(0, 20) : `[${el.type}]`}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="slide-thumbnail-info">
-                        <span className="slide-thumbnail-name">{slide.title || 'Untitled'}</span>
-                        {slide.transition && slide.transition !== 'none' && (
-                          <span className="slide-effect-badge" title="Có hiệu ứng chuyển trang">T</span>
-                        )}
-                        {slide.animation && slide.animation !== 'none' && (
-                          <span className="slide-effect-badge" title="Có hiệu ứng animation">A</span>
-                        )}
-                      </div>
-                      <div className="slide-thumbnail-actions">
-                        <button
-                          className="btn-icon-small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            duplicateSlide(slide.id);
-                          }}
-                          title="Nhân đôi"
-                        >
-                          📋
-                        </button>
-                        <button
-                          className="btn-delete-small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteSlide(index);
-                          }}
-                          title="Xóa"
-                        >
-                          ×
-                        </button>
+                      {FONT_FAMILIES.map(f => <option key={f} value={f}>{f}</option>)}
+                    </select>
+                    <select
+                      className="ppt-ribbon-select ppt-ribbon-select-sm"
+                      value={parseInt(selectedElement.style?.fontSize || '24')}
+                      onChange={(e) => updateElementStyle(selectedElement.id, { fontSize: `${e.target.value}px` })}
+                      title="Cỡ chữ"
+                    >
+                      {FONT_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    <div className="ppt-ribbon-btn-group">
+                      <button
+                        className={`ppt-ribbon-btn-sm ${selectedElement.style?.fontWeight === 'bold' ? 'active' : ''}`}
+                        onClick={() => updateElementStyle(selectedElement.id, { fontWeight: selectedElement.style?.fontWeight === 'bold' ? 'normal' : 'bold' })}
+                        title="In đậm (Ctrl+B)"
+                      ><Bold size={14} /></button>
+                      <button
+                        className={`ppt-ribbon-btn-sm ${selectedElement.style?.fontStyle === 'italic' ? 'active' : ''}`}
+                        onClick={() => updateElementStyle(selectedElement.id, { fontStyle: selectedElement.style?.fontStyle === 'italic' ? 'normal' : 'italic' })}
+                        title="In nghiêng (Ctrl+I)"
+                      ><Italic size={14} /></button>
+                      <button
+                        className={`ppt-ribbon-btn-sm ${selectedElement.style?.textDecoration === 'underline' ? 'active' : ''}`}
+                        onClick={() => updateElementStyle(selectedElement.id, { textDecoration: selectedElement.style?.textDecoration === 'underline' ? 'none' : 'underline' })}
+                        title="Gạch chân (Ctrl+U)"
+                      ><Underline size={14} /></button>
+                      <button
+                        className={`ppt-ribbon-btn-sm ${selectedElement.style?.textDecoration === 'line-through' ? 'active' : ''}`}
+                        onClick={() => updateElementStyle(selectedElement.id, { textDecoration: selectedElement.style?.textDecoration === 'line-through' ? 'none' : 'line-through' })}
+                        title="Gạch ngang"
+                      ><Strikethrough size={14} /></button>
+                    </div>
+                  </div>
+                  <span className="ppt-ribbon-group-label">Font</span>
+                </div>
+              )}
+
+              {/* Text Color & Highlight */}
+              {selectedElement?.type === 'text' && (
+                <div className="ppt-ribbon-group">
+                  <div className="ppt-ribbon-group-content">
+                    <div className="ppt-color-section">
+                      <label className="ppt-ribbon-mini-label">Màu chữ</label>
+                      <div className="ppt-color-picker">
+                        {COLORS.slice(0, 9).map(c => (
+                          <button
+                            key={c}
+                            className={`ppt-color-btn ${selectedElement.style?.color === c ? 'active' : ''}`}
+                            style={{ backgroundColor: c }}
+                            onClick={() => updateElementStyle(selectedElement.id, { color: c })}
+                            title={c}
+                          />
+                        ))}
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
-
-            <div className="slide-editor-main">
-              {editingSlide ? (
-                <>
-                  {/* Rich Toolbar */}
-                  <div className="editor-toolbar">
-                    {/* Insert group */}
-                    <div className="toolbar-group">
-                      <span className="toolbar-label">Chèn:</span>
-                      <button className="toolbar-btn" onClick={() => addElement('text')} title="Chèn văn bản">
-                        <span>T</span>
-                      </button>
-                      <button className="toolbar-btn" onClick={() => addElement('image')} title="Chèn ảnh">
-                        <span>🖼</span>
-                      </button>
-                      <button className="toolbar-btn" onClick={() => addElement('video')} title="Chèn video">
-                        <span>🎬</span>
-                      </button>
-                      <button className="toolbar-btn" onClick={() => addElement('audio')} title="Chèn audio">
-                        <span>🔊</span>
-                      </button>
+                    <div className="ppt-color-section">
+                      <label className="ppt-ribbon-mini-label">Highlight</label>
+                      <div className="ppt-color-picker">
+                        {HIGHLIGHT_COLORS.slice(0, 6).map(c => (
+                          <button
+                            key={c}
+                            className={`ppt-color-btn ${selectedElement.style?.backgroundColor === c ? 'active' : ''}`}
+                            style={{ backgroundColor: c === 'transparent' ? '#fff' : c, border: c === 'transparent' ? '1px dashed #ccc' : undefined }}
+                            onClick={() => updateElementStyle(selectedElement.id, { backgroundColor: c })}
+                            title={c === 'transparent' ? 'Không' : c}
+                          />
+                        ))}
+                      </div>
                     </div>
+                  </div>
+                  <span className="ppt-ribbon-group-label">Màu sắc</span>
+                </div>
+              )}
 
-                    <div className="toolbar-divider" />
+              {/* Shape Fill Color */}
+              {selectedElement?.type === 'shape' && (
+                <div className="ppt-ribbon-group">
+                  <div className="ppt-ribbon-group-content">
+                    <div className="ppt-color-section">
+                      <label className="ppt-ribbon-mini-label">Màu nền</label>
+                      <div className="ppt-color-picker">
+                        {COLORS.slice(0, 12).map(c => (
+                          <button
+                            key={c}
+                            className={`ppt-color-btn ${selectedElement.style?.backgroundColor === c ? 'active' : ''}`}
+                            style={{ backgroundColor: c }}
+                            onClick={() => updateElementStyle(selectedElement.id, { backgroundColor: c })}
+                            title={c}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <span className="ppt-ribbon-group-label">Màu Shape</span>
+                </div>
+              )}
 
-                    {/* Text formatting group - only show when text element selected */}
-                    {selectedElement?.type === 'text' && (
+              {/* Paragraph */}
+              {selectedElement?.type === 'text' && (
+                <div className="ppt-ribbon-group">
+                  <div className="ppt-ribbon-group-content">
+                    <div className="ppt-ribbon-btn-group">
+                      <button
+                        className={`ppt-ribbon-btn-sm ${selectedElement.style?.textAlign === 'left' ? 'active' : ''}`}
+                        onClick={() => updateElementStyle(selectedElement.id, { textAlign: 'left' })}
+                        title="Căn trái"
+                      ><AlignLeft size={14} /></button>
+                      <button
+                        className={`ppt-ribbon-btn-sm ${selectedElement.style?.textAlign === 'center' ? 'active' : ''}`}
+                        onClick={() => updateElementStyle(selectedElement.id, { textAlign: 'center' })}
+                        title="Căn giữa"
+                      ><AlignCenter size={14} /></button>
+                      <button
+                        className={`ppt-ribbon-btn-sm ${selectedElement.style?.textAlign === 'right' ? 'active' : ''}`}
+                        onClick={() => updateElementStyle(selectedElement.id, { textAlign: 'right' })}
+                        title="Căn phải"
+                      ><AlignRight size={14} /></button>
+                    </div>
+                    <select
+                      className="ppt-ribbon-select ppt-ribbon-select-sm"
+                      value={selectedElement.style?.lineHeight || '1.5'}
+                      onChange={(e) => updateElementStyle(selectedElement.id, { lineHeight: e.target.value })}
+                      title="Khoảng cách dòng"
+                    >
+                      {LINE_HEIGHTS.map(h => <option key={h} value={h}>{h}</option>)}
+                    </select>
+                  </div>
+                  <span className="ppt-ribbon-group-label">Đoạn văn</span>
+                </div>
+              )}
+
+              {/* Text Box Background & Padding */}
+              {selectedElement?.type === 'text' && (
+                <div className="ppt-ribbon-group">
+                  <div className="ppt-ribbon-group-content">
+                    <div className="ppt-color-section">
+                      <label className="ppt-ribbon-mini-label">Nền khung</label>
+                      <div className="ppt-color-picker">
+                        {BOX_BACKGROUNDS.slice(0, 8).map((c, i) => (
+                          <button
+                            key={i}
+                            className={`ppt-color-btn ${selectedElement.style?.boxBackground === c ? 'active' : ''}`}
+                            style={{
+                              backgroundColor: c === 'transparent' ? '#fff' : c,
+                              border: c === 'transparent' ? '1px dashed #ccc' : undefined,
+                              backgroundImage: c.startsWith('rgba') ? `linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)` : undefined,
+                              backgroundSize: c.startsWith('rgba') ? '8px 8px' : undefined,
+                              backgroundPosition: c.startsWith('rgba') ? '0 0, 0 4px, 4px -4px, -4px 0px' : undefined,
+                            }}
+                            onClick={() => updateElementStyle(selectedElement.id, { boxBackground: c })}
+                            title={c === 'transparent' ? 'Không' : c}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <select
+                      className="ppt-ribbon-select ppt-ribbon-select-sm"
+                      value={selectedElement.style?.padding?.replace('px', '') || '0'}
+                      onChange={(e) => updateElementStyle(selectedElement.id, { padding: `${e.target.value}px` })}
+                      title="Padding"
+                    >
+                      {PADDING_SIZES.map(p => <option key={p} value={p}>{p}px</option>)}
+                    </select>
+                    <select
+                      className="ppt-ribbon-select ppt-ribbon-select-sm"
+                      value={selectedElement.style?.borderRadius?.replace('px', '') || '0'}
+                      onChange={(e) => updateElementStyle(selectedElement.id, { borderRadius: `${e.target.value}px` })}
+                      title="Bo góc"
+                    >
+                      {['0', '4', '8', '12', '16', '20', '24'].map(r => <option key={r} value={r}>{r}px</option>)}
+                    </select>
+                  </div>
+                  <span className="ppt-ribbon-group-label">Khung Text</span>
+                </div>
+              )}
+
+              {/* Element styling - for all elements */}
+              {selectedElement && (
+                <div className="ppt-ribbon-group">
+                  <div className="ppt-ribbon-group-content">
+                    <select
+                      className="ppt-ribbon-select ppt-ribbon-select-sm"
+                      value={selectedElement.style?.opacity ? String(Math.round(parseFloat(selectedElement.style.opacity) * 100)) : '100'}
+                      onChange={(e) => updateElementStyle(selectedElement.id, { opacity: String(parseInt(e.target.value) / 100) })}
+                      title="Độ trong suốt"
+                    >
+                      {OPACITIES.map(o => <option key={o} value={o}>{o}%</option>)}
+                    </select>
+                    <select
+                      className="ppt-ribbon-select ppt-ribbon-select-sm"
+                      value={selectedElement.style?.borderWidth?.replace('px', '') || '0'}
+                      onChange={(e) => updateElementStyle(selectedElement.id, {
+                        borderWidth: `${e.target.value}px`,
+                        borderStyle: selectedElement.style?.borderStyle || 'solid',
+                        borderColor: selectedElement.style?.borderColor || '#000000'
+                      })}
+                      title="Độ dày viền"
+                    >
+                      {BORDER_WIDTHS.map(w => <option key={w} value={w}>{w}px</option>)}
+                    </select>
+                    {selectedElement.style?.borderWidth && selectedElement.style.borderWidth !== '0px' && (
                       <>
-                        <div className="toolbar-group">
-                          <span className="toolbar-label">Cỡ chữ:</span>
-                          <select
-                            className="toolbar-select"
-                            value={selectedElement.style?.fontSize || '18px'}
-                            onChange={(e) => updateElementStyle(selectedElement.id, { fontSize: e.target.value })}
-                          >
-                            {FONT_SIZES.map(size => (
-                              <option key={size} value={size}>{size}</option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="toolbar-group">
-                          <button
-                            className={`toolbar-btn ${selectedElement.style?.fontWeight === 'bold' ? 'active' : ''}`}
-                            onClick={() => updateElementStyle(selectedElement.id, {
-                              fontWeight: selectedElement.style?.fontWeight === 'bold' ? 'normal' : 'bold'
-                            })}
-                            title="In đậm"
-                          >
-                            <strong>B</strong>
-                          </button>
-                          <button
-                            className={`toolbar-btn ${selectedElement.style?.fontStyle === 'italic' ? 'active' : ''}`}
-                            onClick={() => updateElementStyle(selectedElement.id, {
-                              fontStyle: selectedElement.style?.fontStyle === 'italic' ? 'normal' : 'italic'
-                            })}
-                            title="In nghiêng"
-                          >
-                            <em>I</em>
-                          </button>
-                        </div>
-
-                        <div className="toolbar-group">
-                          <span className="toolbar-label">Căn:</span>
-                          <button
-                            className={`toolbar-btn ${selectedElement.style?.textAlign === 'left' ? 'active' : ''}`}
-                            onClick={() => updateElementStyle(selectedElement.id, { textAlign: 'left' })}
-                            title="Căn trái"
-                          >≡</button>
-                          <button
-                            className={`toolbar-btn ${selectedElement.style?.textAlign === 'center' ? 'active' : ''}`}
-                            onClick={() => updateElementStyle(selectedElement.id, { textAlign: 'center' })}
-                            title="Căn giữa"
-                          >≡</button>
-                          <button
-                            className={`toolbar-btn ${selectedElement.style?.textAlign === 'right' ? 'active' : ''}`}
-                            onClick={() => updateElementStyle(selectedElement.id, { textAlign: 'right' })}
-                            title="Căn phải"
-                          >≡</button>
-                        </div>
-
-                        <div className="toolbar-group">
-                          <span className="toolbar-label">Màu chữ:</span>
-                          <div className="color-picker">
-                            {TEXT_COLORS.map(color => (
-                              <button
-                                key={color}
-                                className={`color-btn ${selectedElement.style?.color === color ? 'active' : ''}`}
-                                style={{ backgroundColor: color, border: color === '#ffffff' ? '1px solid #ccc' : 'none' }}
-                                onClick={() => updateElementStyle(selectedElement.id, { color })}
-                                title={color}
-                              />
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="toolbar-divider" />
+                        <select
+                          className="ppt-ribbon-select ppt-ribbon-select-sm"
+                          value={selectedElement.style?.borderStyle || 'solid'}
+                          onChange={(e) => updateElementStyle(selectedElement.id, { borderStyle: e.target.value })}
+                          title="Kiểu viền"
+                        >
+                          {BORDER_STYLES.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                        <input
+                          type="color"
+                          className="ppt-color-input"
+                          value={selectedElement.style?.borderColor || '#000000'}
+                          onChange={(e) => updateElementStyle(selectedElement.id, { borderColor: e.target.value })}
+                          title="Màu viền"
+                        />
                       </>
                     )}
-
-                    {/* Position/Size group - show when any element selected */}
-                    {selectedElement && (
-                      <div className="toolbar-group">
-                        <span className="toolbar-label">Vị trí:</span>
-                        <button className="toolbar-btn" onClick={() => moveElement(selectedElement.id, 'up')} title="Di chuyển lên">↑</button>
-                        <button className="toolbar-btn" onClick={() => moveElement(selectedElement.id, 'down')} title="Di chuyển xuống">↓</button>
-                        <button className="toolbar-btn" onClick={() => moveElement(selectedElement.id, 'left')} title="Di chuyển trái">←</button>
-                        <button className="toolbar-btn" onClick={() => moveElement(selectedElement.id, 'right')} title="Di chuyển phải">→</button>
-                        <span className="toolbar-label" style={{ marginLeft: '8px' }}>Kích thước:</span>
-                        <button className="toolbar-btn" onClick={() => resizeElement(selectedElement.id, 'width', -5)} title="Thu nhỏ ngang">W-</button>
-                        <button className="toolbar-btn" onClick={() => resizeElement(selectedElement.id, 'width', 5)} title="Phóng to ngang">W+</button>
-                        <button className="toolbar-btn" onClick={() => resizeElement(selectedElement.id, 'height', -5)} title="Thu nhỏ dọc">H-</button>
-                        <button className="toolbar-btn" onClick={() => resizeElement(selectedElement.id, 'height', 5)} title="Phóng to dọc">H+</button>
-                        <button className="toolbar-btn btn-danger" onClick={() => deleteElement(selectedElement.id)} title="Xóa">🗑</button>
-                      </div>
-                    )}
                   </div>
+                  <span className="ppt-ribbon-group-label">Kiểu dáng</span>
+                </div>
+              )}
 
-                  {/* Slide settings */}
-                  <div className="slide-settings">
-                    {/* Row 1: Layout, Title */}
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>Layout</label>
-                        <select
-                          value={editingSlide.layout}
-                          onChange={(e) => setEditingSlide({ ...editingSlide, layout: e.target.value as SlideLayout })}
-                        >
-                          {SLIDE_LAYOUTS.map((l) => (
-                            <option key={l.value} value={l.value}>{l.label}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="form-group">
-                        <label>Tiêu đề slide</label>
-                        <input
-                          type="text"
-                          value={editingSlide.title || ''}
-                          onChange={(e) => setEditingSlide({ ...editingSlide, title: e.target.value })}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Row 2: Background color & image */}
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>Màu nền</label>
-                        <div className="color-picker">
-                          {BG_COLORS.map(color => (
-                            <button
-                              key={color}
-                              className={`color-btn ${editingSlide.backgroundColor === color ? 'active' : ''}`}
-                              style={{
-                                backgroundColor: color === 'transparent' ? '#fff' : color,
-                                border: color === 'transparent' || color === '#ffffff' ? '1px solid #ccc' : 'none',
-                                backgroundImage: color === 'transparent' ? 'linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%), linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%)' : undefined,
-                                backgroundSize: '8px 8px',
-                                backgroundPosition: '0 0, 4px 4px',
-                              }}
-                              onClick={() => setEditingSlide({ ...editingSlide, backgroundColor: color })}
-                              title={color === 'transparent' ? 'Trong suốt' : color}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <div className="form-group">
-                        <label>Ảnh nền</label>
-                        <div className="bg-image-controls">
-                          <input
-                            type="file"
-                            ref={bgImageInputRef}
-                            accept="image/*"
-                            onChange={handleBgImageUpload}
-                            style={{ display: 'none' }}
-                          />
-                          <button
-                            className="btn btn-small btn-secondary"
-                            onClick={() => bgImageInputRef.current?.click()}
-                          >
-                            Upload ảnh
-                          </button>
-                          {editingSlide.backgroundImage && (
-                            <>
-                              <div className="bg-image-preview">
-                                <img src={editingSlide.backgroundImage} alt="Background" />
-                              </div>
-                              <button
-                                className="btn btn-small btn-danger"
-                                onClick={handleRemoveBgImage}
-                              >
-                                Xóa ảnh
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Row 3: Animation & Transition */}
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>Hiệu ứng nội dung</label>
-                        <select
-                          value={editingSlide.animation || 'none'}
-                          onChange={(e) => setEditingSlide({ ...editingSlide, animation: e.target.value as SlideAnimation })}
-                        >
-                          {SLIDE_ANIMATIONS.map((a) => (
-                            <option key={a.value} value={a.value}>{a.label}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="form-group">
-                        <label>Hiệu ứng chuyển trang</label>
-                        <select
-                          value={editingSlide.transition || 'fade'}
-                          onChange={(e) => setEditingSlide({ ...editingSlide, transition: e.target.value as SlideTransition })}
-                        >
-                          {SLIDE_TRANSITIONS.map((t) => (
-                            <option key={t.value} value={t.value}>{t.label}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="form-group">
-                        <label>Thời lượng (ms)</label>
-                        <input
-                          type="number"
-                          min={100}
-                          max={3000}
-                          step={100}
-                          value={editingSlide.animationDuration || 500}
-                          onChange={(e) => setEditingSlide({ ...editingSlide, animationDuration: parseInt(e.target.value) || 500 })}
-                        />
-                      </div>
-                    </div>
-
-                  </div>
-
-                  {/* Professional Slide Editor Canvas */}
-                  <SlideEditorCanvas
-                    slide={editingSlide}
-                    onChange={setEditingSlide}
-                    onSave={handleUpdateSlide}
-                  />
-
-                  <div className="slide-actions">
-                    <button
-                      className="btn btn-secondary"
-                      onClick={() => {
-                        setEditingSlide(null);
-                        setSelectedSlideIndex(null);
-                        setSelectedElementId(null);
-                      }}
-                    >
-                      Huỷ chỉnh sửa
+              {/* Layer & Delete */}
+              {selectedElement && (
+                <div className="ppt-ribbon-group">
+                  <div className="ppt-ribbon-group-content">
+                    <button className="ppt-ribbon-btn-sm" onClick={bringToFront} title="Đưa lên trên">
+                      <MoveUp size={14} />
+                    </button>
+                    <button className="ppt-ribbon-btn-sm" onClick={sendToBack} title="Đưa xuống dưới">
+                      <MoveDown size={14} />
+                    </button>
+                    <button className="ppt-ribbon-btn-sm ppt-ribbon-btn-danger" onClick={deleteElement} title="Xóa (Delete)">
+                      <Trash2 size={14} />
                     </button>
                   </div>
-                </>
-              ) : (
-                <div className="no-slide-selected">
-                  {isNew ? (
-                    <p>Lưu bài giảng trước để thêm slides</p>
-                  ) : slides.length === 0 ? (
-                    <p>Nhấn "+ Thêm slide" để bắt đầu</p>
-                  ) : (
-                    <p>Chọn slide để chỉnh sửa</p>
+                  <span className="ppt-ribbon-group-label">Sắp xếp</span>
+                </div>
+              )}
+            </>
+          )}
+
+          {activeTab === 'insert' && (
+            <>
+              {/* Text & Media */}
+              <div className="ppt-ribbon-group">
+                <div className="ppt-ribbon-group-content">
+                  <button className="ppt-ribbon-btn ppt-ribbon-btn-lg" onClick={() => addElement('text')} disabled={!editingSlide}>
+                    <Type size={20} />
+                    <span>Text</span>
+                  </button>
+                  <button className="ppt-ribbon-btn" onClick={() => imageInputRef.current?.click()} disabled={!editingSlide}>
+                    <Image size={16} />
+                    <span>Ảnh</span>
+                  </button>
+                  <button className="ppt-ribbon-btn" onClick={() => addElement('video')} disabled={!editingSlide}>
+                    <Video size={16} />
+                    <span>Video</span>
+                  </button>
+                  <button className="ppt-ribbon-btn" onClick={() => addElement('audio')} disabled={!editingSlide}>
+                    <Volume2 size={16} />
+                    <span>Audio</span>
+                  </button>
+                </div>
+                <span className="ppt-ribbon-group-label">Media</span>
+              </div>
+
+              {/* Shapes */}
+              <div className="ppt-ribbon-group">
+                <div className="ppt-ribbon-group-content">
+                  <button className="ppt-ribbon-btn" onClick={() => addElement('shape')} disabled={!editingSlide} title="Hình chữ nhật">
+                    <Square size={16} />
+                    <span>Chữ nhật</span>
+                  </button>
+                  <button className="ppt-ribbon-btn" onClick={() => addShapeElement('circle')} disabled={!editingSlide} title="Hình tròn">
+                    <Circle size={16} />
+                    <span>Tròn</span>
+                  </button>
+                  <button className="ppt-ribbon-btn" onClick={() => addShapeElement('line')} disabled={!editingSlide} title="Đường thẳng">
+                    <Minus size={16} />
+                    <span>Line</span>
+                  </button>
+                  <button className="ppt-ribbon-btn" onClick={() => addShapeElement('arrow')} disabled={!editingSlide} title="Mũi tên">
+                    <ArrowRight size={16} />
+                    <span>Arrow</span>
+                  </button>
+                </div>
+                <span className="ppt-ribbon-group-label">Shapes</span>
+              </div>
+
+              {/* Symbols & Icons */}
+              <div className="ppt-ribbon-group">
+                <div className="ppt-ribbon-group-content">
+                  <button className="ppt-ribbon-btn" onClick={() => setShowSymbolPicker(!showSymbolPicker)} disabled={!editingSlide}>
+                    <Sparkles size={16} />
+                    <span>Biểu tượng</span>
+                  </button>
+                  {/* Quick symbols */}
+                  <div className="ppt-quick-symbols">
+                    {['→', '✓', '★', '•', '①', '⚠️', '💡', '📌'].map(s => (
+                      <button
+                        key={s}
+                        className="ppt-symbol-btn"
+                        onClick={() => insertSymbol(s)}
+                        disabled={!editingSlide}
+                        title={`Chèn ${s}`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <span className="ppt-ribbon-group-label">Biểu tượng</span>
+              </div>
+
+              {/* Text Templates */}
+              <div className="ppt-ribbon-group">
+                <div className="ppt-ribbon-group-content">
+                  {TEXT_TEMPLATES.map((t, i) => (
+                    <button
+                      key={i}
+                      className="ppt-ribbon-btn"
+                      onClick={() => addTextTemplate(t)}
+                      disabled={!editingSlide}
+                      title={t.label}
+                    >
+                      <FileText size={14} />
+                      <span>{t.label}</span>
+                    </button>
+                  ))}
+                </div>
+                <span className="ppt-ribbon-group-label">Mẫu Text</span>
+              </div>
+
+              {/* Furigana */}
+              <div className="ppt-ribbon-group">
+                <div className="ppt-ribbon-group-content">
+                  <button
+                    className="ppt-ribbon-btn"
+                    onClick={handleGenerateFurigana}
+                    disabled={!selectedElement || selectedElement.type !== 'text' || furiganaLoading}
+                    title="Tự động thêm furigana cho text đang chọn"
+                  >
+                    <Wand2 size={16} />
+                    <span>{furiganaLoading ? '...' : 'Furigana'}</span>
+                  </button>
+                  <button
+                    className="ppt-ribbon-btn"
+                    onClick={handleGenerateAllFurigana}
+                    disabled={!editingSlide || furiganaLoading}
+                    title="Thêm furigana cho tất cả text trong slide"
+                  >
+                    <span className="ppt-ribbon-icon-text">全</span>
+                    <span>Tất cả</span>
+                  </button>
+                  <button
+                    className="ppt-ribbon-btn"
+                    onClick={handleRemoveFurigana}
+                    disabled={!selectedElement || selectedElement.type !== 'text'}
+                    title="Xóa furigana khỏi text đang chọn"
+                  >
+                    <X size={16} />
+                    <span>Xóa</span>
+                  </button>
+                  <button
+                    className={`ppt-ribbon-btn ${showFurigana ? 'active' : ''}`}
+                    onClick={() => setShowFurigana(!showFurigana)}
+                    title={showFurigana ? 'Ẩn furigana' : 'Hiện furigana'}
+                  >
+                    {showFurigana ? <Eye size={16} /> : <EyeOff size={16} />}
+                    <span>{showFurigana ? 'Ẩn' : 'Hiện'}</span>
+                  </button>
+                </div>
+                <span className="ppt-ribbon-group-label">Furigana</span>
+              </div>
+
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                style={{ display: 'none' }}
+              />
+            </>
+          )}
+
+          {activeTab === 'design' && editingSlide && (
+            <>
+              <div className="ppt-ribbon-group">
+                <div className="ppt-ribbon-group-content">
+                  <div className="ppt-ribbon-row">
+                    <PaintBucket size={16} />
+                    <span className="ppt-ribbon-label">Màu nền:</span>
+                  </div>
+                  <div className="ppt-color-picker">
+                    {COLORS.map(c => (
+                      <button
+                        key={c}
+                        className={`ppt-color-btn ${editingSlide.backgroundColor === c ? 'active' : ''}`}
+                        style={{ backgroundColor: c }}
+                        onClick={() => updateEditingSlide({ backgroundColor: c })}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <span className="ppt-ribbon-group-label">Background</span>
+              </div>
+              <div className="ppt-ribbon-group">
+                <div className="ppt-ribbon-group-content">
+                  <button className="ppt-ribbon-btn" onClick={() => fileInputRef.current?.click()}>
+                    <ImagePlus size={16} />
+                    <span>Ảnh nền</span>
+                  </button>
+                  {editingSlide.backgroundImage && (
+                    <button className="ppt-ribbon-btn" onClick={() => updateEditingSlide({ backgroundImage: undefined })}>
+                      <X size={16} />
+                      <span>Xóa ảnh</span>
+                    </button>
                   )}
+                </div>
+                <span className="ppt-ribbon-group-label">Background Image</span>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => updateEditingSlide({ backgroundImage: reader.result as string });
+                    reader.readAsDataURL(file);
+                  }
+                }}
+                style={{ display: 'none' }}
+              />
+            </>
+          )}
+
+          {activeTab === 'transitions' && editingSlide && (
+            <div className="ppt-ribbon-group">
+              <div className="ppt-ribbon-group-content">
+                <select
+                  className="ppt-ribbon-select"
+                  value={editingSlide.transition || 'fade'}
+                  onChange={(e) => updateEditingSlide({ transition: e.target.value as SlideTransition })}
+                >
+                  <option value="none">Không có</option>
+                  <option value="fade">Fade</option>
+                  <option value="slide-horizontal">Slide ngang</option>
+                  <option value="slide-vertical">Slide dọc</option>
+                  <option value="zoom">Zoom</option>
+                  <option value="flip">Flip</option>
+                </select>
+                <input
+                  type="number"
+                  className="ppt-ribbon-input"
+                  value={editingSlide.animationDuration || 500}
+                  onChange={(e) => updateEditingSlide({ animationDuration: parseInt(e.target.value) || 500 })}
+                  min={100}
+                  max={3000}
+                  step={100}
+                />
+                <span className="ppt-ribbon-label">ms</span>
+              </div>
+              <span className="ppt-ribbon-group-label">Transition</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {error && <div className="ppt-error-bar">{error} <button onClick={() => setError(null)}>×</button></div>}
+
+      {/* Main Content */}
+      <div className="ppt-main">
+        {/* Left Sidebar - Thumbnails */}
+        <aside className="ppt-sidebar">
+          <div className="ppt-sidebar-header">
+            <span>Slides ({slides.length})</span>
+          </div>
+          <div className="ppt-thumbnails">
+            {slidesLoading ? (
+              <div className="ppt-loading">Đang tải...</div>
+            ) : slides.length === 0 ? (
+              <div className="ppt-empty">
+                {isNew ? 'Lưu bài giảng trước' : 'Chưa có slide'}
+              </div>
+            ) : (
+              slides.map((slide, idx) => renderThumbnail(slide, idx))
+            )}
+          </div>
+          <button className="ppt-add-slide-btn" onClick={handleAddSlide} disabled={isNew}>
+            + Thêm Slide
+          </button>
+        </aside>
+
+        {/* Main Editor Canvas */}
+        <main className="ppt-canvas-container">
+          {editingSlide ? (
+            <div
+              ref={canvasRef}
+              className="ppt-canvas"
+              style={{
+                backgroundColor: editingSlide.backgroundColor || '#fff',
+                backgroundImage: editingSlide.backgroundImage ? `url(${editingSlide.backgroundImage})` : undefined,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+              onClick={() => {
+                setSelectedElementId(null);
+                setIsEditingTitle(false);
+              }}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+            >
+              {/* Slide Title - Inline Editable */}
+              <div
+                className={`ppt-slide-title ${isEditingTitle ? 'editing' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditingTitle(true);
+                  setSelectedElementId(null);
+                }}
+              >
+                {isEditingTitle ? (
+                  <input
+                    type="text"
+                    value={editingSlide.title || ''}
+                    onChange={(e) => updateEditingSlide({ title: e.target.value })}
+                    onBlur={() => setIsEditingTitle(false)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === 'Escape') {
+                        setIsEditingTitle(false);
+                      }
+                    }}
+                    autoFocus
+                    className="ppt-title-inline-input"
+                    placeholder="Nhập tiêu đề slide..."
+                  />
+                ) : (
+                  <span>{editingSlide.title || 'Click để thêm tiêu đề'}</span>
+                )}
+              </div>
+
+              {/* Elements */}
+              {editingSlide.elements.map(renderElement)}
+
+              {/* Empty state */}
+              {editingSlide.elements.length === 0 && !isEditingTitle && (
+                <div className="ppt-canvas-empty">
+                  <p>Click "Insert" để thêm nội dung</p>
+                </div>
+              )}
+
+              {/* Floating Context Toolbar */}
+              {selectedElement && (
+                <div
+                  className="ppt-floating-toolbar"
+                  style={{
+                    left: `calc(${selectedElement.position.x}% + ${selectedElement.position.width / 2}%)`,
+                    top: `calc(${selectedElement.position.y}% - 48px)`,
+                  }}
+                >
+                  <div className="ppt-floating-toolbar-group">
+                    <button onClick={copyElement} title="Sao chép (Ctrl+C)">
+                      <Copy size={14} />
+                    </button>
+                    <button onClick={duplicateElement} title="Nhân đôi (Ctrl+D)">
+                      <CopyPlus size={14} />
+                    </button>
+                  </div>
+                  <div className="ppt-floating-toolbar-divider" />
+                  <div className="ppt-floating-toolbar-group">
+                    <button onClick={bringToFront} title="Đưa lên trên">
+                      <MoveUp size={14} />
+                    </button>
+                    <button onClick={sendToBack} title="Đưa xuống dưới">
+                      <MoveDown size={14} />
+                    </button>
+                  </div>
+                  <div className="ppt-floating-toolbar-divider" />
+                  <div className="ppt-floating-toolbar-group">
+                    <button onClick={deleteElement} title="Xóa (Delete)" className="danger">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
-        </div>
+          ) : (
+            <div className="ppt-no-slide">
+              <div className="ppt-no-slide-content">
+                {isNew ? (
+                  <>
+                    <span className="ppt-no-slide-icon"><FileText size={48} /></span>
+                    <p>Nhập tiêu đề và nhấn "Lưu" để bắt đầu</p>
+                  </>
+                ) : slides.length === 0 ? (
+                  <>
+                    <span className="ppt-no-slide-icon"><LayoutGrid size={48} /></span>
+                    <p>Nhấn "+ Thêm Slide" hoặc "Import" để bắt đầu</p>
+                  </>
+                ) : (
+                  <>
+                    <span className="ppt-no-slide-icon"><Layers size={48} /></span>
+                    <p>Chọn slide từ danh sách bên trái</p>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Save indicator */}
+          {hasUnsavedChanges && (
+            <button className="ppt-save-float" onClick={handleSaveSlide}>
+              <Save size={16} />
+              <span>Lưu slide (Ctrl+S)</span>
+            </button>
+          )}
+
+          {/* Quick Actions Bar */}
+          {editingSlide && (
+            <div className="ppt-quick-actions-bar">
+              <button onClick={() => addElement('text')} title="Thêm Text (T)">
+                <Type size={16} />
+              </button>
+              <button onClick={() => imageInputRef.current?.click()} title="Thêm Ảnh">
+                <Image size={16} />
+              </button>
+              <button onClick={() => addElement('shape')} title="Thêm Shape">
+                <Square size={16} />
+              </button>
+              <button onClick={() => addShapeElement('circle')} title="Thêm Circle">
+                <Circle size={16} />
+              </button>
+              <div className="ppt-quick-actions-divider" />
+              <button onClick={handleAddSlide} disabled={isNew} title="Thêm Slide mới">
+                <Plus size={16} />
+              </button>
+            </div>
+          )}
+        </main>
+
+        {/* Settings Panel */}
+        {showSettingsPanel && (
+          <aside className="ppt-settings-panel">
+            <div className="ppt-panel-header">
+              <h3>Cài đặt bài giảng</h3>
+              <button onClick={() => setShowSettingsPanel(false)}>×</button>
+            </div>
+            <div className="ppt-panel-content">
+              <div className="ppt-form-group">
+                <label>Mô tả</label>
+                <textarea
+                  value={lectureForm.description}
+                  onChange={(e) => setLectureForm({ ...lectureForm, description: e.target.value })}
+                  rows={3}
+                />
+              </div>
+              <div className="ppt-form-group">
+                <label>Level JLPT</label>
+                <select
+                  value={lectureForm.jlptLevel}
+                  onChange={(e) => setLectureForm({ ...lectureForm, jlptLevel: e.target.value as JLPTLevel })}
+                >
+                  <option value="N5">N5</option>
+                  <option value="N4">N4</option>
+                  <option value="N3">N3</option>
+                  <option value="N2">N2</option>
+                  <option value="N1">N1</option>
+                </select>
+              </div>
+              <div className="ppt-form-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={lectureForm.isPublished}
+                    onChange={(e) => setLectureForm({ ...lectureForm, isPublished: e.target.checked })}
+                  />
+                  Công khai
+                </label>
+              </div>
+            </div>
+          </aside>
+        )}
       </div>
+
+      {/* Import Modal */}
+      <PPTXImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImport={handleImportSlides}
+        existingSlidesCount={slides.length}
+        lectureId={currentLectureId || ''}
+        importPPTX={importPPTX}
+        previewPPTX={previewPPTX}
+        importProgress={importProgress}
+        importError={importError}
+        resetImport={resetImport}
+      />
+
+      {/* Symbol Picker Modal */}
+      {showSymbolPicker && (
+        <div className="ppt-modal-overlay" onClick={() => setShowSymbolPicker(false)}>
+          <div className="ppt-symbol-modal" onClick={e => e.stopPropagation()}>
+            <div className="ppt-modal-header">
+              <h3>Chèn Biểu tượng</h3>
+              <button className="ppt-modal-close" onClick={() => setShowSymbolPicker(false)}>×</button>
+            </div>
+            <div className="ppt-symbol-categories">
+              {Object.entries(LECTURE_SYMBOLS).map(([category, symbols]) => (
+                <div key={category} className="ppt-symbol-category">
+                  <h4>{category}</h4>
+                  <div className="ppt-symbol-grid">
+                    {symbols.map((s, i) => (
+                      <button
+                        key={i}
+                        className="ppt-symbol-item"
+                        onClick={() => insertSymbol(s)}
+                        title={s}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Note Modal */}
+      {showNoteModal && (
+        <div className="ppt-modal-overlay" onClick={() => {
+          setShowNoteModal(false);
+          setNoteContent('');
+          setEditingNoteId(null);
+        }}>
+          <div className="ppt-note-modal" onClick={e => e.stopPropagation()}>
+            <div className="ppt-modal-header">
+              <h3>{editingNoteId ? 'Sửa ghi chú' : 'Thêm ghi chú Admin'}</h3>
+              <button className="ppt-modal-close" onClick={() => {
+                setShowNoteModal(false);
+                setNoteContent('');
+                setEditingNoteId(null);
+              }}>×</button>
+            </div>
+            <div className="ppt-note-modal-content">
+              {textSelection && !editingNoteId && (
+                <div className="ppt-note-selected-text">
+                  <label>Đoạn văn bản đã chọn:</label>
+                  <div className="ppt-note-highlight">"{textSelection.text}"</div>
+                </div>
+              )}
+              <div className="ppt-note-input-group">
+                <label>Nội dung ghi chú (chỉ admin thấy):</label>
+                <textarea
+                  value={noteContent}
+                  onChange={(e) => setNoteContent(e.target.value)}
+                  placeholder="Nhập ghi chú cho đoạn văn bản này..."
+                  rows={4}
+                  autoFocus
+                />
+              </div>
+              <div className="ppt-note-modal-actions">
+                <button
+                  className="ppt-btn"
+                  onClick={() => {
+                    setShowNoteModal(false);
+                    setNoteContent('');
+                    setEditingNoteId(null);
+                  }}
+                >
+                  Hủy
+                </button>
+                <button
+                  className="ppt-btn ppt-btn-primary"
+                  onClick={editingNoteId ? updateAdminNote : addAdminNote}
+                  disabled={!noteContent.trim()}
+                >
+                  {editingNoteId ? 'Cập nhật' : 'Thêm ghi chú'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -16,7 +16,11 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  School,
+  Bell,
 } from 'lucide-react';
+import { useClassroomNotifications } from '../../hooks/use-classrooms';
+import { useFriendNotifications } from '../../hooks/use-friendships';
 
 // Helper to get role display name
 const getRoleBadge = (role: string): { label: string; className: string } | null => {
@@ -54,6 +58,7 @@ const navItems: NavItem[] = [
   { page: 'quiz', label: 'Game', icon: <Gamepad2 {...iconProps} /> },
   { page: 'jlpt', label: 'JLPT', icon: <FileText {...iconProps} /> },
   { page: 'lectures', label: 'Bài giảng', icon: <GraduationCap {...iconProps} /> },
+  { page: 'classroom', label: 'Lớp Học', icon: <School {...iconProps} /> },
   { page: 'kaiwa', label: '会話', icon: <MessageCircle {...iconProps} />, roles: ['vip_user', 'admin', 'super_admin'] },
   { page: 'settings', label: 'Cài đặt', icon: <Settings {...iconProps} /> },
 ];
@@ -67,6 +72,16 @@ export function Sidebar({
   onToggleCollapse,
 }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  // Classroom notifications
+  const { notifications: classroomNotifications, unreadCount: classroomUnread, markAsRead: markClassroomRead, markAllAsRead: markAllClassroomRead } = useClassroomNotifications(currentUser?.id || null);
+
+  // Friend notifications (including badge received)
+  const { notifications: friendNotifications, unreadCount: friendUnread, markAsRead: markFriendRead, markAllAsRead: markAllFriendRead } = useFriendNotifications(currentUser?.id || null);
+
+  // Combined notifications
+  const totalUnread = classroomUnread + friendUnread;
 
   const handleNavigate = (page: Page) => {
     onNavigate(page);
@@ -133,6 +148,87 @@ export function Sidebar({
                 )}
               </div>
             )}
+            {/* Notification bell - only show when expanded */}
+            {!isCollapsed && (
+              <button
+                className="sidebar-notification-btn"
+                onClick={() => setShowNotifications(!showNotifications)}
+                title="Thông báo"
+              >
+                <Bell size={18} />
+                {totalUnread > 0 && (
+                  <span className="notification-badge-count">{totalUnread > 9 ? '9+' : totalUnread}</span>
+                )}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Notification dropdown */}
+        {showNotifications && (
+          <div className="sidebar-notifications">
+            <div className="sidebar-notifications-header">
+              <span>Thông báo</span>
+              {totalUnread > 0 && (
+                <button
+                  className="btn btn-link btn-xs"
+                  onClick={() => {
+                    markAllClassroomRead();
+                    markAllFriendRead();
+                  }}
+                >
+                  Đọc tất cả
+                </button>
+              )}
+            </div>
+            <div className="sidebar-notifications-list">
+              {classroomNotifications.length === 0 && friendNotifications.length === 0 ? (
+                <p className="empty-text">Không có thông báo</p>
+              ) : (
+                <>
+                  {/* Friend notifications (badge received, friend requests, etc.) */}
+                  {friendNotifications.slice(0, 3).map(n => (
+                      <div
+                        key={n.id}
+                        className={`sidebar-notification-item ${n.isRead ? '' : 'unread'} ${n.type === 'badge_received' ? 'badge-notification' : ''}`}
+                        onClick={() => {
+                          if (!n.isRead) markFriendRead(n.id);
+                          onNavigate('settings');
+                          setShowNotifications(false);
+                        }}
+                      >
+                        <span className="notification-title">
+                          {n.type === 'badge_received' && '🎖️ '}
+                          {n.type === 'friend_request' && '👋 '}
+                          {n.type === 'friend_accepted' && '🤝 '}
+                          {n.type === 'game_invitation' && '🎮 '}
+                          {n.fromUserName || 'Ai đó'} {n.message}
+                        </span>
+                        {n.type === 'badge_received' && (
+                          <span className="notification-badge-icon">Nhận huy hiệu mới!</span>
+                        )}
+                      </div>
+                  ))}
+                  {/* Classroom notifications */}
+                  {classroomNotifications.slice(0, 3).map(n => (
+                    <div
+                      key={n.id}
+                      className={`sidebar-notification-item ${n.isRead ? '' : 'unread'}`}
+                      onClick={() => {
+                        if (!n.isRead) markClassroomRead(n.id);
+                        if (n.classroomId) {
+                          onNavigate('classroom');
+                        }
+                        setShowNotifications(false);
+                      }}
+                    >
+                      <span className="notification-title">{n.title}</span>
+                      <span className="notification-message">{n.message}</span>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
           </div>
         )}
 

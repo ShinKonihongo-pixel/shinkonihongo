@@ -23,16 +23,14 @@ export function useLectures(isAdmin: boolean = false) {
           setLoading(false);
         });
 
-    // Subscribe to folders (only for admin)
-    const unsubscribeFolders = isAdmin
-      ? lectureService.subscribeToLectureFolders((data) => {
-          setLectureFolders(data);
-        })
-      : () => {};
+    // Subscribe to folders (for all users to enable navigation)
+    const unsubscribeFolders = lectureService.subscribeToLectureFolders((data) => {
+      setLectureFolders(data);
+    });
 
     return () => {
       unsubscribeLectures();
-      if (isAdmin) unsubscribeFolders();
+      unsubscribeFolders();
     };
   }, [isAdmin]);
 
@@ -188,11 +186,11 @@ export function useSlides(lectureId: string | null) {
     return () => unsubscribe();
   }, [lectureId]);
 
-  // Add slide
-  const addSlide = useCallback(async (data: SlideFormData): Promise<Slide | null> => {
+  // Add slide (order can be passed for batch imports)
+  const addSlide = useCallback(async (data: SlideFormData, customOrder?: number): Promise<Slide | null> => {
     if (!lectureId) return null;
     try {
-      const order = slides.length;
+      const order = customOrder !== undefined ? customOrder : slides.length;
       return await lectureService.addSlide(lectureId, data, order);
     } catch (err) {
       console.error('Error adding slide:', err);
@@ -266,6 +264,20 @@ export function useSlides(lectureId: string | null) {
     }
   }, [lectureId, slides]);
 
+  // Delete all slides (for replace mode import)
+  const deleteAllSlides = useCallback(async (): Promise<boolean> => {
+    if (!lectureId) return false;
+    try {
+      for (const slide of slides) {
+        await lectureService.deleteSlide(slide.id, lectureId);
+      }
+      return true;
+    } catch (err) {
+      console.error('Error deleting all slides:', err);
+      return false;
+    }
+  }, [lectureId, slides]);
+
   return {
     slides,
     loading,
@@ -274,6 +286,7 @@ export function useSlides(lectureId: string | null) {
     deleteSlide,
     reorderSlides,
     duplicateSlide,
+    deleteAllSlides,
   };
 }
 

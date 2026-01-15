@@ -20,12 +20,14 @@ import { KaiwaPage } from './components/pages/kaiwa-page';
 import { LecturePage } from './components/pages/lecture-page';
 import { LectureEditorPage } from './components/pages/lecture-editor-page';
 import { ProgressPage } from './components/pages/progress-page';
+import { ClassroomPage } from './components/pages/classroom-page';
 import { useJLPTQuestions } from './hooks/use-jlpt-questions';
 import { useKaiwaQuestions } from './hooks/use-kaiwa-questions';
 import { useUserHistory } from './hooks/use-user-history';
 import { useProgress } from './hooks/use-progress';
 import { useNotifications } from './hooks/use-notifications';
 import { useOffline } from './hooks/use-offline';
+import { useFriendships, useBadges, useGameInvitations } from './hooks/use-friendships';
 import { OfflineIndicator } from './components/common/offline-indicator';
 import { FloatingChatButton } from './components/common/floating-chat-button';
 import { FloatingChatPanel } from './components/common/floating-chat-panel';
@@ -196,6 +198,27 @@ function App() {
 
   // Offline support
   const offline = useOffline(cards, lessons);
+
+  // Friendships & Badges
+  const {
+    friendsWithUsers,
+    pendingRequests,
+    loading: friendsLoading,
+    sendRequest: sendFriendRequest,
+    respondToRequest: respondFriendRequest,
+    removeFriend,
+    isFriend,
+  } = useFriendships(currentUser?.id ?? null, users);
+
+  const {
+    receivedBadges,
+    badgeStats,
+    sendBadge,
+  } = useBadges(currentUser?.id ?? null, users);
+
+  const {
+    sendInvitation: sendGameInvitation,
+  } = useGameInvitations(currentUser?.id ?? null);
 
   // Show login page if not logged in
   if (!isLoggedIn) {
@@ -381,6 +404,18 @@ function App() {
                 });
               }
             }}
+            // Friends & Badges
+            allUsers={users}
+            friends={friendsWithUsers}
+            pendingRequests={pendingRequests}
+            badgeStats={badgeStats}
+            receivedBadges={receivedBadges}
+            friendsLoading={friendsLoading}
+            onSendFriendRequest={sendFriendRequest}
+            onRespondFriendRequest={respondFriendRequest}
+            onRemoveFriend={removeFriend}
+            onSendBadge={sendBadge}
+            isFriend={isFriend}
           />
         )}
 
@@ -396,6 +431,9 @@ function App() {
             initialJoinCode={initialJoinCode}
             onJoinCodeUsed={() => setInitialJoinCode(null)}
             settings={settings}
+            // Friends integration
+            friends={friendsWithUsers}
+            onInviteFriend={sendGameInvitation}
           />
         )}
 
@@ -444,6 +482,10 @@ function App() {
 
         {currentPage === 'chat' && currentUser && (
           <ChatPage currentUser={currentUser} />
+        )}
+
+        {currentPage === 'classroom' && currentUser && (
+          <ClassroomPage users={users} />
         )}
         </main>
       </div>

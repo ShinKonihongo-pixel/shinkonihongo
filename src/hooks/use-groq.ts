@@ -392,6 +392,52 @@ Format your response in Vietnamese, clearly and concisely. Use simple formatting
     return data.choices?.[0]?.message?.content || 'Không thể phân tích câu';
   }, [getApiKey]);
 
+  // Generate furigana for Japanese text (kanji → [kanji|reading] format)
+  const generateFurigana = useCallback(async (text: string): Promise<string> => {
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      throw new Error('Chưa cấu hình API key');
+    }
+
+    const systemPrompt = `You are a Japanese language expert. Add furigana readings to ALL kanji in the given text.
+
+RULES:
+- Use the format [kanji|reading] for EVERY kanji/kanji compound
+- Keep all hiragana, katakana, numbers, and punctuation unchanged
+- For kanji compounds (熟語), add furigana to the whole compound, e.g. [日本語|にほんご]
+- For single kanji with okurigana, include only the kanji in brackets: [食|た]べる
+- Be accurate with readings based on context
+
+Example input: 私は日本語を勉強しています。
+Example output: [私|わたし]は[日本語|にほんご]を[勉強|べんきょう]しています。
+
+Return ONLY the text with furigana added, nothing else.`;
+
+    const response = await fetch(GROQ_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: text },
+        ],
+        temperature: 0.1,
+        max_tokens: 2000,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Lỗi tạo furigana');
+    }
+
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content?.trim() || text;
+  }, [getApiKey]);
+
   // Quick translate Japanese to Vietnamese (simple translation only)
   const quickTranslate = useCallback(async (sentence: string): Promise<string> => {
     const apiKey = getApiKey();
@@ -429,6 +475,7 @@ Format your response in Vietnamese, clearly and concisely. Use simple formatting
     startConversation,
     clearConversation,
     analyzeJapaneseSentence,
+    generateFurigana,
     quickTranslate,
     isLoading,
     error,

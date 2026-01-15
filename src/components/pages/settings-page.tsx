@@ -2,11 +2,15 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import type { AppSettings, CardBackgroundType, GameQuestionContent, GameAnswerContent, GlobalTheme } from '../../hooks/use-settings';
-import type { CurrentUser, StudySession, GameSession, JLPTSession, UserStats } from '../../types/user';
+import type { CurrentUser, StudySession, GameSession, JLPTSession, UserStats, User } from '../../types/user';
 import type { Flashcard, Lesson } from '../../types/flashcard';
+import type { BadgeType, FriendWithUser, UserBadgeStats, BadgeGift } from '../../types/friendship';
 import { calculateUserLevel } from '../../types/user';
 import { ExportImportModal } from '../common/export-import-modal';
 import type { ExportData } from '../../lib/data-export';
+import { FriendsPanel } from '../friends/friends-panel';
+import { BadgeGiftModal } from '../friends/badge-gift-modal';
+import { BadgeStatsDisplay } from '../friends/badge-stats-display';
 
 type DeviceType = 'desktop' | 'tablet' | 'mobile';
 
@@ -18,7 +22,7 @@ function getDeviceType(): DeviceType {
   return 'mobile';
 }
 
-type SettingsTab = 'general' | 'profile';
+type SettingsTab = 'general' | 'profile' | 'friends';
 
 interface ThemePreset {
   name: string;
@@ -52,6 +56,25 @@ interface SettingsPageProps {
   flashcards?: Flashcard[];
   lessons?: Lesson[];
   onImportData?: (data: ExportData) => Promise<void>;
+  // Friends & Badges props
+  allUsers?: User[];
+  friends?: FriendWithUser[];
+  pendingRequests?: Array<{
+    id: string;
+    fromUserId: string;
+    fromUserName: string;
+    fromUserAvatar?: string;
+    message?: string;
+    createdAt: string;
+  }>;
+  badgeStats?: UserBadgeStats | null;
+  receivedBadges?: Array<BadgeGift & { fromUserName: string }>;
+  friendsLoading?: boolean;
+  onSendFriendRequest?: (toUserId: string, message?: string) => Promise<{ success: boolean; error?: string }>;
+  onRespondFriendRequest?: (requestId: string, accept: boolean) => Promise<boolean>;
+  onRemoveFriend?: (friendshipId: string) => Promise<boolean>;
+  onSendBadge?: (badgeType: BadgeType, toUserId: string, message?: string) => Promise<boolean>;
+  isFriend?: (userId: string) => boolean;
 }
 
 // Avatar options (emojis)
@@ -160,6 +183,18 @@ export function SettingsPage({
   flashcards = [],
   lessons = [],
   onImportData,
+  // Friends & Badges props
+  allUsers = [],
+  friends = [],
+  pendingRequests = [],
+  badgeStats,
+  receivedBadges = [],
+  friendsLoading = false,
+  onSendFriendRequest,
+  onRespondFriendRequest,
+  onRemoveFriend,
+  onSendBadge,
+  isFriend = () => false,
 }: SettingsPageProps) {
   // Tab state
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
@@ -188,6 +223,7 @@ export function SettingsPage({
   const [avatarMessage, setAvatarMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [activeHistoryTab, setActiveHistoryTab] = useState<'study' | 'game' | 'jlpt'>('study');
+  const [badgeGiftTarget, setBadgeGiftTarget] = useState<{ id: string; name: string } | null>(null);
 
   const handleUpdateDisplayName = async () => {
     if (!onUpdateDisplayName) return;
@@ -265,6 +301,15 @@ export function SettingsPage({
           onClick={() => setActiveTab('profile')}
         >
           Thông Tin Cá Nhân
+        </button>
+        <button
+          className={`settings-main-tab ${activeTab === 'friends' ? 'active' : ''}`}
+          onClick={() => setActiveTab('friends')}
+        >
+          Bạn bè & Huy hiệu
+          {pendingRequests.length > 0 && (
+            <span className="tab-badge">{pendingRequests.length}</span>
+          )}
         </button>
       </div>
 
@@ -1237,6 +1282,58 @@ export function SettingsPage({
         <div className="settings-tab-content">
           <p className="settings-not-logged-in">Vui lòng đăng nhập để xem thông tin cá nhân.</p>
         </div>
+      )}
+
+      {/* Friends & Badges Tab */}
+      {activeTab === 'friends' && currentUser && (
+        <div className="settings-tab-content friends-tab-content">
+          {/* Badge Stats Section */}
+          <section className="settings-section badge-stats-section">
+            <BadgeStatsDisplay
+              stats={badgeStats ?? null}
+              recentBadges={receivedBadges}
+            />
+          </section>
+
+          {/* Friends Panel Section */}
+          <section className="settings-section friends-panel-section">
+            <FriendsPanel
+              friends={friends}
+              pendingRequests={pendingRequests}
+              allUsers={allUsers}
+              currentUserId={currentUser.id}
+              loading={friendsLoading}
+              onSendRequest={onSendFriendRequest || (async () => ({ success: false, error: 'Không khả dụng' }))}
+              onRespondRequest={onRespondFriendRequest || (async () => false)}
+              onRemoveFriend={onRemoveFriend || (async () => false)}
+              onSendBadge={(friendId) => {
+                const friend = friends.find(f => f.friendId === friendId);
+                if (friend) {
+                  setBadgeGiftTarget({ id: friendId, name: friend.friendName });
+                }
+              }}
+              isFriend={isFriend}
+            />
+          </section>
+        </div>
+      )}
+
+      {/* Show message if not logged in for friends tab */}
+      {activeTab === 'friends' && !currentUser && (
+        <div className="settings-tab-content">
+          <p className="settings-not-logged-in">Vui lòng đăng nhập để sử dụng tính năng bạn bè.</p>
+        </div>
+      )}
+
+      {/* Badge Gift Modal */}
+      {badgeGiftTarget && onSendBadge && (
+        <BadgeGiftModal
+          isOpen={!!badgeGiftTarget}
+          onClose={() => setBadgeGiftTarget(null)}
+          friendName={badgeGiftTarget.name}
+          friendId={badgeGiftTarget.id}
+          onSendBadge={onSendBadge}
+        />
       )}
 
       {/* Export/Import Modal */}

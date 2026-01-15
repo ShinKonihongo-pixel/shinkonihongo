@@ -1,6 +1,7 @@
 // Game lobby/waiting room with QR code
 
 import { QRCodeSVG } from 'qrcode.react';
+import { Users } from 'lucide-react';
 import type { QuizGame } from '../../types/quiz-game';
 
 interface GameLobbyProps {
@@ -9,6 +10,8 @@ interface GameLobbyProps {
   onStartGame: () => Promise<boolean>;
   onKickPlayer: (playerId: string) => Promise<boolean>;
   onLeaveGame: () => Promise<void>;
+  onInviteFriends?: () => void;
+  hasFriends?: boolean;
   error: string | null;
 }
 
@@ -18,6 +21,8 @@ export function GameLobby({
   onStartGame,
   onKickPlayer,
   onLeaveGame,
+  onInviteFriends,
+  hasFriends = false,
   error,
 }: GameLobbyProps) {
   const players = Object.values(game.players);
@@ -63,6 +68,15 @@ export function GameLobby({
                 Copy
               </button>
             </div>
+            {onInviteFriends && hasFriends && (
+              <button
+                className="btn btn-secondary invite-friends-btn"
+                onClick={onInviteFriends}
+              >
+                <Users size={18} />
+                Mời bạn bè
+              </button>
+            )}
           </div>
 
           <div className="players-section">

@@ -12,7 +12,18 @@ export type SlideLayout =
   | 'full-media'; // Full screen media (image/video)
 
 // Element types that can be placed on slides
-export type SlideElementType = 'text' | 'image' | 'video' | 'audio' | 'flashcard';
+export type SlideElementType = 'text' | 'image' | 'video' | 'audio' | 'flashcard' | 'shape';
+
+// Admin note for text selection (only visible to admin/superadmin)
+export interface AdminNote {
+  id: string;
+  selectedText: string;    // The text that was highlighted
+  noteContent: string;     // Admin's note content
+  startOffset: number;     // Start position in the text
+  endOffset: number;       // End position in the text
+  createdAt: string;
+  createdBy: string;
+}
 
 // Individual element on a slide
 export interface SlideElement {
@@ -32,7 +43,9 @@ export interface SlideElement {
     color?: string;
     textAlign?: string;
     backgroundColor?: string;
+    [key: string]: string | undefined;
   };
+  adminNotes?: AdminNote[]; // Admin-only notes for text selections
 }
 
 // Animation types for slide elements

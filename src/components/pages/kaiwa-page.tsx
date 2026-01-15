@@ -12,18 +12,17 @@ import type { VocabularyHint } from '../../types/kaiwa';
 import { removeFurigana } from '../../lib/furigana-utils';
 import { FuriganaText } from '../common/furigana-text';
 import {
-  Lightbulb,
-  MessageCircle,
-  HelpCircle,
+  Sparkles,
+  MessagesSquare,
+  CircleHelp,
   Mic,
   Volume2,
   Copy,
   Trash2,
   X,
   Send,
-  Turtle,
+  Gauge,
   Bookmark,
-  BookmarkCheck,
   RefreshCw,
   Clock,
   ChevronRight,
@@ -717,7 +716,7 @@ export function KaiwaPage({
         </div>
         <div className="kaiwa-header-center">
           <div className="kaiwa-stats">
-            <span className="kaiwa-stat" title="Số lượt trao đổi"><MessageCircle size={14} /> {conversationStats.exchanges}</span>
+            <span className="kaiwa-stat" title="Số lượt trao đổi"><MessagesSquare size={14} /> {conversationStats.exchanges}</span>
             <span className="kaiwa-stat" title="Thời gian"><Clock size={14} /> {conversationStats.duration}m</span>
             {savedSentences.length > 0 && (
               <button
@@ -744,7 +743,7 @@ export function KaiwaPage({
             onClick={() => setSlowMode(!slowMode)}
             title={slowMode ? 'Tắt chế độ chậm' : 'Bật chế độ chậm'}
           >
-            <Turtle size={14} /> {slowMode ? 'Chậm' : 'Thường'}
+            <Gauge size={14} /> {slowMode ? 'Chậm' : 'Thường'}
           </button>
           <button
             className={`kaiwa-furigana-btn ${showFurigana ? 'active' : ''}`}
@@ -835,7 +834,7 @@ export function KaiwaPage({
       {showSavedPanel && savedSentences.length > 0 && (
         <div className="kaiwa-saved-panel">
           <div className="kaiwa-saved-header">
-            <h3><BookmarkCheck size={16} /> Câu đã lưu ({savedSentences.length})</h3>
+            <h3><Bookmark size={16} /> Câu đã lưu ({savedSentences.length})</h3>
             <button className="kaiwa-saved-close" onClick={() => setShowSavedPanel(false)}><X size={16} /></button>
           </div>
           <div className="kaiwa-saved-list">
@@ -886,7 +885,7 @@ export function KaiwaPage({
                     className={`kaiwa-tab-btn ${activeSuggestionTab === 'template' ? 'active' : ''}`}
                     onClick={() => setActiveSuggestionTab(activeSuggestionTab === 'template' ? null : 'template')}
                   >
-                    <span className="tab-icon"><Lightbulb size={16} /></span>
+                    <span className="tab-icon"><Sparkles size={16} /></span>
                     <span className="tab-label">Gợi ý trả lời</span>
                   </button>
                 )}
@@ -895,7 +894,7 @@ export function KaiwaPage({
                     className={`kaiwa-tab-btn ${activeSuggestionTab === 'answers' ? 'active' : ''}`}
                     onClick={() => setActiveSuggestionTab(activeSuggestionTab === 'answers' ? null : 'answers')}
                   >
-                    <span className="tab-icon"><MessageCircle size={16} /></span>
+                    <span className="tab-icon"><MessagesSquare size={16} /></span>
                     <span className="tab-label">Câu trả lời mẫu</span>
                   </button>
                 )}
@@ -904,7 +903,7 @@ export function KaiwaPage({
                     className={`kaiwa-tab-btn ${activeSuggestionTab === 'questions' ? 'active' : ''}`}
                     onClick={() => setActiveSuggestionTab(activeSuggestionTab === 'questions' ? null : 'questions')}
                   >
-                    <span className="tab-icon"><HelpCircle size={16} /></span>
+                    <span className="tab-icon"><CircleHelp size={16} /></span>
                     <span className="tab-label">Gợi ý câu hỏi</span>
                   </button>
                 )}
@@ -977,7 +976,7 @@ export function KaiwaPage({
             title="Gợi ý"
             disabled={!answerTemplate && suggestedAnswers.length === 0 && suggestedQuestions.length === 0}
           >
-            <Lightbulb size={18} />
+            <Sparkles size={18} />
           </button>
 
           {speech.recognitionSupported && (

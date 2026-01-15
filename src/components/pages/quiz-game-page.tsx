@@ -5,11 +5,13 @@ import type { Flashcard, JLPTLevel, Lesson } from '../../types/flashcard';
 import type { JLPTQuestion } from '../../types/jlpt-question';
 import type { CreateGameData } from '../../types/quiz-game';
 import type { AppSettings } from '../../hooks/use-settings';
+import type { FriendWithUser } from '../../types/friendship';
 import { useQuizGame } from '../../hooks/use-quiz-game';
 import { GameCreate } from '../quiz-game/game-create';
 import { GameLobby } from '../quiz-game/game-lobby';
 import { GamePlay } from '../quiz-game/game-play';
 import { GameResults } from '../quiz-game/game-results';
+import { GameFriendInvite } from '../quiz-game/game-friend-invite';
 
 interface QuizGamePageProps {
   currentUserId: string;
@@ -22,6 +24,9 @@ interface QuizGamePageProps {
   initialJoinCode?: string | null;
   onJoinCodeUsed?: () => void;
   settings: AppSettings;
+  // Friends integration
+  friends?: FriendWithUser[];
+  onInviteFriend?: (gameId: string, gameCode: string, gameTitle: string, friendId: string) => Promise<boolean>;
 }
 
 type GameView = 'menu' | 'create' | 'join' | 'lobby' | 'play' | 'results';
@@ -37,11 +42,14 @@ export function QuizGamePage({
   initialJoinCode,
   onJoinCodeUsed,
   settings,
+  friends = [],
+  onInviteFriend,
 }: QuizGamePageProps) {
   const [view, setView] = useState<GameView>(initialJoinCode ? 'join' : 'menu');
   const [joinCode, setJoinCode] = useState(initialJoinCode || '');
   const [joinError, setJoinError] = useState('');
   const [autoJoinAttempted, setAutoJoinAttempted] = useState(false);
+  const [showFriendInvite, setShowFriendInvite] = useState(false);
 
   const {
     game,
@@ -334,14 +342,29 @@ export function QuizGamePage({
   // Lobby view
   if (currentView === 'lobby' && game) {
     return (
-      <GameLobby
-        game={game}
-        isHost={isHost}
-        onStartGame={startGame}
-        onKickPlayer={kickPlayer}
-        onLeaveGame={handleLeaveGame}
-        error={error}
-      />
+      <>
+        <GameLobby
+          game={game}
+          isHost={isHost}
+          onStartGame={startGame}
+          onKickPlayer={kickPlayer}
+          onLeaveGame={handleLeaveGame}
+          onInviteFriends={() => setShowFriendInvite(true)}
+          hasFriends={friends.length > 0}
+          error={error}
+        />
+        {onInviteFriend && (
+          <GameFriendInvite
+            isOpen={showFriendInvite}
+            onClose={() => setShowFriendInvite(false)}
+            friends={friends}
+            gameCode={game.code}
+            gameTitle={game.title}
+            gameId={game.id}
+            onInviteFriend={onInviteFriend}
+          />
+        )}
+      </>
     );
   }
 
