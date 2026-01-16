@@ -23,21 +23,6 @@ import {
 import { useClassroomNotifications } from '../../hooks/use-classrooms';
 import { useFriendNotifications } from '../../hooks/use-friendships';
 
-// Helper to get role display name
-const getRoleBadge = (role: string): { label: string; className: string } | null => {
-  switch (role) {
-    case 'super_admin': return { label: 'Super Admin', className: 'role-badge super-admin' };
-    case 'director': return { label: 'Giám đốc', className: 'role-badge director' };
-    case 'admin': return { label: 'Admin', className: 'role-badge admin' };
-    case 'branch_admin': return { label: 'Admin CN', className: 'role-badge branch-admin' };
-    case 'main_teacher': return { label: 'Giáo viên', className: 'role-badge teacher' };
-    case 'part_time_teacher': return { label: 'GV Part-time', className: 'role-badge teacher' };
-    case 'assistant': return { label: 'Trợ giảng', className: 'role-badge assistant' };
-    case 'vip_user': return { label: 'VIP', className: 'role-badge vip' };
-    default: return null;
-  }
-};
-
 interface SidebarProps {
   currentPage: Page;
   onNavigate: (page: Page) => void;
@@ -103,8 +88,6 @@ export function Sidebar({
     return item.roles.includes(currentUser.role);
   };
 
-  const roleBadge = currentUser ? getRoleBadge(currentUser.role) : null;
-
   return (
     <>
       {/* Mobile hamburger button */}
@@ -153,12 +136,9 @@ export function Sidebar({
             </div>
             {!isCollapsed && (
               <div className="sidebar-user-info">
-                <span className="sidebar-username">
+                <span className={`sidebar-username role-name-${currentUser.role}`}>
                   {currentUser.displayName || currentUser.username}
                 </span>
-                {roleBadge && (
-                  <span className={roleBadge.className}>{roleBadge.label}</span>
-                )}
               </div>
             )}
             {/* Notification bell - only show when expanded */}

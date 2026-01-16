@@ -303,12 +303,74 @@ body {
 }
 
 .sidebar-username {
-  font-weight: 600;
-  font-size: var(--font-size-sm);
+  font-weight: 700;
+  font-size: 1.1rem;
   color: var(--dark);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: all 0.3s ease;
+}
+
+/* Role-based username styles */
+.sidebar-username.role-name-super_admin {
+  background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff, #9b59b6);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: rainbow-text 3s ease infinite;
+  font-weight: 800;
+  text-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+}
+
+@keyframes rainbow-text {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.sidebar-username.role-name-director {
+  background: linear-gradient(135deg, #ffd700, #ffb347);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+}
+
+.sidebar-username.role-name-admin {
+  color: var(--jp-shu);
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(227, 66, 52, 0.3);
+}
+
+.sidebar-username.role-name-branch_admin {
+  color: var(--jp-ai);
+  font-weight: 700;
+}
+
+.sidebar-username.role-name-main_teacher {
+  color: var(--jp-matcha);
+  font-weight: 600;
+  font-style: italic;
+}
+
+.sidebar-username.role-name-part_time_teacher {
+  color: var(--jp-matcha-light);
+  font-weight: 600;
+}
+
+.sidebar-username.role-name-assistant {
+  color: var(--jp-murasaki);
+  font-weight: 600;
+}
+
+.sidebar-username.role-name-vip_user {
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
 }
 
 /* Sidebar Navigation */
