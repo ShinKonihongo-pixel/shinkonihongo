@@ -3,6 +3,7 @@
 import { QRCodeSVG } from 'qrcode.react';
 import { Users } from 'lucide-react';
 import type { QuizGame } from '../../types/quiz-game';
+import { isImageAvatar } from '../../utils/avatar-icons';
 
 interface GameLobbyProps {
   game: QuizGame;
@@ -85,6 +86,13 @@ export function GameLobby({
               {players.map((player, index) => (
                 <div key={player.id} className="player-item">
                   <span className="player-rank">#{index + 1}</span>
+                  <span className="player-avatar">
+                    {player.avatar && isImageAvatar(player.avatar) ? (
+                      <img src={player.avatar} alt="avatar" />
+                    ) : (
+                      player.avatar || player.name.charAt(0).toUpperCase()
+                    )}
+                  </span>
                   <span className="player-name">
                     {player.name}
                     {player.isHost && <span className="host-badge">Host</span>}

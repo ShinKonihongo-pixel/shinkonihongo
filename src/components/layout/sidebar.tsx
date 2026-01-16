@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from 'react';
 import type { CurrentUser } from '../../types/user';
 import type { Page } from './header';
+import { isImageAvatar } from '../../utils/avatar-icons';
 import {
   Home,
   LayoutDashboard,
@@ -18,8 +19,6 @@ import {
   School,
   Bell,
   Building2,
-  Users,
-  Wallet,
 } from 'lucide-react';
 import { useClassroomNotifications } from '../../hooks/use-classrooms';
 import { useFriendNotifications } from '../../hooks/use-friendships';
@@ -66,10 +65,8 @@ const navItems: NavItem[] = [
   { page: 'lectures', label: 'Bài giảng', icon: <GraduationCap {...iconProps} /> },
   { page: 'classroom', label: 'Lớp Học', icon: <School {...iconProps} /> },
   { page: 'kaiwa', label: '会話', icon: <MessageCircle {...iconProps} />, roles: ['vip_user', 'admin', 'super_admin', 'director', 'branch_admin', 'main_teacher'] },
-  // Branch management pages
-  { page: 'branches', label: 'Chi nhánh', icon: <Building2 {...iconProps} />, roles: ['director', 'super_admin'] },
-  { page: 'teachers', label: 'Giáo viên', icon: <Users {...iconProps} />, roles: ['director', 'branch_admin', 'super_admin'] },
-  { page: 'salary', label: 'Lương', icon: <Wallet {...iconProps} />, roles: ['director', 'branch_admin', 'super_admin'] },
+  // Branch management - unified page with teachers, salaries, staff management
+  { page: 'branches', label: 'Quản lý', icon: <Building2 {...iconProps} />, roles: ['director', 'branch_admin', 'super_admin'] },
   // Teacher self-service
   { page: 'my-teaching', label: 'Giảng dạy', icon: <GraduationCap {...iconProps} />, roles: ['main_teacher', 'part_time_teacher', 'assistant'] },
   { page: 'settings', label: 'Cài đặt', icon: <Settings {...iconProps} /> },
@@ -148,7 +145,11 @@ export function Sidebar({
         {currentUser && (
           <div className="sidebar-user">
             <div className="sidebar-user-avatar">
-              {currentUser.avatar || (currentUser.displayName || currentUser.username).charAt(0).toUpperCase()}
+              {currentUser.avatar && isImageAvatar(currentUser.avatar) ? (
+                <img src={currentUser.avatar} alt="avatar" />
+              ) : (
+                currentUser.avatar || (currentUser.displayName || currentUser.username).charAt(0).toUpperCase()
+              )}
             </div>
             {!isCollapsed && (
               <div className="sidebar-user-info">

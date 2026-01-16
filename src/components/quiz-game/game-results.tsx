@@ -1,6 +1,7 @@
 // Game results component - shows final rankings
 
 import type { QuizGame, GameResults as GameResultsType } from '../../types/quiz-game';
+import { isImageAvatar } from '../../utils/avatar-icons';
 
 interface GameResultsProps {
   game: QuizGame;
@@ -65,6 +66,13 @@ export function GameResults({
               className={`podium-item position-${index + 1} ${getPositionClass(index + 1)}`}
             >
               <div className="podium-rank">{getPositionEmoji(index + 1)}</div>
+              <div className="podium-avatar">
+                {player.avatar && isImageAvatar(player.avatar) ? (
+                  <img src={player.avatar} alt="avatar" />
+                ) : (
+                  player.avatar || player.name.charAt(0).toUpperCase()
+                )}
+              </div>
               <div className="podium-name">{player.name}</div>
               <div className="podium-score">{player.score}</div>
             </div>
@@ -86,6 +94,13 @@ export function GameResults({
                 className={`ranking-item ${player.id === currentPlayerId ? 'is-me' : ''} ${getPositionClass(index + 1)}`}
               >
                 <span className="rank">{getPositionEmoji(index + 1)}</span>
+                <span className="ranking-avatar">
+                  {player.avatar && isImageAvatar(player.avatar) ? (
+                    <img src={player.avatar} alt="avatar" />
+                  ) : (
+                    player.avatar || player.name.charAt(0).toUpperCase()
+                  )}
+                </span>
                 <span className="name">{player.name}</span>
                 <span className="score">{player.score}</span>
                 {player.streak >= 3 && (

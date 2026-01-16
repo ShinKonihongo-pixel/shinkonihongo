@@ -28,6 +28,7 @@ export const POWER_UPS: PowerUp[] = [
 export interface GamePlayer {
   id: string;
   name: string;
+  avatar?: string; // Player avatar emoji/icon
   score: number;
   isHost: boolean;
   isBlocked: boolean;           // Bị block ở round hiện tại

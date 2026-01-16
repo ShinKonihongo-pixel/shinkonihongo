@@ -12,10 +12,12 @@ import { GameLobby } from '../quiz-game/game-lobby';
 import { GamePlay } from '../quiz-game/game-play';
 import { GameResults } from '../quiz-game/game-results';
 import { GameFriendInvite } from '../quiz-game/game-friend-invite';
+import { GameAvatarPicker } from '../quiz-game/game-avatar-picker';
 
 interface QuizGamePageProps {
   currentUserId: string;
   currentUserName: string;
+  currentUserAvatar?: string;
   flashcards: Flashcard[];
   jlptQuestions: JLPTQuestion[];
   getLessonsByLevel: (level: JLPTLevel) => Lesson[];
@@ -34,6 +36,7 @@ type GameView = 'menu' | 'create' | 'join' | 'lobby' | 'play' | 'results';
 export function QuizGamePage({
   currentUserId,
   currentUserName,
+  currentUserAvatar,
   flashcards,
   jlptQuestions,
   getLessonsByLevel,
@@ -50,6 +53,7 @@ export function QuizGamePage({
   const [joinError, setJoinError] = useState('');
   const [autoJoinAttempted, setAutoJoinAttempted] = useState(false);
   const [showFriendInvite, setShowFriendInvite] = useState(false);
+  const [gameAvatar, setGameAvatar] = useState(currentUserAvatar || '');
 
   const {
     game,
@@ -79,6 +83,7 @@ export function QuizGamePage({
   } = useQuizGame({
     playerId: currentUserId,
     playerName: currentUserName,
+    playerAvatar: gameAvatar || currentUserAvatar,
   });
 
   // Subscribe to available rooms when in join view
@@ -174,10 +179,22 @@ export function QuizGamePage({
     return (
       <div className="quiz-game-page">
         <div className="game-menu">
-          <h2>Đấu Trường Tri Thức</h2>
-          <p className="game-description">
-            Thử thách kiến thức tiếng Nhật cùng bạn bè!
-          </p>
+          <div className="game-menu-header">
+            <div className="game-title-section">
+              <h2>🏆 Đấu Trường Tri Thức</h2>
+              <p className="game-description">
+                Thử thách kiến thức tiếng Nhật cùng bạn bè!
+              </p>
+            </div>
+            <div className="player-profile-section">
+              <GameAvatarPicker
+                currentAvatar={gameAvatar || currentUserAvatar}
+                playerName={currentUserName}
+                onSelect={setGameAvatar}
+              />
+              <span className="player-name">{currentUserName}</span>
+            </div>
+          </div>
 
           <div className="menu-buttons">
             <button

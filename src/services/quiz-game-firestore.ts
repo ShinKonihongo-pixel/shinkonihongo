@@ -158,6 +158,7 @@ export async function createGame(
   data: CreateGameData,
   hostId: string,
   hostName: string,
+  hostAvatar: string | undefined,
   flashcards: Flashcard[],
   jlptQuestions?: JLPTQuestion[]
 ): Promise<QuizGame> {
@@ -227,6 +228,7 @@ export async function createGame(
   const hostPlayer: GamePlayer = {
     id: hostId,
     name: hostName,
+    avatar: hostAvatar,
     score: 0,
     isHost: true,
     isBlocked: false,
@@ -329,7 +331,8 @@ export async function deleteGame(gameId: string): Promise<void> {
 export async function joinGame(
   gameCode: string,
   playerId: string,
-  playerName: string
+  playerName: string,
+  playerAvatar?: string
 ): Promise<{ game: QuizGame; error?: string }> {
   const game = await getGameByCode(gameCode);
 
@@ -354,6 +357,7 @@ export async function joinGame(
   const newPlayer: GamePlayer = {
     id: playerId,
     name: playerName,
+    avatar: playerAvatar,
     score: 0,
     isHost: false,
     isBlocked: false,

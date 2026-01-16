@@ -14,9 +14,10 @@ import * as gameService from '../services/quiz-game-firestore';
 interface UseQuizGameOptions {
   playerId: string;
   playerName: string;
+  playerAvatar?: string;
 }
 
-export function useQuizGame({ playerId, playerName }: UseQuizGameOptions) {
+export function useQuizGame({ playerId, playerName, playerAvatar }: UseQuizGameOptions) {
   const [game, setGame] = useState<QuizGame | null>(null);
   const [gameResults, setGameResults] = useState<GameResults | null>(null);
   const [availableRooms, setAvailableRooms] = useState<QuizGame[]>([]);
@@ -55,7 +56,7 @@ export function useQuizGame({ playerId, playerName }: UseQuizGameOptions) {
     setLoading(true);
     setError(null);
     try {
-      const newGame = await gameService.createGame(data, playerId, playerName, flashcards, jlptQuestions);
+      const newGame = await gameService.createGame(data, playerId, playerName, playerAvatar, flashcards, jlptQuestions);
       setGame(newGame);
       return newGame;
     } catch (err) {
@@ -65,7 +66,7 @@ export function useQuizGame({ playerId, playerName }: UseQuizGameOptions) {
     } finally {
       setLoading(false);
     }
-  }, [playerId, playerName]);
+  }, [playerId, playerName, playerAvatar]);
 
   // Join an existing game by code
   const joinGame = useCallback(async (gameCode: string): Promise<boolean> => {
@@ -75,7 +76,8 @@ export function useQuizGame({ playerId, playerName }: UseQuizGameOptions) {
       const { game: joinedGame, error: joinError } = await gameService.joinGame(
         gameCode,
         playerId,
-        playerName
+        playerName,
+        playerAvatar
       );
 
       if (joinError) {
@@ -91,7 +93,7 @@ export function useQuizGame({ playerId, playerName }: UseQuizGameOptions) {
     } finally {
       setLoading(false);
     }
-  }, [playerId, playerName]);
+  }, [playerId, playerName, playerAvatar]);
 
   // Leave current game
   const leaveGame = useCallback(async (): Promise<void> => {
@@ -236,7 +238,8 @@ export function useQuizGame({ playerId, playerName }: UseQuizGameOptions) {
       const { game: joinedGame, error: joinError } = await gameService.joinGame(
         targetGame.code,
         playerId,
-        playerName
+        playerName,
+        playerAvatar
       );
 
       if (joinError) {
@@ -252,7 +255,7 @@ export function useQuizGame({ playerId, playerName }: UseQuizGameOptions) {
     } finally {
       setLoading(false);
     }
-  }, [playerId, playerName]);
+  }, [playerId, playerName, playerAvatar]);
 
   // Computed values
   const isHost = game?.hostId === playerId;

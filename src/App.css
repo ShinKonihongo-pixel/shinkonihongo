@@ -1,58 +1,121 @@
-/* Japanese Flashcard App Styles */
+/* Japanese Flashcard App Styles - 和 (Wa) Design System */
 
 :root {
-  /* Colors - Unified palette */
-  --primary: #667eea;
-  --primary-dark: #5a6fd6;
-  --primary-light: #8b9bf5;
-  --secondary: #764ba2;
-  --secondary-dark: #6a4291;
-  --accent: #3498db;
-  --success: #27ae60;
-  --success-light: #d4edda;
-  --warning: #f39c12;
-  --warning-light: #fff3cd;
-  --danger: #e74c3c;
+  /* ============ JAPANESE COLOR PALETTE (和) ============ */
+
+  /* Shu (朱) - Vermilion Red (Torii Gates) */
+  --jp-shu: #E34234;
+  --jp-shu-light: #FF6B5B;
+  --jp-shu-dark: #B8352A;
+
+  /* Ai (藍) - Japanese Indigo */
+  --jp-ai: #264E73;
+  --jp-ai-light: #4A7A9E;
+  --jp-ai-dark: #1A3A54;
+
+  /* Sakura (桜) - Cherry Blossom Pink */
+  --jp-sakura: #FFB7C5;
+  --jp-sakura-light: #FFEEF2;
+  --jp-sakura-dark: #E89AAB;
+
+  /* Matcha (抹茶) - Green Tea */
+  --jp-matcha: #7B9E6B;
+  --jp-matcha-light: #B8D4A8;
+  --jp-matcha-dark: #5A7D4A;
+
+  /* Washi (和紙) - Japanese Paper */
+  --jp-washi: #FAF8F5;
+  --jp-washi-warm: #FDF9F3;
+  --jp-washi-cool: #F5F7FA;
+
+  /* Kinari (生成) - Natural Cream */
+  --jp-kinari: #F5F1EB;
+
+  /* Sumi (墨) - Ink Black */
+  --jp-sumi: #1C1C1C;
+  --jp-sumi-light: #3D3D3D;
+  --jp-sumi-medium: #5C5C5C;
+
+  /* Murasaki (紫) - Purple */
+  --jp-murasaki: #7B5B9A;
+  --jp-murasaki-light: #A88BC7;
+
+  /* Kitsune (狐) - Fox Gold */
+  --jp-kitsune: #D4A84B;
+  --jp-kitsune-light: #F0D090;
+
+  /* ============ SEMANTIC COLORS (mapped to Japanese) ============ */
+  --primary: var(--jp-shu);
+  --primary-dark: var(--jp-shu-dark);
+  --primary-light: var(--jp-shu-light);
+  --secondary: var(--jp-ai);
+  --secondary-dark: var(--jp-ai-dark);
+  --secondary-light: var(--jp-ai-light);
+  --accent: var(--jp-sakura);
+  --accent-dark: var(--jp-sakura-dark);
+  --success: var(--jp-matcha);
+  --success-light: var(--jp-matcha-light);
+  --success-dark: var(--jp-matcha-dark);
+  --warning: var(--jp-kitsune);
+  --warning-light: var(--jp-kitsune-light);
+  --danger: #c0392b;
   --danger-light: #f8d7da;
-  --dark: #2c3e50;
-  --light: #f5f7fa;
-  --white: #ffffff;
-  --gray: #7f8c8d;
-  --gray-light: #bdc3c7;
-  --gray-dark: #5a6c7d;
-  --border: #e1e8ed;
+  --dark: var(--jp-sumi);
+  --light: var(--jp-washi);
+  --white: var(--jp-washi-warm);
+  --gray: var(--jp-sumi-medium);
+  --gray-light: #D4D0C8;
+  --gray-dark: var(--jp-sumi-light);
+  --border: #E8E4DC;
 
-  /* Spacing scale (8px base) */
-  --space-xs: 0.5rem;    /* 8px */
-  --space-sm: 0.75rem;   /* 12px */
-  --space-md: 1rem;      /* 16px */
-  --space-lg: 1.5rem;    /* 24px */
-  --space-xl: 2rem;      /* 32px */
-  --space-2xl: 3rem;     /* 48px */
+  /* ============ JAPANESE GRADIENTS ============ */
+  --gradient-shu: linear-gradient(135deg, var(--jp-shu) 0%, var(--jp-shu-light) 100%);
+  --gradient-ai: linear-gradient(135deg, var(--jp-ai) 0%, var(--jp-ai-light) 100%);
+  --gradient-sakura: linear-gradient(135deg, var(--jp-sakura-light) 0%, var(--jp-sakura) 100%);
+  --gradient-matcha: linear-gradient(135deg, var(--jp-matcha) 0%, var(--jp-matcha-light) 100%);
+  --gradient-zen: linear-gradient(180deg, var(--jp-washi) 0%, var(--jp-kinari) 100%);
+  --gradient-sunset: linear-gradient(135deg, var(--jp-shu) 0%, var(--jp-kitsune) 100%);
+  --gradient-main: linear-gradient(180deg, var(--jp-ai-dark) 0%, var(--jp-ai) 50%, var(--jp-sakura-light) 100%);
 
-  /* Typography */
-  --font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-size-xs: 0.75rem;   /* 12px */
-  --font-size-sm: 0.875rem;  /* 14px */
-  --font-size-md: 1rem;      /* 16px */
-  --font-size-lg: 1.125rem;  /* 18px */
-  --font-size-xl: 1.5rem;    /* 24px */
-  --font-size-2xl: 2rem;     /* 32px */
+  /* ============ SPACING (8px base) ============ */
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+
+  /* ============ TYPOGRAPHY ============ */
+  --font-family: 'Noto Sans JP', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-jp-display: 'Zen Old Mincho', 'Shippori Mincho', 'Noto Serif JP', serif;
+  --font-jp-kanji: 'Noto Serif JP', 'Yu Mincho', serif;
+  --font-jp-body: 'Noto Sans JP', 'Zen Maru Gothic', sans-serif;
+  --font-jp-handwritten: 'Klee One', cursive;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.5rem;
+  --font-size-2xl: 2rem;
+  --font-size-3xl: 2.5rem;
   --line-height: 1.6;
+  --line-height-jp: 1.75;
 
-  /* Border radius */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  /* ============ BORDER RADIUS ============ */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-  --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.15);
+  /* ============ SHADOWS ============ */
+  --shadow-sm: 0 1px 3px rgba(28, 28, 28, 0.06);
+  --shadow-md: 0 4px 12px rgba(28, 28, 28, 0.08);
+  --shadow-lg: 0 8px 24px rgba(28, 28, 28, 0.1);
+  --shadow-xl: 0 12px 32px rgba(28, 28, 28, 0.12);
+  --shadow-sakura: 0 4px 16px rgba(255, 183, 197, 0.3);
+  --shadow-shu: 0 4px 16px rgba(227, 66, 52, 0.25);
 
-  /* Transitions */
+  /* ============ TRANSITIONS ============ */
   --transition-fast: 0.15s ease;
   --transition-normal: 0.2s ease;
   --transition-slow: 0.3s ease;
@@ -77,7 +140,7 @@ body {
   font-family: var(--font-family);
   font-size: var(--font-size-md);
   line-height: var(--line-height);
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  background: var(--gradient-main);
   min-height: 100vh;
   color: var(--dark);
   overflow-x: hidden;
@@ -114,15 +177,16 @@ body {
   width: calc(100% - 78px);
 }
 
-/* Sidebar */
+/* Sidebar - Zen Minimal Design */
 .sidebar {
   position: fixed;
   left: 0;
   top: 0;
   bottom: 0;
   width: 260px;
-  background: var(--white);
-  box-shadow: var(--shadow-lg);
+  background: var(--jp-washi-warm);
+  border-right: 1px solid var(--border);
+  box-shadow: 2px 0 12px rgba(28, 28, 28, 0.04);
   display: flex;
   flex-direction: column;
   z-index: 1000;
@@ -140,14 +204,17 @@ body {
   align-items: center;
   justify-content: space-between;
   min-height: 60px;
+  background: var(--jp-washi);
 }
 
 .sidebar-title {
-  font-size: var(--font-size-lg);
+  font-family: var(--font-jp-display);
+  font-size: var(--font-size-xl);
   font-weight: 700;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--jp-shu);
+  background: none;
+  -webkit-background-clip: unset;
+  -webkit-text-fill-color: var(--jp-shu);
   background-clip: text;
   white-space: nowrap;
   overflow: hidden;
@@ -214,6 +281,13 @@ body {
   font-weight: 600;
   font-size: var(--font-size-md);
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sidebar-user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .sidebar-user-info {
@@ -255,29 +329,46 @@ body {
   gap: var(--space-sm);
   border: none;
   background: transparent;
-  color: var(--gray-dark);
+  color: var(--jp-sumi-medium);
   font-size: var(--font-size-sm);
   font-weight: 500;
-  border-radius: var(--radius-md);
+  border-radius: 0;
+  border-left: 3px solid transparent;
   cursor: pointer;
   transition: all var(--transition-normal);
   text-align: left;
+  margin: 2px 0;
 }
 
 .sidebar.collapsed .sidebar-nav-btn {
   justify-content: center;
   padding: var(--space-sm);
+  border-left: none;
+  border-bottom: 3px solid transparent;
 }
 
 .sidebar-nav-btn:hover {
-  background: var(--light);
-  color: var(--dark);
+  background: var(--jp-kinari);
+  color: var(--jp-sumi);
+  border-left-color: var(--jp-sakura);
+}
+
+.sidebar.collapsed .sidebar-nav-btn:hover {
+  border-left-color: transparent;
+  border-bottom-color: var(--jp-sakura);
 }
 
 .sidebar-nav-btn.active {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-  color: var(--white);
-  box-shadow: var(--shadow-sm);
+  background: linear-gradient(90deg, rgba(227, 66, 52, 0.1) 0%, transparent 100%);
+  color: var(--jp-shu);
+  border-left-color: var(--jp-shu);
+  font-weight: 600;
+}
+
+.sidebar.collapsed .sidebar-nav-btn.active {
+  background: rgba(227, 66, 52, 0.1);
+  border-left-color: transparent;
+  border-bottom-color: var(--jp-shu);
 }
 
 .sidebar-nav-icon {
@@ -454,10 +545,10 @@ body {
   display: none;
 }
 
-/* Main Content */
+/* Main Content - Washi Paper Style */
 .main-content {
   flex: 1;
-  padding: 1rem;
+  padding: 1.25rem;
   width: 100%;
   overflow: visible;
   min-height: 0;
@@ -465,9 +556,11 @@ body {
   flex-direction: column;
   margin: 12px;
   margin-left: 0;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  background: var(--jp-washi);
+  box-shadow: -4px 0 24px rgba(28, 28, 28, 0.06);
+  border: 1px solid var(--border);
+  border-right: none;
 }
 
 .main-content > * {
@@ -526,65 +619,66 @@ select, option {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-  color: var(--white);
+  background: var(--jp-shu);
+  color: var(--jp-washi);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  background: var(--jp-shu-dark);
+  box-shadow: var(--shadow-shu);
 }
 
 .btn-secondary {
-  background: var(--white);
-  color: var(--dark);
+  background: var(--jp-washi);
+  color: var(--jp-sumi);
   border: 1px solid var(--border);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: var(--light);
-  border-color: var(--gray-light);
+  background: var(--jp-kinari);
+  border-color: var(--jp-shu);
+  color: var(--jp-shu);
 }
 
 .btn-danger {
   background: var(--danger);
-  color: var(--white);
+  color: var(--jp-washi);
 }
 
 .btn-danger:hover:not(:disabled) {
-  background: #c0392b;
-  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+  background: #a83227;
+  box-shadow: 0 4px 15px rgba(192, 57, 43, 0.3);
 }
 
 .btn-success {
-  background: var(--success);
-  color: var(--white);
+  background: var(--jp-matcha);
+  color: var(--jp-washi);
 }
 
 .btn-success:hover:not(:disabled) {
-  background: #229954;
-  box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4);
+  background: var(--jp-matcha-dark);
+  box-shadow: 0 4px 15px rgba(123, 158, 107, 0.3);
 }
 
 .btn-outline {
   background: transparent;
-  color: var(--primary);
-  border: 2px solid var(--primary);
+  color: var(--jp-shu);
+  border: 2px solid var(--jp-shu);
 }
 
 .btn-outline:hover:not(:disabled) {
-  background: var(--primary);
-  color: var(--white);
+  background: var(--jp-shu);
+  color: var(--jp-washi);
 }
 
 .btn-ghost {
   background: transparent;
-  color: var(--gray-dark);
+  color: var(--jp-sumi-medium);
 }
 
 .btn-ghost:hover:not(:disabled) {
-  background: var(--light);
-  color: var(--dark);
+  background: var(--jp-sakura-light);
+  color: var(--jp-shu);
 }
 
 .btn-large {
@@ -629,12 +723,27 @@ select, option {
   box-shadow: var(--shadow-lg);
 }
 
-/* Home Page */
+/* Home Page - Japanese Style */
 .home-page {
-  background: var(--white);
+  background: var(--jp-washi);
   border-radius: 0;
   padding: var(--space-lg);
   box-shadow: none;
+  position: relative;
+}
+
+/* Subtle seigaiha wave pattern */
+.home-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='50' viewBox='0 0 100 50'%3E%3Cpath d='M0 25 Q25 0 50 25 T100 25' fill='none' stroke='%23E34234' stroke-width='0.5' opacity='0.06'/%3E%3C/svg%3E");
+  background-size: 100px 50px;
+  pointer-events: none;
+  opacity: 0.5;
 }
 
 .welcome-section {
@@ -642,17 +751,19 @@ select, option {
   margin-bottom: var(--space-xl);
   padding: var(--space-lg) 0;
   border-bottom: 1px solid var(--border);
+  position: relative;
 }
 
 .welcome-section h2 {
+  font-family: var(--font-jp-display);
   font-size: var(--font-size-2xl);
-  color: var(--dark);
+  color: var(--jp-shu);
   margin-bottom: var(--space-xs);
   font-weight: 700;
 }
 
 .welcome-section p {
-  color: var(--gray);
+  color: var(--jp-sumi-medium);
   font-size: var(--font-size-md);
 }
 
@@ -693,21 +804,22 @@ select, option {
 .jlpt-label {
   width: 40px;
   font-weight: bold;
-  color: var(--primary);
+  color: var(--jp-shu);
 }
 
 .jlpt-bar {
   flex: 1;
   height: 24px;
-  background: var(--light);
-  border-radius: 12px;
+  background: var(--jp-kinari);
+  border-radius: var(--radius-md);
   overflow: hidden;
+  border: 1px solid var(--border);
 }
 
 .jlpt-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #e74c3c 0%, #c0392b 100%);
-  border-radius: 12px;
+  background: var(--gradient-shu);
+  border-radius: var(--radius-md);
   transition: width 0.3s;
 }
 
@@ -2698,19 +2810,21 @@ select, option {
 }
 
 .mini-card {
-  background: var(--light);
-  border-radius: 12px;
+  background: var(--jp-washi-warm);
+  border-radius: var(--radius-md);
   padding: 1rem;
   min-height: 120px;
   cursor: pointer;
-  transition: transform 0.3s, box-shadow 0.3s;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
   position: relative;
   transform-style: preserve-3d;
+  border: 1px solid var(--border);
 }
 
 .mini-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sakura);
+  border-color: var(--jp-sakura);
 }
 
 .mini-card.flipped .mini-card-front {
@@ -2743,18 +2857,19 @@ select, option {
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
-  background: var(--primary);
-  color: var(--white);
+  background: var(--jp-shu);
+  color: var(--jp-washi);
   padding: 0.2rem 0.5rem;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-size: 0.7rem;
   font-weight: bold;
 }
 
 .mini-kanji {
-  font-size: 1.8rem;
-  font-weight: bold;
-  color: var(--dark);
+  font-family: var(--font-jp-kanji);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--jp-sumi);
 }
 
 .mini-vocab {
@@ -2945,48 +3060,65 @@ select, option {
   width: 100%;
   height: 100%;
   backface-visibility: hidden;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   padding: 2rem;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px rgba(28, 28, 28, 0.15);
 }
 
 .flashcard-front {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: var(--white);
+  background: var(--gradient-ai);
+  color: var(--jp-washi);
+  position: relative;
+}
+
+/* Subtle washi texture overlay */
+.flashcard-front::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.08) 0%, transparent 3%),
+    radial-gradient(circle at 70% 60%, rgba(255, 255, 255, 0.06) 0%, transparent 2%),
+    radial-gradient(circle at 50% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 4%);
+  pointer-events: none;
+  border-radius: var(--radius-lg);
 }
 
 .flashcard-back {
-  background: var(--white);
-  color: var(--dark);
+  background: var(--jp-washi-warm);
+  color: var(--jp-sumi);
   transform: rotateY(180deg);
+  border: 1px solid var(--border);
 }
 
 .jlpt-badge {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   padding: 0.3rem 0.8rem;
-  border-radius: 20px;
+  border-radius: var(--radius-sm);
   font-size: 0.8rem;
   font-weight: bold;
 }
 
 .flashcard-back .jlpt-badge {
-  background: var(--primary);
-  color: var(--white);
+  background: var(--jp-shu);
+  color: var(--jp-washi);
+  border: none;
 }
 
 /* Speak button for TTS pronunciation */
 .speak-btn {
-  background: rgba(255, 255, 255, 0.3);
-  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   padding: 0.5rem 0.8rem;
-  border-radius: 20px;
+  border-radius: 50%;
   font-size: 1.5rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -2994,7 +3126,7 @@ select, option {
 }
 
 .speak-btn:hover {
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.35);
   transform: scale(1.1);
 }
 
@@ -3008,12 +3140,13 @@ select, option {
 }
 
 .flashcard-back .speak-btn {
-  background: var(--primary);
-  color: var(--white);
+  background: var(--jp-shu);
+  color: var(--jp-washi);
+  border: none;
 }
 
 .flashcard-back .speak-btn:hover {
-  background: var(--primary-dark, #5a67d8);
+  background: var(--jp-shu-dark);
 }
 
 .card-content {
@@ -3021,10 +3154,11 @@ select, option {
 }
 
 .kanji {
+  font-family: var(--font-jp-kanji);
   font-size: 250px;
   font-weight: 900;
   line-height: 1;
-  font-family: 'MS Mincho', 'Yu Mincho', 'Hiragino Mincho Pro', serif;
+  text-shadow: 2px 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .vocabulary {
@@ -4020,6 +4154,17 @@ select, option {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
+.profile-avatar.has-image {
+  overflow: hidden;
+  padding: 0;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .avatar-edit-hint {
   font-size: 0.75rem;
   color: var(--gray);
@@ -4067,6 +4212,53 @@ select, option {
 .avatar-option.active {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.3);
+}
+
+/* Avatar Picker Expanded - 100 icons with categories */
+.avatar-picker-expanded {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.avatar-category {
+  margin-bottom: 1rem;
+}
+
+.avatar-category:last-child {
+  margin-bottom: 0;
+}
+
+.avatar-category-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gray-dark);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.avatar-picker-expanded .avatar-option {
+  width: 38px;
+  height: 38px;
+  font-size: 1.3rem;
+}
+
+/* Image avatar options */
+.avatar-options-images {
+  gap: 0.75rem;
+}
+
+.avatar-option-image {
+  width: 56px;
+  height: 56px;
+  padding: 4px;
+}
+
+.avatar-option-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 /* Profile Form Group */
@@ -4780,39 +4972,81 @@ select, option {
   padding: 2rem;
 }
 
-/* Login Page */
+/* Login Page - Japanese Aesthetic */
 .login-page {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  background: var(--gradient-main);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Decorative sakura petals background */
+.login-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(255, 183, 197, 0.3) 0%, transparent 8%),
+    radial-gradient(circle at 80% 20%, rgba(255, 183, 197, 0.25) 0%, transparent 6%),
+    radial-gradient(circle at 60% 70%, rgba(255, 183, 197, 0.2) 0%, transparent 10%),
+    radial-gradient(circle at 30% 80%, rgba(255, 183, 197, 0.25) 0%, transparent 7%),
+    radial-gradient(circle at 90% 60%, rgba(255, 183, 197, 0.2) 0%, transparent 5%);
+  animation: sakura-float 20s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes sakura-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(2deg); }
 }
 
 .login-card {
-  background: var(--white);
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  background: var(--jp-washi-warm);
+  border-radius: var(--radius-md);
+  padding: 2.5rem 2rem;
+  box-shadow: 0 8px 32px rgba(28, 28, 28, 0.15);
   width: 100%;
   max-width: 400px;
+  border: 1px solid var(--border);
+  position: relative;
+  z-index: 1;
+}
+
+/* Decorative Japanese character */
+.login-card::before {
+  content: '日本語';
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-family: var(--font-jp-display);
+  font-size: 0.7rem;
+  color: var(--jp-shu);
+  opacity: 0.25;
+  letter-spacing: 2px;
 }
 
 .login-card h2 {
   text-align: center;
-  color: var(--primary);
+  font-family: var(--font-jp-display);
+  color: var(--jp-shu);
   margin-bottom: 0.5rem;
+  font-size: var(--font-size-xl);
 }
 
 .login-subtitle {
   text-align: center;
-  color: var(--gray);
+  color: var(--jp-sumi-medium);
   margin-bottom: 1.5rem;
   font-size: 0.9rem;
+  font-family: var(--font-jp-body);
 }
 
 .login-card .btn {
-  padding: 0.7rem 1.25rem;
+  padding: 0.75rem 1.25rem;
   font-size: 0.95rem;
 }
 
@@ -4823,15 +5057,18 @@ select, option {
 .login-card .form-group input {
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 1px solid var(--gray-light);
-  border-radius: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   font-size: 0.95rem;
-  color: #000;
+  color: var(--jp-sumi);
+  background: var(--jp-washi);
+  transition: all var(--transition-normal);
 }
 
 .login-card .form-group input:focus {
   outline: none;
-  border-color: var(--primary);
+  border-color: var(--jp-shu);
+  box-shadow: 0 0 0 3px rgba(227, 66, 52, 0.1);
 }
 
 .btn-full {
@@ -4848,31 +5085,35 @@ select, option {
 .login-toggle {
   text-align: center;
   margin-top: 1.5rem;
-  color: var(--gray);
+  color: var(--jp-sumi-medium);
 }
 
 .btn-link {
   background: none;
   border: none;
-  color: var(--primary);
+  color: var(--jp-shu);
   cursor: pointer;
   font-size: inherit;
-  text-decoration: underline;
+  text-decoration: none;
   margin-left: 0.25rem;
+  font-weight: 500;
+  transition: color var(--transition-fast);
 }
 
 .btn-link:hover {
-  color: var(--primary-dark);
+  color: var(--jp-shu-dark);
+  text-decoration: underline;
 }
 
 .login-hint {
   text-align: center;
   margin-top: 1rem;
   font-size: 0.85rem;
-  color: var(--gray);
+  color: var(--jp-sumi-medium);
   padding: 0.75rem;
-  background: var(--light);
-  border-radius: 8px;
+  background: var(--jp-kinari);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
 }
 
 /* User Info in Header */
@@ -5227,14 +5468,15 @@ select, option {
   border-left: 2px solid var(--gray-light);
 }
 
-/* Confirm Modal */
+/* Confirm Modal - Japanese Fusuma Style */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(28, 28, 28, 0.6);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5242,24 +5484,28 @@ select, option {
 }
 
 .modal-content {
-  background: var(--white);
-  border-radius: 12px;
+  background: var(--jp-washi-warm);
+  border-radius: var(--radius-md);
   padding: 1.5rem;
   max-width: 400px;
   width: 90%;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 16px 48px rgba(28, 28, 28, 0.2);
+  border: 1px solid var(--border);
 }
 
 .confirm-modal .modal-title {
+  font-family: var(--font-jp-body);
   font-size: 1.25rem;
-  color: var(--dark);
+  color: var(--jp-shu);
   margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
 }
 
 .confirm-modal .modal-message {
-  color: var(--gray);
+  color: var(--jp-sumi-medium);
   margin-bottom: 1.5rem;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .modal-actions {
@@ -7545,8 +7791,9 @@ button.kaiwa-stat.saved.active {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-height: 100vh;
   padding: var(--space-lg);
-  background: var(--white);
+  background: linear-gradient(135deg, var(--jp-ai-dark) 0%, var(--jp-ai) 50%, var(--jp-sakura-light) 100%);
 }
 
 /* ============ PROFESSIONAL GAME PLAY STYLES ============ */
@@ -8627,28 +8874,209 @@ button.kaiwa-stat.saved.active {
 .game-menu {
   background: var(--white);
   padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  max-width: 500px;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  max-width: 520px;
   width: 100%;
+}
+
+.game-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--light);
+}
+
+.game-title-section {
+  text-align: left;
+  flex: 1;
 }
 
 .game-menu h2 {
   color: var(--primary);
   margin-bottom: 0.5rem;
-  font-size: 1.5rem;
+  font-size: 1.6rem;
+  font-weight: 700;
 }
 
 .game-description {
   color: var(--gray);
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
+  font-size: 0.95rem;
+}
+
+.player-profile-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.player-profile-section .player-name {
+  font-size: 0.85rem;
+  color: var(--dark);
+  font-weight: 500;
+}
+
+/* Game Avatar Picker */
+.game-avatar-picker {
+  position: relative;
+}
+
+.game-avatar-picker .avatar-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  gap: 0.25rem;
+}
+
+.game-avatar-picker .avatar-display {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--gradient-shu);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: white;
+  border: 3px solid var(--white);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.game-avatar-picker .avatar-display:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.game-avatar-picker .avatar-display img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.game-avatar-picker .avatar-change-hint {
+  font-size: 0.7rem;
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.avatar-picker-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  z-index: 100;
+  min-width: 280px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.avatar-picker-category {
+  margin-bottom: 1rem;
+}
+
+.avatar-picker-category:last-child {
+  margin-bottom: 0;
+}
+
+.avatar-picker-category .category-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gray-dark);
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.5px;
+}
+
+.avatar-picker-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.avatar-picker-item {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: var(--light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  overflow: hidden;
+}
+
+.avatar-picker-item:hover {
+  border-color: var(--primary);
+  transform: scale(1.1);
+}
+
+.avatar-picker-item.selected {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(227, 66, 52, 0.3);
+}
+
+.avatar-picker-item.is-image {
+  width: 48px;
+  height: 48px;
+  padding: 3px;
+}
+
+.avatar-picker-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .menu-buttons {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.menu-buttons .btn {
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.menu-buttons .btn-primary {
+  background: var(--gradient-shu);
+  box-shadow: 0 4px 12px rgba(227, 66, 52, 0.3);
+}
+
+.menu-buttons .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(227, 66, 52, 0.4);
+}
+
+.menu-buttons .btn-secondary {
+  background: var(--gradient-ai);
+  box-shadow: 0 4px 12px rgba(38, 78, 115, 0.3);
+}
+
+.menu-buttons .btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(38, 78, 115, 0.4);
 }
 
 .btn-large {
@@ -8658,34 +9086,40 @@ button.kaiwa-stat.saved.active {
 
 /* Game Rules */
 .game-rules {
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--light);
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  background: var(--light);
+  border-radius: 12px;
   text-align: left;
 }
 
 .game-rules h3 {
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: var(--dark);
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   text-align: center;
+  font-weight: 600;
 }
 
 .game-rules ul {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: grid;
+  gap: 0.5rem;
 }
 
 .game-rules li {
-  padding: 0.5rem 0;
-  color: var(--gray);
-  font-size: 0.9rem;
-  line-height: 1.5;
+  padding: 0.5rem 0.75rem;
+  color: var(--gray-dark);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  background: var(--white);
+  border-radius: 8px;
 }
 
 .game-rules li strong {
-  color: var(--dark);
+  color: var(--primary);
 }
 
 /* Game Lobby Join (Sảnh chờ) */
@@ -9298,24 +9732,36 @@ button.kaiwa-stat.saved.active {
 .game-lobby {
   background: var(--white);
   padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  max-width: 600px;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  max-width: 680px;
   width: 100%;
 }
 
 .lobby-header {
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--light);
 }
 
 .lobby-header h2 {
   color: var(--primary);
   margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
 }
 
 .game-info {
   color: var(--gray);
+  font-size: 0.95rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.game-info::before {
+  content: '📝';
 }
 
 .lobby-content {
@@ -9326,69 +9772,113 @@ button.kaiwa-stat.saved.active {
 
 .qr-section {
   text-align: center;
-}
-
-.qr-section h3 {
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-  color: var(--dark);
+  background: var(--light);
+  padding: 1.5rem;
+  border-radius: 12px;
 }
 
 .qr-code {
   background: var(--white);
   padding: 1rem;
-  border-radius: 8px;
+  border-radius: 12px;
   display: inline-block;
   margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .game-code {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  background: var(--white);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-top: 0.5rem;
 }
 
 .code-label {
   color: var(--gray);
+  font-size: 0.85rem;
 }
 
 .code-value {
-  font-size: 1.5rem;
-  font-weight: bold;
+  font-size: 1.4rem;
+  font-weight: 700;
   color: var(--primary);
-  letter-spacing: 0.2rem;
+  letter-spacing: 0.15rem;
+  font-family: 'Courier New', monospace;
+}
+
+.invite-friends-btn {
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.players-section {
+  background: var(--light);
+  padding: 1.5rem;
+  border-radius: 12px;
 }
 
 .players-section h3 {
   margin-bottom: 1rem;
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: var(--dark);
+  font-weight: 600;
 }
 
 .player-list {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  max-height: 280px;
+  overflow-y: auto;
 }
 
 .player-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  background: var(--light);
-  border-radius: 6px;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--white);
+  border-radius: 10px;
+  transition: transform 0.2s;
+}
+
+.player-item:hover {
+  transform: translateX(4px);
 }
 
 .player-rank {
-  font-weight: bold;
-  color: var(--gray);
-  min-width: 30px;
+  font-weight: 700;
+  color: var(--primary);
+  min-width: 28px;
+  font-size: 0.9rem;
 }
 
 .player-name {
   flex: 1;
+  font-weight: 500;
+}
+
+.player-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--gradient-sakura);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.player-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .host-badge {
@@ -10238,6 +10728,25 @@ button.kaiwa-stat.saved.active {
   margin-bottom: 0.5rem;
 }
 
+.podium-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+}
+
+.podium-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .podium-name {
   font-weight: 600;
   font-size: 0.9rem;
@@ -10282,6 +10791,25 @@ button.kaiwa-stat.saved.active {
 
 .ranking-item.is-me {
   background: #e3f2fd;
+}
+
+.ranking-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--gradient-sakura);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.ranking-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .ranking-item .streak {
@@ -10526,6 +11054,550 @@ button.kaiwa-stat.saved.active {
 /* JLPT Management Section */
 .jlpt-management {
   padding: 1rem 0;
+}
+
+/* ============ JLPT SETUP PAGE - Japanese Style ============ */
+.jlpt-setup-container {
+  background: var(--jp-washi-warm);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+}
+
+.jlpt-setup-header {
+  text-align: center;
+  margin-bottom: var(--space-xl);
+  padding-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--border);
+}
+
+.jlpt-setup-header h1 {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: var(--space-sm);
+}
+
+.jlpt-title-jp {
+  font-family: var(--font-jp-display);
+  font-size: var(--font-size-xl);
+  color: var(--jp-shu);
+  letter-spacing: 2px;
+}
+
+.jlpt-title-vi {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--jp-sumi);
+}
+
+.jlpt-subtitle {
+  color: var(--jp-sumi-medium);
+  font-size: var(--font-size-md);
+}
+
+/* JLPT Sections */
+.jlpt-section {
+  margin-bottom: var(--space-xl);
+}
+
+.jlpt-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
+.jlpt-section-header h3 {
+  font-family: var(--font-jp-body);
+  font-size: var(--font-size-lg);
+  color: var(--jp-sumi);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.jlpt-section-header h3::before {
+  content: '';
+  width: 4px;
+  height: 20px;
+  background: var(--jp-shu);
+  border-radius: 2px;
+}
+
+.btn-link-sm {
+  background: none;
+  border: none;
+  color: var(--jp-shu);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color var(--transition-fast);
+}
+
+.btn-link-sm:hover {
+  color: var(--jp-shu-dark);
+}
+
+/* Level Grid */
+.jlpt-level-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--space-sm);
+}
+
+.jlpt-level-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: var(--space-md);
+  background: var(--jp-washi);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  position: relative;
+}
+
+.jlpt-level-card:hover {
+  border-color: var(--jp-sakura);
+  background: var(--jp-sakura-light);
+}
+
+.jlpt-level-card.selected {
+  border-color: var(--jp-shu);
+  background: rgba(227, 66, 52, 0.08);
+}
+
+.jlpt-level-card .level-badge {
+  font-family: var(--font-jp-body);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--jp-ai);
+}
+
+.jlpt-level-card.selected .level-badge {
+  color: var(--jp-shu);
+}
+
+.jlpt-level-card .level-count {
+  font-size: var(--font-size-xs);
+  color: var(--jp-sumi-medium);
+}
+
+.jlpt-level-card .check-icon {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: var(--jp-shu);
+}
+
+/* Category Grid */
+.jlpt-category-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-sm);
+}
+
+.jlpt-category-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: var(--space-lg) var(--space-md);
+  background: var(--jp-washi);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  position: relative;
+}
+
+.jlpt-category-card:hover {
+  border-color: var(--jp-sakura);
+  background: var(--jp-sakura-light);
+}
+
+.jlpt-category-card.selected {
+  border-color: var(--jp-shu);
+  background: rgba(227, 66, 52, 0.08);
+}
+
+.jlpt-category-card .category-icon {
+  font-family: var(--font-jp-kanji);
+  font-size: 2rem;
+  color: var(--jp-ai);
+  line-height: 1;
+}
+
+.jlpt-category-card.selected .category-icon {
+  color: var(--jp-shu);
+}
+
+.jlpt-category-card .category-name {
+  font-weight: 600;
+  color: var(--jp-sumi);
+}
+
+.jlpt-category-card .category-count {
+  font-size: var(--font-size-xs);
+  color: var(--jp-sumi-medium);
+}
+
+.jlpt-category-card .check-icon {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: var(--jp-shu);
+}
+
+/* Question Count - Toggle Button */
+.btn-toggle-advanced {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--jp-washi);
+  border: 1px solid var(--border);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  color: var(--jp-sumi-medium);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.btn-toggle-advanced:hover {
+  background: var(--jp-sakura-light);
+  border-color: var(--jp-sakura);
+  color: var(--jp-shu);
+}
+
+/* Simple Count Options */
+.jlpt-simple-count {
+  background: var(--jp-washi);
+  padding: var(--space-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.count-options {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-md);
+}
+
+.count-option {
+  padding: 0.75rem 1.5rem;
+  background: var(--jp-washi-warm);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.count-option:hover {
+  border-color: var(--jp-sakura);
+  background: var(--jp-sakura-light);
+}
+
+.count-option.selected {
+  border-color: var(--jp-shu);
+  background: var(--jp-shu);
+  color: var(--jp-washi);
+}
+
+.count-note {
+  color: var(--jp-sumi-medium);
+  font-size: var(--font-size-sm);
+}
+
+.count-note strong {
+  color: var(--jp-shu);
+}
+
+/* Advanced Setup - Per Section Config */
+.jlpt-advanced-setup {
+  background: var(--jp-washi);
+  padding: var(--space-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.no-sections {
+  text-align: center;
+  color: var(--jp-sumi-medium);
+  padding: var(--space-lg);
+}
+
+.section-config-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.section-config-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md);
+  background: var(--jp-washi-warm);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.section-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.section-icon {
+  font-family: var(--font-jp-kanji);
+  font-size: 1.5rem;
+  color: var(--jp-ai);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--jp-washi);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.section-name {
+  font-weight: 600;
+  color: var(--jp-sumi);
+}
+
+.section-available {
+  font-size: var(--font-size-xs);
+  color: var(--jp-sumi-medium);
+}
+
+.section-count-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.count-btn {
+  width: 40px;
+  height: 36px;
+  background: var(--jp-washi);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.count-btn:hover:not(:disabled) {
+  background: var(--jp-sakura-light);
+  border-color: var(--jp-sakura);
+}
+
+.count-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.count-input {
+  width: 60px;
+  height: 36px;
+  text-align: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  background: var(--jp-washi);
+}
+
+.count-input:focus {
+  outline: none;
+  border-color: var(--jp-shu);
+  box-shadow: 0 0 0 3px rgba(227, 66, 52, 0.1);
+}
+
+/* Summary Section */
+.jlpt-summary {
+  background: linear-gradient(135deg, var(--jp-ai-dark) 0%, var(--jp-ai) 100%);
+  padding: var(--space-xl);
+  border-radius: var(--radius-md);
+  color: var(--jp-washi);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.summary-stats {
+  display: flex;
+  gap: var(--space-xl);
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.summary-value {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+}
+
+.summary-label {
+  font-size: var(--font-size-sm);
+  opacity: 0.8;
+}
+
+.btn-start {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+/* Result Header with Badge */
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.result-badge {
+  font-family: var(--font-jp-kanji);
+  font-size: 1.5rem;
+  color: var(--jp-shu);
+  padding: 0.5rem 1rem;
+  background: rgba(227, 66, 52, 0.1);
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--jp-shu);
+}
+
+/* Practice Score */
+.practice-score {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.score-correct {
+  color: var(--jp-matcha);
+  font-weight: 600;
+}
+
+.score-wrong {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+/* Review Meta */
+.review-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.review-level {
+  background: var(--jp-ai);
+  color: var(--jp-washi);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
+.review-category {
+  background: var(--jp-kinari);
+  color: var(--jp-sumi-medium);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+}
+
+/* Result Stats with Icons */
+.result-stats .stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.result-stats .stat-item.correct svg {
+  color: var(--jp-matcha);
+}
+
+.result-stats .stat-item.wrong svg {
+  color: var(--danger);
+}
+
+.result-stats .stat-item.accuracy .stat-value {
+  font-size: var(--font-size-3xl);
+  color: var(--jp-shu);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .jlpt-level-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .jlpt-category-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .jlpt-summary {
+    flex-direction: column;
+    gap: var(--space-lg);
+    text-align: center;
+  }
+
+  .summary-stats {
+    width: 100%;
+    justify-content: space-around;
+  }
+
+  .section-config-item {
+    flex-direction: column;
+    gap: var(--space-md);
+    align-items: stretch;
+  }
+
+  .section-count-control {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .jlpt-level-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .jlpt-category-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .count-options {
+    justify-content: center;
+  }
+
+  .count-option {
+    flex: 1;
+    min-width: 80px;
+  }
 }
 
 /* ============ KAIWA DEFAULT QUESTIONS STYLES ============ */
@@ -29147,6 +30219,867 @@ html:has(.ppt-editor) {
     align-items: flex-start;
     gap: var(--space-sm);
   }
+}
+
+/* ==================== UNIFIED BRANCH MANAGEMENT STYLES ==================== */
+
+/* Main container */
+.branch-mgmt-page {
+  padding: var(--space-lg);
+  max-width: 1600px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--jp-washi);
+}
+
+/* Loading state */
+.branch-mgmt-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: var(--space-md);
+  color: var(--jp-sumi-medium);
+}
+
+.branch-mgmt-loading .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--jp-sakura-light);
+  border-top-color: var(--jp-shu);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Header */
+.branch-mgmt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-xl);
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.branch-mgmt-header .header-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.branch-mgmt-header .jp-icon {
+  font-family: var(--font-jp-display);
+  font-size: 2rem;
+  color: var(--jp-shu);
+  background: var(--jp-sakura-light);
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+}
+
+.branch-mgmt-header h1 {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+  color: var(--jp-sumi);
+  font-weight: 600;
+}
+
+.branch-detail-header h1 {
+  font-size: var(--font-size-xl);
+}
+
+.branch-detail-header .status-badge {
+  margin-left: var(--space-sm);
+}
+
+/* Stats cards - list view */
+.branch-mgmt-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.branch-mgmt-stats .stat-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border-left: 4px solid var(--jp-ai);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.branch-mgmt-stats .stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.branch-mgmt-stats .stat-card.stat-success {
+  border-left-color: var(--jp-matcha);
+}
+
+.branch-mgmt-stats .stat-card.stat-warning {
+  border-left-color: var(--jp-kitsune);
+}
+
+.branch-mgmt-stats .stat-icon {
+  font-size: 1.5rem;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--jp-washi);
+  border-radius: var(--radius-md);
+}
+
+.branch-mgmt-stats .stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.branch-mgmt-stats .stat-value {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--jp-sumi);
+  line-height: 1;
+}
+
+.branch-mgmt-stats .stat-label {
+  font-size: var(--font-size-sm);
+  color: var(--jp-sumi-medium);
+  margin-top: 4px;
+}
+
+/* Empty state */
+.branch-mgmt-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2xl) var(--space-lg);
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.branch-mgmt-empty .empty-icon {
+  font-size: 4rem;
+  margin-bottom: var(--space-md);
+  opacity: 0.5;
+}
+
+.branch-mgmt-empty p {
+  color: var(--jp-sumi-medium);
+  margin: 0;
+}
+
+.branch-mgmt-empty .hint {
+  font-size: var(--font-size-sm);
+  margin-top: var(--space-xs);
+  opacity: 0.7;
+}
+
+/* Branch grid */
+.branch-mgmt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--space-lg);
+}
+
+/* Main tabs */
+.branch-mgmt-tabs {
+  display: flex;
+  gap: var(--space-xs);
+  background: var(--white);
+  padding: var(--space-xs);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+}
+
+.branch-mgmt-tabs .tab-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--font-size-md);
+  color: var(--jp-sumi-medium);
+  transition: all var(--transition-fast);
+  font-weight: 500;
+}
+
+.branch-mgmt-tabs .tab-btn:hover {
+  background: var(--jp-washi);
+  color: var(--jp-sumi);
+}
+
+.branch-mgmt-tabs .tab-btn.active {
+  background: var(--jp-shu);
+  color: white;
+}
+
+.branch-mgmt-tabs .tab-btn .tab-icon {
+  font-size: 1.1rem;
+}
+
+/* Content area */
+.branch-mgmt-content {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  min-height: 400px;
+}
+
+/* Sub-tabs */
+.sub-tabs {
+  display: flex;
+  gap: var(--space-xs);
+  border-bottom: 2px solid var(--border);
+  margin-bottom: var(--space-lg);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.sub-tab {
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--jp-sumi-medium);
+  position: relative;
+  transition: color var(--transition-fast);
+  font-weight: 500;
+}
+
+.sub-tab:hover {
+  color: var(--jp-shu);
+}
+
+.sub-tab.active {
+  color: var(--jp-shu);
+}
+
+.sub-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--jp-shu);
+}
+
+.sub-tabs .btn-add {
+  margin-left: auto;
+}
+
+/* Filter bar */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  padding: var(--space-md);
+  background: var(--jp-washi);
+  border-radius: var(--radius-md);
+}
+
+.filter-bar label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--jp-sumi-medium);
+}
+
+.filter-bar select {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  font-size: var(--font-size-sm);
+  min-width: 200px;
+}
+
+/* Overview tab - cards grid */
+.tab-content-overview .overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-lg);
+}
+
+.tab-content-overview .card {
+  background: var(--jp-washi-warm);
+  border: 1px solid var(--border);
+  margin-bottom: 0;
+}
+
+.tab-content-overview .card h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--jp-ai);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.tab-content-overview .card h3 .card-icon {
+  font-size: 1.2rem;
+}
+
+.tab-content-overview .card-monthly {
+  grid-column: 1 / -1;
+}
+
+/* Info rows */
+.tab-content-overview .info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab-content-overview .info-row:last-child {
+  border-bottom: none;
+}
+
+.tab-content-overview .info-row .label {
+  color: var(--jp-sumi-medium);
+  font-size: var(--font-size-sm);
+}
+
+.tab-content-overview .info-row .value {
+  font-weight: 500;
+  color: var(--jp-sumi);
+}
+
+/* Stats grid */
+.tab-content-overview .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+}
+
+.tab-content-overview .stat-box {
+  padding: var(--space-md);
+  background: var(--white);
+  border-radius: var(--radius-md);
+  text-align: center;
+  border: 1px solid var(--border);
+}
+
+.tab-content-overview .stat-box.stat-active {
+  border-color: var(--jp-matcha);
+  background: var(--jp-matcha-light);
+}
+
+.tab-content-overview .stat-number {
+  display: block;
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--jp-ai);
+  line-height: 1;
+}
+
+.tab-content-overview .stat-box.stat-active .stat-number {
+  color: var(--jp-matcha-dark);
+}
+
+.tab-content-overview .stat-text {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--jp-sumi-medium);
+  margin-top: 4px;
+}
+
+/* Monthly stats */
+.tab-content-overview .monthly-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+}
+
+.tab-content-overview .monthly-item {
+  padding: var(--space-md);
+  background: var(--white);
+  border-radius: var(--radius-md);
+  text-align: center;
+  border: 1px solid var(--border);
+}
+
+.tab-content-overview .monthly-label {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--jp-sumi-medium);
+  margin-bottom: 4px;
+}
+
+.tab-content-overview .monthly-value {
+  display: block;
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--jp-sumi);
+}
+
+.tab-content-overview .monthly-value.approved {
+  color: var(--jp-ai);
+}
+
+.tab-content-overview .monthly-value.paid {
+  color: var(--jp-matcha);
+}
+
+/* Staff tab */
+.tab-content-staff .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.tab-content-staff .section-header h3 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  color: var(--jp-sumi);
+}
+
+.tab-content-staff .add-staff-controls {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.tab-content-staff .add-staff-controls select {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  min-width: 200px;
+}
+
+/* Staff table */
+.staff-table {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.staff-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.staff-table th,
+.staff-table td {
+  padding: var(--space-md);
+  text-align: left;
+}
+
+.staff-table th {
+  background: var(--jp-washi);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  color: var(--jp-sumi-medium);
+  border-bottom: 2px solid var(--border);
+}
+
+.staff-table tr:not(:last-child) td {
+  border-bottom: 1px solid var(--border);
+}
+
+.staff-table tr:hover td {
+  background: var(--jp-washi);
+}
+
+.staff-table .member-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.staff-table .avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--gradient-ai);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+}
+
+.staff-table .email {
+  color: var(--jp-sumi-medium);
+  font-size: var(--font-size-sm);
+}
+
+.staff-table .date {
+  font-size: var(--font-size-sm);
+  color: var(--jp-sumi-medium);
+}
+
+/* Role badges */
+.role-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+.role-badge.role-branch_admin {
+  background: linear-gradient(135deg, var(--jp-ai) 0%, var(--jp-ai-light) 100%);
+  color: white;
+}
+
+.role-badge.role-main_teacher {
+  background: linear-gradient(135deg, var(--jp-shu) 0%, var(--jp-shu-light) 100%);
+  color: white;
+}
+
+.role-badge.role-part_time_teacher {
+  background: linear-gradient(135deg, var(--jp-matcha) 0%, var(--jp-matcha-light) 100%);
+  color: white;
+}
+
+.role-badge.role-assistant {
+  background: var(--jp-kitsune-light);
+  color: var(--jp-sumi);
+}
+
+/* Settings tab */
+.tab-content-settings .card {
+  background: var(--jp-washi-warm);
+  border: 1px solid var(--border);
+}
+
+.tab-content-settings .card h3 {
+  color: var(--jp-ai);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.tab-content-settings .settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.tab-content-settings .setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md);
+  background: var(--white);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.tab-content-settings .setting-item.danger {
+  border-color: var(--danger-light);
+  background: #fff8f8;
+}
+
+.tab-content-settings .setting-info strong {
+  display: block;
+  color: var(--jp-sumi);
+  margin-bottom: 4px;
+}
+
+.tab-content-settings .setting-item.danger .setting-info strong {
+  color: var(--danger);
+}
+
+.tab-content-settings .setting-info p {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--jp-sumi-medium);
+}
+
+/* Salary slips view */
+.salary-slips-view .slips-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.salary-slips-view .slips-header h3 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  color: var(--jp-sumi);
+}
+
+.salary-slips-view .slips-header input[type="month"] {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+}
+
+.salary-slips-view .slips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--space-lg);
+}
+
+.salary-slips-view .slip-card {
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+}
+
+.salary-slips-view .slip-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Loading and empty states */
+.loading-state,
+.empty-state {
+  padding: var(--space-2xl);
+  text-align: center;
+  color: var(--jp-sumi-medium);
+}
+
+.empty-state .hint {
+  font-size: var(--font-size-sm);
+  margin-top: var(--space-xs);
+  opacity: 0.7;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .tab-content-overview .overview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tab-content-overview .monthly-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .branch-mgmt-page {
+    padding: var(--space-md);
+  }
+
+  .branch-mgmt-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .branch-mgmt-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: var(--space-xs);
+  }
+
+  .branch-mgmt-tabs .tab-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .branch-mgmt-content {
+    padding: var(--space-md);
+  }
+
+  .sub-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: var(--space-xs);
+  }
+
+  .sub-tab {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .sub-tabs .btn-add {
+    margin-left: var(--space-md);
+  }
+
+  .filter-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filter-bar select {
+    width: 100%;
+  }
+
+  .tab-content-overview .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tab-content-staff .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  .tab-content-staff .add-staff-controls {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .tab-content-staff .add-staff-controls select {
+    width: 100%;
+  }
+
+  .tab-content-settings .setting-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  .tab-content-settings .setting-item button {
+    width: 100%;
+  }
+
+  .salary-slips-view .slips-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+}
+
+/* ============ JAPANESE UTILITY CLASSES (和) ============ */
+
+/* Japanese Typography */
+.jp-title {
+  font-family: var(--font-jp-display);
+  color: var(--jp-shu);
+  font-weight: 700;
+}
+
+.jp-kanji-display {
+  font-family: var(--font-jp-kanji);
+  font-weight: 700;
+}
+
+.jp-body-text {
+  font-family: var(--font-jp-body);
+  line-height: var(--line-height-jp);
+}
+
+/* Japanese Divider */
+.jp-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--border) 20%,
+    var(--jp-shu) 50%,
+    var(--border) 80%,
+    transparent 100%
+  );
+  margin: var(--space-lg) 0;
+}
+
+/* Hanko (Stamp) Style Badge */
+.hanko-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--jp-shu);
+  color: var(--jp-washi);
+  font-family: var(--font-jp-kanji);
+  font-size: 1.25rem;
+  border-radius: 50%;
+  transform: rotate(-5deg);
+  box-shadow: inset 0 0 0 2px var(--jp-washi), inset 0 0 0 4px var(--jp-shu);
+}
+
+/* Shu Red accent bar */
+.jp-accent-bar {
+  position: relative;
+  padding-left: 12px;
+}
+
+.jp-accent-bar::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--jp-shu);
+  border-radius: 2px;
+}
+
+/* Japanese Animations */
+@keyframes jp-brush-reveal {
+  0% { clip-path: inset(0 100% 0 0); }
+  100% { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes jp-zen-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes jp-sakura-sway {
+  0%, 100% { transform: rotate(-2deg) translateX(0); }
+  50% { transform: rotate(2deg) translateX(5px); }
+}
+
+.animate-brush-reveal {
+  animation: jp-brush-reveal 0.5s ease-out;
+}
+
+.animate-zen-float {
+  animation: jp-zen-float 3s ease-in-out infinite;
+}
+
+/* Washi Paper texture background */
+.bg-washi {
+  background: var(--jp-washi-warm);
+}
+
+.bg-washi-pattern {
+  background: var(--jp-washi-warm);
+  background-image:
+    radial-gradient(circle at 25% 25%, rgba(0, 0, 0, 0.01) 0%, transparent 2%),
+    radial-gradient(circle at 75% 75%, rgba(0, 0, 0, 0.01) 0%, transparent 2%);
+  background-size: 20px 20px;
+}
+
+/* Sakura highlight on hover */
+.hover-sakura:hover {
+  background: var(--jp-sakura-light);
+  border-color: var(--jp-sakura);
+}
+
+/* Shu link style */
+a.jp-link {
+  color: var(--jp-shu);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a.jp-link:hover {
+  color: var(--jp-shu-dark);
+  text-decoration: underline;
 }
 
 /* Print styles for salary slip */

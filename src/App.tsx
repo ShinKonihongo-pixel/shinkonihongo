@@ -438,6 +438,7 @@ function App() {
           <QuizGamePage
             currentUserId={currentUser.id}
             currentUserName={currentUser.username}
+            currentUserAvatar={currentUser.avatar}
             flashcards={cards}
             jlptQuestions={jlptQuestions}
             getLessonsByLevel={filteredGetLessonsByLevel}
@@ -503,8 +504,8 @@ function App() {
           <ClassroomPage users={users} />
         )}
 
-        {currentPage === 'branches' && currentUser && (currentUser.role === 'director' || currentUser.role === 'super_admin') && (
-          <BranchManagementPage users={users} onNavigate={setCurrentPage} />
+        {currentPage === 'branches' && currentUser && (currentUser.role === 'director' || currentUser.role === 'branch_admin' || currentUser.role === 'super_admin') && (
+          <BranchManagementPage users={users} />
         )}
 
         {currentPage === 'teachers' && currentUser && (currentUser.role === 'director' || currentUser.role === 'branch_admin' || currentUser.role === 'super_admin') && (

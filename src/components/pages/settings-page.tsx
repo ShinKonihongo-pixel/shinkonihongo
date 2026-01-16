@@ -11,6 +11,7 @@ import type { ExportData } from '../../lib/data-export';
 import { FriendsPanel } from '../friends/friends-panel';
 import { BadgeGiftModal } from '../friends/badge-gift-modal';
 import { BadgeStatsDisplay } from '../friends/badge-stats-display';
+import { AVATAR_CATEGORIES, isImageAvatar } from '../../utils/avatar-icons';
 
 type DeviceType = 'desktop' | 'tablet' | 'mobile';
 
@@ -77,13 +78,7 @@ interface SettingsPageProps {
   isFriend?: (userId: string) => boolean;
 }
 
-// Avatar options (emojis)
-const AVATAR_OPTIONS = [
-  '😊', '😎', '🤓', '🥳', '😇', '🤩', '🥰', '😺',
-  '🐱', '🐶', '🐼', '🦊', '🦁', '🐯', '🐻', '🐨',
-  '🌸', '🌺', '🌻', '🌼', '🍀', '⭐', '🌙', '☀️',
-  '🎮', '📚', '✏️', '🎨', '🎵', '🎯', '🏆', '💎',
-];
+// Avatar options are now imported from utils/avatar-icons.ts (100 icons)
 
 // Profile background options
 const PROFILE_BACKGROUND_OPTIONS = [
@@ -999,16 +994,22 @@ export function SettingsPage({
             <div className="profile-info">
               <div className="profile-avatar-wrapper">
                 <div
-                  className="profile-avatar clickable"
+                  className={`profile-avatar clickable ${currentUser.avatar && isImageAvatar(currentUser.avatar) ? 'has-image' : ''}`}
                   onClick={() => setShowAvatarPicker(!showAvatarPicker)}
                   title="Nhấp để đổi avatar"
                   style={{
-                    background: currentUser.profileBackground && currentUser.profileBackground !== 'transparent'
-                      ? currentUser.profileBackground
-                      : 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)'
+                    background: currentUser.avatar && isImageAvatar(currentUser.avatar)
+                      ? 'transparent'
+                      : currentUser.profileBackground && currentUser.profileBackground !== 'transparent'
+                        ? currentUser.profileBackground
+                        : 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)'
                   }}
                 >
-                  {currentUser.avatar || (currentUser.displayName || currentUser.username).charAt(0).toUpperCase()}
+                  {currentUser.avatar && isImageAvatar(currentUser.avatar) ? (
+                    <img src={currentUser.avatar} alt="avatar" />
+                  ) : (
+                    currentUser.avatar || (currentUser.displayName || currentUser.username).charAt(0).toUpperCase()
+                  )}
                 </div>
                 <span className="avatar-edit-hint">Đổi avatar</span>
               </div>
@@ -1041,21 +1042,30 @@ export function SettingsPage({
               </div>
             </div>
 
-            {/* Avatar Picker */}
+            {/* Avatar Picker - 100 icons organized by category */}
             {showAvatarPicker && (
-              <div className="avatar-picker">
-                <p className="avatar-picker-title">Chọn avatar:</p>
-                <div className="avatar-options">
-                  {AVATAR_OPTIONS.map((emoji) => (
-                    <button
-                      key={emoji}
-                      className={`avatar-option ${currentUser.avatar === emoji ? 'active' : ''}`}
-                      onClick={() => handleUpdateAvatar(emoji)}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
+              <div className="avatar-picker avatar-picker-expanded">
+                <p className="avatar-picker-title">Chọn avatar (100 biểu tượng):</p>
+                {AVATAR_CATEGORIES.map((category) => (
+                  <div key={category.key} className="avatar-category">
+                    <p className="avatar-category-label">{category.label}</p>
+                    <div className={`avatar-options ${category.isImage ? 'avatar-options-images' : ''}`}>
+                      {category.icons.map((avatar) => (
+                        <button
+                          key={avatar}
+                          className={`avatar-option ${category.isImage ? 'avatar-option-image' : ''} ${currentUser.avatar === avatar ? 'active' : ''}`}
+                          onClick={() => handleUpdateAvatar(avatar)}
+                        >
+                          {isImageAvatar(avatar) ? (
+                            <img src={avatar} alt="avatar" />
+                          ) : (
+                            avatar
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
                 {avatarMessage && (
                   <p className={`form-message ${avatarMessage.type}`}>{avatarMessage.text}</p>
                 )}
