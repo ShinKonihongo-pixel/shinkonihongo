@@ -5,11 +5,10 @@ import type { CurrentUser } from '../../types/user';
 import type { Page } from './header';
 import {
   Home,
-  ClipboardList,
-  BookOpen,
-  BarChart3,
+  LayoutDashboard,
+  Layers,
   Gamepad2,
-  FileText,
+  Award,
   GraduationCap,
   MessageCircle,
   Settings,
@@ -18,6 +17,9 @@ import {
   ChevronRight,
   School,
   Bell,
+  Building2,
+  Users,
+  Wallet,
 } from 'lucide-react';
 import { useClassroomNotifications } from '../../hooks/use-classrooms';
 import { useFriendNotifications } from '../../hooks/use-friendships';
@@ -26,7 +28,12 @@ import { useFriendNotifications } from '../../hooks/use-friendships';
 const getRoleBadge = (role: string): { label: string; className: string } | null => {
   switch (role) {
     case 'super_admin': return { label: 'Super Admin', className: 'role-badge super-admin' };
+    case 'director': return { label: 'Giám đốc', className: 'role-badge director' };
     case 'admin': return { label: 'Admin', className: 'role-badge admin' };
+    case 'branch_admin': return { label: 'Admin CN', className: 'role-badge branch-admin' };
+    case 'main_teacher': return { label: 'Giáo viên', className: 'role-badge teacher' };
+    case 'part_time_teacher': return { label: 'GV Part-time', className: 'role-badge teacher' };
+    case 'assistant': return { label: 'Trợ giảng', className: 'role-badge assistant' };
     case 'vip_user': return { label: 'VIP', className: 'role-badge vip' };
     default: return null;
   }
@@ -52,14 +59,19 @@ const iconProps = { size: 20, strokeWidth: 1.75 };
 
 const navItems: NavItem[] = [
   { page: 'home', label: 'Trang chủ', icon: <Home {...iconProps} /> },
-  { page: 'cards', label: 'Quản Lí', icon: <ClipboardList {...iconProps} />, roles: ['admin', 'super_admin'] },
-  { page: 'study', label: 'Học', icon: <BookOpen {...iconProps} /> },
-  { page: 'progress', label: 'Tiến độ', icon: <BarChart3 {...iconProps} /> },
+  { page: 'cards', label: 'Quản Lí', icon: <LayoutDashboard {...iconProps} />, roles: ['admin', 'super_admin'] },
+  { page: 'study', label: 'Flash Card', icon: <Layers {...iconProps} /> },
   { page: 'quiz', label: 'Game', icon: <Gamepad2 {...iconProps} /> },
-  { page: 'jlpt', label: 'JLPT', icon: <FileText {...iconProps} /> },
+  { page: 'jlpt', label: 'JLPT', icon: <Award {...iconProps} /> },
   { page: 'lectures', label: 'Bài giảng', icon: <GraduationCap {...iconProps} /> },
   { page: 'classroom', label: 'Lớp Học', icon: <School {...iconProps} /> },
-  { page: 'kaiwa', label: '会話', icon: <MessageCircle {...iconProps} />, roles: ['vip_user', 'admin', 'super_admin'] },
+  { page: 'kaiwa', label: '会話', icon: <MessageCircle {...iconProps} />, roles: ['vip_user', 'admin', 'super_admin', 'director', 'branch_admin', 'main_teacher'] },
+  // Branch management pages
+  { page: 'branches', label: 'Chi nhánh', icon: <Building2 {...iconProps} />, roles: ['director', 'super_admin'] },
+  { page: 'teachers', label: 'Giáo viên', icon: <Users {...iconProps} />, roles: ['director', 'branch_admin', 'super_admin'] },
+  { page: 'salary', label: 'Lương', icon: <Wallet {...iconProps} />, roles: ['director', 'branch_admin', 'super_admin'] },
+  // Teacher self-service
+  { page: 'my-teaching', label: 'Giảng dạy', icon: <GraduationCap {...iconProps} />, roles: ['main_teacher', 'part_time_teacher', 'assistant'] },
   { page: 'settings', label: 'Cài đặt', icon: <Settings {...iconProps} /> },
 ];
 
@@ -161,11 +173,8 @@ export function Sidebar({
                 )}
               </button>
             )}
-          </div>
-        )}
-
-        {/* Notification dropdown */}
-        {showNotifications && (
+            {/* Notification dropdown - inside user section for proper positioning */}
+            {showNotifications && (
           <div className="sidebar-notifications">
             <div className="sidebar-notifications-header">
               <span>Thông báo</span>
@@ -193,20 +202,31 @@ export function Sidebar({
                         className={`sidebar-notification-item ${n.isRead ? '' : 'unread'} ${n.type === 'badge_received' ? 'badge-notification' : ''}`}
                         onClick={() => {
                           if (!n.isRead) markFriendRead(n.id);
-                          onNavigate('settings');
+                          // Navigate based on notification type
+                          if (n.type === 'badge_received') {
+                            onNavigate('notifications'); // Go to notifications page to see gift stats
+                          } else if (n.type === 'game_invitation') {
+                            onNavigate('quiz');
+                          } else {
+                            onNavigate('settings');
+                          }
                           setShowNotifications(false);
                         }}
                       >
-                        <span className="notification-title">
-                          {n.type === 'badge_received' && '🎖️ '}
-                          {n.type === 'friend_request' && '👋 '}
-                          {n.type === 'friend_accepted' && '🤝 '}
-                          {n.type === 'game_invitation' && '🎮 '}
-                          {n.fromUserName || 'Ai đó'} {n.message}
+                        <span className="notification-icon">
+                          {n.type === 'badge_received' && '🎁'}
+                          {n.type === 'friend_request' && '👋'}
+                          {n.type === 'friend_accepted' && '🤝'}
+                          {n.type === 'game_invitation' && '🎮'}
                         </span>
-                        {n.type === 'badge_received' && (
-                          <span className="notification-badge-icon">Nhận huy hiệu mới!</span>
-                        )}
+                        <div className="notification-content">
+                          <span className="notification-title">
+                            {n.fromUserName || 'Ai đó'} {n.message}
+                          </span>
+                          {n.type === 'badge_received' && (
+                            <span className="notification-subtitle">Nhận huy hiệu mới!</span>
+                          )}
+                        </div>
                       </div>
                   ))}
                   {/* Classroom notifications */}
@@ -216,19 +236,52 @@ export function Sidebar({
                       className={`sidebar-notification-item ${n.isRead ? '' : 'unread'}`}
                       onClick={() => {
                         if (!n.isRead) markClassroomRead(n.id);
-                        if (n.classroomId) {
+                        // Navigate based on notification type
+                        if (n.type === 'test_assigned' || n.type === 'assignment_assigned' || n.type === 'submission_graded') {
                           onNavigate('classroom');
+                        } else if (n.type === 'deadline_reminder') {
+                          onNavigate('classroom');
+                        } else if (n.type === 'class_invitation') {
+                          onNavigate('classroom');
+                        } else {
+                          onNavigate('notifications');
                         }
                         setShowNotifications(false);
                       }}
                     >
-                      <span className="notification-title">{n.title}</span>
-                      <span className="notification-message">{n.message}</span>
+                      <span className="notification-icon">
+                        {n.type === 'test_assigned' && '📝'}
+                        {n.type === 'assignment_assigned' && '📋'}
+                        {n.type === 'submission_graded' && '✅'}
+                        {n.type === 'deadline_reminder' && '⏰'}
+                        {n.type === 'class_invitation' && '🎓'}
+                        {n.type === 'announcement' && '📢'}
+                      </span>
+                      <div className="notification-content">
+                        <span className="notification-title">{n.title}</span>
+                        <span className="notification-message">{n.message}</span>
+                      </div>
                     </div>
                   ))}
                 </>
               )}
             </div>
+            {/* View all link */}
+            {(classroomNotifications.length > 0 || friendNotifications.length > 0) && (
+              <div className="sidebar-notifications-footer">
+                <button
+                  className="btn btn-link btn-sm"
+                  onClick={() => {
+                    onNavigate('notifications');
+                    setShowNotifications(false);
+                  }}
+                >
+                  Xem tất cả thông báo →
+                </button>
+              </div>
+            )}
+          </div>
+        )}
           </div>
         )}
 

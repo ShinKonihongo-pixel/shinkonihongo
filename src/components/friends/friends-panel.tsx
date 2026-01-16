@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { User } from '../../types/user';
 import type { FriendWithUser } from '../../types/friendship';
 import { Users, UserPlus, UserMinus, MessageCircle, Gamepad2, Gift, Search } from 'lucide-react';
+import { ConfirmModal } from '../ui/confirm-modal';
 
 interface FriendsPanelProps {
   friends: FriendWithUser[];
@@ -46,6 +47,9 @@ export function FriendsPanel({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
 
+  // Remove friend confirmation state
+  const [removeFriendConfirm, setRemoveFriendConfirm] = useState<{ friendshipId: string; friendName: string } | null>(null);
+
   // Filter users for search (exclude self and existing friends)
   const searchableUsers = allUsers.filter(u =>
     u.id !== currentUserId &&
@@ -67,9 +71,14 @@ export function FriendsPanel({
     setSending(false);
   };
 
-  const handleRemoveFriend = async (friendshipId: string, friendName: string) => {
-    if (window.confirm(`Bạn có chắc muốn xóa ${friendName} khỏi danh sách bạn bè?`)) {
-      await onRemoveFriend(friendshipId);
+  const handleRemoveFriendClick = (friendshipId: string, friendName: string) => {
+    setRemoveFriendConfirm({ friendshipId, friendName });
+  };
+
+  const handleRemoveFriendConfirm = async () => {
+    if (removeFriendConfirm) {
+      await onRemoveFriend(removeFriendConfirm.friendshipId);
+      setRemoveFriendConfirm(null);
     }
   };
 
@@ -144,7 +153,7 @@ export function FriendsPanel({
                   )}
                   <button
                     className="btn btn-icon danger"
-                    onClick={() => handleRemoveFriend(f.friendship.id, f.friendName)}
+                    onClick={() => handleRemoveFriendClick(f.friendship.id, f.friendName)}
                     title="Xóa bạn"
                   >
                     <UserMinus size={16} />
@@ -265,6 +274,16 @@ export function FriendsPanel({
           </div>
         </div>
       )}
+
+      {/* Remove Friend Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!removeFriendConfirm}
+        title="Xóa bạn bè"
+        message={`Bạn có chắc muốn xóa ${removeFriendConfirm?.friendName || ''} khỏi danh sách bạn bè?`}
+        confirmText="Xóa"
+        onConfirm={handleRemoveFriendConfirm}
+        onCancel={() => setRemoveFriendConfirm(null)}
+      />
     </div>
   );
 }

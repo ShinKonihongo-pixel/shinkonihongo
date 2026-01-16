@@ -55,6 +55,9 @@ const defaultSettings: AppSettings = {
   // Weekly goals
   weeklyCardsTarget: 50,
   weeklyMinutesTarget: 60,
+  // App background
+  appBackground: 'default',
+  appBackgroundCustomUrl: '',
 };
 
 // Check if current screen is mobile

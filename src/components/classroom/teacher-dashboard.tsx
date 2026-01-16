@@ -1,7 +1,7 @@
 // Teacher Dashboard - Comprehensive classroom management overview
 // Shows key metrics, alerts, recent activity, and quick actions
 
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import type { User } from '../../types/user';
 import type {
   Classroom,
@@ -16,7 +16,6 @@ import {
   Users,
   FileText,
   CheckCircle,
-  AlertTriangle,
   Clock,
   TrendingUp,
   TrendingDown,
@@ -44,7 +43,7 @@ interface TeacherDashboardProps {
 
 interface AlertItem {
   type: 'warning' | 'danger' | 'info';
-  icon: JSX.Element;
+  icon: React.ReactElement;
   title: string;
   description: string;
   action?: () => void;
@@ -52,7 +51,7 @@ interface AlertItem {
 }
 
 export function TeacherDashboard({
-  classroom,
+  classroom: _classroom,
   classProgress,
   studentGrades,
   tests,
@@ -61,7 +60,7 @@ export function TeacherDashboard({
   evaluations,
   students,
   onViewStudent,
-  onViewTest,
+  onViewTest: _onViewTest,
   onNavigateToTab,
 }: TeacherDashboardProps) {
   // Calculate key metrics

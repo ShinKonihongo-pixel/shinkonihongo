@@ -110,7 +110,7 @@ function convertToSlideElement(
         id: generateId(),
         type: 'image',
         content: imageUrl,
-        position,
+        position: basePosition,
       };
     }
   }
@@ -276,7 +276,7 @@ function findSlideFiles(zip: JSZip): string[] {
 // Main import function
 export async function importPPTXFile(
   file: File,
-  lectureId: string,
+  _lectureId: string,
   onProgress?: (progress: ImportProgress) => void
 ): Promise<ImportResult> {
   const result: ImportResult = {

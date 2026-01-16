@@ -1,6 +1,7 @@
 // Classroom page - manage and view classrooms
 
 import { useState, useCallback } from 'react';
+import { ConfirmModal } from '../ui/confirm-modal';
 import {
   useClassrooms,
   useClassroomMembers,
@@ -10,12 +11,13 @@ import {
   useClassroomSubmissions,
   useClassroomAttendance,
   useStudentEvaluations,
+  useTestTemplates,
 } from '../../hooks/use-classrooms';
 import { useAuth } from '../../hooks/use-auth';
 import { ClassroomCard } from '../classroom/classroom-card';
 import { ClassroomCreateModal } from '../classroom/classroom-create-modal';
 import { ClassroomInviteModal } from '../classroom/classroom-invite-modal';
-import { TestCreateModal } from '../classroom/test-create-modal';
+import { AssignTestModal } from '../classroom/assign-test-modal';
 import { TestTake } from '../classroom/test-take';
 import { SubmissionReview } from '../classroom/submission-review';
 import { AttendancePanel } from '../classroom/attendance-panel';
@@ -23,7 +25,7 @@ import { EvaluationPanel } from '../classroom/evaluation-panel';
 import { TeacherDashboard } from '../classroom/teacher-dashboard';
 import { StudentDetailModal } from '../classroom/student-detail-modal';
 import { SubmissionTracker } from '../classroom/submission-tracker';
-import type { Classroom, ClassroomFormData, ClassroomMember, ClassroomTest, TestType, TestFormData, SubmissionAnswer } from '../../types/classroom';
+import type { Classroom, ClassroomFormData, ClassroomMember, ClassroomTest, TestType, SubmissionAnswer } from '../../types/classroom';
 import { CLASSROOM_LEVELS, CLASSROOM_LEVEL_COLORS, DAY_OF_WEEK_LABELS } from '../../types/classroom';
 import type { User } from '../../types/user';
 
@@ -44,13 +46,19 @@ export function ClassroomPage({ users }: ClassroomPageProps) {
     joinByCode,
   } = useClassrooms(currentUser?.id || null, isAdmin);
 
+  // Test templates (test bank)
+  const {
+    templates: testTemplates,
+    assignToClassroom,
+  } = useTestTemplates();
+
   // View state
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedClassroom, setSelectedClassroom] = useState<Classroom | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [showTestCreateModal, setShowTestCreateModal] = useState(false);
-  const [testCreateType, setTestCreateType] = useState<TestType>('test');
+  const [showAssignTestModal, setShowAssignTestModal] = useState(false);
+  const [assignFilterType, setAssignFilterType] = useState<TestType | 'all'>('all');
   const [editingClassroom, setEditingClassroom] = useState<Classroom | undefined>();
 
   // Test taking state
@@ -66,6 +74,10 @@ export function ClassroomPage({ users }: ClassroomPageProps) {
   const [joinError, setJoinError] = useState('');
   const [joining, setJoining] = useState(false);
 
+  // Confirm modal state
+  const [publishTestConfirm, setPublishTestConfirm] = useState<string | null>(null);
+  const [removeMemberConfirm, setRemoveMemberConfirm] = useState<string | null>(null);
+
   // Members hook
   const { membersWithUsers, students, loading: membersLoading, inviteUser, removeMember } = useClassroomMembers(
     selectedClassroom?.id || null,
@@ -73,7 +85,7 @@ export function ClassroomPage({ users }: ClassroomPageProps) {
   );
 
   // Tests hook
-  const { tests, testsList, assignmentsList, loading: testsLoading, createTest, publishTest } = useClassroomTests(
+  const { tests, testsList, assignmentsList, loading: testsLoading, publishTest } = useClassroomTests(
     selectedClassroom?.id || null
   );
 
@@ -114,7 +126,7 @@ export function ClassroomPage({ users }: ClassroomPageProps) {
   // Evaluations hook
   const {
     evaluations,
-    evaluationsWithUsers,
+    evaluationsWithUsers: _evaluationsWithUsers,
     loading: evaluationsLoading,
     createEvaluation,
     updateEvaluation,
@@ -193,13 +205,6 @@ export function ClassroomPage({ users }: ClassroomPageProps) {
     return await inviteUser(userId, currentUser.id);
   };
 
-  // Handle create test
-  const handleCreateTest = async (data: TestFormData): Promise<boolean> => {
-    if (!currentUser) return false;
-    const result = await createTest(data, currentUser.id);
-    return !!result;
-  };
-
   // Handle start test
   const handleStartTest = async (test: ClassroomTest) => {
     if (!currentUser || !selectedClassroom) return;
@@ -233,16 +238,26 @@ export function ClassroomPage({ users }: ClassroomPageProps) {
   };
 
   // Handle publish test
-  const handlePublishTest = async (testId: string) => {
-    if (window.confirm('Xuất bản bài kiểm tra? Học viên sẽ có thể làm bài.')) {
-      await publishTest(testId);
+  const handlePublishTestClick = (testId: string) => {
+    setPublishTestConfirm(testId);
+  };
+
+  const handlePublishTestConfirm = async () => {
+    if (publishTestConfirm) {
+      await publishTest(publishTestConfirm);
+      setPublishTestConfirm(null);
     }
   };
 
   // Handle remove member
-  const handleRemoveMember = async (memberId: string) => {
-    if (window.confirm('Bạn có chắc muốn xóa học viên này khỏi lớp?')) {
-      await removeMember(memberId);
+  const handleRemoveMemberClick = (memberId: string) => {
+    setRemoveMemberConfirm(memberId);
+  };
+
+  const handleRemoveMemberConfirm = async () => {
+    if (removeMemberConfirm) {
+      await removeMember(removeMemberConfirm);
+      setRemoveMemberConfirm(null);
     }
   };
 
@@ -283,11 +298,6 @@ export function ClassroomPage({ users }: ClassroomPageProps) {
   // Handle navigation to tab
   const handleNavigateToTab = (tab: string) => {
     setViewMode(tab as ViewMode);
-  };
-
-  // Get all submissions for tracker
-  const getAllSubmissionsForTests = () => {
-    return allSubmissions;
   };
 
   // Format schedule for display
@@ -579,7 +589,7 @@ export function ClassroomPage({ users }: ClassroomPageProps) {
                       </div>
                       <button
                         className="btn btn-sm btn-danger"
-                        onClick={() => handleRemoveMember(member.id)}
+                        onClick={() => handleRemoveMemberClick(member.id)}
                       >
                         Xóa
                       </button>
@@ -601,20 +611,20 @@ export function ClassroomPage({ users }: ClassroomPageProps) {
                   <button
                     className="btn btn-primary"
                     onClick={() => {
-                      setTestCreateType('test');
-                      setShowTestCreateModal(true);
+                      setAssignFilterType('test');
+                      setShowAssignTestModal(true);
                     }}
                   >
-                    + Bài kiểm tra
+                    + Giao bài kiểm tra
                   </button>
                   <button
                     className="btn btn-secondary"
                     onClick={() => {
-                      setTestCreateType('assignment');
-                      setShowTestCreateModal(true);
+                      setAssignFilterType('assignment');
+                      setShowAssignTestModal(true);
                     }}
                   >
-                    + Bài tập
+                    + Giao bài tập
                   </button>
                 </div>
               )}
@@ -650,7 +660,7 @@ export function ClassroomPage({ users }: ClassroomPageProps) {
                                   {!test.isPublished && (
                                     <button
                                       className="btn btn-sm btn-primary"
-                                      onClick={() => handlePublishTest(test.id)}
+                                      onClick={() => handlePublishTestClick(test.id)}
                                     >
                                       Xuất bản
                                     </button>
@@ -708,7 +718,7 @@ export function ClassroomPage({ users }: ClassroomPageProps) {
                                   {!assignment.isPublished && (
                                     <button
                                       className="btn btn-sm btn-primary"
-                                      onClick={() => handlePublishTest(assignment.id)}
+                                      onClick={() => handlePublishTestClick(assignment.id)}
                                     >
                                       Xuất bản
                                     </button>
@@ -836,6 +846,12 @@ export function ClassroomPage({ users }: ClassroomPageProps) {
             onDelete={deleteEvaluation}
             getAverageRating={getAverageRating}
             latestEvaluationByUser={latestEvaluationByUser}
+            classroom={selectedClassroom || undefined}
+            studentGrades={studentGrades}
+            attendanceSummaries={studentSummaries}
+            submissions={allSubmissions}
+            tests={tests}
+            attendanceRecords={recordsWithUsers}
           />
         )}
       </div>
@@ -862,11 +878,16 @@ export function ClassroomPage({ users }: ClassroomPageProps) {
       />
 
       {/* Test Create Modal */}
-      <TestCreateModal
-        isOpen={showTestCreateModal}
-        onClose={() => setShowTestCreateModal(false)}
-        onSave={handleCreateTest}
-        testType={testCreateType}
+      <AssignTestModal
+        isOpen={showAssignTestModal}
+        onClose={() => setShowAssignTestModal(false)}
+        templates={testTemplates}
+        onAssign={async (templateId, options) => {
+          if (!selectedClassroom || !currentUser) return null;
+          return assignToClassroom(templateId, selectedClassroom.id, currentUser.id, options);
+        }}
+        classroomName={selectedClassroom?.name}
+        filterType={assignFilterType}
       />
 
       {/* Test Take View */}
@@ -929,6 +950,7 @@ export function ClassroomPage({ users }: ClassroomPageProps) {
           onClose={() => setSelectedStudentId(null)}
           userId={selectedStudentId}
           user={users.find(u => u.id === selectedStudentId)}
+          classroom={selectedClassroom || undefined}
           studentGrade={studentGrades.find(g => g.userId === selectedStudentId)}
           attendanceSummary={studentSummaries.find(s => s.userId === selectedStudentId)}
           attendanceRecords={recordsWithUsers.filter(r => r.userId === selectedStudentId)}
@@ -937,6 +959,26 @@ export function ClassroomPage({ users }: ClassroomPageProps) {
           tests={tests}
         />
       )}
+
+      {/* Publish Test Confirm Modal */}
+      <ConfirmModal
+        isOpen={!!publishTestConfirm}
+        title="Xuất bản bài kiểm tra"
+        message="Bạn có chắc muốn xuất bản bài kiểm tra này? Học viên sẽ có thể làm bài ngay sau khi xuất bản."
+        confirmText="Xuất bản"
+        onConfirm={handlePublishTestConfirm}
+        onCancel={() => setPublishTestConfirm(null)}
+      />
+
+      {/* Remove Member Confirm Modal */}
+      <ConfirmModal
+        isOpen={!!removeMemberConfirm}
+        title="Xóa học viên"
+        message="Bạn có chắc muốn xóa học viên này khỏi lớp? Dữ liệu điểm số và bài nộp của học viên vẫn được giữ lại."
+        confirmText="Xóa"
+        onConfirm={handleRemoveMemberConfirm}
+        onCancel={() => setRemoveMemberConfirm(null)}
+      />
     </div>
   );
 }

@@ -4,13 +4,25 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../hooks/use-auth';
 import { useLectures, useSlides } from '../../hooks/use-lectures';
+import { ConfirmModal } from '../ui/confirm-modal';
 import { usePPTX } from '../../hooks/use-pptx';
 import { useGroq } from '../../hooks/use-groq';
 import { PPTXImportModal } from '../lecture/pptx-import-modal';
 import { convertFuriganaToRuby, hasFurigana, removeFurigana } from '../../lib/furigana-utils';
-import type { LectureFormData, SlideFormData, SlideElement, SlideLayout, SlideAnimation, SlideTransition, Lecture, Slide, AdminNote } from '../../types/lecture';
+import type { LectureFormData, SlideFormData, SlideElement, SlideTransition, Lecture, Slide, AdminNote } from '../../types/lecture';
 import type { JLPTLevel } from '../../types/flashcard';
 import type { PPTXImportOptions } from '../../types/pptx';
+import { QuickActionsPanel, TemplatesPanel, LayersPanel, ZoomControls, GridToggle } from '../lecture/lecture-toolbar-panels';
+import { SLIDE_TEMPLATES, createSlideFromTemplate, type SlideTemplate } from '../../utils/slide-templates';
+import {
+  TextEffectsPanel, ShapeEffectsPanel, GradientPanel, AnimationsPanel,
+  ThemesPanel, ShortcutsPanel, RotationControl, UndoRedoToolbar, OpacityControl, BorderControl
+} from '../lecture/lecture-advanced-panels';
+import {
+  TEXT_EFFECTS, SHAPE_EFFECTS, GRADIENT_PRESETS, ELEMENT_ANIMATIONS, SLIDE_THEMES,
+  createHistoryState, pushHistory, undo, redo, canUndo, canRedo,
+  type TextEffect, type ShapeEffect, type GradientPreset, type ElementAnimation, type SlideTheme, type HistoryState
+} from '../../utils/slide-editor-effects';
 import {
   ArrowLeft,
   Settings,
@@ -44,19 +56,13 @@ import {
   MoveDown,
   Eye,
   EyeOff,
-  Palette,
   LayoutGrid,
   Wand2,
   PaintBucket,
   ImagePlus,
   X,
-  ChevronDown,
   Pencil,
-  RotateCcw,
   Layers,
-  Move,
-  ZoomIn,
-  Check,
 } from 'lucide-react';
 
 // Constants
@@ -104,7 +110,7 @@ const LECTURE_SYMBOLS = {
 };
 
 // Quick text templates for lectures
-const TEXT_TEMPLATES = [
+const TEXT_TEMPLATES: { label: string; content: string; style: Record<string, string> }[] = [
   { label: 'Tiêu đề', content: 'Tiêu đề', style: { fontSize: '36px', fontWeight: 'bold', textAlign: 'center' } },
   { label: 'Phụ đề', content: 'Phụ đề', style: { fontSize: '24px', fontStyle: 'italic', color: '#7f8c8d' } },
   { label: 'Bullet point', content: '• Điểm quan trọng', style: { fontSize: '20px' } },
@@ -155,6 +161,9 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Delete slide confirmation state
+  const [deleteSlideConfirm, setDeleteSlideConfirm] = useState<{ index: number } | null>(null);
+
   // Admin notes state
   const [textSelection, setTextSelection] = useState<{
     elementId: string;
@@ -196,6 +205,24 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
 
   // Inline title editing
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+
+  // Enhanced UI State - New features
+  const [showQuickPanel, setShowQuickPanel] = useState(false);
+  const [showTemplatesPanel, setShowTemplatesPanel] = useState(false);
+  const [showLayersPanel, setShowLayersPanel] = useState(false);
+  const [showGrid, setShowGrid] = useState(false);
+  const [zoom, setZoom] = useState(100);
+
+  // Advanced Panels State
+  const [showTextEffects, setShowTextEffects] = useState(false);
+  const [showShapeEffects, setShowShapeEffects] = useState(false);
+  const [showGradientPanel, setShowGradientPanel] = useState(false);
+  const [showAnimationsPanel, setShowAnimationsPanel] = useState(false);
+  const [showThemesPanel, setShowThemesPanel] = useState(false);
+  const [showShortcutsPanel, setShowShortcutsPanel] = useState(false);
+
+  // Undo/Redo History
+  const [history, setHistory] = useState<HistoryState<SlideFormData | null>>(createHistoryState(null));
 
   const isNew = !currentLectureId || currentLectureId === 'new';
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -363,17 +390,22 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
   };
 
   // Delete slide
-  const handleDeleteSlide = async (index: number, e: React.MouseEvent) => {
+  const handleDeleteSlideClick = (index: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!window.confirm('Xóa slide này?')) return;
+    setDeleteSlideConfirm({ index });
+  };
 
-    const slide = slides[index];
+  const handleDeleteSlideConfirm = async () => {
+    if (!deleteSlideConfirm) return;
+
+    const slide = slides[deleteSlideConfirm.index];
     await deleteSlide(slide.id);
 
     if (selectedSlideIndex >= slides.length - 1) {
       setSelectedSlideIndex(Math.max(0, slides.length - 2));
     }
     setHasUnsavedChanges(false);
+    setDeleteSlideConfirm(null);
   };
 
   // Handle PPTX import
@@ -590,7 +622,7 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
       type: 'text',
       content: template.content,
       position: { x: 10, y: 20, width: 80, height: 15 },
-      style: template.style as Record<string, string>,
+      style: template.style,
     };
     updateEditingSlide({
       elements: [...editingSlide.elements, newElement],
@@ -817,6 +849,252 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
     }
   }, [selectedElementId, editingSlide]);
 
+  // ============ NEW ENHANCED FEATURES ============
+
+  // Zoom controls
+  const handleZoomIn = useCallback(() => setZoom(z => Math.min(200, z + 25)), []);
+  const handleZoomOut = useCallback(() => setZoom(z => Math.max(25, z - 25)), []);
+  const handleZoomReset = useCallback(() => setZoom(100), []);
+  const handleZoomFit = useCallback(() => setZoom(100), []); // Could calculate based on container
+
+  // Apply template to current slide
+  const handleApplyTemplate = useCallback(async (template: SlideTemplate) => {
+    if (!currentLectureId) {
+      setError('Vui lòng lưu bài giảng trước');
+      return;
+    }
+
+    // Save current slide if has changes
+    if (hasUnsavedChanges) {
+      await handleSaveSlide();
+    }
+
+    const newSlideData = createSlideFromTemplate(template);
+    const newSlide = await addSlide(newSlideData, slides.length);
+    if (newSlide) {
+      setTimeout(() => {
+        setSelectedSlideIndex(slides.length);
+        setHasUnsavedChanges(false);
+      }, 300);
+    }
+    setShowTemplatesPanel(false);
+  }, [currentLectureId, hasUnsavedChanges, handleSaveSlide, addSlide, slides.length]);
+
+  // Layer management - Toggle visibility
+  const handleToggleElementVisibility = useCallback((elementId: string) => {
+    if (!editingSlide) return;
+    const elements = editingSlide.elements.map(el =>
+      el.id === elementId ? { ...el, hidden: !el.hidden } : el
+    );
+    updateEditingSlide({ elements });
+  }, [editingSlide, updateEditingSlide]);
+
+  // Layer management - Toggle lock
+  const handleToggleElementLock = useCallback((elementId: string) => {
+    if (!editingSlide) return;
+    const elements = editingSlide.elements.map(el =>
+      el.id === elementId ? { ...el, locked: !el.locked } : el
+    );
+    updateEditingSlide({ elements });
+  }, [editingSlide, updateEditingSlide]);
+
+  // Layer management - Reorder element
+  const handleMoveElementLayer = useCallback((elementId: string, direction: 'up' | 'down') => {
+    if (!editingSlide) return;
+    const elements = [...editingSlide.elements];
+    const idx = elements.findIndex(el => el.id === elementId);
+    if (idx === -1) return;
+
+    // Note: "up" in layers means higher z-index (later in array)
+    const newIdx = direction === 'up' ? idx + 1 : idx - 1;
+    if (newIdx < 0 || newIdx >= elements.length) return;
+
+    [elements[idx], elements[newIdx]] = [elements[newIdx], elements[idx]];
+    updateEditingSlide({ elements });
+  }, [editingSlide, updateEditingSlide]);
+
+  // Layer management - Delete element by ID
+  const handleDeleteElementById = useCallback((elementId: string) => {
+    if (!editingSlide) return;
+    updateEditingSlide({
+      elements: editingSlide.elements.filter(el => el.id !== elementId),
+    });
+    if (selectedElementId === elementId) {
+      setSelectedElementId(null);
+    }
+  }, [editingSlide, selectedElementId, updateEditingSlide]);
+
+  // Layer management - Duplicate element by ID
+  const handleDuplicateElementById = useCallback((elementId: string) => {
+    if (!editingSlide) return;
+    const element = editingSlide.elements.find(el => el.id === elementId);
+    if (!element) return;
+    const newElement: SlideElement = {
+      ...element,
+      id: generateId(),
+      position: {
+        ...element.position,
+        x: element.position.x + 2,
+        y: element.position.y + 2,
+      },
+    };
+    updateEditingSlide({
+      elements: [...editingSlide.elements, newElement],
+    });
+    setSelectedElementId(newElement.id);
+  }, [editingSlide, updateEditingSlide]);
+
+  // Alignment - Align selected element
+  const handleAlignElement = useCallback((alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
+    if (!selectedElement || !editingSlide) return;
+    const pos = { ...selectedElement.position };
+
+    switch (alignment) {
+      case 'left': pos.x = 0; break;
+      case 'center': pos.x = 50 - pos.width / 2; break;
+      case 'right': pos.x = 100 - pos.width; break;
+      case 'top': pos.y = 0; break;
+      case 'middle': pos.y = 50 - pos.height / 2; break;
+      case 'bottom': pos.y = 100 - pos.height; break;
+    }
+
+    updateElement(selectedElementId!, { position: pos });
+  }, [selectedElement, selectedElementId, editingSlide, updateElement]);
+
+  // Quick add shape
+  const handleQuickAddShape = useCallback((shape: 'rectangle' | 'circle' | 'line' | 'arrow') => {
+    if (!editingSlide) return;
+    const shapeStyles: Record<string, React.CSSProperties> = {
+      rectangle: { backgroundColor: '#3498db', borderRadius: '4px' },
+      circle: { backgroundColor: '#e74c3c', borderRadius: '50%' },
+      line: { backgroundColor: '#2c3e50', height: '4px' },
+      arrow: { backgroundColor: 'transparent' },
+    };
+
+    const newElement: SlideElement = {
+      id: generateId(),
+      type: 'shape',
+      content: shape === 'arrow' ? '→' : '',
+      position: { x: 30, y: 30, width: shape === 'line' ? 40 : 20, height: shape === 'line' ? 1 : 20 },
+      style: shapeStyles[shape],
+    };
+    updateEditingSlide({
+      elements: [...editingSlide.elements, newElement],
+    });
+    setSelectedElementId(newElement.id);
+    setShowQuickPanel(false);
+  }, [editingSlide, updateEditingSlide]);
+
+  // ============ ADVANCED FEATURES HANDLERS ============
+
+  // Apply text effect to selected element
+  const handleApplyTextEffect = useCallback((effect: TextEffect) => {
+    if (!selectedElement || selectedElement.type !== 'text') return;
+    updateElementStyle(selectedElement.id, effect.style);
+    setShowTextEffects(false);
+  }, [selectedElement, updateElementStyle]);
+
+  // Apply shape effect to selected element
+  const handleApplyShapeEffect = useCallback((effect: ShapeEffect) => {
+    if (!selectedElement || selectedElement.type !== 'shape') return;
+    updateElementStyle(selectedElement.id, effect.style);
+    setShowShapeEffects(false);
+  }, [selectedElement, updateElementStyle]);
+
+  // Apply gradient background to slide
+  const handleApplyGradient = useCallback((gradient: GradientPreset) => {
+    if (!editingSlide) return;
+    updateEditingSlide({ backgroundColor: gradient.value });
+    setShowGradientPanel(false);
+  }, [editingSlide, updateEditingSlide]);
+
+  // Apply animation to selected element
+  const handleApplyAnimation = useCallback((animation: ElementAnimation) => {
+    if (!selectedElement) return;
+    updateElement(selectedElement.id, {
+      animation: animation.id,
+      animationDuration: animation.duration
+    });
+    setShowAnimationsPanel(false);
+  }, [selectedElement, updateElement]);
+
+  // Preview animation on element
+  const handlePreviewAnimation = useCallback((animation: ElementAnimation) => {
+    if (!selectedElement) return;
+    const element = document.querySelector(`[data-element-id="${selectedElement.id}"]`);
+    if (element) {
+      element.classList.remove('le-animate');
+      void (element as HTMLElement).offsetWidth; // Trigger reflow
+      (element as HTMLElement).style.animation = `${animation.keyframes} ${animation.duration}ms ease`;
+      setTimeout(() => {
+        (element as HTMLElement).style.animation = '';
+      }, animation.duration);
+    }
+  }, [selectedElement]);
+
+  // Apply theme to current slide
+  const handleApplyTheme = useCallback((theme: SlideTheme) => {
+    if (!editingSlide) return;
+    updateEditingSlide({
+      backgroundColor: theme.backgroundColor,
+    });
+    // Also update title style if there's a title element
+    // This is a simplified implementation
+    setShowThemesPanel(false);
+  }, [editingSlide, updateEditingSlide]);
+
+  // Update element rotation
+  const handleRotateElement = useCallback((rotation: number) => {
+    if (!selectedElement) return;
+    updateElementStyle(selectedElement.id, { transform: `rotate(${rotation}deg)` });
+  }, [selectedElement, updateElementStyle]);
+
+  // Update element opacity
+  const handleOpacityChange = useCallback((opacity: number) => {
+    if (!selectedElement) return;
+    updateElementStyle(selectedElement.id, { opacity: opacity / 100 });
+  }, [selectedElement, updateElementStyle]);
+
+  // Update element border
+  const handleBorderChange = useCallback((borderProps: Partial<{
+    borderWidth: number;
+    borderColor: string;
+    borderStyle: string;
+    borderRadius: number;
+  }>) => {
+    if (!selectedElement) return;
+    const style: Record<string, string> = {};
+    if (borderProps.borderWidth !== undefined) style.borderWidth = `${borderProps.borderWidth}px`;
+    if (borderProps.borderColor) style.borderColor = borderProps.borderColor;
+    if (borderProps.borderStyle) style.borderStyle = borderProps.borderStyle;
+    if (borderProps.borderRadius !== undefined) style.borderRadius = `${borderProps.borderRadius}px`;
+    updateElementStyle(selectedElement.id, style);
+  }, [selectedElement, updateElementStyle]);
+
+  // Undo/Redo handlers
+  const handleUndo = useCallback(() => {
+    const newHistory = undo(history);
+    if (newHistory.present) {
+      setEditingSlide(newHistory.present);
+      setHistory(newHistory);
+    }
+  }, [history]);
+
+  const handleRedo = useCallback(() => {
+    const newHistory = redo(history);
+    if (newHistory.present) {
+      setEditingSlide(newHistory.present);
+      setHistory(newHistory);
+    }
+  }, [history]);
+
+  // Push to history when slide changes
+  const pushToHistory = useCallback(() => {
+    if (editingSlide) {
+      setHistory(prev => pushHistory(prev, editingSlide));
+    }
+  }, [editingSlide]);
+
   // Start dragging element
   const handleDragStart = useCallback((e: React.MouseEvent, elementId: string) => {
     e.preventDefault();
@@ -953,6 +1231,16 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
         e.preventDefault();
         handleSaveSlide();
       }
+      // Undo: Ctrl/Cmd + Z
+      if (e.key === 'z' && (e.ctrlKey || e.metaKey) && !e.shiftKey && !isEditing) {
+        e.preventDefault();
+        handleUndo();
+      }
+      // Redo: Ctrl/Cmd + Y or Ctrl/Cmd + Shift + Z
+      if (((e.key === 'y' && (e.ctrlKey || e.metaKey)) || (e.key === 'z' && (e.ctrlKey || e.metaKey) && e.shiftKey)) && !isEditing) {
+        e.preventDefault();
+        handleRedo();
+      }
       if (e.key === 'Delete' && selectedElementId && !isEditing) {
         e.preventDefault();
         deleteElement();
@@ -993,7 +1281,7 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleSaveSlide, selectedElementId, deleteElement, copyElement, pasteElement, duplicateElement, clipboard, editingSlide, updateElement]);
+  }, [handleSaveSlide, selectedElementId, deleteElement, copyElement, pasteElement, duplicateElement, clipboard, editingSlide, updateElement, handleUndo, handleRedo]);
 
   // Render slide thumbnail
   const renderThumbnail = (slide: Slide, index: number) => (
@@ -1022,7 +1310,7 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
         <button onClick={(e) => { e.stopPropagation(); duplicateSlide(slide.id); }} title="Nhân đôi">
           <CopyPlus size={12} />
         </button>
-        <button onClick={(e) => handleDeleteSlide(index, e)} title="Xóa">
+        <button onClick={(e) => handleDeleteSlideClick(index, e)} title="Xóa">
           <Trash2 size={12} />
         </button>
       </div>
@@ -1053,7 +1341,7 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
       top: `${element.position.y}%`,
       width: `${element.position.width}%`,
       height: `${element.position.height}%`,
-      ...(element.style || {}),
+      ...(element.style as React.CSSProperties || {}),
       border: isSelected ? '2px solid #3498db' : '1px dashed transparent',
       cursor: isDraggingThis ? 'grabbing' : isSelected ? 'grab' : 'pointer',
       boxSizing: 'border-box',
@@ -1345,6 +1633,22 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
           {hasUnsavedChanges && <span className="ppt-unsaved-badge">●</span>}
         </div>
         <div className="ppt-header-right">
+          {/* Undo/Redo */}
+          <UndoRedoToolbar
+            canUndo={canUndo(history)}
+            canRedo={canRedo(history)}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            historyLength={history.past.length}
+          />
+          {/* Shortcuts Help */}
+          <button
+            className="ppt-btn ppt-btn-ghost"
+            onClick={() => setShowShortcutsPanel(true)}
+            title="Phím tắt"
+          >
+            <span style={{ fontSize: '14px' }}>⌨️</span>
+          </button>
           <button className="ppt-btn ppt-btn-ghost" onClick={() => setShowSettingsPanel(!showSettingsPanel)} title="Cài đặt">
             <Settings size={16} />
             <span>Cài đặt</span>
@@ -1380,6 +1684,16 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
           <button className={`ppt-tab ${activeTab === 'insert' ? 'active' : ''}`} onClick={() => setActiveTab('insert')}>Insert</button>
           <button className={`ppt-tab ${activeTab === 'design' ? 'active' : ''}`} onClick={() => setActiveTab('design')}>Design</button>
           <button className={`ppt-tab ${activeTab === 'transitions' ? 'active' : ''}`} onClick={() => setActiveTab('transitions')}>Transitions</button>
+          {/* Templates Quick Access */}
+          <button
+            className="le-templates-trigger"
+            onClick={() => setShowTemplatesPanel(!showTemplatesPanel)}
+            disabled={isNew}
+            title="Chọn mẫu slide"
+          >
+            <LayoutGrid size={16} />
+            <span>Mẫu Slide</span>
+          </button>
         </div>
 
         {/* Tab Content */}
@@ -1813,14 +2127,11 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
 
           {activeTab === 'design' && editingSlide && (
             <>
+              {/* Basic Colors */}
               <div className="ppt-ribbon-group">
                 <div className="ppt-ribbon-group-content">
-                  <div className="ppt-ribbon-row">
-                    <PaintBucket size={16} />
-                    <span className="ppt-ribbon-label">Màu nền:</span>
-                  </div>
                   <div className="ppt-color-picker">
-                    {COLORS.map(c => (
+                    {COLORS.slice(0, 12).map(c => (
                       <button
                         key={c}
                         className={`ppt-color-btn ${editingSlide.backgroundColor === c ? 'active' : ''}`}
@@ -1830,8 +2141,25 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
                     ))}
                   </div>
                 </div>
-                <span className="ppt-ribbon-group-label">Background</span>
+                <span className="ppt-ribbon-group-label">Màu nền</span>
               </div>
+
+              {/* Gradient & Theme */}
+              <div className="ppt-ribbon-group">
+                <div className="ppt-ribbon-group-content">
+                  <button className="ppt-ribbon-btn" onClick={() => setShowGradientPanel(true)}>
+                    <Sparkles size={16} />
+                    <span>Gradient</span>
+                  </button>
+                  <button className="ppt-ribbon-btn" onClick={() => setShowThemesPanel(true)}>
+                    <Layers size={16} />
+                    <span>Themes</span>
+                  </button>
+                </div>
+                <span className="ppt-ribbon-group-label">Nền nâng cao</span>
+              </div>
+
+              {/* Background Image */}
               <div className="ppt-ribbon-group">
                 <div className="ppt-ribbon-group-content">
                   <button className="ppt-ribbon-btn" onClick={() => fileInputRef.current?.click()}>
@@ -1841,12 +2169,64 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
                   {editingSlide.backgroundImage && (
                     <button className="ppt-ribbon-btn" onClick={() => updateEditingSlide({ backgroundImage: undefined })}>
                       <X size={16} />
-                      <span>Xóa ảnh</span>
+                      <span>Xóa</span>
                     </button>
                   )}
                 </div>
-                <span className="ppt-ribbon-group-label">Background Image</span>
+                <span className="ppt-ribbon-group-label">Background</span>
               </div>
+
+              {/* Text Effects - only when text selected */}
+              {selectedElement?.type === 'text' && (
+                <div className="ppt-ribbon-group">
+                  <div className="ppt-ribbon-group-content">
+                    <button className="ppt-ribbon-btn" onClick={() => setShowTextEffects(true)}>
+                      <Wand2 size={16} />
+                      <span>Text Effects</span>
+                    </button>
+                    <button className="ppt-ribbon-btn" onClick={() => setShowAnimationsPanel(true)}>
+                      <Sparkles size={16} />
+                      <span>Animation</span>
+                    </button>
+                  </div>
+                  <span className="ppt-ribbon-group-label">Hiệu ứng chữ</span>
+                </div>
+              )}
+
+              {/* Shape Effects - only when shape selected */}
+              {selectedElement?.type === 'shape' && (
+                <div className="ppt-ribbon-group">
+                  <div className="ppt-ribbon-group-content">
+                    <button className="ppt-ribbon-btn" onClick={() => setShowShapeEffects(true)}>
+                      <Wand2 size={16} />
+                      <span>Shape Effects</span>
+                    </button>
+                    <button className="ppt-ribbon-btn" onClick={() => setShowAnimationsPanel(true)}>
+                      <Sparkles size={16} />
+                      <span>Animation</span>
+                    </button>
+                  </div>
+                  <span className="ppt-ribbon-group-label">Hiệu ứng hình</span>
+                </div>
+              )}
+
+              {/* Rotation & Opacity - when any element selected */}
+              {selectedElement && (
+                <div className="ppt-ribbon-group">
+                  <div className="ppt-ribbon-group-content" style={{ flexDirection: 'column', gap: '8px' }}>
+                    <RotationControl
+                      rotation={parseInt(selectedElement.style?.transform?.match(/rotate\((\d+)deg\)/)?.[1] || '0')}
+                      onChange={handleRotateElement}
+                    />
+                    <OpacityControl
+                      opacity={Math.round((selectedElement.style?.opacity || 1) * 100)}
+                      onChange={handleOpacityChange}
+                    />
+                  </div>
+                  <span className="ppt-ribbon-group-label">Transform</span>
+                </div>
+              )}
+
               <input
                 ref={fileInputRef}
                 type="file"
@@ -1923,15 +2303,35 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
 
         {/* Main Editor Canvas */}
         <main className="ppt-canvas-container">
+          {/* Zoom & Grid Controls */}
+          <div className="le-status-bar">
+            <div className="le-status-left">
+              <span>Slide {selectedSlideIndex + 1} / {slides.length}</span>
+              {selectedElement && <span>| {selectedElement.type}</span>}
+            </div>
+            <div className="le-status-right">
+              <GridToggle showGrid={showGrid} onToggle={() => setShowGrid(!showGrid)} />
+              <ZoomControls
+                zoom={zoom}
+                onZoomIn={handleZoomIn}
+                onZoomOut={handleZoomOut}
+                onZoomReset={handleZoomReset}
+                onZoomFit={handleZoomFit}
+              />
+            </div>
+          </div>
+
           {editingSlide ? (
             <div
               ref={canvasRef}
-              className="ppt-canvas"
+              className={`ppt-canvas ${showGrid ? 'show-grid' : ''}`}
               style={{
                 backgroundColor: editingSlide.backgroundColor || '#fff',
                 backgroundImage: editingSlide.backgroundImage ? `url(${editingSlide.backgroundImage})` : undefined,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
+                transform: `scale(${zoom / 100})`,
+                transformOrigin: 'center center',
               }}
               onClick={() => {
                 setSelectedElementId(null);
@@ -2214,6 +2614,99 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
           </div>
         </div>
       )}
+
+      {/* ============ ENHANCED UI PANELS ============ */}
+
+      {/* Quick Actions Floating Panel */}
+      <QuickActionsPanel
+        isVisible={showQuickPanel}
+        onToggle={() => setShowQuickPanel(!showQuickPanel)}
+        onAddText={addTextElement}
+        onAddImage={() => imageInputRef.current?.click()}
+        onAddShape={handleQuickAddShape}
+        onAddVideo={addVideoElement}
+        onAddAudio={addAudioElement}
+      />
+
+      {/* Slide Templates Panel */}
+      <TemplatesPanel
+        isVisible={showTemplatesPanel}
+        onClose={() => setShowTemplatesPanel(false)}
+        onSelectTemplate={handleApplyTemplate}
+      />
+
+      {/* Element Layers Panel */}
+      <LayersPanel
+        elements={editingSlide?.elements || []}
+        selectedElementId={selectedElementId}
+        onSelectElement={setSelectedElementId}
+        onMoveElement={handleMoveElementLayer}
+        onToggleVisibility={handleToggleElementVisibility}
+        onToggleLock={handleToggleElementLock}
+        onDeleteElement={handleDeleteElementById}
+        onDuplicateElement={handleDuplicateElementById}
+        isVisible={showLayersPanel}
+        onToggle={() => setShowLayersPanel(!showLayersPanel)}
+      />
+
+      {/* ============ ADVANCED EFFECTS PANELS ============ */}
+
+      {/* Text Effects Panel */}
+      <TextEffectsPanel
+        currentEffect={selectedElement?.style?.textEffect || 'none'}
+        onSelectEffect={handleApplyTextEffect}
+        isVisible={showTextEffects}
+        onClose={() => setShowTextEffects(false)}
+      />
+
+      {/* Shape Effects Panel */}
+      <ShapeEffectsPanel
+        currentEffect={selectedElement?.style?.shapeEffect || 'none'}
+        onSelectEffect={handleApplyShapeEffect}
+        isVisible={showShapeEffects}
+        onClose={() => setShowShapeEffects(false)}
+      />
+
+      {/* Gradient Backgrounds Panel */}
+      <GradientPanel
+        currentGradient={editingSlide?.backgroundColor || '#ffffff'}
+        onSelectGradient={handleApplyGradient}
+        isVisible={showGradientPanel}
+        onClose={() => setShowGradientPanel(false)}
+      />
+
+      {/* Element Animations Panel */}
+      <AnimationsPanel
+        currentAnimation={selectedElement?.animation || 'none'}
+        onSelectAnimation={handleApplyAnimation}
+        onPreviewAnimation={handlePreviewAnimation}
+        isVisible={showAnimationsPanel}
+        onClose={() => setShowAnimationsPanel(false)}
+      />
+
+      {/* Slide Themes Panel */}
+      <ThemesPanel
+        currentTheme="default"
+        onSelectTheme={handleApplyTheme}
+        isVisible={showThemesPanel}
+        onClose={() => setShowThemesPanel(false)}
+      />
+
+      {/* Keyboard Shortcuts Panel */}
+      <ShortcutsPanel
+        isVisible={showShortcutsPanel}
+        onClose={() => setShowShortcutsPanel(false)}
+      />
+
+      {/* Delete Slide Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!deleteSlideConfirm}
+        title="Xóa slide"
+        message="Bạn có chắc muốn xóa slide này? Hành động này không thể hoàn tác."
+        confirmText="Xóa"
+        onConfirm={handleDeleteSlideConfirm}
+        onCancel={() => setDeleteSlideConfirm(null)}
+      />
     </div>
   );
 }

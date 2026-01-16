@@ -21,13 +21,19 @@ import { LecturePage } from './components/pages/lecture-page';
 import { LectureEditorPage } from './components/pages/lecture-editor-page';
 import { ProgressPage } from './components/pages/progress-page';
 import { ClassroomPage } from './components/pages/classroom-page';
+import { BranchManagementPage } from './components/pages/branch-management-page';
+import { TeacherManagementPage } from './components/pages/teacher-management-page';
+import { SalaryPage } from './components/pages/salary-page';
+import { MyTeachingPage } from './components/pages/my-teaching-page';
+import { NotificationsPage } from './components/pages/notifications-page';
 import { useJLPTQuestions } from './hooks/use-jlpt-questions';
 import { useKaiwaQuestions } from './hooks/use-kaiwa-questions';
 import { useUserHistory } from './hooks/use-user-history';
 import { useProgress } from './hooks/use-progress';
 import { useNotifications } from './hooks/use-notifications';
 import { useOffline } from './hooks/use-offline';
-import { useFriendships, useBadges, useGameInvitations } from './hooks/use-friendships';
+import { useFriendships, useBadges, useGameInvitations, useFriendNotifications } from './hooks/use-friendships';
+import { useClassroomNotifications } from './hooks/use-classrooms';
 import { OfflineIndicator } from './components/common/offline-indicator';
 import { FloatingChatButton } from './components/common/floating-chat-button';
 import { FloatingChatPanel } from './components/common/floating-chat-panel';
@@ -220,6 +226,19 @@ function App() {
     sendInvitation: sendGameInvitation,
   } = useGameInvitations(currentUser?.id ?? null);
 
+  // Notifications hooks
+  const {
+    notifications: classroomNotifications,
+    markAsRead: markClassroomRead,
+    markAllAsRead: markAllClassroomRead,
+  } = useClassroomNotifications(currentUser?.id ?? null);
+
+  const {
+    notifications: friendNotifications,
+    markAsRead: markFriendRead,
+    markAllAsRead: markAllFriendRead,
+  } = useFriendNotifications(currentUser?.id ?? null);
+
   // Show login page if not logged in
   if (!isLoggedIn) {
     return (
@@ -257,12 +276,7 @@ function App() {
               setInitialFilterLevel('all');
               setCurrentPage('study');
             }}
-            onManageCards={() => setCurrentPage('cards')}
-            onStudyByLevel={(level) => {
-              setInitialFilterLevel(level);
-              setCurrentPage('study');
-            }}
-            onStudyByCategory={(level) => {
+            onStudyByLevel={(level: JLPTLevel) => {
               setInitialFilterLevel(level);
               setCurrentPage('study');
             }}
@@ -274,9 +288,10 @@ function App() {
             getLessonsByLevel={getLessonsByLevel}
             getChildLessons={getChildLessons}
             canAccessLocked={canAccessLocked}
-            isAdmin={isAdmin}
-            jlptQuestionCount={jlptQuestions.length}
             onPracticeJLPT={() => setCurrentPage('jlpt')}
+            onNavigate={(page) => setCurrentPage(page as Page)}
+            userName={currentUser?.displayName || currentUser?.username}
+            progress={progress}
           />
         )}
 
@@ -305,10 +320,10 @@ function App() {
             // Kaiwa question management props
             kaiwaQuestions={kaiwaQuestions}
             kaiwaFolders={kaiwaFolders}
-            onAddKaiwaQuestion={async (data) => { await addKaiwaQuestion(data, currentUser.id); }}
+            onAddKaiwaQuestion={async (data) => { return await addKaiwaQuestion(data, currentUser.id); }}
             onUpdateKaiwaQuestion={updateKaiwaQuestion}
             onDeleteKaiwaQuestion={deleteKaiwaQuestion}
-            onAddKaiwaFolder={async (name, level, topic) => { await addKaiwaFolder(name, level, topic, currentUser.id); }}
+            onAddKaiwaFolder={async (name, level, topic) => { return await addKaiwaFolder(name, level, topic, currentUser.id); }}
             onUpdateKaiwaFolder={updateKaiwaFolder}
             onDeleteKaiwaFolder={deleteKaiwaFolder}
             getFoldersByLevelAndTopic={getFoldersByLevelAndTopic}
@@ -486,6 +501,34 @@ function App() {
 
         {currentPage === 'classroom' && currentUser && (
           <ClassroomPage users={users} />
+        )}
+
+        {currentPage === 'branches' && currentUser && (currentUser.role === 'director' || currentUser.role === 'super_admin') && (
+          <BranchManagementPage users={users} onNavigate={setCurrentPage} />
+        )}
+
+        {currentPage === 'teachers' && currentUser && (currentUser.role === 'director' || currentUser.role === 'branch_admin' || currentUser.role === 'super_admin') && (
+          <TeacherManagementPage users={users} />
+        )}
+
+        {currentPage === 'salary' && currentUser && (currentUser.role === 'director' || currentUser.role === 'branch_admin' || currentUser.role === 'super_admin') && (
+          <SalaryPage users={users} />
+        )}
+
+        {currentPage === 'my-teaching' && currentUser && (currentUser.role === 'main_teacher' || currentUser.role === 'part_time_teacher' || currentUser.role === 'assistant') && (
+          <MyTeachingPage />
+        )}
+
+        {currentPage === 'notifications' && currentUser && (
+          <NotificationsPage
+            classroomNotifications={classroomNotifications}
+            friendNotifications={friendNotifications}
+            onMarkClassroomRead={markClassroomRead}
+            onMarkAllClassroomRead={markAllClassroomRead}
+            onMarkFriendRead={markFriendRead}
+            onMarkAllFriendRead={markAllFriendRead}
+            onNavigate={setCurrentPage}
+          />
         )}
         </main>
       </div>

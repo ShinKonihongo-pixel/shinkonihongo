@@ -1,7 +1,57 @@
 // User types for authentication system
-// Role hierarchy: super_admin > admin > vip_user > user
+// Role hierarchy: super_admin > director > branch_admin > main_teacher > part_time_teacher > assistant > vip_user > user
 
-export type UserRole = 'super_admin' | 'admin' | 'vip_user' | 'user';
+export type UserRole =
+  | 'super_admin'
+  | 'director'           // Giám đốc - quản lý nhiều chi nhánh
+  | 'branch_admin'       // Admin chi nhánh
+  | 'main_teacher'       // Giáo viên chính
+  | 'part_time_teacher'  // Giáo viên part-time
+  | 'assistant'          // Trợ giảng
+  | 'admin'              // Legacy - for backward compatibility
+  | 'vip_user'
+  | 'user';
+
+// Role labels (Vietnamese)
+export const USER_ROLE_LABELS: Record<UserRole, string> = {
+  super_admin: 'Super Admin',
+  director: 'Giám đốc',
+  branch_admin: 'Admin chi nhánh',
+  main_teacher: 'Giáo viên chính',
+  part_time_teacher: 'Giáo viên part-time',
+  assistant: 'Trợ giảng',
+  admin: 'Admin',
+  vip_user: 'VIP',
+  user: 'Người dùng',
+};
+
+// Role hierarchy level (higher = more permissions)
+export const USER_ROLE_LEVEL: Record<UserRole, number> = {
+  super_admin: 100,
+  director: 90,
+  branch_admin: 70,
+  main_teacher: 50,
+  part_time_teacher: 40,
+  assistant: 30,
+  admin: 60,  // Legacy
+  vip_user: 20,
+  user: 10,
+};
+
+// Check if user has permission (role level >= required level)
+export function hasPermission(userRole: UserRole, requiredRole: UserRole): boolean {
+  return USER_ROLE_LEVEL[userRole] >= USER_ROLE_LEVEL[requiredRole];
+}
+
+// Check if user is any type of teacher
+export function isTeacher(role: UserRole): boolean {
+  return ['main_teacher', 'part_time_teacher', 'assistant'].includes(role);
+}
+
+// Check if user is admin level or higher
+export function isAdminLevel(role: UserRole): boolean {
+  return USER_ROLE_LEVEL[role] >= USER_ROLE_LEVEL.branch_admin;
+}
 
 export interface User {
   id: string;
@@ -9,11 +59,15 @@ export interface User {
   password: string; // In real app, this would be hashed
   role: UserRole;
   displayName?: string; // Optional display name
+  email?: string; // User email
   avatar?: string; // Avatar URL or emoji
   profileBackground?: string; // Profile background gradient/color
   vipExpirationDate?: string; // VIP expiration date (YYYY-MM-DD), auto convert to user when expired
   createdBy?: string; // ID of admin who created this user
   createdAt: string;
+  // Branch-related fields
+  branchId?: string;      // Chi nhánh hiện tại (cho teacher, branch_admin)
+  branchIds?: string[];   // Các chi nhánh được quản lý (cho director)
 }
 
 export interface CurrentUser {

@@ -13,9 +13,11 @@ import { FlashcardForm } from '../flashcard/flashcard-form';
 import { FlashcardList } from '../flashcard/flashcard-list';
 import { ConfirmModal } from '../ui/confirm-modal';
 import { useLectures } from '../../hooks/use-lectures';
+import { useTestTemplates } from '../../hooks/use-classrooms';
 import { LectureCard } from '../lecture/lecture-card';
+import { TestBankPanel } from '../classroom/test-bank-panel';
 
-type ManagementTab = 'flashcards' | 'lectures' | 'jlpt' | 'kaiwa' | 'users';
+type ManagementTab = 'flashcards' | 'lectures' | 'jlpt' | 'kaiwa' | 'assignments' | 'tests' | 'users';
 
 interface CardsPageProps {
   cards: Flashcard[];
@@ -133,7 +135,7 @@ export function CardsPage({
   onNavigateToLectureEditor,
   // Kaiwa management props
   kaiwaQuestions = [],
-  kaiwaFolders = [],
+  kaiwaFolders: _kaiwaFolders = [],
   onAddKaiwaQuestion,
   onUpdateKaiwaQuestion,
   onDeleteKaiwaQuestion,
@@ -166,6 +168,22 @@ export function CardsPage({
     getFoldersByLevel: getLectureFoldersByLevel,
     getLecturesByFolder,
   } = useLectures(true);
+
+  // Test templates (test bank) with folder management
+  const {
+    templates: testTemplates,
+    folders: testFolders,
+    loading: testTemplatesLoading,
+    createFolder: createTestFolder,
+    updateFolder: updateTestFolder,
+    deleteFolder: deleteTestFolder,
+    createTemplate,
+    updateTemplate,
+    deleteTemplate,
+    getFoldersByLevelAndType,
+    getTemplatesByFolder,
+  } = useTestTemplates();
+
   const [deleteLectureTarget, setDeleteLectureTarget] = useState<Lecture | null>(null);
   const [deleteLectureFolderTarget, setDeleteLectureFolderTarget] = useState<LectureFolder | null>(null);
 
@@ -295,6 +313,7 @@ export function CardsPage({
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
   const [editingFolderName, setEditingFolderName] = useState('');
   const [deleteFolderTarget, setDeleteFolderTarget] = useState<JLPTFolder | null>(null);
+  const [deleteJLPTQuestionTarget, setDeleteJLPTQuestionTarget] = useState<JLPTQuestion | null>(null);
 
   // Kaiwa Question state
   const [kaiwaNavState, setKaiwaNavState] = useState<KaiwaNavState>({ type: 'root' });
@@ -793,6 +812,18 @@ export function CardsPage({
             onClick={() => setActiveTab('kaiwa')}
           >
             Kaiwa ({kaiwaQuestions.length})
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'assignments' ? 'active' : ''}`}
+            onClick={() => setActiveTab('assignments')}
+          >
+            Bài tập
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'tests' ? 'active' : ''}`}
+            onClick={() => setActiveTab('tests')}
+          >
+            Bài kiểm tra ({testTemplates.length})
           </button>
           <button
             className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
@@ -1348,7 +1379,7 @@ export function CardsPage({
                                   </button>
                                   <button
                                     className="btn-icon danger"
-                                    onClick={() => onDeleteJLPTQuestion(question.id)}
+                                    onClick={() => setDeleteJLPTQuestionTarget(question)}
                                     title="Xóa"
                                   >
                                     ×
@@ -1424,7 +1455,7 @@ export function CardsPage({
                                 </button>
                                 <button
                                   className="btn-icon danger"
-                                  onClick={() => onDeleteJLPTQuestion(question.id)}
+                                  onClick={() => setDeleteJLPTQuestionTarget(question)}
                                   title="Xóa"
                                 >
                                   ×
@@ -2073,6 +2104,37 @@ export function CardsPage({
         </>
       )}
 
+      {/* Assignments Management Tab */}
+      {activeTab === 'assignments' && (
+        <div className="assignments-tab-content">
+          <div className="empty-state">
+            <div className="empty-state-icon">📝</div>
+            <h3>Quản lý bài tập</h3>
+            <p>Tính năng đang được phát triển</p>
+          </div>
+        </div>
+      )}
+
+      {/* Test Bank Management Tab */}
+      {activeTab === 'tests' && (
+        <TestBankPanel
+          templates={testTemplates}
+          folders={testFolders}
+          loading={testTemplatesLoading}
+          onCreate={(data) => createTemplate(data, currentUser.id)}
+          onUpdate={updateTemplate}
+          onDelete={deleteTemplate}
+          onCreateFolder={(name, level, type) => createTestFolder(name, level, type, currentUser.id)}
+          onUpdateFolder={updateTestFolder}
+          onDeleteFolder={deleteTestFolder}
+          getFoldersByLevelAndType={getFoldersByLevelAndType}
+          getTemplatesByFolder={getTemplatesByFolder}
+          flashcards={cards}
+          jlptQuestions={jlptQuestions}
+          currentUserId={currentUser.id}
+        />
+      )}
+
       <ConfirmModal
         isOpen={deleteUserTarget !== null}
         title="Xác nhận xóa người dùng"
@@ -2127,6 +2189,20 @@ export function CardsPage({
           }
         }}
         onCancel={() => setDeleteFolderTarget(null)}
+      />
+
+      <ConfirmModal
+        isOpen={deleteJLPTQuestionTarget !== null}
+        title="Xác nhận xóa câu hỏi JLPT"
+        message={`Bạn có chắc muốn xóa câu hỏi "${deleteJLPTQuestionTarget?.question?.slice(0, 50) || ''}..."?`}
+        confirmText="Xóa"
+        onConfirm={async () => {
+          if (deleteJLPTQuestionTarget) {
+            await onDeleteJLPTQuestion(deleteJLPTQuestionTarget.id);
+            setDeleteJLPTQuestionTarget(null);
+          }
+        }}
+        onCancel={() => setDeleteJLPTQuestionTarget(null)}
       />
 
       <ConfirmModal

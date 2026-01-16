@@ -1,6 +1,6 @@
 // Attendance panel component for tracking student attendance
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import type { User } from '../../types/user';
 import type {
   AttendanceSession,
@@ -28,7 +28,7 @@ interface AttendancePanelProps {
   studentSummaries: StudentAttendanceSummary[];
 }
 
-const statusIcons: Record<AttendanceStatus, JSX.Element> = {
+const statusIcons: Record<AttendanceStatus, React.ReactElement> = {
   present: <Check size={16} />,
   late: <Clock size={16} />,
   absent: <X size={16} />,
@@ -43,7 +43,7 @@ export function AttendancePanel({
   students,
   loading,
   onCreateSession,
-  onMarkAttendance,
+  onMarkAttendance: _onMarkAttendance,
   onBulkMark,
   hasSessionForDate,
   studentSummaries,

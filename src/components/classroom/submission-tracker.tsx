@@ -35,9 +35,9 @@ export function SubmissionTracker({
   submissions,
   students,
   onViewSubmission,
-  onGradeSubmission,
+  onGradeSubmission: _onGradeSubmission,
 }: SubmissionTrackerProps) {
-  const [selectedTestId, setSelectedTestId] = useState<string | null>(null);
+  const [_selectedTestId, _setSelectedTestId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>('all');
   const [expandedTest, setExpandedTest] = useState<string | null>(null);
 

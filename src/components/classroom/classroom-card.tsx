@@ -1,7 +1,9 @@
 // Classroom card component
 
+import { useState } from 'react';
 import type { Classroom } from '../../types/classroom';
 import { CLASSROOM_LEVEL_LABELS, CLASSROOM_LEVEL_COLORS, DAY_OF_WEEK_LABELS } from '../../types/classroom';
+import { ConfirmModal } from '../ui/confirm-modal';
 
 interface ClassroomCardProps {
   classroom: Classroom;
@@ -18,6 +20,7 @@ export function ClassroomCard({
   onEdit,
   onDelete,
 }: ClassroomCardProps) {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const levelColor = CLASSROOM_LEVEL_COLORS[classroom.level];
   const levelLabel = CLASSROOM_LEVEL_LABELS[classroom.level];
 
@@ -38,11 +41,14 @@ export function ClassroomCard({
     onEdit?.();
   };
 
-  const handleDelete = (e: React.MouseEvent) => {
+  const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm('Bạn có chắc muốn xóa lớp học này? Tất cả dữ liệu sẽ bị xóa.')) {
-      onDelete?.();
-    }
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    setShowDeleteConfirm(false);
+    onDelete?.();
   };
 
   return (
@@ -92,7 +98,7 @@ export function ClassroomCard({
               {onDelete && (
                 <button
                   className="btn btn-sm btn-danger"
-                  onClick={handleDelete}
+                  onClick={handleDeleteClick}
                 >
                   Xóa
                 </button>
@@ -101,6 +107,15 @@ export function ClassroomCard({
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title="Xóa lớp học"
+        message={`Bạn có chắc muốn xóa lớp "${classroom.name}"? Tất cả dữ liệu bao gồm học viên, bài kiểm tra và điểm số sẽ bị xóa vĩnh viễn.`}
+        confirmText="Xóa"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   );
 }

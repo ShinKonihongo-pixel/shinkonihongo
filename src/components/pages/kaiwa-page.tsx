@@ -7,7 +7,7 @@ import type { KaiwaDefaultQuestion, KaiwaFolder } from '../../types/kaiwa-questi
 import { useSpeech, comparePronunciation } from '../../hooks/use-speech';
 import { useGroq } from '../../hooks/use-groq';
 import { JLPT_LEVELS, CONVERSATION_STYLES, CONVERSATION_TOPICS, getStyleDisplay } from '../../constants/kaiwa';
-import { KaiwaMessageItem, KaiwaPracticeModal, KaiwaAnalysisModal, KaiwaAnswerTemplate, KaiwaSuggestionsBox } from '../kaiwa';
+import { KaiwaMessageItem, KaiwaPracticeModal, KaiwaAnalysisModal, KaiwaAnswerTemplate } from '../kaiwa';
 import type { VocabularyHint } from '../../types/kaiwa';
 import { removeFurigana } from '../../lib/furigana-utils';
 import { FuriganaText } from '../common/furigana-text';
@@ -51,7 +51,7 @@ type QuestionSelectorState =
 export function KaiwaPage({
   settings,
   defaultQuestions = [],
-  kaiwaFolders = [],
+  kaiwaFolders: _kaiwaFolders = [],
   getFoldersByLevelAndTopic,
   getQuestionsByFolder,
   getQuestionsByLevelAndTopic,

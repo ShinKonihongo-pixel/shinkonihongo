@@ -195,7 +195,7 @@ export async function addSlide(
   order: number
 ): Promise<Slide> {
   // Clean data - remove undefined fields
-  const cleanedData = removeUndefined(data as Record<string, unknown>) as SlideFormData;
+  const cleanedData = removeUndefined(data as unknown as Record<string, unknown>) as unknown as SlideFormData;
 
   const newSlide: Omit<Slide, 'id'> = {
     ...cleanedData,

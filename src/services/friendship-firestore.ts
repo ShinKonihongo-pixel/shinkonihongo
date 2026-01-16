@@ -359,13 +359,17 @@ export function subscribeToReceivedBadges(
   userId: string,
   callback: (badges: BadgeGift[]) => void
 ): Unsubscribe {
+  // Query without orderBy to avoid composite index requirement
   const q = query(
     collection(db, COLLECTIONS.BADGE_GIFTS),
-    where('toUserId', '==', userId),
-    orderBy('createdAt', 'desc')
+    where('toUserId', '==', userId)
   );
   return onSnapshot(q, snapshot => {
-    callback(snapshot.docs.map(doc => doc.data() as BadgeGift));
+    // Sort client-side by createdAt descending
+    const badges = snapshot.docs
+      .map(doc => doc.data() as BadgeGift)
+      .sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+    callback(badges);
   });
 }
 
@@ -458,13 +462,17 @@ export function subscribeToFriendNotifications(
   userId: string,
   callback: (notifications: FriendNotification[]) => void
 ): Unsubscribe {
+  // Query without orderBy to avoid composite index requirement
   const q = query(
     collection(db, COLLECTIONS.FRIEND_NOTIFICATIONS),
-    where('userId', '==', userId),
-    orderBy('createdAt', 'desc')
+    where('userId', '==', userId)
   );
   return onSnapshot(q, snapshot => {
-    callback(snapshot.docs.map(doc => doc.data() as FriendNotification));
+    // Sort client-side by createdAt descending
+    const notifications = snapshot.docs
+      .map(doc => doc.data() as FriendNotification)
+      .sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+    callback(notifications);
   });
 }
 

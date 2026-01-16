@@ -1,8 +1,10 @@
 // Game play component - handles all gameplay states
+// Professional Kahoot-like game interface
 
 import { useState, useEffect } from 'react';
 import type { QuizGame, GamePlayer, GameQuestion, PowerUpType } from '../../types/quiz-game';
 import { POWER_UPS } from '../../types/quiz-game';
+import { Trophy, Zap, Users, ChevronRight, Shield, Snowflake, Target, Crown, Medal, Award } from 'lucide-react';
 
 interface GamePlayProps {
   game: QuizGame;
@@ -21,6 +23,14 @@ interface GamePlayProps {
   gameAnswerFontSize?: number;
 }
 
+// Answer option colors - vibrant gradient pairs
+const ANSWER_COLORS = [
+  { bg: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)', icon: '▲' },
+  { bg: 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)', icon: '◆' },
+  { bg: 'linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)', icon: '●' },
+  { bg: 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)', icon: '■' },
+];
+
 export function GamePlay({
   game,
   currentPlayer,
@@ -34,7 +44,7 @@ export function GamePlay({
   onContinueFromLeaderboard,
   onUsePowerUp,
   onLeaveGame,
-  gameQuestionFontSize = 8,
+  gameQuestionFontSize = 2,
   gameAnswerFontSize = 1.1,
 }: GamePlayProps) {
   const [timeLeft, setTimeLeft] = useState(currentQuestion.timeLimit);
@@ -43,9 +53,7 @@ export function GamePlay({
   const [countdown, setCountdown] = useState(3);
   const [revealTimer, setRevealTimer] = useState(5);
   const [powerUpTimer, setPowerUpTimer] = useState(10);
-  // Store previous scores to calculate score changes
   const [prevScores, setPrevScores] = useState<Record<string, number>>({});
-  // Track if power-up has been confirmed (no changes allowed after)
   const [powerUpConfirmed, setPowerUpConfirmed] = useState(false);
 
   // Countdown for starting state
@@ -124,7 +132,7 @@ export function GamePlay({
   useEffect(() => {
     if (game.status === 'power_up') {
       setPowerUpTimer(10);
-      setPowerUpConfirmed(false); // Reset confirmed state
+      setPowerUpConfirmed(false);
       setSelectedPowerUp(null);
       setSelectedTarget(null);
       const timer = setInterval(() => {
@@ -163,13 +171,22 @@ export function GamePlay({
     }
   }, [game.status, isHost, onContinueFromLeaderboard]);
 
+  // Calculate timer progress percentage
+  const timerProgress = (timeLeft / currentQuestion.timeLimit) * 100;
+
   // Starting countdown
   if (game.status === 'starting') {
     return (
-      <div className="quiz-game-page">
-        <div className="game-starting">
-          <h2>Game sắp bắt đầu!</h2>
-          <div className="countdown">{countdown}</div>
+      <div className="game-fullscreen game-starting-screen">
+        <div className="starting-content">
+          <div className="starting-icon">
+            <Zap size={64} />
+          </div>
+          <h1 className="starting-title">Chuẩn bị!</h1>
+          <div className="starting-countdown">
+            <span className="countdown-number">{countdown}</span>
+          </div>
+          <p className="starting-hint">Game sắp bắt đầu...</p>
         </div>
       </div>
     );
@@ -181,67 +198,102 @@ export function GamePlay({
     const isBlocked = currentPlayer?.isBlocked;
     const hasTimeFreeze = currentPlayer?.hasTimeFreeze;
     const effectiveTime = hasTimeFreeze ? timeLeft + 5 : timeLeft;
+    const answeredCount = sortedPlayers.filter(p => p.currentAnswer !== null).length;
 
     return (
-      <div className="quiz-game-page">
-        {/* Timer centered at top */}
-        <div className={`game-timer-center ${timeLeft <= 5 ? 'timer-warning' : ''}`}>
-          {effectiveTime}
-          {hasTimeFreeze && <span className="time-bonus">+5s</span>}
+      <div className="game-fullscreen game-question-screen">
+        {/* Top bar */}
+        <div className="game-top-bar">
+          <div className="top-bar-left">
+            <span className="round-badge">
+              {game.currentRound + 1}/{game.totalRounds}
+            </span>
+            {currentQuestion.isSpecialRound && (
+              <span className="special-round-badge">
+                <Zap size={14} /> Special
+              </span>
+            )}
+          </div>
+          <div className="top-bar-center">
+            <div className={`timer-circle ${timeLeft <= 5 ? 'warning' : ''}`}>
+              <svg viewBox="0 0 100 100">
+                <circle
+                  className="timer-bg"
+                  cx="50" cy="50" r="45"
+                  fill="none"
+                  strokeWidth="8"
+                />
+                <circle
+                  className="timer-progress"
+                  cx="50" cy="50" r="45"
+                  fill="none"
+                  strokeWidth="8"
+                  strokeDasharray={`${timerProgress * 2.83} 283`}
+                  transform="rotate(-90 50 50)"
+                />
+              </svg>
+              <span className="timer-value">
+                {effectiveTime}
+                {hasTimeFreeze && <Snowflake size={12} className="time-freeze-icon" />}
+              </span>
+            </div>
+          </div>
+          <div className="top-bar-right">
+            <div className="score-display">
+              <Trophy size={16} />
+              <span>{currentPlayer?.score || 0}</span>
+            </div>
+          </div>
         </div>
 
-        <div className="game-question">
-          <div className="question-header-combined">
-            <span className="round-info">
-              Câu {game.currentRound + 1}/{game.totalRounds}
-              {currentQuestion.isSpecialRound && <span className="special-badge">Special!</span>}
-            </span>
-            <span className="score-info">Điểm: {currentPlayer?.score || 0}</span>
-          </div>
-
-          <div className="question-content">
+        {/* Question area */}
+        <div className="question-area">
+          <div className="question-card">
             <h2 className="question-text" style={{ fontSize: `${gameQuestionFontSize}rem` }}>
               {currentQuestion.question}
             </h2>
           </div>
+        </div>
 
-          {isBlocked ? (
-            <div className="blocked-message">
-              Bạn bị phong tỏa câu này!
-            </div>
-          ) : (
-            <div className="answer-options">
-              {currentQuestion.options.map((option, index) => (
-                <button
-                  key={index}
-                  className={`answer-btn answer-${index} ${
-                    currentPlayer?.currentAnswer === index ? 'selected' : ''
-                  } ${hasAnswered ? 'disabled' : ''}`}
-                  onClick={() => !hasAnswered && onSubmitAnswer(index)}
-                  style={{ fontSize: `${gameAnswerFontSize}rem` }}
-                  disabled={hasAnswered}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {hasAnswered && (
-            <p className="answered-message">Đã trả lời! Đang chờ người khác...</p>
-          )}
-
-          <div className="player-status">
-            {sortedPlayers.slice(0, 5).map(player => (
-              <span
-                key={player.id}
-                className={`player-dot ${player.currentAnswer !== null ? 'answered' : ''}`}
-                title={player.name}
+        {/* Answers area */}
+        {isBlocked ? (
+          <div className="blocked-overlay">
+            <Shield size={48} />
+            <p>Bạn bị phong tỏa câu này!</p>
+          </div>
+        ) : (
+          <div className="answers-grid">
+            {currentQuestion.options.map((option, index) => (
+              <button
+                key={index}
+                className={`answer-card ${currentPlayer?.currentAnswer === index ? 'selected' : ''} ${hasAnswered ? 'disabled' : ''}`}
+                onClick={() => !hasAnswered && onSubmitAnswer(index)}
+                style={{
+                  background: ANSWER_COLORS[index].bg,
+                  fontSize: `${gameAnswerFontSize}rem`
+                }}
+                disabled={hasAnswered}
               >
-                {player.name.charAt(0)}
-              </span>
+                <span className="answer-icon">{ANSWER_COLORS[index].icon}</span>
+                <span className="answer-text">{option}</span>
+              </button>
             ))}
           </div>
+        )}
+
+        {/* Bottom status bar */}
+        <div className="game-bottom-bar">
+          {hasAnswered ? (
+            <div className="answered-status">
+              <span className="status-check">✓</span>
+              <span>Đã trả lời</span>
+            </div>
+          ) : (
+            <div className="waiting-status">
+              <Users size={16} />
+              <span>{answeredCount}/{sortedPlayers.length} đã trả lời</span>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -249,102 +301,85 @@ export function GamePlay({
 
   // Answer reveal state
   if (game.status === 'answer_reveal') {
-    // Calculate score changes and sort players by score change (descending)
     const playersWithChanges = sortedPlayers.map(player => {
       const prevScore = prevScores[player.id] || 0;
       const scoreChange = player.score - prevScore;
       const answeredCorrectly = player.currentAnswer === currentQuestion.correctIndex;
-      return {
-        ...player,
-        scoreChange,
-        answeredCorrectly,
-        prevScore,
-      };
+      return { ...player, scoreChange, answeredCorrectly, prevScore };
     }).sort((a, b) => b.scoreChange - a.scoreChange);
 
-    // Count correct answers
     const correctCount = playersWithChanges.filter(p => p.answeredCorrectly).length;
+    const myResult = playersWithChanges.find(p => p.id === currentPlayer?.id);
 
     return (
-      <div className="quiz-game-page">
-        <div className="game-reveal">
-          <div className="question-header">
-            <span className="round-info">Câu {game.currentRound + 1}/{game.totalRounds}</span>
-            <div className="timer">{revealTimer}s</div>
-            <span className="score-info">Điểm: {currentPlayer?.score || 0}</span>
+      <div className="game-fullscreen game-reveal-screen">
+        {/* Result header */}
+        <div className="reveal-header">
+          <div className={`result-banner ${myResult?.answeredCorrectly ? 'correct' : 'wrong'}`}>
+            {myResult?.answeredCorrectly ? (
+              <>
+                <span className="result-icon">🎉</span>
+                <span className="result-text">Chính xác!</span>
+                {myResult.scoreChange > 0 && (
+                  <span className="score-gained">+{myResult.scoreChange}</span>
+                )}
+              </>
+            ) : (
+              <>
+                <span className="result-icon">😔</span>
+                <span className="result-text">Sai rồi!</span>
+              </>
+            )}
           </div>
+        </div>
 
-          <div className="reveal-answer-section">
-            <div className="correct-answer-display">
-              <span className="correct-label">Đáp án đúng:</span>
-              <span className="correct-text">{currentQuestion.options[currentQuestion.correctIndex]}</span>
-            </div>
-            <div className="answer-stats">
-              <span className="correct-count">{correctCount}/{sortedPlayers.length} trả lời đúng</span>
-            </div>
+        {/* Correct answer display */}
+        <div className="correct-answer-card">
+          <span className="correct-label">Đáp án đúng</span>
+          <span
+            className="correct-answer"
+            style={{ background: ANSWER_COLORS[currentQuestion.correctIndex].bg }}
+          >
+            {ANSWER_COLORS[currentQuestion.correctIndex].icon} {currentQuestion.options[currentQuestion.correctIndex]}
+          </span>
+          <span className="answer-stats">{correctCount}/{sortedPlayers.length} trả lời đúng</span>
+        </div>
+
+        {/* Players results */}
+        <div className="reveal-players">
+          <h3>Kết quả</h3>
+          <div className="reveal-list">
+            {playersWithChanges.slice(0, 8).map((player, index) => {
+              const isMe = player.id === currentPlayer?.id;
+              return (
+                <div
+                  key={player.id}
+                  className={`reveal-item ${isMe ? 'is-me' : ''} ${player.answeredCorrectly ? 'correct' : 'wrong'}`}
+                >
+                  <span className="reveal-rank">
+                    {index === 0 && player.scoreChange > 0 ? <Crown size={16} /> : `#${index + 1}`}
+                  </span>
+                  <span className="reveal-name">
+                    {player.name}
+                    {isMe && <span className="me-tag">Bạn</span>}
+                  </span>
+                  <span className="reveal-status">
+                    {player.answeredCorrectly ? '✓' : player.currentAnswer !== null ? '✗' : '—'}
+                  </span>
+                  <span className="reveal-score">
+                    {player.score}
+                    {player.scoreChange > 0 && <span className="change positive">+{player.scoreChange}</span>}
+                  </span>
+                </div>
+              );
+            })}
           </div>
+        </div>
 
-          <div className="reveal-players-section">
-            <h3>Kết quả người chơi</h3>
-            <div className="reveal-players-list">
-              {playersWithChanges.map((player, index) => {
-                const isMe = player.id === currentPlayer?.id;
-                return (
-                  <div
-                    key={player.id}
-                    className={`reveal-player-item ${isMe ? 'is-me' : ''} ${player.answeredCorrectly ? 'correct' : 'wrong'}`}
-                  >
-                    <div className="reveal-player-rank">
-                      {index === 0 && player.scoreChange > 0 ? '🏆' : `#${index + 1}`}
-                    </div>
-                    <div className="reveal-player-info">
-                      <span className="reveal-player-name">
-                        {player.name}
-                        {isMe && <span className="me-badge">(Bạn)</span>}
-                      </span>
-                      <div className="reveal-player-status">
-                        {player.answeredCorrectly ? (
-                          <span className="status-correct">✓ Đúng</span>
-                        ) : player.currentAnswer !== null ? (
-                          <span className="status-wrong">✗ Sai</span>
-                        ) : player.isBlocked ? (
-                          <span className="status-blocked">🚫 Bị phong tỏa</span>
-                        ) : (
-                          <span className="status-no-answer">— Không trả lời</span>
-                        )}
-                        {player.streak >= 2 && (
-                          <span className="streak-badge">{player.streak} streak 🔥</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="reveal-player-score">
-                      <span className="score-total">{player.score}</span>
-                      {player.scoreChange > 0 && (
-                        <span className="score-change positive">+{player.scoreChange}</span>
-                      )}
-                      {player.scoreChange < 0 && (
-                        <span className="score-change negative">{player.scoreChange}</span>
-                      )}
-                    </div>
-                    <div className="reveal-player-bonuses">
-                      {player.hasDoublePoints && <span className="bonus-badge" title="Nhân đôi điểm">✨x2</span>}
-                      {player.hasShield && <span className="bonus-badge" title="Có lá chắn">🛡️</span>}
-                      {player.hasTimeFreeze && <span className="bonus-badge" title="Đóng băng thời gian">❄️</span>}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {isHost && (
-            <button className="btn btn-primary btn-next" onClick={onNextRound}>
-              Tiếp tục ({revealTimer}s)
-            </button>
-          )}
-          {!isHost && (
-            <p className="auto-advance-hint">Tự động tiếp tục sau {revealTimer}s...</p>
-          )}
+        {/* Timer bar */}
+        <div className="reveal-timer-bar">
+          <div className="timer-fill" style={{ width: `${(revealTimer / 5) * 100}%` }} />
+          <span className="timer-text">Tiếp tục sau {revealTimer}s</span>
         </div>
       </div>
     );
@@ -354,160 +389,185 @@ export function GamePlay({
   if (game.status === 'power_up') {
     const otherPlayers = sortedPlayers.filter(p => p.id !== currentPlayer?.id);
     const needsTarget = selectedPowerUp === 'steal_points' || selectedPowerUp === 'block_player';
-    // Check if current player answered correctly (only they can select power-up)
     const answeredCorrectly = currentPlayer?.currentAnswer === currentQuestion.correctIndex;
 
     const handleUsePowerUp = async () => {
-      if (powerUpConfirmed) return; // Already confirmed
+      if (powerUpConfirmed) return;
       if (!selectedPowerUp) return;
       if (needsTarget && !selectedTarget) return;
 
       const success = await onUsePowerUp(selectedPowerUp, selectedTarget || undefined);
       if (success) {
-        setPowerUpConfirmed(true); // Lock selection after successful use
+        setPowerUpConfirmed(true);
       }
     };
 
-    // Player did not answer correctly - show message only
+    // Player did not answer correctly
     if (!answeredCorrectly) {
       return (
-        <div className="quiz-game-page">
-          <div className="game-powerup">
-            <div className="powerup-header">
-              <h2>Round đặc biệt!</h2>
-              <div className={`timer ${powerUpTimer <= 3 ? 'timer-warning' : ''}`}>{powerUpTimer}s</div>
-            </div>
-            <div className="powerup-ineligible">
-              <p className="ineligible-icon">😔</p>
-              <p className="ineligible-message">Bạn không trả lời đúng nên không được chọn power-up!</p>
-              <p className="ineligible-hint">Trả lời đúng ở round đặc biệt để nhận power-up.</p>
-            </div>
-            <p className="auto-advance-hint">Tự động tiếp tục sau {powerUpTimer}s...</p>
+        <div className="game-fullscreen game-powerup-screen ineligible">
+          <div className="powerup-header">
+            <Zap size={32} className="powerup-icon-large" />
+            <h2>Round Đặc Biệt!</h2>
+            <div className="powerup-timer">{powerUpTimer}s</div>
+          </div>
+          <div className="powerup-ineligible-content">
+            <div className="ineligible-icon">😔</div>
+            <p className="ineligible-text">Bạn không trả lời đúng</p>
+            <p className="ineligible-hint">Trả lời đúng để nhận power-up!</p>
           </div>
         </div>
       );
     }
 
-    // Player already confirmed their selection
+    // Power-up confirmed
     if (powerUpConfirmed) {
       const confirmedPowerUp = POWER_UPS.find(p => p.type === selectedPowerUp);
       return (
-        <div className="quiz-game-page">
-          <div className="game-powerup">
-            <div className="powerup-header">
-              <h2>Round đặc biệt!</h2>
-              <div className={`timer ${powerUpTimer <= 3 ? 'timer-warning' : ''}`}>{powerUpTimer}s</div>
-            </div>
-            <div className="powerup-confirmed">
-              <p className="confirmed-icon">✅</p>
-              <p className="confirmed-message">Bạn đã chọn power-up!</p>
-              {confirmedPowerUp && (
-                <div className="confirmed-powerup">
-                  <span className="powerup-icon">{confirmedPowerUp.icon}</span>
-                  <span className="powerup-name">{confirmedPowerUp.name}</span>
-                </div>
-              )}
-            </div>
-            <p className="auto-advance-hint">Đang chờ người chơi khác... ({powerUpTimer}s)</p>
+        <div className="game-fullscreen game-powerup-screen confirmed">
+          <div className="powerup-header">
+            <Zap size={32} className="powerup-icon-large" />
+            <h2>Round Đặc Biệt!</h2>
+            <div className="powerup-timer">{powerUpTimer}s</div>
+          </div>
+          <div className="powerup-confirmed-content">
+            <div className="confirmed-check">✓</div>
+            <p>Đã chọn power-up!</p>
+            {confirmedPowerUp && (
+              <div className="confirmed-powerup-display">
+                <span className="powerup-emoji">{confirmedPowerUp.icon}</span>
+                <span className="powerup-name">{confirmedPowerUp.name}</span>
+              </div>
+            )}
           </div>
         </div>
       );
     }
 
-    // Player can select power-up
+    // Power-up selection
     return (
-      <div className="quiz-game-page">
-        <div className="game-powerup">
-          <div className="powerup-header">
-            <h2>Round đặc biệt!</h2>
-            <div className={`timer ${powerUpTimer <= 3 ? 'timer-warning' : ''}`}>{powerUpTimer}s</div>
-          </div>
-          <p>🎉 Bạn trả lời đúng! Chọn một power-up (còn {powerUpTimer}s):</p>
-
-          <div className="powerup-list">
-            {POWER_UPS.map(powerUp => (
-              <button
-                key={powerUp.type}
-                className={`powerup-btn ${selectedPowerUp === powerUp.type ? 'selected' : ''}`}
-                onClick={() => {
-                  setSelectedPowerUp(powerUp.type);
-                  setSelectedTarget(null);
-                }}
-              >
-                <span className="powerup-icon">{powerUp.icon}</span>
-                <span className="powerup-name">{powerUp.name}</span>
-                <span className="powerup-desc">{powerUp.description}</span>
-              </button>
-            ))}
-          </div>
-
-          {needsTarget && selectedPowerUp && (
-            <div className="target-selection">
-              <h3>Chọn mục tiêu:</h3>
-              <div className="target-list">
-                {otherPlayers.map(player => (
-                  <button
-                    key={player.id}
-                    className={`target-btn ${selectedTarget === player.id ? 'selected' : ''}`}
-                    onClick={() => setSelectedTarget(player.id)}
-                  >
-                    <span className="target-name">{player.name}</span>
-                    <span className="target-score">{player.score} điểm</span>
-                    {player.hasShield && <span className="shield-icon">🛡️</span>}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="powerup-actions">
-            <button
-              className="btn btn-primary"
-              onClick={handleUsePowerUp}
-              disabled={!selectedPowerUp || (needsTarget && !selectedTarget)}
-            >
-              Xác nhận
-            </button>
-          </div>
-
-          <p className="auto-advance-hint">Sau {powerUpTimer}s nếu không chọn sẽ mất quyền lợi!</p>
+      <div className="game-fullscreen game-powerup-screen">
+        <div className="powerup-header">
+          <Zap size={32} className="powerup-icon-large" />
+          <h2>Chọn Power-up!</h2>
+          <div className="powerup-timer">{powerUpTimer}s</div>
         </div>
+
+        <div className="powerup-grid">
+          {POWER_UPS.map(powerUp => (
+            <button
+              key={powerUp.type}
+              className={`powerup-card ${selectedPowerUp === powerUp.type ? 'selected' : ''}`}
+              onClick={() => {
+                setSelectedPowerUp(powerUp.type);
+                setSelectedTarget(null);
+              }}
+            >
+              <span className="powerup-emoji">{powerUp.icon}</span>
+              <span className="powerup-name">{powerUp.name}</span>
+              <span className="powerup-desc">{powerUp.description}</span>
+            </button>
+          ))}
+        </div>
+
+        {needsTarget && selectedPowerUp && (
+          <div className="target-section">
+            <h3><Target size={16} /> Chọn mục tiêu</h3>
+            <div className="target-grid">
+              {otherPlayers.map(player => (
+                <button
+                  key={player.id}
+                  className={`target-card ${selectedTarget === player.id ? 'selected' : ''}`}
+                  onClick={() => setSelectedTarget(player.id)}
+                >
+                  <span className="target-name">{player.name}</span>
+                  <span className="target-score">{player.score} điểm</span>
+                  {player.hasShield && <Shield size={14} className="shield-indicator" />}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <button
+          className="confirm-powerup-btn"
+          onClick={handleUsePowerUp}
+          disabled={!selectedPowerUp || (needsTarget && !selectedTarget)}
+        >
+          Xác nhận <ChevronRight size={20} />
+        </button>
       </div>
     );
   }
 
   // Leaderboard state
   if (game.status === 'leaderboard') {
-    return (
-      <div className="quiz-game-page">
-        <div className="game-leaderboard">
-          <div className="leaderboard-header">
-            <h2>Bảng xếp hạng</h2>
-            <div className="timer">{revealTimer}s</div>
-          </div>
-          <p>Sau {game.currentRound + 1} câu hỏi</p>
+    const top3 = sortedPlayers.slice(0, 3);
+    const rest = sortedPlayers.slice(3);
 
-          <div className="leaderboard-list">
-            {sortedPlayers.map((player, index) => (
+    return (
+      <div className="game-fullscreen game-leaderboard-screen">
+        <div className="leaderboard-header">
+          <Trophy size={32} className="trophy-icon" />
+          <h2>Bảng Xếp Hạng</h2>
+          <p className="round-progress">Sau câu {game.currentRound + 1}/{game.totalRounds}</p>
+        </div>
+
+        {/* Podium for top 3 */}
+        <div className="podium">
+          {top3[1] && (
+            <div className="podium-place second">
+              <div className="podium-player">
+                <Medal size={24} className="medal silver" />
+                <span className="podium-name">{top3[1].name}</span>
+                <span className="podium-score">{top3[1].score}</span>
+              </div>
+              <div className="podium-stand">2</div>
+            </div>
+          )}
+          {top3[0] && (
+            <div className="podium-place first">
+              <div className="podium-player">
+                <Crown size={28} className="crown" />
+                <span className="podium-name">{top3[0].name}</span>
+                <span className="podium-score">{top3[0].score}</span>
+                {top3[0].streak >= 3 && <span className="streak-fire">🔥 {top3[0].streak}</span>}
+              </div>
+              <div className="podium-stand">1</div>
+            </div>
+          )}
+          {top3[2] && (
+            <div className="podium-place third">
+              <div className="podium-player">
+                <Award size={22} className="medal bronze" />
+                <span className="podium-name">{top3[2].name}</span>
+                <span className="podium-score">{top3[2].score}</span>
+              </div>
+              <div className="podium-stand">3</div>
+            </div>
+          )}
+        </div>
+
+        {/* Rest of players */}
+        {rest.length > 0 && (
+          <div className="leaderboard-rest">
+            {rest.map((player, index) => (
               <div
                 key={player.id}
-                className={`leaderboard-item ${
-                  index === 0 ? 'first' : index === 1 ? 'second' : index === 2 ? 'third' : ''
-                } ${player.id === currentPlayer?.id ? 'is-me' : ''}`}
+                className={`leaderboard-row ${player.id === currentPlayer?.id ? 'is-me' : ''}`}
               >
-                <span className="rank">
-                  {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
-                </span>
-                <span className="name">{player.name}</span>
-                <span className="score">{player.score}</span>
-                {player.streak >= 3 && (
-                  <span className="streak-badge">{player.streak} streak</span>
-                )}
+                <span className="row-rank">#{index + 4}</span>
+                <span className="row-name">{player.name}</span>
+                <span className="row-score">{player.score}</span>
               </div>
             ))}
           </div>
+        )}
 
-          <p className="auto-advance-hint">Câu tiếp theo sau {revealTimer}s...</p>
+        {/* Timer bar */}
+        <div className="reveal-timer-bar">
+          <div className="timer-fill" style={{ width: `${(revealTimer / 5) * 100}%` }} />
+          <span className="timer-text">Câu tiếp theo sau {revealTimer}s</span>
         </div>
       </div>
     );
@@ -515,13 +575,12 @@ export function GamePlay({
 
   // Fallback
   return (
-    <div className="quiz-game-page">
-      <div className="loading-state">
-        <p>Đang tải...</p>
-        <button className="btn btn-outline" onClick={onLeaveGame}>
-          Rời game
-        </button>
-      </div>
+    <div className="game-fullscreen game-loading-screen">
+      <div className="loading-spinner" />
+      <p>Đang tải...</p>
+      <button className="leave-btn" onClick={onLeaveGame}>
+        Rời game
+      </button>
     </div>
   );
 }

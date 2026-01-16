@@ -255,8 +255,9 @@ export async function createGame(
     settings,
     // Metadata for display in lobby
     source: data.source,
-    jlptLevels: data.source === 'jlpt' ? data.jlptLevels : undefined,
-    lessonNames: data.source === 'flashcards' ? data.lessonNames : undefined,
+    // Only include optional fields if they have values (Firestore doesn't accept undefined)
+    ...(data.source === 'jlpt' && data.jlptLevels && data.jlptLevels.length > 0 && { jlptLevels: data.jlptLevels }),
+    ...(data.source === 'flashcards' && data.lessonNames && data.lessonNames.length > 0 && { lessonNames: data.lessonNames }),
   };
 
   const docRef = await addDoc(collection(db, COLLECTIONS.GAMES), game);

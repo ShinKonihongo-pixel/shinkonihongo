@@ -4,6 +4,7 @@
 import { useState, useMemo } from 'react';
 import type { User } from '../../types/user';
 import type {
+  Classroom,
   ClassroomTest,
   ClassroomSubmission,
   StudentGrade,
@@ -30,13 +31,16 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Download,
 } from 'lucide-react';
+import { exportStudentReportPDF } from '../../utils/student-report-pdf-export';
 
 interface StudentDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   userId: string;
   user?: User;
+  classroom?: Classroom;
   studentGrade?: StudentGrade;
   attendanceSummary?: StudentAttendanceSummary;
   attendanceRecords: AttendanceRecord[];
@@ -52,6 +56,7 @@ export function StudentDetailModal({
   onClose,
   userId,
   user,
+  classroom,
   studentGrade,
   attendanceSummary,
   attendanceRecords,
@@ -60,6 +65,30 @@ export function StudentDetailModal({
   tests,
 }: StudentDetailModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [exporting, setExporting] = useState(false);
+
+  // Handle PDF export
+  const handleExportPDF = () => {
+    if (!user || !classroom) return;
+
+    setExporting(true);
+    try {
+      exportStudentReportPDF({
+        user,
+        classroom,
+        studentGrade,
+        attendanceSummary,
+        attendanceRecords,
+        evaluations,
+        submissions,
+        tests,
+      });
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   // Student submissions with test info
   const submissionsWithTest = useMemo(() => {
@@ -123,7 +152,20 @@ export function StudentDetailModal({
               <span className="student-email">{user?.email || ''}</span>
             </div>
           </div>
-          <button className="btn-close" onClick={onClose}><X size={20} /></button>
+          <div className="header-actions">
+            {classroom && (
+              <button
+                className="btn btn-secondary btn-export"
+                onClick={handleExportPDF}
+                disabled={exporting}
+                title="Xuat bao cao PDF"
+              >
+                <Download size={16} />
+                {exporting ? 'Dang xuat...' : 'Xuat PDF'}
+              </button>
+            )}
+            <button className="btn-close" onClick={onClose}><X size={20} /></button>
+          </div>
         </div>
 
         {/* Tabs */}

@@ -47,6 +47,7 @@ export function GameCreate({
   const [timePerQuestion, setTimePerQuestion] = useState(15);
   const [specialRoundEvery, setSpecialRoundEvery] = useState(5);
   const [expandedLevel, setExpandedLevel] = useState<JLPTLevel | null>(null);
+  const [activeTab, setActiveTab] = useState<'basic' | 'settings'>('basic');
 
   // Count available cards from selected lessons
   const availableCards = flashcards.filter(c => selectedLessons.includes(c.lessonId)).length;
@@ -178,6 +179,26 @@ export function GameCreate({
         <h2>Tạo phòng mới</h2>
 
         <form onSubmit={handleSubmit} className="create-game-form">
+          {/* Tab navigation */}
+          <div className="game-create-tabs">
+            <button
+              type="button"
+              className={`tab-btn ${activeTab === 'basic' ? 'active' : ''}`}
+              onClick={() => setActiveTab('basic')}
+            >
+              Cơ bản
+            </button>
+            <button
+              type="button"
+              className={`tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
+              onClick={() => setActiveTab('settings')}
+            >
+              Cài đặt
+            </button>
+          </div>
+
+          {activeTab === 'basic' && (
+            <>
           <div className="form-group">
             <label htmlFor="title">Tên phòng</label>
             <input
@@ -369,20 +390,37 @@ export function GameCreate({
               <small>5-30 giây</small>
             </div>
           </div>
+            </>
+          )}
 
-          <div className="form-group">
-            <label htmlFor="special">Câu đặc biệt (mỗi N câu)</label>
-            <input
-              type="number"
-              id="special"
-              value={specialRoundEvery}
-              onChange={(e) => setSpecialRoundEvery(Math.max(1, Math.min(20, parseInt(e.target.value) || 5)))}
-              min={1}
-              max={20}
-              className="form-input"
-            />
-            <small>Câu {specialRoundEvery}, {specialRoundEvery * 2}, {specialRoundEvery * 3}... sẽ là câu đặc biệt (có power-up)</small>
-          </div>
+          {activeTab === 'settings' && (
+            <div className="settings-tab-content">
+              <div className="form-group">
+                <label htmlFor="special">Câu đặc biệt (mỗi N câu)</label>
+                <input
+                  type="number"
+                  id="special"
+                  value={specialRoundEvery}
+                  onChange={(e) => setSpecialRoundEvery(Math.max(1, Math.min(20, parseInt(e.target.value) || 5)))}
+                  min={1}
+                  max={20}
+                  className="form-input"
+                />
+                <small>Câu {specialRoundEvery}, {specialRoundEvery * 2}, {specialRoundEvery * 3}... sẽ là câu đặc biệt (có power-up)</small>
+              </div>
+
+              <div className="settings-info">
+                <p><strong>💡 Câu đặc biệt:</strong> Người chơi có thể nhận power-up khi trả lời đúng câu đặc biệt</p>
+                <p><strong>Power-ups:</strong></p>
+                <ul>
+                  <li>🛡️ Shield - Bảo vệ điểm</li>
+                  <li>⚡ Double - Nhân đôi điểm</li>
+                  <li>⏱️ Time Freeze - Thêm thời gian</li>
+                  <li>💰 Steal - Cướp điểm đối thủ</li>
+                </ul>
+              </div>
+            </div>
+          )}
 
           {error && <p className="error-message">{error}</p>}
 
