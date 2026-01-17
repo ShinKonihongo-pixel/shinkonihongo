@@ -15,6 +15,7 @@ import {
   LecturesTab,
   JLPTTab,
   KaiwaTab,
+  GameTab,
   UsersTab,
   type ManagementTab,
 } from '../cards-management';
@@ -114,6 +115,7 @@ export function CardsPage({
           <button className={`tab-btn ${activeTab === 'lectures' ? 'active' : ''}`} onClick={() => setActiveTab('lectures')}>Bài giảng ({lectures.length})</button>
           <button className={`tab-btn ${activeTab === 'jlpt' ? 'active' : ''}`} onClick={() => setActiveTab('jlpt')}>JLPT</button>
           <button className={`tab-btn ${activeTab === 'kaiwa' ? 'active' : ''}`} onClick={() => setActiveTab('kaiwa')}>Kaiwa ({kaiwaQuestions.length})</button>
+          <button className={`tab-btn ${activeTab === 'game' ? 'active' : ''}`} onClick={() => setActiveTab('game')}>Game</button>
           <button className={`tab-btn ${activeTab === 'assignments' ? 'active' : ''}`} onClick={() => setActiveTab('assignments')}>Bài tập</button>
           <button className={`tab-btn ${activeTab === 'tests' ? 'active' : ''}`} onClick={() => setActiveTab('tests')}>Bài kiểm tra ({testTemplates.length})</button>
           <button className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>Tài khoản ({visibleUsers.length})</button>
@@ -190,6 +192,11 @@ export function CardsPage({
           currentUser={currentUser}
           isSuperAdmin={isSuperAdmin}
         />
+      )}
+
+      {/* Game Tab */}
+      {activeTab === 'game' && (
+        <GameTab />
       )}
 
       {/* Assignments Tab (placeholder) */}

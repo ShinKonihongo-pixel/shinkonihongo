@@ -12,7 +12,7 @@ import { LoginPage } from './components/pages/login-page';
 import { HomePage } from './components/pages/home-page';
 import { CardsPage } from './components/pages/cards-page';
 import { StudyPage } from './components/pages/study-page';
-import { QuizGamePage } from './components/pages/quiz-game-page';
+// QuizGamePage imported by GameHubPage
 import { SettingsPage } from './components/pages/settings-page';
 import { JLPTPage } from './components/pages/jlpt-page';
 import { ChatPage } from './components/pages/chat-page';
@@ -26,6 +26,8 @@ import { TeacherManagementPage } from './components/pages/teacher-management-pag
 import { SalaryPage } from './components/pages/salary-page';
 import { MyTeachingPage } from './components/pages/my-teaching-page';
 import { NotificationsPage } from './components/pages/notifications-page';
+import { GameHubPage } from './components/pages/game-hub-page';
+import type { GameType } from './types/game-hub';
 import { useJLPTQuestions } from './hooks/use-jlpt-questions';
 import { useKaiwaQuestions } from './hooks/use-kaiwa-questions';
 import { useUserHistory } from './hooks/use-user-history';
@@ -42,21 +44,44 @@ import './App.css';
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [initialFilterLevel, setInitialFilterLevel] = useState<JLPTLevel | 'all'>('all');
-  const [initialJoinCode, setInitialJoinCode] = useState<string | null>(null);
+  // Game Hub state - unified game join handling
+  const [initialGameType, setInitialGameType] = useState<GameType | null>(null);
+  const [initialGameJoinCode, setInitialGameJoinCode] = useState<string | null>(null);
   const [editingLectureId, setEditingLectureId] = useState<string | undefined>(undefined);
   const [editingLectureFolderId, setEditingLectureFolderId] = useState<string | undefined>(undefined);
   const [editingLectureLevel, setEditingLectureLevel] = useState<JLPTLevel | undefined>(undefined);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  // Handle URL parameters for quiz game join (QR code scanning)
+  // Handle URL parameters for game join (QR code scanning)
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const joinCode = urlParams.get('join');
+    const racingCode = urlParams.get('racing');
+    const goldenBellCode = urlParams.get('golden-bell');
+    const pictureGuessCode = urlParams.get('picture-guess');
+
+    // Route all game join codes to Game Hub
     if (joinCode) {
-      setInitialJoinCode(joinCode.toUpperCase());
-      setCurrentPage('quiz');
-      // Clean URL without reload
+      setInitialGameType('quiz');
+      setInitialGameJoinCode(joinCode.toUpperCase());
+      setCurrentPage('game-hub');
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (racingCode) {
+      // Default to boat-racing for legacy racing links
+      setInitialGameType('boat-racing');
+      setInitialGameJoinCode(racingCode.toUpperCase());
+      setCurrentPage('game-hub');
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (goldenBellCode) {
+      setInitialGameType('golden-bell');
+      setInitialGameJoinCode(goldenBellCode.toUpperCase());
+      setCurrentPage('game-hub');
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (pictureGuessCode) {
+      setInitialGameType('picture-guess');
+      setInitialGameJoinCode(pictureGuessCode.toUpperCase());
+      setCurrentPage('game-hub');
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
@@ -81,12 +106,12 @@ function App() {
 
   // Reset to home page when user logs in (unless joining via QR code)
   useEffect(() => {
-    if (isLoggedIn && !initialJoinCode) {
+    if (isLoggedIn && !initialGameJoinCode) {
       setCurrentPage('home');
-    } else if (isLoggedIn && initialJoinCode) {
-      setCurrentPage('quiz');
+    } else if (isLoggedIn && initialGameJoinCode) {
+      setCurrentPage('game-hub');
     }
-  }, [isLoggedIn, initialJoinCode]);
+  }, [isLoggedIn, initialGameJoinCode]);
 
   // User history
   const {
@@ -434,22 +459,19 @@ function App() {
           />
         )}
 
-        {currentPage === 'quiz' && currentUser && (
-          <QuizGamePage
-            currentUserId={currentUser.id}
-            currentUserName={currentUser.username}
-            currentUserAvatar={currentUser.avatar}
+        {/* Game Hub - Unified game center */}
+        {currentPage === 'game-hub' && (
+          <GameHubPage
+            currentUser={currentUser}
             flashcards={cards}
             jlptQuestions={jlptQuestions}
             getLessonsByLevel={filteredGetLessonsByLevel}
             getChildLessons={filteredGetChildLessons}
-            onGoHome={() => setCurrentPage('home')}
-            initialJoinCode={initialJoinCode}
-            onJoinCodeUsed={() => setInitialJoinCode(null)}
             settings={settings}
-            // Friends integration
             friends={friendsWithUsers}
             onInviteFriend={sendGameInvitation}
+            initialGame={initialGameType}
+            initialJoinCode={initialGameJoinCode}
           />
         )}
 

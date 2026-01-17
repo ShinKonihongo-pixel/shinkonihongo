@@ -3,6 +3,7 @@
 import React from 'react';
 import type { Flashcard } from '../../types/flashcard';
 import type { AppSettings } from '../../hooks/use-settings';
+import { CARD_FRAME_PRESETS } from '../../hooks/use-settings';
 import { useTextToSpeech } from '../../hooks/use-text-to-speech';
 import { Volume2 } from 'lucide-react';
 
@@ -39,6 +40,18 @@ const defaultSettings: AppSettings = {
   cardBackgroundGradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
   cardBackgroundColor: '#667eea',
   cardBackgroundImage: '',
+  cardFrame: 'none',
+  customFrame: {
+    borderWidth: 4,
+    borderStyle: 'solid',
+    borderColor: '#FFD700',
+    borderRadius: 12,
+    glowEnabled: true,
+    glowColor: '#FFD700',
+    glowIntensity: 10,
+    animationEnabled: false,
+    animationType: 'none',
+  },
   gameQuestionContent: 'kanji',
   gameAnswerContent: 'vocabulary_meaning',
   gameQuestionFontSize: 8,
@@ -59,6 +72,40 @@ const defaultSettings: AppSettings = {
   appBackground: 'default',
   appBackgroundCustomUrl: '',
 };
+
+// Get card frame styles based on settings
+function getCardFrameStyle(settings: AppSettings): React.CSSProperties {
+  if (settings.cardFrame === 'custom') {
+    const cf = settings.customFrame;
+    const style: React.CSSProperties = {
+      border: `${cf.borderWidth}px ${cf.borderStyle} ${cf.borderColor}`,
+      borderRadius: `${cf.borderRadius}px`,
+    };
+    if (cf.glowEnabled) {
+      style.boxShadow = `0 0 ${cf.glowIntensity}px ${cf.glowColor}, 0 0 ${cf.glowIntensity * 2}px ${cf.glowColor}`;
+    }
+    return style;
+  }
+  const framePreset = CARD_FRAME_PRESETS.find(f => f.id === settings.cardFrame);
+  return framePreset?.css || {};
+}
+
+// Get animation class for frame
+function getFrameAnimationClass(settings: AppSettings): string {
+  if (settings.cardFrame === 'custom') {
+    if (settings.customFrame.animationEnabled) {
+      switch (settings.customFrame.animationType) {
+        case 'pulse': return 'frame-anim-pulse-gold';
+        case 'glow': return 'frame-anim-glow-blue';
+        case 'shimmer': return 'frame-anim-shimmer';
+        default: return '';
+      }
+    }
+    return '';
+  }
+  const framePreset = CARD_FRAME_PRESETS.find(f => f.id === settings.cardFrame);
+  return framePreset?.animationClass || '';
+}
 
 // Check if current screen is mobile
 function useIsMobile() {
@@ -141,7 +188,7 @@ export function FlashcardItem({
         onClick={onFlip}
       >
         {/* Front side - Kanji only */}
-        <div className="flashcard-face flashcard-front" style={getCardBackgroundStyle(settings)}>
+        <div className={`flashcard-face flashcard-front ${getFrameAnimationClass(settings)}`} style={{ ...getCardBackgroundStyle(settings), ...getCardFrameStyle(settings) }}>
           <span className="jlpt-badge">{levelBadge}</span>
           <div className="card-content">
             <div className="kanji" style={{ fontSize: `${kanjiFontSize}px`, fontFamily: `"${settings.kanjiFont}", serif`, fontWeight: settings.kanjiBold ? 900 : 400 }}>
@@ -152,7 +199,7 @@ export function FlashcardItem({
         </div>
 
         {/* Back side - Answer */}
-        <div className="flashcard-face flashcard-back">
+        <div className={`flashcard-face flashcard-back ${getFrameAnimationClass(settings)}`} style={getCardFrameStyle(settings)}>
           <span className="jlpt-badge">{levelBadge}</span>
           <div className="card-content">
             {settings.showSinoVietnamese && card.sinoVietnamese && (

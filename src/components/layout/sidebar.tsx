@@ -45,7 +45,7 @@ const navItems: NavItem[] = [
   { page: 'home', label: 'Trang chủ', icon: <Home {...iconProps} /> },
   { page: 'cards', label: 'Quản Lí', icon: <LayoutDashboard {...iconProps} />, roles: ['admin', 'super_admin'] },
   { page: 'study', label: 'Flash Card', icon: <Layers {...iconProps} /> },
-  { page: 'quiz', label: 'Game', icon: <Gamepad2 {...iconProps} /> },
+  { page: 'game-hub', label: 'Game', icon: <Gamepad2 {...iconProps} /> },
   { page: 'jlpt', label: 'JLPT', icon: <Award {...iconProps} /> },
   { page: 'lectures', label: 'Bài giảng', icon: <GraduationCap {...iconProps} /> },
   { page: 'classroom', label: 'Lớp Học', icon: <School {...iconProps} /> },

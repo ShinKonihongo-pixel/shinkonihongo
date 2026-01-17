@@ -8,7 +8,7 @@ import type { KaiwaDefaultQuestion, KaiwaQuestionFormData, KaiwaFolder } from '.
 import type { JLPTLevel as KaiwaJLPTLevel, ConversationTopic, ConversationStyle } from '../../types/kaiwa';
 import type { Classroom } from '../../types/classroom';
 
-export type ManagementTab = 'flashcards' | 'lectures' | 'jlpt' | 'kaiwa' | 'assignments' | 'tests' | 'users';
+export type ManagementTab = 'flashcards' | 'lectures' | 'jlpt' | 'kaiwa' | 'game' | 'assignments' | 'tests' | 'users';
 
 // Navigation state types
 export type FlashcardNavState =

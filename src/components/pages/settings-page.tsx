@@ -1,7 +1,8 @@
 // Settings page component with tabs: General Settings and Personal Info
 
 import { useState, useMemo, useEffect } from 'react';
-import type { AppSettings, CardBackgroundType, GameQuestionContent, GameAnswerContent, GlobalTheme } from '../../hooks/use-settings';
+import type { AppSettings, CardBackgroundType, GameQuestionContent, GameAnswerContent, GlobalTheme, CardFrameId, CustomFrameSettings } from '../../hooks/use-settings';
+import { CARD_FRAME_PRESETS } from '../../hooks/use-settings';
 import type { CurrentUser, StudySession, GameSession, JLPTSession, UserStats, User } from '../../types/user';
 import type { Flashcard, Lesson } from '../../types/flashcard';
 import type { BadgeType, FriendWithUser, UserBadgeStats, BadgeGift } from '../../types/friendship';
@@ -24,6 +25,7 @@ function getDeviceType(): DeviceType {
 }
 
 type SettingsTab = 'general' | 'profile' | 'friends';
+type GeneralSubTab = 'flashcard' | 'study' | 'game' | 'kaiwa' | 'system';
 
 interface ThemePreset {
   name: string;
@@ -94,20 +96,92 @@ const PROFILE_BACKGROUND_OPTIONS = [
   { value: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)', label: 'Đỏ' },
 ];
 
-// Preset gradients for card background
-const GRADIENT_PRESETS = [
-  { value: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', label: 'Tím xanh (Mặc định)' },
-  { value: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', label: 'Hồng' },
-  { value: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', label: 'Xanh dương' },
-  { value: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', label: 'Xanh lá' },
-  { value: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', label: 'Cam hồng' },
-  { value: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)', label: 'Pastel' },
-  { value: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)', label: 'Hồng nhạt' },
-  { value: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)', label: 'Cam nhạt' },
-  { value: 'linear-gradient(135deg, #2c3e50 0%, #3498db 100%)', label: 'Xanh đậm' },
-  { value: 'linear-gradient(135deg, #232526 0%, #414345 100%)', label: 'Xám đen' },
-  { value: 'linear-gradient(135deg, #c31432 0%, #240b36 100%)', label: 'Đỏ đậm' },
-  { value: 'linear-gradient(180deg, #e74c3c 0%, #c0392b 100%)', label: 'Đỏ' },
+// Preset gradients for card background - organized by category
+type GradientCategory = 'all' | 'japanese' | 'nature' | 'sunset' | 'ocean' | 'galaxy' | 'neon' | 'pastel' | 'dark' | 'pattern';
+
+interface GradientPreset {
+  value: string;
+  label: string;
+  category: GradientCategory;
+}
+
+const GRADIENT_PRESETS: GradientPreset[] = [
+  // Japanese-themed
+  { value: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', label: 'Tím Xanh (Mặc định)', category: 'japanese' },
+  { value: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)', label: 'Shu (Đỏ son)', category: 'japanese' },
+  { value: 'linear-gradient(135deg, #d4a574 0%, #c19a6b 100%)', label: 'Kincha (Vàng trà)', category: 'japanese' },
+  { value: 'linear-gradient(135deg, #2d5a27 0%, #1e3d14 100%)', label: 'Matcha (Trà xanh)', category: 'japanese' },
+  { value: 'linear-gradient(135deg, #ffb7c5 0%, #ff69b4 100%)', label: 'Sakura (Hoa anh đào)', category: 'japanese' },
+  { value: 'linear-gradient(180deg, #1a1a2e 0%, #3d1a4a 50%, #0f3460 100%)', label: 'Yoru (Đêm)', category: 'japanese' },
+
+  // Nature
+  { value: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', label: 'Rừng Xanh', category: 'nature' },
+  { value: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)', label: 'Lá Non', category: 'nature' },
+  { value: 'linear-gradient(135deg, #56ab2f 0%, #a8e063 100%)', label: 'Cỏ Mùa Xuân', category: 'nature' },
+  { value: 'linear-gradient(135deg, #134e5e 0%, #71b280 100%)', label: 'Rừng Sâu', category: 'nature' },
+  { value: 'linear-gradient(135deg, #8e9eab 0%, #eef2f3 100%)', label: 'Sương Mù', category: 'nature' },
+
+  // Sunset
+  { value: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', label: 'Hoàng Hôn', category: 'sunset' },
+  { value: 'linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%)', label: 'Bình Minh', category: 'sunset' },
+  { value: 'linear-gradient(135deg, #f12711 0%, #f5af19 100%)', label: 'Lửa Chiều', category: 'sunset' },
+  { value: 'linear-gradient(135deg, #ff6b6b 0%, #feca57 100%)', label: 'Cam Đỏ', category: 'sunset' },
+  { value: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)', label: 'Cam Nhạt', category: 'sunset' },
+
+  // Ocean
+  { value: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', label: 'Biển Xanh', category: 'ocean' },
+  { value: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', label: 'Đại Dương Sâu', category: 'ocean' },
+  { value: 'linear-gradient(180deg, #87ceeb 0%, #1e90ff 50%, #000080 100%)', label: 'Biển Sâu', category: 'ocean' },
+  { value: 'linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)', label: 'Sóng Biển', category: 'ocean' },
+  { value: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)', label: 'Biển Pastel', category: 'ocean' },
+
+  // Galaxy
+  { value: 'linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)', label: 'Thiên Hà', category: 'galaxy' },
+  { value: 'linear-gradient(135deg, #141e30 0%, #243b55 100%)', label: 'Vũ Trụ', category: 'galaxy' },
+  { value: 'linear-gradient(135deg, #1a1a2e 0%, #4a0080 100%)', label: 'Sao Đêm', category: 'galaxy' },
+  { value: 'linear-gradient(135deg, #200122 0%, #6f0000 100%)', label: 'Sao Hỏa', category: 'galaxy' },
+  { value: 'linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%)', label: 'Aurora', category: 'galaxy' },
+
+  // Neon
+  { value: 'linear-gradient(135deg, #ff00ff 0%, #00ffff 100%)', label: 'Neon Hồng-Xanh', category: 'neon' },
+  { value: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', label: 'Neon Hồng', category: 'neon' },
+  { value: 'linear-gradient(135deg, #00f3ff 0%, #0080ff 100%)', label: 'Neon Xanh', category: 'neon' },
+  { value: 'linear-gradient(135deg, #b721ff 0%, #21d4fd 100%)', label: 'Neon Tím', category: 'neon' },
+  { value: 'linear-gradient(135deg, #f7971e 0%, #ffd200 100%)', label: 'Neon Vàng', category: 'neon' },
+
+  // Pastel
+  { value: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)', label: 'Pastel Xanh-Hồng', category: 'pastel' },
+  { value: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)', label: 'Pastel Hồng', category: 'pastel' },
+  { value: 'linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)', label: 'Pastel Tím', category: 'pastel' },
+  { value: 'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)', label: 'Pastel Cầu Vồng', category: 'pastel' },
+  { value: 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)', label: 'Pastel Lavender', category: 'pastel' },
+
+  // Dark
+  { value: 'linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)', label: 'Đêm Tối', category: 'dark' },
+  { value: 'linear-gradient(135deg, #232526 0%, #414345 100%)', label: 'Xám Tối', category: 'dark' },
+  { value: 'linear-gradient(135deg, #c31432 0%, #240b36 100%)', label: 'Đỏ Đậm', category: 'dark' },
+  { value: 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)', label: 'Đen Xanh', category: 'dark' },
+  { value: 'linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%)', label: 'Than Đen', category: 'dark' },
+
+  // Patterns (CSS patterns)
+  { value: 'repeating-linear-gradient(45deg, #606dbc, #606dbc 10px, #465298 10px, #465298 20px)', label: 'Sọc Xéo', category: 'pattern' },
+  { value: 'repeating-linear-gradient(0deg, #e74c3c, #e74c3c 10px, #c0392b 10px, #c0392b 20px)', label: 'Sọc Ngang Đỏ', category: 'pattern' },
+  { value: 'repeating-linear-gradient(90deg, #667eea, #667eea 10px, #764ba2 10px, #764ba2 20px)', label: 'Sọc Dọc Tím', category: 'pattern' },
+  { value: 'radial-gradient(circle at 25% 25%, #667eea 2%, transparent 2%), radial-gradient(circle at 75% 75%, #667eea 2%, #764ba2 2%)', label: 'Chấm Bi', category: 'pattern' },
+  { value: 'conic-gradient(from 0deg at 50% 50%, #667eea, #764ba2, #667eea)', label: 'Xoáy Ốc', category: 'pattern' },
+];
+
+const GRADIENT_CATEGORIES: { key: GradientCategory; label: string; icon: string }[] = [
+  { key: 'all', label: 'Tất cả', icon: '🎨' },
+  { key: 'japanese', label: 'Nhật Bản', icon: '🎌' },
+  { key: 'nature', label: 'Thiên nhiên', icon: '🌿' },
+  { key: 'sunset', label: 'Hoàng hôn', icon: '🌅' },
+  { key: 'ocean', label: 'Đại dương', icon: '🌊' },
+  { key: 'galaxy', label: 'Vũ trụ', icon: '🌌' },
+  { key: 'neon', label: 'Neon', icon: '💜' },
+  { key: 'pastel', label: 'Pastel', icon: '🍬' },
+  { key: 'dark', label: 'Tối', icon: '🌑' },
+  { key: 'pattern', label: 'Họa tiết', icon: '🔲' },
 ];
 
 // Get background style for preview
@@ -127,6 +201,20 @@ function getPreviewBackground(settings: AppSettings): React.CSSProperties {
     default:
       return { background: settings.cardBackgroundGradient };
   }
+}
+
+// Get custom frame style
+function getCustomFrameStyle(customFrame: CustomFrameSettings): React.CSSProperties {
+  const baseStyle: React.CSSProperties = {
+    border: `${customFrame.borderWidth}px ${customFrame.borderStyle} ${customFrame.borderColor}`,
+    borderRadius: `${customFrame.borderRadius}px`,
+  };
+
+  if (customFrame.glowEnabled) {
+    baseStyle.boxShadow = `0 0 ${customFrame.glowIntensity}px ${customFrame.glowColor}, 0 0 ${customFrame.glowIntensity * 2}px ${customFrame.glowColor}`;
+  }
+
+  return baseStyle;
 }
 
 const KANJI_FONTS = [
@@ -193,10 +281,17 @@ export function SettingsPage({
 }: SettingsPageProps) {
   // Tab state
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
+  const [generalSubTab, setGeneralSubTab] = useState<GeneralSubTab>('flashcard');
   const [showExportModal, setShowExportModal] = useState(false);
 
   // Device type for font size preview
   const [selectedDevice, setSelectedDevice] = useState<DeviceType>(getDeviceType);
+
+  // Frame category filter
+  const [frameCategory, setFrameCategory] = useState<string>('all');
+
+  // Gradient category filter
+  const [gradientCategory, setGradientCategory] = useState<GradientCategory>('all');
 
   // Auto-detect device on resize
   useEffect(() => {
@@ -217,6 +312,7 @@ export function SettingsPage({
   const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [avatarMessage, setAvatarMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
   const [activeHistoryTab, setActiveHistoryTab] = useState<'study' | 'game' | 'jlpt'>('study');
   const [badgeGiftTarget, setBadgeGiftTarget] = useState<{ id: string; name: string } | null>(null);
 
@@ -256,6 +352,7 @@ export function SettingsPage({
     if (result.success) {
       setAvatarMessage({ type: 'success', text: 'Đã cập nhật avatar!' });
       setShowAvatarPicker(false);
+      setSelectedAvatar(null);
     } else {
       setAvatarMessage({ type: 'error', text: result.error || 'Lỗi' });
     }
@@ -311,142 +408,221 @@ export function SettingsPage({
       {/* General Settings Tab */}
       {activeTab === 'general' && (
         <div className="settings-tab-content">
-          {/* Font Settings */}
-          <section className="settings-section">
-            <h3>Font chữ</h3>
+          {/* Sub-tabs Navigation */}
+          <div className="settings-sub-tabs">
+            <button
+              className={`settings-sub-tab ${generalSubTab === 'flashcard' ? 'active' : ''}`}
+              onClick={() => setGeneralSubTab('flashcard')}
+            >
+              <span className="sub-tab-icon">🎴</span>
+              <span className="sub-tab-label">Thẻ học</span>
+            </button>
+            <button
+              className={`settings-sub-tab ${generalSubTab === 'study' ? 'active' : ''}`}
+              onClick={() => setGeneralSubTab('study')}
+            >
+              <span className="sub-tab-icon">📚</span>
+              <span className="sub-tab-label">Học tập</span>
+            </button>
+            <button
+              className={`settings-sub-tab ${generalSubTab === 'game' ? 'active' : ''}`}
+              onClick={() => setGeneralSubTab('game')}
+            >
+              <span className="sub-tab-icon">🎮</span>
+              <span className="sub-tab-label">Trò chơi</span>
+            </button>
+            <button
+              className={`settings-sub-tab ${generalSubTab === 'kaiwa' ? 'active' : ''}`}
+              onClick={() => setGeneralSubTab('kaiwa')}
+            >
+              <span className="sub-tab-icon">💬</span>
+              <span className="sub-tab-label">Hội thoại</span>
+            </button>
+            <button
+              className={`settings-sub-tab ${generalSubTab === 'system' ? 'active' : ''}`}
+              onClick={() => setGeneralSubTab('system')}
+            >
+              <span className="sub-tab-icon">⚙️</span>
+              <span className="sub-tab-label">Hệ thống</span>
+            </button>
+          </div>
 
-            <div className="setting-item">
-              <label>Font Kanji</label>
-              <div className="setting-control">
-                <select
-                  value={settings.kanjiFont}
-                  onChange={(e) => onUpdateSetting('kanjiFont', e.target.value)}
-                  className="font-select"
-                >
-                  {KANJI_FONTS.map((font) => (
-                    <option key={font.value} value={font.value} style={{ fontFamily: font.value }}>
-                      {font.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="setting-item">
-              <label>In đậm Kanji</label>
-              <label className="toggle">
-                <input
-                  type="checkbox"
-                  checked={settings.kanjiBold}
-                  onChange={(e) => onUpdateSetting('kanjiBold', e.target.checked)}
-                />
-                <span className="toggle-slider"></span>
-              </label>
-            </div>
-
-            {/* Font Preview */}
-            <div className="font-preview" style={getPreviewBackground(settings)}>
-              <div className="font-preview-label">Xem trước:</div>
-              <div
-                className="font-preview-text"
-                style={{
-                  fontFamily: `"${settings.kanjiFont}", serif`,
-                  fontSize: `${Math.min(settings.kanjiFontSize, 150)}px`,
-                  fontWeight: settings.kanjiBold ? 900 : 400
-                }}
-              >
-                漢字
-              </div>
-              <div className="font-preview-samples">
-                <span style={{ fontFamily: `"${settings.kanjiFont}", serif`, fontWeight: settings.kanjiBold ? 900 : 400 }}>永 愛 飛 龍 鬱</span>
-              </div>
-            </div>
-          </section>
-
-          {/* Card Background Settings */}
-          <section className="settings-section">
-            <h3>Nền thẻ flashcard</h3>
-
-            <div className="setting-item">
-              <label>Loại nền</label>
-              <div className="setting-control">
-                <select
-                  value={settings.cardBackgroundType}
-                  onChange={(e) => onUpdateSetting('cardBackgroundType', e.target.value as CardBackgroundType)}
-                  className="font-select"
-                >
-                  <option value="gradient">Gradient</option>
-                  <option value="solid">Màu đơn</option>
-                  <option value="image">Hình ảnh</option>
-                </select>
-              </div>
-            </div>
-
-            {settings.cardBackgroundType === 'gradient' && (
-              <>
-                <div className="setting-item">
-                  <label>Chọn gradient</label>
-                  <div className="setting-control">
-                    <select
-                      value={settings.cardBackgroundGradient}
-                      onChange={(e) => onUpdateSetting('cardBackgroundGradient', e.target.value)}
-                      className="font-select"
+          {/* ==================== FLASHCARD SUB-TAB - PRO DESIGN ==================== */}
+          {generalSubTab === 'flashcard' && (
+            <>
+              <div className="fc-studio">
+                {/* Row 1: Preview + Typography */}
+                <div className="fc-studio-top">
+                  {/* Preview: Front Card */}
+                  <div className="fc-preview-area">
+                    <div
+                      className={`fc-preview-card fc-card-front ${CARD_FRAME_PRESETS.find(f => f.id === settings.cardFrame)?.animationClass || ''}`}
+                      style={{
+                        ...(settings.cardFrame === 'custom' ? getCustomFrameStyle(settings.customFrame) : CARD_FRAME_PRESETS.find(f => f.id === settings.cardFrame)?.css),
+                        ...getPreviewBackground(settings),
+                      }}
                     >
-                      {GRADIENT_PRESETS.map((preset) => (
-                        <option key={preset.value} value={preset.value}>
-                          {preset.label}
-                        </option>
-                      ))}
-                    </select>
+                      <span
+                        className="fc-kanji"
+                        style={{
+                          fontFamily: `"${settings.kanjiFont}", serif`,
+                          fontSize: `${Math.min(settings.kanjiFontSize * 0.4, 120)}px`,
+                          fontWeight: settings.kanjiBold ? 900 : 400
+                        }}
+                      >
+                        漢字
+                      </span>
+                    </div>
+                    <div className="fc-preview-label">Mặt trước</div>
+                  </div>
+
+                  {/* Preview: Back Card */}
+                  <div className="fc-preview-area">
+                    <div className="fc-preview-card fc-card-back">
+                      {settings.showSinoVietnamese && <div className="fc-sino" style={{ fontSize: `${settings.sinoVietnameseFontSize * 0.6}px` }}>HÁN TỰ</div>}
+                      {settings.showVocabulary && <div className="fc-vocab" style={{ fontSize: `${settings.vocabularyFontSize * 0.6}px` }}>かんじ</div>}
+                      {settings.showMeaning && <div className="fc-meaning" style={{ fontSize: `${settings.meaningFontSize * 0.6}px` }}>Chữ Hán</div>}
+                    </div>
+                    <div className="fc-preview-label">Mặt sau</div>
+                  </div>
+
+                  {/* Typography Section */}
+                  <div className="fc-section fc-typography">
+                    <div className="fc-section-header">
+                      <span className="fc-section-title">Kiểu chữ</span>
+                    </div>
+                    <div className="fc-section-body">
+                      <div className="fc-control-row">
+                        <label>Font</label>
+                        <select
+                          value={settings.kanjiFont}
+                          onChange={(e) => onUpdateSetting('kanjiFont', e.target.value)}
+                          className="fc-select"
+                        >
+                          {KANJI_FONTS.map((font) => (
+                            <option key={font.value} value={font.value}>{font.label}</option>
+                          ))}
+                        </select>
+                        <label className="fc-toggle-mini">
+                          <input type="checkbox" checked={settings.kanjiBold} onChange={(e) => onUpdateSetting('kanjiBold', e.target.checked)} />
+                          <span>B</span>
+                        </label>
+                      </div>
+                      <div className="fc-control-row">
+                        <label>Kanji</label>
+                        <input type="range" min="100" max="400" step="10" value={settings.kanjiFontSize}
+                          onChange={(e) => onUpdateSetting('kanjiFontSize', Number(e.target.value))} />
+                        <span className="fc-value">{settings.kanjiFontSize}</span>
+                      </div>
+                      <div className="fc-control-row">
+                        <label>Hán Việt</label>
+                        <input type="range" min="16" max="60" step="2" value={settings.sinoVietnameseFontSize}
+                          onChange={(e) => onUpdateSetting('sinoVietnameseFontSize', Number(e.target.value))} />
+                        <span className="fc-value">{settings.sinoVietnameseFontSize}</span>
+                      </div>
+                      <div className="fc-control-row">
+                        <label>Từ vựng</label>
+                        <input type="range" min="16" max="60" step="2" value={settings.vocabularyFontSize}
+                          onChange={(e) => onUpdateSetting('vocabularyFontSize', Number(e.target.value))} />
+                        <span className="fc-value">{settings.vocabularyFontSize}</span>
+                      </div>
+                      <div className="fc-control-row">
+                        <label>Nghĩa</label>
+                        <input type="range" min="14" max="48" step="2" value={settings.meaningFontSize}
+                          onChange={(e) => onUpdateSetting('meaningFontSize', Number(e.target.value))} />
+                        <span className="fc-value">{settings.meaningFontSize}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="gradient-preview-grid">
-                  {GRADIENT_PRESETS.map((preset) => (
-                    <div
-                      key={preset.value}
-                      className={`gradient-preview-item ${settings.cardBackgroundGradient === preset.value ? 'active' : ''}`}
-                      style={{ background: preset.value }}
-                      onClick={() => onUpdateSetting('cardBackgroundGradient', preset.value)}
-                      title={preset.label}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
 
-            {settings.cardBackgroundType === 'solid' && (
-              <div className="setting-item">
-                <label>Chọn màu</label>
-                <div className="setting-control">
-                  <input
-                    type="color"
-                    value={settings.cardBackgroundColor}
-                    onChange={(e) => onUpdateSetting('cardBackgroundColor', e.target.value)}
-                    className="color-picker"
-                  />
-                  <span className="setting-value">{settings.cardBackgroundColor}</span>
+                {/* Row 2: Background, Frame */}
+                <div className="fc-studio-bottom">
+                  {/* Background Section */}
+                  <div className="fc-section">
+                    <div className="fc-section-header">
+                      <span className="fc-section-icon">🎨</span>
+                      <span className="fc-section-title">Nền thẻ</span>
+                      <div className="fc-bg-tabs">
+                        <button className={settings.cardBackgroundType === 'gradient' ? 'active' : ''} onClick={() => onUpdateSetting('cardBackgroundType', 'gradient')}>Gradient</button>
+                        <button className={settings.cardBackgroundType === 'solid' ? 'active' : ''} onClick={() => onUpdateSetting('cardBackgroundType', 'solid')}>Màu</button>
+                        <button className={settings.cardBackgroundType === 'image' ? 'active' : ''} onClick={() => onUpdateSetting('cardBackgroundType', 'image')}>Ảnh</button>
+                      </div>
+                    </div>
+                    <div className="fc-section-body">
+                      {settings.cardBackgroundType === 'gradient' && (
+                        <>
+                          <div className="fc-cat-tabs">
+                            {GRADIENT_CATEGORIES.map(cat => (
+                              <button key={cat.key} className={gradientCategory === cat.key ? 'active' : ''} onClick={() => setGradientCategory(cat.key)} title={cat.label}>{cat.icon}</button>
+                            ))}
+                          </div>
+                          <div className="fc-palette">
+                            {GRADIENT_PRESETS.filter(g => gradientCategory === 'all' || g.category === gradientCategory).map((preset) => (
+                              <button key={preset.value} className={`fc-swatch ${settings.cardBackgroundGradient === preset.value ? 'active' : ''}`}
+                                style={{ background: preset.value }} onClick={() => onUpdateSetting('cardBackgroundGradient', preset.value)} title={preset.label} />
+                            ))}
+                          </div>
+                        </>
+                      )}
+                      {settings.cardBackgroundType === 'solid' && (
+                        <div className="fc-color-row">
+                          <input type="color" value={settings.cardBackgroundColor} onChange={(e) => onUpdateSetting('cardBackgroundColor', e.target.value)} />
+                          {['#667eea', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#34495e', '#e91e63'].map(c => (
+                            <button key={c} className={`fc-color ${settings.cardBackgroundColor === c ? 'active' : ''}`} style={{ background: c }} onClick={() => onUpdateSetting('cardBackgroundColor', c)} />
+                          ))}
+                        </div>
+                      )}
+                      {settings.cardBackgroundType === 'image' && (
+                        <input type="text" className="fc-input" placeholder="Dán URL hình ảnh..." value={settings.cardBackgroundImage} onChange={(e) => onUpdateSetting('cardBackgroundImage', e.target.value)} />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Frame Section */}
+                  <div className="fc-section">
+                    <div className="fc-section-header">
+                      <span className="fc-section-icon">🖼️</span>
+                      <span className="fc-section-title">Khung</span>
+                    </div>
+                    <div className="fc-section-body">
+                      <div className="fc-cat-tabs">
+                        {[{ k: 'all', i: '🎨' }, { k: 'basic', i: '◻️' }, { k: 'gradient', i: '🌈' }, { k: 'shadow', i: '✨' }, { k: 'animated', i: '🔮' }, { k: 'custom', i: '⚙️' }].map(c => (
+                          <button key={c.k} className={frameCategory === c.k ? 'active' : ''} onClick={() => setFrameCategory(c.k)}>{c.i}</button>
+                        ))}
+                      </div>
+                      {frameCategory !== 'custom' ? (
+                        <div className="fc-frames">
+                          {CARD_FRAME_PRESETS.filter(f => frameCategory === 'all' || f.category === frameCategory || (frameCategory === 'basic' && f.id === 'none')).map(frame => (
+                            <button key={frame.id} className={`fc-frame ${settings.cardFrame === frame.id ? 'active' : ''}`}
+                              onClick={() => onUpdateSetting('cardFrame', frame.id as CardFrameId)} title={frame.name}
+                              style={{ border: frame.id === 'none' ? '2px dashed #ccc' : (frame.css.border || 'none'), boxShadow: frame.css.boxShadow as string || 'none', borderRadius: frame.css.borderRadius as string || '4px' }}>
+                              {frame.id === 'none' ? '✕' : '漢'}
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="fc-custom-frame">
+                          <div className="fc-cf-row">
+                            <span>Viền</span>
+                            <input type="range" min="1" max="10" value={settings.customFrame.borderWidth} onChange={(e) => onUpdateSetting('customFrame', { ...settings.customFrame, borderWidth: Number(e.target.value) })} />
+                            <input type="color" value={settings.customFrame.borderColor} onChange={(e) => onUpdateSetting('customFrame', { ...settings.customFrame, borderColor: e.target.value })} />
+                          </div>
+                          <div className="fc-cf-row">
+                            <span>Bo góc</span>
+                            <input type="range" min="0" max="24" value={settings.customFrame.borderRadius} onChange={(e) => onUpdateSetting('customFrame', { ...settings.customFrame, borderRadius: Number(e.target.value) })} />
+                            <label><input type="checkbox" checked={settings.customFrame.glowEnabled} onChange={(e) => onUpdateSetting('customFrame', { ...settings.customFrame, glowEnabled: e.target.checked })} /> Glow</label>
+                          </div>
+                          <button className="fc-apply-btn" onClick={() => onUpdateSetting('cardFrame', 'custom' as CardFrameId)}>Áp dụng khung</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
-            )}
 
-            {settings.cardBackgroundType === 'image' && (
-              <div className="setting-item">
-                <label>URL hình ảnh</label>
-                <div className="setting-control full-width">
-                  <input
-                    type="text"
-                    value={settings.cardBackgroundImage}
-                    onChange={(e) => onUpdateSetting('cardBackgroundImage', e.target.value)}
-                    placeholder="https://example.com/image.jpg"
-                    className="url-input"
-                  />
-                </div>
-              </div>
-            )}
-          </section>
-
-          {/* Font Size Settings */}
-          <section className="settings-section">
+          {/* Hidden: Font Size Settings - Moved to Typography above */}
+          <section className="settings-section" style={{ display: 'none' }}>
             <h3>Kích thước chữ</h3>
 
             <div className="setting-item">
@@ -483,7 +659,7 @@ export function SettingsPage({
               </div>
             </div>
 
-            <div className="setting-item">
+            <div className="setting-item" style={{ display: 'none' }}>
               <label>Âm Hán Việt</label>
               <div className="setting-control">
                 <input
@@ -590,10 +766,15 @@ export function SettingsPage({
               </label>
             </div>
           </section>
+            </>
+          )}
 
-          {/* Study Behavior Settings */}
-          <section className="settings-section">
-            <h3>Hành vi học</h3>
+          {/* ==================== STUDY SUB-TAB ==================== */}
+          {generalSubTab === 'study' && (
+            <>
+              {/* Study Behavior Settings */}
+              <section className="settings-section">
+                <h3>Hành vi học</h3>
 
             <div className="setting-item">
               <label>Tự động chuyển từ khi nhấp {settings.clicksToAdvance} lần</label>
@@ -623,12 +804,17 @@ export function SettingsPage({
                 </div>
               </div>
             )}
-          </section>
+              </section>
+            </>
+          )}
 
-          {/* Game Settings */}
-          <section className="settings-section">
-            <h3>Cài đặt trò chơi</h3>
-            <p className="settings-description">Cài đặt nội dung hiển thị trong trò chơi Quiz Game</p>
+          {/* ==================== GAME SUB-TAB ==================== */}
+          {generalSubTab === 'game' && (
+            <>
+              {/* Game Settings */}
+              <section className="settings-section">
+                <h3>Cài đặt trò chơi</h3>
+                <p className="settings-description">Cài đặt nội dung hiển thị trong trò chơi Quiz Game</p>
 
             <div className="setting-item">
               <label>Nội dung câu hỏi</label>
@@ -714,12 +900,17 @@ export function SettingsPage({
                 </div>
               </div>
             </div>
-          </section>
+              </section>
+            </>
+          )}
 
-          {/* Kaiwa (Conversation) Settings */}
-          <section className="settings-section">
-            <h3>Cài đặt hội thoại (会話)</h3>
-            <p className="settings-description">Cài đặt cho tính năng luyện hội thoại tiếng Nhật (chỉ VIP và Admin)</p>
+          {/* ==================== KAIWA SUB-TAB ==================== */}
+          {generalSubTab === 'kaiwa' && (
+            <>
+              {/* Kaiwa (Conversation) Settings */}
+              <section className="settings-section">
+                <h3>Cài đặt hội thoại (会話)</h3>
+                <p className="settings-description">Cài đặt cho tính năng luyện hội thoại tiếng Nhật (chỉ VIP và Admin)</p>
 
             <div className="setting-item">
               <label>Giọng nói</label>
@@ -817,170 +1008,117 @@ export function SettingsPage({
                 </select>
               </div>
             </div>
-          </section>
-
-          {/* Weekly Goals & Notifications */}
-          <section className="settings-section">
-            <h3>Mục tiêu tuần & Thông báo</h3>
-            <p className="settings-description">Đặt mục tiêu học tập và nhận nhắc nhở ôn bài</p>
-
-            <div className="setting-item">
-              <label>Mục tiêu thẻ/tuần: {settings.weeklyCardsTarget}</label>
-              <div className="setting-control">
-                <input
-                  type="range"
-                  min="10"
-                  max="200"
-                  step="10"
-                  value={settings.weeklyCardsTarget}
-                  onChange={(e) => onUpdateSetting('weeklyCardsTarget', parseInt(e.target.value))}
-                />
-                <span className="setting-value">{settings.weeklyCardsTarget} thẻ</span>
-              </div>
-            </div>
-
-            <div className="setting-item">
-              <label>Mục tiêu thời gian/tuần: {settings.weeklyMinutesTarget} phút</label>
-              <div className="setting-control">
-                <input
-                  type="range"
-                  min="15"
-                  max="300"
-                  step="15"
-                  value={settings.weeklyMinutesTarget}
-                  onChange={(e) => onUpdateSetting('weeklyMinutesTarget', parseInt(e.target.value))}
-                />
-                <span className="setting-value">{settings.weeklyMinutesTarget} phút</span>
-              </div>
-            </div>
-
-            <div className="setting-item">
-              <label>Sao lưu & Khôi phục dữ liệu</label>
-              <button
-                className="btn btn-secondary"
-                onClick={() => setShowExportModal(true)}
-              >
-                📦 Xuất / Nhập dữ liệu
-              </button>
-            </div>
-          </section>
-
-          {/* Theme Settings (Super Admin Only) */}
-          {isSuperAdmin && theme && (
-            <section className="settings-section theme-section">
-              <h3>Màu chủ đạo (Toàn trang web)</h3>
-              <p className="settings-description">Chỉ Super Admin mới có thể thay đổi. Màu này sẽ áp dụng cho tất cả người dùng.</p>
-
-              <div className="theme-current">
-                <span>Đang sử dụng:</span>
-                <div className="theme-current-preview">
-                  <div
-                    className="theme-color-preview"
-                    style={{ background: theme.primaryColor }}
-                  />
-                  <div
-                    className="theme-gradient-preview"
-                    style={{ background: theme.bodyGradient }}
-                  />
-                </div>
-              </div>
-
-              {/* Classic & Professional */}
-              <div className="theme-category">
-                <span className="theme-category-label">Cổ điển</span>
-                <div className="theme-preset-grid">
-                  {themePresets.slice(0, 4).map((preset) => (
-                    <button
-                      key={preset.name}
-                      className={`theme-preset-btn ${theme.primaryColor === preset.primary ? 'active' : ''}`}
-                      onClick={() => onApplyThemePreset?.(preset)}
-                      title={preset.name}
-                    >
-                      <div className="theme-preset-colors">
-                        <div className="theme-preset-primary" style={{ background: preset.primary }} />
-                        <div className="theme-preset-gradient" style={{ background: preset.gradient }} />
-                      </div>
-                      <span className="theme-preset-name">{preset.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Modern & Trendy */}
-              <div className="theme-category">
-                <span className="theme-category-label">Hiện đại</span>
-                <div className="theme-preset-grid">
-                  {themePresets.slice(4, 8).map((preset) => (
-                    <button
-                      key={preset.name}
-                      className={`theme-preset-btn ${theme.primaryColor === preset.primary ? 'active' : ''}`}
-                      onClick={() => onApplyThemePreset?.(preset)}
-                      title={preset.name}
-                    >
-                      <div className="theme-preset-colors">
-                        <div className="theme-preset-primary" style={{ background: preset.primary }} />
-                        <div className="theme-preset-gradient" style={{ background: preset.gradient }} />
-                      </div>
-                      <span className="theme-preset-name">{preset.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Dark & Elegant */}
-              <div className="theme-category">
-                <span className="theme-category-label">Tối & Sang trọng</span>
-                <div className="theme-preset-grid">
-                  {themePresets.slice(8, 12).map((preset) => (
-                    <button
-                      key={preset.name}
-                      className={`theme-preset-btn ${theme.primaryColor === preset.primary ? 'active' : ''}`}
-                      onClick={() => onApplyThemePreset?.(preset)}
-                      title={preset.name}
-                    >
-                      <div className="theme-preset-colors">
-                        <div className="theme-preset-primary" style={{ background: preset.primary }} />
-                        <div className="theme-preset-gradient" style={{ background: preset.gradient }} />
-                      </div>
-                      <span className="theme-preset-name">{preset.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Nature & Soft */}
-              <div className="theme-category">
-                <span className="theme-category-label">Tự nhiên & Nhẹ nhàng</span>
-                <div className="theme-preset-grid">
-                  {themePresets.slice(12, 16).map((preset) => (
-                    <button
-                      key={preset.name}
-                      className={`theme-preset-btn ${theme.primaryColor === preset.primary ? 'active' : ''}`}
-                      onClick={() => onApplyThemePreset?.(preset)}
-                      title={preset.name}
-                    >
-                      <div className="theme-preset-colors">
-                        <div className="theme-preset-primary" style={{ background: preset.primary }} />
-                        <div className="theme-preset-gradient" style={{ background: preset.gradient }} />
-                      </div>
-                      <span className="theme-preset-name">{preset.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <button className="btn btn-secondary btn-small" onClick={onResetTheme}>
-                Khôi phục mặc định
-              </button>
-            </section>
+              </section>
+            </>
           )}
 
-          {/* Reset Button */}
-          <div className="settings-actions">
-            <button className="btn btn-secondary" onClick={onReset}>
-              Khôi phục mặc định
-            </button>
-          </div>
+          {/* ==================== SYSTEM SUB-TAB ==================== */}
+          {generalSubTab === 'system' && (
+            <>
+              {/* Weekly Goals & Notifications */}
+              <section className="settings-section">
+                <h3>Mục tiêu tuần & Thông báo</h3>
+                <p className="settings-description">Đặt mục tiêu học tập và nhận nhắc nhở ôn bài</p>
+
+                <div className="setting-item">
+                  <label>Mục tiêu thẻ/tuần: {settings.weeklyCardsTarget}</label>
+                  <div className="setting-control">
+                    <input
+                      type="range"
+                      min="10"
+                      max="200"
+                      step="10"
+                      value={settings.weeklyCardsTarget}
+                      onChange={(e) => onUpdateSetting('weeklyCardsTarget', parseInt(e.target.value))}
+                    />
+                    <span className="setting-value">{settings.weeklyCardsTarget} thẻ</span>
+                  </div>
+                </div>
+
+                <div className="setting-item">
+                  <label>Mục tiêu thời gian/tuần: {settings.weeklyMinutesTarget} phút</label>
+                  <div className="setting-control">
+                    <input
+                      type="range"
+                      min="15"
+                      max="300"
+                      step="15"
+                      value={settings.weeklyMinutesTarget}
+                      onChange={(e) => onUpdateSetting('weeklyMinutesTarget', parseInt(e.target.value))}
+                    />
+                    <span className="setting-value">{settings.weeklyMinutesTarget} phút</span>
+                  </div>
+                </div>
+
+                <div className="setting-item">
+                  <label>Sao lưu & Khôi phục dữ liệu</label>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => setShowExportModal(true)}
+                  >
+                    📦 Xuất / Nhập dữ liệu
+                  </button>
+                </div>
+              </section>
+
+              {/* Theme Settings (Super Admin Only) */}
+              {isSuperAdmin && theme && (
+                <section className="settings-section theme-section">
+                  <h3>Màu chủ đạo (Toàn trang web)</h3>
+                  <p className="settings-description">Chỉ Super Admin mới có thể thay đổi. Màu này sẽ áp dụng cho tất cả người dùng.</p>
+
+                  <div className="theme-current">
+                    <span>Đang sử dụng:</span>
+                    <div className="theme-current-preview">
+                      <div className="theme-color-preview" style={{ background: theme.primaryColor }} />
+                      <div className="theme-gradient-preview" style={{ background: theme.bodyGradient }} />
+                    </div>
+                  </div>
+
+                  {/* Theme Presets Grid */}
+                  <div className="theme-presets-container">
+                    {[
+                      { label: 'Cổ điển', presets: themePresets.slice(0, 4) },
+                      { label: 'Hiện đại', presets: themePresets.slice(4, 8) },
+                      { label: 'Tối & Sang trọng', presets: themePresets.slice(8, 12) },
+                      { label: 'Tự nhiên', presets: themePresets.slice(12, 16) },
+                    ].map(category => (
+                      <div className="theme-category" key={category.label}>
+                        <span className="theme-category-label">{category.label}</span>
+                        <div className="theme-preset-grid">
+                          {category.presets.map((preset) => (
+                            <button
+                              key={preset.name}
+                              className={`theme-preset-btn ${theme.primaryColor === preset.primary ? 'active' : ''}`}
+                              onClick={() => onApplyThemePreset?.(preset)}
+                              title={preset.name}
+                            >
+                              <div className="theme-preset-colors">
+                                <div className="theme-preset-primary" style={{ background: preset.primary }} />
+                                <div className="theme-preset-gradient" style={{ background: preset.gradient }} />
+                              </div>
+                              <span className="theme-preset-name">{preset.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button className="btn btn-secondary btn-small" onClick={onResetTheme}>
+                    Khôi phục mặc định
+                  </button>
+                </section>
+              )}
+
+              {/* Reset Settings Button */}
+              <div className="settings-actions">
+                <button className="btn btn-secondary" onClick={onReset}>
+                  Khôi phục cài đặt mặc định
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -994,24 +1132,24 @@ export function SettingsPage({
             <div className="profile-info">
               <div className="profile-avatar-wrapper">
                 <div
-                  className={`profile-avatar clickable ${currentUser.avatar && isImageAvatar(currentUser.avatar) ? 'has-image' : ''}`}
+                  className={`profile-avatar clickable ${(selectedAvatar || currentUser.avatar) && isImageAvatar(selectedAvatar || currentUser.avatar || '') ? 'has-image' : ''}`}
                   onClick={() => setShowAvatarPicker(!showAvatarPicker)}
                   title="Nhấp để đổi avatar"
                   style={{
-                    background: currentUser.avatar && isImageAvatar(currentUser.avatar)
+                    background: (selectedAvatar || currentUser.avatar) && isImageAvatar(selectedAvatar || currentUser.avatar || '')
                       ? 'transparent'
                       : currentUser.profileBackground && currentUser.profileBackground !== 'transparent'
                         ? currentUser.profileBackground
                         : 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)'
                   }}
                 >
-                  {currentUser.avatar && isImageAvatar(currentUser.avatar) ? (
-                    <img src={currentUser.avatar} alt="avatar" />
+                  {(selectedAvatar || currentUser.avatar) && isImageAvatar(selectedAvatar || currentUser.avatar || '') ? (
+                    <img src={selectedAvatar || currentUser.avatar} alt="avatar" />
                   ) : (
-                    currentUser.avatar || (currentUser.displayName || currentUser.username).charAt(0).toUpperCase()
+                    selectedAvatar || currentUser.avatar || (currentUser.displayName || currentUser.username).charAt(0).toUpperCase()
                   )}
                 </div>
-                <span className="avatar-edit-hint">Đổi avatar</span>
+                <span className="avatar-edit-hint">{selectedAvatar && selectedAvatar !== currentUser.avatar ? 'Xem trước - Nhấn Lưu để áp dụng' : 'Đổi avatar'}</span>
               </div>
               <div className="profile-details">
                 <p className="profile-name">{currentUser.displayName || currentUser.username}</p>
@@ -1053,8 +1191,8 @@ export function SettingsPage({
                       {category.icons.map((avatar) => (
                         <button
                           key={avatar}
-                          className={`avatar-option ${category.isImage ? 'avatar-option-image' : ''} ${currentUser.avatar === avatar ? 'active' : ''}`}
-                          onClick={() => handleUpdateAvatar(avatar)}
+                          className={`avatar-option ${category.isImage ? 'avatar-option-image' : ''} ${(selectedAvatar || currentUser.avatar) === avatar ? 'active' : ''}`}
+                          onClick={() => setSelectedAvatar(avatar)}
                         >
                           {isImageAvatar(avatar) ? (
                             <img src={avatar} alt="avatar" />
@@ -1066,6 +1204,21 @@ export function SettingsPage({
                     </div>
                   </div>
                 ))}
+                <div className="avatar-picker-actions">
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => selectedAvatar && handleUpdateAvatar(selectedAvatar)}
+                    disabled={!selectedAvatar || selectedAvatar === currentUser.avatar}
+                  >
+                    Lưu avatar
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => { setShowAvatarPicker(false); setSelectedAvatar(null); }}
+                  >
+                    Hủy
+                  </button>
+                </div>
                 {avatarMessage && (
                   <p className={`form-message ${avatarMessage.type}`}>{avatarMessage.text}</p>
                 )}

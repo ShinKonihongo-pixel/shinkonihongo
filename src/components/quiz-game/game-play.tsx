@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import type { QuizGame, GamePlayer, GameQuestion, PowerUpType } from '../../types/quiz-game';
 import { POWER_UPS } from '../../types/quiz-game';
-import { Trophy, Zap, Users, ChevronRight, Shield, Snowflake, Target, Crown, Medal, Award } from 'lucide-react';
+import { Trophy, Zap, Users, ChevronRight, Shield, Snowflake, Target, Crown, Medal, Award, LogOut } from 'lucide-react';
 
 interface GamePlayProps {
   game: QuizGame;
@@ -178,6 +178,9 @@ export function GamePlay({
   if (game.status === 'starting') {
     return (
       <div className="game-fullscreen game-starting-screen">
+        <button className="leave-game-btn floating" onClick={onLeaveGame} title="Rời game">
+          <LogOut size={18} /> Rời
+        </button>
         <div className="starting-content">
           <div className="starting-icon">
             <Zap size={64} />
@@ -243,6 +246,9 @@ export function GamePlay({
               <Trophy size={16} />
               <span>{currentPlayer?.score || 0}</span>
             </div>
+            <button className="leave-game-btn" onClick={onLeaveGame} title="Rời game">
+              <LogOut size={16} />
+            </button>
           </div>
         </div>
 
@@ -313,6 +319,9 @@ export function GamePlay({
 
     return (
       <div className="game-fullscreen game-reveal-screen">
+        <button className="leave-game-btn floating" onClick={onLeaveGame} title="Rời game">
+          <LogOut size={18} /> Rời
+        </button>
         {/* Result header */}
         <div className="reveal-header">
           <div className={`result-banner ${myResult?.answeredCorrectly ? 'correct' : 'wrong'}`}>
@@ -406,6 +415,9 @@ export function GamePlay({
     if (!answeredCorrectly) {
       return (
         <div className="game-fullscreen game-powerup-screen ineligible">
+          <button className="leave-game-btn floating" onClick={onLeaveGame} title="Rời game">
+            <LogOut size={18} /> Rời
+          </button>
           <div className="powerup-header">
             <Zap size={32} className="powerup-icon-large" />
             <h2>Round Đặc Biệt!</h2>
@@ -425,6 +437,9 @@ export function GamePlay({
       const confirmedPowerUp = POWER_UPS.find(p => p.type === selectedPowerUp);
       return (
         <div className="game-fullscreen game-powerup-screen confirmed">
+          <button className="leave-game-btn floating" onClick={onLeaveGame} title="Rời game">
+            <LogOut size={18} /> Rời
+          </button>
           <div className="powerup-header">
             <Zap size={32} className="powerup-icon-large" />
             <h2>Round Đặc Biệt!</h2>
@@ -447,6 +462,9 @@ export function GamePlay({
     // Power-up selection
     return (
       <div className="game-fullscreen game-powerup-screen">
+        <button className="leave-game-btn floating" onClick={onLeaveGame} title="Rời game">
+          <LogOut size={18} /> Rời
+        </button>
         <div className="powerup-header">
           <Zap size={32} className="powerup-icon-large" />
           <h2>Chọn Power-up!</h2>
@@ -507,6 +525,9 @@ export function GamePlay({
 
     return (
       <div className="game-fullscreen game-leaderboard-screen">
+        <button className="leave-game-btn floating" onClick={onLeaveGame} title="Rời game">
+          <LogOut size={18} /> Rời
+        </button>
         <div className="leaderboard-header">
           <Trophy size={32} className="trophy-icon" />
           <h2>Bảng Xếp Hạng</h2>
