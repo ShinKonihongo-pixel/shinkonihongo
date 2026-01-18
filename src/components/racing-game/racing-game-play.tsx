@@ -1,10 +1,14 @@
 // Racing Game Play - Main racing gameplay with track visualization
-// Shows questions, answer options, player positions, and special features
+// Shows questions, answer options, player positions, traps, milestones, and inventory
 
 import { useState, useEffect, useCallback } from 'react';
 import { Clock, Zap, Star, ChevronRight, Gift, LogOut } from 'lucide-react';
-import type { RacingGame, RacingPlayer, RacingQuestion, SpecialFeatureType } from '../../types/racing-game';
-import { SPECIAL_FEATURES } from '../../types/racing-game';
+import type { RacingGame, RacingPlayer, RacingQuestion, SpecialFeatureType, TrapType } from '../../types/racing-game';
+import { SPECIAL_FEATURES, TRAPS } from '../../types/racing-game';
+import { MilestoneBadge, MilestoneRewardPreview } from './shared/milestone-question';
+import { TrapTriggeredOverlay, TrapWarning } from './shared/trap-system';
+import { InventoryBar } from './shared/inventory-bar';
+import { TeamScoreboard } from './shared/team-view';
 
 interface RacingGamePlayProps {
   game: RacingGame;
@@ -18,6 +22,10 @@ interface RacingGamePlayProps {
   onOpenMysteryBox: () => void;
   onApplyFeature: (type: SpecialFeatureType) => void;
   onLeave?: () => void;
+  // New props for "Đường Đua"
+  onPlaceTrap?: (trapType: TrapType, position: number) => void;
+  onUseItem?: (itemId: string) => void;
+  onEscapeTap?: () => void;
 }
 
 // Answer option colors
@@ -43,10 +51,16 @@ export function RacingGamePlay({
   onOpenMysteryBox,
   onApplyFeature,
   onLeave,
+  onPlaceTrap,
+  onUseItem,
+  onEscapeTap,
 }: RacingGamePlayProps) {
   const [timeLeft, setTimeLeft] = useState(currentQuestion?.timeLimit || 15);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showMysteryReward, setShowMysteryReward] = useState(false);
+
+  const isTeamMode = game.settings.gameMode === 'team';
+  const enableTraps = game.settings.enableTraps;
 
   // Timer countdown
   useEffect(() => {
@@ -206,12 +220,19 @@ export function RacingGamePlay({
           </div>
 
           {/* Question */}
-          <div className="question-display">
+          <div className={`question-display ${currentQuestion.isMilestone ? 'milestone' : ''}`}>
+            {currentQuestion.isMilestone && <MilestoneBadge />}
             <span className="question-difficulty">
               {currentQuestion.difficulty === 'easy' ? '⭐' : currentQuestion.difficulty === 'medium' ? '⭐⭐' : '⭐⭐⭐'}
             </span>
             <h2 className="question-text">{currentQuestion.questionText}</h2>
-            <span className="speed-bonus">+{currentQuestion.speedBonus} km/h</span>
+            <span className="speed-bonus">
+              +{currentQuestion.speedBonus} km/h
+              {currentQuestion.isMilestone && <span className="milestone-bonus"> (x2 bonus!)</span>}
+            </span>
+            {currentQuestion.isMilestone && (
+              <MilestoneRewardPreview speedBonus={currentQuestion.speedBonus} />
+            )}
           </div>
 
           {/* Answer Options */}
@@ -280,6 +301,72 @@ export function RacingGamePlay({
               ))}
             </div>
           )}
+          {/* Trap effects indicator */}
+          {currentPlayer.trapEffects && currentPlayer.trapEffects.length > 0 && (
+            <div className="trap-effects">
+              {currentPlayer.trapEffects.map((e, i) => (
+                <span key={i} className={`trap-effect-badge effect-${e.trapType}`} title={TRAPS[e.trapType].name}>
+                  {TRAPS[e.trapType].emoji}
+                  <span className="effect-duration">{e.remainingRounds}</span>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Inventory Bar */}
+      {currentPlayer && currentPlayer.inventory && currentPlayer.inventory.length > 0 && onUseItem && onPlaceTrap && (
+        <InventoryBar
+          inventory={currentPlayer.inventory}
+          onUseItem={onUseItem}
+          onPlaceTrap={onPlaceTrap}
+          currentDistance={currentPlayer.distance}
+          disabled={game.status !== 'answering'}
+        />
+      )}
+
+      {/* Team Scoreboard (for team mode) */}
+      {isTeamMode && game.teams && currentPlayer?.teamId && (
+        <div className="team-scoreboard-mini">
+          <TeamScoreboard
+            teams={game.teams}
+            players={sortedPlayers}
+            currentTeamId={currentPlayer.teamId}
+          />
+        </div>
+      )}
+
+      {/* Trap Warning */}
+      {enableTraps && currentPlayer && (
+        <TrapWarning
+          distance={currentPlayer.distance}
+          traps={game.activeTraps}
+        />
+      )}
+
+      {/* Trap Triggered Overlay */}
+      {currentPlayer?.isEscaping && currentPlayer.trapEffects.some(e => e.trapType === 'sinkhole') && onEscapeTap && (
+        <TrapTriggeredOverlay
+          trapType="sinkhole"
+          onDismiss={() => {}}
+          isEscapeRequired={true}
+          onEscapeTap={onEscapeTap}
+          escapeProgress={currentPlayer.escapeProgress || 0}
+        />
+      )}
+
+      {/* Escape mini-game for non-sinkhole traps */}
+      {currentPlayer?.trapEffects && currentPlayer.trapEffects.some(e => e.trapType !== 'sinkhole' && e.remainingRounds > 0) && (
+        <div className="trap-effect-notification">
+          {currentPlayer.trapEffects.filter(e => e.trapType !== 'sinkhole').map((effect, i) => (
+            <div key={i} className={`effect-notice effect-${effect.trapType}`}>
+              <span className="effect-emoji">{TRAPS[effect.trapType].emoji}</span>
+              <span className="effect-text">
+                {effect.trapType === 'imprisonment' ? 'Bị giam!' : 'Bị đóng băng!'} ({effect.remainingRounds} lượt)
+              </span>
+            </div>
+          ))}
         </div>
       )}
     </div>

@@ -1,10 +1,10 @@
 // Racing Game Setup - Configure and create a new race
-// Select vehicle, questions, and game settings
+// Select vehicle, questions, game mode, traps, and other settings
 
 import { useState } from 'react';
-import { ArrowLeft, Play, Settings, BookOpen, Clock, Map, HelpCircle } from 'lucide-react';
-import type { VehicleType, RacingVehicle, CreateRacingGameData } from '../../types/racing-game';
-import { DEFAULT_VEHICLES } from '../../types/racing-game';
+import { ArrowLeft, Play, Settings, BookOpen, Clock, Map, HelpCircle, Users, AlertTriangle } from 'lucide-react';
+import type { VehicleType, RacingVehicle, CreateRacingGameData, GameMode } from '../../types/racing-game';
+import { DEFAULT_VEHICLES, DEFAULT_TRACK_ZONES } from '../../types/racing-game';
 import type { JLPTLevel } from '../../types/flashcard';
 
 interface RacingGameSetupProps {
@@ -28,12 +28,16 @@ export function RacingGameSetup({
   loading,
   error,
 }: RacingGameSetupProps) {
-  const [title, setTitle] = useState(raceType === 'boat' ? 'Cuộc Đua Thuyền' : 'Cuộc Đua Ngựa');
+  const [title, setTitle] = useState(raceType === 'boat' ? 'Cuộc Đua Thuyền' : 'Cuộc Chạy Đua');
   const [jlptLevel, setJlptLevel] = useState<JLPTLevel>('N5');
   const [questionCount, setQuestionCount] = useState(20);
   const [timePerQuestion, setTimePerQuestion] = useState(15);
   const [trackLength, setTrackLength] = useState(100);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  // New state for "Đường Đua" features
+  const [gameMode, setGameMode] = useState<GameMode>('individual');
+  const [teamCount, setTeamCount] = useState(2);
+  const [enableTraps, setEnableTraps] = useState(false);
 
   const vehiclesForType = DEFAULT_VEHICLES.filter(v => v.type === raceType);
 
@@ -46,6 +50,9 @@ export function RacingGameSetup({
       questionCount,
       timePerQuestion,
       trackLength,
+      gameMode,
+      teamCount: gameMode === 'team' ? teamCount : undefined,
+      enableTraps,
     });
   };
 
@@ -65,7 +72,7 @@ export function RacingGameSetup({
         </button>
         <div className="setup-title">
           <span className="setup-icon">{raceType === 'boat' ? '🚣' : '🏇'}</span>
-          <h2>{raceType === 'boat' ? 'Đua Thuyền' : 'Đua Ngựa'}</h2>
+          <h2>{raceType === 'boat' ? 'Đua Thuyền' : 'Chạy Đua'}</h2>
         </div>
       </div>
 
@@ -119,6 +126,74 @@ export function RacingGameSetup({
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Game Mode Selection */}
+      <div className="setup-section">
+        <label><Users size={16} /> Chế Độ Chơi</label>
+        <div className="mode-selector">
+          <button
+            className={`mode-btn ${gameMode === 'individual' ? 'selected' : ''}`}
+            onClick={() => setGameMode('individual')}
+          >
+            <span className="mode-icon">🏃</span>
+            <span className="mode-name">Cá Nhân</span>
+            <span className="mode-desc">Thi đấu riêng lẻ</span>
+          </button>
+          <button
+            className={`mode-btn ${gameMode === 'team' ? 'selected' : ''}`}
+            onClick={() => setGameMode('team')}
+          >
+            <span className="mode-icon">👥</span>
+            <span className="mode-name">Đội</span>
+            <span className="mode-desc">Thi đấu theo đội</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Team Count (only show if team mode) */}
+      {gameMode === 'team' && (
+        <div className="setup-section">
+          <label><Users size={16} /> Số Đội</label>
+          <div className="team-count-selector">
+            {[2, 3, 4].map(count => (
+              <button
+                key={count}
+                className={`team-count-btn ${teamCount === count ? 'selected' : ''}`}
+                onClick={() => setTeamCount(count)}
+              >
+                {count} đội
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Trap Toggle */}
+      <div className="setup-section">
+        <label><AlertTriangle size={16} /> Hệ Thống Bẫy</label>
+        <div className="trap-toggle">
+          <button
+            className={`toggle-btn ${!enableTraps ? 'selected' : ''}`}
+            onClick={() => setEnableTraps(false)}
+          >
+            <span className="toggle-icon">🚫</span>
+            <span>Tắt</span>
+          </button>
+          <button
+            className={`toggle-btn ${enableTraps ? 'selected' : ''}`}
+            onClick={() => setEnableTraps(true)}
+          >
+            <span className="toggle-icon">⚠️</span>
+            <span>Bật</span>
+          </button>
+        </div>
+        {enableTraps && (
+          <div className="trap-info">
+            <span className="info-icon">ℹ️</span>
+            <span>Bẫy sẽ xuất hiện ngẫu nhiên: ⛓️ Nhà tù, 🧊 Băng giá, 🕳️ Hố sụt</span>
+          </div>
+        )}
       </div>
 
       {/* Basic Settings */}
@@ -182,6 +257,34 @@ export function RacingGameSetup({
         </div>
       )}
 
+      {/* Track Zones Preview */}
+      <div className="setup-section">
+        <label><Map size={16} /> Các Vùng Đường Đua</label>
+        <div className="track-zones-preview">
+          {DEFAULT_TRACK_ZONES.map(zone => (
+            <div
+              key={zone.id}
+              className={`zone-preview zone-${zone.type}`}
+              style={{
+                width: `${zone.endPosition - zone.startPosition}%`,
+                background: zone.background,
+              }}
+              title={`${zone.type}: ${zone.startPosition}% - ${zone.endPosition}%`}
+            >
+              <span className="zone-deco">{zone.decorations[0]}</span>
+            </div>
+          ))}
+        </div>
+        <div className="zone-labels">
+          <span>🏁 Xuất phát</span>
+          <span>🌲 Rừng</span>
+          <span>🏜️ Sa mạc</span>
+          <span>⛰️ Núi</span>
+          <span>🌊 Nước</span>
+          <span>🏆 Đích</span>
+        </div>
+      </div>
+
       {/* Info Box */}
       <div className="setup-info">
         <div className="info-item">
@@ -189,9 +292,25 @@ export function RacingGameSetup({
           <span>Hộp mù xuất hiện mỗi 5 câu hỏi</span>
         </div>
         <div className="info-item">
+          <span className="info-icon">🏆</span>
+          <span>Câu hỏi cột mốc mỗi 5 câu (x2 bonus)</span>
+        </div>
+        <div className="info-item">
           <span className="info-icon">🔥</span>
           <span>Combo streak tăng tốc độ bonus</span>
         </div>
+        {enableTraps && (
+          <div className="info-item">
+            <span className="info-icon">⚠️</span>
+            <span>Bẫy xuất hiện ngẫu nhiên trên đường đua</span>
+          </div>
+        )}
+        {gameMode === 'team' && (
+          <div className="info-item">
+            <span className="info-icon">👥</span>
+            <span>Đội thắng = tổng khoảng cách cao nhất</span>
+          </div>
+        )}
       </div>
 
       {/* Create Button */}

@@ -1,0 +1,164 @@
+// Word Match Results - Final game results
+import React from 'react';
+import type { WordMatchResults as Results, WordMatchPlayerResult } from '../../types/word-match';
+
+interface WordMatchResultsProps {
+  results: Results;
+  currentPlayerId: string;
+  onPlayAgain: () => void;
+  onExit: () => void;
+}
+
+export const WordMatchResults: React.FC<WordMatchResultsProps> = ({
+  results,
+  currentPlayerId,
+  onPlayAgain,
+  onExit,
+}) => {
+  const currentPlayerResult = results.rankings.find((r) => r.odinhId === currentPlayerId);
+  const top3 = results.rankings.slice(0, 3);
+
+  return (
+    <div className="word-match-results">
+      <div className="results-header">
+        <h1>🏆 Kết Quả Cuối Cùng</h1>
+        <p>
+          {results.totalRounds} câu • {results.totalPairs} cặp từ
+        </p>
+      </div>
+
+      {/* Winner announcement */}
+      {results.winner && (
+        <div className="winner-section">
+          <div className="confetti">🎊</div>
+          <div className="winner-trophy">🏆</div>
+          <div className="winner-info">
+            <span className="winner-avatar">{results.winner.avatar}</span>
+            <span className="winner-name">{results.winner.displayName}</span>
+            <span className="winner-score">{results.winner.score} điểm</span>
+          </div>
+          <div className="winner-label">NGƯỜI CHIẾN THẮNG!</div>
+        </div>
+      )}
+
+      {/* Podium */}
+      <div className="podium">
+        {top3[1] && (
+          <div className="podium-place second">
+            <div className="podium-player">
+              <span className="medal">🥈</span>
+              <span className="avatar">{top3[1].avatar}</span>
+              <span className="name">{top3[1].displayName}</span>
+              <span className="score">{top3[1].score}</span>
+            </div>
+            <div className="podium-stand">2</div>
+          </div>
+        )}
+
+        {top3[0] && (
+          <div className="podium-place first">
+            <div className="podium-player">
+              <span className="medal">🥇</span>
+              <span className="avatar">{top3[0].avatar}</span>
+              <span className="name">{top3[0].displayName}</span>
+              <span className="score">{top3[0].score}</span>
+            </div>
+            <div className="podium-stand">1</div>
+          </div>
+        )}
+
+        {top3[2] && (
+          <div className="podium-place third">
+            <div className="podium-player">
+              <span className="medal">🥉</span>
+              <span className="avatar">{top3[2].avatar}</span>
+              <span className="name">{top3[2].displayName}</span>
+              <span className="score">{top3[2].score}</span>
+            </div>
+            <div className="podium-stand">3</div>
+          </div>
+        )}
+      </div>
+
+      {/* Your result */}
+      {currentPlayerResult && (
+        <div className="your-final-result">
+          <h3>📊 Kết Quả Của Bạn</h3>
+          <div className="result-stats">
+            <div className="stat">
+              <span className="stat-value">#{currentPlayerResult.rank}</span>
+              <span className="stat-label">Xếp hạng</span>
+            </div>
+            <div className="stat">
+              <span className="stat-value">{currentPlayerResult.score}</span>
+              <span className="stat-label">Điểm</span>
+            </div>
+            <div className="stat">
+              <span className="stat-value">{currentPlayerResult.correctPairs}</span>
+              <span className="stat-label">Cặp đúng</span>
+            </div>
+            <div className="stat">
+              <span className="stat-value">{currentPlayerResult.perfectRounds}</span>
+              <span className="stat-label">Câu hoàn hảo</span>
+            </div>
+            <div className="stat">
+              <span className="stat-value">{currentPlayerResult.accuracy}%</span>
+              <span className="stat-label">Độ chính xác</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full rankings */}
+      <div className="full-rankings">
+        <h3>📋 Bảng Xếp Hạng Đầy Đủ</h3>
+        <div className="rankings-table">
+          <div className="rankings-header">
+            <span className="col-rank">#</span>
+            <span className="col-player">Người chơi</span>
+            <span className="col-score">Điểm</span>
+            <span className="col-pairs">Cặp đúng</span>
+            <span className="col-perfect">Hoàn hảo</span>
+            <span className="col-accuracy">Chính xác</span>
+          </div>
+          {results.rankings.map((player: WordMatchPlayerResult) => (
+            <div
+              key={player.odinhId}
+              className={`rankings-row ${player.odinhId === currentPlayerId ? 'current' : ''} ${
+                player.isWinner ? 'winner' : ''
+              }`}
+            >
+              <span className="col-rank">
+                {player.rank === 1
+                  ? '🥇'
+                  : player.rank === 2
+                  ? '🥈'
+                  : player.rank === 3
+                  ? '🥉'
+                  : `#${player.rank}`}
+              </span>
+              <span className="col-player">
+                <span className="avatar">{player.avatar}</span>
+                <span className="name">{player.displayName}</span>
+              </span>
+              <span className="col-score">{player.score}</span>
+              <span className="col-pairs">{player.correctPairs}</span>
+              <span className="col-perfect">{player.perfectRounds}</span>
+              <span className="col-accuracy">{player.accuracy}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="results-actions">
+        <button className="word-match-btn primary large" onClick={onPlayAgain}>
+          🔄 Chơi Lại
+        </button>
+        <button className="word-match-btn secondary large" onClick={onExit}>
+          🚪 Thoát
+        </button>
+      </div>
+    </div>
+  );
+};

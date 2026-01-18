@@ -21,7 +21,7 @@ const RACE_THEMES = {
   },
   horse: {
     icon: '🏇',
-    title: 'Cuộc Đua Ngựa',
+    title: 'Cuộc Chạy Đua',
     subtitle: 'Phi nước đại cùng kiến thức!',
     gradient: 'linear-gradient(180deg, #2d5016 0%, #4a7c23 50%, #7cb342 100%)',
     countdownColors: ['#ff6b6b', '#ffd93d', '#7cb342'],

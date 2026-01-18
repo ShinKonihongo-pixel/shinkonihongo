@@ -191,6 +191,7 @@ export function BoatRacingPage({
         <RacingGameLobby
           game={game}
           isHost={isHost}
+          currentPlayerId={currentUser.id}
           selectedVehicle={selectedVehicle}
           loading={loading}
           onSelectVehicle={selectVehicle}

@@ -1,10 +1,10 @@
 // Racing Game Lobby - Waiting room before race starts
-// Shows players, game code, and start button for host
+// Shows players, game code, team assignment, and start button for host
 
 import { Copy, Play, LogOut, Users, Share2, Check } from 'lucide-react';
 import { useState } from 'react';
 import type { RacingGame, RacingVehicle } from '../../types/racing-game';
-import { DEFAULT_VEHICLES } from '../../types/racing-game';
+import { DEFAULT_VEHICLES, TEAM_COLORS } from '../../types/racing-game';
 import { isImageAvatar } from '../../utils/avatar-icons';
 
 interface RacingGameLobbyProps {
@@ -18,6 +18,7 @@ interface RacingGameLobbyProps {
   onLeaveGame?: () => void;
   onStart?: () => void;
   onLeave?: () => void;
+  onAssignTeam?: (playerId: string, teamId: string) => void;
 }
 
 export function RacingGameLobby({
@@ -31,6 +32,7 @@ export function RacingGameLobby({
   onLeaveGame,
   onStart,
   onLeave,
+  onAssignTeam,
 }: RacingGameLobbyProps) {
   const handleStart = onStartGame || onStart;
   const handleLeave = onLeaveGame || onLeave;
@@ -39,6 +41,8 @@ export function RacingGameLobby({
 
   const players = Object.values(game.players);
   const canStart = players.length >= game.settings.minPlayers;
+  const isTeamMode = game.settings.gameMode === 'team';
+  const teams = game.teams;
 
   const copyCode = async () => {
     try {
@@ -79,7 +83,7 @@ export function RacingGameLobby({
         <div className="lobby-info">
           <h2>{game.title}</h2>
           <div className="lobby-meta">
-            <span>{game.settings.raceType === 'boat' ? 'Đua Thuyền' : 'Đua Ngựa'}</span>
+            <span>{game.settings.raceType === 'boat' ? 'Đua Thuyền' : 'Chạy Đua'}</span>
             <span>•</span>
             <span>{game.settings.jlptLevel}</span>
             <span>•</span>
@@ -108,31 +112,44 @@ export function RacingGameLobby({
         <div className="players-header">
           <Users size={18} />
           <span>Người chơi ({players.length}/{game.settings.maxPlayers})</span>
+          {isTeamMode && <span className="mode-badge team">Chế độ Đội</span>}
         </div>
         <div className="players-grid">
-          {players.map(player => (
-            <div
-              key={player.odinhId}
-              className={`player-card ${player.odinhId === currentPlayerId ? 'current' : ''} ${player.odinhId === game.hostId ? 'host' : ''}`}
-            >
-              <div className="player-avatar">
-                {player.avatar && isImageAvatar(player.avatar) ? (
-                  <img src={player.avatar} alt={player.displayName} />
-                ) : (
-                  player.avatar || player.displayName.charAt(0).toUpperCase()
+          {players.map(player => {
+            const playerTeam = player.teamId && teams ? teams[player.teamId] : null;
+            const teamColor = playerTeam ? TEAM_COLORS[playerTeam.colorKey] : null;
+
+            return (
+              <div
+                key={player.odinhId}
+                className={`player-card ${player.odinhId === currentPlayerId ? 'current' : ''} ${player.odinhId === game.hostId ? 'host' : ''}`}
+                style={teamColor ? { '--team-color': teamColor.color, borderLeftColor: teamColor.color } as React.CSSProperties : undefined}
+              >
+                {/* Team indicator */}
+                {playerTeam && (
+                  <div className="player-team-indicator" style={{ backgroundColor: teamColor?.color }}>
+                    {playerTeam.emoji}
+                  </div>
                 )}
+                <div className="player-avatar">
+                  {player.avatar && isImageAvatar(player.avatar) ? (
+                    <img src={player.avatar} alt={player.displayName} />
+                  ) : (
+                    player.avatar || player.displayName.charAt(0).toUpperCase()
+                  )}
+                </div>
+                <div className="player-info">
+                  <span className="player-name">
+                    {player.displayName}
+                    {player.odinhId === game.hostId && <span className="host-badge">Host</span>}
+                                      </span>
+                  <span className="player-vehicle">
+                    {player.vehicle.emoji} {player.vehicle.name}
+                  </span>
+                </div>
               </div>
-              <div className="player-info">
-                <span className="player-name">
-                  {player.displayName}
-                  {player.odinhId === game.hostId && <span className="host-badge">Host</span>}
-                </span>
-                <span className="player-vehicle">
-                  {player.vehicle.emoji} {player.vehicle.name}
-                </span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
 
           {/* Empty slots */}
           {Array.from({ length: game.settings.maxPlayers - players.length }).map((_, i) => (
@@ -143,6 +160,52 @@ export function RacingGameLobby({
           ))}
         </div>
       </div>
+
+      {/* Team Assignment UI (only for team mode) */}
+      {isTeamMode && teams && onAssignTeam && (
+        <div className="lobby-teams">
+          <div className="teams-header">
+            <span className="teams-title">Chọn Đội</span>
+          </div>
+          <div className="teams-grid">
+            {Object.values(teams).map(team => {
+              const teamColor = TEAM_COLORS[team.colorKey];
+              const memberPlayers = players.filter(p => p.teamId === team.id);
+              const currentPlayer = players.find(p => p.odinhId === currentPlayerId);
+              const isCurrentTeam = currentPlayer?.teamId === team.id;
+
+              return (
+                <button
+                  key={team.id}
+                  className={`team-select-card ${isCurrentTeam ? 'selected' : ''}`}
+                  style={{ '--team-color': teamColor.color } as React.CSSProperties}
+                  onClick={() => currentPlayerId && onAssignTeam(currentPlayerId, team.id)}
+                  disabled={isCurrentTeam}
+                >
+                  <div className="team-header">
+                    <span className="team-emoji">{team.emoji}</span>
+                    <span className="team-name">{team.name}</span>
+                    {isCurrentTeam && <Check size={16} className="check-icon" />}
+                  </div>
+                  <div className="team-members-list">
+                    {memberPlayers.map(p => (
+                      <span key={p.odinhId} className="member-mini" title={p.displayName}>
+                        {p.avatar && isImageAvatar(p.avatar) ? (
+                          <img src={p.avatar} alt={p.displayName} />
+                        ) : (
+                          p.avatar || p.displayName.charAt(0)
+                        )}
+                      </span>
+                    ))}
+                    {memberPlayers.length === 0 && <span className="no-members">Trống</span>}
+                  </div>
+                  <div className="team-count">{memberPlayers.length} người</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Track Preview */}
       <div className="track-preview">

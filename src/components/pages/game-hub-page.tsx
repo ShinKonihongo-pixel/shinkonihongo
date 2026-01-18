@@ -1,7 +1,8 @@
 // Game Hub Page - Unified game center orchestrating all mini-games
 // Manages game selection and routes to appropriate game pages
+// Uses lazy loading for game pages to improve initial load performance
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, lazy, Suspense } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import type { GameType } from '../../types/game-hub';
 import type { CurrentUser } from '../../types/user';
@@ -11,12 +12,25 @@ import type { AppSettings } from '../../hooks/use-settings';
 import type { FriendWithUser } from '../../types/friendship';
 import { GameSelector } from '../game-hub/game-selector';
 
-// Import individual game pages
-import { QuizGamePage } from './quiz-game-page';
-import { BoatRacingPage } from './boat-racing-page';
-import { HorseRacingPage } from './horse-racing-page';
-import { GoldenBellPage } from './golden-bell-page';
-import { PictureGuessPage } from './picture-guess-page';
+// Lazy load game pages for code splitting
+const QuizGamePage = lazy(() => import('./quiz-game-page').then(m => ({ default: m.QuizGamePage })));
+const BoatRacingPage = lazy(() => import('./boat-racing-page').then(m => ({ default: m.BoatRacingPage })));
+const HorseRacingPage = lazy(() => import('./horse-racing-page').then(m => ({ default: m.HorseRacingPage })));
+const GoldenBellPage = lazy(() => import('./golden-bell-page').then(m => ({ default: m.GoldenBellPage })));
+const PictureGuessPage = lazy(() => import('./picture-guess-page').then(m => ({ default: m.PictureGuessPage })));
+const BingoPage = lazy(() => import('./bingo-page').then(m => ({ default: m.BingoPage })));
+const SpeedQuizPage = lazy(() => import('./speed-quiz-page').then(m => ({ default: m.SpeedQuizPage })));
+const WordMatchPage = lazy(() => import('./word-match-page').then(m => ({ default: m.WordMatchPage })));
+
+// Loading fallback component
+function GameLoadingFallback() {
+  return (
+    <div className="game-loading-fallback">
+      <div className="loading-spinner" />
+      <p>Đang tải game...</p>
+    </div>
+  );
+}
 
 interface GameHubPageProps {
   currentUser: CurrentUser | null;
@@ -99,7 +113,8 @@ export function GameHubPage({
         <span>Game Center</span>
       </button>
 
-      {/* Render appropriate game */}
+      {/* Render appropriate game with lazy loading */}
+      <Suspense fallback={<GameLoadingFallback />}>
       {selectedGame === 'quiz' && (
         <QuizGamePage
           currentUserId={currentUser.id}
@@ -160,6 +175,42 @@ export function GameHubPage({
           flashcards={flashcards}
         />
       )}
+
+      {selectedGame === 'bingo' && (
+        <BingoPage
+          currentUser={{
+            id: currentUser.id,
+            displayName: currentUser.displayName || currentUser.username,
+            avatar: currentUser.avatar || '🎱',
+          }}
+          initialJoinCode={joinCode || undefined}
+        />
+      )}
+
+      {selectedGame === 'speed-quiz' && (
+        <SpeedQuizPage
+          onClose={handleBackToHub}
+          currentUser={{
+            id: currentUser.id,
+            displayName: currentUser.displayName || currentUser.username,
+            avatar: currentUser.avatar || '⚡',
+          }}
+          flashcards={flashcards}
+        />
+      )}
+
+      {selectedGame === 'word-match' && (
+        <WordMatchPage
+          onClose={handleBackToHub}
+          currentUser={{
+            id: currentUser.id,
+            displayName: currentUser.displayName || currentUser.username,
+            avatar: currentUser.avatar || '🔗',
+          }}
+          flashcards={flashcards}
+        />
+      )}
+      </Suspense>
     </div>
   );
 }

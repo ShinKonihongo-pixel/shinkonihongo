@@ -1,7 +1,7 @@
 // Game Hub Types - Unified game center for all mini-games
 
 // Available games in the hub
-export type GameType = 'quiz' | 'boat-racing' | 'horse-racing' | 'golden-bell' | 'picture-guess';
+export type GameType = 'quiz' | 'boat-racing' | 'horse-racing' | 'golden-bell' | 'picture-guess' | 'bingo' | 'speed-quiz' | 'word-match';
 
 // Racing sub-types
 export type RacingType = 'boat' | 'horse';
@@ -105,7 +105,7 @@ export const GAMES: Record<GameType, GameInfo> = {
   },
   'horse-racing': {
     id: 'horse-racing',
-    name: 'Đua Ngựa',
+    name: 'Chạy Đua',
     description: 'Phi nước đại cùng kiến thức - về đích đầu tiên!',
     icon: '🏇',
     color: '#8B5CF6',
@@ -140,6 +140,45 @@ export const GAMES: Record<GameType, GameInfo> = {
     features: ['Gợi ý thông minh', 'Điểm tốc độ', 'Ôn từ vựng'],
     difficulty: 'easy',
     category: 'puzzle',
+  },
+  'bingo': {
+    id: 'bingo',
+    name: 'Bingo',
+    description: 'Bốc số may mắn - 6 dãy số, ai BINGO trước thắng!',
+    icon: '🎱',
+    color: '#9C27B0',
+    gradient: 'linear-gradient(135deg, #9C27B0 0%, #E040FB 100%)',
+    playerRange: '2-20',
+    features: ['6 dãy × 5 số', 'Kỹ năng đặc biệt', 'Multiplayer'],
+    difficulty: 'easy',
+    isNew: true,
+    category: 'puzzle',
+  },
+  'speed-quiz': {
+    id: 'speed-quiz',
+    name: 'Ai Nhanh Hơn Ai',
+    description: 'Gõ đáp án nhanh nhất - tích điểm cao nhất thắng!',
+    icon: '⚡',
+    color: '#FF5722',
+    gradient: 'linear-gradient(135deg, #FF5722 0%, #FF9800 100%)',
+    playerRange: '2-20',
+    features: ['Gõ nhanh', '3 gợi ý', 'Kỹ năng đặc biệt'],
+    difficulty: 'medium',
+    isNew: true,
+    category: 'quiz',
+  },
+  'word-match': {
+    id: 'word-match',
+    name: 'Nối Từ Thách Đấu',
+    description: 'Nối cặp từ nhanh và chính xác - vòng quay may mắn!',
+    icon: '🔗',
+    color: '#00BCD4',
+    gradient: 'linear-gradient(135deg, #00BCD4 0%, #4DD0E1 100%)',
+    playerRange: '2-10',
+    features: ['5 cặp/câu', 'Vòng quay', 'Thách đấu'],
+    difficulty: 'easy',
+    isNew: true,
+    category: 'quiz',
   },
 };
 

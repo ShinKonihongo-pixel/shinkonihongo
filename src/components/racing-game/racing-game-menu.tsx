@@ -120,7 +120,7 @@ export function RacingGameMenu({
                   <Zap size={48} />
                   <span className="race-emoji">🏇</span>
                 </div>
-                <h3>Đua Ngựa</h3>
+                <h3>Chạy Đua</h3>
                 <p>Phi nước đại trên thảo nguyên</p>
                 <div className="race-type-action">
                   <Plus size={16} /> Tạo Phòng
@@ -179,7 +179,7 @@ export function RacingGameMenu({
                 <div className="room-info">
                   <h4>{room.title}</h4>
                   <div className="room-meta">
-                    <span>{room.settings.raceType === 'boat' ? 'Đua Thuyền' : 'Đua Ngựa'}</span>
+                    <span>{room.settings.raceType === 'boat' ? 'Đua Thuyền' : 'Chạy Đua'}</span>
                     <span>•</span>
                     <span>{room.settings.jlptLevel}</span>
                     <span>•</span>

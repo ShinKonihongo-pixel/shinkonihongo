@@ -7,14 +7,9 @@ import { RacingGameMenu } from '../racing-game/racing-game-menu';
 import { RacingGameSetup } from '../racing-game/racing-game-setup';
 import { RacingGameLobby } from '../racing-game/racing-game-lobby';
 import { RacingGameResults } from '../racing-game/racing-game-results';
-import {
-  RaceCountdown,
-  RaceTrack,
-  RaceQuestion,
-  RaceMysteryBox,
-  RacePlayerStats,
-} from '../racing-game/shared';
-import type { CreateRacingGameData } from '../../types/racing-game';
+import { RacingGamePlayV2 } from '../racing-game/racing-game-play-v2';
+import { RaceCountdown } from '../racing-game/shared';
+import type { CreateRacingGameData, SpecialFeatureType } from '../../types/racing-game';
 import type { Flashcard } from '../../types/flashcard';
 
 interface HorseRacingUser {
@@ -141,6 +136,23 @@ export function HorseRacingPage({
     setView('menu');
   }, [leaveGame]);
 
+  // Handle effect application
+  const handleApplyEffect = useCallback((effectType: string, targetId?: string) => {
+    // Map effect type to special feature type and apply
+    const featureMap: Record<string, SpecialFeatureType> = {
+      'speed_boost': 'speed_boost',
+      'shield': 'shield',
+      'freeze': 'freeze',
+      'imprisonment': 'freeze', // Map to freeze for now
+      'sinkhole': 'freeze',
+      'trap': 'slow_others',
+    };
+    const featureType = featureMap[effectType];
+    if (featureType) {
+      applySpecialFeature(featureType);
+    }
+  }, [applySpecialFeature]);
+
   // Get current player position
   const currentPosition = currentPlayer
     ? sortedPlayers.findIndex(p => p.odinhId === currentPlayer.odinhId) + 1
@@ -152,7 +164,7 @@ export function HorseRacingPage({
       <div className="horse-racing-page">
         <div className="horse-racing-header">
           <div className="header-icon">🏇</div>
-          <h1>Đua Ngựa</h1>
+          <h1>Chạy Đua</h1>
           <p>Phi nước đại cùng kiến thức tiếng Nhật!</p>
         </div>
         <RacingGameMenu
@@ -191,6 +203,7 @@ export function HorseRacingPage({
         <RacingGameLobby
           game={game}
           isHost={isHost}
+          currentPlayerId={currentUser.id}
           selectedVehicle={selectedVehicle}
           loading={loading}
           onSelectVehicle={selectVehicle}
@@ -201,7 +214,7 @@ export function HorseRacingPage({
     );
   }
 
-  // Render Play
+  // Render Play - Using new V2 component
   if (view === 'play' && game) {
     // Countdown
     if (showCountdown) {
@@ -215,57 +228,20 @@ export function HorseRacingPage({
       );
     }
 
-    // Mystery Box
-    if (game.status === 'mystery_box' && currentQuestion?.isMysteryBox) {
-      return (
-        <div className="horse-racing-page racing-active">
-          <RaceMysteryBox
-            question={currentQuestion}
-            raceType="horse"
-            onOpenBox={openMysteryBox}
-            onApplyFeature={applySpecialFeature}
-          />
-        </div>
-      );
-    }
-
-    // Main Racing UI
+    // Main Racing UI - V2 with vertical track
     return (
-      <div className="horse-racing-page racing-active">
-        {/* Race Track */}
-        <RaceTrack
-          raceType="horse"
-          players={sortedPlayers}
-          currentPlayerId={currentPlayer?.odinhId}
-          trackLength={game.settings.trackLength}
-          currentQuestion={game.currentQuestionIndex + 1}
-          totalQuestions={game.questions.length}
-        />
-
-        {/* Question Section */}
-        {currentQuestion && (game.status === 'question' || game.status === 'answering' || game.status === 'revealing') && (
-          <RaceQuestion
-            question={currentQuestion}
-            raceType="horse"
-            status={game.status}
-            isHost={isHost}
-            hasAnswered={currentPlayer?.currentAnswer !== undefined}
-            onSubmitAnswer={submitAnswer}
-            onRevealAnswer={revealAnswer}
-            onNextQuestion={nextQuestion}
-          />
-        )}
-
-        {/* Player Stats */}
-        {currentPlayer && (
-          <RacePlayerStats
-            player={currentPlayer}
-            raceType="horse"
-            position={currentPosition}
-            totalPlayers={sortedPlayers.length}
-          />
-        )}
-      </div>
+      <RacingGamePlayV2
+        game={game}
+        currentPlayer={currentPlayer}
+        currentQuestion={currentQuestion}
+        sortedPlayers={sortedPlayers}
+        isHost={isHost}
+        onSubmitAnswer={submitAnswer}
+        onRevealAnswer={revealAnswer}
+        onNextQuestion={nextQuestion}
+        onApplyEffect={handleApplyEffect}
+        onLeave={handleLeave}
+      />
     );
   }
 

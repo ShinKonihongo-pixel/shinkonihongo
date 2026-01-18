@@ -1,13 +1,22 @@
-// Racing Game Types - "Đua Thuyền & Đua Ngựa: Học Tiếng Nhật"
-// Players compete by answering Japanese questions to increase vehicle speed
+// Racing Game Types - "Đường Đua: Học Tiếng Nhật"
+// Players compete by answering Japanese questions, with traps and team modes
 
 import type { JLPTLevel } from './flashcard';
 
 // Vehicle types available for racing
 export type VehicleType = 'boat' | 'horse';
 
+// Game mode - individual or team
+export type GameMode = 'individual' | 'team';
+
 // Difficulty levels for questions
 export type QuestionDifficulty = 'easy' | 'medium' | 'hard';
+
+// Trap types on the track
+export type TrapType = 'imprisonment' | 'freeze' | 'sinkhole';
+
+// Track zone types for visual variety
+export type TrackZoneType = 'start' | 'forest' | 'desert' | 'mountain' | 'water' | 'finish';
 
 // Special features from mystery box
 export type SpecialFeatureType =
@@ -64,6 +73,111 @@ export const SPECIAL_FEATURES: Record<SpecialFeatureType, SpecialFeature> = {
   freeze: { type: 'freeze', name: 'Đóng Băng', description: 'Đóng băng đối thủ 1 lượt', emoji: '❄️', duration: 1 },
 };
 
+// Trap definition
+export interface TrapDefinition {
+  type: TrapType;
+  name: string;
+  emoji: string;
+  description: string;
+  effect: {
+    duration: number;
+    speedReduction?: number;
+    immobilize?: boolean;
+    escapeRequired?: boolean;
+  };
+}
+
+// Available traps
+export const TRAPS: Record<TrapType, TrapDefinition> = {
+  imprisonment: {
+    type: 'imprisonment',
+    name: 'Nhà Tù',
+    emoji: '⛓️',
+    description: 'Giam giữ người chơi 2 lượt',
+    effect: { duration: 2, immobilize: true },
+  },
+  freeze: {
+    type: 'freeze',
+    name: 'Băng Giá',
+    emoji: '🧊',
+    description: 'Đóng băng 1 lượt, giảm 50% tốc độ',
+    effect: { duration: 1, speedReduction: 0.5, immobilize: true },
+  },
+  sinkhole: {
+    type: 'sinkhole',
+    name: 'Hố Sụt',
+    emoji: '🕳️',
+    description: 'Cần chơi mini-game để thoát',
+    effect: { duration: 1, immobilize: true, escapeRequired: true },
+  },
+};
+
+// Track zone definition
+export interface TrackZone {
+  id: string;
+  type: TrackZoneType;
+  startPosition: number;
+  endPosition: number;
+  background: string;
+  decorations: string[];
+}
+
+// Default track zones (6 zones covering 0-100%)
+export const DEFAULT_TRACK_ZONES: TrackZone[] = [
+  { id: 'start', type: 'start', startPosition: 0, endPosition: 10, background: 'linear-gradient(90deg, #4ade80, #22c55e)', decorations: ['🏁', '🎪', '🎈'] },
+  { id: 'forest', type: 'forest', startPosition: 10, endPosition: 30, background: 'linear-gradient(90deg, #166534, #15803d)', decorations: ['🌲', '🌳', '🍃'] },
+  { id: 'desert', type: 'desert', startPosition: 30, endPosition: 50, background: 'linear-gradient(90deg, #fbbf24, #f59e0b)', decorations: ['🌵', '☀️', '🏜️'] },
+  { id: 'mountain', type: 'mountain', startPosition: 50, endPosition: 70, background: 'linear-gradient(90deg, #6b7280, #4b5563)', decorations: ['⛰️', '🏔️', '🦅'] },
+  { id: 'water', type: 'water', startPosition: 70, endPosition: 90, background: 'linear-gradient(90deg, #3b82f6, #2563eb)', decorations: ['🌊', '💧', '🐟'] },
+  { id: 'finish', type: 'finish', startPosition: 90, endPosition: 100, background: 'linear-gradient(90deg, #eab308, #ca8a04)', decorations: ['🏆', '🎉', '👑'] },
+];
+
+// Team colors
+export const TEAM_COLORS = {
+  red: { name: 'Đỏ', color: '#ef4444', emoji: '🔴', bgClass: 'team-red' },
+  blue: { name: 'Xanh', color: '#3b82f6', emoji: '🔵', bgClass: 'team-blue' },
+  yellow: { name: 'Vàng', color: '#eab308', emoji: '🟡', bgClass: 'team-yellow' },
+  purple: { name: 'Tím', color: '#a855f7', emoji: '🟣', bgClass: 'team-purple' },
+} as const;
+
+export type TeamColorKey = keyof typeof TEAM_COLORS;
+
+// Racing team
+export interface RacingTeam {
+  id: string;
+  name: string;
+  colorKey: TeamColorKey;
+  emoji: string;
+  members: string[];
+  totalDistance: number;
+  totalPoints: number;
+}
+
+// Trap on track
+export interface Trap {
+  id: string;
+  type: TrapType;
+  position: number;
+  placedBy?: string;
+  isActive: boolean;
+}
+
+// Active trap effect on player
+export interface ActiveTrapEffect {
+  trapType: TrapType;
+  remainingRounds: number;
+  escapeTaps?: number;
+  escapeRequired?: number;
+}
+
+// Inventory item (power-up or trap to place)
+export interface InventoryItem {
+  id: string;
+  type: SpecialFeatureType | TrapType;
+  category: 'powerup' | 'trap';
+  isUsed: boolean;
+}
+
 // Mystery box with special question
 export interface MysteryBox {
   difficulty: QuestionDifficulty;
@@ -82,6 +196,7 @@ export interface RacingQuestion {
   speedBonus: number;         // Speed gained for correct answer
   isMysteryBox?: boolean;     // Is this a mystery box question
   mysteryBox?: MysteryBox;
+  isMilestone?: boolean;      // Is this a milestone question (bonus rewards)
 }
 
 // Player in racing game
@@ -104,6 +219,12 @@ export interface RacingPlayer {
   finishPosition?: number;    // Final position (1st, 2nd, etc.)
   totalPoints: number;        // Points earned this race
   isBot?: boolean;            // Is this player a bot?
+  // New fields for "Đường Đua" features
+  teamId?: string;            // Team ID (team mode only)
+  trapEffects: ActiveTrapEffect[];  // Active trap effects
+  inventory: InventoryItem[]; // Items held (max 3)
+  isEscaping?: boolean;       // Currently in escape mini-game
+  escapeProgress?: number;    // Escape progress (0-100)
 }
 
 // Active special feature on player
@@ -124,6 +245,12 @@ export interface RacingGameSettings {
   jlptLevel: JLPTLevel;
   contentSource: 'flashcard' | 'jlpt';
   lessonId?: string;
+  // New settings for "Đường Đua"
+  gameMode: GameMode;         // Individual or team mode
+  teamCount?: number;         // Number of teams (2-4) for team mode
+  enableTraps: boolean;       // Enable trap system
+  trapFrequency: number;      // Spawn trap every N questions
+  milestoneFrequency: number; // Special milestone question every N questions
 }
 
 // Game status
@@ -135,6 +262,8 @@ export type RacingGameStatus =
   | 'answering'         // Players answering
   | 'revealing'         // Showing correct answer
   | 'mystery_box'       // Mystery box event
+  | 'trap_triggered'    // Trap triggered event
+  | 'milestone'         // Milestone question bonus
   | 'finished';         // Race complete
 
 // Main racing game state
@@ -152,6 +281,10 @@ export interface RacingGame {
   createdAt: string;
   startedAt?: string;
   finishedAt?: string;
+  // New fields for "Đường Đua"
+  teams?: Record<string, RacingTeam>;  // Teams (team mode only)
+  activeTraps: Trap[];                 // Traps on the track
+  trackZones: TrackZone[];             // Track visual zones
 }
 
 // Game results
@@ -161,6 +294,8 @@ export interface RacingGameResults {
   totalQuestions: number;
   raceType: VehicleType;
   trackLength: number;
+  gameMode: GameMode;
+  teamRankings?: RacingTeamResult[];
 }
 
 export interface RacingPlayerResult {
@@ -175,6 +310,21 @@ export interface RacingPlayerResult {
   averageTime: number;
   pointsEarned: number;
   featuresUsed: number;
+  teamId?: string;
+  trapsTriggered: number;
+  trapsPlaced: number;
+}
+
+// Team results
+export interface RacingTeamResult {
+  teamId: string;
+  teamName: string;
+  colorKey: TeamColorKey;
+  emoji: string;
+  position: number;
+  totalDistance: number;
+  totalPoints: number;
+  memberCount: number;
 }
 
 // Create game form data
@@ -187,6 +337,10 @@ export interface CreateRacingGameData {
   questionCount: number;
   timePerQuestion: number;
   trackLength: number;
+  // New fields for "Đường Đua"
+  gameMode?: GameMode;
+  teamCount?: number;
+  enableTraps?: boolean;
 }
 
 // User's unlocked vehicles and points

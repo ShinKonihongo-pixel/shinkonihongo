@@ -1,8 +1,9 @@
 // Race Track - Professional animated race track visualization
-// Themed for boat (water) or horse (grass) racing
+// Supports multi-zone track with traps and team indicators
 
 import { useMemo } from 'react';
-import type { RacingPlayer, VehicleType } from '../../../types/racing-game';
+import type { RacingPlayer, VehicleType, TrackZone, Trap, RacingTeam } from '../../../types/racing-game';
+import { DEFAULT_TRACK_ZONES, TRAPS, TEAM_COLORS } from '../../../types/racing-game';
 import { isImageAvatar } from '../../../utils/avatar-icons';
 
 interface RaceTrackProps {
@@ -13,6 +14,11 @@ interface RaceTrackProps {
   currentQuestion: number;
   totalQuestions: number;
   compact?: boolean;
+  // New props for "Đường Đua"
+  trackZones?: TrackZone[];
+  activeTraps?: Trap[];
+  teams?: Record<string, RacingTeam>;
+  showZones?: boolean;
 }
 
 const TRACK_THEMES = {
@@ -42,6 +48,10 @@ export function RaceTrack({
   currentQuestion,
   totalQuestions,
   compact = false,
+  trackZones = DEFAULT_TRACK_ZONES,
+  activeTraps = [],
+  teams,
+  showZones = true,
 }: RaceTrackProps) {
   const theme = TRACK_THEMES[raceType];
 
@@ -51,7 +61,7 @@ export function RaceTrack({
   }, [players]);
 
   return (
-    <div className={`pro-race-track ${raceType} ${compact ? 'compact' : ''}`}>
+    <div className={`pro-race-track ${raceType} ${compact ? 'compact' : ''} ${showZones ? 'multi-zone' : ''}`}>
       {/* Track Header */}
       <div className="track-header">
         <div className="track-info">
@@ -70,25 +80,75 @@ export function RaceTrack({
         </div>
       </div>
 
-      {/* Track Visual */}
-      <div className="track-body" style={{ background: theme.bgGradient }}>
-        {/* Decorative elements */}
-        <div className="track-decorations">
-          {theme.decorations.map((d, i) => (
-            <span key={i} className={`decoration d${i + 1}`}>{d}</span>
+      {/* Track Zones Visual (background gradient) */}
+      {showZones && (
+        <div className="track-zones">
+          {trackZones.map(zone => (
+            <div
+              key={zone.id}
+              className={`track-zone zone-${zone.type}`}
+              style={{
+                left: `${zone.startPosition}%`,
+                width: `${zone.endPosition - zone.startPosition}%`,
+                background: zone.background,
+              }}
+            >
+              <div className="zone-decorations">
+                {zone.decorations.map((d, i) => (
+                  <span key={i} className="zone-deco">{d}</span>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
+      )}
+
+      {/* Track Visual */}
+      <div className="track-body" style={{ background: showZones ? 'transparent' : theme.bgGradient }}>
+        {/* Decorative elements (only show if no zones) */}
+        {!showZones && (
+          <div className="track-decorations">
+            {theme.decorations.map((d, i) => (
+              <span key={i} className={`decoration d${i + 1}`}>{d}</span>
+            ))}
+          </div>
+        )}
+
+        {/* Trap Markers */}
+        {activeTraps.length > 0 && (
+          <div className="track-traps">
+            {activeTraps.filter(t => t.isActive).map(trap => {
+              const trapDef = TRAPS[trap.type];
+              return (
+                <div
+                  key={trap.id}
+                  className={`trap-marker trap-${trap.type}`}
+                  style={{ left: `${trap.position}%` }}
+                  title={trapDef.name}
+                >
+                  <span className="trap-emoji">{trapDef.emoji}</span>
+                  <div className="trap-pulse" />
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Race Lanes */}
         <div className="race-lanes">
           {sortedPlayers.map((player, idx) => {
             const isCurrentPlayer = player.odinhId === currentPlayerId;
             const position = idx + 1;
+            const teamColor = player.teamId && teams?.[player.teamId]
+              ? TEAM_COLORS[teams[player.teamId].colorKey]
+              : null;
+            const hasTrapEffect = player.trapEffects && player.trapEffects.length > 0;
 
             return (
               <div
                 key={player.odinhId}
-                className={`race-lane ${isCurrentPlayer ? 'current-player' : ''} ${player.isBot ? 'bot' : ''}`}
+                className={`race-lane ${isCurrentPlayer ? 'current-player' : ''} ${player.isBot ? 'bot' : ''} ${hasTrapEffect ? 'trapped' : ''}`}
+                style={teamColor ? { '--team-color': teamColor.color } as React.CSSProperties : undefined}
               >
                 {/* Position Badge */}
                 <div className={`position-badge pos-${position}`}>
@@ -97,6 +157,12 @@ export function RaceTrack({
 
                 {/* Player Info */}
                 <div className="player-info">
+                  {/* Team Indicator */}
+                  {teamColor && (
+                    <span className="team-indicator" title={teams![player.teamId!].name}>
+                      {teams![player.teamId!].emoji}
+                    </span>
+                  )}
                   <span className="player-avatar">
                     {player.avatar && isImageAvatar(player.avatar) ? (
                       <img src={player.avatar} alt={player.displayName} />
@@ -106,8 +172,7 @@ export function RaceTrack({
                   </span>
                   <span className="player-name">
                     {player.displayName}
-                    {player.isBot && <span className="bot-tag">BOT</span>}
-                  </span>
+                                      </span>
                 </div>
 
                 {/* Track Lane */}
@@ -117,16 +182,22 @@ export function RaceTrack({
                     className="lane-progress"
                     style={{
                       width: `${Math.max(player.distance, 2)}%`,
-                      background: theme.progressColor,
+                      background: teamColor ? teamColor.color : theme.progressColor,
                     }}
                   >
                     {/* Vehicle */}
-                    <div className={`vehicle ${player.isFrozen ? 'frozen' : ''}`}>
+                    <div className={`vehicle ${player.isFrozen ? 'frozen' : ''} ${player.isEscaping ? 'escaping' : ''}`}>
                       <span className="vehicle-emoji">{player.vehicle.emoji}</span>
                       {player.hasShield && <span className="effect-shield">🛡️</span>}
                       {player.activeFeatures.some(f => f.type === 'speed_boost' || f.type === 'double_speed') && (
                         <span className="effect-boost">🚀</span>
                       )}
+                      {/* Trap Effect Indicators */}
+                      {player.trapEffects && player.trapEffects.map((effect, i) => (
+                        <span key={i} className={`effect-trap effect-${effect.trapType}`}>
+                          {TRAPS[effect.trapType].emoji}
+                        </span>
+                      ))}
                     </div>
                   </div>
 

@@ -1,9 +1,11 @@
 // Racing Game Results - Final race results and rankings
-// Shows podium, stats, and play again options
+// Shows podium, stats, team results, and play again options
 
-import { Trophy, Target, Zap, Home, RotateCcw } from 'lucide-react';
+import { Trophy, Target, Zap, Home, RotateCcw, Users, AlertTriangle } from 'lucide-react';
 import type { RacingGameResults } from '../../types/racing-game';
+import { TEAM_COLORS } from '../../types/racing-game';
 import { isImageAvatar } from '../../utils/avatar-icons';
+import { TeamResults } from './shared/team-view';
 
 // Helper to render avatar
 function renderAvatar(avatar: string | undefined, name: string) {
@@ -34,6 +36,8 @@ export function RacingGameResults({
     ? results.rankings.find(r => r.odinhId === currentPlayerId)
     : results.rankings[0];
   const currentPosition = currentPlayerResult?.position || 0;
+  const isTeamMode = results.gameMode === 'team';
+  const teamRankings = results.teamRankings;
 
   return (
     <div className="racing-results">
@@ -42,7 +46,16 @@ export function RacingGameResults({
         <div className="results-icon">{results.raceType === 'boat' ? '🚣' : '🏇'}</div>
         <h1>Kết Quả Cuộc Đua</h1>
         <p>Đường đua {results.trackLength} km - {results.totalQuestions} câu hỏi</p>
+        {isTeamMode && <span className="mode-badge team"><Users size={14} /> Chế độ Đội</span>}
       </div>
+
+      {/* Team Results (for team mode) */}
+      {isTeamMode && teamRankings && teamRankings.length > 0 && (
+        <TeamResults
+          teamRankings={teamRankings}
+          currentTeamId={currentPlayerResult?.teamId}
+        />
+      )}
 
       {/* Podium */}
       <div className="results-podium">
@@ -126,28 +139,45 @@ export function RacingGameResults({
 
       {/* Full Rankings */}
       <div className="full-rankings">
-        <h3>Bảng Xếp Hạng</h3>
+        <h3>{isTeamMode ? 'Bảng Xếp Hạng Cá Nhân' : 'Bảng Xếp Hạng'}</h3>
         <div className="rankings-list">
-          {results.rankings.map((player, idx) => (
-            <div
-              key={player.odinhId}
-              className={`ranking-item ${player.odinhId === currentPlayerId ? 'current' : ''}`}
-            >
-              <div className="ranking-position">
-                {idx < 3 ? MEDAL_EMOJIS[idx] : `#${idx + 1}`}
+          {results.rankings.map((player, idx) => {
+            const teamColor = player.teamId && isTeamMode
+              ? TEAM_COLORS[results.teamRankings?.find(t => t.teamId === player.teamId)?.colorKey || 'red']
+              : null;
+
+            return (
+              <div
+                key={player.odinhId}
+                className={`ranking-item ${player.odinhId === currentPlayerId ? 'current' : ''}`}
+                style={teamColor ? { '--team-color': teamColor.color, borderLeftColor: teamColor.color } as React.CSSProperties : undefined}
+              >
+                <div className="ranking-position">
+                  {idx < 3 ? MEDAL_EMOJIS[idx] : `#${idx + 1}`}
+                </div>
+                {teamColor && (
+                  <div className="ranking-team-indicator" style={{ backgroundColor: teamColor.color }}>
+                    {teamColor.emoji}
+                  </div>
+                )}
+                <div className="ranking-avatar">{renderAvatar(player.avatar, player.displayName)}</div>
+                <div className="ranking-info">
+                  <span className="ranking-name">{player.displayName}</span>
+                  <span className="ranking-vehicle">{player.vehicle.emoji} {player.vehicle.name}</span>
+                </div>
+                <div className="ranking-stats">
+                  <span className="ranking-distance">{player.distance.toFixed(1)}%</span>
+                  <span className="ranking-accuracy">{player.accuracy.toFixed(0)}% đúng</span>
+                  {(player.trapsTriggered > 0 || player.trapsPlaced > 0) && (
+                    <span className="ranking-traps" title="Bẫy trúng/đặt">
+                      <AlertTriangle size={12} /> {player.trapsTriggered}/{player.trapsPlaced}
+                    </span>
+                  )}
+                </div>
+                <div className="ranking-points">+{player.pointsEarned}</div>
               </div>
-              <div className="ranking-avatar">{renderAvatar(player.avatar, player.displayName)}</div>
-              <div className="ranking-info">
-                <span className="ranking-name">{player.displayName}</span>
-                <span className="ranking-vehicle">{player.vehicle.emoji} {player.vehicle.name}</span>
-              </div>
-              <div className="ranking-stats">
-                <span className="ranking-distance">{player.distance.toFixed(1)}%</span>
-                <span className="ranking-accuracy">{player.accuracy.toFixed(0)}% đúng</span>
-              </div>
-              <div className="ranking-points">+{player.pointsEarned}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
