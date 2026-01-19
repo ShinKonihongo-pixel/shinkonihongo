@@ -1,11 +1,13 @@
 // Speed Quiz Play - Main gameplay screen
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type {
   SpeedQuizGame,
   SpeedQuizSkill,
   SpeedQuizSkillType,
 } from '../../types/speed-quiz';
 import { SPEED_QUIZ_SKILLS } from '../../types/speed-quiz';
+import { PlayerLeaderboard, type LeaderboardPlayer } from '../game-hub/player-leaderboard';
+import { useGameSounds } from '../../hooks/use-game-sounds';
 
 interface SpeedQuizPlayProps {
   game: SpeedQuizGame;
@@ -33,6 +35,46 @@ export const SpeedQuizPlay: React.FC<SpeedQuizPlayProps> = ({
   const isPlaying = game.status === 'playing';
   const isSkillPhase = game.status === 'skill_phase';
   const isResult = game.status === 'result';
+
+  // Game sounds
+  const { playCorrect, playWrong, playVictory, playDefeat, startMusic, stopMusic, settings: soundSettings } = useGameSounds();
+  const soundPlayedRef = useRef<string>('');
+
+  // Play sounds when result is shown
+  useEffect(() => {
+    if (isResult && currentPlayer) {
+      const soundKey = `result-${game.currentRound}`;
+      if (soundPlayedRef.current !== soundKey) {
+        soundPlayedRef.current = soundKey;
+        if (currentPlayer.isCorrect) {
+          playCorrect();
+        } else {
+          playWrong();
+        }
+      }
+    }
+  }, [isResult, game.currentRound, currentPlayer, playCorrect, playWrong]);
+
+  // Play victory/defeat sound when game ends
+  useEffect(() => {
+    if (game.status === 'finished') {
+      const players = Object.values(game.players).sort((a, b) => b.score - a.score);
+      const isWinner = players[0]?.odinhId === currentPlayerId;
+      if (isWinner) {
+        playVictory();
+      } else {
+        playDefeat();
+      }
+      stopMusic();
+    }
+  }, [game.status, game.players, currentPlayerId, playVictory, playDefeat, stopMusic]);
+
+  // Start background music
+  useEffect(() => {
+    if (isPlaying && soundSettings.musicEnabled) {
+      startMusic();
+    }
+  }, [isPlaying, soundSettings.musicEnabled, startMusic]);
 
   // Focus input when playing
   useEffect(() => {
@@ -120,6 +162,34 @@ export const SpeedQuizPlay: React.FC<SpeedQuizPlayProps> = ({
 
   const sortedPlayers = Object.values(game.players).sort((a, b) => b.score - a.score);
   const lastResult = game.roundResults[game.roundResults.length - 1];
+
+  // Convert players to leaderboard format
+  const leaderboardPlayers: LeaderboardPlayer[] = useMemo(() => {
+    return sortedPlayers.map(player => {
+      // Determine answer status
+      let answerStatus: LeaderboardPlayer['answerStatus'] = 'none';
+      if (isResult && lastResult) {
+        const playerResult = lastResult.playerResults.find(r => r.odinhId === player.odinhId);
+        if (playerResult) {
+          answerStatus = playerResult.isCorrect ? 'correct' : 'wrong';
+        }
+      } else if (isPlaying) {
+        answerStatus = player.hasAnswered ? 'pending' : 'none';
+      }
+
+      return {
+        id: player.odinhId,
+        displayName: player.displayName,
+        avatar: player.avatar,
+        score: player.score,
+        isCurrentUser: player.odinhId === currentPlayerId,
+        answerStatus,
+        streak: player.streak,
+        isBot: player.isBot,
+        role: player.role,
+      };
+    });
+  }, [sortedPlayers, isPlaying, isResult, lastResult, currentPlayerId]);
 
   // Render skill phase
   if (isSkillPhase) {
@@ -279,133 +349,115 @@ export const SpeedQuizPlay: React.FC<SpeedQuizPlayProps> = ({
 
   // Render playing phase
   return (
-    <div className="speed-quiz-play playing-phase">
-      <div className="play-header">
-        <div className="round-info">
-          <span className="round">Câu {game.currentRound}/{game.settings.totalRounds}</span>
-          <div className={`timer ${timeLeft <= 3 ? 'danger' : timeLeft <= 5 ? 'warning' : ''}`}>
-            <span className="time-value">{Math.ceil(timeLeft)}</span>
-            <span className="time-label">giây</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Effects display */}
-      {currentPlayer && (
-        <div className="active-effects">
-          {currentPlayer.hasDoublePoints && (
-            <span className="effect double">✨ x2 ({currentPlayer.doublePointsTurns} lượt)</span>
-          )}
-          {currentPlayer.hasShield && (
-            <span className="effect shield">🛡️ Khiên ({currentPlayer.shieldTurns} lượt)</span>
-          )}
-          {currentPlayer.isSlowed && (
-            <span className="effect slowed">🐌 Bị làm chậm</span>
-          )}
-        </div>
-      )}
-
-      {/* Question display */}
-      {game.currentQuestion && (
-        <div className="question-area">
-          <div className="question-display">
-            <span className="question-text">{game.currentQuestion.display}</span>
-          </div>
-
-          <div className="question-meta">
-            <span className="category">
-              {game.currentQuestion.category === 'vocabulary'
-                ? '📝 Từ vựng'
-                : game.currentQuestion.category === 'kanji'
-                ? '🈳 Kanji'
-                : '📖 Ngữ pháp'}
-            </span>
-            <span className="points">+{game.currentQuestion.points} điểm</span>
-          </div>
-
-          {/* Hints */}
-          {revealedHints.length > 0 && (
-            <div className="hints-revealed">
-              {revealedHints.map((hint, i) => (
-                <div key={i} className="hint-item">
-                  💡 {hint}
-                </div>
-              ))}
+    <div className="speed-quiz-play playing-phase with-leaderboard">
+      <div className="speed-quiz-main">
+        <div className="play-header">
+          <div className="round-info">
+            <span className="round">Câu {game.currentRound}/{game.settings.totalRounds}</span>
+            <div className={`timer ${timeLeft <= 3 ? 'danger' : timeLeft <= 5 ? 'warning' : ''}`}>
+              <span className="time-value">{Math.ceil(timeLeft)}</span>
+              <span className="time-label">giây</span>
             </div>
-          )}
+          </div>
         </div>
-      )}
 
-      {/* Answer input */}
-      {isDelayed ? (
-        <div className="delay-overlay">
-          <span className="delay-icon">🐌</span>
-          <span className="delay-text">Bị làm chậm...</span>
-        </div>
-      ) : (
-        <form className="answer-form" onSubmit={handleSubmit}>
-          <input
-            ref={inputRef}
-            type="text"
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
-            placeholder="Nhập đáp án..."
-            disabled={currentPlayer?.hasAnswered}
-            className={currentPlayer?.hasAnswered ? 'answered' : ''}
-          />
-          <button
-            type="submit"
-            className="speed-quiz-btn primary"
-            disabled={!answer.trim() || currentPlayer?.hasAnswered}
-          >
-            {currentPlayer?.hasAnswered ? '✓ Đã trả lời' : '📤 Gửi'}
-          </button>
-        </form>
-      )}
+        {/* Effects display */}
+        {currentPlayer && (
+          <div className="active-effects">
+            {currentPlayer.hasDoublePoints && (
+              <span className="effect double">✨ x2 ({currentPlayer.doublePointsTurns} lượt)</span>
+            )}
+            {currentPlayer.hasShield && (
+              <span className="effect shield">🛡️ Khiên ({currentPlayer.shieldTurns} lượt)</span>
+            )}
+            {currentPlayer.isSlowed && (
+              <span className="effect slowed">🐌 Bị làm chậm</span>
+            )}
+          </div>
+        )}
 
-      {/* Hint button */}
-      <div className="hint-section">
-        <button
-          className="speed-quiz-btn secondary hint-btn"
-          onClick={handleUseHint}
-          disabled={
-            currentPlayer?.hintsRemaining <= 0 ||
-            revealedHints.length >= (game.currentQuestion?.hints.length || 0)
-          }
-        >
-          💡 Gợi ý ({currentPlayer?.hintsRemaining || 0} còn lại)
-        </button>
-      </div>
+        {/* Question display */}
+        {game.currentQuestion && (
+          <div className="question-area">
+            <div className="question-display">
+              <span className="question-text">{game.currentQuestion.display}</span>
+            </div>
 
-      {/* Live scoreboard */}
-      <div className="live-scoreboard">
-        <h3>📊 Bảng xếp hạng</h3>
-        <div className="scoreboard-list">
-          {sortedPlayers.map((player, index) => (
-            <div
-              key={player.odinhId}
-              className={`score-row ${player.odinhId === currentPlayerId ? 'current' : ''} ${
-                player.hasAnswered ? 'answered' : ''
-              }`}
+            <div className="question-meta">
+              <span className="category">
+                {game.currentQuestion.category === 'vocabulary'
+                  ? '📝 Từ vựng'
+                  : game.currentQuestion.category === 'kanji'
+                  ? '🈳 Kanji'
+                  : '📖 Ngữ pháp'}
+              </span>
+              <span className="points">+{game.currentQuestion.points} điểm</span>
+            </div>
+
+            {/* Hints */}
+            {revealedHints.length > 0 && (
+              <div className="hints-revealed">
+                {revealedHints.map((hint, i) => (
+                  <div key={i} className="hint-item">
+                    💡 {hint}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Answer input */}
+        {isDelayed ? (
+          <div className="delay-overlay">
+            <span className="delay-icon">🐌</span>
+            <span className="delay-text">Bị làm chậm...</span>
+          </div>
+        ) : (
+          <form className="answer-form" onSubmit={handleSubmit}>
+            <input
+              ref={inputRef}
+              type="text"
+              value={answer}
+              onChange={(e) => setAnswer(e.target.value)}
+              placeholder="Nhập đáp án..."
+              disabled={currentPlayer?.hasAnswered}
+              className={currentPlayer?.hasAnswered ? 'answered' : ''}
+            />
+            <button
+              type="submit"
+              className="speed-quiz-btn primary"
+              disabled={!answer.trim() || currentPlayer?.hasAnswered}
             >
-              <span className="rank">
-                {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
-              </span>
-              <span className="avatar">{player.avatar}</span>
-              <span className="name">
-                {player.displayName}
-                {player.isBot && ' 🤖'}
-              </span>
-              <span className="streak">
-                {player.streak > 0 && `🔥${player.streak}`}
-              </span>
-              <span className="status">
-                {player.hasAnswered ? '✓' : '...'}
-              </span>
-              <span className="score">{player.score}</span>
-            </div>
-          ))}
+              {currentPlayer?.hasAnswered ? '✓ Đã trả lời' : '📤 Gửi'}
+            </button>
+          </form>
+        )}
+
+        {/* Hint button */}
+        <div className="hint-section">
+          <button
+            className="speed-quiz-btn secondary hint-btn"
+            onClick={handleUseHint}
+            disabled={
+              currentPlayer?.hintsRemaining <= 0 ||
+              revealedHints.length >= (game.currentQuestion?.hints.length || 0)
+            }
+          >
+            💡 Gợi ý ({currentPlayer?.hintsRemaining || 0} còn lại)
+          </button>
         </div>
+      </div>
+
+      {/* Player Leaderboard Sidebar */}
+      <div className="speed-quiz-sidebar">
+        <PlayerLeaderboard
+          players={leaderboardPlayers}
+          currentUserId={currentPlayerId}
+          title="Bảng Xếp Hạng"
+          showAnswerStatus={true}
+          maxVisible={10}
+        />
       </div>
     </div>
   );

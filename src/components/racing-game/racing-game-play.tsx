@@ -1,14 +1,16 @@
 // Racing Game Play - Main racing gameplay with track visualization
 // Shows questions, answer options, player positions, traps, milestones, and inventory
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Clock, Zap, Star, ChevronRight, Gift, LogOut } from 'lucide-react';
 import type { RacingGame, RacingPlayer, RacingQuestion, SpecialFeatureType, TrapType } from '../../types/racing-game';
 import { SPECIAL_FEATURES, TRAPS } from '../../types/racing-game';
+import { useGameSounds } from '../../hooks/use-game-sounds';
 import { MilestoneBadge, MilestoneRewardPreview } from './shared/milestone-question';
 import { TrapTriggeredOverlay, TrapWarning } from './shared/trap-system';
 import { InventoryBar } from './shared/inventory-bar';
 import { TeamScoreboard } from './shared/team-view';
+import { PlayerLeaderboard, type LeaderboardPlayer } from '../game-hub/player-leaderboard';
 
 interface RacingGamePlayProps {
   game: RacingGame;
@@ -36,8 +38,8 @@ const OPTION_COLORS = [
   'linear-gradient(135deg, #6c5ce7, #5849c4)',
 ];
 
-// Answer option shapes
-const OPTION_SHAPES = ['▲', '◆', '●', '■'];
+// Answer option labels (A, B, C, D)
+const OPTION_LABELS = ['A', 'B', 'C', 'D'];
 
 export function RacingGamePlay({
   game,
@@ -62,10 +64,54 @@ export function RacingGamePlay({
   const isTeamMode = game.settings.gameMode === 'team';
   const enableTraps = game.settings.enableTraps;
 
-  // Timer countdown
+  // Game sounds
+  const { playCorrect, playWrong, playVictory, playDefeat, playPowerUp, startMusic, stopMusic, settings: soundSettings } = useGameSounds();
+  const soundPlayedRef = useRef<string>('');
+
+  // Convert players to leaderboard format - use primitive values to avoid recompute
+  const correctIndex = currentQuestion?.correctIndex;
+  const currentPlayerId = currentPlayer?.odinhId;
+
+  const leaderboardPlayers: LeaderboardPlayer[] = useMemo(() => {
+    return sortedPlayers.map(player => {
+      // Determine answer status based on game state
+      let answerStatus: LeaderboardPlayer['answerStatus'] = 'none';
+      if (game.status === 'revealing' && correctIndex !== undefined) {
+        const playerAnswer = player.currentAnswer;
+        if (playerAnswer !== undefined && playerAnswer !== null) {
+          answerStatus = playerAnswer === correctIndex ? 'correct' : 'wrong';
+        }
+      } else if (game.status === 'answering') {
+        if (player.currentAnswer !== undefined && player.currentAnswer !== null) {
+          answerStatus = 'pending';
+        }
+      }
+
+      return {
+        id: player.odinhId,
+        displayName: player.displayName,
+        avatar: player.avatar,
+        score: Math.round(player.distance * 10), // Convert distance to score
+        isCurrentUser: player.odinhId === currentPlayerId,
+        answerStatus,
+        streak: player.streak,
+        isBot: player.isBot,
+        role: player.role,
+        extraInfo: `${player.distance.toFixed(1)}% • ${Math.round(player.currentSpeed)}km/h`,
+      };
+    });
+  }, [sortedPlayers, game.status, correctIndex, currentPlayerId]);
+
+  // Timer countdown - only depend on primitive values to avoid re-render loops
+  const questionTimeLimit = currentQuestion?.timeLimit || 15;
+
   useEffect(() => {
-    if (game.status !== 'answering' || !currentQuestion) {
-      setTimeLeft(currentQuestion?.timeLimit || 15);
+    // Reset timeLeft when question changes
+    setTimeLeft(questionTimeLimit);
+  }, [game.currentQuestionIndex, questionTimeLimit]);
+
+  useEffect(() => {
+    if (game.status !== 'answering') {
       return;
     }
 
@@ -80,13 +126,56 @@ export function RacingGamePlay({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [game.status, currentQuestion, game.currentQuestionIndex]);
+  }, [game.status, game.currentQuestionIndex]);
 
   // Reset selected answer when question changes
   useEffect(() => {
     setSelectedAnswer(null);
     setShowMysteryReward(false);
   }, [game.currentQuestionIndex]);
+
+  // Play sounds when answer is revealed
+  useEffect(() => {
+    if (game.status === 'revealing' && currentPlayer && currentQuestion) {
+      const soundKey = `reveal-${game.currentQuestionIndex}`;
+      if (soundPlayedRef.current !== soundKey) {
+        soundPlayedRef.current = soundKey;
+        const answeredCorrectly = currentPlayer.currentAnswer === currentQuestion.correctIndex;
+        if (answeredCorrectly) {
+          playCorrect();
+        } else {
+          playWrong();
+        }
+      }
+    }
+  }, [game.status, game.currentQuestionIndex, currentPlayer, currentQuestion, playCorrect, playWrong]);
+
+  // Play victory sound when game ends (winner crosses finish line)
+  useEffect(() => {
+    if (game.status === 'finished' && currentPlayer) {
+      const isWinner = sortedPlayers[0]?.odinhId === currentPlayer.odinhId;
+      if (isWinner) {
+        playVictory();
+      } else {
+        playDefeat();
+      }
+      stopMusic();
+    }
+  }, [game.status, currentPlayer, sortedPlayers, playVictory, playDefeat, stopMusic]);
+
+  // Start background music when game starts
+  useEffect(() => {
+    if (game.status === 'answering' && soundSettings.musicEnabled) {
+      startMusic();
+    }
+  }, [game.status, soundSettings.musicEnabled, startMusic]);
+
+  // Play powerup sound when mystery box is opened
+  useEffect(() => {
+    if (showMysteryReward) {
+      playPowerUp();
+    }
+  }, [showMysteryReward, playPowerUp]);
 
   const handleAnswer = useCallback((index: number) => {
     if (selectedAnswer !== null || game.status !== 'answering') return;
@@ -163,12 +252,15 @@ export function RacingGamePlay({
   }
 
   return (
-    <div className="racing-play">
+    <div className="racing-play with-leaderboard">
       {onLeave && (
         <button className="leave-game-btn floating" onClick={onLeave} title="Rời game">
           <LogOut size={18} /> Rời
         </button>
       )}
+
+      {/* Main game content */}
+      <div className="racing-play-main">
       {/* Race Track */}
       <div className="race-track">
         <div className="track-header">
@@ -250,7 +342,7 @@ export function RacingGamePlay({
                   onClick={() => handleAnswer(index)}
                   disabled={game.status !== 'answering' || selectedAnswer !== null}
                 >
-                  <span className="option-shape">{OPTION_SHAPES[index]}</span>
+                  <span className="option-label">{OPTION_LABELS[index]}</span>
                   <span className="option-text">{option}</span>
                   {isCorrect && <span className="correct-mark">✓</span>}
                   {isWrong && <span className="wrong-mark">✗</span>}
@@ -369,6 +461,18 @@ export function RacingGamePlay({
           ))}
         </div>
       )}
+      </div>
+
+      {/* Player Leaderboard Sidebar */}
+      <div className="racing-play-sidebar">
+        <PlayerLeaderboard
+          players={leaderboardPlayers}
+          currentUserId={currentPlayer?.odinhId}
+          title="Bảng Xếp Hạng"
+          showAnswerStatus={true}
+          maxVisible={10}
+        />
+      </div>
     </div>
   );
 }

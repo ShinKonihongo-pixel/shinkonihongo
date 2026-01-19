@@ -1,10 +1,12 @@
 // Word Match Play - Main gameplay screen with matching interface
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type {
   WordMatchGame,
   WordMatchEffectType,
 } from '../../types/word-match';
 import { WORD_MATCH_EFFECTS, shuffleForDisplay } from '../../types/word-match';
+import { PlayerLeaderboard, type LeaderboardPlayer } from '../game-hub/player-leaderboard';
+import { useGameSounds } from '../../hooks/use-game-sounds';
 
 interface WordMatchPlayProps {
   game: WordMatchGame;
@@ -32,6 +34,54 @@ export const WordMatchPlay: React.FC<WordMatchPlayProps> = ({
   const isWheelSpin = game.status === 'wheel_spin';
   const isResult = game.status === 'result';
   const isWheelWinner = game.wheelSpinner === currentPlayerId;
+
+  // Game sounds
+  const { playCorrect, playWrong, playVictory, playDefeat, playPowerUp, startMusic, stopMusic, settings: soundSettings } = useGameSounds();
+  const soundPlayedRef = useRef<string>('');
+
+  // Play sounds when result is shown
+  useEffect(() => {
+    if (isResult && currentPlayer) {
+      const soundKey = `result-${game.currentRound}`;
+      if (soundPlayedRef.current !== soundKey) {
+        soundPlayedRef.current = soundKey;
+        // Check if player got any correct pairs this round
+        if (currentPlayer.correctPairs > 0 || currentPlayer.score > 0) {
+          playCorrect();
+        } else {
+          playWrong();
+        }
+      }
+    }
+  }, [isResult, game.currentRound, currentPlayer, playCorrect, playWrong]);
+
+  // Play victory/defeat sound when game ends
+  useEffect(() => {
+    if (game.status === 'finished') {
+      const players = Object.values(game.players).sort((a, b) => b.score - a.score);
+      const isWinner = players[0]?.odinhId === currentPlayerId;
+      if (isWinner) {
+        playVictory();
+      } else {
+        playDefeat();
+      }
+      stopMusic();
+    }
+  }, [game.status, game.players, currentPlayerId, playVictory, playDefeat, stopMusic]);
+
+  // Play powerup sound when wheel winner gets effect
+  useEffect(() => {
+    if (isWheelSpin && isWheelWinner) {
+      playPowerUp();
+    }
+  }, [isWheelSpin, isWheelWinner, playPowerUp]);
+
+  // Start background music
+  useEffect(() => {
+    if (isPlaying && soundSettings.musicEnabled) {
+      startMusic();
+    }
+  }, [isPlaying, soundSettings.musicEnabled, startMusic]);
 
   // Shuffle pairs for display
   const { leftItems, rightItems } = useMemo(() => {
@@ -137,6 +187,33 @@ export const WordMatchPlay: React.FC<WordMatchPlayProps> = ({
   const sortedPlayers = Object.values(game.players).sort((a, b) => b.score - a.score);
   const lastResult = game.roundResults[game.roundResults.length - 1];
   const otherPlayers = Object.values(game.players).filter(p => p.odinhId !== currentPlayerId);
+
+  // Convert players to leaderboard format
+  const leaderboardPlayers: LeaderboardPlayer[] = useMemo(() => {
+    return sortedPlayers.map(player => {
+      // Determine answer status
+      let answerStatus: LeaderboardPlayer['answerStatus'] = 'none';
+      if (isResult && lastResult) {
+        const playerResult = lastResult.playerResults.find(r => r.odinhId === player.odinhId);
+        if (playerResult) {
+          answerStatus = playerResult.allCorrect ? 'correct' : 'wrong';
+        }
+      } else if (isPlaying) {
+        answerStatus = player.hasSubmitted ? 'pending' : 'none';
+      }
+
+      return {
+        id: player.odinhId,
+        displayName: player.displayName,
+        avatar: player.avatar,
+        score: player.score,
+        isCurrentUser: player.odinhId === currentPlayerId,
+        answerStatus,
+        isBot: player.isBot,
+        role: player.role,
+      };
+    });
+  }, [sortedPlayers, isPlaying, isResult, lastResult, currentPlayerId]);
 
   // Render wheel spin phase
   if (isWheelSpin) {
@@ -326,127 +403,117 @@ export const WordMatchPlay: React.FC<WordMatchPlayProps> = ({
 
   // Render playing phase
   return (
-    <div className="word-match-play playing-phase">
-      <div className="play-header">
-        <div className="round-info">
-          <span className="round">
-            Câu {game.currentRound}/{game.settings.totalRounds}
-            {game.currentRoundData?.isSpecial && <span className="special">⭐</span>}
-          </span>
-          <div className={`timer ${timeLeft <= 5 ? 'danger' : timeLeft <= 10 ? 'warning' : ''}`}>
-            <span className="time-value">{Math.ceil(timeLeft)}</span>
-            <span className="time-label">giây</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Effects display */}
-      {currentPlayer && (
-        <div className="active-effects">
-          {currentPlayer.hasShield && (
-            <span className="effect shield">🛡️ Có lá chắn</span>
-          )}
-          {currentPlayer.isChallenged && (
-            <span className="effect challenged">⚔️ Bị thách đấu (từ khó)</span>
-          )}
-        </div>
-      )}
-
-      {/* Matching area */}
-      <div className="matching-area">
-        <div className="matching-instruction">
-          <p>Nối từ bên trái với nghĩa bên phải ({matches.length}/5)</p>
-        </div>
-
-        <div className="matching-columns">
-          {/* Left column - Japanese words */}
-          <div className="match-column left-column">
-            {leftItems.map(item => {
-              const match = getMatchForLeft(item.id);
-              return (
-                <button
-                  key={item.id}
-                  className={`match-item ${selectedLeft === item.id ? 'selected' : ''} ${
-                    match ? 'matched' : ''
-                  }`}
-                  onClick={() => handleLeftClick(item.id)}
-                  disabled={currentPlayer?.hasSubmitted}
-                >
-                  <span className="match-text">{item.text}</span>
-                  {match && <span className="match-indicator">✓</span>}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Connection lines visualization */}
-          <div className="match-lines">
-            {matches.map((_, idx) => (
-              <div key={idx} className="match-line" />
-            ))}
-          </div>
-
-          {/* Right column - Vietnamese meanings */}
-          <div className="match-column right-column">
-            {rightItems.map(item => {
-              const match = getMatchForRight(item.id);
-              return (
-                <button
-                  key={item.id}
-                  className={`match-item ${match ? 'matched' : ''} ${
-                    selectedLeft && !match ? 'selectable' : ''
-                  }`}
-                  onClick={() => handleRightClick(item.id)}
-                  disabled={currentPlayer?.hasSubmitted || !selectedLeft}
-                >
-                  <span className="match-text">{item.text}</span>
-                  {match && <span className="match-indicator">✓</span>}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Submit button */}
-      <div className="submit-section">
-        {currentPlayer?.hasSubmitted ? (
-          <div className="submitted-message">
-            <span className="icon">✅</span>
-            <span>Đã gửi! Đợi người khác...</span>
-          </div>
-        ) : (
-          <button
-            className="word-match-btn primary large"
-            onClick={handleSubmit}
-            disabled={matches.length === 0}
-          >
-            📤 Gửi Đáp Án ({matches.length}/5)
-          </button>
-        )}
-      </div>
-
-      {/* Live scoreboard */}
-      <div className="live-scoreboard">
-        <h3>📊 Bảng xếp hạng</h3>
-        <div className="scoreboard-list">
-          {sortedPlayers.slice(0, 5).map((player, index) => (
-            <div
-              key={player.odinhId}
-              className={`score-row ${player.odinhId === currentPlayerId ? 'current' : ''} ${
-                player.hasSubmitted ? 'submitted' : ''
-              }`}
-            >
-              <span className="rank">
-                {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
-              </span>
-              <span className="avatar">{player.avatar}</span>
-              <span className="name">{player.displayName}</span>
-              <span className="status">{player.hasSubmitted ? '✓' : '...'}</span>
-              <span className="score">{player.score}</span>
+    <div className="word-match-play playing-phase with-leaderboard">
+      <div className="word-match-main">
+        <div className="play-header">
+          <div className="round-info">
+            <span className="round">
+              Câu {game.currentRound}/{game.settings.totalRounds}
+              {game.currentRoundData?.isSpecial && <span className="special">⭐</span>}
+            </span>
+            <div className={`timer ${timeLeft <= 5 ? 'danger' : timeLeft <= 10 ? 'warning' : ''}`}>
+              <span className="time-value">{Math.ceil(timeLeft)}</span>
+              <span className="time-label">giây</span>
             </div>
-          ))}
+          </div>
         </div>
+
+        {/* Effects display */}
+        {currentPlayer && (
+          <div className="active-effects">
+            {currentPlayer.hasShield && (
+              <span className="effect shield">🛡️ Có lá chắn</span>
+            )}
+            {currentPlayer.isChallenged && (
+              <span className="effect challenged">⚔️ Bị thách đấu (từ khó)</span>
+            )}
+          </div>
+        )}
+
+        {/* Matching area */}
+        <div className="matching-area">
+          <div className="matching-instruction">
+            <p>Nối từ bên trái với nghĩa bên phải ({matches.length}/5)</p>
+          </div>
+
+          <div className="matching-columns">
+            {/* Left column - Japanese words */}
+            <div className="match-column left-column">
+              {leftItems.map(item => {
+                const match = getMatchForLeft(item.id);
+                return (
+                  <button
+                    key={item.id}
+                    className={`match-item ${selectedLeft === item.id ? 'selected' : ''} ${
+                      match ? 'matched' : ''
+                    }`}
+                    onClick={() => handleLeftClick(item.id)}
+                    disabled={currentPlayer?.hasSubmitted}
+                  >
+                    <span className="match-text">{item.text}</span>
+                    {match && <span className="match-indicator">✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Connection lines visualization */}
+            <div className="match-lines">
+              {matches.map((_, idx) => (
+                <div key={idx} className="match-line" />
+              ))}
+            </div>
+
+            {/* Right column - Vietnamese meanings */}
+            <div className="match-column right-column">
+              {rightItems.map(item => {
+                const match = getMatchForRight(item.id);
+                return (
+                  <button
+                    key={item.id}
+                    className={`match-item ${match ? 'matched' : ''} ${
+                      selectedLeft && !match ? 'selectable' : ''
+                    }`}
+                    onClick={() => handleRightClick(item.id)}
+                    disabled={currentPlayer?.hasSubmitted || !selectedLeft}
+                  >
+                    <span className="match-text">{item.text}</span>
+                    {match && <span className="match-indicator">✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Submit button */}
+        <div className="submit-section">
+          {currentPlayer?.hasSubmitted ? (
+            <div className="submitted-message">
+              <span className="icon">✅</span>
+              <span>Đã gửi! Đợi người khác...</span>
+            </div>
+          ) : (
+            <button
+              className="word-match-btn primary large"
+              onClick={handleSubmit}
+              disabled={matches.length === 0}
+            >
+              📤 Gửi Đáp Án ({matches.length}/5)
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Player Leaderboard Sidebar */}
+      <div className="word-match-sidebar">
+        <PlayerLeaderboard
+          players={leaderboardPlayers}
+          currentUserId={currentPlayerId}
+          title="Bảng Xếp Hạng"
+          showAnswerStatus={true}
+          maxVisible={10}
+        />
       </div>
     </div>
   );

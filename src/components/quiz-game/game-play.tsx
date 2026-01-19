@@ -1,10 +1,11 @@
 // Game play component - handles all gameplay states
 // Professional Kahoot-like game interface
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { QuizGame, GamePlayer, GameQuestion, PowerUpType } from '../../types/quiz-game';
 import { POWER_UPS } from '../../types/quiz-game';
 import { Trophy, Zap, Users, ChevronRight, Shield, Snowflake, Target, Crown, Medal, Award, LogOut } from 'lucide-react';
+import { useGameSounds } from '../../hooks/use-game-sounds';
 
 interface GamePlayProps {
   game: QuizGame;
@@ -23,12 +24,12 @@ interface GamePlayProps {
   gameAnswerFontSize?: number;
 }
 
-// Answer option colors - vibrant gradient pairs
+// Answer option colors with A, B, C, D labels
 const ANSWER_COLORS = [
-  { bg: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)', icon: '▲' },
-  { bg: 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)', icon: '◆' },
-  { bg: 'linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)', icon: '●' },
-  { bg: 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)', icon: '■' },
+  { bg: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)', label: 'A' },
+  { bg: 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)', label: 'B' },
+  { bg: 'linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)', label: 'C' },
+  { bg: 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)', label: 'D' },
 ];
 
 export function GamePlay({
@@ -56,6 +57,10 @@ export function GamePlay({
   const [prevScores, setPrevScores] = useState<Record<string, number>>({});
   const [powerUpConfirmed, setPowerUpConfirmed] = useState(false);
 
+  // Game sounds
+  const { playCorrect, playWrong, playStart, playCountdown, startMusic, stopMusic, settings: soundSettings } = useGameSounds();
+  const soundPlayedRef = useRef<string>('');
+
   // Countdown for starting state
   useEffect(() => {
     if (game.status === 'starting') {
@@ -64,14 +69,44 @@ export function GamePlay({
         setCountdown(prev => {
           if (prev <= 1) {
             clearInterval(timer);
+            playStart(); // Play start sound when countdown ends
             return 0;
           }
+          playCountdown(); // Play countdown beep
           return prev - 1;
         });
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [game.status]);
+  }, [game.status, playStart, playCountdown]);
+
+  // Start background music when game starts (if enabled)
+  useEffect(() => {
+    if (game.status === 'question' && soundSettings.musicEnabled) {
+      startMusic();
+    }
+    return () => {
+      if (game.status === 'finished') {
+        stopMusic();
+      }
+    };
+  }, [game.status, soundSettings.musicEnabled, startMusic, stopMusic]);
+
+  // Play sound when answer is revealed
+  useEffect(() => {
+    if (game.status === 'answer_reveal' && currentPlayer) {
+      const soundKey = `reveal-${game.currentRound}`;
+      if (soundPlayedRef.current !== soundKey) {
+        soundPlayedRef.current = soundKey;
+        const answeredCorrectly = currentPlayer.currentAnswer === currentQuestion.correctIndex;
+        if (answeredCorrectly) {
+          playCorrect();
+        } else {
+          playWrong();
+        }
+      }
+    }
+  }, [game.status, game.currentRound, currentPlayer, currentQuestion.correctIndex, playCorrect, playWrong]);
 
   // Timer for questions
   useEffect(() => {
@@ -280,7 +315,7 @@ export function GamePlay({
                 }}
                 disabled={hasAnswered}
               >
-                <span className="answer-icon">{ANSWER_COLORS[index].icon}</span>
+                <span className="answer-label">{ANSWER_COLORS[index].label}</span>
                 <span className="answer-text">{option}</span>
               </button>
             ))}
@@ -349,7 +384,7 @@ export function GamePlay({
             className="correct-answer"
             style={{ background: ANSWER_COLORS[currentQuestion.correctIndex].bg }}
           >
-            {ANSWER_COLORS[currentQuestion.correctIndex].icon} {currentQuestion.options[currentQuestion.correctIndex]}
+            {ANSWER_COLORS[currentQuestion.correctIndex].label} {currentQuestion.options[currentQuestion.correctIndex]}
           </span>
           <span className="answer-stats">{correctCount}/{sortedPlayers.length} trả lời đúng</span>
         </div>

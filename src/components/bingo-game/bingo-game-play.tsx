@@ -1,9 +1,11 @@
 // Bingo Game Play - Main game interface with number boards and drawing
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { LogOut, Target, Sparkles, X, HelpCircle } from 'lucide-react';
 import type { BingoGame, BingoPlayer, BingoSkillType } from '../../types/bingo-game';
 import { BINGO_SKILLS } from '../../types/bingo-game';
+import { PlayerLeaderboard, type LeaderboardPlayer } from '../game-hub/player-leaderboard';
+import { useGameSounds } from '../../hooks/use-game-sounds';
 
 interface BingoGamePlayProps {
   game: BingoGame;
@@ -37,10 +39,63 @@ export function BingoGamePlay({
   const [showDrawAnimation, setShowDrawAnimation] = useState(false);
   const [animatedNumber, setAnimatedNumber] = useState<number | null>(null);
 
+  // Game sounds
+  const { playCorrect, playVictory, playDefeat, startMusic, stopMusic, settings: soundSettings } = useGameSounds();
+  const soundPlayedRef = useRef<string>('');
+
+  // Play sound when number is drawn (matches on player's rows)
+  useEffect(() => {
+    if (game.drawnNumbers.length > 0 && currentPlayer) {
+      const lastDrawn = game.drawnNumbers[game.drawnNumbers.length - 1];
+      const hasNumber = currentPlayer.rows.some(row =>
+        row.cells.some(cell => cell.number === lastDrawn.number)
+      );
+      const soundKey = `draw-${game.drawnNumbers.length}`;
+      if (soundPlayedRef.current !== soundKey && hasNumber) {
+        soundPlayedRef.current = soundKey;
+        playCorrect();
+      }
+    }
+  }, [game.drawnNumbers, currentPlayer, playCorrect]);
+
+  // Play victory/defeat sound when game ends
+  useEffect(() => {
+    if (game.status === 'finished' && currentPlayer) {
+      if (game.winnerId === currentPlayer.odinhId) {
+        playVictory();
+      } else {
+        playDefeat();
+      }
+      stopMusic();
+    }
+  }, [game.status, game.winnerId, currentPlayer, playVictory, playDefeat, stopMusic]);
+
+  // Start background music
+  useEffect(() => {
+    if (game.status === 'playing' && soundSettings.musicEnabled) {
+      startMusic();
+    }
+  }, [game.status, soundSettings.musicEnabled, startMusic]);
+
   // Opponents for skill targeting
   const opponents = useMemo(() => {
     return sortedPlayers.filter(p => p.odinhId !== currentPlayer?.odinhId);
   }, [sortedPlayers, currentPlayer]);
+
+  // Convert players to leaderboard format
+  const leaderboardPlayers: LeaderboardPlayer[] = useMemo(() => {
+    return sortedPlayers.map(player => ({
+      id: player.odinhId,
+      displayName: player.displayName,
+      avatar: player.avatar,
+      score: player.completedRows * 100 + player.markedCount,
+      isCurrentUser: player.odinhId === currentPlayer?.odinhId,
+      isBot: player.isBot,
+      role: player.role,
+      extraInfo: `${player.completedRows} dãy • ✓${player.markedCount}`,
+      answerStatus: player.hasBingoed ? 'correct' : player.completedRows >= 3 ? 'pending' : 'none',
+    }));
+  }, [sortedPlayers, currentPlayer?.odinhId]);
 
   // Animate drawn number
   useEffect(() => {
@@ -82,7 +137,7 @@ export function BingoGamePlay({
   const canBingo = currentPlayer?.canBingo && !currentPlayer?.hasBingoed;
 
   return (
-    <div className="bingo-play">
+    <div className="bingo-play with-leaderboard">
       {/* Header */}
       <div className="bingo-play-header">
         <div className="turn-info">
@@ -112,111 +167,105 @@ export function BingoGamePlay({
         </div>
       )}
 
-      {/* Main game area */}
-      <div className="bingo-play-main">
-        {/* My bingo card */}
-        {currentPlayer && (
-          <div className="my-bingo-card">
-            <div className="card-header">
-              <span className="card-title">Thẻ Của Bạn</span>
-              <span className="marked-count">
-                ✓ {currentPlayer.markedCount} số
-              </span>
-            </div>
+      {/* Content wrapper for sidebar layout */}
+      <div className="bingo-play-content">
+        {/* Main game area */}
+        <div className="bingo-play-main">
+          {/* My bingo card */}
+          {currentPlayer && (
+            <div className="my-bingo-card">
+              <div className="card-header">
+                <span className="card-title">Thẻ Của Bạn</span>
+                <span className="marked-count">
+                  ✓ {currentPlayer.markedCount} số
+                </span>
+              </div>
 
-            <div className="bingo-rows">
-              {currentPlayer.rows.map((row, rowIdx) => (
-                <div
-                  key={row.id}
-                  className={`bingo-row ${row.isComplete ? 'complete' : ''}`}
-                >
-                  <span className="row-number">{rowIdx + 1}</span>
-                  <div className="row-cells">
-                    {row.cells.map((cell, cellIdx) => (
-                      <div
-                        key={cellIdx}
-                        className={`bingo-cell ${cell.marked ? 'marked' : ''} ${
-                          cell.number === game.lastDrawnNumber ? 'just-marked' : ''
-                        }`}
-                      >
-                        <span>{cell.number.toString().padStart(2, '0')}</span>
-                      </div>
-                    ))}
+              <div className="bingo-rows">
+                {currentPlayer.rows.map((row, rowIdx) => (
+                  <div
+                    key={row.id}
+                    className={`bingo-row ${row.isComplete ? 'complete' : ''}`}
+                  >
+                    <span className="row-number">{rowIdx + 1}</span>
+                    <div className="row-cells">
+                      {row.cells.map((cell, cellIdx) => (
+                        <div
+                          key={cellIdx}
+                          className={`bingo-cell ${cell.marked ? 'marked' : ''} ${
+                            cell.number === game.lastDrawnNumber ? 'just-marked' : ''
+                          }`}
+                        >
+                          <span>{cell.number.toString().padStart(2, '0')}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {row.isComplete && <span className="row-complete">✓</span>}
                   </div>
-                  {row.isComplete && <span className="row-complete">✓</span>}
+                ))}
+              </div>
+
+              {/* Status badges */}
+              <div className="player-status-badges">
+                {currentPlayer.isBlocked && (
+                  <span className="status-badge blocked">🚫 Bị Chặn</span>
+                )}
+                {currentPlayer.luckBonus > 1 && (
+                  <span className="status-badge lucky">🍀 May Mắn ({currentPlayer.luckTurnsLeft})</span>
+                )}
+                {currentPlayer.hasFiftyFifty && (
+                  <span className="status-badge fifty">🎲 50/50</span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Drawn numbers history */}
+          <div className="drawn-numbers-section">
+            <h4>Số Đã Bốc</h4>
+            <div className="drawn-numbers-grid">
+              {game.drawnNumbers.slice(-20).reverse().map((drawn, idx) => (
+                <div
+                  key={idx}
+                  className={`drawn-number ${idx === 0 ? 'latest' : ''}`}
+                >
+                  {drawn.number.toString().padStart(2, '0')}
                 </div>
               ))}
             </div>
-
-            {/* Status badges */}
-            <div className="player-status-badges">
-              {currentPlayer.isBlocked && (
-                <span className="status-badge blocked">🚫 Bị Chặn</span>
-              )}
-              {currentPlayer.luckBonus > 1 && (
-                <span className="status-badge lucky">🍀 May Mắn ({currentPlayer.luckTurnsLeft})</span>
-              )}
-              {currentPlayer.hasFiftyFifty && (
-                <span className="status-badge fifty">🎲 50/50</span>
-              )}
-            </div>
           </div>
-        )}
 
-        {/* Drawn numbers history */}
-        <div className="drawn-numbers-section">
-          <h4>Số Đã Bốc</h4>
-          <div className="drawn-numbers-grid">
-            {game.drawnNumbers.slice(-20).reverse().map((drawn, idx) => (
-              <div
-                key={idx}
-                className={`drawn-number ${idx === 0 ? 'latest' : ''}`}
-              >
-                {drawn.number.toString().padStart(2, '0')}
-              </div>
-            ))}
+          {/* Action buttons */}
+          <div className="bingo-play-actions">
+            {/* Draw button */}
+            <button
+              className="draw-btn"
+              onClick={onDrawNumber}
+              disabled={!canDraw || isSkillPhase}
+            >
+              <span className="draw-icon">🎱</span>
+              <span>Bốc Số</span>
+            </button>
+
+            {/* Bingo button - only show when eligible */}
+            {canBingo && (
+              <button className="bingo-btn" onClick={onClaimBingo}>
+                <span className="bingo-text">🎉 BINGO! 🎉</span>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Other players preview */}
-        <div className="other-players-section">
-          <h4>Người Chơi Khác</h4>
-          <div className="players-mini-grid">
-            {opponents.slice(0, 6).map(player => (
-              <div key={player.odinhId} className="player-mini-card">
-                <span className="mini-avatar">{player.avatar}</span>
-                <span className="mini-name">{player.displayName}</span>
-                <span className="mini-progress">
-                  {player.completedRows > 0 ? (
-                    <span className="danger">⚠️ {player.completedRows} dãy</span>
-                  ) : (
-                    <span>✓{player.markedCount}</span>
-                  )}
-                </span>
-              </div>
-            ))}
-          </div>
+        {/* Player Leaderboard Sidebar */}
+        <div className="bingo-play-sidebar">
+          <PlayerLeaderboard
+            players={leaderboardPlayers}
+            currentUserId={currentPlayer?.odinhId}
+            title="Bảng Xếp Hạng"
+            showAnswerStatus={true}
+            maxVisible={10}
+          />
         </div>
-      </div>
-
-      {/* Action buttons */}
-      <div className="bingo-play-actions">
-        {/* Draw button */}
-        <button
-          className="draw-btn"
-          onClick={onDrawNumber}
-          disabled={!canDraw || isSkillPhase}
-        >
-          <span className="draw-icon">🎱</span>
-          <span>Bốc Số</span>
-        </button>
-
-        {/* Bingo button - only show when eligible */}
-        {canBingo && (
-          <button className="bingo-btn" onClick={onClaimBingo}>
-            <span className="bingo-text">🎉 BINGO! 🎉</span>
-          </button>
-        )}
       </div>
 
       {/* Skill phase overlay */}

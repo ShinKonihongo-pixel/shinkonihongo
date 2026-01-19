@@ -3,6 +3,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import type { AppSettings, CardBackgroundType, GameQuestionContent, GameAnswerContent, GlobalTheme, CardFrameId, CustomFrameSettings } from '../../hooks/use-settings';
 import { CARD_FRAME_PRESETS } from '../../hooks/use-settings';
+import { useGameSounds, MUSIC_TRACKS } from '../../hooks/use-game-sounds';
+import { Volume2, VolumeX, Music, Music2 } from 'lucide-react';
 import type { CurrentUser, StudySession, GameSession, JLPTSession, UserStats, User } from '../../types/user';
 import type { Flashcard, Lesson } from '../../types/flashcard';
 import type { BadgeType, FriendWithUser, UserBadgeStats, BadgeGift } from '../../types/friendship';
@@ -243,6 +245,188 @@ function formatDuration(seconds: number): string {
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
   return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+// Game Sound Settings Component
+function GameSoundSettings() {
+  const {
+    settings: soundSettings,
+    updateSettings,
+    playCorrect,
+    playWrong,
+    playVictory,
+    playStart,
+    startMusic,
+    stopMusic,
+    isMusicPlaying,
+  } = useGameSounds();
+
+  const handleTestSound = (type: 'correct' | 'wrong' | 'victory' | 'start') => {
+    switch (type) {
+      case 'correct': playCorrect(); break;
+      case 'wrong': playWrong(); break;
+      case 'victory': playVictory(); break;
+      case 'start': playStart(); break;
+    }
+  };
+
+  return (
+    <section className="settings-section sound-settings-section">
+      <h3>
+        <span className="section-icon">🔊</span>
+        Âm thanh & Nhạc nền
+      </h3>
+      <p className="settings-description">Cài đặt hiệu ứng âm thanh và nhạc nền cho trò chơi</p>
+
+      {/* Sound Effects Toggle */}
+      <div className="setting-item">
+        <label>
+          {soundSettings.soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+          <span>Hiệu ứng âm thanh</span>
+        </label>
+        <label className="toggle">
+          <input
+            type="checkbox"
+            checked={soundSettings.soundEnabled}
+            onChange={(e) => updateSettings({ soundEnabled: e.target.checked })}
+          />
+          <span className="toggle-slider"></span>
+        </label>
+      </div>
+
+      {/* Sound Volume */}
+      {soundSettings.soundEnabled && (
+        <div className="setting-item">
+          <label>Âm lượng hiệu ứng: {soundSettings.soundVolume}%</label>
+          <div className="setting-control">
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="5"
+              value={soundSettings.soundVolume}
+              onChange={(e) => updateSettings({ soundVolume: Number(e.target.value) })}
+            />
+            <span className="setting-value">{soundSettings.soundVolume}%</span>
+          </div>
+        </div>
+      )}
+
+      {/* Sound Test Buttons */}
+      {soundSettings.soundEnabled && (
+        <div className="sound-test-section">
+          <label>Nghe thử:</label>
+          <div className="sound-test-buttons">
+            <button className="sound-test-btn correct" onClick={() => handleTestSound('correct')} title="Trả lời đúng">
+              ✓ Đúng
+            </button>
+            <button className="sound-test-btn wrong" onClick={() => handleTestSound('wrong')} title="Trả lời sai">
+              ✗ Sai
+            </button>
+            <button className="sound-test-btn victory" onClick={() => handleTestSound('victory')} title="Chiến thắng">
+              🏆 Thắng
+            </button>
+            <button className="sound-test-btn start" onClick={() => handleTestSound('start')} title="Bắt đầu">
+              🎮 Start
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="setting-divider"></div>
+
+      {/* Background Music Toggle */}
+      <div className="setting-item">
+        <label>
+          {soundSettings.musicEnabled ? <Music size={18} /> : <Music2 size={18} />}
+          <span>Nhạc nền</span>
+        </label>
+        <label className="toggle">
+          <input
+            type="checkbox"
+            checked={soundSettings.musicEnabled}
+            onChange={(e) => updateSettings({ musicEnabled: e.target.checked })}
+          />
+          <span className="toggle-slider"></span>
+        </label>
+      </div>
+
+      {/* Music Volume */}
+      {soundSettings.musicEnabled && (
+        <>
+          <div className="setting-item">
+            <label>Âm lượng nhạc: {soundSettings.musicVolume}%</label>
+            <div className="setting-control">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="5"
+                value={soundSettings.musicVolume}
+                onChange={(e) => updateSettings({ musicVolume: Number(e.target.value) })}
+              />
+              <span className="setting-value">{soundSettings.musicVolume}%</span>
+            </div>
+          </div>
+
+          {/* Music Track Selection */}
+          <div className="setting-item">
+            <label>Bản nhạc</label>
+            <div className="setting-control">
+              <select
+                value={soundSettings.musicTrack}
+                onChange={(e) => updateSettings({ musicTrack: e.target.value })}
+                className="font-select"
+              >
+                {['epic', 'chill', 'action', 'fun'].map(category => (
+                  <optgroup key={category} label={
+                    category === 'epic' ? '🔥 Epic/Dramatic' :
+                    category === 'chill' ? '☕ Chill/Relaxed' :
+                    category === 'action' ? '🏎️ Action/Intense' : '🎮 Fun/Playful'
+                  }>
+                    {MUSIC_TRACKS.filter(t => t.category === category).map(track => (
+                      <option key={track.id} value={track.id}>
+                        {track.emoji} {track.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Music Play/Stop Button */}
+          <div className="music-control-section">
+            <button
+              className={`music-control-btn ${isMusicPlaying ? 'playing' : ''}`}
+              onClick={isMusicPlaying ? stopMusic : startMusic}
+            >
+              {isMusicPlaying ? (
+                <>⏹️ Dừng nhạc</>
+              ) : (
+                <>▶️ Nghe thử nhạc</>
+              )}
+            </button>
+            {isMusicPlaying && (
+              <span className="music-playing-indicator">
+                <span className="music-bar"></span>
+                <span className="music-bar"></span>
+                <span className="music-bar"></span>
+                <span className="music-bar"></span>
+                Đang phát...
+              </span>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Info note */}
+      <div className="sound-info-note">
+        <span className="info-icon">💡</span>
+        <span>Âm thanh sẽ tự động phát khi bạn trả lời đúng/sai và khi chiến thắng game.</span>
+      </div>
+    </section>
+  );
 }
 
 export function SettingsPage({
@@ -901,6 +1085,9 @@ export function SettingsPage({
               </div>
             </div>
               </section>
+
+              {/* Game Sound Settings */}
+              <GameSoundSettings />
             </>
           )}
 

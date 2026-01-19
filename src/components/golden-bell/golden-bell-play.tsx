@@ -1,10 +1,11 @@
 // Golden Bell Play - Main gameplay with questions and eliminations
 // Shows questions, answer options, player status, and elimination results
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Clock, Users, Bell, ChevronRight, Skull, CheckCircle, XCircle, LogOut } from 'lucide-react';
 import type { GoldenBellGame, GoldenBellPlayer, GoldenBellQuestion } from '../../types/golden-bell';
-import { ANSWER_COLORS, ANSWER_LABELS, ANSWER_SHAPES, DIFFICULTY_INFO, CATEGORY_INFO } from '../../types/golden-bell';
+import { ANSWER_COLORS, ANSWER_LABELS, DIFFICULTY_INFO, CATEGORY_INFO } from '../../types/golden-bell';
+import { useGameSounds } from '../../hooks/use-game-sounds';
 
 interface GoldenBellPlayProps {
   game: GoldenBellGame;
@@ -34,6 +35,10 @@ export function GoldenBellPlay({
   const [timeLeft, setTimeLeft] = useState(currentQuestion?.timeLimit || 15);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showEliminated, setShowEliminated] = useState(false);
+
+  // Game sounds
+  const { playCorrect, playWrong, playVictory, playDefeat, startMusic, stopMusic, settings: soundSettings } = useGameSounds();
+  const soundPlayedRef = useRef<string>('');
 
   // Timer countdown
   useEffect(() => {
@@ -67,6 +72,41 @@ export function GoldenBellPlay({
       setTimeout(() => setShowEliminated(true), 1000);
     }
   }, [game.status]);
+
+  // Play sounds when answer is revealed
+  useEffect(() => {
+    if (game.status === 'revealing' && currentPlayer && currentQuestion) {
+      const soundKey = `reveal-${game.currentQuestionIndex}`;
+      if (soundPlayedRef.current !== soundKey) {
+        soundPlayedRef.current = soundKey;
+        const answeredCorrectly = currentPlayer.currentAnswer === currentQuestion.correctIndex;
+        if (answeredCorrectly) {
+          playCorrect();
+        } else {
+          playWrong();
+        }
+      }
+    }
+  }, [game.status, game.currentQuestionIndex, currentPlayer, currentQuestion, playCorrect, playWrong]);
+
+  // Play victory/defeat sound when game ends
+  useEffect(() => {
+    if (game.status === 'finished' && currentPlayer) {
+      if (currentPlayer.status === 'alive') {
+        playVictory();
+      } else {
+        playDefeat();
+      }
+      stopMusic();
+    }
+  }, [game.status, currentPlayer, playVictory, playDefeat, stopMusic]);
+
+  // Start background music when game starts
+  useEffect(() => {
+    if (game.status === 'answering' && soundSettings.musicEnabled) {
+      startMusic();
+    }
+  }, [game.status, soundSettings.musicEnabled, startMusic]);
 
   const handleAnswer = useCallback((index: number) => {
     if (selectedAnswer !== null || game.status !== 'answering') return;
@@ -206,7 +246,6 @@ export function GoldenBellPlay({
                   onClick={() => handleAnswer(index)}
                   disabled={game.status !== 'answering' || selectedAnswer !== null}
                 >
-                  <span className="option-shape">{ANSWER_SHAPES[index]}</span>
                   <span className="option-label">{ANSWER_LABELS[index]}</span>
                   <span className="option-text">{option}</span>
                   {isCorrect && <CheckCircle className="result-icon" size={24} />}
