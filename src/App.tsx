@@ -30,6 +30,7 @@ import { GameHubPage } from './components/pages/game-hub-page';
 import type { GameType } from './types/game-hub';
 import { useJLPTQuestions } from './hooks/use-jlpt-questions';
 import { useKaiwaQuestions } from './hooks/use-kaiwa-questions';
+import { useKaiwaTopics } from './hooks/use-kaiwa-topics';
 import { useUserHistory } from './hooks/use-user-history';
 import { useProgress } from './hooks/use-progress';
 import { useNotifications } from './hooks/use-notifications';
@@ -172,6 +173,19 @@ function App() {
     getQuestionsByFolder: getQuestionsByKaiwaFolder,
     getQuestionsByLevelAndTopic,
   } = useKaiwaQuestions();
+
+  // Advanced Kaiwa topics for conversation practice
+  const {
+    topics: advancedKaiwaTopics,
+    questions: advancedKaiwaQuestions,
+    addTopic: addAdvancedKaiwaTopic,
+    updateTopic: updateAdvancedKaiwaTopic,
+    deleteTopic: deleteAdvancedKaiwaTopic,
+    addQuestion: addAdvancedKaiwaQuestion,
+    updateQuestion: updateAdvancedKaiwaQuestion,
+    deleteQuestion: deleteAdvancedKaiwaQuestion,
+    getQuestionsByTopic: getAdvancedKaiwaQuestionsByTopic,
+  } = useKaiwaTopics({ currentUserId: currentUser?.id ?? '' });
 
   // Check if user is VIP (can access locked lessons)
   const isVip = currentUser?.role === 'vip_user';
@@ -353,6 +367,15 @@ function App() {
             onDeleteKaiwaFolder={deleteKaiwaFolder}
             getFoldersByLevelAndTopic={getFoldersByLevelAndTopic}
             getQuestionsByKaiwaFolder={getQuestionsByKaiwaFolder}
+            // Advanced Kaiwa Topics props
+            advancedKaiwaTopics={advancedKaiwaTopics}
+            advancedKaiwaQuestions={advancedKaiwaQuestions}
+            onAddAdvancedKaiwaTopic={addAdvancedKaiwaTopic}
+            onUpdateAdvancedKaiwaTopic={updateAdvancedKaiwaTopic}
+            onDeleteAdvancedKaiwaTopic={deleteAdvancedKaiwaTopic}
+            onAddAdvancedKaiwaQuestion={addAdvancedKaiwaQuestion}
+            onUpdateAdvancedKaiwaQuestion={updateAdvancedKaiwaQuestion}
+            onDeleteAdvancedKaiwaQuestion={deleteAdvancedKaiwaQuestion}
             // User management props
             users={users}
             onUpdateUserRole={updateUserRole}
@@ -491,6 +514,10 @@ function App() {
             getFoldersByLevelAndTopic={getFoldersByLevelAndTopic}
             getQuestionsByFolder={getQuestionsByKaiwaFolder}
             getQuestionsByLevelAndTopic={getQuestionsByLevelAndTopic}
+            // Advanced session props
+            advancedTopics={advancedKaiwaTopics}
+            advancedQuestions={advancedKaiwaQuestions}
+            getAdvancedQuestionsByTopic={getAdvancedKaiwaQuestionsByTopic}
           />
         )}
 

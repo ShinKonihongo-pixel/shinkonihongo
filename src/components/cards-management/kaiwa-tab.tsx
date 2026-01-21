@@ -6,10 +6,11 @@ import { CONVERSATION_TOPICS, CONVERSATION_STYLES } from '../../constants/kaiwa'
 import { ConfirmModal } from '../ui/confirm-modal';
 import type { KaiwaTabProps, KaiwaNavState, KaiwaDefaultQuestion, KaiwaFolder, KaiwaQuestionFormData, ConversationStyle } from './cards-management-types';
 import { KAIWA_LEVELS } from './cards-management-types';
-import { MessageSquare, FolderOpen, Upload, Settings, Trophy, Clock, Mic, FileText, Plus, Search, Filter, ChevronRight, ChevronLeft, Edit2, Trash2, BookOpen, Target, Zap, Award, TrendingUp, BarChart3 } from 'lucide-react';
+import { MessageSquare, FolderOpen, Upload, Settings, Trophy, Clock, Mic, FileText, Plus, Search, Filter, ChevronRight, ChevronLeft, Edit2, Trash2, BookOpen, Target, Zap, Award, TrendingUp, BarChart3, Star } from 'lucide-react';
+import { KaiwaTopicsManagement } from '../kaiwa/kaiwa-topics-management';
 
 // Kaiwa management sub-tabs
-type KaiwaSubTab = 'overview' | 'questions' | 'import' | 'settings' | 'challenges' | 'rewards';
+type KaiwaSubTab = 'overview' | 'questions' | 'import' | 'settings' | 'challenges' | 'rewards' | 'advanced_topics';
 
 // Practice settings type
 interface KaiwaPracticeSettings {
@@ -83,6 +84,15 @@ export function KaiwaTab({
   onDeleteFolder,
   getFoldersByLevelAndTopic,
   getQuestionsByFolder,
+  // Advanced Topics props
+  advancedTopics = [],
+  advancedQuestions = [],
+  onAddAdvancedTopic,
+  onUpdateAdvancedTopic,
+  onDeleteAdvancedTopic,
+  onAddAdvancedQuestion,
+  onUpdateAdvancedQuestion,
+  onDeleteAdvancedQuestion,
   currentUser,
   isSuperAdmin,
 }: KaiwaTabProps) {
@@ -574,6 +584,13 @@ export function KaiwaTab({
         >
           <Trophy size={18} />
           <span>Phần thưởng</span>
+        </button>
+        <button
+          className={`subtab advanced ${activeSubTab === 'advanced_topics' ? 'active' : ''}`}
+          onClick={() => setActiveSubTab('advanced_topics')}
+        >
+          <Star size={18} />
+          <span>Nâng cao ({advancedTopics.length})</span>
         </button>
       </div>
 
@@ -1206,6 +1223,22 @@ export function KaiwaTab({
             <p>Huy hiệu sẽ tự động được cấp khi người học đạt điều kiện</p>
           </div>
         </div>
+      )}
+
+      {/* Advanced Topics Tab */}
+      {activeSubTab === 'advanced_topics' && onAddAdvancedTopic && onUpdateAdvancedTopic && onDeleteAdvancedTopic && onAddAdvancedQuestion && onUpdateAdvancedQuestion && onDeleteAdvancedQuestion && (
+        <KaiwaTopicsManagement
+          topics={advancedTopics}
+          questions={advancedQuestions}
+          currentUserId={currentUser.id}
+          isSuperAdmin={isSuperAdmin}
+          onAddTopic={onAddAdvancedTopic}
+          onUpdateTopic={onUpdateAdvancedTopic}
+          onDeleteTopic={onDeleteAdvancedTopic}
+          onAddQuestion={onAddAdvancedQuestion}
+          onUpdateQuestion={onUpdateAdvancedQuestion}
+          onDeleteQuestion={onDeleteAdvancedQuestion}
+        />
       )}
 
       {/* Confirm Modals */}

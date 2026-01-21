@@ -1,10 +1,12 @@
 // Golden Bell Lobby - Waiting room before game starts
 // Shows players, game code, and start button for host
 
-import { Copy, Play, LogOut, Users, Share2, Check, Bell } from 'lucide-react';
+import { Copy, Play, LogOut, Users, Share2, Check, Bell, X } from 'lucide-react';
 import { useState } from 'react';
 import type { GoldenBellGame } from '../../types/golden-bell';
 import { CATEGORY_INFO } from '../../types/golden-bell';
+import { isImageAvatar } from '../../utils/avatar-icons';
+import { getVipAvatarClasses, getVipNameClasses, isVipRole, getVipBadge } from '../../utils/vip-styling';
 
 interface GoldenBellLobbyProps {
   game: GoldenBellGame;
@@ -12,6 +14,7 @@ interface GoldenBellLobbyProps {
   currentPlayerId: string;
   onStart: () => void;
   onLeave: () => void;
+  onKickPlayer?: (playerId: string) => void;
 }
 
 export function GoldenBellLobby({
@@ -20,6 +23,7 @@ export function GoldenBellLobby({
   currentPlayerId,
   onStart,
   onLeave,
+  onKickPlayer,
 }: GoldenBellLobbyProps) {
   const [copied, setCopied] = useState(false);
 
@@ -103,23 +107,44 @@ export function GoldenBellLobby({
           <span>Người chơi ({players.length}/{game.settings.maxPlayers})</span>
         </div>
         <div className="players-grid golden-bell-players">
-          {players.map(player => (
-            <div
-              key={player.odinhId}
-              className={`player-card ${player.odinhId === currentPlayerId ? 'current' : ''} ${player.odinhId === game.hostId ? 'host' : ''}`}
-            >
-              <div className="player-avatar">
-                {player.avatar}
+          {players.map(player => {
+            const playerIsVip = isVipRole(player.role);
+            const vipBadge = getVipBadge(player.role);
+
+            return (
+              <div
+                key={player.odinhId}
+                className={`player-card ${player.odinhId === currentPlayerId ? 'current' : ''} ${player.odinhId === game.hostId ? 'host' : ''} ${playerIsVip ? 'vip-player' : ''}`}
+              >
+                <div className={getVipAvatarClasses(player.role, 'player-avatar')}>
+                  {player.avatar && isImageAvatar(player.avatar) ? (
+                    <img src={player.avatar} alt={player.displayName} />
+                  ) : (
+                    player.avatar
+                  )}
+                  {playerIsVip && <span className="vip-frame" />}
+                </div>
+                <div className="player-info">
+                  <span className={getVipNameClasses(player.role, 'player-name')}>
+                    {vipBadge && <span className="vip-badge">{vipBadge}</span>}
+                    {player.displayName}
+                    {player.odinhId === game.hostId && <span className="host-badge">Host</span>}
+                  </span>
+                  <span className="player-status alive">Sẵn sàng</span>
+                </div>
+                {/* Kick button for host */}
+                {isHost && player.odinhId !== game.hostId && player.odinhId !== currentPlayerId && onKickPlayer && (
+                  <button
+                    className="kick-btn"
+                    onClick={() => onKickPlayer(player.odinhId)}
+                    title="Kick khỏi phòng"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
               </div>
-              <div className="player-info">
-                <span className="player-name">
-                  {player.displayName}
-                  {player.odinhId === game.hostId && <span className="host-badge">Host</span>}
-                </span>
-                <span className="player-status alive">Sẵn sàng</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
 
           {/* Empty slots */}
           {Array.from({ length: Math.min(game.settings.maxPlayers - players.length, 10) }).map((_, i) => (

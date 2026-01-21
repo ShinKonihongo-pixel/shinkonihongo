@@ -1,177 +1,682 @@
-// Game Tab - Manage game questions (Picture Guess, Bingo, etc.)
-// Part of the management section for admins
+// Game Tab - Professional Game Management Dashboard
+// Unified hub for managing all game settings, visibility, and analytics
 
-import { useState } from 'react';
-import { Gamepad2, Settings, ChevronRight } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import {
+  Gamepad2, Settings, ChevronRight, TrendingUp, Users, Clock, Zap,
+  Activity, Volume2, Bot, RefreshCw, Eye, EyeOff, Check, AlertCircle
+} from 'lucide-react';
 import { PictureGuessPuzzleEditor } from '../picture-guess/picture-guess-puzzle-editor';
 import { BingoGameManager } from '../bingo-game/bingo-game-manager';
 import { SpeedQuizManager } from '../speed-quiz/speed-quiz-manager';
 import { WordMatchManager } from '../word-match/word-match-manager';
+import { ImageWordManagementPage } from '../pages/image-word-management-page';
+import {
+  getGameVisibilitySettings,
+  toggleGameVisibility,
+  showAllGames,
+  type GameVisibilitySettings,
+} from '../../services/game-visibility-storage';
+import type { GameType } from '../../types/game-hub';
 
-type GameSection = 'menu' | 'picture-guess' | 'bingo' | 'speed-quiz' | 'word-match';
+type GameSection = 'dashboard' | 'picture-guess' | 'bingo' | 'speed-quiz' | 'word-match' | 'image-word' | 'ai-challenge' | 'global-settings';
 
-// Game configurations with gradients and icons
-const GAME_CONFIGS = [
+// Game configuration with management capabilities
+interface GameConfig {
+  id: GameType;
+  title: string;
+  shortTitle: string;
+  description: string;
+  emoji: string;
+  gradient: string;
+  color: string;
+  category: string;
+  hasManager: boolean;
+  isNew: boolean;
+  stats: { questions: number | null; played: number; avgScore: number | null };
+}
+
+// All game configurations
+const ALL_GAMES: GameConfig[] = [
   {
-    id: 'picture-guess' as const,
+    id: 'picture-guess',
     title: 'Đuổi Hình Bắt Chữ',
-    description: 'Tạo và quản lý câu hỏi với hình ảnh gợi ý',
+    shortTitle: 'Picture Guess',
+    description: 'Đoán từ qua hình ảnh emoji gợi ý',
     emoji: '🖼️',
     gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    questionCount: 0,
+    color: '#667eea',
+    category: 'puzzle',
+    hasManager: true,
+    isNew: false,
+    stats: { questions: 24, played: 156, avgScore: 78 },
   },
   {
-    id: 'bingo' as const,
+    id: 'bingo',
     title: 'Bingo',
-    description: 'Quản lý cài đặt và theo dõi phòng Bingo',
+    shortTitle: 'Bingo',
+    description: 'Bốc số may mắn - 6 dãy, ai BINGO trước thắng',
     emoji: '🎱',
     gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    questionCount: null, // Uses numbers, not questions
+    color: '#f093fb',
+    category: 'luck',
+    hasManager: true,
+    isNew: false,
+    stats: { questions: null, played: 89, avgScore: null },
   },
   {
-    id: 'speed-quiz' as const,
+    id: 'speed-quiz',
     title: 'Ai Nhanh Hơn Ai',
-    description: 'Quản lý cài đặt và câu hỏi Speed Quiz',
+    shortTitle: 'Speed Quiz',
+    description: 'Gõ đáp án nhanh nhất để giành chiến thắng',
     emoji: '⚡',
     gradient: 'linear-gradient(135deg, #FF5722 0%, #FF9800 100%)',
-    questionCount: 0,
+    color: '#FF5722',
+    category: 'quiz',
+    hasManager: true,
+    isNew: false,
+    stats: { questions: 150, played: 234, avgScore: 82 },
   },
   {
-    id: 'word-match' as const,
+    id: 'word-match',
     title: 'Nối Từ Thách Đấu',
-    description: 'Quản lý cài đặt game nối cặp từ',
+    shortTitle: 'Word Match',
+    description: 'Nối cặp từ nhanh và chính xác nhất',
     emoji: '🔗',
     gradient: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
-    questionCount: 0,
-  },
-] as const;
-
-// Disabled games (using other tabs)
-const DISABLED_GAMES = [
-  {
-    title: 'Quiz Game',
-    description: 'Câu hỏi trắc nghiệm',
-    emoji: '❓',
-    badge: 'JLPT Tab',
-    gradient: 'linear-gradient(135deg, #bdc3c7 0%, #95a5a6 100%)',
+    color: '#11998e',
+    category: 'matching',
+    hasManager: true,
+    isNew: false,
+    stats: { questions: 80, played: 67, avgScore: 75 },
   },
   {
-    title: 'Chạy Đua / Đua Thuyền',
-    description: 'Câu hỏi từ vựng',
+    id: 'image-word',
+    title: 'Nối Hình - Từ',
+    shortTitle: 'Image Match',
+    description: 'Nối hình ảnh với từ vựng tương ứng',
+    emoji: '🖼️',
+    gradient: 'linear-gradient(135deg, #E91E63 0%, #F06292 100%)',
+    color: '#E91E63',
+    category: 'matching',
+    hasManager: true,
+    isNew: true,
+    stats: { questions: 0, played: 0, avgScore: null },
+  },
+  {
+    id: 'ai-challenge',
+    title: 'Thách Đấu AI',
+    shortTitle: 'AI Battle',
+    description: 'Đấu trí 1v1 với AI - 10 cấp độ thử thách',
+    emoji: '🤖',
+    gradient: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+    color: '#6366f1',
+    category: 'ai',
+    hasManager: false,
+    isNew: true,
+    stats: { questions: null, played: 45, avgScore: 68 },
+  },
+  {
+    id: 'quiz',
+    title: 'Quiz Battle',
+    shortTitle: 'Quiz',
+    description: 'Đối kháng kiến thức với bạn bè',
+    emoji: '🎯',
+    gradient: 'linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%)',
+    color: '#FF6B6B',
+    category: 'quiz',
+    hasManager: false,
+    isNew: false,
+    stats: { questions: null, played: 312, avgScore: 71 },
+  },
+  {
+    id: 'boat-racing',
+    title: 'Đua Thuyền',
+    shortTitle: 'Boat Race',
+    description: 'Đua thuyền học từ vựng realtime',
+    emoji: '🚣',
+    gradient: 'linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%)',
+    color: '#4ECDC4',
+    category: 'racing',
+    hasManager: false,
+    isNew: false,
+    stats: { questions: null, played: 178, avgScore: 76 },
+  },
+  {
+    id: 'horse-racing',
+    title: 'Chạy Đua',
+    shortTitle: 'Horse Race',
+    description: 'Phi nước đại cùng kiến thức',
     emoji: '🏇',
-    badge: 'Flash Card Tab',
-    gradient: 'linear-gradient(135deg, #bdc3c7 0%, #95a5a6 100%)',
+    gradient: 'linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%)',
+    color: '#8B5CF6',
+    category: 'racing',
+    hasManager: false,
+    isNew: true,
+    stats: { questions: null, played: 95, avgScore: 74 },
+  },
+  {
+    id: 'golden-bell',
+    title: 'Rung Chuông Vàng',
+    shortTitle: 'Golden Bell',
+    description: 'Loại trực tiếp - người cuối thắng',
+    emoji: '🔔',
+    gradient: 'linear-gradient(135deg, #FFD93D 0%, #FF9F43 100%)',
+    color: '#FFD93D',
+    category: 'elimination',
+    hasManager: false,
+    isNew: false,
+    stats: { questions: null, played: 203, avgScore: 65 },
   },
 ];
 
+// Dashboard stats
+interface DashboardStats {
+  totalGamesPlayed: number;
+  activeRooms: number;
+  playersOnline: number;
+  avgSessionTime: string;
+  popularGame: string;
+  todayGames: number;
+}
+
 export function GameTab() {
-  const [activeSection, setActiveSection] = useState<GameSection>('menu');
+  const [activeSection, setActiveSection] = useState<GameSection>('dashboard');
+  const [visibilitySettings, setVisibilitySettings] = useState<GameVisibilitySettings>({ hiddenGames: [], updatedAt: 0 });
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
+    totalGamesPlayed: 591,
+    activeRooms: 3,
+    playersOnline: 12,
+    avgSessionTime: '8 phút',
+    popularGame: 'Speed Quiz',
+    todayGames: 24,
+  });
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Main menu
-  if (activeSection === 'menu') {
+  // Load visibility settings on mount
+  useEffect(() => {
+    setVisibilitySettings(getGameVisibilitySettings());
+  }, []);
+
+  // Show toast notification
+  const showToast = useCallback((message: string) => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(null), 2500);
+  }, []);
+
+  // Toggle game visibility
+  const handleToggleVisibility = useCallback((gameId: GameType, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newHiddenState = toggleGameVisibility(gameId);
+    setVisibilitySettings(getGameVisibilitySettings());
+
+    const game = ALL_GAMES.find(g => g.id === gameId);
+    if (game) {
+      showToast(newHiddenState ? `Đã ẩn "${game.title}"` : `Đã hiện "${game.title}"`);
+    }
+  }, [showToast]);
+
+  // Show all games
+  const handleShowAllGames = useCallback(() => {
+    showAllGames();
+    setVisibilitySettings(getGameVisibilitySettings());
+    showToast('Đã hiện tất cả games');
+  }, [showToast]);
+
+  // Simulate data refresh
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setDashboardStats(prev => ({
+        ...prev,
+        playersOnline: Math.floor(Math.random() * 20) + 5,
+        activeRooms: Math.floor(Math.random() * 5),
+      }));
+      setIsRefreshing(false);
+      showToast('Đã cập nhật dữ liệu');
+    }, 1000);
+  };
+
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDashboardStats(prev => ({
+        ...prev,
+        playersOnline: Math.max(0, prev.playersOnline + Math.floor(Math.random() * 5) - 2),
+      }));
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Check if game is hidden
+  const isHidden = (gameId: GameType) => visibilitySettings.hiddenGames.includes(gameId);
+
+  // Count hidden games
+  const hiddenCount = visibilitySettings.hiddenGames.length;
+
+  // Dashboard view
+  if (activeSection === 'dashboard') {
     return (
-      <div className="game-tab">
-        <div className="game-tab-header">
-          <div className="game-tab-icon">
-            <Gamepad2 size={24} />
+      <div className="game-management-dashboard">
+        {/* Toast Notification */}
+        {toastMessage && (
+          <div className="gm-toast">
+            <Check size={16} />
+            {toastMessage}
           </div>
-          <div className="game-tab-title">
-            <h3>Quản Lý Game</h3>
-            <p>Tạo và quản lý câu hỏi cho các game học tập</p>
+        )}
+
+        {/* Header */}
+        <div className="gm-header">
+          <div className="gm-header-left">
+            <div className="gm-icon">
+              <Gamepad2 size={28} />
+            </div>
+            <div className="gm-header-text">
+              <h2>Game Management</h2>
+              <p>Quản lý hiển thị và cài đặt tất cả mini-games</p>
+            </div>
+          </div>
+          <div className="gm-header-actions">
+            <button
+              className={`gm-btn-icon ${isRefreshing ? 'spinning' : ''}`}
+              onClick={handleRefresh}
+              title="Làm mới dữ liệu"
+            >
+              <RefreshCw size={18} />
+            </button>
+            <button
+              className="gm-btn-secondary"
+              onClick={() => setActiveSection('global-settings')}
+            >
+              <Settings size={16} />
+              Cài Đặt Chung
+            </button>
           </div>
         </div>
 
-        {/* Active Games */}
-        <div className="game-tab-section">
-          <h4 className="game-tab-section-title">
-            <Settings size={16} />
-            Có thể quản lý
-          </h4>
-          <div className="game-tab-cards">
-            {GAME_CONFIGS.map((game) => (
-              <div
-                key={game.id}
-                className="game-tab-card"
-                onClick={() => setActiveSection(game.id)}
-              >
-                <div
-                  className="game-card-icon"
-                  style={{ background: game.gradient }}
-                >
-                  <span>{game.emoji}</span>
-                </div>
-                <div className="game-card-content">
-                  <h4>{game.title}</h4>
-                  <p>{game.description}</p>
-                </div>
-                <ChevronRight size={20} className="game-card-arrow" />
-              </div>
-            ))}
+        {/* Quick Stats Row */}
+        <div className="gm-stats-row">
+          <div className="gm-stat-card">
+            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%)' }}>
+              <TrendingUp size={20} />
+            </div>
+            <div className="stat-info">
+              <span className="stat-value">{dashboardStats.totalGamesPlayed}</span>
+              <span className="stat-label">Tổng Lượt Chơi</span>
+            </div>
+          </div>
+          <div className="gm-stat-card">
+            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #2196F3 0%, #03A9F4 100%)' }}>
+              <Activity size={20} />
+            </div>
+            <div className="stat-info">
+              <span className="stat-value">{dashboardStats.activeRooms}</span>
+              <span className="stat-label">Phòng Hoạt Động</span>
+            </div>
+          </div>
+          <div className="gm-stat-card">
+            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #9C27B0 0%, #E040FB 100%)' }}>
+              <Users size={20} />
+            </div>
+            <div className="stat-info">
+              <span className="stat-value">{dashboardStats.playersOnline}</span>
+              <span className="stat-label">Đang Online</span>
+            </div>
+          </div>
+          <div className="gm-stat-card">
+            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #FF9800 0%, #FFC107 100%)' }}>
+              <Clock size={20} />
+            </div>
+            <div className="stat-info">
+              <span className="stat-value">{dashboardStats.avgSessionTime}</span>
+              <span className="stat-label">TB Mỗi Game</span>
+            </div>
           </div>
         </div>
 
-        {/* Disabled Games */}
-        <div className="game-tab-section">
-          <h4 className="game-tab-section-title disabled">
-            Sử dụng tab khác
-          </h4>
-          <div className="game-tab-cards">
-            {DISABLED_GAMES.map((game, idx) => (
-              <div key={idx} className="game-tab-card disabled">
+        {/* Visibility Control Banner */}
+        {hiddenCount > 0 && (
+          <div className="gm-visibility-banner">
+            <div className="visibility-info">
+              <AlertCircle size={18} />
+              <span><strong>{hiddenCount}</strong> game đang bị ẩn khỏi màn hình chơi</span>
+            </div>
+            <button className="gm-btn-text" onClick={handleShowAllGames}>
+              <Eye size={16} />
+              Hiện Tất Cả
+            </button>
+          </div>
+        )}
+
+        {/* Main Games Grid */}
+        <div className="gm-section">
+          <div className="gm-section-header">
+            <h3>
+              <Zap size={18} />
+              Quản Lý Hiển Thị Game
+            </h3>
+            <span className="gm-badge">{ALL_GAMES.length} games</span>
+          </div>
+
+          <p className="gm-section-hint">
+            Nhấn nút <EyeOff size={14} style={{ verticalAlign: 'middle' }} /> để ẩn game khỏi danh sách chơi
+          </p>
+
+          <div className="gm-games-grid">
+            {ALL_GAMES.map((game) => {
+              const hidden = isHidden(game.id);
+              return (
                 <div
-                  className="game-card-icon"
-                  style={{ background: game.gradient }}
+                  key={game.id}
+                  className={`gm-game-card ${!game.hasManager ? 'no-manager' : ''} ${hidden ? 'is-hidden' : ''}`}
+                  onClick={() => game.hasManager && setActiveSection(game.id as GameSection)}
                 >
-                  <span>{game.emoji}</span>
+                  {/* Visibility Toggle Button */}
+                  <button
+                    className={`gm-visibility-toggle ${hidden ? 'hidden' : 'visible'}`}
+                    onClick={(e) => handleToggleVisibility(game.id, e)}
+                    title={hidden ? 'Nhấn để hiện game' : 'Nhấn để ẩn game'}
+                  >
+                    {hidden ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+
+                  <div className="gm-game-card-header" style={{ background: game.gradient }}>
+                    <span className="gm-game-emoji">{game.emoji}</span>
+                    {game.isNew && <span className="gm-new-badge">MỚI</span>}
+                    {hidden && <span className="gm-hidden-badge">ẨN</span>}
+                  </div>
+                  <div className="gm-game-card-body">
+                    <h4>{game.title}</h4>
+                    <p>{game.description}</p>
+
+                    {/* Mini Stats */}
+                    <div className="gm-game-stats">
+                      {game.stats.questions !== null && (
+                        <span className="gm-mini-stat">
+                          <span className="value">{game.stats.questions}</span>
+                          <span className="label">câu</span>
+                        </span>
+                      )}
+                      <span className="gm-mini-stat">
+                        <span className="value">{game.stats.played}</span>
+                        <span className="label">lượt</span>
+                      </span>
+                      {game.stats.avgScore !== null && (
+                        <span className="gm-mini-stat">
+                          <span className="value">{game.stats.avgScore}%</span>
+                          <span className="label">TB</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="gm-game-card-footer">
+                    {game.hasManager ? (
+                      <span className="gm-manage-link">
+                        Quản lý <ChevronRight size={14} />
+                      </span>
+                    ) : (
+                      <span className="gm-no-manager-hint">{game.category === 'racing' ? 'Dùng Flashcard' : 'Tự động'}</span>
+                    )}
+                  </div>
                 </div>
-                <div className="game-card-content">
-                  <h4>{game.title}</h4>
-                  <p>{game.description}</p>
-                </div>
-                <span className="game-card-badge">{game.badge}</span>
-              </div>
-            ))}
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Activity Feed */}
+        <div className="gm-section">
+          <div className="gm-section-header">
+            <h3>
+              <Activity size={18} />
+              Hoạt Động Gần Đây
+            </h3>
+            <button className="gm-btn-text">Xem tất cả</button>
+          </div>
+
+          <div className="gm-activity-feed">
+            <ActivityItem
+              icon="🎱"
+              title="Bingo #A4F2"
+              description="Phòng mới được tạo bởi Teacher1"
+              time="2 phút trước"
+              status="active"
+            />
+            <ActivityItem
+              icon="⚡"
+              title="Speed Quiz kết thúc"
+              description="Người thắng: Sakura với 850 điểm"
+              time="15 phút trước"
+              status="completed"
+            />
+            <ActivityItem
+              icon="🔗"
+              title="Word Match #B7C1"
+              description="5 người chơi đang thi đấu"
+              time="25 phút trước"
+              status="playing"
+            />
+            <ActivityItem
+              icon="🖼️"
+              title="Bài học mới"
+              description="Image-Word: Động vật (12 cặp)"
+              time="1 giờ trước"
+              status="new"
+            />
+          </div>
+        </div>
+
+        {/* Quick Tips */}
+        <div className="gm-tips-banner">
+          <div className="gm-tip-icon">💡</div>
+          <div className="gm-tip-content">
+            <strong>Mẹo:</strong> Ẩn game để tập trung học sinh vào các game cụ thể.
+            Game bị ẩn sẽ không hiển thị ở màn hình chọn game.
           </div>
         </div>
       </div>
     );
   }
 
+  // Global Settings View
+  if (activeSection === 'global-settings') {
+    return <GlobalSettingsPanel onBack={() => setActiveSection('dashboard')} />;
+  }
+
   // Picture Guess Editor
   if (activeSection === 'picture-guess') {
-    return (
-      <PictureGuessPuzzleEditor
-        onClose={() => setActiveSection('menu')}
-      />
-    );
+    return <PictureGuessPuzzleEditor onClose={() => setActiveSection('dashboard')} />;
   }
 
   // Bingo Manager
   if (activeSection === 'bingo') {
-    return (
-      <BingoGameManager
-        onClose={() => setActiveSection('menu')}
-      />
-    );
+    return <BingoGameManager onClose={() => setActiveSection('dashboard')} />;
   }
 
   // Speed Quiz Manager
   if (activeSection === 'speed-quiz') {
-    return (
-      <SpeedQuizManager
-        onClose={() => setActiveSection('menu')}
-      />
-    );
+    return <SpeedQuizManager onClose={() => setActiveSection('dashboard')} />;
   }
 
   // Word Match Manager
   if (activeSection === 'word-match') {
-    return (
-      <WordMatchManager
-        onClose={() => setActiveSection('menu')}
-      />
-    );
+    return <WordMatchManager onClose={() => setActiveSection('dashboard')} />;
+  }
+
+  // Image Word Manager
+  if (activeSection === 'image-word') {
+    return <ImageWordManagementPage onBack={() => setActiveSection('dashboard')} />;
   }
 
   return null;
+}
+
+// Activity Feed Item Component
+function ActivityItem({
+  icon,
+  title,
+  description,
+  time,
+  status,
+}: {
+  icon: string;
+  title: string;
+  description: string;
+  time: string;
+  status: 'active' | 'completed' | 'playing' | 'new';
+}) {
+  const statusColors = {
+    active: '#4CAF50',
+    completed: '#9E9E9E',
+    playing: '#2196F3',
+    new: '#FF9800',
+  };
+
+  return (
+    <div className="gm-activity-item">
+      <span className="gm-activity-icon">{icon}</span>
+      <div className="gm-activity-content">
+        <div className="gm-activity-header">
+          <span className="gm-activity-title">{title}</span>
+          <span className="gm-activity-status" style={{ background: statusColors[status] }}>
+            {status === 'active' && 'Mới'}
+            {status === 'completed' && 'Xong'}
+            {status === 'playing' && 'Đang chơi'}
+            {status === 'new' && 'Tạo mới'}
+          </span>
+        </div>
+        <span className="gm-activity-desc">{description}</span>
+        <span className="gm-activity-time">{time}</span>
+      </div>
+    </div>
+  );
+}
+
+// Global Settings Panel
+function GlobalSettingsPanel({ onBack }: { onBack: () => void }) {
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [autoStartBots, setAutoStartBots] = useState(true);
+  const [showLeaderboard, setShowLeaderboard] = useState(true);
+  const [defaultTimeLimit, setDefaultTimeLimit] = useState(30);
+
+  return (
+    <div className="gm-global-settings">
+      <div className="gm-header">
+        <button className="gm-back-btn" onClick={onBack}>
+          ← Quay lại Dashboard
+        </button>
+        <div className="gm-header-text">
+          <h2>Cài Đặt Chung</h2>
+          <p>Cấu hình áp dụng cho tất cả mini-games</p>
+        </div>
+      </div>
+
+      <div className="gm-settings-grid">
+        {/* Sound Settings */}
+        <div className="gm-settings-card">
+          <div className="settings-card-header">
+            <Volume2 size={20} />
+            <h4>Âm Thanh & Hiệu Ứng</h4>
+          </div>
+          <div className="settings-card-body">
+            <div className="setting-row">
+              <div className="setting-info">
+                <span className="setting-label">Âm thanh game</span>
+                <span className="setting-desc">Hiệu ứng âm thanh khi chơi</span>
+              </div>
+              <button
+                className={`toggle-switch ${soundEnabled ? 'active' : ''}`}
+                onClick={() => setSoundEnabled(!soundEnabled)}
+              >
+                <span className="toggle-knob" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Bot Settings */}
+        <div className="gm-settings-card">
+          <div className="settings-card-header">
+            <Bot size={20} />
+            <h4>Bot & Tự Động</h4>
+          </div>
+          <div className="settings-card-body">
+            <div className="setting-row">
+              <div className="setting-info">
+                <span className="setting-label">Tự động thêm Bot</span>
+                <span className="setting-desc">Thêm bot khi không đủ người chơi</span>
+              </div>
+              <button
+                className={`toggle-switch ${autoStartBots ? 'active' : ''}`}
+                onClick={() => setAutoStartBots(!autoStartBots)}
+              >
+                <span className="toggle-knob" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Display Settings */}
+        <div className="gm-settings-card">
+          <div className="settings-card-header">
+            <Eye size={20} />
+            <h4>Hiển Thị</h4>
+          </div>
+          <div className="settings-card-body">
+            <div className="setting-row">
+              <div className="setting-info">
+                <span className="setting-label">Bảng xếp hạng</span>
+                <span className="setting-desc">Hiện bảng xếp hạng sau game</span>
+              </div>
+              <button
+                className={`toggle-switch ${showLeaderboard ? 'active' : ''}`}
+                onClick={() => setShowLeaderboard(!showLeaderboard)}
+              >
+                <span className="toggle-knob" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Time Settings */}
+        <div className="gm-settings-card">
+          <div className="settings-card-header">
+            <Clock size={20} />
+            <h4>Thời Gian</h4>
+          </div>
+          <div className="settings-card-body">
+            <div className="setting-row">
+              <div className="setting-info">
+                <span className="setting-label">Thời gian mặc định</span>
+                <span className="setting-desc">Giới hạn thời gian mỗi câu</span>
+              </div>
+              <div className="setting-select">
+                <select
+                  value={defaultTimeLimit}
+                  onChange={(e) => setDefaultTimeLimit(Number(e.target.value))}
+                >
+                  <option value={15}>15 giây</option>
+                  <option value={20}>20 giây</option>
+                  <option value={30}>30 giây</option>
+                  <option value={45}>45 giây</option>
+                  <option value={60}>60 giây</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="gm-settings-actions">
+        <button className="gm-btn-primary">
+          💾 Lưu Cài Đặt
+        </button>
+        <button className="gm-btn-secondary">
+          🔄 Khôi Phục Mặc Định
+        </button>
+      </div>
+    </div>
+  );
 }

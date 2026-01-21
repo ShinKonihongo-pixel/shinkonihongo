@@ -7,6 +7,7 @@ import type { Lecture, LectureFolder } from '../../types/lecture';
 import type { KaiwaDefaultQuestion, KaiwaQuestionFormData, KaiwaFolder } from '../../types/kaiwa-question';
 import type { JLPTLevel as KaiwaJLPTLevel, ConversationTopic, ConversationStyle } from '../../types/kaiwa';
 import type { Classroom } from '../../types/classroom';
+import type { KaiwaAdvancedTopic, KaiwaAdvancedQuestion, KaiwaAdvancedTopicFormData, KaiwaAdvancedQuestionFormData } from '../../types/kaiwa-advanced';
 
 export type ManagementTab = 'flashcards' | 'lectures' | 'jlpt' | 'kaiwa' | 'custom_topics' | 'game' | 'assignments' | 'tests' | 'users';
 
@@ -94,6 +95,15 @@ export interface KaiwaTabProps {
   onDeleteFolder?: (id: string) => Promise<void>;
   getFoldersByLevelAndTopic?: (level: KaiwaJLPTLevel, topic: ConversationTopic) => KaiwaFolder[];
   getQuestionsByFolder?: (folderId: string) => KaiwaDefaultQuestion[];
+  // Advanced Topics props
+  advancedTopics?: KaiwaAdvancedTopic[];
+  advancedQuestions?: KaiwaAdvancedQuestion[];
+  onAddAdvancedTopic?: (data: KaiwaAdvancedTopicFormData) => Promise<KaiwaAdvancedTopic | null>;
+  onUpdateAdvancedTopic?: (id: string, data: Partial<KaiwaAdvancedTopicFormData>) => Promise<boolean>;
+  onDeleteAdvancedTopic?: (id: string) => Promise<boolean>;
+  onAddAdvancedQuestion?: (data: KaiwaAdvancedQuestionFormData) => Promise<KaiwaAdvancedQuestion | null>;
+  onUpdateAdvancedQuestion?: (id: string, data: Partial<KaiwaAdvancedQuestionFormData>) => Promise<boolean>;
+  onDeleteAdvancedQuestion?: (id: string) => Promise<boolean>;
   currentUser: CurrentUser;
   isSuperAdmin: boolean;
 }

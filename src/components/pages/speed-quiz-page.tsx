@@ -46,6 +46,7 @@ export const SpeedQuizPage: React.FC<SpeedQuizPageProps> = ({
     createGame,
     joinGame,
     leaveGame,
+    kickPlayer,
     startGame,
     submitAnswer,
     useHint,
@@ -171,6 +172,7 @@ export const SpeedQuizPage: React.FC<SpeedQuizPageProps> = ({
             onStartGame={handleStartGame}
             onAddBot={handleAddBot}
             onLeave={handleLeaveGame}
+            onKickPlayer={kickPlayer}
           />
         );
 

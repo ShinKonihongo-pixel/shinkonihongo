@@ -49,6 +49,7 @@ export function GoldenBellPage({
     createGame,
     joinGame,
     leaveGame,
+    kickPlayer,
     startGame,
     submitAnswer,
     revealAnswer,
@@ -192,6 +193,7 @@ export function GoldenBellPage({
           currentPlayerId={currentUser.id}
           onStart={startGame}
           onLeave={handleLeaveGame}
+          onKickPlayer={kickPlayer}
         />
       )}
 

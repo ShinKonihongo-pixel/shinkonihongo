@@ -54,6 +54,7 @@ export function BoatRacingPage({
     createGame,
     joinGame,
     leaveGame,
+    kickPlayer,
     startGame,
     submitAnswer,
     revealAnswer,
@@ -198,6 +199,7 @@ export function BoatRacingPage({
           onSelectVehicle={selectVehicle}
           onStartGame={handleStartGame}
           onLeaveGame={handleLeave}
+          onKickPlayer={kickPlayer}
         />
       </div>
     );

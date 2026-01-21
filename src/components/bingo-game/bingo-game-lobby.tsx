@@ -1,8 +1,10 @@
 // Bingo Game Lobby - Waiting room before game starts
 
-import { Copy, Users, Play, LogOut, Check } from 'lucide-react';
+import { Copy, Users, Play, LogOut, Check, X } from 'lucide-react';
 import { useState } from 'react';
 import type { BingoGame } from '../../types/bingo-game';
+import { isImageAvatar } from '../../utils/avatar-icons';
+import { getVipAvatarClasses, getVipNameClasses, isVipRole, getVipBadge } from '../../utils/vip-styling';
 
 interface BingoGameLobbyProps {
   game: BingoGame;
@@ -11,6 +13,7 @@ interface BingoGameLobbyProps {
   loading: boolean;
   onStartGame: () => void;
   onLeaveGame: () => void;
+  onKickPlayer?: (playerId: string) => void;
 }
 
 export function BingoGameLobby({
@@ -20,6 +23,7 @@ export function BingoGameLobby({
   loading,
   onStartGame,
   onLeaveGame,
+  onKickPlayer,
 }: BingoGameLobbyProps) {
   const [copied, setCopied] = useState(false);
   const players = Object.values(game.players);
@@ -67,18 +71,43 @@ export function BingoGameLobby({
       <div className="lobby-players">
         <h3>Người Chơi</h3>
         <div className="players-grid">
-          {players.map(player => (
-            <div
-              key={player.odinhId}
-              className={`player-card ${player.odinhId === currentPlayerId ? 'is-me' : ''} ${player.odinhId === game.hostId ? 'is-host' : ''}`}
-            >
-              <div className="player-avatar">{player.avatar}</div>
-              <div className="player-name">{player.displayName}</div>
-              {player.odinhId === game.hostId && (
-                <span className="host-badge">👑</span>
-              )}
-            </div>
-          ))}
+          {players.map(player => {
+            const playerIsVip = isVipRole(player.role);
+            const vipBadge = getVipBadge(player.role);
+
+            return (
+              <div
+                key={player.odinhId}
+                className={`player-card ${player.odinhId === currentPlayerId ? 'is-me' : ''} ${player.odinhId === game.hostId ? 'is-host' : ''} ${playerIsVip ? 'vip-player' : ''}`}
+              >
+                <div className={getVipAvatarClasses(player.role, 'player-avatar')}>
+                  {player.avatar && isImageAvatar(player.avatar) ? (
+                    <img src={player.avatar} alt={player.displayName} />
+                  ) : (
+                    player.avatar
+                  )}
+                  {playerIsVip && <span className="vip-frame" />}
+                </div>
+                <div className={getVipNameClasses(player.role, 'player-name')}>
+                  {vipBadge && <span className="vip-badge">{vipBadge}</span>}
+                  {player.displayName}
+                </div>
+                {player.odinhId === game.hostId && (
+                  <span className="host-badge">👑</span>
+                )}
+                {/* Kick button for host */}
+                {isHost && player.odinhId !== game.hostId && player.odinhId !== currentPlayerId && onKickPlayer && (
+                  <button
+                    className="kick-btn"
+                    onClick={() => onKickPlayer(player.odinhId)}
+                    title="Kick khỏi phòng"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+            );
+          })}
 
           {/* Empty slots */}
           {Array.from({ length: Math.min(game.settings.maxPlayers - players.length, 4) }).map((_, i) => (

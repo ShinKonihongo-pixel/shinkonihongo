@@ -1,11 +1,12 @@
 // Racing Game Lobby - Waiting room before race starts
 // Shows players, game code, team assignment, and start button for host
 
-import { Copy, Play, LogOut, Users, Share2, Check } from 'lucide-react';
+import { Copy, Play, LogOut, Users, Share2, Check, X } from 'lucide-react';
 import { useState } from 'react';
 import type { RacingGame, RacingVehicle } from '../../types/racing-game';
 import { DEFAULT_VEHICLES, TEAM_COLORS } from '../../types/racing-game';
 import { isImageAvatar } from '../../utils/avatar-icons';
+import { getVipAvatarClasses, getVipNameClasses, isVipRole, getVipBadge } from '../../utils/vip-styling';
 
 interface RacingGameLobbyProps {
   game: RacingGame;
@@ -19,6 +20,7 @@ interface RacingGameLobbyProps {
   onStart?: () => void;
   onLeave?: () => void;
   onAssignTeam?: (playerId: string, teamId: string) => void;
+  onKickPlayer?: (playerId: string) => void;
 }
 
 export function RacingGameLobby({
@@ -33,6 +35,7 @@ export function RacingGameLobby({
   onStart,
   onLeave,
   onAssignTeam,
+  onKickPlayer,
 }: RacingGameLobbyProps) {
   const handleStart = onStartGame || onStart;
   const handleLeave = onLeaveGame || onLeave;
@@ -119,10 +122,13 @@ export function RacingGameLobby({
             const playerTeam = player.teamId && teams ? teams[player.teamId] : null;
             const teamColor = playerTeam ? TEAM_COLORS[playerTeam.colorKey] : null;
 
+            const playerIsVip = isVipRole(player.role);
+            const vipBadge = getVipBadge(player.role);
+
             return (
               <div
                 key={player.odinhId}
-                className={`player-card ${player.odinhId === currentPlayerId ? 'current' : ''} ${player.odinhId === game.hostId ? 'host' : ''}`}
+                className={`player-card ${player.odinhId === currentPlayerId ? 'current' : ''} ${player.odinhId === game.hostId ? 'host' : ''} ${playerIsVip ? 'vip-player' : ''}`}
                 style={teamColor ? { '--team-color': teamColor.color, borderLeftColor: teamColor.color } as React.CSSProperties : undefined}
               >
                 {/* Team indicator */}
@@ -131,22 +137,34 @@ export function RacingGameLobby({
                     {playerTeam.emoji}
                   </div>
                 )}
-                <div className="player-avatar">
+                <div className={getVipAvatarClasses(player.role, 'player-avatar')}>
                   {player.avatar && isImageAvatar(player.avatar) ? (
                     <img src={player.avatar} alt={player.displayName} />
                   ) : (
                     player.avatar || player.displayName.charAt(0).toUpperCase()
                   )}
+                  {playerIsVip && <span className="vip-frame" />}
                 </div>
                 <div className="player-info">
-                  <span className="player-name">
+                  <span className={getVipNameClasses(player.role, 'player-name')}>
+                    {vipBadge && <span className="vip-badge">{vipBadge}</span>}
                     {player.displayName}
                     {player.odinhId === game.hostId && <span className="host-badge">Host</span>}
-                                      </span>
+                  </span>
                   <span className="player-vehicle">
                     {player.vehicle.emoji} {player.vehicle.name}
                   </span>
                 </div>
+                {/* Kick button for host */}
+                {isHost && player.odinhId !== game.hostId && player.odinhId !== currentPlayerId && onKickPlayer && (
+                  <button
+                    className="kick-btn"
+                    onClick={() => onKickPlayer(player.odinhId)}
+                    title="Kick khỏi phòng"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
               </div>
             );
           })}

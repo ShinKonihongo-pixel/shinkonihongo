@@ -46,6 +46,7 @@ export const WordMatchPage: React.FC<WordMatchPageProps> = ({
     createGame,
     joinGame,
     leaveGame,
+    kickPlayer,
     startGame,
     addBot,
     submitMatches,
@@ -158,6 +159,7 @@ export const WordMatchPage: React.FC<WordMatchPageProps> = ({
             onStartGame={handleStartGame}
             onAddBot={addBot}
             onLeave={handleLeaveGame}
+            onKickPlayer={kickPlayer}
           />
         );
 

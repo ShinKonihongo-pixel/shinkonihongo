@@ -38,6 +38,7 @@ export interface GoldenBellPlayer {
   odinhId: string;            // Player unique ID
   displayName: string;
   avatar: string;
+  role?: string;              // User role for VIP styling
   status: PlayerStatus;
   correctAnswers: number;
   totalAnswers: number;

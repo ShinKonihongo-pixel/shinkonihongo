@@ -1,6 +1,6 @@
 // Settings page component with tabs: General Settings and Personal Info
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import type { AppSettings, GameQuestionContent, GameAnswerContent, GlobalTheme, CardFrameId, CustomFrameSettings, JLPTLevelOption, MemorizationFilter, AutoAddDifficulty } from '../../hooks/use-settings';
 import { CARD_FRAME_PRESETS } from '../../hooks/use-settings';
 import { useGameSounds, MUSIC_CATEGORY_LABELS, type MusicCategory } from '../../hooks/use-game-sounds';
@@ -269,6 +269,9 @@ function GameSoundSettings() {
   const [customTrackName, setCustomTrackName] = useState('');
   const [customTrackUrl, setCustomTrackUrl] = useState('');
   const [customTrackEmoji, setCustomTrackEmoji] = useState('🎵');
+  const [uploadMode, setUploadMode] = useState<'url' | 'file'>('url');
+  const [uploadedFileName, setUploadedFileName] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Get current selected track info
   const selectedTrack = useMemo(() => {
@@ -306,10 +309,51 @@ function GameSoundSettings() {
     });
 
     // Reset form
+    resetCustomForm();
+  };
+
+  const resetCustomForm = () => {
     setCustomTrackName('');
     setCustomTrackUrl('');
     setCustomTrackEmoji('🎵');
+    setUploadedFileName('');
+    setUploadMode('url');
     setShowAddCustom(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/ogg', 'audio/wav', 'audio/webm', 'audio/aac'];
+    if (!validTypes.includes(file.type) && !file.name.match(/\.(mp3|ogg|wav|webm|aac|m4a)$/i)) {
+      alert('Chỉ hỗ trợ file âm thanh: MP3, OGG, WAV, WebM, AAC');
+      return;
+    }
+
+    // Max 10MB
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File quá lớn! Tối đa 10MB');
+      return;
+    }
+
+    setUploadedFileName(file.name);
+
+    // Auto-fill name from filename if empty
+    if (!customTrackName.trim()) {
+      const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+      setCustomTrackName(nameWithoutExt);
+    }
+
+    // Convert to data URL
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setCustomTrackUrl(dataUrl);
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -478,10 +522,26 @@ function GameSoundSettings() {
             <div className="add-custom-track-section">
               {!showAddCustom ? (
                 <button className="add-custom-btn" onClick={() => setShowAddCustom(true)}>
-                  ➕ Thêm nhạc từ URL
+                  ➕ Thêm nhạc tùy chỉnh
                 </button>
               ) : (
                 <div className="custom-track-form">
+                  {/* Mode Toggle */}
+                  <div className="upload-mode-toggle">
+                    <button
+                      className={`mode-btn ${uploadMode === 'url' ? 'active' : ''}`}
+                      onClick={() => setUploadMode('url')}
+                    >
+                      🔗 Từ URL
+                    </button>
+                    <button
+                      className={`mode-btn ${uploadMode === 'file' ? 'active' : ''}`}
+                      onClick={() => setUploadMode('file')}
+                    >
+                      📁 Tải file lên
+                    </button>
+                  </div>
+
                   <div className="form-row">
                     <select
                       value={customTrackEmoji}
@@ -500,13 +560,43 @@ function GameSoundSettings() {
                       className="custom-track-name-input"
                     />
                   </div>
-                  <input
-                    type="url"
-                    placeholder="URL nhạc (mp3, ogg, wav...)"
-                    value={customTrackUrl}
-                    onChange={(e) => setCustomTrackUrl(e.target.value)}
-                    className="custom-track-url-input"
-                  />
+
+                  {uploadMode === 'url' ? (
+                    <input
+                      type="url"
+                      placeholder="URL nhạc (mp3, ogg, wav...)"
+                      value={customTrackUrl}
+                      onChange={(e) => setCustomTrackUrl(e.target.value)}
+                      className="custom-track-url-input"
+                    />
+                  ) : (
+                    <div className="file-upload-area">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="audio/*,.mp3,.ogg,.wav,.webm,.aac,.m4a"
+                        onChange={handleFileUpload}
+                        className="file-input-hidden"
+                        id="audio-file-input"
+                      />
+                      <label htmlFor="audio-file-input" className="file-upload-label">
+                        {uploadedFileName ? (
+                          <span className="file-selected">
+                            <span className="file-icon">🎵</span>
+                            <span className="file-name">{uploadedFileName}</span>
+                            <span className="file-change">Đổi file</span>
+                          </span>
+                        ) : (
+                          <span className="file-placeholder">
+                            <span className="upload-icon">📤</span>
+                            <span className="upload-text">Chọn file âm thanh</span>
+                            <span className="upload-hint">MP3, OGG, WAV, WebM (tối đa 10MB)</span>
+                          </span>
+                        )}
+                      </label>
+                    </div>
+                  )}
+
                   <div className="form-actions">
                     <button
                       className="btn-add"
@@ -515,7 +605,7 @@ function GameSoundSettings() {
                     >
                       Thêm
                     </button>
-                    <button className="btn-cancel" onClick={() => setShowAddCustom(false)}>
+                    <button className="btn-cancel" onClick={resetCustomForm}>
                       Hủy
                     </button>
                   </div>
@@ -543,7 +633,7 @@ function GameSoundSettings() {
       {/* Info note */}
       <div className="sound-info-note">
         <span className="info-icon">💡</span>
-        <span>Nhạc nền sẽ tự động phát khi game bắt đầu. Bạn có thể thêm nhạc riêng từ URL.</span>
+        <span>Nhạc nền sẽ tự động phát khi game bắt đầu. Bạn có thể thêm nhạc riêng từ URL hoặc tải file lên.</span>
       </div>
     </section>
   );

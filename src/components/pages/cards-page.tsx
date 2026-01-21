@@ -7,6 +7,7 @@ import type { CurrentUser, User, UserRole } from '../../types/user';
 import type { JLPTQuestion, JLPTQuestionFormData, JLPTLevel as JLPTQuestionLevel, QuestionCategory, JLPTFolder } from '../../types/jlpt-question';
 import type { KaiwaDefaultQuestion, KaiwaQuestionFormData, KaiwaFolder } from '../../types/kaiwa-question';
 import type { JLPTLevel as KaiwaJLPTLevel, ConversationTopic } from '../../types/kaiwa';
+import type { KaiwaAdvancedTopic, KaiwaAdvancedQuestion, KaiwaAdvancedTopicFormData, KaiwaAdvancedQuestionFormData } from '../../types/kaiwa-advanced';
 import { useLectures } from '../../hooks/use-lectures';
 import { useTestTemplates } from '../../hooks/use-classrooms';
 import { useCustomTopics } from '../../hooks/use-custom-topics';
@@ -66,6 +67,15 @@ interface CardsPageProps {
   onDeleteKaiwaFolder?: (id: string) => Promise<void>;
   getFoldersByLevelAndTopic?: (level: KaiwaJLPTLevel, topic: ConversationTopic) => KaiwaFolder[];
   getQuestionsByKaiwaFolder?: (folderId: string) => KaiwaDefaultQuestion[];
+  // Kaiwa Advanced Topics props
+  advancedKaiwaTopics?: KaiwaAdvancedTopic[];
+  advancedKaiwaQuestions?: KaiwaAdvancedQuestion[];
+  onAddAdvancedKaiwaTopic?: (data: KaiwaAdvancedTopicFormData) => Promise<KaiwaAdvancedTopic | null>;
+  onUpdateAdvancedKaiwaTopic?: (id: string, data: Partial<KaiwaAdvancedTopicFormData>) => Promise<boolean>;
+  onDeleteAdvancedKaiwaTopic?: (id: string) => Promise<boolean>;
+  onAddAdvancedKaiwaQuestion?: (data: KaiwaAdvancedQuestionFormData) => Promise<KaiwaAdvancedQuestion | null>;
+  onUpdateAdvancedKaiwaQuestion?: (id: string, data: Partial<KaiwaAdvancedQuestionFormData>) => Promise<boolean>;
+  onDeleteAdvancedKaiwaQuestion?: (id: string) => Promise<boolean>;
 }
 
 export function CardsPage({
@@ -82,6 +92,10 @@ export function CardsPage({
   onAddKaiwaQuestion, onUpdateKaiwaQuestion, onDeleteKaiwaQuestion,
   onAddKaiwaFolder, onUpdateKaiwaFolder, onDeleteKaiwaFolder,
   getFoldersByLevelAndTopic, getQuestionsByKaiwaFolder,
+  // Advanced Kaiwa Topics
+  advancedKaiwaTopics = [], advancedKaiwaQuestions = [],
+  onAddAdvancedKaiwaTopic, onUpdateAdvancedKaiwaTopic, onDeleteAdvancedKaiwaTopic,
+  onAddAdvancedKaiwaQuestion, onUpdateAdvancedKaiwaQuestion, onDeleteAdvancedKaiwaQuestion,
 }: CardsPageProps) {
   const isSuperAdmin = currentUser.role === 'super_admin';
   const [activeTab, setActiveTab] = useState<ManagementTab>('flashcards');
@@ -200,6 +214,15 @@ export function CardsPage({
           onDeleteFolder={onDeleteKaiwaFolder}
           getFoldersByLevelAndTopic={getFoldersByLevelAndTopic}
           getQuestionsByFolder={getQuestionsByKaiwaFolder}
+          // Advanced Topics
+          advancedTopics={advancedKaiwaTopics}
+          advancedQuestions={advancedKaiwaQuestions}
+          onAddAdvancedTopic={onAddAdvancedKaiwaTopic}
+          onUpdateAdvancedTopic={onUpdateAdvancedKaiwaTopic}
+          onDeleteAdvancedTopic={onDeleteAdvancedKaiwaTopic}
+          onAddAdvancedQuestion={onAddAdvancedKaiwaQuestion}
+          onUpdateAdvancedQuestion={onUpdateAdvancedKaiwaQuestion}
+          onDeleteAdvancedQuestion={onDeleteAdvancedKaiwaQuestion}
           currentUser={currentUser}
           isSuperAdmin={isSuperAdmin}
         />

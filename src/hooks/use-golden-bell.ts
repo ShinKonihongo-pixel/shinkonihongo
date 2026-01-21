@@ -313,6 +313,17 @@ export function useGoldenBell({ currentUser, flashcards = [] }: UseGoldenBellPro
     setGame(null);
   }, [game]);
 
+  // Kick player (host only)
+  const kickPlayer = useCallback((playerId: string) => {
+    if (!game || !isHost || playerId === currentUser.id) return;
+
+    setGame(prev => {
+      if (!prev) return null;
+      const { [playerId]: _, ...remainingPlayers } = prev.players;
+      return { ...prev, players: remainingPlayers };
+    });
+  }, [game, currentUser, isHost]);
+
   // Start game (host only)
   const startGame = useCallback(() => {
     if (!game || !isHost) return;
@@ -595,6 +606,7 @@ export function useGoldenBell({ currentUser, flashcards = [] }: UseGoldenBellPro
     createGame,
     joinGame,
     leaveGame,
+    kickPlayer,
     startGame,
     submitAnswer,
     revealAnswer,

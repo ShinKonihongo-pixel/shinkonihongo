@@ -594,6 +594,21 @@ export function useRacingGame({ currentUser, flashcards = [] }: UseRacingGamePro
     setGameResults(null);
   }, [game, currentUser, isHost]);
 
+  // Kick player (host only)
+  const kickPlayer = useCallback((playerId: string) => {
+    if (!game || !isHost || playerId === currentUser.id) return;
+
+    const { [playerId]: _, ...remainingPlayers } = game.players;
+
+    const updatedGame = {
+      ...game,
+      players: remainingPlayers,
+    };
+
+    setGame(updatedGame);
+    setAvailableRooms(prev => prev.map(g => g.id === game.id ? updatedGame : g));
+  }, [game, currentUser, isHost]);
+
   // Start game (host only)
   const startGame = useCallback(() => {
     if (!game || !isHost) return;
@@ -1218,6 +1233,7 @@ export function useRacingGame({ currentUser, flashcards = [] }: UseRacingGamePro
     createGame,
     joinGame,
     leaveGame,
+    kickPlayer,
     startGame,
     submitAnswer,
     revealAnswer,

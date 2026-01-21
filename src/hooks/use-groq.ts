@@ -320,13 +320,56 @@ export function useGroq(options: UseGroqOptions = {}) {
       questionVi?: string;
       situationContext?: string;
       suggestedAnswers?: string[];
+      advancedTopicContext?: {
+        topicName: string;
+        topicDescription: string;
+        vocabulary: { word: string; reading?: string; meaning: string }[];
+      };
     }
   ): Promise<GeminiKaiwaResponse | null> => {
     conversationHistoryRef.current = [];
 
     // If a default question is provided, instruct AI to ask that question
     if (defaultQuestion) {
-      const questionPrompt = `Please ask the following question to start the conversation. This is a preset question for conversation practice:
+      // Build vocabulary list for advanced topic
+      let vocabContext = '';
+      if (defaultQuestion.advancedTopicContext?.vocabulary?.length) {
+        const vocabList = defaultQuestion.advancedTopicContext.vocabulary
+          .slice(0, 15) // Limit to 15 words to avoid token overflow
+          .map(v => `${v.word}${v.reading ? ` (${v.reading})` : ''} = ${v.meaning}`)
+          .join('\n');
+        vocabContext = `
+
+TOPIC VOCABULARY (use these words in your responses and suggestions when appropriate):
+${vocabList}`;
+      }
+
+      // Build the question prompt
+      let questionPrompt: string;
+
+      if (defaultQuestion.advancedTopicContext) {
+        // Advanced topic mode
+        const hasQuestion = defaultQuestion.questionJa && defaultQuestion.questionJa.trim();
+        questionPrompt = `This is an ADVANCED CONVERSATION SESSION about "${defaultQuestion.advancedTopicContext.topicName}".
+Topic description: ${defaultQuestion.advancedTopicContext.topicDescription}
+${vocabContext}
+
+${hasQuestion ? `Please ask the following question to start the conversation:
+Question: ${defaultQuestion.questionJa}
+${defaultQuestion.questionVi ? `(Vietnamese: ${defaultQuestion.questionVi})` : ''}
+${defaultQuestion.situationContext ? `Situation context: ${defaultQuestion.situationContext}` : ''}
+${defaultQuestion.suggestedAnswers?.length ? `Sample answers for reference: ${defaultQuestion.suggestedAnswers.join(' / ')}` : ''}
+
+Start with a brief greeting relevant to the topic, then ask this specific question.`
+        : `Start a conversation about "${defaultQuestion.advancedTopicContext.topicName}". Greet the user and ask an interesting opening question related to this topic. Use the topic vocabulary when appropriate.`}
+
+IMPORTANT:
+- Incorporate topic vocabulary naturally in your suggestions and hints
+- Keep the conversation focused on the topic
+- Provide relevant template, hints, suggestions, and follow-up questions.`;
+      } else {
+        // Standard default question mode
+        questionPrompt = `Please ask the following question to start the conversation. This is a preset question for conversation practice:
 
 Question: ${defaultQuestion.questionJa}
 ${defaultQuestion.questionVi ? `(Vietnamese: ${defaultQuestion.questionVi})` : ''}
@@ -334,6 +377,7 @@ ${defaultQuestion.situationContext ? `Situation context: ${defaultQuestion.situa
 ${defaultQuestion.suggestedAnswers?.length ? `Sample answers for reference: ${defaultQuestion.suggestedAnswers.join(' / ')}` : ''}
 
 Start by greeting the user briefly, then ask this question. Provide template, hints, suggestions, and follow-up questions as usual.`;
+      }
 
       return sendMessage(questionPrompt, context);
     }

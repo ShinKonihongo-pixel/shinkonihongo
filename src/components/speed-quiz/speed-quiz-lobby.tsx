@@ -1,6 +1,9 @@
 // Speed Quiz Lobby - Waiting room for players
 import React from 'react';
+import { X } from 'lucide-react';
 import type { SpeedQuizGame, SpeedQuizPlayer } from '../../types/speed-quiz';
+import { isImageAvatar } from '../../utils/avatar-icons';
+import { getVipAvatarClasses, getVipNameClasses, isVipRole, getVipBadge } from '../../utils/vip-styling';
 
 interface SpeedQuizLobbyProps {
   game: SpeedQuizGame;
@@ -8,6 +11,7 @@ interface SpeedQuizLobbyProps {
   onStartGame: () => void;
   onAddBot: () => void;
   onLeave: () => void;
+  onKickPlayer?: (playerId: string) => void;
 }
 
 export const SpeedQuizLobby: React.FC<SpeedQuizLobbyProps> = ({
@@ -16,6 +20,7 @@ export const SpeedQuizLobby: React.FC<SpeedQuizLobbyProps> = ({
   onStartGame,
   onAddBot,
   onLeave,
+  onKickPlayer,
 }) => {
   const isHost = game.hostId === currentPlayerId;
   const players = Object.values(game.players);
@@ -73,23 +78,48 @@ export const SpeedQuizLobby: React.FC<SpeedQuizLobbyProps> = ({
         </div>
 
         <div className="players-grid">
-          {players.map((player: SpeedQuizPlayer) => (
-            <div
-              key={player.odinhId}
-              className={`player-card ${player.odinhId === game.hostId ? 'host' : ''} ${
-                player.isBot ? 'bot' : ''
-              }`}
-            >
-              <div className="player-avatar">{player.avatar}</div>
-              <div className="player-info">
-                <span className="player-name">{player.displayName}</span>
-                {player.odinhId === game.hostId && (
-                  <span className="host-badge">👑 Chủ phòng</span>
+          {players.map((player: SpeedQuizPlayer) => {
+            const playerIsVip = isVipRole(player.role);
+            const vipBadge = getVipBadge(player.role);
+
+            return (
+              <div
+                key={player.odinhId}
+                className={`player-card ${player.odinhId === game.hostId ? 'host' : ''} ${
+                  player.isBot ? 'bot' : ''
+                } ${playerIsVip ? 'vip-player' : ''}`}
+              >
+                <div className={getVipAvatarClasses(player.role, 'player-avatar')}>
+                  {player.avatar && isImageAvatar(player.avatar) ? (
+                    <img src={player.avatar} alt={player.displayName} />
+                  ) : (
+                    player.avatar
+                  )}
+                  {playerIsVip && <span className="vip-frame" />}
+                </div>
+                <div className="player-info">
+                  <span className={getVipNameClasses(player.role, 'player-name')}>
+                    {vipBadge && <span className="vip-badge">{vipBadge}</span>}
+                    {player.displayName}
+                  </span>
+                  {player.odinhId === game.hostId && (
+                    <span className="host-badge">👑 Chủ phòng</span>
+                  )}
+                  {player.isBot && <span className="bot-badge">🤖</span>}
+                </div>
+                {/* Kick button for host */}
+                {isHost && player.odinhId !== game.hostId && player.odinhId !== currentPlayerId && onKickPlayer && (
+                  <button
+                    className="kick-btn"
+                    onClick={() => onKickPlayer(player.odinhId)}
+                    title="Kick khỏi phòng"
+                  >
+                    <X size={14} />
+                  </button>
                 )}
-                {player.isBot && <span className="bot-badge">🤖</span>}
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {/* Empty slots */}
           {Array.from({ length: game.settings.maxPlayers - players.length }).map(

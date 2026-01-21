@@ -49,6 +49,7 @@ export function HorseRacingPage({
     createGame,
     joinGame,
     leaveGame,
+    kickPlayer,
     startGame,
     submitAnswer,
     revealAnswer,
@@ -212,6 +213,7 @@ export function HorseRacingPage({
           onSelectVehicle={selectVehicle}
           onStartGame={handleStartGame}
           onLeaveGame={handleLeave}
+          onKickPlayer={kickPlayer}
         />
       </div>
     );

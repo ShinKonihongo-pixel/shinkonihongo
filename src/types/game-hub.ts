@@ -213,6 +213,10 @@ export const GAMES: Record<GameType, GameInfo> = {
 // Get all games as array
 export const getAllGames = (): GameInfo[] => Object.values(GAMES);
 
+// Get visible games (filtering out hidden ones)
+export const getVisibleGames = (hiddenGameIds: GameType[]): GameInfo[] =>
+  getAllGames().filter(g => !hiddenGameIds.includes(g.id));
+
 // Get games by difficulty
 export const getGamesByDifficulty = (difficulty: 'easy' | 'medium' | 'hard'): GameInfo[] =>
   getAllGames().filter(g => g.difficulty === difficulty);
@@ -228,6 +232,10 @@ export const getNewGames = (): GameInfo[] =>
 // Get racing games
 export const getRacingGames = (): GameInfo[] =>
   getAllGames().filter(g => g.category === 'racing');
+
+// Get visible racing games
+export const getVisibleRacingGames = (hiddenGameIds: GameType[]): GameInfo[] =>
+  getRacingGames().filter(g => !hiddenGameIds.includes(g.id));
 
 // Get games by category
 export const getGamesByCategory = (category: string): GameInfo[] =>

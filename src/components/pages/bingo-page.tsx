@@ -49,6 +49,7 @@ export function BingoPage({
     createGame,
     joinGame,
     leaveGame,
+    kickPlayer,
     startGame,
     drawNumber,
     claimBingo,
@@ -211,6 +212,7 @@ export function BingoPage({
           loading={loading}
           onStartGame={handleStartGame}
           onLeaveGame={handleLeave}
+          onKickPlayer={kickPlayer}
         />
         {guideOverlay}
       </div>

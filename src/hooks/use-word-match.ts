@@ -244,6 +244,17 @@ export function useWordMatch({ currentUser, flashcards = [] }: UseWordMatchProps
     setGameResults(null);
   }, []);
 
+  // Kick player (host only)
+  const kickPlayer = useCallback((playerId: string) => {
+    if (!game || !isHost || playerId === currentUser.id) return;
+
+    setGame(prev => {
+      if (!prev) return null;
+      const { [playerId]: _, ...remainingPlayers } = prev.players;
+      return { ...prev, players: remainingPlayers };
+    });
+  }, [game, currentUser, isHost]);
+
   // Start game
   const startGame = useCallback(async () => {
     if (!game || !isHost) return;
@@ -609,6 +620,7 @@ export function useWordMatch({ currentUser, flashcards = [] }: UseWordMatchProps
     createGame,
     joinGame,
     leaveGame,
+    kickPlayer,
     startGame,
     addBot,
     submitMatches,

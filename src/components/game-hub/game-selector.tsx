@@ -1,10 +1,11 @@
 // Game Selector - Professional game selection interface
-// Shows all available games with rich cards and quick actions
+// Shows all available games with rich cards and visibility filtering
 
-import { useState } from 'react';
-import { Search, Users, Zap, Star, Sparkles, Trophy, ArrowRight, Plus, Home } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Search, Users, Zap, Star, Sparkles, Trophy, ArrowRight, Plus, Home, EyeOff } from 'lucide-react';
 import type { GameType, GameInfo } from '../../types/game-hub';
-import { GAMES, getAllGames, getRacingGames } from '../../types/game-hub';
+import { GAMES, getVisibleGames, getVisibleRacingGames } from '../../types/game-hub';
+import { getHiddenGames } from '../../services/game-visibility-storage';
 import { WaitingRoom } from './waiting-room';
 
 type SelectorView = 'games' | 'waiting-room' | 'create-room';
@@ -21,19 +22,33 @@ export function GameSelector({ onSelectGame, onQuickJoin }: GameSelectorProps) {
   const [selectedGameForJoin, setSelectedGameForJoin] = useState<GameType | null>(null);
   const [currentView, setCurrentView] = useState<SelectorView>('games');
   const [filterGameType, setFilterGameType] = useState<GameType | null>(null);
+  const [hiddenGames, setHiddenGames] = useState<GameType[]>([]);
 
-  const allGames = getAllGames();
-  const racingGames = getRacingGames();
+  // Load hidden games on mount
+  useEffect(() => {
+    setHiddenGames(getHiddenGames());
+  }, []);
+
+  // Get visible games only
+  const visibleGames = useMemo(() => getVisibleGames(hiddenGames), [hiddenGames]);
+  const visibleRacingGames = useMemo(() => getVisibleRacingGames(hiddenGames), [hiddenGames]);
 
   // Filter games by search
-  const filteredGames = allGames.filter(game =>
-    game.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    game.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredGames = useMemo(() => {
+    return visibleGames.filter(game =>
+      game.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      game.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [visibleGames, searchQuery]);
 
   // Separate featured and regular games
-  const featuredGames = filteredGames.filter(g => g.isPopular || g.isNew);
-  const regularGames = filteredGames.filter(g => !g.isPopular && !g.isNew);
+  const featuredGames = useMemo(() => {
+    return filteredGames.filter(g => (g.isPopular || g.isNew) && g.category !== 'racing');
+  }, [filteredGames]);
+
+  const regularGames = useMemo(() => {
+    return filteredGames.filter(g => !g.isPopular && !g.isNew && g.category !== 'racing');
+  }, [filteredGames]);
 
   const handleJoinGame = (gameType: GameType) => {
     setSelectedGameForJoin(gameType);
@@ -82,6 +97,9 @@ export function GameSelector({ onSelectGame, onQuickJoin }: GameSelectorProps) {
     );
   }
 
+  // Check if all games are hidden
+  const noGamesAvailable = visibleGames.length === 0;
+
   return (
     <div className="game-selector">
       {/* Hero Header */}
@@ -96,7 +114,7 @@ export function GameSelector({ onSelectGame, onQuickJoin }: GameSelectorProps) {
         <div className="hero-stats">
           <div className="stat-item">
             <Trophy size={20} />
-            <span>{allGames.length} Games</span>
+            <span>{visibleGames.length} Games</span>
           </div>
           <div className="stat-item">
             <Users size={20} />
@@ -115,79 +133,118 @@ export function GameSelector({ onSelectGame, onQuickJoin }: GameSelectorProps) {
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="game-search-section">
-        <div className="game-search-wrapper">
-          <Search size={20} />
-          <input
-            type="text"
-            placeholder="Tìm kiếm trò chơi..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Racing Games Section - Special with room options */}
-      <section className="game-section racing-section">
-        <h2 className="section-title">
-          <span className="racing-icon">🏁</span>
-          <span>Trò Chơi Đua</span>
-        </h2>
-        <div className="racing-games-grid">
-          {racingGames.map(game => (
-            <RacingGameCard
-              key={game.id}
-              game={game}
-              onPlay={() => onSelectGame(game.id)}
-              onJoin={() => handleJoinGame(game.id)}
-              onBrowseRooms={() => handleOpenWaitingRoom(game.id)}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* Featured Games */}
-      {featuredGames.length > 0 && (
-        <section className="game-section featured-section">
-          <h2 className="section-title">
-            <Sparkles size={20} />
-            <span>Nổi Bật</span>
-          </h2>
-          <div className="featured-games-grid">
-            {featuredGames.filter(g => g.category !== 'racing').map(game => (
-              <GameCardFeatured
-                key={game.id}
-                game={game}
-                onPlay={() => onSelectGame(game.id)}
-                onJoin={() => handleJoinGame(game.id)}
-                getDifficultyLabel={getDifficultyLabel}
-              />
-            ))}
+      {/* No Games Available State */}
+      {noGamesAvailable ? (
+        <div className="game-empty-state">
+          <div className="empty-icon">
+            <EyeOff size={48} />
           </div>
-        </section>
-      )}
-
-      {/* All Games (non-racing) */}
-      <section className="game-section all-games-section">
-        <h2 className="section-title">
-          <Star size={20} />
-          <span>Các Game Khác</span>
-        </h2>
-        <div className="all-games-grid">
-          {(regularGames.length > 0 ? regularGames : filteredGames)
-            .filter(g => g.category !== 'racing')
-            .map(game => (
-              <GameCard
-                key={game.id}
-                game={game}
-                onPlay={() => onSelectGame(game.id)}
-                onJoin={() => handleJoinGame(game.id)}
-                getDifficultyLabel={getDifficultyLabel}
-              />
-            ))}
+          <h3>Không có game nào</h3>
+          <p>Tất cả games đã bị ẩn bởi quản trị viên.</p>
+          <p className="empty-hint">Vui lòng liên hệ giáo viên để mở game.</p>
         </div>
-      </section>
+      ) : (
+        <>
+          {/* Search Bar */}
+          <div className="game-search-section">
+            <div className="game-search-wrapper">
+              <Search size={20} />
+              <input
+                type="text"
+                placeholder="Tìm kiếm trò chơi..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button
+                  className="search-clear"
+                  onClick={() => setSearchQuery('')}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+            {hiddenGames.length > 0 && (
+              <div className="hidden-games-notice">
+                <EyeOff size={14} />
+                <span>{hiddenGames.length} game đang bị ẩn</span>
+              </div>
+            )}
+          </div>
+
+          {/* Racing Games Section - Special with room options */}
+          {visibleRacingGames.length > 0 && (
+            <section className="game-section racing-section">
+              <h2 className="section-title">
+                <span className="racing-icon">🏁</span>
+                <span>Trò Chơi Đua</span>
+              </h2>
+              <div className="racing-games-grid">
+                {visibleRacingGames.map(game => (
+                  <RacingGameCard
+                    key={game.id}
+                    game={game}
+                    onPlay={() => onSelectGame(game.id)}
+                    onJoin={() => handleJoinGame(game.id)}
+                    onBrowseRooms={() => handleOpenWaitingRoom(game.id)}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Featured Games */}
+          {featuredGames.length > 0 && (
+            <section className="game-section featured-section">
+              <h2 className="section-title">
+                <Sparkles size={20} />
+                <span>Nổi Bật</span>
+              </h2>
+              <div className="featured-games-grid">
+                {featuredGames.map(game => (
+                  <GameCardFeatured
+                    key={game.id}
+                    game={game}
+                    onPlay={() => onSelectGame(game.id)}
+                    onJoin={() => handleJoinGame(game.id)}
+                    getDifficultyLabel={getDifficultyLabel}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* All Games (non-racing, non-featured) */}
+          {regularGames.length > 0 && (
+            <section className="game-section all-games-section">
+              <h2 className="section-title">
+                <Star size={20} />
+                <span>Các Game Khác</span>
+              </h2>
+              <div className="all-games-grid">
+                {regularGames.map(game => (
+                  <GameCard
+                    key={game.id}
+                    game={game}
+                    onPlay={() => onSelectGame(game.id)}
+                    onJoin={() => handleJoinGame(game.id)}
+                    getDifficultyLabel={getDifficultyLabel}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* No Results State */}
+          {filteredGames.length === 0 && searchQuery && (
+            <div className="game-no-results">
+              <Search size={32} />
+              <h3>Không tìm thấy game</h3>
+              <p>Thử tìm kiếm với từ khóa khác</p>
+            </div>
+          )}
+        </>
+      )}
 
       {/* Quick Join Modal */}
       {showJoinModal && selectedGameForJoin && (
