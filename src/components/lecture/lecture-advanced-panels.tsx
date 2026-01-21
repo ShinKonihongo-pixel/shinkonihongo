@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import {
   X, Type, Square, Palette, Sparkles, Keyboard, RotateCw, Undo2, Redo2,
-  ChevronDown, ChevronUp, Play, Pause
+  ChevronDown, ChevronUp, Play
 } from 'lucide-react';
 import {
   TEXT_EFFECTS, SHAPE_EFFECTS, GRADIENT_PRESETS, ELEMENT_ANIMATIONS,

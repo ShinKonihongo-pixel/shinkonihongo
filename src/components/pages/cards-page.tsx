@@ -9,6 +9,7 @@ import type { KaiwaDefaultQuestion, KaiwaQuestionFormData, KaiwaFolder } from '.
 import type { JLPTLevel as KaiwaJLPTLevel, ConversationTopic } from '../../types/kaiwa';
 import { useLectures } from '../../hooks/use-lectures';
 import { useTestTemplates } from '../../hooks/use-classrooms';
+import { useCustomTopics } from '../../hooks/use-custom-topics';
 import { TestBankPanel } from '../classroom/test-bank-panel';
 import {
   FlashcardsTab,
@@ -17,6 +18,7 @@ import {
   KaiwaTab,
   GameTab,
   UsersTab,
+  CustomTopicsTab,
   type ManagementTab,
 } from '../cards-management';
 
@@ -101,6 +103,14 @@ export function CardsPage({
     getFoldersByLevelAndType, getTemplatesByFolder,
   } = useTestTemplates();
 
+  // Custom topics hook
+  const {
+    topics: customTopics, folders: customTopicFolders, questions: customTopicQuestions,
+    addCustomTopic, updateCustomTopic, deleteCustomTopic,
+    addCustomTopicFolder, updateCustomTopicFolder, deleteCustomTopicFolder,
+    addCustomTopicQuestion, updateCustomTopicQuestion, deleteCustomTopicQuestion,
+  } = useCustomTopics();
+
   // Filter visible users based on role
   const visibleUsers = isSuperAdmin
     ? users
@@ -115,6 +125,7 @@ export function CardsPage({
           <button className={`tab-btn ${activeTab === 'lectures' ? 'active' : ''}`} onClick={() => setActiveTab('lectures')}>Bài giảng ({lectures.length})</button>
           <button className={`tab-btn ${activeTab === 'jlpt' ? 'active' : ''}`} onClick={() => setActiveTab('jlpt')}>JLPT</button>
           <button className={`tab-btn ${activeTab === 'kaiwa' ? 'active' : ''}`} onClick={() => setActiveTab('kaiwa')}>Kaiwa ({kaiwaQuestions.length})</button>
+          <button className={`tab-btn ${activeTab === 'custom_topics' ? 'active' : ''}`} onClick={() => setActiveTab('custom_topics')}>Chủ đề ({customTopics.length})</button>
           <button className={`tab-btn ${activeTab === 'game' ? 'active' : ''}`} onClick={() => setActiveTab('game')}>Game</button>
           <button className={`tab-btn ${activeTab === 'assignments' ? 'active' : ''}`} onClick={() => setActiveTab('assignments')}>Bài tập</button>
           <button className={`tab-btn ${activeTab === 'tests' ? 'active' : ''}`} onClick={() => setActiveTab('tests')}>Bài kiểm tra ({testTemplates.length})</button>
@@ -191,6 +202,26 @@ export function CardsPage({
           getQuestionsByFolder={getQuestionsByKaiwaFolder}
           currentUser={currentUser}
           isSuperAdmin={isSuperAdmin}
+        />
+      )}
+
+      {/* Custom Topics Tab */}
+      {activeTab === 'custom_topics' && (
+        <CustomTopicsTab
+          topics={customTopics}
+          folders={customTopicFolders}
+          questions={customTopicQuestions}
+          currentUser={currentUser}
+          isSuperAdmin={isSuperAdmin}
+          onAddTopic={(data) => addCustomTopic(data, currentUser.id)}
+          onUpdateTopic={updateCustomTopic}
+          onDeleteTopic={deleteCustomTopic}
+          onAddFolder={(topicId, name) => addCustomTopicFolder(topicId, name, currentUser.id)}
+          onUpdateFolder={updateCustomTopicFolder}
+          onDeleteFolder={deleteCustomTopicFolder}
+          onAddQuestion={(data) => addCustomTopicQuestion(data, currentUser.id)}
+          onUpdateQuestion={updateCustomTopicQuestion}
+          onDeleteQuestion={deleteCustomTopicQuestion}
         />
       )}
 

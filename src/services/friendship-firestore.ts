@@ -368,7 +368,7 @@ export function subscribeToReceivedBadges(
     // Sort client-side by createdAt descending
     const badges = snapshot.docs
       .map(doc => doc.data() as BadgeGift)
-      .sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     callback(badges);
   });
 }
@@ -471,7 +471,7 @@ export function subscribeToFriendNotifications(
     // Sort client-side by createdAt descending
     const notifications = snapshot.docs
       .map(doc => doc.data() as FriendNotification)
-      .sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     callback(notifications);
   });
 }

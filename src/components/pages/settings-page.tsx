@@ -1,9 +1,9 @@
 // Settings page component with tabs: General Settings and Personal Info
 
 import { useState, useMemo, useEffect } from 'react';
-import type { AppSettings, CardBackgroundType, GameQuestionContent, GameAnswerContent, GlobalTheme, CardFrameId, CustomFrameSettings } from '../../hooks/use-settings';
+import type { AppSettings, GameQuestionContent, GameAnswerContent, GlobalTheme, CardFrameId, CustomFrameSettings, JLPTLevelOption, MemorizationFilter, AutoAddDifficulty } from '../../hooks/use-settings';
 import { CARD_FRAME_PRESETS } from '../../hooks/use-settings';
-import { useGameSounds, MUSIC_TRACKS } from '../../hooks/use-game-sounds';
+import { useGameSounds, MUSIC_CATEGORY_LABELS, type MusicCategory } from '../../hooks/use-game-sounds';
 import { Volume2, VolumeX, Music, Music2 } from 'lucide-react';
 import type { CurrentUser, StudySession, GameSession, JLPTSession, UserStats, User } from '../../types/user';
 import type { Flashcard, Lesson } from '../../types/flashcard';
@@ -259,7 +259,31 @@ function GameSoundSettings() {
     startMusic,
     stopMusic,
     isMusicPlaying,
+    currentTrack,
+    addCustomTrack,
+    removeCustomTrack,
+    allTracks,
   } = useGameSounds();
+
+  const [showAddCustom, setShowAddCustom] = useState(false);
+  const [customTrackName, setCustomTrackName] = useState('');
+  const [customTrackUrl, setCustomTrackUrl] = useState('');
+  const [customTrackEmoji, setCustomTrackEmoji] = useState('🎵');
+
+  // Get current selected track info
+  const selectedTrack = useMemo(() => {
+    return allTracks.find(t => t.id === soundSettings.musicTrack);
+  }, [allTracks, soundSettings.musicTrack]);
+
+  // Group tracks by category
+  const tracksByCategory = useMemo(() => {
+    const categories: MusicCategory[] = ['epic', 'chill', 'action', 'fun', 'japanese', 'custom'];
+    return categories.map(cat => ({
+      category: cat,
+      label: MUSIC_CATEGORY_LABELS[cat],
+      tracks: allTracks.filter(t => t.category === cat),
+    })).filter(g => g.tracks.length > 0);
+  }, [allTracks]);
 
   const handleTestSound = (type: 'correct' | 'wrong' | 'victory' | 'start') => {
     switch (type) {
@@ -268,6 +292,24 @@ function GameSoundSettings() {
       case 'victory': playVictory(); break;
       case 'start': playStart(); break;
     }
+  };
+
+  const handleAddCustomTrack = () => {
+    if (!customTrackName.trim() || !customTrackUrl.trim()) return;
+
+    const trackId = `custom-${Date.now()}`;
+    addCustomTrack({
+      id: trackId,
+      name: customTrackName.trim(),
+      emoji: customTrackEmoji,
+      url: customTrackUrl.trim(),
+    });
+
+    // Reset form
+    setCustomTrackName('');
+    setCustomTrackUrl('');
+    setCustomTrackEmoji('🎵');
+    setShowAddCustom(false);
   };
 
   return (
@@ -369,29 +411,116 @@ function GameSoundSettings() {
             </div>
           </div>
 
-          {/* Music Track Selection */}
-          <div className="setting-item">
-            <label>Bản nhạc</label>
-            <div className="setting-control">
-              <select
-                value={soundSettings.musicTrack}
-                onChange={(e) => updateSettings({ musicTrack: e.target.value })}
-                className="font-select"
-              >
-                {['epic', 'chill', 'action', 'fun'].map(category => (
-                  <optgroup key={category} label={
-                    category === 'epic' ? '🔥 Epic/Dramatic' :
-                    category === 'chill' ? '☕ Chill/Relaxed' :
-                    category === 'action' ? '🏎️ Action/Intense' : '🎮 Fun/Playful'
-                  }>
-                    {MUSIC_TRACKS.filter(t => t.category === category).map(track => (
-                      <option key={track.id} value={track.id}>
-                        {track.emoji} {track.name}
-                      </option>
+          {/* Current Track Display */}
+          {selectedTrack && (
+            <div className="music-current-track">
+              <div className="current-track-info">
+                <span className="track-emoji">{selectedTrack.emoji}</span>
+                <div className="track-details">
+                  <span className="track-name">{selectedTrack.name}</span>
+                  <span className="track-category">{MUSIC_CATEGORY_LABELS[selectedTrack.category]}</span>
+                </div>
+              </div>
+              {isMusicPlaying && currentTrack && (
+                <div className="music-playing-badge">
+                  <span className="music-bar"></span>
+                  <span className="music-bar"></span>
+                  <span className="music-bar"></span>
+                  Đang phát
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Music Track Selection Grid */}
+          <div className="music-track-selector">
+            <label>Chọn bản nhạc</label>
+            <div className="music-categories">
+              {tracksByCategory.map(group => (
+                <div key={group.category} className="music-category-group">
+                  <div className="category-header">{group.label}</div>
+                  <div className="category-tracks">
+                    {group.tracks.map(track => (
+                      <button
+                        key={track.id}
+                        className={`track-btn ${soundSettings.musicTrack === track.id ? 'selected' : ''} ${track.url ? 'has-audio' : ''}`}
+                        onClick={() => {
+                          updateSettings({ musicTrack: track.id });
+                          // Auto stop if playing different track
+                          if (isMusicPlaying) {
+                            stopMusic();
+                          }
+                        }}
+                        title={track.url ? `${track.name} (Audio file)` : `${track.name} (Procedural)`}
+                      >
+                        <span className="track-emoji">{track.emoji}</span>
+                        <span className="track-name">{track.name}</span>
+                        {track.category === 'custom' && (
+                          <button
+                            className="track-remove-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeCustomTrack(track.id);
+                            }}
+                            title="Xóa bản nhạc"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </button>
                     ))}
-                  </optgroup>
-                ))}
-              </select>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Add Custom Track */}
+            <div className="add-custom-track-section">
+              {!showAddCustom ? (
+                <button className="add-custom-btn" onClick={() => setShowAddCustom(true)}>
+                  ➕ Thêm nhạc từ URL
+                </button>
+              ) : (
+                <div className="custom-track-form">
+                  <div className="form-row">
+                    <select
+                      value={customTrackEmoji}
+                      onChange={(e) => setCustomTrackEmoji(e.target.value)}
+                      className="emoji-select"
+                    >
+                      {['🎵', '🎶', '🎸', '🎹', '🎺', '🎻', '🥁', '🎤', '🎧', '📻', '💿', '🌟', '❤️', '🔥', '⚡', '🌈'].map(e => (
+                        <option key={e} value={e}>{e}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      placeholder="Tên bản nhạc"
+                      value={customTrackName}
+                      onChange={(e) => setCustomTrackName(e.target.value)}
+                      className="custom-track-name-input"
+                    />
+                  </div>
+                  <input
+                    type="url"
+                    placeholder="URL nhạc (mp3, ogg, wav...)"
+                    value={customTrackUrl}
+                    onChange={(e) => setCustomTrackUrl(e.target.value)}
+                    className="custom-track-url-input"
+                  />
+                  <div className="form-actions">
+                    <button
+                      className="btn-add"
+                      onClick={handleAddCustomTrack}
+                      disabled={!customTrackName.trim() || !customTrackUrl.trim()}
+                    >
+                      Thêm
+                    </button>
+                    <button className="btn-cancel" onClick={() => setShowAddCustom(false)}>
+                      Hủy
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -407,15 +536,6 @@ function GameSoundSettings() {
                 <>▶️ Nghe thử nhạc</>
               )}
             </button>
-            {isMusicPlaying && (
-              <span className="music-playing-indicator">
-                <span className="music-bar"></span>
-                <span className="music-bar"></span>
-                <span className="music-bar"></span>
-                <span className="music-bar"></span>
-                Đang phát...
-              </span>
-            )}
           </div>
         </>
       )}
@@ -423,7 +543,7 @@ function GameSoundSettings() {
       {/* Info note */}
       <div className="sound-info-note">
         <span className="info-icon">💡</span>
-        <span>Âm thanh sẽ tự động phát khi bạn trả lời đúng/sai và khi chiến thắng game.</span>
+        <span>Nhạc nền sẽ tự động phát khi game bắt đầu. Bạn có thể thêm nhạc riêng từ URL.</span>
       </div>
     </section>
   );
@@ -562,32 +682,46 @@ export function SettingsPage({
 
   return (
     <div className="settings-page">
-      <h2>Cài đặt</h2>
-
-      {/* Main Tabs */}
-      <div className="settings-main-tabs">
-        <button
-          className={`settings-main-tab ${activeTab === 'general' ? 'active' : ''}`}
-          onClick={() => setActiveTab('general')}
-        >
-          Cài Đặt Chung
-        </button>
-        <button
-          className={`settings-main-tab ${activeTab === 'profile' ? 'active' : ''}`}
-          onClick={() => setActiveTab('profile')}
-        >
-          Thông Tin Cá Nhân
-        </button>
-        <button
-          className={`settings-main-tab ${activeTab === 'friends' ? 'active' : ''}`}
-          onClick={() => setActiveTab('friends')}
-        >
-          Bạn bè & Huy hiệu
-          {pendingRequests.length > 0 && (
-            <span className="tab-badge">{pendingRequests.length}</span>
-          )}
-        </button>
+      {/* Professional Header */}
+      <div className="settings-header">
+        <div className="settings-header-content">
+          <h2>
+            <span className="header-icon">⚙️</span>
+            Cài đặt
+          </h2>
+          <p className="settings-header-subtitle">Tùy chỉnh trải nghiệm học tập của bạn</p>
+        </div>
       </div>
+
+      {/* Page Body */}
+      <div className="settings-page-body">
+        {/* Main Tabs */}
+        <div className="settings-main-tabs">
+          <button
+            className={`settings-main-tab ${activeTab === 'general' ? 'active' : ''}`}
+            onClick={() => setActiveTab('general')}
+          >
+            <span className="tab-icon">🎛️</span>
+            <span className="tab-label">Cài Đặt Chung</span>
+          </button>
+          <button
+            className={`settings-main-tab ${activeTab === 'profile' ? 'active' : ''}`}
+            onClick={() => setActiveTab('profile')}
+          >
+            <span className="tab-icon">👤</span>
+            <span className="tab-label">Thông Tin Cá Nhân</span>
+          </button>
+          <button
+            className={`settings-main-tab ${activeTab === 'friends' ? 'active' : ''}`}
+            onClick={() => setActiveTab('friends')}
+          >
+            <span className="tab-icon">👥</span>
+            <span className="tab-label">Bạn bè & Huy hiệu</span>
+            {pendingRequests.length > 0 && (
+              <span className="tab-badge">{pendingRequests.length}</span>
+            )}
+          </button>
+        </div>
 
       {/* General Settings Tab */}
       {activeTab === 'general' && (
@@ -1086,6 +1220,363 @@ export function SettingsPage({
             </div>
               </section>
 
+              {/* Question Source Settings */}
+              <section className="settings-section">
+                <h3>
+                  <span className="section-icon">📚</span>
+                  Nguồn câu hỏi
+                </h3>
+                <p className="settings-description">Chọn nguồn thẻ để tạo câu hỏi cho các trò chơi</p>
+
+                <div className="question-source-options">
+                  <label className="source-option">
+                    <input
+                      type="checkbox"
+                      checked={settings.gameQuestionSources.includes('all')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          onUpdateSetting('gameQuestionSources', ['all']);
+                        } else {
+                          const filtered = settings.gameQuestionSources.filter(s => s !== 'all');
+                          onUpdateSetting('gameQuestionSources', filtered.length > 0 ? filtered : ['all']);
+                        }
+                      }}
+                    />
+                    <span className="source-label">Tất cả thẻ</span>
+                  </label>
+
+                  <label className="source-option">
+                    <input
+                      type="checkbox"
+                      checked={settings.gameQuestionSources.includes('jlpt_level')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          const newSources = settings.gameQuestionSources.filter(s => s !== 'all');
+                          onUpdateSetting('gameQuestionSources', [...newSources, 'jlpt_level']);
+                        } else {
+                          const filtered = settings.gameQuestionSources.filter(s => s !== 'jlpt_level');
+                          onUpdateSetting('gameQuestionSources', filtered.length > 0 ? filtered : ['all']);
+                        }
+                      }}
+                    />
+                    <span className="source-label">Theo cấp độ JLPT</span>
+                  </label>
+
+                  {settings.gameQuestionSources.includes('jlpt_level') && (
+                    <div className="jlpt-level-buttons">
+                      {(['N5', 'N4', 'N3', 'N2', 'N1'] as JLPTLevelOption[]).map(level => (
+                        <button
+                          key={level}
+                          className={`jlpt-btn ${settings.gameSelectedJLPTLevels.includes(level) ? 'active' : ''}`}
+                          onClick={() => {
+                            const newLevels = settings.gameSelectedJLPTLevels.includes(level)
+                              ? settings.gameSelectedJLPTLevels.filter(l => l !== level)
+                              : [...settings.gameSelectedJLPTLevels, level];
+                            onUpdateSetting('gameSelectedJLPTLevels', newLevels);
+                          }}
+                        >
+                          {level}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <label className="source-option">
+                    <input
+                      type="checkbox"
+                      checked={settings.gameQuestionSources.includes('lesson')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          const newSources = settings.gameQuestionSources.filter(s => s !== 'all');
+                          onUpdateSetting('gameQuestionSources', [...newSources, 'lesson']);
+                        } else {
+                          const filtered = settings.gameQuestionSources.filter(s => s !== 'lesson');
+                          onUpdateSetting('gameQuestionSources', filtered.length > 0 ? filtered : ['all']);
+                        }
+                      }}
+                    />
+                    <span className="source-label">Theo bài học</span>
+                  </label>
+
+                  {settings.gameQuestionSources.includes('lesson') && lessons.length > 0 && (
+                    <div className="lesson-select-wrapper">
+                      <select
+                        multiple
+                        className="lesson-multiselect"
+                        value={settings.gameSelectedLessons}
+                        onChange={(e) => {
+                          const selected = Array.from(e.target.selectedOptions, opt => opt.value);
+                          onUpdateSetting('gameSelectedLessons', selected);
+                        }}
+                      >
+                        {lessons.map(lesson => (
+                          <option key={lesson.id} value={lesson.id}>{lesson.name}</option>
+                        ))}
+                      </select>
+                      <span className="lesson-hint">Giữ Ctrl để chọn nhiều bài</span>
+                    </div>
+                  )}
+
+                  <label className="source-option">
+                    <input
+                      type="checkbox"
+                      checked={settings.gameQuestionSources.includes('memorization')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          const newSources = settings.gameQuestionSources.filter(s => s !== 'all');
+                          onUpdateSetting('gameQuestionSources', [...newSources, 'memorization']);
+                        } else {
+                          const filtered = settings.gameQuestionSources.filter(s => s !== 'memorization');
+                          onUpdateSetting('gameQuestionSources', filtered.length > 0 ? filtered : ['all']);
+                        }
+                      }}
+                    />
+                    <span className="source-label">Theo trạng thái</span>
+                  </label>
+
+                  {settings.gameQuestionSources.includes('memorization') && (
+                    <div className="memorization-buttons">
+                      {([
+                        { value: 'all', label: 'Tất cả' },
+                        { value: 'memorized', label: 'Đã thuộc' },
+                        { value: 'not_memorized', label: 'Chưa thuộc' },
+                      ] as { value: MemorizationFilter; label: string }[]).map(opt => (
+                        <button
+                          key={opt.value}
+                          className={`mem-btn ${settings.gameMemorizationFilter === opt.value ? 'active' : ''}`}
+                          onClick={() => onUpdateSetting('gameMemorizationFilter', opt.value)}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="source-summary">
+                  <span className="summary-icon">📊</span>
+                  <span className="summary-text">
+                    Số thẻ phù hợp: <strong>{flashcards.length}</strong>
+                  </span>
+                </div>
+              </section>
+
+              {/* AI Challenge Settings */}
+              <section className="settings-section ai-challenge-section">
+                <h3>
+                  <span className="section-icon">🤖</span>
+                  Cài đặt Thách Đấu AI
+                </h3>
+                <p className="settings-description">Cài đặt cho chế độ chơi 1v1 với AI</p>
+
+                <div className="setting-item">
+                  <label>Số câu hỏi: {settings.aiChallengeQuestionCount}</label>
+                  <div className="setting-control">
+                    <input
+                      type="range"
+                      min="5"
+                      max="20"
+                      step="1"
+                      value={settings.aiChallengeQuestionCount}
+                      onChange={(e) => onUpdateSetting('aiChallengeQuestionCount', Number(e.target.value))}
+                    />
+                    <span className="setting-value">{settings.aiChallengeQuestionCount} câu</span>
+                  </div>
+                </div>
+
+                <div className="setting-item">
+                  <label>Thời gian/câu: {settings.aiChallengeTimePerQuestion}s</label>
+                  <div className="setting-control">
+                    <input
+                      type="range"
+                      min="5"
+                      max="30"
+                      step="1"
+                      value={settings.aiChallengeTimePerQuestion}
+                      onChange={(e) => onUpdateSetting('aiChallengeTimePerQuestion', Number(e.target.value))}
+                    />
+                    <span className="setting-value">{settings.aiChallengeTimePerQuestion}s</span>
+                  </div>
+                </div>
+
+                <div className="setting-divider"></div>
+                <p className="ai-adjust-label">Điều chỉnh AI</p>
+
+                <div className="setting-item">
+                  <label>Độ chính xác: {settings.aiChallengeAccuracyModifier > 0 ? '+' : ''}{settings.aiChallengeAccuracyModifier}%</label>
+                  <div className="setting-control">
+                    <input
+                      type="range"
+                      min="-20"
+                      max="20"
+                      step="5"
+                      value={settings.aiChallengeAccuracyModifier}
+                      onChange={(e) => onUpdateSetting('aiChallengeAccuracyModifier', Number(e.target.value))}
+                    />
+                    <span className="setting-value">{settings.aiChallengeAccuracyModifier > 0 ? '+' : ''}{settings.aiChallengeAccuracyModifier}%</span>
+                  </div>
+                </div>
+
+                <div className="setting-item">
+                  <label>Tốc độ trả lời: {settings.aiChallengeSpeedMultiplier}x</label>
+                  <div className="setting-control">
+                    <input
+                      type="range"
+                      min="0.5"
+                      max="2"
+                      step="0.1"
+                      value={settings.aiChallengeSpeedMultiplier}
+                      onChange={(e) => onUpdateSetting('aiChallengeSpeedMultiplier', Number(e.target.value))}
+                    />
+                    <span className="setting-value">{settings.aiChallengeSpeedMultiplier.toFixed(1)}x</span>
+                  </div>
+                </div>
+
+                <div className="setting-divider"></div>
+                <p className="ai-adjust-label">Thêm AI Nhanh</p>
+
+                <div className="setting-item">
+                  <label>Mức độ mặc định</label>
+                  <div className="setting-control">
+                    <select
+                      value={settings.aiChallengeAutoAddDifficulty}
+                      onChange={(e) => onUpdateSetting('aiChallengeAutoAddDifficulty', e.target.value as AutoAddDifficulty)}
+                      className="font-select"
+                    >
+                      <option value="random">🎲 Ngẫu nhiên</option>
+                      <option value="easy">🌱 Dễ (Trang 1)</option>
+                      <option value="medium">⚡ Trung bình (Trang 2)</option>
+                      <option value="hard">🔥 Khó (Trang 3)</option>
+                    </select>
+                  </div>
+                </div>
+              </section>
+
+              {/* JLPT Practice Settings */}
+              <section className="settings-section jlpt-settings-section">
+                <h3>
+                  <span className="section-icon">📝</span>
+                  Cài đặt Luyện thi JLPT
+                </h3>
+                <p className="settings-description">Tùy chỉnh trải nghiệm luyện thi JLPT</p>
+
+                <div className="setting-item">
+                  <label>Số câu hỏi mặc định: {settings.jlptDefaultQuestionCount}</label>
+                  <div className="setting-control">
+                    <input
+                      type="range"
+                      min="5"
+                      max="100"
+                      step="5"
+                      value={settings.jlptDefaultQuestionCount}
+                      onChange={(e) => onUpdateSetting('jlptDefaultQuestionCount', Number(e.target.value))}
+                    />
+                    <span className="setting-value">{settings.jlptDefaultQuestionCount} câu</span>
+                  </div>
+                </div>
+
+                <div className="setting-item">
+                  <label>Hiển thị giải thích sau mỗi câu</label>
+                  <label className="toggle">
+                    <input
+                      type="checkbox"
+                      checked={settings.jlptShowExplanation}
+                      onChange={(e) => onUpdateSetting('jlptShowExplanation', e.target.checked)}
+                    />
+                    <span className="slider"></span>
+                  </label>
+                </div>
+
+                <div className="setting-item">
+                  <label>Tự động chuyển câu sau: {settings.jlptAutoNextDelay === 0 ? 'Tắt (thủ công)' : `${settings.jlptAutoNextDelay}s`}</label>
+                  <div className="setting-control">
+                    <input
+                      type="range"
+                      min="0"
+                      max="5"
+                      step="1"
+                      value={settings.jlptAutoNextDelay}
+                      onChange={(e) => onUpdateSetting('jlptAutoNextDelay', Number(e.target.value))}
+                    />
+                    <span className="setting-value">{settings.jlptAutoNextDelay === 0 ? 'Tắt' : `${settings.jlptAutoNextDelay}s`}</span>
+                  </div>
+                </div>
+
+                <div className="setting-divider"></div>
+                <p className="ai-adjust-label">Chọn câu hỏi thông minh</p>
+
+                <div className="setting-item">
+                  <label>Tránh lặp câu hỏi gần đây</label>
+                  <label className="toggle">
+                    <input
+                      type="checkbox"
+                      checked={settings.jlptPreventRepetition}
+                      onChange={(e) => onUpdateSetting('jlptPreventRepetition', e.target.checked)}
+                    />
+                    <span className="slider"></span>
+                  </label>
+                </div>
+
+                {settings.jlptPreventRepetition && (
+                  <div className="setting-item">
+                    <label>Độ trễ lặp: {settings.jlptRepetitionCooldown} phiên</label>
+                    <div className="setting-control">
+                      <input
+                        type="range"
+                        min="1"
+                        max="10"
+                        step="1"
+                        value={settings.jlptRepetitionCooldown}
+                        onChange={(e) => onUpdateSetting('jlptRepetitionCooldown', Number(e.target.value))}
+                      />
+                      <span className="setting-value">{settings.jlptRepetitionCooldown} phiên</span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="setting-item">
+                  <label>Chế độ chọn câu hỏi</label>
+                  <div className="setting-control">
+                    <select
+                      value={settings.jlptCoverageMode}
+                      onChange={(e) => onUpdateSetting('jlptCoverageMode', e.target.value as 'random' | 'balanced' | 'weak_first')}
+                      className="font-select"
+                    >
+                      <option value="random">🎲 Ngẫu nhiên</option>
+                      <option value="balanced">⚖️ Cân bằng (mỗi phần đều có)</option>
+                      <option value="weak_first">🎯 Ưu tiên điểm yếu</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="setting-divider"></div>
+                <p className="ai-adjust-label">Đánh giá & Phân tích</p>
+
+                <div className="setting-item">
+                  <label>Hiển thị đánh giá trình độ</label>
+                  <label className="toggle">
+                    <input
+                      type="checkbox"
+                      checked={settings.jlptShowLevelAssessment}
+                      onChange={(e) => onUpdateSetting('jlptShowLevelAssessment', e.target.checked)}
+                    />
+                    <span className="slider"></span>
+                  </label>
+                </div>
+
+                <div className="setting-item">
+                  <label>Theo dõi điểm yếu</label>
+                  <label className="toggle">
+                    <input
+                      type="checkbox"
+                      checked={settings.jlptTrackWeakAreas}
+                      onChange={(e) => onUpdateSetting('jlptTrackWeakAreas', e.target.checked)}
+                    />
+                    <span className="slider"></span>
+                  </label>
+                </div>
+              </section>
+
               {/* Game Sound Settings */}
               <GameSoundSettings />
             </>
@@ -1163,6 +1654,53 @@ export function SettingsPage({
                 <span className="toggle-slider"></span>
               </label>
             </div>
+
+            <div className="setting-item">
+              <label>Chế độ gửi phát âm</label>
+              <div className="setting-control">
+                <select
+                  value={settings.kaiwaSendMode}
+                  onChange={(e) => onUpdateSetting('kaiwaSendMode', e.target.value as 'auto' | 'manual')}
+                  className="font-select"
+                >
+                  <option value="manual">Thủ công (Manual)</option>
+                  <option value="auto">Tự động (Auto)</option>
+                </select>
+              </div>
+            </div>
+
+            {settings.kaiwaSendMode === 'auto' && (
+              <>
+                <div className="setting-item">
+                  <label>Ngưỡng tự động gửi</label>
+                  <div className="setting-control">
+                    <input
+                      type="range"
+                      min="50"
+                      max="100"
+                      value={settings.kaiwaAutoSendThreshold}
+                      onChange={(e) => onUpdateSetting('kaiwaAutoSendThreshold', Number(e.target.value))}
+                    />
+                    <span className="slider-value">{settings.kaiwaAutoSendThreshold}%</span>
+                  </div>
+                </div>
+
+                <div className="setting-item">
+                  <label>Độ trễ trước khi gửi</label>
+                  <div className="setting-control">
+                    <input
+                      type="range"
+                      min="0.5"
+                      max="3"
+                      step="0.5"
+                      value={settings.kaiwaAutoSendDelay}
+                      onChange={(e) => onUpdateSetting('kaiwaAutoSendDelay', Number(e.target.value))}
+                    />
+                    <span className="slider-value">{settings.kaiwaAutoSendDelay}s</span>
+                  </div>
+                </div>
+              </>
+            )}
 
             <div className="setting-item">
               <label>Cấp độ mặc định</label>
@@ -1699,6 +2237,7 @@ export function SettingsPage({
           onImport={onImportData}
         />
       )}
+      </div>{/* End settings-page-body */}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 // Bingo Game Guide - Instructions and rules
 
-import { X, Target, Sparkles, Zap, Shield, Ban, Dice5 } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface BingoGameGuideProps {
   onClose: () => void;

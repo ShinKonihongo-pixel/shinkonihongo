@@ -16,12 +16,12 @@ interface RaceQuestionProps {
   onNextQuestion: () => void;
 }
 
-// Professional answer option colors
+// Professional answer option colors with A, B, C, D labels
 const OPTION_THEMES = [
-  { bg: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%)', icon: '▲', color: '#ff6b6b' },
-  { bg: 'linear-gradient(135deg, #4ecdc4 0%, #26a69a 100%)', icon: '◆', color: '#4ecdc4' },
-  { bg: 'linear-gradient(135deg, #ffd93d 0%, #f9a825 100%)', icon: '●', color: '#ffd93d' },
-  { bg: 'linear-gradient(135deg, #8B5CF6 0%, #7c3aed 100%)', icon: '■', color: '#8B5CF6' },
+  { bg: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%)', label: 'A', color: '#ff6b6b' },
+  { bg: 'linear-gradient(135deg, #4ecdc4 0%, #26a69a 100%)', label: 'B', color: '#4ecdc4' },
+  { bg: 'linear-gradient(135deg, #ffd93d 0%, #f9a825 100%)', label: 'C', color: '#ffd93d' },
+  { bg: 'linear-gradient(135deg, #8B5CF6 0%, #7c3aed 100%)', label: 'D', color: '#8B5CF6' },
 ];
 
 export function RaceQuestion({
@@ -161,7 +161,7 @@ export function RaceQuestion({
               onClick={() => handleAnswer(index)}
               disabled={isDisabled}
             >
-              <span className="option-icon">{theme.icon}</span>
+              <span className="option-label">{theme.label}</span>
               <span className="option-text">{option}</span>
               {isCorrect && (
                 <span className="result-icon correct">

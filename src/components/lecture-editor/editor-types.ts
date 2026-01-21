@@ -2,7 +2,6 @@
 
 import type { SlideFormData, SlideElement, AdminNote } from '../../types/lecture';
 import type { JLPTLevel } from '../../types/flashcard';
-import type { HistoryState } from '../../utils/slide-editor-effects';
 
 // Resize handle positions
 export type ResizeHandle = 'nw' | 'n' | 'ne' | 'w' | 'e' | 'sw' | 's' | 'se';

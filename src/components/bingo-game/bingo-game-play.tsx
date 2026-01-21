@@ -25,7 +25,7 @@ export function BingoGamePlay({
   game,
   currentPlayer,
   sortedPlayers,
-  isHost,
+  isHost: _isHost,
   isSkillPhase,
   onDrawNumber,
   onClaimBingo,
@@ -34,6 +34,7 @@ export function BingoGamePlay({
   onLeave,
   onShowGuide,
 }: BingoGamePlayProps) {
+  void _isHost; // Reserved for future use
   const [selectedSkill, setSelectedSkill] = useState<BingoSkillType | null>(null);
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
   const [showDrawAnimation, setShowDrawAnimation] = useState(false);

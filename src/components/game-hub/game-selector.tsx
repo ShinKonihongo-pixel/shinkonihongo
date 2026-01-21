@@ -194,7 +194,11 @@ export function GameSelector({ onSelectGame, onQuickJoin }: GameSelectorProps) {
         <div className="game-modal-overlay" onClick={() => setShowJoinModal(false)}>
           <div className="game-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header" style={{ background: GAMES[selectedGameForJoin].gradient }}>
-              <span className="modal-icon">{GAMES[selectedGameForJoin].icon}</span>
+              <span className="modal-icon">
+                {GAMES[selectedGameForJoin].iconImage ? (
+                  <img src={GAMES[selectedGameForJoin].iconImage} alt={GAMES[selectedGameForJoin].name} className="icon-image" />
+                ) : GAMES[selectedGameForJoin].icon}
+              </span>
               <h3>Tham Gia {GAMES[selectedGameForJoin].name}</h3>
             </div>
             <div className="modal-body">
@@ -247,7 +251,11 @@ function GameCardFeatured({ game, onPlay, onJoin, getDifficultyLabel }: GameCard
       {game.isPopular && !game.isNew && <span className="badge-popular">HOT</span>}
 
       <div className="card-content">
-        <div className="card-icon">{game.icon}</div>
+        <div className="card-icon">
+          {game.iconImage ? (
+            <img src={game.iconImage} alt={game.name} className="icon-image" />
+          ) : game.icon}
+        </div>
         <h3 className="card-title">{game.name}</h3>
         <p className="card-description">{game.description}</p>
 
@@ -288,7 +296,11 @@ function GameCard({ game, onPlay, onJoin, getDifficultyLabel }: GameCardProps) {
   return (
     <div className="game-card">
       <div className="card-header" style={{ background: game.gradient }}>
-        <span className="card-icon">{game.icon}</span>
+        <span className="card-icon">
+          {game.iconImage ? (
+            <img src={game.iconImage} alt={game.name} className="icon-image" />
+          ) : game.icon}
+        </span>
         {game.isNew && <span className="badge-new small">MỚI</span>}
       </div>
 

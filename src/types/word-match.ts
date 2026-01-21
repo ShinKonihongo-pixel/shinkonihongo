@@ -92,6 +92,7 @@ export interface WordMatchPlayer {
   odinhId: string;
   displayName: string;
   avatar: string;
+  role?: string;              // User role for VIP styling
   score: number;
   correctPairs: number;
   perfectRounds: number;       // All 5 correct

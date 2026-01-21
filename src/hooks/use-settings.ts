@@ -1,7 +1,7 @@
 // Hook for managing app settings with localStorage persistence
 
 import { useState, useCallback, useEffect } from 'react';
-import type { JapaneseVoiceGender, JLPTLevel, ConversationStyle } from '../types/kaiwa';
+import type { JapaneseVoiceGender, JLPTLevel, ConversationStyle, KaiwaSendMode } from '../types/kaiwa';
 
 export type CardBackgroundType = 'gradient' | 'solid' | 'image';
 
@@ -27,6 +27,12 @@ export type AppBackgroundId = 'default' | 'doraemon' | 'hello_kitty' | 'superher
 // Game content types
 export type GameQuestionContent = 'kanji' | 'vocabulary' | 'meaning';
 export type GameAnswerContent = 'kanji' | 'vocabulary' | 'meaning' | 'vocabulary_meaning';
+
+// Game question source types
+export type GameQuestionSource = 'all' | 'jlpt_level' | 'lesson' | 'memorization';
+export type JLPTLevelOption = 'N5' | 'N4' | 'N3' | 'N2' | 'N1';
+export type MemorizationFilter = 'all' | 'memorized' | 'not_memorized';
+export type AutoAddDifficulty = 'random' | 'easy' | 'medium' | 'hard';
 
 // Global theme settings (controlled by super_admin)
 export interface GlobalTheme {
@@ -84,6 +90,9 @@ export interface AppSettings {
   kaiwaDefaultLevel: JLPTLevel;
   kaiwaDefaultStyle: ConversationStyle;
   kaiwaShowTranslation: boolean;
+  kaiwaSendMode: KaiwaSendMode;           // auto or manual send after speech
+  kaiwaAutoSendThreshold: number;         // accuracy % to trigger auto-send (default: 80)
+  kaiwaAutoSendDelay: number;             // delay in seconds before auto-send (default: 1.5)
 
   // Weekly goals
   weeklyCardsTarget: number;
@@ -92,6 +101,29 @@ export interface AppSettings {
   // App background
   appBackground: AppBackgroundId;
   appBackgroundCustomUrl: string;
+
+  // Game Question Source Settings (all games)
+  gameQuestionSources: GameQuestionSource[];
+  gameSelectedJLPTLevels: JLPTLevelOption[];
+  gameSelectedLessons: string[];
+  gameMemorizationFilter: MemorizationFilter;
+
+  // AI Challenge Settings
+  aiChallengeQuestionCount: number;        // 5-20, default 10
+  aiChallengeTimePerQuestion: number;      // 5-30 seconds, default 15
+  aiChallengeAccuracyModifier: number;     // -20 to +20, default 0
+  aiChallengeSpeedMultiplier: number;      // 0.5-2.0, default 1.0
+  aiChallengeAutoAddDifficulty: AutoAddDifficulty;
+
+  // JLPT Practice Settings
+  jlptDefaultQuestionCount: number;        // Default question count per session
+  jlptShowExplanation: boolean;            // Show explanation after each question
+  jlptAutoNextDelay: number;               // Auto-advance delay (0 = manual, 1-5 seconds)
+  jlptPreventRepetition: boolean;          // Avoid repeating recently answered questions
+  jlptRepetitionCooldown: number;          // How many sessions before allowing repeat (1-10)
+  jlptCoverageMode: 'random' | 'balanced' | 'weak_first';  // Question selection strategy
+  jlptShowLevelAssessment: boolean;        // Show detailed assessment after practice
+  jlptTrackWeakAreas: boolean;             // Track and suggest weak areas
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -144,12 +176,35 @@ const DEFAULT_SETTINGS: AppSettings = {
   kaiwaDefaultLevel: 'N5',
   kaiwaDefaultStyle: 'polite',
   kaiwaShowTranslation: true,
+  kaiwaSendMode: 'manual',
+  kaiwaAutoSendThreshold: 80,
+  kaiwaAutoSendDelay: 1.5,
   // Weekly goals
   weeklyCardsTarget: 50,
   weeklyMinutesTarget: 60,
   // App background
   appBackground: 'default',
   appBackgroundCustomUrl: '',
+  // Game Question Source defaults
+  gameQuestionSources: ['all'],
+  gameSelectedJLPTLevels: [],
+  gameSelectedLessons: [],
+  gameMemorizationFilter: 'all',
+  // AI Challenge defaults
+  aiChallengeQuestionCount: 10,
+  aiChallengeTimePerQuestion: 15,
+  aiChallengeAccuracyModifier: 0,
+  aiChallengeSpeedMultiplier: 1.0,
+  aiChallengeAutoAddDifficulty: 'random',
+  // JLPT defaults
+  jlptDefaultQuestionCount: 20,
+  jlptShowExplanation: true,
+  jlptAutoNextDelay: 0,
+  jlptPreventRepetition: true,
+  jlptRepetitionCooldown: 3,
+  jlptCoverageMode: 'balanced',
+  jlptShowLevelAssessment: true,
+  jlptTrackWeakAreas: true,
 };
 
 const STORAGE_KEY = 'flashcard-settings';

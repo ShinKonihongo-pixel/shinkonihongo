@@ -204,6 +204,7 @@ export interface RacingPlayer {
   odinhId: string;            // Player unique ID
   displayName: string;
   avatar: string;
+  role?: string;              // User role for VIP styling
   vehicle: RacingVehicle;
   currentSpeed: number;       // Current speed in km/h
   distance: number;           // Distance traveled (0-100%)

@@ -3,9 +3,8 @@
 // Features: Vertical race track, special questions every 3, effect targeting
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Clock, Zap, Shield, Target, X, LogOut } from 'lucide-react';
-import type { RacingGame, RacingPlayer, RacingQuestion, SpecialFeatureType } from '../../types/racing-game';
-import { SPECIAL_FEATURES, TRAPS } from '../../types/racing-game';
+import { Clock, Zap, Shield, Target, LogOut } from 'lucide-react';
+import type { RacingGame, RacingPlayer, RacingQuestion } from '../../types/racing-game';
 import { isImageAvatar } from '../../utils/avatar-icons';
 
 // Effect types for the new system
@@ -59,12 +58,13 @@ export function RacingGamePlayV2({
   sortedPlayers,
   isHost,
   onSubmitAnswer,
-  onRevealAnswer,
+  onRevealAnswer: _onRevealAnswer,
   onNextQuestion,
   onApplyEffect,
   onEscapeTap,
   onLeave,
 }: RacingGamePlayV2Props) {
+  void _onRevealAnswer; // Reserved for future use
   // View state - controls what's shown
   const [view, setView] = useState<GameView>('track');
   const [timeLeft, setTimeLeft] = useState(15);
@@ -250,7 +250,7 @@ export function RacingGamePlayV2({
         <div className="track-v2-area">
           {sortedPlayers.map((player, idx) => {
             const isMe = player.odinhId === currentPlayer?.odinhId;
-            const position = 100 - player.distance; // Invert for bottom-to-top
+            void (100 - player.distance); // Position calculation reserved for future layout
 
             return (
               <div

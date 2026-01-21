@@ -69,6 +69,16 @@ export function BranchManagementPage({ users }: BranchManagementPageProps) {
   const teachers = useMemo(() => membersWithUsers.filter(m => ['main_teacher', 'part_time_teacher', 'assistant'].includes(m.role)), [membersWithUsers]);
   const branchClassrooms = useMemo(() => classrooms.filter(c => c.branchId === selectedBranch?.id), [classrooms, selectedBranch?.id]);
   const availableAdmins = useMemo(() => users.filter(u => !membersWithUsers.some(m => m.userId === u.id) && u.id !== currentUser?.id), [users, membersWithUsers, currentUser?.id]);
+  // Convert MonthlySalarySummary to simple SalarySummary for overview
+  const overviewSalarySummary = useMemo(() => {
+    if (!summary) return null;
+    return {
+      total: summary.totalAmount,
+      approved: summary.totalTeachers - summary.pendingCount,
+      paid: summary.paidCount,
+      count: summary.totalTeachers,
+    };
+  }, [summary]);
 
   // Branch handlers
   const handleSelectBranch = (branch: Branch) => { setSelectedBranch(branch); setCurrentBranch(branch); setActiveTab('overview'); };
@@ -138,7 +148,7 @@ export function BranchManagementPage({ users }: BranchManagementPageProps) {
 
       {/* Tab Content */}
       <div className="branch-mgmt-content">
-        {activeTab === 'overview' && <BranchOverviewTab branch={selectedBranch} stats={stats} salarySummary={summary} selectedMonth={selectedMonth} />}
+        {activeTab === 'overview' && <BranchOverviewTab branch={selectedBranch} stats={stats} salarySummary={overviewSalarySummary} selectedMonth={selectedMonth} />}
         {activeTab === 'teachers' && (
           <BranchTeachersTab
             teachers={teachers} schedules={schedulesWithDetails} sessions={sessionsWithDetails} classrooms={branchClassrooms} users={users} isAdmin={isBranchAdmin}
@@ -156,7 +166,7 @@ export function BranchManagementPage({ users }: BranchManagementPageProps) {
         {activeTab === 'salaries' && (
           <BranchSalariesTab
             salaries={salariesWithUsers} summary={summary} branch={selectedBranch} selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} isAdmin={isBranchAdmin} loading={salariesLoading}
-            onApprove={handleApproveSalary} onMarkPaid={handleMarkPaid} onEdit={(s) => setEditingSalary(s)} onRecalculate={recalculateSalary} onGenerateAll={handleGenerateSalaries} onViewSlip={(s) => setViewingSalary(s)}
+            onApprove={handleApproveSalary} onMarkPaid={handleMarkPaid} onEdit={(s) => setEditingSalary(s)} onRecalculate={(s) => recalculateSalary(s.id)} onGenerateAll={handleGenerateSalaries} onViewSlip={(s) => setViewingSalary(s)}
           />
         )}
         {activeTab === 'staff' && <BranchStaffTab members={membersWithUsers} availableUsers={availableAdmins} isDirector={isDirector} loading={membersLoading} onAddAdmin={(id) => addMember(id, 'branch_admin')} onRemoveMember={removeMember} />}

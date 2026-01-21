@@ -1,6 +1,7 @@
 // Pronunciation practice modal for Kaiwa
 
 import type { SuggestedAnswer, PronunciationResult } from '../../types/kaiwa';
+import { KaiwaKaraokeText } from './kaiwa-karaoke-text';
 import { Mic, Volume2, X, RefreshCw, Send } from 'lucide-react';
 
 interface KaiwaPracticeModalProps {
@@ -8,6 +9,7 @@ interface KaiwaPracticeModalProps {
   result: PronunciationResult | null;
   isListening: boolean;
   isSpeaking: boolean;
+  interimTranscript?: string;
   onMicClick: () => void;
   onListen: () => void;
   onRetry: () => void;
@@ -20,6 +22,7 @@ export function KaiwaPracticeModal({
   result,
   isListening,
   isSpeaking,
+  interimTranscript,
   onMicClick,
   onListen,
   onRetry,
@@ -30,7 +33,16 @@ export function KaiwaPracticeModal({
     <div className="kaiwa-practice-overlay">
       <div className="kaiwa-practice-modal">
         <h3>Luyện phát âm</h3>
-        <p className="kaiwa-practice-text">{suggestion.text}</p>
+
+        {/* Karaoke-style text display */}
+        <div className="kaiwa-practice-karaoke-wrapper">
+          <KaiwaKaraokeText
+            expectedText={suggestion.text}
+            result={result}
+            isRecording={isListening}
+            interimText={interimTranscript}
+          />
+        </div>
 
         {!result ? (
           <>
@@ -55,22 +67,8 @@ export function KaiwaPracticeModal({
           </>
         ) : (
           <div className="kaiwa-practice-result">
-            <div className={`kaiwa-accuracy ${result.accuracy >= 80 ? 'good' : result.accuracy >= 50 ? 'ok' : 'poor'}`}>
-              {result.accuracy}%
-            </div>
-            <p className="kaiwa-feedback">{result.feedback}</p>
             {result.spokenText && (
               <p className="kaiwa-spoken">Bạn nói: {result.spokenText}</p>
-            )}
-            {result.differences.length > 0 && (
-              <div className="kaiwa-differences">
-                <span>Khác biệt:</span>
-                {result.differences.slice(0, 3).map((d, i) => (
-                  <span key={i} className="kaiwa-diff-item">
-                    "{d.expected}" → "{d.spoken}"
-                  </span>
-                ))}
-              </div>
             )}
             <div className="kaiwa-practice-actions">
               <button className="btn btn-secondary" onClick={onRetry}>

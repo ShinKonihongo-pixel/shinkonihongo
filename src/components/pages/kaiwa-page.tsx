@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { AppSettings } from '../../hooks/use-settings';
-import type { KaiwaMessage, KaiwaContext, JLPTLevel, ConversationStyle, ConversationTopic, PronunciationResult, AnswerTemplate, SuggestedAnswer } from '../../types/kaiwa';
+import type { KaiwaMessage, KaiwaContext, JLPTLevel, ConversationStyle, ConversationTopic, PronunciationResult, AnswerTemplate, SuggestedAnswer, KaiwaScenario, KaiwaRole, KaiwaEvaluation, KaiwaMetrics } from '../../types/kaiwa';
 import type { KaiwaDefaultQuestion, KaiwaFolder } from '../../types/kaiwa-question';
 import { useSpeech, comparePronunciation } from '../../hooks/use-speech';
 import { useGroq } from '../../hooks/use-groq';
-import { JLPT_LEVELS, CONVERSATION_STYLES, CONVERSATION_TOPICS, getStyleDisplay } from '../../constants/kaiwa';
-import { KaiwaMessageItem, KaiwaPracticeModal, KaiwaAnalysisModal, KaiwaAnswerTemplate } from '../kaiwa';
+import { JLPT_LEVELS, CONVERSATION_STYLES, CONVERSATION_TOPICS, getStyleDisplay, getScenarioByTopic } from '../../constants/kaiwa';
+import { KaiwaMessageItem, KaiwaPracticeModal, KaiwaAnalysisModal, KaiwaAnswerTemplate, KaiwaEvaluationModal } from '../kaiwa';
 import type { VocabularyHint } from '../../types/kaiwa';
 import { removeFurigana } from '../../lib/furigana-utils';
 import { FuriganaText } from '../common/furigana-text';
@@ -30,6 +30,9 @@ import {
   FileText,
   ArrowLeft,
   ListChecks,
+  Users,
+  Zap,
+  Award,
 } from 'lucide-react';
 
 interface KaiwaPageProps {
@@ -98,6 +101,23 @@ export function KaiwaPage({
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+  // Role switching state
+  const [selectedScenario, setSelectedScenario] = useState<KaiwaScenario | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  // Evaluation state
+  const [evaluation, setEvaluation] = useState<KaiwaEvaluation | null>(null);
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [showEvaluationModal, setShowEvaluationModal] = useState(false);
+
+  // Metrics tracking
+  const [pronunciationAttempts, setPronunciationAttempts] = useState(0);
+  const [totalAccuracy, setTotalAccuracy] = useState(0);
+
+  // Auto-send state
+  const [autoSendCountdown, setAutoSendCountdown] = useState<number | null>(null);
+  const autoSendTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   // Computed stats
   const conversationStats = useMemo(() => {
     const userMessages = messages.filter(m => m.role === 'user').length;
@@ -122,6 +142,47 @@ export function KaiwaPage({
 
   // Build context
   const getContext = useCallback((): KaiwaContext => ({ level, style, topic }), [level, style, topic]);
+
+  // Handle topic change - detect if scenario exists
+  const handleTopicChange = useCallback((newTopic: ConversationTopic) => {
+    setTopic(newTopic);
+    const scenario = getScenarioByTopic(newTopic);
+    if (scenario) {
+      setSelectedScenario(scenario);
+      setUserRole(scenario.defaultUserRole);
+    } else {
+      setSelectedScenario(null);
+      setUserRole(null);
+    }
+  }, []);
+
+  // Get user role info
+  const getUserRoleInfo = useCallback((): KaiwaRole | null => {
+    if (!selectedScenario || !userRole) return null;
+    return selectedScenario.roles.find(r => r.id === userRole) || null;
+  }, [selectedScenario, userRole]);
+
+  // Get AI role info (opposite of user) - may be used for role display
+  const _getAiRoleInfo = useCallback((): KaiwaRole | null => {
+    if (!selectedScenario || !userRole) return null;
+    return selectedScenario.roles.find(r => r.id !== userRole) || null;
+  }, [selectedScenario, userRole]);
+  // Suppress unused warning - reserved for future use
+  void _getAiRoleInfo;
+
+  // Build metrics for evaluation
+  const buildMetrics = useCallback((): KaiwaMetrics => {
+    const userMessages = messages.filter(m => m.role === 'user');
+    const avgAccuracy = pronunciationAttempts > 0 ? Math.round(totalAccuracy / pronunciationAttempts) : 0;
+    return {
+      totalExchanges: userMessages.length,
+      durationMinutes: startTime ? Math.floor((Date.now() - startTime.getTime()) / 60000) : 0,
+      avgPronunciationAccuracy: avgAccuracy,
+      pronunciationAttempts,
+      wordsUsed: new Set(userMessages.flatMap(m => removeFurigana(m.content).split(/[\s。、！？]/)).filter(Boolean)),
+      grammarPatterns: [],
+    };
+  }, [messages, pronunciationAttempts, totalAccuracy, startTime]);
 
   // Update voice when settings change
   useEffect(() => {
@@ -196,6 +257,10 @@ export function KaiwaPage({
     setAnswerTemplate(null);
     setSuggestedQuestions([]);
     setSavedSentences([]);
+    // Reset metrics
+    setPronunciationAttempts(0);
+    setTotalAccuracy(0);
+    setEvaluation(null);
     groq.clearConversation();
 
     // If a default question is selected, use its context
@@ -279,8 +344,32 @@ export function KaiwaPage({
     speech.isListening ? speech.stopListening() : speech.startListening();
   };
 
-  // End conversation
-  const handleEnd = () => {
+  // End conversation with optional evaluation
+  const handleEnd = async (skipEvaluation = false) => {
+    // Cancel any auto-send timer
+    if (autoSendTimerRef.current) {
+      clearInterval(autoSendTimerRef.current);
+      autoSendTimerRef.current = null;
+    }
+    setAutoSendCountdown(null);
+
+    // Trigger evaluation if enough exchanges
+    if (!skipEvaluation && messages.length >= 4) {
+      setIsEvaluating(true);
+      setShowEvaluationModal(true);
+      const metrics = buildMetrics();
+      const result = await groq.evaluateConversation(messages, getContext(), metrics);
+      setEvaluation(result);
+      setIsEvaluating(false);
+      return; // Don't reset yet, let modal close trigger it
+    }
+
+    // Reset everything
+    resetConversation();
+  };
+
+  // Reset conversation state
+  const resetConversation = () => {
     setIsStarted(false);
     setStartTime(null);
     setMessages([]);
@@ -294,8 +383,20 @@ export function KaiwaPage({
     setActiveSuggestionTab(null);
     setSelectedDefaultQuestion(null);
     setQuestionSelectorState({ type: 'hidden' });
+    setSelectedScenario(null);
+    setUserRole(null);
+    setEvaluation(null);
+    setShowEvaluationModal(false);
+    setPronunciationAttempts(0);
+    setTotalAccuracy(0);
     speech.stopSpeaking();
     groq.clearConversation();
+  };
+
+  // Handle evaluation modal close
+  const handleEvaluationClose = () => {
+    setShowEvaluationModal(false);
+    resetConversation();
   };
 
   // Save sentence to favorites
@@ -405,22 +506,80 @@ export function KaiwaPage({
 
   // Practice mode handlers
   const handleCancelPractice = () => {
+    // Cancel auto-send timer
+    if (autoSendTimerRef.current) {
+      clearInterval(autoSendTimerRef.current);
+      autoSendTimerRef.current = null;
+    }
+    setAutoSendCountdown(null);
     setIsPracticeMode(false);
     setSelectedSuggestion(null);
     setPronunciationResult(null);
   };
 
   const handleRetryPractice = () => {
+    // Cancel auto-send timer
+    if (autoSendTimerRef.current) {
+      clearInterval(autoSendTimerRef.current);
+      autoSendTimerRef.current = null;
+    }
+    setAutoSendCountdown(null);
     setPronunciationResult(null);
     speech.resetTranscript();
   };
 
   const handleAcceptPronunciation = () => {
+    // Cancel auto-send timer
+    if (autoSendTimerRef.current) {
+      clearInterval(autoSendTimerRef.current);
+      autoSendTimerRef.current = null;
+    }
+    setAutoSendCountdown(null);
+
+    // Track metrics
+    if (pronunciationResult) {
+      setPronunciationAttempts(prev => prev + 1);
+      setTotalAccuracy(prev => prev + pronunciationResult.accuracy);
+    }
+
     if (selectedSuggestion) handleSend(selectedSuggestion.text);
     setIsPracticeMode(false);
     setSelectedSuggestion(null);
     setPronunciationResult(null);
   };
+
+  // Handle auto-send for pronunciation practice
+  useEffect(() => {
+    if (
+      settings.kaiwaSendMode === 'auto' &&
+      pronunciationResult &&
+      pronunciationResult.accuracy >= settings.kaiwaAutoSendThreshold &&
+      !autoSendTimerRef.current
+    ) {
+      // Start countdown
+      const totalMs = settings.kaiwaAutoSendDelay * 1000;
+      let remaining = totalMs;
+      setAutoSendCountdown(settings.kaiwaAutoSendDelay);
+
+      autoSendTimerRef.current = setInterval(() => {
+        remaining -= 100;
+        if (remaining <= 0) {
+          clearInterval(autoSendTimerRef.current!);
+          autoSendTimerRef.current = null;
+          setAutoSendCountdown(null);
+          handleAcceptPronunciation();
+        } else {
+          setAutoSendCountdown(Math.ceil(remaining / 1000));
+        }
+      }, 100);
+    }
+
+    return () => {
+      if (autoSendTimerRef.current) {
+        clearInterval(autoSendTimerRef.current);
+      }
+    };
+  }, [pronunciationResult, settings.kaiwaSendMode, settings.kaiwaAutoSendThreshold, settings.kaiwaAutoSendDelay]);
 
   // Helper function to get questions for current selector state
   const getQuestionsForSelector = (): KaiwaDefaultQuestion[] => {
@@ -658,7 +817,7 @@ export function KaiwaPage({
                     <button
                       key={t.value}
                       className={`kaiwa-topic-btn ${topic === t.value ? 'active' : ''}`}
-                      onClick={() => setTopic(t.value)}
+                      onClick={() => handleTopicChange(t.value)}
                     >
                       <span className="topic-icon">{t.icon}</span>
                       <span className="topic-label">{t.label}</span>
@@ -666,6 +825,29 @@ export function KaiwaPage({
                   ))}
                 </div>
               </div>
+
+              {/* Role Selector - shows when scenario topic is selected */}
+              {selectedScenario && (
+                <div className="kaiwa-setup-item kaiwa-role-section">
+                  <label>
+                    <Users size={16} />
+                    Chọn vai trò của bạn
+                  </label>
+                  <div className="kaiwa-role-grid">
+                    {selectedScenario.roles.map(role => (
+                      <button
+                        key={role.id}
+                        className={`kaiwa-role-btn ${userRole === role.id ? 'active' : ''}`}
+                        onClick={() => setUserRole(role.id)}
+                      >
+                        <span className="role-emoji">{role.emoji}</span>
+                        <span className="role-name">{role.name}</span>
+                        <span className="role-name-vi">{role.nameVi}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -712,6 +894,11 @@ export function KaiwaPage({
             <span className="kaiwa-badge">{level}</span>
             <span className="kaiwa-badge">{getStyleDisplay(style)}</span>
             <span className="kaiwa-badge topic">{currentTopic?.icon} {currentTopic?.label.split(' ')[0]}</span>
+            {getUserRoleInfo() && (
+              <span className="kaiwa-badge role">
+                {getUserRoleInfo()?.emoji} {getUserRoleInfo()?.nameVi}
+              </span>
+            )}
           </div>
         </div>
         <div className="kaiwa-header-center">
@@ -732,11 +919,20 @@ export function KaiwaPage({
         <div className="kaiwa-header-right">
           <button
             className="kaiwa-restart-btn"
-            onClick={handleStart}
+            onClick={() => handleStart()}
             disabled={groq.isLoading}
             title="Bắt đầu lại từ đầu"
           >
             <RefreshCw size={14} /> Lại từ đầu
+          </button>
+          <button
+            className={`kaiwa-send-mode-btn ${settings.kaiwaSendMode === 'auto' ? 'active' : ''}`}
+            onClick={() => {
+              // Toggle send mode (only in settings page, but show status here)
+            }}
+            title={settings.kaiwaSendMode === 'auto' ? 'Chế độ tự động gửi' : 'Chế độ gửi thủ công'}
+          >
+            <Zap size={14} /> {settings.kaiwaSendMode === 'auto' ? 'Auto' : 'Manual'}
           </button>
           <button
             className={`kaiwa-slow-btn ${slowMode ? 'active' : ''}`}
@@ -769,7 +965,17 @@ export function KaiwaPage({
               A+
             </button>
           </div>
-          <button className="btn btn-danger btn-small kaiwa-end-btn" onClick={handleEnd}>
+          {messages.length >= 4 && (
+            <button
+              className="kaiwa-eval-btn"
+              onClick={() => handleEnd(false)}
+              disabled={groq.isLoading || isEvaluating}
+              title="Đánh giá và kết thúc"
+            >
+              <Award size={14} /> Đánh giá
+            </button>
+          )}
+          <button className="btn btn-danger btn-small kaiwa-end-btn" onClick={() => handleEnd(true)}>
             Kết thúc
           </button>
         </div>
@@ -807,17 +1013,29 @@ export function KaiwaPage({
 
       {/* Pronunciation Practice Modal */}
       {isPracticeMode && selectedSuggestion && (
-        <KaiwaPracticeModal
-          suggestion={selectedSuggestion}
-          result={pronunciationResult}
-          isListening={speech.isListening}
-          isSpeaking={speech.isSpeaking}
-          onMicClick={handleMicClick}
-          onListen={() => speech.speak(selectedSuggestion.text, { rate: settings.kaiwaVoiceRate })}
-          onRetry={handleRetryPractice}
-          onAccept={handleAcceptPronunciation}
-          onClose={handleCancelPractice}
-        />
+        <>
+          <KaiwaPracticeModal
+            suggestion={selectedSuggestion}
+            result={pronunciationResult}
+            isListening={speech.isListening}
+            isSpeaking={speech.isSpeaking}
+            interimTranscript={speech.interimTranscript}
+            onMicClick={handleMicClick}
+            onListen={() => speech.speak(selectedSuggestion.text, { rate: settings.kaiwaVoiceRate })}
+            onRetry={handleRetryPractice}
+            onAccept={handleAcceptPronunciation}
+            onClose={handleCancelPractice}
+          />
+          {/* Auto-send countdown overlay */}
+          {autoSendCountdown !== null && autoSendCountdown > 0 && (
+            <div className="kaiwa-auto-send-countdown">
+              <Zap size={18} />
+              <span>Tự động gửi trong</span>
+              <span className="countdown-number">{autoSendCountdown}</span>
+              <span>giây</span>
+            </div>
+          )}
+        </>
       )}
 
       {/* Analysis Modal */}
@@ -827,6 +1045,15 @@ export function KaiwaPage({
           result={analysisResult}
           isLoading={isAnalyzing}
           onClose={() => { setAnalysisText(null); setAnalysisResult(null); }}
+        />
+      )}
+
+      {/* Evaluation Modal */}
+      {showEvaluationModal && (
+        <KaiwaEvaluationModal
+          evaluation={evaluation}
+          isLoading={isEvaluating}
+          onClose={handleEvaluationClose}
         />
       )}
 

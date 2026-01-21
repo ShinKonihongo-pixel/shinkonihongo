@@ -83,6 +83,7 @@ export interface BingoPlayer {
   odinhId: string;
   displayName: string;
   avatar: string;
+  role?: string;              // User role for VIP styling
   rows: BingoRow[];           // 6 rows of numbers
   markedCount: number;        // Total marked numbers
   completedRows: number;      // Rows with all 5 marked

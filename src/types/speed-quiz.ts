@@ -89,6 +89,7 @@ export interface SpeedQuizPlayer {
   odinhId: string;
   displayName: string;
   avatar: string;
+  role?: string;              // User role for VIP styling
   score: number;
   correctAnswers: number;
   wrongAnswers: number;

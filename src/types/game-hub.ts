@@ -1,7 +1,7 @@
 // Game Hub Types - Unified game center for all mini-games
 
 // Available games in the hub
-export type GameType = 'quiz' | 'boat-racing' | 'horse-racing' | 'golden-bell' | 'picture-guess' | 'bingo' | 'speed-quiz' | 'word-match';
+export type GameType = 'quiz' | 'boat-racing' | 'horse-racing' | 'golden-bell' | 'picture-guess' | 'bingo' | 'speed-quiz' | 'word-match' | 'ai-challenge' | 'image-word';
 
 // Racing sub-types
 export type RacingType = 'boat' | 'horse';
@@ -12,6 +12,7 @@ export interface GameInfo {
   name: string;
   description: string;
   icon: string;
+  iconImage?: string; // Optional image URL for custom icon
   color: string;
   gradient: string;
   playerRange: string;
@@ -179,6 +180,33 @@ export const GAMES: Record<GameType, GameInfo> = {
     difficulty: 'easy',
     isNew: true,
     category: 'quiz',
+  },
+  'ai-challenge': {
+    id: 'ai-challenge',
+    name: 'Thách Đấu AI',
+    description: 'Đấu trí 1v1 với AI - 10 cấp độ thử thách',
+    icon: '🤖',
+    iconImage: '/images/ai-robot.png',
+    color: '#6366f1',
+    gradient: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)',
+    playerRange: '1',
+    features: ['10 cấp AI', 'Mở khóa dần', 'Lưu tiến độ'],
+    difficulty: 'medium',
+    isNew: true,
+    category: 'quiz',
+  },
+  'image-word': {
+    id: 'image-word',
+    name: 'Nối Hình - Từ',
+    description: 'Nối hình ảnh với từ vựng tiếng Nhật tương ứng',
+    icon: '🖼️',
+    color: '#E91E63',
+    gradient: 'linear-gradient(135deg, #E91E63 0%, #F06292 100%)',
+    playerRange: '1',
+    features: ['Tự tạo bài', 'Ảnh tùy chỉnh', 'Lưu tiến độ'],
+    difficulty: 'easy',
+    isNew: true,
+    category: 'puzzle',
   },
 };
 

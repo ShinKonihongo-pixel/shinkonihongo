@@ -2,7 +2,6 @@
 
 import { ConfirmModal } from '../ui/confirm-modal';
 import type { JLPTLevel } from '../../types/flashcard';
-import type { AdminNote } from '../../types/lecture';
 import type { TextSelection, LectureFormState } from './editor-types';
 import { LECTURE_SYMBOLS } from './editor-constants';
 

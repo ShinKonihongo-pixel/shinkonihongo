@@ -70,6 +70,7 @@ interface UseSpeedQuizProps {
     id: string;
     displayName: string;
     avatar: string;
+    role?: string;
   };
   flashcards?: Flashcard[];
 }
@@ -138,6 +139,7 @@ export function useSpeedQuiz({ currentUser, flashcards = [] }: UseSpeedQuizProps
         odinhId: currentUser.id,
         displayName: currentUser.displayName,
         avatar: currentUser.avatar,
+        role: currentUser.role,
         score: 0,
         correctAnswers: 0,
         wrongAnswers: 0,

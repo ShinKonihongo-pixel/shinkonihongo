@@ -46,6 +46,11 @@ export interface SlideElement {
     [key: string]: string | undefined;
   };
   adminNotes?: AdminNote[]; // Admin-only notes for text selections
+  // Editor state properties
+  hidden?: boolean;         // Element visibility in editor
+  locked?: boolean;         // Element locked from editing
+  animation?: SlideAnimation | string; // Element animation type
+  animationDuration?: number; // Animation duration in ms
 }
 
 // Animation types for slide elements

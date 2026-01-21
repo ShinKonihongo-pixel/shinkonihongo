@@ -10,14 +10,12 @@ import type {
   CreateBingoGameData,
   BingoGameSettings,
   BingoSkillType,
-  BingoRow,
   DrawnNumber,
 } from '../types/bingo-game';
 import {
   generateBingoRows,
   generateNumberPool,
   isRowComplete,
-  canClaimBingo,
   DEFAULT_BINGO_SETTINGS,
 } from '../types/bingo-game';
 import { generateBots } from '../types/game-hub';
@@ -42,6 +40,7 @@ interface UseBingoGameProps {
     id: string;
     displayName: string;
     avatar: string;
+    role?: string;
   };
 }
 
@@ -110,6 +109,7 @@ export function useBingoGame({ currentUser }: UseBingoGameProps) {
         odinhId: currentUser.id,
         displayName: currentUser.displayName,
         avatar: currentUser.avatar,
+        role: currentUser.role,
         rows: playerRows,
         markedCount: 0,
         completedRows: 0,
@@ -200,7 +200,8 @@ export function useBingoGame({ currentUser }: UseBingoGameProps) {
   }, [currentUser]);
 
   // Join existing game
-  const joinGame = useCallback(async (code: string) => {
+  const joinGame = useCallback(async (_code: string) => {
+    void _code; // Will be used when server-side is implemented
     setLoading(true);
     setError(null);
 

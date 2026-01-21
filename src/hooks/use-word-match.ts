@@ -83,6 +83,7 @@ interface UseWordMatchProps {
     id: string;
     displayName: string;
     avatar: string;
+    role?: string;
   };
   flashcards?: Flashcard[];
 }
@@ -144,6 +145,7 @@ export function useWordMatch({ currentUser, flashcards = [] }: UseWordMatchProps
         odinhId: currentUser.id,
         displayName: currentUser.displayName,
         avatar: currentUser.avatar,
+        role: currentUser.role,
         score: 0,
         correctPairs: 0,
         perfectRounds: 0,

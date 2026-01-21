@@ -472,6 +472,7 @@ function App() {
             onInviteFriend={sendGameInvitation}
             initialGame={initialGameType}
             initialJoinCode={initialGameJoinCode}
+            onCollapseSidebar={() => setSidebarCollapsed(true)}
           />
         )}
 
@@ -556,8 +557,8 @@ function App() {
         </main>
       </div>
 
-      {/* Floating AI Chat Button and Panel */}
-      {currentUser && (
+      {/* Floating AI Chat Button and Panel - hidden on game-hub */}
+      {currentUser && currentPage !== 'game-hub' && (
         <>
           <FloatingChatButton
             onClick={() => setIsChatOpen(!isChatOpen)}

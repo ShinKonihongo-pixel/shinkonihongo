@@ -65,12 +65,35 @@ const defaultSettings: AppSettings = {
   kaiwaDefaultLevel: 'N5',
   kaiwaDefaultStyle: 'polite',
   kaiwaShowTranslation: true,
+  kaiwaSendMode: 'manual',
+  kaiwaAutoSendThreshold: 80,
+  kaiwaAutoSendDelay: 1.5,
   // Weekly goals
   weeklyCardsTarget: 50,
   weeklyMinutesTarget: 60,
   // App background
   appBackground: 'default',
   appBackgroundCustomUrl: '',
+  // Game Question Source defaults
+  gameQuestionSources: ['all'],
+  gameSelectedJLPTLevels: [],
+  gameSelectedLessons: [],
+  gameMemorizationFilter: 'all',
+  // AI Challenge defaults
+  aiChallengeQuestionCount: 10,
+  aiChallengeTimePerQuestion: 15,
+  aiChallengeAccuracyModifier: 0,
+  aiChallengeSpeedMultiplier: 1.0,
+  aiChallengeAutoAddDifficulty: 'random',
+  // JLPT defaults
+  jlptDefaultQuestionCount: 20,
+  jlptShowExplanation: true,
+  jlptAutoNextDelay: 0,
+  jlptPreventRepetition: true,
+  jlptRepetitionCooldown: 3,
+  jlptCoverageMode: 'balanced',
+  jlptShowLevelAssessment: true,
+  jlptTrackWeakAreas: true,
 };
 
 // Get card frame styles based on settings

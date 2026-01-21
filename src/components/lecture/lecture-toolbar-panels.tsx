@@ -7,7 +7,7 @@ import {
   Layers, ChevronUp, ChevronDown, Eye, EyeOff, Trash2,
   Lock, Unlock, Copy, AlignLeft, AlignCenter, AlignRight,
   AlignStartVertical, AlignCenterVertical, AlignEndVertical,
-  Columns, Grid3X3, ZoomIn, ZoomOut, Maximize2,
+  Grid3X3, ZoomIn, ZoomOut, Maximize2,
   LayoutTemplate, X, GripVertical
 } from 'lucide-react';
 import { SLIDE_TEMPLATES, getTemplateCategories, type SlideTemplate, type TemplateCategory } from '../../utils/slide-templates';
@@ -237,7 +237,8 @@ interface AlignmentToolsProps {
   onDistribute: (direction: 'horizontal' | 'vertical') => void;
 }
 
-export function AlignmentTools({ hasSelection, onAlign, onDistribute }: AlignmentToolsProps) {
+export function AlignmentTools({ hasSelection, onAlign, onDistribute: _onDistribute }: AlignmentToolsProps) {
+  void _onDistribute; // Reserved for future distribution feature
   return (
     <div className="le-align-tools">
       <div className="le-align-group">

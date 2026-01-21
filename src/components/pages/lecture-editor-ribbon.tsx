@@ -154,7 +154,7 @@ export function EditorRibbon({
 
 // Home Tab Content
 function HomeTabContent({
-  selectedElement, editingSlide, clipboard, isNew,
+  selectedElement, editingSlide: _editingSlide, clipboard, isNew,
   onAddSlide, onCopy, onPaste, onDuplicate, onDelete, onBringToFront, onSendToBack,
   updateElementStyle,
 }: {
@@ -171,6 +171,7 @@ function HomeTabContent({
   onSendToBack: () => void;
   updateElementStyle: (id: string, style: Record<string, string>) => void;
 }) {
+  void _editingSlide; // Reserved for future use
   return (
     <>
       {/* Clipboard */}

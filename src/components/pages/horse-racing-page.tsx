@@ -16,6 +16,7 @@ interface HorseRacingUser {
   id: string;
   displayName?: string;
   avatar?: string;
+  role?: string;
 }
 
 type PageView = 'menu' | 'setup' | 'lobby' | 'play' | 'results';
@@ -52,7 +53,7 @@ export function HorseRacingPage({
     submitAnswer,
     revealAnswer,
     nextQuestion,
-    openMysteryBox,
+    openMysteryBox: _openMysteryBox,
     applySpecialFeature,
     selectVehicle,
     resetGame,
@@ -65,6 +66,7 @@ export function HorseRacingPage({
     },
     flashcards,
   });
+  void _openMysteryBox; // Reserved for future use
 
   // Handle initial join code
   useEffect(() => {
@@ -137,7 +139,8 @@ export function HorseRacingPage({
   }, [leaveGame]);
 
   // Handle effect application
-  const handleApplyEffect = useCallback((effectType: string, targetId?: string) => {
+  const handleApplyEffect = useCallback((effectType: string, _targetId?: string) => {
+    void _targetId; // Reserved for future use
     // Map effect type to special feature type and apply
     const featureMap: Record<string, SpecialFeatureType> = {
       'speed_boost': 'speed_boost',
@@ -153,10 +156,10 @@ export function HorseRacingPage({
     }
   }, [applySpecialFeature]);
 
-  // Get current player position
-  const currentPosition = currentPlayer
+  // Get current player position (reserved for future use in UI display)
+  void (currentPlayer
     ? sortedPlayers.findIndex(p => p.odinhId === currentPlayer.odinhId) + 1
-    : 0;
+    : 0);
 
   // Render Menu
   if (view === 'menu') {

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ConfirmModal } from '../ui/confirm-modal';
-import type { JLPTTabProps, JLPTNavState, JLPTQuestion, JLPTFolder, JLPTQuestionFormData, JLPTAnswer } from './cards-management-types';
+import type { JLPTTabProps, JLPTNavState, JLPTQuestion, JLPTFolder, JLPTQuestionFormData } from './cards-management-types';
 import { JLPT_QUESTION_LEVELS, QUESTION_CATEGORIES, defaultAnswers } from './cards-management-types';
 
 export function JLPTTab({

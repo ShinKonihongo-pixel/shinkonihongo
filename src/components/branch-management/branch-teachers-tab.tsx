@@ -13,7 +13,7 @@ export function BranchTeachersTab({
   schedules,
   sessions,
   classrooms,
-  users,
+  users: _users,
   isAdmin,
   loading,
   onAddTeacher,
@@ -25,6 +25,7 @@ export function BranchTeachersTab({
   onAddSession,
   onApproveSession,
 }: BranchTeachersTabProps) {
+  void _users; // Reserved for future use
   const [subTab, setSubTab] = useState<TeacherSubTab>('list');
   const [selectedTeacher, setSelectedTeacher] = useState<TeacherMember | null>(null);
 

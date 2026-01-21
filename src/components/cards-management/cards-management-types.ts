@@ -8,7 +8,7 @@ import type { KaiwaDefaultQuestion, KaiwaQuestionFormData, KaiwaFolder } from '.
 import type { JLPTLevel as KaiwaJLPTLevel, ConversationTopic, ConversationStyle } from '../../types/kaiwa';
 import type { Classroom } from '../../types/classroom';
 
-export type ManagementTab = 'flashcards' | 'lectures' | 'jlpt' | 'kaiwa' | 'game' | 'assignments' | 'tests' | 'users';
+export type ManagementTab = 'flashcards' | 'lectures' | 'jlpt' | 'kaiwa' | 'custom_topics' | 'game' | 'assignments' | 'tests' | 'users';
 
 // Navigation state types
 export type FlashcardNavState =
@@ -101,11 +101,11 @@ export interface KaiwaTabProps {
 export interface LecturesTabProps {
   lectures: Lecture[];
   loading: boolean;
-  onDeleteLecture: (id: string) => Promise<void>;
+  onDeleteLecture: (id: string) => Promise<boolean | void>;
   onToggleHide: (id: string) => void;
-  onAddFolder: (name: string, level: JLPTLevel, createdBy: string) => Promise<void>;
-  onUpdateFolder: (id: string, data: Partial<LectureFolder>) => Promise<void>;
-  onDeleteFolder: (id: string) => Promise<void>;
+  onAddFolder: (name: string, level: JLPTLevel, createdBy: string) => Promise<LectureFolder | null | void>;
+  onUpdateFolder: (id: string, data: Partial<LectureFolder>) => Promise<boolean | void>;
+  onDeleteFolder: (id: string) => Promise<boolean | void>;
   getFoldersByLevel: (level: JLPTLevel) => LectureFolder[];
   getLecturesByFolder: (folderId: string) => Lecture[];
   onNavigateToEditor?: (lectureId?: string, folderId?: string, level?: JLPTLevel) => void;

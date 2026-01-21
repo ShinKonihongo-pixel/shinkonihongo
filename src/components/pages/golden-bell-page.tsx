@@ -16,6 +16,7 @@ interface GoldenBellUser {
   id: string;
   displayName?: string;
   avatar?: string;
+  role?: string;
 }
 
 // Page view states

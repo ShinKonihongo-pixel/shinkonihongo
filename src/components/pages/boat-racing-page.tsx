@@ -21,6 +21,7 @@ interface BoatRacingUser {
   id: string;
   displayName?: string;
   avatar?: string;
+  role?: string;
 }
 
 type PageView = 'menu' | 'setup' | 'lobby' | 'play' | 'results';

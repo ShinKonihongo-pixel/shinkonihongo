@@ -20,6 +20,7 @@ interface SpeedQuizPageProps {
     id: string;
     displayName: string;
     avatar: string;
+    role?: string;
   };
   flashcards?: Flashcard[];
 }

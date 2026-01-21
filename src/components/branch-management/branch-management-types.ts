@@ -1,7 +1,7 @@
 // Branch Management - Shared Types and Interfaces
 
-import type { Branch, BranchMember, BranchMemberRole } from '../../types/branch';
-import type { TeacherSchedule, TeacherScheduleFormData, Salary, TeachingSession } from '../../types/teacher';
+import type { Branch, BranchMember } from '../../types/branch';
+import type { TeacherSchedule, Salary, TeachingSession, MonthlySalarySummary } from '../../types/teacher';
 import type { Classroom } from '../../types/classroom';
 import type { User } from '../../types/user';
 
@@ -19,7 +19,10 @@ export interface BranchStats {
   totalTeachers: number;
 }
 
-// Salary summary
+// Re-export MonthlySalarySummary for convenience
+export type { MonthlySalarySummary } from '../../types/teacher';
+
+// Simple salary summary for overview display
 export interface SalarySummary {
   total: number;
   approved: number;
@@ -71,7 +74,7 @@ export interface BranchTeachersTabProps {
 
 export interface BranchSalariesTabProps {
   salaries: (Salary & { teacher?: User })[];
-  summary: SalarySummary | null;
+  summary: MonthlySalarySummary | null;
   branch: Branch;
   selectedMonth: string;
   onMonthChange: (month: string) => void;

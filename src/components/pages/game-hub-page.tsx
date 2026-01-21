@@ -3,7 +3,7 @@
 // Uses lazy loading for game pages to improve initial load performance
 
 import { useState, useCallback, lazy, Suspense } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import type { GameType } from '../../types/game-hub';
 import type { CurrentUser } from '../../types/user';
 import type { Flashcard, JLPTLevel, Lesson } from '../../types/flashcard';
@@ -21,6 +21,8 @@ const PictureGuessPage = lazy(() => import('./picture-guess-page').then(m => ({ 
 const BingoPage = lazy(() => import('./bingo-page').then(m => ({ default: m.BingoPage })));
 const SpeedQuizPage = lazy(() => import('./speed-quiz-page').then(m => ({ default: m.SpeedQuizPage })));
 const WordMatchPage = lazy(() => import('./word-match-page').then(m => ({ default: m.WordMatchPage })));
+const AIChallengePage = lazy(() => import('./ai-challenge-page').then(m => ({ default: m.AIChallengePage })));
+const ImageWordPage = lazy(() => import('./image-word-page').then(m => ({ default: m.ImageWordPage })));
 
 // Loading fallback component
 function GameLoadingFallback() {
@@ -44,6 +46,8 @@ interface GameHubPageProps {
   // Initial game selection (from URL params)
   initialGame?: GameType | null;
   initialJoinCode?: string | null;
+  // Collapse sidebar when entering game
+  onCollapseSidebar?: () => void;
 }
 
 export function GameHubPage({
@@ -57,21 +61,24 @@ export function GameHubPage({
   onInviteFriend,
   initialGame,
   initialJoinCode,
+  onCollapseSidebar,
 }: GameHubPageProps) {
   const [selectedGame, setSelectedGame] = useState<GameType | null>(initialGame || null);
   const [joinCode, setJoinCode] = useState<string | null>(initialJoinCode || null);
 
-  // Handle game selection
+  // Handle game selection - also collapse sidebar
   const handleSelectGame = useCallback((game: GameType) => {
     setSelectedGame(game);
     setJoinCode(null);
-  }, []);
+    onCollapseSidebar?.();
+  }, [onCollapseSidebar]);
 
-  // Handle quick join with code
+  // Handle quick join with code - also collapse sidebar
   const handleQuickJoin = useCallback((gameType: GameType, code: string) => {
     setSelectedGame(gameType);
     setJoinCode(code);
-  }, []);
+    onCollapseSidebar?.();
+  }, [onCollapseSidebar]);
 
   // Return to game selector
   const handleBackToHub = useCallback(() => {
@@ -107,10 +114,10 @@ export function GameHubPage({
   // Render selected game with back button
   return (
     <div className="game-hub-page game-active">
-      {/* Floating back button */}
-      <button className="game-hub-back-btn" onClick={handleBackToHub}>
-        <ArrowLeft size={20} />
-        <span>Game Center</span>
+      {/* Floating leave button - top left */}
+      <button className="game-hub-leave-btn" onClick={handleBackToHub}>
+        <LogOut size={18} />
+        <span>Rời Phòng</span>
       </button>
 
       {/* Render appropriate game with lazy loading */}
@@ -139,6 +146,7 @@ export function GameHubPage({
             id: currentUser.id,
             displayName: currentUser.displayName || currentUser.username,
             avatar: currentUser.avatar || '🚣',
+            role: currentUser.role,
           }}
           flashcards={flashcards}
           initialJoinCode={joinCode || undefined}
@@ -151,6 +159,7 @@ export function GameHubPage({
             id: currentUser.id,
             displayName: currentUser.displayName || currentUser.username,
             avatar: currentUser.avatar || '🏇',
+            role: currentUser.role,
           }}
           flashcards={flashcards}
           initialJoinCode={joinCode || undefined}
@@ -163,6 +172,7 @@ export function GameHubPage({
             id: currentUser.id,
             displayName: currentUser.displayName || currentUser.username,
             avatar: currentUser.avatar || '🔔',
+            role: currentUser.role,
           }}
           flashcards={flashcards}
           initialJoinCode={joinCode || undefined}
@@ -182,6 +192,7 @@ export function GameHubPage({
             id: currentUser.id,
             displayName: currentUser.displayName || currentUser.username,
             avatar: currentUser.avatar || '🎱',
+            role: currentUser.role,
           }}
           initialJoinCode={joinCode || undefined}
         />
@@ -194,6 +205,7 @@ export function GameHubPage({
             id: currentUser.id,
             displayName: currentUser.displayName || currentUser.username,
             avatar: currentUser.avatar || '⚡',
+            role: currentUser.role,
           }}
           flashcards={flashcards}
         />
@@ -206,8 +218,28 @@ export function GameHubPage({
             id: currentUser.id,
             displayName: currentUser.displayName || currentUser.username,
             avatar: currentUser.avatar || '🔗',
+            role: currentUser.role,
           }}
           flashcards={flashcards}
+        />
+      )}
+
+      {selectedGame === 'ai-challenge' && (
+        <AIChallengePage
+          currentUser={{
+            id: currentUser.id,
+            displayName: currentUser.displayName || currentUser.username,
+            avatar: currentUser.avatar || '🧠',
+            role: currentUser.role === 'super_admin' ? 'superadmin' : currentUser.role as 'vip' | 'admin' | 'user',
+          }}
+          flashcards={flashcards}
+          onClose={handleBackToHub}
+        />
+      )}
+
+      {selectedGame === 'image-word' && (
+        <ImageWordPage
+          onClose={handleBackToHub}
         />
       )}
       </Suspense>

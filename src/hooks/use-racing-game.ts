@@ -153,6 +153,7 @@ interface UseRacingGameProps {
     id: string;
     displayName: string;
     avatar: string;
+    role?: string;
   };
   flashcards?: Flashcard[];
 }
@@ -174,18 +175,23 @@ export function useRacingGame({ currentUser, flashcards = [] }: UseRacingGamePro
   const botTimer2Ref = useRef<NodeJS.Timeout | null>(null);
   const botAnswerTimersRef = useRef<NodeJS.Timeout[]>([]);
 
-  // Computed values
-  const isHost = useMemo(() => game?.hostId === currentUser.id, [game, currentUser]);
-  const currentPlayer = useMemo(() => game?.players[currentUser.id], [game, currentUser]);
+  // Computed values - use specific dependencies to avoid unnecessary recalculations
+  const isHost = useMemo(() => game?.hostId === currentUser.id, [game?.hostId, currentUser.id]);
+  const currentPlayer = useMemo(() => game?.players[currentUser.id], [game?.players, currentUser.id]);
+
+  // Use specific primitive dependencies to avoid creating new reference on every game update
+  const questions = game?.questions;
+  const currentQuestionIndex = game?.currentQuestionIndex ?? 0;
   const currentQuestion = useMemo(() =>
-    game ? game.questions[game.currentQuestionIndex] : null,
-    [game]
+    questions ? questions[currentQuestionIndex] : null,
+    [questions, currentQuestionIndex]
   );
 
+  const players = game?.players;
   const sortedPlayers = useMemo(() => {
-    if (!game) return [];
-    return Object.values(game.players).sort((a, b) => b.distance - a.distance);
-  }, [game]);
+    if (!players) return [];
+    return Object.values(players).sort((a, b) => b.distance - a.distance);
+  }, [players]);
 
   const finishedPlayers = useMemo(() =>
     sortedPlayers.filter(p => p.isFinished),
@@ -346,6 +352,7 @@ export function useRacingGame({ currentUser, flashcards = [] }: UseRacingGamePro
         odinhId: currentUser.id,
         displayName: currentUser.displayName,
         avatar: currentUser.avatar,
+        role: currentUser.role,
         vehicle: playerVehicle,
         currentSpeed: playerVehicle.baseSpeed,
         distance: 0,
@@ -518,6 +525,7 @@ export function useRacingGame({ currentUser, flashcards = [] }: UseRacingGamePro
         odinhId: currentUser.id,
         displayName: currentUser.displayName,
         avatar: currentUser.avatar,
+        role: currentUser.role,
         vehicle: playerVehicle,
         currentSpeed: playerVehicle.baseSpeed,
         distance: 0,

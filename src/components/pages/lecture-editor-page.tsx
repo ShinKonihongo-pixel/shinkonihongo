@@ -8,7 +8,7 @@ import { usePPTX } from '../../hooks/use-pptx';
 import { useGroq } from '../../hooks/use-groq';
 import { PPTXImportModal } from '../lecture/pptx-import-modal';
 import { hasFurigana, removeFurigana } from '../../lib/furigana-utils';
-import type { LectureFormData, SlideFormData, SlideElement, SlideTransition, Lecture, AdminNote } from '../../types/lecture';
+import type { LectureFormData, SlideFormData, SlideElement, Lecture, AdminNote } from '../../types/lecture';
 import type { JLPTLevel } from '../../types/flashcard';
 import type { PPTXImportOptions } from '../../types/pptx';
 import { QuickActionsPanel, TemplatesPanel, LayersPanel } from '../lecture/lecture-toolbar-panels';
@@ -18,7 +18,7 @@ import {
   ThemesPanel, ShortcutsPanel,
 } from '../lecture/lecture-advanced-panels';
 import {
-  createHistoryState, pushHistory, undo, redo, canUndo, canRedo,
+  createHistoryState, undo, redo, canUndo, canRedo,
   type TextEffect, type ShapeEffect, type GradientPreset, type ElementAnimation, type SlideTheme, type HistoryState
 } from '../../utils/slide-editor-effects';
 
@@ -430,7 +430,7 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
   }, [editingSlide, updateEditingSlide]);
 
   // Update element style
-  const updateElementStyle = useCallback((id: string, styleUpdates: Record<string, string>) => {
+  const updateElementStyle = useCallback((id: string, styleUpdates: Record<string, string | undefined>) => {
     if (!editingSlide) return;
     updateEditingSlide({
       elements: editingSlide.elements.map(el =>
@@ -708,13 +708,13 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
   // Advanced effects
   const handleApplyTextEffect = useCallback((effect: TextEffect) => {
     if (!selectedElement || selectedElement.type !== 'text') return;
-    updateElementStyle(selectedElement.id, effect.style);
+    updateElementStyle(selectedElement.id, effect.style as Record<string, string | undefined>);
     setShowTextEffects(false);
   }, [selectedElement, updateElementStyle]);
 
   const handleApplyShapeEffect = useCallback((effect: ShapeEffect) => {
     if (!selectedElement || selectedElement.type !== 'shape') return;
-    updateElementStyle(selectedElement.id, effect.style);
+    updateElementStyle(selectedElement.id, effect.style as Record<string, string | undefined>);
     setShowShapeEffects(false);
   }, [selectedElement, updateElementStyle]);
 
