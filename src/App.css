@@ -11177,6 +11177,1178 @@ button.kaiwa-stat.saved.active {
   font-weight: bold;
 }
 
+/* ============================================= */
+/* Kaiwa Stats Dashboard - Premium Design */
+/* ============================================= */
+
+.kaiwa-stats-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  animation: stats-overlay-fade 0.3s ease;
+}
+
+@keyframes stats-overlay-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.kaiwa-stats-modal {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 253, 250, 0.95) 100%);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 580px;
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 25px 60px -15px rgba(13, 148, 136, 0.3),
+    0 -1px 0 rgba(255, 255, 255, 0.9) inset;
+  border: 1px solid rgba(13, 148, 136, 0.15);
+  animation: stats-modal-enter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes stats-modal-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.stats-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 253, 250, 0.9) 100%);
+  border-bottom: 1px solid rgba(13, 148, 136, 0.1);
+}
+
+.stats-modal-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(135deg, #0F766E 0%, #0D9488 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stats-close-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(13, 148, 136, 0.12);
+  color: #64748B;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stats-close-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #EF4444;
+}
+
+/* Stats Tabs */
+.stats-tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  background: rgba(13, 148, 136, 0.05);
+  border-bottom: 1px solid rgba(13, 148, 136, 0.1);
+}
+
+.stats-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--kaiwa-text);
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+
+.stats-tab:hover {
+  background: rgba(255, 255, 255, 0.8);
+  opacity: 1;
+}
+
+.stats-tab.active {
+  background: var(--white);
+  color: var(--kaiwa-primary);
+  opacity: 1;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.1);
+}
+
+.stats-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+/* Overview Tab */
+.stats-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Streak Card */
+.streak-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.streak-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+}
+
+.streak-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  border-radius: 14px;
+  color: white;
+  position: relative;
+}
+
+.streak-info {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.streak-count {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #92400E;
+  line-height: 1;
+}
+
+.streak-label {
+  font-size: 0.85rem;
+  color: #B45309;
+  font-weight: 500;
+}
+
+.streak-best {
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: #92400E;
+  background: rgba(255, 255, 255, 0.6);
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 500;
+  position: relative;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 1rem 0.5rem;
+  background: var(--white);
+  border-radius: 12px;
+  border: 1px solid rgba(13, 148, 136, 0.1);
+  transition: all 0.2s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.1);
+}
+
+.stat-item svg {
+  color: var(--kaiwa-primary);
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--kaiwa-text);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  color: var(--kaiwa-text);
+  opacity: 0.7;
+  text-align: center;
+}
+
+/* Stats Section */
+.stats-section {
+  background: var(--white);
+  border-radius: 14px;
+  padding: 1rem;
+  border: 1px solid rgba(13, 148, 136, 0.1);
+}
+
+.stats-section h3 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--kaiwa-text);
+  margin-bottom: 0.75rem;
+}
+
+/* Weekly Summary */
+.weekly-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.weekly-stat {
+  text-align: center;
+  padding: 0.5rem;
+  background: rgba(13, 148, 136, 0.05);
+  border-radius: 8px;
+}
+
+.weekly-value {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--kaiwa-primary);
+}
+
+.weekly-label {
+  font-size: 0.7rem;
+  color: var(--kaiwa-text);
+  opacity: 0.7;
+}
+
+/* Activity Heatmap */
+.activity-heatmap {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+  margin-top: 0.5rem;
+}
+
+.heatmap-cell {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.heatmap-cell.empty {
+  background: rgba(13, 148, 136, 0.08);
+}
+
+.heatmap-cell.low {
+  background: rgba(13, 148, 136, 0.25);
+}
+
+.heatmap-cell.medium {
+  background: rgba(13, 148, 136, 0.5);
+}
+
+.heatmap-cell.high {
+  background: var(--kaiwa-primary);
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.2);
+}
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.7rem;
+  color: var(--kaiwa-text);
+  opacity: 0.7;
+}
+
+.heatmap-legend .heatmap-cell {
+  width: 12px;
+  height: 12px;
+}
+
+/* Pronunciation Stats */
+.pronunciation-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.pron-stat {
+  text-align: center;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #F0FDFA 0%, #CCFBF1 100%);
+  border-radius: 10px;
+}
+
+.pron-value {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--kaiwa-primary);
+}
+
+.pron-label {
+  font-size: 0.7rem;
+  color: var(--kaiwa-text);
+  opacity: 0.7;
+}
+
+/* Achievements Tab */
+.stats-achievements {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.achievements-progress {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--white);
+  border-radius: 12px;
+  border: 1px solid rgba(13, 148, 136, 0.1);
+}
+
+.achievements-progress .progress-bar {
+  flex: 1;
+  height: 8px;
+  background: rgba(13, 148, 136, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.achievements-progress .progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--kaiwa-primary) 0%, var(--kaiwa-secondary) 100%);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.achievements-progress span {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--kaiwa-text);
+  white-space: nowrap;
+}
+
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.achievement-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--white);
+  border-radius: 12px;
+  border: 1px solid rgba(13, 148, 136, 0.1);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.achievement-card.locked {
+  opacity: 0.6;
+  filter: grayscale(0.5);
+}
+
+.achievement-card.unlocked {
+  background: linear-gradient(135deg, #F0FDFA 0%, #CCFBF1 100%);
+  border-color: rgba(13, 148, 136, 0.2);
+}
+
+.achievement-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.1);
+}
+
+.achievement-icon {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.achievement-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.achievement-name {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--kaiwa-text);
+  line-height: 1.2;
+}
+
+.achievement-name-ja {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--kaiwa-text);
+  opacity: 0.6;
+  margin-top: 0.1rem;
+}
+
+.achievement-desc {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--kaiwa-text);
+  opacity: 0.7;
+  margin-top: 0.25rem;
+  line-height: 1.3;
+}
+
+.achievement-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(13, 148, 136, 0.1);
+}
+
+.achievement-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--kaiwa-primary) 0%, var(--kaiwa-secondary) 100%);
+  transition: width 0.5s ease;
+}
+
+.achievement-date {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  font-size: 0.65rem;
+  color: var(--kaiwa-primary);
+  background: rgba(13, 148, 136, 0.1);
+  padding: 0.2rem 0.5rem;
+  border-radius: 8px;
+}
+
+/* Levels Tab */
+.stats-levels {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.level-card {
+  padding: 1rem;
+  background: var(--white);
+  border-radius: 12px;
+  border: 1px solid rgba(13, 148, 136, 0.1);
+}
+
+.level-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.level-badge {
+  padding: 0.3rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: white;
+}
+
+.level-sessions {
+  font-size: 0.8rem;
+  color: var(--kaiwa-text);
+  opacity: 0.7;
+}
+
+.level-bar-container {
+  height: 10px;
+  background: rgba(13, 148, 136, 0.1);
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.level-bar {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.5s ease;
+}
+
+.level-details {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--kaiwa-text);
+  opacity: 0.7;
+}
+
+/* History Tab */
+.stats-history {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.no-sessions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 3rem 1rem;
+  color: var(--kaiwa-text);
+  opacity: 0.5;
+}
+
+.no-sessions svg {
+  opacity: 0.3;
+}
+
+.sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.session-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--white);
+  border-radius: 12px;
+  border: 1px solid rgba(13, 148, 136, 0.1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.session-card:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.1);
+}
+
+.session-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.session-level {
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+}
+
+.session-date {
+  font-size: 0.8rem;
+  color: var(--kaiwa-text);
+  opacity: 0.7;
+}
+
+.session-details {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: var(--kaiwa-text);
+}
+
+.session-details span {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.session-details svg {
+  opacity: 0.6;
+}
+
+.session-score {
+  color: var(--kaiwa-primary) !important;
+  font-weight: 600;
+}
+
+.session-topic {
+  font-size: 0.75rem;
+  color: var(--kaiwa-text);
+  opacity: 0.6;
+  font-style: italic;
+}
+
+.session-arrow {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.3;
+  transition: all 0.2s ease;
+}
+
+.session-card:hover .session-arrow {
+  opacity: 0.7;
+  transform: translateY(-50%) translateX(4px);
+}
+
+/* ============================================= */
+/* Kaiwa Shadowing Mode - Premium Design */
+/* ============================================= */
+
+.kaiwa-shadowing-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  animation: stats-overlay-fade 0.3s ease;
+}
+
+.kaiwa-shadowing-modal {
+  background: linear-gradient(180deg, #0F172A 0%, #1E293B 100%);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 25px 60px -15px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  animation: stats-modal-enter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.shadowing-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.shadowing-header h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+}
+
+.shadowing-progress {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.shadowing-close {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shadowing-close:hover {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #FCA5A5;
+}
+
+/* Timeline */
+.shadowing-timeline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.timeline-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.timeline-dot:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(1.2);
+}
+
+.timeline-dot.completed {
+  background: var(--kaiwa-primary);
+  border-color: var(--kaiwa-secondary);
+}
+
+.timeline-dot.active {
+  width: 16px;
+  height: 16px;
+  background: var(--kaiwa-secondary);
+  border-color: white;
+  box-shadow: 0 0 12px rgba(45, 212, 191, 0.5);
+}
+
+/* Content */
+.shadowing-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  min-height: 250px;
+}
+
+.shadowing-text {
+  font-size: 1.75rem;
+  line-height: 2;
+  color: white;
+  text-align: center;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.shadowing-text.listen {
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+}
+
+.shadowing-text.prepare {
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+}
+
+.shadowing-text.record {
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+}
+
+.shadowing-text.result {
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+}
+
+/* Phase Badge */
+.shadowing-phase {
+  margin-bottom: 1rem;
+}
+
+.phase-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.phase-badge.listening {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93C5FD;
+}
+
+.phase-badge.prepare {
+  background: rgba(245, 158, 11, 0.2);
+  color: #FCD34D;
+}
+
+.phase-badge.recording {
+  background: rgba(239, 68, 68, 0.3);
+  color: #FCA5A5;
+  animation: recording-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes recording-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.phase-badge.result {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6EE7B7;
+}
+
+.phase-badge.result.good {
+  background: rgba(16, 185, 129, 0.25);
+}
+
+.phase-badge.result.ok {
+  background: rgba(245, 158, 11, 0.25);
+  color: #FCD34D;
+}
+
+.phase-badge.result.poor {
+  background: rgba(239, 68, 68, 0.25);
+  color: #FCA5A5;
+}
+
+/* Interim Transcript */
+.shadowing-interim {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-style: italic;
+  text-align: center;
+  padding: 0.75rem 1rem;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+/* Result Display */
+.shadowing-result {
+  width: 100%;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  margin-top: 0.5rem;
+}
+
+.result-spoken,
+.result-differences {
+  margin-bottom: 0.75rem;
+}
+
+.result-label {
+  display: block;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 0.25rem;
+}
+
+.result-text {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95rem;
+}
+
+.result-differences {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.diff-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+}
+
+.diff-item .expected {
+  color: #6EE7B7;
+}
+
+.diff-item .spoken {
+  color: #FCA5A5;
+}
+
+/* Controls */
+.shadowing-controls {
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.shadowing-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.shadowing-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shadowing-btn.nav {
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.shadowing-btn.nav:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.shadowing-btn.nav:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.shadowing-btn.replay {
+  width: 44px;
+  height: 44px;
+  background: rgba(59, 130, 246, 0.2);
+  color: #93C5FD;
+}
+
+.shadowing-btn.replay:hover {
+  background: rgba(59, 130, 246, 0.3);
+}
+
+.shadowing-btn.retry {
+  width: 44px;
+  height: 44px;
+  background: rgba(245, 158, 11, 0.2);
+  color: #FCD34D;
+}
+
+.shadowing-btn.retry:hover {
+  background: rgba(245, 158, 11, 0.3);
+}
+
+.shadowing-btn.main {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, var(--kaiwa-primary) 0%, var(--kaiwa-secondary) 100%);
+  color: white;
+  box-shadow: 0 4px 20px rgba(13, 148, 136, 0.4);
+}
+
+.shadowing-btn.main:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+
+.shadowing-btn.main:disabled {
+  opacity: 0.5;
+}
+
+.shadowing-btn.main.listening {
+  background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%);
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+  animation: listening-pulse 2s ease-in-out infinite;
+}
+
+@keyframes listening-pulse {
+  0%, 100% { box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4); }
+  50% { box-shadow: 0 4px 30px rgba(59, 130, 246, 0.6); }
+}
+
+.shadowing-btn.main.record {
+  background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+}
+
+.shadowing-btn.main.recording {
+  background: linear-gradient(135deg, #EF4444 0%, #F87171 100%);
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+  animation: recording-glow 1s ease-in-out infinite;
+}
+
+@keyframes recording-glow {
+  0%, 100% { box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 4px 35px rgba(239, 68, 68, 0.7); }
+}
+
+.shadowing-btn.main.accept {
+  background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+}
+
+/* Options */
+.shadowing-options {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.shadowing-option {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shadowing-option:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+.shadowing-option.active {
+  background: rgba(13, 148, 136, 0.3);
+  border-color: var(--kaiwa-primary);
+  color: var(--kaiwa-secondary);
+}
+
+/* Stats */
+.shadowing-stats {
+  text-align: center;
+  padding-top: 1rem;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Empty State */
+.shadowing-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 3rem 2rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
+/* Responsive - Stats Dashboard */
+@media (max-width: 600px) {
+  .kaiwa-stats-modal {
+    max-width: 100%;
+    max-height: 95vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .stats-tabs {
+    overflow-x: auto;
+    padding: 0.5rem;
+  }
+
+  .stats-tab {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .weekly-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .achievements-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .streak-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .streak-best {
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+
+  .kaiwa-shadowing-modal {
+    max-width: 100%;
+    max-height: 95vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .shadowing-text {
+    font-size: 1.25rem;
+  }
+
+  .shadowing-nav {
+    gap: 0.75rem;
+  }
+
+  .shadowing-btn.main {
+    width: 56px;
+    height: 56px;
+  }
+
+  .shadowing-btn.nav,
+  .shadowing-btn.replay,
+  .shadowing-btn.retry {
+    width: 40px;
+    height: 40px;
+  }
+}
+
 /* Responsive - Tablet */
 @media (max-width: 768px) {
   /* Sidebar mobile styles */
