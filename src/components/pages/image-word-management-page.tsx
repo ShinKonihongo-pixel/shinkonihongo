@@ -1,9 +1,11 @@
 // Image-Word Management Page
-// Create and manage lessons with image-word pairs
+// Professional UI for creating and managing image-word lessons
+// Features: Card-based layout, smooth animations, drag-drop reordering
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  ArrowLeft, Plus, Trash2, Edit2, Save, X, Image, Upload, Layers, AlertCircle
+  ArrowLeft, Plus, Trash2, Edit3, Save, X, ImageIcon, Upload, Layers,
+  AlertTriangle, GripVertical, Eye, Calendar, Hash, Sparkles, FolderOpen
 } from 'lucide-react';
 import type { ImageWordLesson, ImageWordPair } from '../../types/image-word';
 import {
@@ -18,13 +20,13 @@ interface ImageWordManagementPageProps {
 }
 
 export const ImageWordManagementPage: React.FC<ImageWordManagementPageProps> = ({ onBack }) => {
-  // State
   const [lessons, setLessons] = useState<ImageWordLesson[]>([]);
   const [editingLesson, setEditingLesson] = useState<ImageWordLesson | null>(null);
   const [showEditor, setShowEditor] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [previewLesson, setPreviewLesson] = useState<ImageWordLesson | null>(null);
 
-  // Load lessons on mount
+  // Load lessons
   useEffect(() => {
     setLessons(getImageWordLessons());
   }, []);
@@ -43,7 +45,7 @@ export const ImageWordManagementPage: React.FC<ImageWordManagementPageProps> = (
     setShowEditor(true);
   }, []);
 
-  // Edit existing lesson
+  // Edit lesson
   const handleEditLesson = useCallback((lesson: ImageWordLesson) => {
     setEditingLesson({ ...lesson, pairs: [...lesson.pairs] });
     setShowEditor(true);
@@ -73,64 +75,127 @@ export const ImageWordManagementPage: React.FC<ImageWordManagementPageProps> = (
     setDeleteConfirm(null);
   }, []);
 
+  // Format date
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp).toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
   return (
-    <div className="image-word-management-page">
+    <div className="iw-management">
       {/* Header */}
-      <div className="management-header">
-        <button className="btn-back" onClick={onBack}>
+      <header className="iw-management-header">
+        <button className="iw-back-btn" onClick={onBack}>
           <ArrowLeft size={20} />
-          Quay Lại
+          <span>Quay lại</span>
         </button>
-        <h1>
-          <Layers size={24} />
-          Quản Lý Bài Học Nối Hình
-        </h1>
-        <button className="btn-create" onClick={handleCreateLesson}>
+        <div className="iw-header-title">
+          <div className="iw-title-icon">
+            <Layers size={24} />
+          </div>
+          <div className="iw-title-text">
+            <h1>Quản Lý Bài Học</h1>
+            <span className="iw-subtitle">Nối Hình - Từ Vựng</span>
+          </div>
+        </div>
+        <button className="iw-create-btn" onClick={handleCreateLesson}>
           <Plus size={18} />
-          Tạo Bài Mới
+          <span>Tạo Mới</span>
         </button>
+      </header>
+
+      {/* Stats bar */}
+      <div className="iw-stats-bar">
+        <div className="iw-stat">
+          <FolderOpen size={16} />
+          <span>{lessons.length} bài học</span>
+        </div>
+        <div className="iw-stat">
+          <Hash size={16} />
+          <span>{lessons.reduce((sum, l) => sum + l.pairs.length, 0)} cặp từ</span>
+        </div>
       </div>
 
-      {/* Lessons list */}
-      {lessons.length === 0 ? (
-        <div className="empty-state">
-          <Image size={64} strokeWidth={1} />
-          <h3>Chưa có bài học nào</h3>
-          <p>Tạo bài học đầu tiên để bắt đầu</p>
-          <button className="btn-primary" onClick={handleCreateLesson}>
-            <Plus size={18} />
-            Tạo Bài Học Đầu Tiên
-          </button>
-        </div>
-      ) : (
-        <div className="lessons-list">
-          {lessons.map(lesson => (
-            <div key={lesson.id} className="lesson-item">
-              <div className="lesson-preview">
-                {lesson.pairs[0]?.imageUrl ? (
-                  <img src={lesson.pairs[0].imageUrl} alt="" />
-                ) : (
-                  <Image size={32} />
-                )}
-              </div>
-              <div className="lesson-details">
-                <h3>{lesson.name || 'Chưa đặt tên'}</h3>
-                <p>{lesson.pairs.length} cặp hình - từ</p>
-                {lesson.description && <span className="desc">{lesson.description}</span>}
-              </div>
-              <div className="lesson-actions">
-                <button className="btn-edit" onClick={() => handleEditLesson(lesson)}>
-                  <Edit2 size={16} />
-                  Sửa
-                </button>
-                <button className="btn-delete" onClick={() => setDeleteConfirm(lesson.id)}>
-                  <Trash2 size={16} />
-                </button>
-              </div>
+      {/* Content */}
+      <div className="iw-management-content">
+        {lessons.length === 0 ? (
+          <div className="iw-empty-state">
+            <div className="iw-empty-icon">
+              <ImageIcon size={48} strokeWidth={1.5} />
+              <Sparkles size={20} className="iw-sparkle" />
             </div>
-          ))}
-        </div>
-      )}
+            <h3>Chưa có bài học nào</h3>
+            <p>Tạo bài học đầu tiên để bắt đầu sử dụng trò chơi nối hình</p>
+            <button className="iw-empty-btn" onClick={handleCreateLesson}>
+              <Plus size={18} />
+              Tạo Bài Học Đầu Tiên
+            </button>
+          </div>
+        ) : (
+          <div className="iw-lessons-grid">
+            {lessons.map((lesson, index) => (
+              <div
+                key={lesson.id}
+                className="iw-lesson-card"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                {/* Thumbnail */}
+                <div className="iw-lesson-thumb">
+                  {lesson.pairs[0]?.imageUrl ? (
+                    <img src={lesson.pairs[0].imageUrl} alt="" />
+                  ) : (
+                    <div className="iw-thumb-placeholder">
+                      <ImageIcon size={32} />
+                    </div>
+                  )}
+                  <div className="iw-thumb-overlay">
+                    <button
+                      className="iw-preview-btn"
+                      onClick={() => setPreviewLesson(lesson)}
+                      title="Xem trước"
+                    >
+                      <Eye size={18} />
+                    </button>
+                  </div>
+                  <span className="iw-pair-badge">{lesson.pairs.length}</span>
+                </div>
+
+                {/* Info */}
+                <div className="iw-lesson-info">
+                  <h3>{lesson.name || 'Chưa đặt tên'}</h3>
+                  {lesson.description && (
+                    <p className="iw-lesson-desc">{lesson.description}</p>
+                  )}
+                  <div className="iw-lesson-meta">
+                    <Calendar size={12} />
+                    <span>{formatDate(lesson.updatedAt)}</span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="iw-lesson-actions">
+                  <button
+                    className="iw-action-btn edit"
+                    onClick={() => handleEditLesson(lesson)}
+                  >
+                    <Edit3 size={16} />
+                    Chỉnh sửa
+                  </button>
+                  <button
+                    className="iw-action-btn delete"
+                    onClick={() => setDeleteConfirm(lesson.id)}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Editor Modal */}
       {showEditor && editingLesson && (
@@ -141,16 +206,47 @@ export const ImageWordManagementPage: React.FC<ImageWordManagementPageProps> = (
         />
       )}
 
+      {/* Preview Modal */}
+      {previewLesson && (
+        <div className="iw-modal-overlay" onClick={() => setPreviewLesson(null)}>
+          <div className="iw-preview-modal" onClick={e => e.stopPropagation()}>
+            <div className="iw-preview-header">
+              <h2>{previewLesson.name}</h2>
+              <button className="iw-close-btn" onClick={() => setPreviewLesson(null)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="iw-preview-grid">
+              {previewLesson.pairs.map((pair) => (
+                <div key={pair.id} className="iw-preview-item">
+                  <img src={pair.imageUrl} alt="" />
+                  <div className="iw-preview-word">
+                    <span className="vocab">{pair.vocabulary}</span>
+                    {pair.reading && <span className="reading">{pair.reading}</span>}
+                    <span className="meaning">{pair.meaning}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Delete Confirmation */}
       {deleteConfirm && (
-        <div className="modal-overlay" onClick={() => setDeleteConfirm(null)}>
-          <div className="confirm-dialog" onClick={e => e.stopPropagation()}>
-            <AlertCircle size={48} color="#f44336" />
-            <h3>Xóa Bài Học?</h3>
-            <p>Bạn có chắc muốn xóa bài học này? Hành động này không thể hoàn tác.</p>
-            <div className="dialog-actions">
-              <button className="btn-cancel" onClick={() => setDeleteConfirm(null)}>Hủy</button>
-              <button className="btn-confirm-delete" onClick={() => handleDeleteLesson(deleteConfirm)}>
+        <div className="iw-modal-overlay" onClick={() => setDeleteConfirm(null)}>
+          <div className="iw-confirm-dialog" onClick={e => e.stopPropagation()}>
+            <div className="iw-confirm-icon">
+              <AlertTriangle size={32} />
+            </div>
+            <h3>Xóa bài học này?</h3>
+            <p>Hành động này không thể hoàn tác. Tất cả dữ liệu của bài học sẽ bị xóa vĩnh viễn.</p>
+            <div className="iw-confirm-actions">
+              <button className="iw-cancel-btn" onClick={() => setDeleteConfirm(null)}>
+                Hủy bỏ
+              </button>
+              <button className="iw-delete-btn" onClick={() => handleDeleteLesson(deleteConfirm)}>
+                <Trash2 size={16} />
                 Xóa
               </button>
             </div>
@@ -173,6 +269,7 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onSave, onCancel })
   const [description, setDescription] = useState(lesson.description || '');
   const [pairs, setPairs] = useState<ImageWordPair[]>(lesson.pairs);
   const [error, setError] = useState<string | null>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
 
   // Handle save
   const handleSave = () => {
@@ -184,7 +281,6 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onSave, onCancel })
       setError('Vui lòng thêm ít nhất 1 cặp hình - từ');
       return;
     }
-    // Validate all pairs have image and vocabulary
     const invalidPair = pairs.find(p => !p.imageUrl || !p.vocabulary);
     if (invalidPair) {
       setError('Mỗi cặp cần có hình ảnh và từ vựng');
@@ -220,79 +316,120 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onSave, onCancel })
     setPairs(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Drag & drop reorder
+  const handleDragStart = (index: number) => {
+    setDragIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (dragIndex === null || dragIndex === index) return;
+
+    const newPairs = [...pairs];
+    const [draggedItem] = newPairs.splice(dragIndex, 1);
+    newPairs.splice(index, 0, draggedItem);
+    setPairs(newPairs);
+    setDragIndex(index);
+  };
+
+  const handleDragEnd = () => {
+    setDragIndex(null);
+  };
+
   return (
-    <div className="modal-overlay" onClick={onCancel}>
-      <div className="lesson-editor-modal" onClick={e => e.stopPropagation()}>
-        <div className="editor-header">
-          <h2>{lesson.id ? 'Sửa Bài Học' : 'Tạo Bài Học Mới'}</h2>
-          <button className="btn-close" onClick={onCancel}>
+    <div className="iw-modal-overlay" onClick={onCancel}>
+      <div className="iw-editor-modal" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="iw-editor-header">
+          <h2>{lesson.id ? 'Chỉnh Sửa Bài Học' : 'Tạo Bài Học Mới'}</h2>
+          <button className="iw-close-btn" onClick={onCancel}>
             <X size={20} />
           </button>
         </div>
 
-        <div className="editor-body">
+        {/* Body */}
+        <div className="iw-editor-body">
           {error && (
-            <div className="error-message">
-              <AlertCircle size={16} />
-              {error}
+            <div className="iw-error-msg">
+              <AlertTriangle size={16} />
+              <span>{error}</span>
+              <button onClick={() => setError(null)}><X size={14} /></button>
             </div>
           )}
 
-          <div className="form-group">
-            <label>Tên Bài Học *</label>
-            <input
-              type="text"
-              value={name}
-              onChange={e => { setName(e.target.value); setError(null); }}
-              placeholder="VD: Động vật, Trái cây..."
-            />
+          {/* Lesson info */}
+          <div className="iw-form-section">
+            <div className="iw-form-group">
+              <label>Tên bài học <span className="required">*</span></label>
+              <input
+                type="text"
+                value={name}
+                onChange={e => { setName(e.target.value); setError(null); }}
+                placeholder="VD: Động vật, Trái cây, Màu sắc..."
+                autoFocus
+              />
+            </div>
+            <div className="iw-form-group">
+              <label>Mô tả</label>
+              <input
+                type="text"
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="Mô tả ngắn về nội dung bài học"
+              />
+            </div>
           </div>
 
-          <div className="form-group">
-            <label>Mô Tả</label>
-            <input
-              type="text"
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              placeholder="Mô tả ngắn về bài học"
-            />
-          </div>
-
-          <div className="pairs-section">
-            <div className="pairs-header">
-              <h3>Danh Sách Cặp ({pairs.length})</h3>
-              <button className="btn-add-pair" onClick={handleAddPair}>
+          {/* Pairs section */}
+          <div className="iw-pairs-section">
+            <div className="iw-pairs-header">
+              <h3>
+                <Hash size={16} />
+                Danh sách cặp ({pairs.length})
+              </h3>
+              <button className="iw-add-pair-btn" onClick={handleAddPair}>
                 <Plus size={16} />
-                Thêm Cặp
+                Thêm cặp
               </button>
             </div>
 
-            <div className="pairs-list">
-              {pairs.map((pair, index) => (
-                <PairEditor
-                  key={pair.id}
-                  pair={pair}
-                  index={index}
-                  onUpdate={(updates) => handleUpdatePair(index, updates)}
-                  onDelete={() => handleDeletePair(index)}
-                />
-              ))}
-
-              {pairs.length === 0 && (
-                <div className="no-pairs">
-                  <Image size={32} />
-                  <p>Chưa có cặp nào. Nhấn "Thêm Cặp" để bắt đầu.</p>
+            <div className="iw-pairs-list">
+              {pairs.length === 0 ? (
+                <div className="iw-no-pairs">
+                  <ImageIcon size={40} strokeWidth={1.5} />
+                  <p>Chưa có cặp nào</p>
+                  <button onClick={handleAddPair}>
+                    <Plus size={16} />
+                    Thêm cặp đầu tiên
+                  </button>
                 </div>
+              ) : (
+                pairs.map((pair, index) => (
+                  <PairEditor
+                    key={pair.id}
+                    pair={pair}
+                    index={index}
+                    isDragging={dragIndex === index}
+                    onUpdate={(updates) => handleUpdatePair(index, updates)}
+                    onDelete={() => handleDeletePair(index)}
+                    onDragStart={() => handleDragStart(index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDragEnd={handleDragEnd}
+                  />
+                ))
               )}
             </div>
           </div>
         </div>
 
-        <div className="editor-footer">
-          <button className="btn-cancel" onClick={onCancel}>Hủy</button>
-          <button className="btn-save" onClick={handleSave}>
+        {/* Footer */}
+        <div className="iw-editor-footer">
+          <button className="iw-cancel-btn" onClick={onCancel}>
+            Hủy bỏ
+          </button>
+          <button className="iw-save-btn" onClick={handleSave}>
             <Save size={16} />
-            Lưu Bài Học
+            {lesson.id ? 'Lưu thay đổi' : 'Tạo bài học'}
           </button>
         </div>
       </div>
@@ -304,11 +441,17 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onSave, onCancel })
 interface PairEditorProps {
   pair: ImageWordPair;
   index: number;
+  isDragging: boolean;
   onUpdate: (updates: Partial<ImageWordPair>) => void;
   onDelete: () => void;
+  onDragStart: () => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDragEnd: () => void;
 }
 
-const PairEditor: React.FC<PairEditorProps> = ({ pair, index, onUpdate, onDelete }) => {
+const PairEditor: React.FC<PairEditorProps> = ({
+  pair, index, isDragging, onUpdate, onDelete, onDragStart, onDragOver, onDragEnd
+}) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Handle image upload
@@ -316,19 +459,16 @@ const PairEditor: React.FC<PairEditorProps> = ({ pair, index, onUpdate, onDelete
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       alert('Vui lòng chọn file hình ảnh');
       return;
     }
 
-    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       alert('Kích thước file tối đa 2MB');
       return;
     }
 
-    // Convert to base64
     const reader = new FileReader();
     reader.onload = () => {
       onUpdate({ imageUrl: reader.result as string });
@@ -337,58 +477,72 @@ const PairEditor: React.FC<PairEditorProps> = ({ pair, index, onUpdate, onDelete
   };
 
   return (
-    <div className="pair-editor">
-      <span className="pair-index">{index + 1}</span>
+    <div
+      className={`iw-pair-item ${isDragging ? 'dragging' : ''}`}
+      draggable
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDragEnd={onDragEnd}
+    >
+      {/* Drag handle */}
+      <div className="iw-drag-handle">
+        <GripVertical size={16} />
+      </div>
 
-      {/* Image upload area */}
-      <div className="pair-image-upload">
+      {/* Index */}
+      <span className="iw-pair-index">{index + 1}</span>
+
+      {/* Image upload */}
+      <div className="iw-pair-image">
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
           onChange={handleImageUpload}
-          style={{ display: 'none' }}
+          hidden
         />
         {pair.imageUrl ? (
-          <div className="image-preview" onClick={() => fileInputRef.current?.click()}>
+          <div className="iw-image-thumb" onClick={() => fileInputRef.current?.click()}>
             <img src={pair.imageUrl} alt="" />
-            <div className="image-overlay">
-              <Upload size={16} />
-              Đổi ảnh
+            <div className="iw-image-hover">
+              <Upload size={14} />
+              <span>Đổi</span>
             </div>
           </div>
         ) : (
-          <button className="upload-btn" onClick={() => fileInputRef.current?.click()}>
-            <Upload size={20} />
-            Tải ảnh
+          <button className="iw-upload-btn" onClick={() => fileInputRef.current?.click()}>
+            <Upload size={18} />
           </button>
         )}
       </div>
 
-      {/* Word inputs */}
-      <div className="pair-inputs">
+      {/* Inputs */}
+      <div className="iw-pair-inputs">
         <input
           type="text"
           value={pair.vocabulary}
           onChange={e => onUpdate({ vocabulary: e.target.value })}
           placeholder="Từ vựng (VD: 犬)"
+          className="vocab-input"
         />
         <input
           type="text"
           value={pair.reading || ''}
           onChange={e => onUpdate({ reading: e.target.value })}
           placeholder="Cách đọc (VD: いぬ)"
+          className="reading-input"
         />
         <input
           type="text"
           value={pair.meaning}
           onChange={e => onUpdate({ meaning: e.target.value })}
           placeholder="Nghĩa (VD: Con chó)"
+          className="meaning-input"
         />
       </div>
 
-      {/* Delete button */}
-      <button className="btn-delete-pair" onClick={onDelete}>
+      {/* Delete */}
+      <button className="iw-delete-pair-btn" onClick={onDelete}>
         <Trash2 size={16} />
       </button>
     </div>

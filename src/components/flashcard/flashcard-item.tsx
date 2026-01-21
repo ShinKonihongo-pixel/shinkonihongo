@@ -94,6 +94,9 @@ const defaultSettings: AppSettings = {
   jlptCoverageMode: 'balanced',
   jlptShowLevelAssessment: true,
   jlptTrackWeakAreas: true,
+  // Daily words
+  dailyWordsEnabled: true,
+  dailyWordsTarget: 5,
 };
 
 // Get card frame styles based on settings

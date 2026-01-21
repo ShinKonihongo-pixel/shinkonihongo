@@ -1,7 +1,7 @@
 // List of flashcards with filter and CRUD actions
 
 import { useState } from 'react';
-import type { Flashcard, JLPTLevel } from '../../types/flashcard';
+import type { Flashcard } from '../../types/flashcard';
 import { ConfirmModal } from '../ui/confirm-modal';
 import { Edit3, Trash2 } from 'lucide-react';
 
@@ -13,16 +13,9 @@ interface FlashcardListProps {
   canDelete?: (card: Flashcard) => boolean;
 }
 
-const JLPT_LEVELS: (JLPTLevel | 'all')[] = ['all', 'N5', 'N4', 'N3', 'N2', 'N1'];
-
 export function FlashcardList({ cards, onEdit, onDelete, canEdit, canDelete }: FlashcardListProps) {
-  const [filter, setFilter] = useState<JLPTLevel | 'all'>('all');
   const [flippedId, setFlippedId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Flashcard | null>(null);
-
-  const filteredCards = filter === 'all'
-    ? cards
-    : cards.filter(card => card.jlptLevel === filter);
 
   const handleFlip = (id: string) => {
     setFlippedId(prev => (prev === id ? null : id));
@@ -41,28 +34,15 @@ export function FlashcardList({ cards, onEdit, onDelete, canEdit, canDelete }: F
 
   return (
     <div className="flashcard-list">
-      <div className="filter-bar">
-        <span>Lọc theo JLPT:</span>
-        {JLPT_LEVELS.map(level => (
-          <button
-            key={level}
-            className={`filter-btn ${filter === level ? 'active' : ''}`}
-            onClick={() => setFilter(level)}
-          >
-            {level === 'all' ? 'Tất cả' : level}
-          </button>
-        ))}
-      </div>
-
       <p className="card-count">
-        Hiển thị {filteredCards.length} / {cards.length} thẻ
+        Hiển thị {cards.length} thẻ
       </p>
 
-      {filteredCards.length === 0 ? (
+      {cards.length === 0 ? (
         <p className="empty-message">Chưa có thẻ nào. Hãy tạo thẻ mới!</p>
       ) : (
         <div className="cards-grid">
-          {filteredCards.map(card => (
+          {cards.map(card => (
             <div key={card.id} className="card-item">
               <div
                 className={`mini-card ${flippedId === card.id ? 'flipped' : ''}`}

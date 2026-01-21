@@ -3,7 +3,6 @@
 // Uses lazy loading for game pages to improve initial load performance
 
 import { useState, useCallback, lazy, Suspense } from 'react';
-import { LogOut } from 'lucide-react';
 import type { GameType } from '../../types/game-hub';
 import type { CurrentUser } from '../../types/user';
 import type { Flashcard, JLPTLevel, Lesson } from '../../types/flashcard';
@@ -111,15 +110,9 @@ export function GameHubPage({
     );
   }
 
-  // Render selected game with back button
+  // Render selected game
   return (
     <div className="game-hub-page game-active">
-      {/* Floating leave button - top left */}
-      <button className="game-hub-leave-btn" onClick={handleBackToHub}>
-        <LogOut size={18} />
-        <span>Rời Phòng</span>
-      </button>
-
       {/* Render appropriate game with lazy loading */}
       <Suspense fallback={<GameLoadingFallback />}>
       {selectedGame === 'quiz' && (

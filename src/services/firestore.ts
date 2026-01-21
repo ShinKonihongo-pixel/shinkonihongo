@@ -60,9 +60,12 @@ export function subscribeToFlashcards(callback: (cards: Flashcard[]) => void): U
 }
 
 export async function addFlashcard(data: FlashcardFormData, createdBy?: string): Promise<Flashcard> {
+  const defaultValues = getDefaultSM2Values();
   const newCard: Omit<Flashcard, 'id'> = {
     ...data,
-    ...getDefaultSM2Values(),
+    ...defaultValues,
+    // Override with form data difficultyLevel if provided
+    difficultyLevel: data.difficultyLevel || defaultValues.difficultyLevel,
     createdAt: getTodayISO(),
     createdBy,
   };

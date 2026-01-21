@@ -1,4 +1,4 @@
-// Floating AI chat button - bottom right corner
+// Floating chat button - bottom right corner
 
 import { useState } from 'react';
 
@@ -16,8 +16,8 @@ export function FloatingChatButton({ onClick, isActive }: FloatingChatButtonProp
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      title="Thảo luận với AI"
-      aria-label="Mở chat AI"
+      title="Thảo luận"
+      aria-label="Mở chat thảo luận"
     >
       {/* Chat Bubble Icon */}
       <svg

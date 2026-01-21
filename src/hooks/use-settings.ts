@@ -98,6 +98,10 @@ export interface AppSettings {
   weeklyCardsTarget: number;
   weeklyMinutesTarget: number;
 
+  // Daily words goal
+  dailyWordsEnabled: boolean;
+  dailyWordsTarget: 5 | 10 | 15 | 20;
+
   // App background
   appBackground: AppBackgroundId;
   appBackgroundCustomUrl: string;
@@ -182,6 +186,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   // Weekly goals
   weeklyCardsTarget: 50,
   weeklyMinutesTarget: 60,
+  // Daily words goal
+  dailyWordsEnabled: true,
+  dailyWordsTarget: 5,
   // App background
   appBackground: 'default',
   appBackgroundCustomUrl: '',

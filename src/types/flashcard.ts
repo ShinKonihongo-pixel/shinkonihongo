@@ -61,6 +61,7 @@ export interface FlashcardFormData {
   examples: string[];
   jlptLevel: JLPTLevel;
   lessonId: string;
+  difficultyLevel?: DifficultyLevel; // Optional - defaults to 'unset' if not provided
 }
 
 // Keep Category as alias for backward compatibility during migration

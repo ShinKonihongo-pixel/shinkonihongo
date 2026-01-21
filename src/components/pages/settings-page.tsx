@@ -1866,6 +1866,35 @@ export function SettingsPage({
                 </div>
 
                 <div className="setting-item">
+                  <label className="setting-label-with-toggle">
+                    <span>Nhiệm vụ học từ hàng ngày</span>
+                    <input
+                      type="checkbox"
+                      checked={settings.dailyWordsEnabled}
+                      onChange={(e) => onUpdateSetting('dailyWordsEnabled', e.target.checked)}
+                    />
+                  </label>
+                  <p className="setting-hint">Hiển thị nhiệm vụ học từ ngẫu nhiên mỗi ngày trên trang chủ</p>
+                </div>
+
+                {settings.dailyWordsEnabled && (
+                  <div className="setting-item">
+                    <label>Số từ mỗi ngày: {settings.dailyWordsTarget}</label>
+                    <div className="setting-control daily-words-options">
+                      {([5, 10, 15, 20] as const).map(num => (
+                        <button
+                          key={num}
+                          className={`daily-words-option ${settings.dailyWordsTarget === num ? 'active' : ''}`}
+                          onClick={() => onUpdateSetting('dailyWordsTarget', num)}
+                        >
+                          {num} từ
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="setting-item">
                   <label>Sao lưu & Khôi phục dữ liệu</label>
                   <button
                     className="btn btn-secondary"

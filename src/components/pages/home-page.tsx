@@ -2,6 +2,7 @@
 import { useState, useMemo } from 'react';
 import type { JLPTLevel, Lesson, Flashcard } from '../../types/flashcard';
 import type { ProgressSummary } from '../../types/progress';
+import { DailyWordsTask } from '../home/daily-words-task';
 import {
   Play,
   ChevronRight,
@@ -20,6 +21,21 @@ export interface StudySelection {
   lessonIds: string[];
 }
 
+// Daily words props type
+interface DailyWordsProps {
+  todayWords: Flashcard[];
+  progress: { completed: number; target: number; percent: number };
+  isCompleted: boolean;
+  streak: number;
+  longestStreak: number;
+  markWordLearned: (wordId: string) => void;
+  markAllLearned: () => void;
+  refreshWords: () => void;
+  enabled: boolean;
+  justCompleted: boolean;
+  completedWordIds: Set<string>;
+}
+
 interface HomePageProps {
   statsByLevel: Record<JLPTLevel, number>;
   cards: Flashcard[];
@@ -33,6 +49,9 @@ interface HomePageProps {
   onNavigate?: (page: string) => void;
   userName?: string;
   progress?: ProgressSummary;
+  // Daily words
+  dailyWords?: DailyWordsProps;
+  onSpeak?: (text: string) => void;
 }
 
 const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
@@ -56,6 +75,8 @@ export function HomePage({
   canAccessLocked = false,
   userName,
   progress,
+  dailyWords,
+  onSpeak,
 }: HomePageProps) {
   const totalCards = cards.length;
   const [expandedLevel, setExpandedLevel] = useState<JLPTLevel | null>(null);
@@ -135,6 +156,23 @@ export function HomePage({
           </div>
         </div>
       </header>
+
+      {/* Daily Words Task */}
+      {dailyWords && dailyWords.enabled && dailyWords.todayWords.length > 0 && (
+        <DailyWordsTask
+          todayWords={dailyWords.todayWords}
+          progress={dailyWords.progress}
+          isCompleted={dailyWords.isCompleted}
+          streak={dailyWords.streak}
+          longestStreak={dailyWords.longestStreak}
+          onMarkLearned={dailyWords.markWordLearned}
+          onMarkAllLearned={dailyWords.markAllLearned}
+          onRefresh={dailyWords.refreshWords}
+          onSpeak={onSpeak}
+          justCompleted={dailyWords.justCompleted}
+          completedWordIds={dailyWords.completedWordIds}
+        />
+      )}
 
       {/* Main CTA Card */}
       <div className="hp-cta-card">

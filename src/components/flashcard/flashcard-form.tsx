@@ -1,7 +1,7 @@
 // Form for creating/editing flashcards
 
 import { useState, useEffect } from 'react';
-import type { FlashcardFormData, JLPTLevel, Flashcard, Lesson } from '../../types/flashcard';
+import type { FlashcardFormData, JLPTLevel, Flashcard, Lesson, DifficultyLevel } from '../../types/flashcard';
 
 interface FlashcardFormProps {
   onSubmit: (data: FlashcardFormData) => void;
@@ -14,6 +14,12 @@ interface FlashcardFormProps {
 }
 
 const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
+
+const DIFFICULTY_OPTIONS: { value: DifficultyLevel; label: string; color: string }[] = [
+  { value: 'easy', label: '🟢 Dễ', color: '#22c55e' },
+  { value: 'medium', label: '🟡 Trung bình', color: '#f59e0b' },
+  { value: 'hard', label: '🔴 Khó', color: '#ef4444' },
+];
 
 export function FlashcardForm({
   onSubmit,
@@ -31,6 +37,7 @@ export function FlashcardForm({
     examples: [''],
     jlptLevel: fixedLevel || 'N5',
     lessonId: fixedLessonId || '',
+    difficultyLevel: 'medium', // Default to medium
   });
 
   useEffect(() => {
@@ -43,6 +50,7 @@ export function FlashcardForm({
         examples: initialData.examples.length > 0 ? initialData.examples : [''],
         jlptLevel: initialData.jlptLevel,
         lessonId: initialData.lessonId,
+        difficultyLevel: initialData.difficultyLevel === 'unset' ? 'medium' : initialData.difficultyLevel,
       });
     }
   }, [initialData]);
@@ -183,6 +191,28 @@ export function FlashcardForm({
             )}
           </div>
         ))}
+      </div>
+
+      {/* Difficulty level selector */}
+      <div className="form-group">
+        <label>Độ khó</label>
+        <div className="difficulty-selector">
+          {DIFFICULTY_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              className={`difficulty-btn ${formData.difficultyLevel === opt.value ? 'active' : ''}`}
+              style={{
+                '--diff-color': opt.color,
+                borderColor: formData.difficultyLevel === opt.value ? opt.color : undefined,
+                background: formData.difficultyLevel === opt.value ? `${opt.color}15` : undefined,
+              } as React.CSSProperties}
+              onClick={() => setFormData(prev => ({ ...prev, difficultyLevel: opt.value }))}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Show level/lesson selectors only if not fixed */}

@@ -19,9 +19,24 @@ import {
   School,
   Bell,
   Building2,
+  BookOpen,
+  Flame,
 } from 'lucide-react';
 import { useClassroomNotifications } from '../../hooks/use-classrooms';
 import { useFriendNotifications } from '../../hooks/use-friendships';
+
+interface DailyWordsNotification {
+  enabled: boolean;
+  isCompleted: boolean;
+  progress: {
+    completed: number;
+    target: number;
+    percent: number;
+  };
+  streak: number;
+  showNotification: boolean;
+  onDismiss: () => void;
+}
 
 interface SidebarProps {
   currentPage: Page;
@@ -30,6 +45,7 @@ interface SidebarProps {
   onLogout: () => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  dailyWordsNotification?: DailyWordsNotification;
 }
 
 interface NavItem {
@@ -64,6 +80,7 @@ export function Sidebar({
   onLogout,
   isCollapsed,
   onToggleCollapse,
+  dailyWordsNotification,
 }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -74,8 +91,11 @@ export function Sidebar({
   // Friend notifications (including badge received)
   const { notifications: friendNotifications, unreadCount: friendUnread, markAsRead: markFriendRead, markAllAsRead: markAllFriendRead } = useFriendNotifications(currentUser?.id || null);
 
+  // Daily words notification flag - use new showNotification prop
+  const hasDailyWordsReminder = dailyWordsNotification?.showNotification ?? false;
+
   // Combined notifications
-  const totalUnread = classroomUnread + friendUnread;
+  const totalUnread = classroomUnread + friendUnread + (hasDailyWordsReminder ? 1 : 0);
 
   const handleNavigate = (page: Page) => {
     onNavigate(page);
@@ -172,10 +192,42 @@ export function Sidebar({
               )}
             </div>
             <div className="sidebar-notifications-list">
-              {classroomNotifications.length === 0 && friendNotifications.length === 0 ? (
+              {classroomNotifications.length === 0 && friendNotifications.length === 0 && !hasDailyWordsReminder ? (
                 <p className="empty-text">Không có thông báo</p>
               ) : (
                 <>
+                  {/* Daily words notification */}
+                  {hasDailyWordsReminder && dailyWordsNotification && (
+                    <div
+                      className="sidebar-notification-item unread daily-words-notification"
+                      onClick={() => {
+                        dailyWordsNotification.onDismiss(); // Dismiss notification
+                        onNavigate('daily-words');
+                        setShowNotifications(false);
+                      }}
+                    >
+                      <span className="notification-icon daily-words-icon">
+                        <BookOpen size={18} />
+                      </span>
+                      <div className="notification-content">
+                        <span className="notification-title">Nhiệm vụ học từ hôm nay</span>
+                        <span className="notification-progress">
+                          {dailyWordsNotification.progress.completed}/{dailyWordsNotification.progress.target} từ
+                          {dailyWordsNotification.streak > 0 && (
+                            <span className="streak-badge">
+                              <Flame size={12} /> {dailyWordsNotification.streak}
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                      <div className="notification-progress-bar">
+                        <div
+                          className="notification-progress-fill"
+                          style={{ width: `${dailyWordsNotification.progress.percent}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
                   {/* Friend notifications (badge received, friend requests, etc.) */}
                   {friendNotifications.slice(0, 3).map(n => (
                       <div

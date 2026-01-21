@@ -27,6 +27,7 @@ import { SalaryPage } from './components/pages/salary-page';
 import { MyTeachingPage } from './components/pages/my-teaching-page';
 import { NotificationsPage } from './components/pages/notifications-page';
 import { GameHubPage } from './components/pages/game-hub-page';
+import { DailyWordsPage } from './components/pages/daily-words-page';
 import type { GameType } from './types/game-hub';
 import { useJLPTQuestions } from './hooks/use-jlpt-questions';
 import { useKaiwaQuestions } from './hooks/use-kaiwa-questions';
@@ -37,6 +38,7 @@ import { useNotifications } from './hooks/use-notifications';
 import { useOffline } from './hooks/use-offline';
 import { useFriendships, useBadges, useGameInvitations, useFriendNotifications } from './hooks/use-friendships';
 import { useClassroomNotifications } from './hooks/use-classrooms';
+import { useDailyWords } from './hooks/use-daily-words';
 import { OfflineIndicator } from './components/common/offline-indicator';
 import { FloatingChatButton } from './components/common/floating-chat-button';
 import { FloatingChatPanel } from './components/common/floating-chat-panel';
@@ -147,6 +149,13 @@ function App() {
 
   const { settings, updateSetting, resetSettings } = useSettings();
   const { theme, applyPreset, resetTheme } = useGlobalTheme();
+
+  // Daily words learning
+  const dailyWords = useDailyWords({
+    allCards: cards,
+    targetCount: settings.dailyWordsTarget,
+    enabled: settings.dailyWordsEnabled,
+  });
 
   const {
     questions: jlptQuestions,
@@ -296,6 +305,14 @@ function App() {
         onLogout={logout}
         isCollapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        dailyWordsNotification={{
+          enabled: dailyWords.enabled,
+          isCompleted: dailyWords.isCompleted,
+          progress: dailyWords.progress,
+          streak: dailyWords.streak,
+          showNotification: dailyWords.showNotification,
+          onDismiss: dailyWords.dismissNotification,
+        }}
       />
 
       <div className="main-wrapper">
@@ -331,6 +348,13 @@ function App() {
             onNavigate={(page) => setCurrentPage(page as Page)}
             userName={currentUser?.displayName || currentUser?.username}
             progress={progress}
+            dailyWords={dailyWords}
+            onSpeak={(text) => {
+              const utterance = new SpeechSynthesisUtterance(text);
+              utterance.lang = 'ja-JP';
+              utterance.rate = 0.9;
+              speechSynthesis.speak(utterance);
+            }}
           />
         )}
 
@@ -579,6 +603,23 @@ function App() {
             onMarkFriendRead={markFriendRead}
             onMarkAllFriendRead={markAllFriendRead}
             onNavigate={setCurrentPage}
+          />
+        )}
+
+        {currentPage === 'daily-words' && currentUser && (
+          <DailyWordsPage
+            todayWords={dailyWords.todayWords}
+            progress={dailyWords.progress}
+            isCompleted={dailyWords.isCompleted}
+            streak={dailyWords.streak}
+            longestStreak={dailyWords.longestStreak}
+            completedWordIds={dailyWords.completedWordIds}
+            onMarkLearned={dailyWords.markWordLearned}
+            onMarkAllLearned={dailyWords.markAllLearned}
+            onRefresh={dailyWords.refreshWords}
+            onGoHome={() => setCurrentPage('home')}
+            settings={settings}
+            lessons={lessons}
           />
         )}
         </main>
