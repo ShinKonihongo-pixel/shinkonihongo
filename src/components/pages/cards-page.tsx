@@ -19,7 +19,6 @@ import {
   KaiwaTab,
   GameTab,
   UsersTab,
-  CustomTopicsTab,
   type ManagementTab,
 } from '../cards-management';
 
@@ -80,7 +79,7 @@ interface CardsPageProps {
 
 export function CardsPage({
   cards, onAddCard, onUpdateCard, onDeleteCard,
-  getLessonsByLevel, getChildLessons, onAddLesson, onUpdateLesson, onDeleteLesson,
+  lessons, getLessonsByLevel, getChildLessons, onAddLesson, onUpdateLesson, onDeleteLesson,
   currentUser,
   jlptQuestions, onAddJLPTQuestion, onUpdateJLPTQuestion, onDeleteJLPTQuestion,
   onAddJLPTFolder, onUpdateJLPTFolder, onDeleteJLPTFolder,
@@ -139,7 +138,6 @@ export function CardsPage({
           <button className={`tab-btn ${activeTab === 'lectures' ? 'active' : ''}`} onClick={() => setActiveTab('lectures')}>Bài giảng ({lectures.length})</button>
           <button className={`tab-btn ${activeTab === 'jlpt' ? 'active' : ''}`} onClick={() => setActiveTab('jlpt')}>JLPT</button>
           <button className={`tab-btn ${activeTab === 'kaiwa' ? 'active' : ''}`} onClick={() => setActiveTab('kaiwa')}>Kaiwa ({kaiwaQuestions.length})</button>
-          <button className={`tab-btn ${activeTab === 'custom_topics' ? 'active' : ''}`} onClick={() => setActiveTab('custom_topics')}>Chủ đề ({customTopics.length})</button>
           <button className={`tab-btn ${activeTab === 'game' ? 'active' : ''}`} onClick={() => setActiveTab('game')}>Game</button>
           <button className={`tab-btn ${activeTab === 'assignments' ? 'active' : ''}`} onClick={() => setActiveTab('assignments')}>Bài tập</button>
           <button className={`tab-btn ${activeTab === 'tests' ? 'active' : ''}`} onClick={() => setActiveTab('tests')}>Bài kiểm tra ({testTemplates.length})</button>
@@ -223,30 +221,27 @@ export function CardsPage({
           onAddAdvancedQuestion={onAddAdvancedKaiwaQuestion}
           onUpdateAdvancedQuestion={onUpdateAdvancedKaiwaQuestion}
           onDeleteAdvancedQuestion={onDeleteAdvancedKaiwaQuestion}
+          // Custom Topics (moved from separate tab)
+          customTopics={customTopics}
+          customTopicFolders={customTopicFolders}
+          customTopicQuestions={customTopicQuestions}
+          onAddCustomTopic={(data) => addCustomTopic(data, currentUser.id)}
+          onUpdateCustomTopic={updateCustomTopic}
+          onDeleteCustomTopic={deleteCustomTopic}
+          onAddCustomTopicFolder={(topicId, name, level) => addCustomTopicFolder(topicId, name, currentUser.id, level)}
+          onUpdateCustomTopicFolder={updateCustomTopicFolder}
+          onDeleteCustomTopicFolder={deleteCustomTopicFolder}
+          onAddCustomTopicQuestion={(data) => addCustomTopicQuestion(data, currentUser.id)}
+          onUpdateCustomTopicQuestion={updateCustomTopicQuestion}
+          onDeleteCustomTopicQuestion={deleteCustomTopicQuestion}
+          // Flashcard lessons for custom topic linking
+          lessons={lessons}
+          getLessonsByLevel={getLessonsByLevel}
           currentUser={currentUser}
           isSuperAdmin={isSuperAdmin}
         />
       )}
 
-      {/* Custom Topics Tab */}
-      {activeTab === 'custom_topics' && (
-        <CustomTopicsTab
-          topics={customTopics}
-          folders={customTopicFolders}
-          questions={customTopicQuestions}
-          currentUser={currentUser}
-          isSuperAdmin={isSuperAdmin}
-          onAddTopic={(data) => addCustomTopic(data, currentUser.id)}
-          onUpdateTopic={updateCustomTopic}
-          onDeleteTopic={deleteCustomTopic}
-          onAddFolder={(topicId, name) => addCustomTopicFolder(topicId, name, currentUser.id)}
-          onUpdateFolder={updateCustomTopicFolder}
-          onDeleteFolder={deleteCustomTopicFolder}
-          onAddQuestion={(data) => addCustomTopicQuestion(data, currentUser.id)}
-          onUpdateQuestion={updateCustomTopicQuestion}
-          onDeleteQuestion={deleteCustomTopicQuestion}
-        />
-      )}
 
       {/* Game Tab */}
       {activeTab === 'game' && (

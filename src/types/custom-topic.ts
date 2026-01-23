@@ -1,7 +1,8 @@
 // Custom Topic Extension Types - 題材拡張
-// Allows creating custom question sets beyond standard JLPT categories
+// Custom conversation topics for Kaiwa practice with AI
+// Questions are used for conversation prompts, not multiple choice quiz
 
-import type { JLPTAnswer } from './jlpt-question';
+import type { JLPTLevel } from './kaiwa';
 
 // Difficulty levels for custom topics
 export type TopicDifficulty = 'beginner' | 'intermediate' | 'advanced' | 'mixed';
@@ -50,6 +51,7 @@ export interface CustomTopic {
   tags: string[];                  // Searchable tags
   isPublic: boolean;               // Visible to all users or private
   questionCount: number;           // Cached count for display
+  linkedLessonIds: string[];       // Linked Flashcard lesson IDs for vocabulary/grammar
   createdBy: string;               // User ID
   createdAt: string;               // ISO date
   updatedAt: string;               // ISO date
@@ -60,19 +62,22 @@ export interface CustomTopicFolder {
   id: string;
   topicId: string;                 // Parent topic
   name: string;                    // Folder name
+  level: JLPTLevel;                // JLPT level for this folder
+  linkedLessonIds: string[];       // Linked Flashcard lesson IDs for vocabulary
   order: number;                   // Display order
   createdBy: string;
   createdAt: string;
 }
 
-// Custom Topic Question - Question within a custom topic
+// Custom Topic Question - Conversation prompt for AI Kaiwa practice
 export interface CustomTopicQuestion {
   id: string;
   topicId: string;                 // Parent topic
   folderId?: string;               // Optional folder
-  question: string;                // Question text
-  answers: JLPTAnswer[];           // 4 answer options (reuse JLPT answer type)
-  explanation?: string;            // Optional explanation
+  questionJa: string;              // Question in Japanese
+  questionVi?: string;             // Vietnamese translation
+  situationContext?: string;       // Conversation situation/context
+  suggestedAnswers?: string[];     // Sample answer patterns for reference
   difficulty?: TopicDifficulty;    // Question-specific difficulty
   tags?: string[];                 // Additional tags
   createdBy: string;
@@ -88,17 +93,27 @@ export interface CustomTopicFormData {
   difficulty: TopicDifficulty;
   tags: string[];
   isPublic: boolean;
+  linkedLessonIds?: string[];      // Linked Flashcard lesson IDs
 }
 
 // Form data for creating/editing questions
 export interface CustomTopicQuestionFormData {
   topicId: string;
   folderId?: string;
-  question: string;
-  answers: JLPTAnswer[];
-  explanation?: string;
+  questionJa: string;
+  questionVi?: string;
+  situationContext?: string;
+  suggestedAnswers?: string[];
   difficulty?: TopicDifficulty;
   tags?: string[];
+}
+
+// Form data for creating/editing folders
+export interface CustomTopicFolderFormData {
+  topicId: string;
+  name: string;
+  level: JLPTLevel;
+  linkedLessonIds: string[];
 }
 
 // Statistics for a topic
@@ -118,18 +133,22 @@ export const DEFAULT_TOPIC_FORM: CustomTopicFormData = {
   difficulty: 'mixed',
   tags: [],
   isPublic: false,
+  linkedLessonIds: [],
 };
 
 export const DEFAULT_QUESTION_FORM: CustomTopicQuestionFormData = {
   topicId: '',
-  question: '',
-  answers: [
-    { text: '', isCorrect: true },
-    { text: '', isCorrect: false },
-    { text: '', isCorrect: false },
-    { text: '', isCorrect: false },
-  ],
-  explanation: '',
+  questionJa: '',
+  questionVi: '',
+  situationContext: '',
+  suggestedAnswers: [],
+};
+
+export const DEFAULT_FOLDER_FORM: CustomTopicFolderFormData = {
+  topicId: '',
+  name: '',
+  level: 'N5',
+  linkedLessonIds: [],
 };
 
 // Difficulty labels in Vietnamese

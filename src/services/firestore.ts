@@ -15,7 +15,7 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import type { Flashcard, FlashcardFormData, Lesson } from '../types/flashcard';
+import type { Flashcard, FlashcardFormData, Lesson, JLPTLevel } from '../types/flashcard';
 import type { User, StudySession, GameSession, JLPTSession } from '../types/user';
 import type { JLPTQuestion, JLPTQuestionFormData, JLPTFolder } from '../types/jlpt-question';
 import type { KaiwaDefaultQuestion, KaiwaQuestionFormData, KaiwaFolder } from '../types/kaiwa-question';
@@ -378,6 +378,7 @@ export function subscribeToCustomTopics(callback: (topics: CustomTopic[]) => voi
 export async function addCustomTopic(data: CustomTopicFormData, createdBy: string): Promise<CustomTopic> {
   const newTopic: Omit<CustomTopic, 'id'> = {
     ...data,
+    linkedLessonIds: data.linkedLessonIds || [],
     questionCount: 0,
     createdBy,
     createdAt: new Date().toISOString(),
@@ -417,10 +418,12 @@ export function subscribeToCustomTopicFolders(callback: (folders: CustomTopicFol
   });
 }
 
-export async function addCustomTopicFolder(topicId: string, name: string, createdBy: string): Promise<CustomTopicFolder> {
+export async function addCustomTopicFolder(topicId: string, name: string, createdBy: string, level: JLPTLevel = 'N5'): Promise<CustomTopicFolder> {
   const newFolder: Omit<CustomTopicFolder, 'id'> = {
     topicId,
     name,
+    level,
+    linkedLessonIds: [],
     order: Date.now(),
     createdBy,
     createdAt: new Date().toISOString(),
@@ -455,12 +458,22 @@ export function subscribeToCustomTopicQuestions(callback: (questions: CustomTopi
 }
 
 export async function addCustomTopicQuestion(data: CustomTopicQuestionFormData, createdBy: string): Promise<CustomTopicQuestion> {
-  const newQuestion: Omit<CustomTopicQuestion, 'id'> = {
-    ...data,
+  // Clean undefined values - Firebase doesn't accept undefined
+  const cleanData: Record<string, unknown> = {
+    topicId: data.topicId,
+    questionJa: data.questionJa,
     createdBy,
     createdAt: new Date().toISOString(),
   };
-  const docRef = await addDoc(collection(db, COLLECTIONS.CUSTOM_TOPIC_QUESTIONS), newQuestion);
+  // Only add optional fields if they have values
+  if (data.folderId) cleanData.folderId = data.folderId;
+  if (data.questionVi) cleanData.questionVi = data.questionVi;
+  if (data.situationContext) cleanData.situationContext = data.situationContext;
+  if (data.suggestedAnswers && data.suggestedAnswers.length > 0) cleanData.suggestedAnswers = data.suggestedAnswers;
+  if (data.difficulty) cleanData.difficulty = data.difficulty;
+  if (data.tags && data.tags.length > 0) cleanData.tags = data.tags;
+
+  const docRef = await addDoc(collection(db, COLLECTIONS.CUSTOM_TOPIC_QUESTIONS), cleanData);
 
   // Update topic question count
   const topicRef = doc(db, COLLECTIONS.CUSTOM_TOPICS, data.topicId);
@@ -470,12 +483,19 @@ export async function addCustomTopicQuestion(data: CustomTopicQuestionFormData, 
     await updateDoc(topicRef, { questionCount: currentCount + 1, updatedAt: new Date().toISOString() });
   }
 
-  return { id: docRef.id, ...newQuestion };
+  return { id: docRef.id, ...cleanData } as CustomTopicQuestion;
 }
 
 export async function updateCustomTopicQuestion(id: string, data: Partial<CustomTopicQuestionFormData>): Promise<void> {
   const docRef = doc(db, COLLECTIONS.CUSTOM_TOPIC_QUESTIONS, id);
-  await updateDoc(docRef, data);
+  // Clean undefined values - Firebase doesn't accept undefined
+  const cleanData: Record<string, unknown> = {};
+  Object.entries(data).forEach(([key, value]) => {
+    if (value !== undefined) {
+      cleanData[key] = value;
+    }
+  });
+  await updateDoc(docRef, cleanData);
 }
 
 export async function deleteCustomTopicQuestion(id: string): Promise<void> {

@@ -5,6 +5,7 @@ import type { AppSettings } from '../../hooks/use-settings';
 import type { KaiwaMessage, KaiwaContext, JLPTLevel, ConversationStyle, ConversationTopic, PronunciationResult, AnswerTemplate, SuggestedAnswer, KaiwaScenario, KaiwaRole, KaiwaEvaluation, KaiwaMetrics } from '../../types/kaiwa';
 import type { KaiwaDefaultQuestion, KaiwaFolder } from '../../types/kaiwa-question';
 import type { KaiwaAdvancedTopic, KaiwaAdvancedQuestion } from '../../types/kaiwa-advanced';
+import type { CustomTopic, CustomTopicQuestion } from '../../types/custom-topic';
 import { useSpeech, comparePronunciation } from '../../hooks/use-speech';
 import { useGroq } from '../../hooks/use-groq';
 import { JLPT_LEVELS, CONVERSATION_STYLES, CONVERSATION_TOPICS, getStyleDisplay, getScenarioByTopic } from '../../constants/kaiwa';
@@ -50,10 +51,14 @@ interface KaiwaPageProps {
   advancedTopics?: KaiwaAdvancedTopic[];
   advancedQuestions?: KaiwaAdvancedQuestion[];
   getAdvancedQuestionsByTopic?: (topicId: string) => KaiwaAdvancedQuestion[];
+  // Custom topics props
+  customTopics?: CustomTopic[];
+  customTopicQuestions?: CustomTopicQuestion[];
+  getCustomTopicQuestionsByTopic?: (topicId: string) => CustomTopicQuestion[];
 }
 
 // Session mode type
-type SessionMode = 'default' | 'advanced';
+type SessionMode = 'default' | 'advanced' | 'custom';
 
 // Navigation state for question selector
 type QuestionSelectorState =
@@ -72,6 +77,9 @@ export function KaiwaPage({
   advancedTopics = [],
   advancedQuestions = [],
   getAdvancedQuestionsByTopic,
+  customTopics = [],
+  customTopicQuestions = [],
+  getCustomTopicQuestionsByTopic,
 }: KaiwaPageProps) {
   // Conversation state
   const [messages, setMessages] = useState<KaiwaMessage[]>([]);
@@ -114,6 +122,10 @@ export function KaiwaPage({
   const [sessionMode, setSessionMode] = useState<SessionMode>('default');
   const [selectedAdvancedTopic, setSelectedAdvancedTopic] = useState<KaiwaAdvancedTopic | null>(null);
   const [selectedAdvancedQuestion, setSelectedAdvancedQuestion] = useState<KaiwaAdvancedQuestion | null>(null);
+
+  // Custom topic session state
+  const [selectedCustomTopic, setSelectedCustomTopic] = useState<CustomTopic | null>(null);
+  const [selectedCustomQuestion, setSelectedCustomQuestion] = useState<CustomTopicQuestion | null>(null);
 
   // Analysis state
   const [analysisText, setAnalysisText] = useState<string | null>(null);
@@ -345,6 +357,49 @@ export function KaiwaPage({
           };
         }
       }
+    } else if (sessionMode === 'custom' && selectedCustomTopic) {
+      // Custom topic mode
+      contextToUse.topic = 'free'; // Custom topics are custom
+
+      // Build custom topic context for AI
+      const customContext = {
+        topicName: selectedCustomTopic.name,
+        topicDescription: selectedCustomTopic.description,
+        vocabulary: [], // Custom topics don't have vocabulary yet
+      };
+
+      // If a specific question is selected, use it
+      if (selectedCustomQuestion) {
+        questionData = {
+          questionJa: selectedCustomQuestion.questionJa,
+          questionVi: selectedCustomQuestion.questionVi,
+          situationContext: selectedCustomQuestion.situationContext,
+          suggestedAnswers: selectedCustomQuestion.suggestedAnswers,
+          advancedTopicContext: customContext,
+        };
+      } else {
+        // Get a random question from the topic
+        const topicQuestions = getCustomQuestionsForTopic();
+        const randomQuestion = topicQuestions.length > 0
+          ? topicQuestions[Math.floor(Math.random() * topicQuestions.length)]
+          : null;
+
+        if (randomQuestion) {
+          questionData = {
+            questionJa: randomQuestion.questionJa,
+            questionVi: randomQuestion.questionVi,
+            situationContext: randomQuestion.situationContext,
+            suggestedAnswers: randomQuestion.suggestedAnswers,
+            advancedTopicContext: customContext,
+          };
+        } else {
+          // No questions, just use topic context
+          questionData = {
+            questionJa: '',
+            advancedTopicContext: customContext,
+          };
+        }
+      }
     } else if (selectedDefaultQuestion) {
       // Default question mode
       contextToUse.level = selectedDefaultQuestion.level;
@@ -471,6 +526,9 @@ export function KaiwaPage({
     // Reset advanced session state
     setSelectedAdvancedTopic(null);
     setSelectedAdvancedQuestion(null);
+    // Reset custom topic state
+    setSelectedCustomTopic(null);
+    setSelectedCustomQuestion(null);
     speech.stopSpeaking();
     groq.clearConversation();
   };
@@ -684,6 +742,15 @@ export function KaiwaPage({
     return advancedQuestions.filter(q => q.topicId === selectedAdvancedTopic.id);
   };
 
+  // Helper function to get questions for selected custom topic
+  const getCustomQuestionsForTopic = (): CustomTopicQuestion[] => {
+    if (!selectedCustomTopic) return [];
+    if (getCustomTopicQuestionsByTopic) {
+      return getCustomTopicQuestionsByTopic(selectedCustomTopic.id);
+    }
+    return customTopicQuestions.filter(q => q.topicId === selectedCustomTopic.id);
+  };
+
   // Helper function to get folders for current selector state
   const getFoldersForSelector = (): KaiwaFolder[] => {
     if (questionSelectorState.type !== 'list') return [];
@@ -708,7 +775,7 @@ export function KaiwaPage({
           </p>
 
           {/* Session Mode Selector */}
-          {advancedTopics.length > 0 && (
+          {(advancedTopics.length > 0 || customTopics.length > 0) && (
             <div className="kaiwa-session-mode-selector">
               <button
                 className={`session-mode-btn ${sessionMode === 'default' ? 'active' : ''}`}
@@ -716,22 +783,43 @@ export function KaiwaPage({
                   setSessionMode('default');
                   setSelectedAdvancedTopic(null);
                   setSelectedAdvancedQuestion(null);
+                  setSelectedCustomTopic(null);
+                  setSelectedCustomQuestion(null);
                 }}
               >
                 <MessagesSquare size={18} />
                 <span>Hội thoại cơ bản</span>
               </button>
-              <button
-                className={`session-mode-btn ${sessionMode === 'advanced' ? 'active' : ''}`}
-                onClick={() => {
-                  setSessionMode('advanced');
-                  setSelectedDefaultQuestion(null);
-                  setQuestionSelectorState({ type: 'hidden' });
-                }}
-              >
-                <Star size={18} />
-                <span>Session nâng cao</span>
-              </button>
+              {advancedTopics.length > 0 && (
+                <button
+                  className={`session-mode-btn ${sessionMode === 'advanced' ? 'active' : ''}`}
+                  onClick={() => {
+                    setSessionMode('advanced');
+                    setSelectedDefaultQuestion(null);
+                    setQuestionSelectorState({ type: 'hidden' });
+                    setSelectedCustomTopic(null);
+                    setSelectedCustomQuestion(null);
+                  }}
+                >
+                  <Star size={18} />
+                  <span>Session nâng cao</span>
+                </button>
+              )}
+              {customTopics.length > 0 && (
+                <button
+                  className={`session-mode-btn ${sessionMode === 'custom' ? 'active' : ''}`}
+                  onClick={() => {
+                    setSessionMode('custom');
+                    setSelectedDefaultQuestion(null);
+                    setQuestionSelectorState({ type: 'hidden' });
+                    setSelectedAdvancedTopic(null);
+                    setSelectedAdvancedQuestion(null);
+                  }}
+                >
+                  <BookOpen size={18} />
+                  <span>Chủ đề mở rộng</span>
+                </button>
+              )}
             </div>
           )}
 
@@ -840,6 +928,68 @@ export function KaiwaPage({
                   )}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Custom Topics Session Selector */}
+          {sessionMode === 'custom' && customTopics.length > 0 && (
+            <div className="kaiwa-custom-session">
+              <div className="custom-session-header">
+                <h3><BookOpen size={18} /> Chọn chủ đề mở rộng</h3>
+              </div>
+
+              {/* Custom Topics Grid - Always visible, shows selection state */}
+              <div className="custom-topics-grid">
+                {customTopics.map(topic => (
+                  <button
+                    key={topic.id}
+                    className={`custom-topic-card ${selectedCustomTopic?.id === topic.id ? 'selected' : ''}`}
+                    style={{ '--topic-color': topic.color } as React.CSSProperties}
+                    onClick={() => setSelectedCustomTopic(
+                      selectedCustomTopic?.id === topic.id ? null : topic
+                    )}
+                  >
+                    <span className="topic-icon" style={{ backgroundColor: `${topic.color}20` }}>
+                      {topic.icon}
+                    </span>
+                    <div className="topic-info">
+                      <span className="topic-name">{topic.name}</span>
+                      <span className="topic-meta">
+                        <span className="topic-count">
+                          <MessageCircle size={12} /> {topic.questionCount || 0}
+                        </span>
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Start Conversation Button - Centered, only active when topic selected */}
+              <div className="custom-start-section">
+                <button
+                  className={`kaiwa-start-btn ${selectedCustomTopic ? 'active' : 'disabled'}`}
+                  disabled={!selectedCustomTopic}
+                  onClick={() => {
+                    if (selectedCustomTopic) {
+                      // Pick a random question from the topic if available
+                      const topicQuestions = getCustomQuestionsForTopic();
+                      if (topicQuestions.length > 0) {
+                        const randomQuestion = topicQuestions[Math.floor(Math.random() * topicQuestions.length)];
+                        setSelectedCustomQuestion(randomQuestion);
+                      }
+                      handleStart();
+                    }
+                  }}
+                >
+                  <MessagesSquare size={20} />
+                  Bắt đầu hội thoại
+                </button>
+                {selectedCustomTopic && (
+                  <p className="start-hint">
+                    AI sẽ ngẫu nhiên chọn câu hỏi hoặc sử dụng nguồn từ vựng để luyện giao tiếp
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
@@ -1014,8 +1164,8 @@ export function KaiwaPage({
             </div>
           )}
 
-          {/* Free conversation setup (only show if no default question selected and not advanced mode with topic) */}
-          {!selectedDefaultQuestion && !(sessionMode === 'advanced' && selectedAdvancedTopic) && (
+          {/* Free conversation setup (only show if no default question selected and not in advanced/custom mode) */}
+          {!selectedDefaultQuestion && sessionMode !== 'advanced' && sessionMode !== 'custom' && (
             <div className="kaiwa-setup">
               <div className="kaiwa-setup-row">
                 <div className="kaiwa-setup-item">
@@ -1078,19 +1228,22 @@ export function KaiwaPage({
             </div>
           )}
 
-          <div className="kaiwa-setup-item kaiwa-options-row">
-            <label>
-              <input
-                type="checkbox"
-                checked={slowMode}
-                onChange={e => setSlowMode(e.target.checked)}
-              />
-              Chế độ chậm (luyện nghe)
-            </label>
-            <span className="kaiwa-voice-info">
-              Giọng: {settings.kaiwaVoiceGender === 'female' ? 'Nữ' : 'Nam'}
-            </span>
-          </div>
+          {/* Options row - hide in custom mode */}
+          {sessionMode !== 'custom' && (
+            <div className="kaiwa-setup-item kaiwa-options-row">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={slowMode}
+                  onChange={e => setSlowMode(e.target.checked)}
+                />
+                Chế độ chậm (luyện nghe)
+              </label>
+              <span className="kaiwa-voice-info">
+                Giọng: {settings.kaiwaVoiceGender === 'female' ? 'Nữ' : 'Nam'}
+              </span>
+            </div>
+          )}
 
           {!speech.recognitionSupported && (
             <p className="kaiwa-warning">
@@ -1098,17 +1251,20 @@ export function KaiwaPage({
             </p>
           )}
 
-          <button
-            className="btn btn-primary btn-large"
-            onClick={handleStart}
-            disabled={sessionMode === 'advanced' && !selectedAdvancedTopic}
-          >
-            {sessionMode === 'advanced' && selectedAdvancedTopic
-              ? `Bắt đầu: ${selectedAdvancedTopic.name}`
-              : selectedDefaultQuestion
-                ? 'Bắt đầu với câu hỏi đã chọn'
-                : 'Bắt đầu hội thoại'}
-          </button>
+          {/* Start button - hide in custom mode (has its own button) */}
+          {sessionMode !== 'custom' && (
+            <button
+              className="btn btn-primary btn-large"
+              onClick={handleStart}
+              disabled={sessionMode === 'advanced' && !selectedAdvancedTopic}
+            >
+              {sessionMode === 'advanced' && selectedAdvancedTopic
+                ? `Bắt đầu: ${selectedAdvancedTopic.name}`
+                : selectedDefaultQuestion
+                  ? 'Bắt đầu với câu hỏi đã chọn'
+                  : 'Bắt đầu hội thoại'}
+            </button>
+          )}
         </div>
         </div>
       </div>
@@ -1131,6 +1287,10 @@ export function KaiwaPage({
             {selectedAdvancedTopic ? (
               <span className="kaiwa-badge topic advanced" style={{ borderColor: selectedAdvancedTopic.color }}>
                 {selectedAdvancedTopic.icon} {selectedAdvancedTopic.name}
+              </span>
+            ) : selectedCustomTopic ? (
+              <span className="kaiwa-badge topic custom" style={{ borderColor: selectedCustomTopic.color }}>
+                {selectedCustomTopic.icon} {selectedCustomTopic.name}
               </span>
             ) : (
               <span className="kaiwa-badge topic">{currentTopic?.icon} {currentTopic?.label.split(' ')[0]}</span>

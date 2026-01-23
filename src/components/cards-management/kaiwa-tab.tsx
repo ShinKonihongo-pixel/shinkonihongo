@@ -6,11 +6,11 @@ import { CONVERSATION_TOPICS, CONVERSATION_STYLES } from '../../constants/kaiwa'
 import { ConfirmModal } from '../ui/confirm-modal';
 import type { KaiwaTabProps, KaiwaNavState, KaiwaDefaultQuestion, KaiwaFolder, KaiwaQuestionFormData, ConversationStyle } from './cards-management-types';
 import { KAIWA_LEVELS } from './cards-management-types';
-import { MessageSquare, FolderOpen, Upload, Settings, Trophy, Clock, Mic, FileText, Plus, Search, Filter, ChevronRight, ChevronLeft, Edit2, Trash2, BookOpen, Target, Zap, Award, TrendingUp, BarChart3, Star } from 'lucide-react';
-import { KaiwaTopicsManagement } from '../kaiwa/kaiwa-topics-management';
+import { MessageSquare, FolderOpen, Upload, Settings, Clock, Mic, FileText, Plus, Search, Filter, ChevronRight, ChevronLeft, Edit2, Trash2, BookOpen, Zap, TrendingUp, Star } from 'lucide-react';
+import { CustomTopicsTab } from './custom-topics-tab';
 
 // Kaiwa management sub-tabs
-type KaiwaSubTab = 'overview' | 'questions' | 'import' | 'settings' | 'challenges' | 'rewards' | 'advanced_topics';
+type KaiwaSubTab = 'questions' | 'import' | 'settings' | 'custom_topics';
 
 // Practice settings type
 interface KaiwaPracticeSettings {
@@ -22,32 +22,6 @@ interface KaiwaPracticeSettings {
   slowModeDefault: boolean;
 }
 
-// Challenge configuration
-interface KaiwaChallenge {
-  id: string;
-  name: string;
-  description: string;
-  level: string;
-  topics: string[];
-  questionCount: number;
-  timeLimit: number; // minutes, 0 = unlimited
-  minAccuracy: number; // percentage required to pass
-  rewardPoints: number;
-  badge?: string;
-  isActive: boolean;
-}
-
-// Reward badge definition
-interface KaiwaBadge {
-  id: string;
-  name: string;
-  icon: string;
-  description: string;
-  requirement: string;
-  pointsRequired?: number;
-  conversationsRequired?: number;
-  accuracyRequired?: number;
-}
 
 // Default practice settings
 const DEFAULT_SETTINGS: KaiwaPracticeSettings = {
@@ -59,19 +33,6 @@ const DEFAULT_SETTINGS: KaiwaPracticeSettings = {
   slowModeDefault: false,
 };
 
-// Preset badges
-const KAIWA_BADGES: KaiwaBadge[] = [
-  { id: 'first_chat', name: 'Người mới bắt đầu', icon: '🌱', description: 'Hoàn thành cuộc hội thoại đầu tiên', requirement: '1 cuộc hội thoại', conversationsRequired: 1 },
-  { id: 'ten_chats', name: 'Người chăm chỉ', icon: '📚', description: 'Hoàn thành 10 cuộc hội thoại', requirement: '10 cuộc hội thoại', conversationsRequired: 10 },
-  { id: 'fifty_chats', name: 'Người kiên trì', icon: '💪', description: 'Hoàn thành 50 cuộc hội thoại', requirement: '50 cuộc hội thoại', conversationsRequired: 50 },
-  { id: 'perfect_accuracy', name: 'Phát âm chuẩn', icon: '🎯', description: 'Đạt 100% độ chính xác phát âm', requirement: '100% accuracy', accuracyRequired: 100 },
-  { id: 'all_topics', name: 'Đa chủ đề', icon: '🌈', description: 'Luyện tập tất cả chủ đề', requirement: 'Tất cả topics' },
-  { id: 'n5_master', name: 'N5 Master', icon: '⭐', description: 'Hoàn thành tất cả câu hỏi N5', requirement: 'Hoàn thành N5' },
-  { id: 'n4_master', name: 'N4 Master', icon: '⭐⭐', description: 'Hoàn thành tất cả câu hỏi N4', requirement: 'Hoàn thành N4' },
-  { id: 'n3_master', name: 'N3 Master', icon: '⭐⭐⭐', description: 'Hoàn thành tất cả câu hỏi N3', requirement: 'Hoàn thành N3' },
-  { id: 'speed_demon', name: 'Nhanh như chớp', icon: '⚡', description: 'Trả lời trong 5 giây', requirement: '< 5 giây' },
-  { id: 'streak_7', name: 'Streak 7 ngày', icon: '🔥', description: 'Luyện tập 7 ngày liên tiếp', requirement: '7 ngày liên tiếp' },
-];
 
 export function KaiwaTab({
   questions,
@@ -84,20 +45,36 @@ export function KaiwaTab({
   onDeleteFolder,
   getFoldersByLevelAndTopic,
   getQuestionsByFolder,
-  // Advanced Topics props
+  // Advanced Topics props (unused but kept for API compatibility)
   advancedTopics = [],
-  advancedQuestions = [],
-  onAddAdvancedTopic,
-  onUpdateAdvancedTopic,
-  onDeleteAdvancedTopic,
-  onAddAdvancedQuestion,
-  onUpdateAdvancedQuestion,
-  onDeleteAdvancedQuestion,
+  advancedQuestions: _advancedQuestions = [],
+  onAddAdvancedTopic: _onAddAdvancedTopic,
+  onUpdateAdvancedTopic: _onUpdateAdvancedTopic,
+  onDeleteAdvancedTopic: _onDeleteAdvancedTopic,
+  onAddAdvancedQuestion: _onAddAdvancedQuestion,
+  onUpdateAdvancedQuestion: _onUpdateAdvancedQuestion,
+  onDeleteAdvancedQuestion: _onDeleteAdvancedQuestion,
+  // Custom Topics props
+  customTopics = [],
+  customTopicFolders = [],
+  customTopicQuestions = [],
+  onAddCustomTopic,
+  onUpdateCustomTopic,
+  onDeleteCustomTopic,
+  onAddCustomTopicFolder,
+  onUpdateCustomTopicFolder,
+  onDeleteCustomTopicFolder,
+  onAddCustomTopicQuestion,
+  onUpdateCustomTopicQuestion,
+  onDeleteCustomTopicQuestion,
+  // Flashcard lessons
+  lessons = [],
+  getLessonsByLevel,
   currentUser,
   isSuperAdmin,
 }: KaiwaTabProps) {
   // Main tab state
-  const [activeSubTab, setActiveSubTab] = useState<KaiwaSubTab>('overview');
+  const [activeSubTab, setActiveSubTab] = useState<KaiwaSubTab>('questions');
 
   // Navigation state for questions
   const [navState, setNavState] = useState<KaiwaNavState>({ type: 'root' });
@@ -137,9 +114,6 @@ export function KaiwaTab({
   // Settings state
   const [practiceSettings, setPracticeSettings] = useState<KaiwaPracticeSettings>(DEFAULT_SETTINGS);
 
-  // Challenge state
-  const [challenges] = useState<KaiwaChallenge[]>([]);
-  const [isAddingChallenge, setIsAddingChallenge] = useState(false);
 
   // Permission helpers
   const canModifyQuestion = (q: KaiwaDefaultQuestion) => isSuperAdmin || q.createdBy === currentUser.id;
@@ -544,18 +518,18 @@ export function KaiwaTab({
       {/* Sub-tab Navigation */}
       <div className="kaiwa-subtabs">
         <button
-          className={`subtab ${activeSubTab === 'overview' ? 'active' : ''}`}
-          onClick={() => setActiveSubTab('overview')}
-        >
-          <BarChart3 size={18} />
-          <span>Tổng quan</span>
-        </button>
-        <button
           className={`subtab ${activeSubTab === 'questions' ? 'active' : ''}`}
           onClick={() => setActiveSubTab('questions')}
         >
           <MessageSquare size={18} />
           <span>Câu hỏi</span>
+        </button>
+        <button
+          className={`subtab ${activeSubTab === 'custom_topics' ? 'active' : ''}`}
+          onClick={() => setActiveSubTab('custom_topics')}
+        >
+          <Star size={18} />
+          <span>Chủ đề ({customTopics.length})</span>
         </button>
         <button
           className={`subtab ${activeSubTab === 'import' ? 'active' : ''}`}
@@ -571,122 +545,28 @@ export function KaiwaTab({
           <Settings size={18} />
           <span>Cài đặt</span>
         </button>
-        <button
-          className={`subtab ${activeSubTab === 'challenges' ? 'active' : ''}`}
-          onClick={() => setActiveSubTab('challenges')}
-        >
-          <Target size={18} />
-          <span>Thử thách</span>
-        </button>
-        <button
-          className={`subtab ${activeSubTab === 'rewards' ? 'active' : ''}`}
-          onClick={() => setActiveSubTab('rewards')}
-        >
-          <Trophy size={18} />
-          <span>Phần thưởng</span>
-        </button>
-        <button
-          className={`subtab advanced ${activeSubTab === 'advanced_topics' ? 'active' : ''}`}
-          onClick={() => setActiveSubTab('advanced_topics')}
-        >
-          <Star size={18} />
-          <span>Nâng cao ({advancedTopics.length})</span>
-        </button>
       </div>
 
-      {/* Overview Tab */}
-      {activeSubTab === 'overview' && (
-        <div className="kaiwa-overview">
-          {/* Stats Cards */}
-          <div className="stats-grid">
-            <div className="stat-card primary">
-              <div className="stat-icon"><MessageSquare size={24} /></div>
-              <div className="stat-content">
-                <div className="stat-value">{stats.total}</div>
-                <div className="stat-label">Tổng câu hỏi</div>
-              </div>
-            </div>
-            <div className="stat-card success">
-              <div className="stat-icon"><FolderOpen size={24} /></div>
-              <div className="stat-content">
-                <div className="stat-value">{_folders?.length || 0}</div>
-                <div className="stat-label">Thư mục</div>
-              </div>
-            </div>
-            <div className="stat-card warning">
-              <div className="stat-icon"><BookOpen size={24} /></div>
-              <div className="stat-content">
-                <div className="stat-value">{CONVERSATION_TOPICS.filter(t => t.value !== 'free').length}</div>
-                <div className="stat-label">Chủ đề</div>
-              </div>
-            </div>
-            <div className="stat-card info">
-              <div className="stat-icon"><Target size={24} /></div>
-              <div className="stat-content">
-                <div className="stat-value">{challenges.filter(c => c.isActive).length}</div>
-                <div className="stat-label">Thử thách</div>
-              </div>
-            </div>
-          </div>
-
-          {/* By Level Chart */}
-          <div className="overview-section">
-            <h3>Phân bố theo cấp độ</h3>
-            <div className="level-bars">
-              {KAIWA_LEVELS.map(level => {
-                const count = stats.byLevel[level] || 0;
-                const percentage = stats.total > 0 ? (count / stats.total) * 100 : 0;
-                return (
-                  <div key={level} className="level-bar-item">
-                    <div className="level-bar-label">
-                      <span className="level-name">{level}</span>
-                      <span className="level-count">{count} câu</span>
-                    </div>
-                    <div className="level-bar-track">
-                      <div
-                        className={`level-bar-fill level-${level.toLowerCase()}`}
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* By Topic Grid */}
-          <div className="overview-section">
-            <h3>Phân bố theo chủ đề</h3>
-            <div className="topic-stats-grid">
-              {CONVERSATION_TOPICS.filter(t => t.value !== 'free').map(topic => (
-                <div key={topic.value} className="topic-stat-card">
-                  <span className="topic-icon">{topic.icon}</span>
-                  <span className="topic-name">{topic.label}</span>
-                  <span className="topic-count">{stats.byTopic[topic.value] || 0}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="overview-section">
-            <h3>Thao tác nhanh</h3>
-            <div className="quick-actions">
-              <button className="quick-action-btn" onClick={() => setActiveSubTab('questions')}>
-                <Plus size={20} />
-                <span>Thêm câu hỏi</span>
-              </button>
-              <button className="quick-action-btn" onClick={() => setActiveSubTab('import')}>
-                <Upload size={20} />
-                <span>Import câu hỏi</span>
-              </button>
-              <button className="quick-action-btn" onClick={() => setActiveSubTab('challenges')}>
-                <Target size={20} />
-                <span>Tạo thử thách</span>
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Custom Topics Tab */}
+      {activeSubTab === 'custom_topics' && onAddCustomTopic && onUpdateCustomTopic && onDeleteCustomTopic && (
+        <CustomTopicsTab
+          topics={customTopics}
+          folders={customTopicFolders}
+          questions={customTopicQuestions}
+          currentUser={currentUser}
+          isSuperAdmin={isSuperAdmin}
+          lessons={lessons}
+          getLessonsByLevel={getLessonsByLevel}
+          onAddTopic={onAddCustomTopic}
+          onUpdateTopic={onUpdateCustomTopic}
+          onDeleteTopic={onDeleteCustomTopic}
+          onAddFolder={onAddCustomTopicFolder!}
+          onUpdateFolder={onUpdateCustomTopicFolder!}
+          onDeleteFolder={onDeleteCustomTopicFolder!}
+          onAddQuestion={onAddCustomTopicQuestion!}
+          onUpdateQuestion={onUpdateCustomTopicQuestion!}
+          onDeleteQuestion={onDeleteCustomTopicQuestion!}
+        />
       )}
 
       {/* Questions Tab */}
@@ -1149,97 +1029,6 @@ export function KaiwaTab({
         </div>
       )}
 
-      {/* Challenges Tab */}
-      {activeSubTab === 'challenges' && (
-        <div className="kaiwa-challenges-tab">
-          <div className="challenges-header">
-            <h3><Target size={24} /> Quản Lý Thử Thách</h3>
-            <button className="btn btn-primary" onClick={() => setIsAddingChallenge(true)}>
-              <Plus size={16} /> Tạo thử thách
-            </button>
-          </div>
-
-          {challenges.length === 0 ? (
-            <div className="empty-state">
-              <Target size={48} />
-              <p>Chưa có thử thách nào</p>
-              <p className="sub">Tạo thử thách để tăng động lực học tập</p>
-            </div>
-          ) : (
-            <div className="challenges-list">
-              {challenges.map(challenge => (
-                <div key={challenge.id} className={`challenge-card ${challenge.isActive ? 'active' : 'inactive'}`}>
-                  <div className="challenge-header">
-                    <h4>{challenge.name}</h4>
-                    <span className={`status ${challenge.isActive ? 'active' : ''}`}>
-                      {challenge.isActive ? 'Đang hoạt động' : 'Tạm dừng'}
-                    </span>
-                  </div>
-                  <p className="challenge-desc">{challenge.description}</p>
-                  <div className="challenge-meta">
-                    <span><Award size={14} /> {challenge.rewardPoints} điểm</span>
-                    <span><MessageSquare size={14} /> {challenge.questionCount} câu</span>
-                    {challenge.timeLimit > 0 && <span><Clock size={14} /> {challenge.timeLimit} phút</span>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Challenge Form Placeholder */}
-          {isAddingChallenge && (
-            <div className="challenge-form">
-              <h4>Tạo thử thách mới</h4>
-              <p className="form-note">Tính năng đang được phát triển...</p>
-              <button className="btn btn-secondary" onClick={() => setIsAddingChallenge(false)}>Đóng</button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Rewards Tab */}
-      {activeSubTab === 'rewards' && (
-        <div className="kaiwa-rewards-tab">
-          <div className="rewards-header">
-            <h3><Trophy size={24} /> Hệ Thống Phần Thưởng</h3>
-            <p>Huy hiệu và điểm thưởng cho người học</p>
-          </div>
-
-          <div className="badges-grid">
-            {KAIWA_BADGES.map(badge => (
-              <div key={badge.id} className="badge-card">
-                <div className="badge-icon">{badge.icon}</div>
-                <div className="badge-info">
-                  <h4>{badge.name}</h4>
-                  <p>{badge.description}</p>
-                  <span className="badge-requirement">{badge.requirement}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="rewards-note">
-            <Award size={20} />
-            <p>Huy hiệu sẽ tự động được cấp khi người học đạt điều kiện</p>
-          </div>
-        </div>
-      )}
-
-      {/* Advanced Topics Tab */}
-      {activeSubTab === 'advanced_topics' && onAddAdvancedTopic && onUpdateAdvancedTopic && onDeleteAdvancedTopic && onAddAdvancedQuestion && onUpdateAdvancedQuestion && onDeleteAdvancedQuestion && (
-        <KaiwaTopicsManagement
-          topics={advancedTopics}
-          questions={advancedQuestions}
-          currentUserId={currentUser.id}
-          isSuperAdmin={isSuperAdmin}
-          onAddTopic={onAddAdvancedTopic}
-          onUpdateTopic={onUpdateAdvancedTopic}
-          onDeleteTopic={onDeleteAdvancedTopic}
-          onAddQuestion={onAddAdvancedQuestion}
-          onUpdateQuestion={onUpdateAdvancedQuestion}
-          onDeleteQuestion={onDeleteAdvancedQuestion}
-        />
-      )}
 
       {/* Confirm Modals */}
       <ConfirmModal

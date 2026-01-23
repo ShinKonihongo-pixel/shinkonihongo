@@ -2,7 +2,7 @@
 // Professional UI for creating and managing custom question sets beyond JLPT
 
 import { useState, useMemo } from 'react';
-import { Plus, Edit2, Trash2, FolderPlus, FileQuestion, ArrowLeft, Search, Grid, List, Download, Upload, Settings, Eye, EyeOff, Star } from 'lucide-react';
+import { Plus, Edit2, Trash2, FileQuestion, ArrowLeft, Search, Grid, List, Download, Upload, Settings, Eye, EyeOff, Star, BookOpen, Circle, CheckCircle } from 'lucide-react';
 import { ConfirmModal } from '../ui/confirm-modal';
 import type {
   CustomTopic,
@@ -12,6 +12,9 @@ import type {
   CustomTopicQuestionFormData,
   TopicDifficulty,
 } from '../../types/custom-topic';
+import type { JLPTLevel } from '../../types/kaiwa';
+
+const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 import {
   TOPIC_ICONS,
   TOPIC_COLORS,
@@ -32,19 +35,27 @@ interface NavState {
   folderId?: string;
 }
 
+import type { Lesson } from '../../types/flashcard';
+
+// Detail session tabs
+type DetailSessionTab = 'sources' | 'questions';
+
 interface CustomTopicsTabProps {
   topics: CustomTopic[];
   folders: CustomTopicFolder[];
   questions: CustomTopicQuestion[];
   currentUser: CurrentUser;
   isSuperAdmin: boolean;
+  // Flashcard lessons for linking
+  lessons?: Lesson[];
+  getLessonsByLevel?: (level: JLPTLevel) => Lesson[];
   // Topic CRUD
   onAddTopic: (data: CustomTopicFormData) => Promise<CustomTopic | null>;
   onUpdateTopic: (id: string, data: Partial<CustomTopicFormData>) => Promise<boolean>;
   onDeleteTopic: (id: string) => Promise<boolean>;
-  // Folder CRUD
-  onAddFolder: (topicId: string, name: string) => Promise<CustomTopicFolder | null>;
-  onUpdateFolder: (id: string, name: string) => Promise<boolean>;
+  // Folder CRUD (kept for compatibility)
+  onAddFolder: (topicId: string, name: string, level?: JLPTLevel) => Promise<CustomTopicFolder | null>;
+  onUpdateFolder: (id: string, name: string, level?: JLPTLevel) => Promise<boolean>;
   onDeleteFolder: (id: string) => Promise<boolean>;
   // Question CRUD
   onAddQuestion: (data: CustomTopicQuestionFormData) => Promise<CustomTopicQuestion | null>;
@@ -61,12 +72,14 @@ export function CustomTopicsTab({
   questions,
   currentUser,
   isSuperAdmin,
+  lessons = [],
+  getLessonsByLevel,
   onAddTopic,
   onUpdateTopic,
   onDeleteTopic,
-  onAddFolder,
-  onUpdateFolder,
-  onDeleteFolder,
+  onAddFolder: _onAddFolder,
+  onUpdateFolder: _onUpdateFolder,
+  onDeleteFolder: _onDeleteFolder,
   onAddQuestion,
   onUpdateQuestion,
   onDeleteQuestion,
@@ -83,11 +96,9 @@ export function CustomTopicsTab({
   const [editingTopic, setEditingTopic] = useState<CustomTopic | null>(null);
   const [topicForm, setTopicForm] = useState<CustomTopicFormData>(DEFAULT_TOPIC_FORM);
 
-  // Folder states
-  const [showAddFolder, setShowAddFolder] = useState(false);
-  const [newFolderName, setNewFolderName] = useState('');
-  const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
-  const [editingFolderName, setEditingFolderName] = useState('');
+  // Detail session tab
+  const [detailSessionTab, setDetailSessionTab] = useState<DetailSessionTab>('sources');
+  const [selectedSourceLevel, setSelectedSourceLevel] = useState<JLPTLevel>('N5');
 
   // Question states
   const [showQuestionForm, setShowQuestionForm] = useState(false);
@@ -194,8 +205,9 @@ export function CustomTopicsTab({
   // Folder handlers
   const handleAddFolder = async () => {
     if (!newFolderName.trim() || !navState.topicId) return;
-    await onAddFolder(navState.topicId, newFolderName.trim());
+    await onAddFolder(navState.topicId, newFolderName.trim(), newFolderLevel);
     setNewFolderName('');
+    setNewFolderLevel('N5');
     setShowAddFolder(false);
   };
 
@@ -213,9 +225,10 @@ export function CustomTopicsTab({
       setQuestionForm({
         topicId: question.topicId,
         folderId: question.folderId,
-        question: question.question,
-        answers: [...question.answers],
-        explanation: question.explanation || '',
+        questionJa: question.questionJa,
+        questionVi: question.questionVi || '',
+        situationContext: question.situationContext || '',
+        suggestedAnswers: question.suggestedAnswers || [],
         difficulty: question.difficulty,
         tags: question.tags || [],
       });
@@ -231,7 +244,7 @@ export function CustomTopicsTab({
   };
 
   const handleSaveQuestion = async () => {
-    if (!questionForm.question.trim() || questionForm.answers.some(a => !a.text.trim())) return;
+    if (!questionForm.questionJa.trim()) return;
     if (editingQuestion) {
       await onUpdateQuestion(editingQuestion.id, questionForm);
     } else {
@@ -242,15 +255,23 @@ export function CustomTopicsTab({
     setQuestionForm(DEFAULT_QUESTION_FORM);
   };
 
-  const handleAnswerChange = (index: number, text: string) => {
-    const newAnswers = [...questionForm.answers];
-    newAnswers[index] = { ...newAnswers[index], text };
-    setQuestionForm({ ...questionForm, answers: newAnswers });
+  // Suggested answers handlers
+  const handleAddSuggestedAnswer = () => {
+    setQuestionForm({
+      ...questionForm,
+      suggestedAnswers: [...(questionForm.suggestedAnswers || []), ''],
+    });
   };
 
-  const handleCorrectAnswerChange = (index: number) => {
-    const newAnswers = questionForm.answers.map((a, i) => ({ ...a, isCorrect: i === index }));
-    setQuestionForm({ ...questionForm, answers: newAnswers });
+  const handleUpdateSuggestedAnswer = (index: number, value: string) => {
+    const newAnswers = [...(questionForm.suggestedAnswers || [])];
+    newAnswers[index] = value;
+    setQuestionForm({ ...questionForm, suggestedAnswers: newAnswers });
+  };
+
+  const handleRemoveSuggestedAnswer = (index: number) => {
+    const newAnswers = (questionForm.suggestedAnswers || []).filter((_, i) => i !== index);
+    setQuestionForm({ ...questionForm, suggestedAnswers: newAnswers });
   };
 
   // Navigation
@@ -282,21 +303,6 @@ export function CustomTopicsTab({
           <span className="topic-icon" style={{ backgroundColor: `${topic.color}20` }}>
             {topic.icon}
           </span>
-          {canModifyTopic(topic) && (
-            <div className="topic-card-actions" onClick={e => e.stopPropagation()}>
-              <button className="btn-icon" onClick={() => handleOpenTopicModal(topic)} title="Chỉnh sửa">
-                <Edit2 size={14} />
-              </button>
-              {onExportTopic && (
-                <button className="btn-icon" onClick={() => onExportTopic(topic.id)} title="Xuất">
-                  <Download size={14} />
-                </button>
-              )}
-              <button className="btn-icon danger" onClick={() => setDeleteTopicTarget(topic)} title="Xóa">
-                <Trash2 size={14} />
-              </button>
-            </div>
-          )}
         </div>
         <div className="topic-card-body">
           <h3 className="topic-name">{topic.name}</h3>
@@ -321,42 +327,41 @@ export function CustomTopicsTab({
             </div>
           )}
         </div>
-      </div>
-    );
-  };
-
-  // Question Card Component
-  const renderQuestionCard = (question: CustomTopicQuestion) => (
-    <div key={question.id} className="question-card">
-      <div className="question-header">
-        {canModifyQuestion(question) && (
-          <div className="question-actions">
-            <button className="btn-icon" onClick={() => handleOpenQuestionForm(question)} title="Sửa">
+        {canModifyTopic(topic) && (
+          <div className="topic-card-actions" onClick={e => e.stopPropagation()}>
+            <button className="btn-icon" onClick={() => handleOpenTopicModal(topic)} title="Chỉnh sửa">
               <Edit2 size={14} />
             </button>
-            <button className="btn-icon danger" onClick={() => setDeleteQuestionTarget(question)} title="Xóa">
+            {onExportTopic && (
+              <button className="btn-icon" onClick={() => onExportTopic(topic.id)} title="Xuất">
+                <Download size={14} />
+              </button>
+            )}
+            <button className="btn-icon danger" onClick={() => setDeleteTopicTarget(topic)} title="Xóa">
               <Trash2 size={14} />
             </button>
           </div>
         )}
       </div>
-      <div className="question-content">
-        <p className="question-text">{question.question}</p>
-        <div className="question-answers">
-          {question.answers.map((answer, index) => (
-            <div key={index} className={`answer-item ${answer.isCorrect ? 'correct' : ''}`}>
-              <span className="answer-letter">{String.fromCharCode(65 + index)}.</span>
-              <span className="answer-text">{answer.text}</span>
-              {answer.isCorrect && <span className="correct-mark">✓</span>}
-            </div>
-          ))}
+    );
+  };
+
+  // Question Card Component - Conversation format
+  const renderQuestionCard = (question: CustomTopicQuestion, index: number) => (
+    <div key={question.id} className="question-list-item">
+      <span className="question-number">{index + 1}.</span>
+      <span className="question-text">{question.questionJa}</span>
+      {question.questionVi && <span className="question-vi">({question.questionVi})</span>}
+      {canModifyQuestion(question) && (
+        <div className="question-actions">
+          <button className="btn-icon-sm" onClick={() => handleOpenQuestionForm(question)} title="Sửa">
+            <Edit2 size={14} />
+          </button>
+          <button className="btn-icon-sm danger" onClick={() => setDeleteQuestionTarget(question)} title="Xóa">
+            <Trash2 size={14} />
+          </button>
         </div>
-        {question.explanation && (
-          <div className="question-explanation">
-            <strong>Giải thích:</strong> {question.explanation}
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 
@@ -632,174 +637,178 @@ export function CustomTopicsTab({
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="topic-stats">
-          <div className="stat-item">
-            <span className="stat-value">{getTopicQuestionCount(currentTopic.id)}</span>
-            <span className="stat-label">Câu hỏi</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-value">{currentFolders.length}</span>
-            <span className="stat-label">Thư mục</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-value" style={{ color: DIFFICULTY_LABELS[currentTopic.difficulty].color }}>
-              {DIFFICULTY_LABELS[currentTopic.difficulty].label}
-            </span>
-            <span className="stat-label">Độ khó</span>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="folder-actions">
-          <button className="btn btn-secondary" onClick={() => setShowAddFolder(true)}>
-            <FolderPlus size={16} /> Thêm thư mục
+        {/* Session Tabs */}
+        <div className="detail-session-tabs">
+          <button
+            className={`session-tab-btn ${detailSessionTab === 'sources' ? 'active' : ''}`}
+            onClick={() => setDetailSessionTab('sources')}
+          >
+            <BookOpen size={16} /> Nguồn từ vựng / Ngữ pháp
           </button>
-          {currentFolders.length === 0 && (
-            <button className="btn btn-primary" onClick={() => handleOpenQuestionForm()}>
-              <Plus size={16} /> Thêm câu hỏi
-            </button>
-          )}
+          <button
+            className={`session-tab-btn ${detailSessionTab === 'questions' ? 'active' : ''}`}
+            onClick={() => setDetailSessionTab('questions')}
+          >
+            <FileQuestion size={16} /> Câu hỏi ({getTopicQuestionCount(currentTopic.id)})
+          </button>
         </div>
 
-        {/* Add Folder Inline */}
-        {showAddFolder && (
-          <div className="add-folder-inline">
-            <input
-              type="text"
-              placeholder="Tên thư mục mới..."
-              value={newFolderName}
-              onChange={e => setNewFolderName(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') handleAddFolder();
-                if (e.key === 'Escape') { setShowAddFolder(false); setNewFolderName(''); }
-              }}
-              autoFocus
-            />
-            <button className="btn btn-primary" onClick={handleAddFolder}>Tạo</button>
-            <button className="btn btn-secondary" onClick={() => { setShowAddFolder(false); setNewFolderName(''); }}>Hủy</button>
-          </div>
-        )}
-
-        {/* Folders List */}
-        {currentFolders.length > 0 && (
-          <div className="folders-list">
-            {currentFolders.map(folder => (
-              <div
-                key={folder.id}
-                className="folder-item"
-                onClick={() => setNavState({ type: 'folder-detail', topicId: navState.topicId, folderId: folder.id })}
-              >
-                <span className="folder-icon">📁</span>
-                {editingFolderId === folder.id ? (
-                  <input
-                    type="text"
-                    className="edit-input inline"
-                    value={editingFolderName}
-                    onChange={e => setEditingFolderName(e.target.value)}
-                    onBlur={() => handleUpdateFolder(folder.id)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') handleUpdateFolder(folder.id);
-                      if (e.key === 'Escape') { setEditingFolderId(null); setEditingFolderName(''); }
-                    }}
-                    onClick={e => e.stopPropagation()}
-                    autoFocus
-                  />
-                ) : (
-                  <span className="folder-name">{folder.name}</span>
-                )}
-                <span className="folder-count">({getFolderQuestionCount(folder.id)} câu)</span>
-                {canModifyFolder(folder) && (
-                  <div className="folder-actions-inline" onClick={e => e.stopPropagation()}>
-                    <button
-                      className="btn-icon"
-                      onClick={() => { setEditingFolderId(folder.id); setEditingFolderName(folder.name); }}
-                      title="Sửa tên"
-                    >
-                      <Edit2 size={14} />
-                    </button>
-                    <button
-                      className="btn-icon danger"
-                      onClick={() => setDeleteFolderTarget(folder)}
-                      title="Xóa"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                )}
+        {/* Sources Session */}
+        {detailSessionTab === 'sources' && (
+          <div className="sources-session">
+            <div className="sources-header">
+              <p className="sources-description">
+                Chọn các bài học từ vựng, ngữ pháp để AI sử dụng khi hội thoại với bạn.
+              </p>
+              <div className="level-filter">
+                <label>Cấp độ:</label>
+                <select
+                  value={selectedSourceLevel}
+                  onChange={e => setSelectedSourceLevel(e.target.value as JLPTLevel)}
+                >
+                  {JLPT_LEVELS.map(l => (
+                    <option key={l} value={l}>{l}</option>
+                  ))}
+                </select>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
 
-        {/* Questions without folder */}
-        {currentFolders.length === 0 && (
-          <div className="questions-list">
-            {currentQuestions.length === 0 ? (
-              <div className="empty-message">
-                Chưa có câu hỏi. Tạo thư mục để tổ chức hoặc thêm câu hỏi trực tiếp.
+            {/* Lessons Grid */}
+            <div className="lessons-source-grid">
+              {(getLessonsByLevel ? getLessonsByLevel(selectedSourceLevel) : lessons.filter(l => l.level === selectedSourceLevel && !l.parentId))
+                .map(lesson => {
+                  const isLinked = currentTopic.linkedLessonIds?.includes(lesson.id);
+                  return (
+                    <div
+                      key={lesson.id}
+                      className={`lesson-source-item ${isLinked ? 'linked' : ''}`}
+                      onClick={() => {
+                        const currentLinked = currentTopic.linkedLessonIds || [];
+                        const newLinked = isLinked
+                          ? currentLinked.filter(id => id !== lesson.id)
+                          : [...currentLinked, lesson.id];
+                        onUpdateTopic(currentTopic.id, { linkedLessonIds: newLinked });
+                      }}
+                    >
+                      <div className="lesson-checkbox">
+                        {isLinked ? <CheckCircle size={20} /> : <Circle size={20} />}
+                      </div>
+                      <div className="lesson-info">
+                        <span className="lesson-name">{lesson.name}</span>
+                        <span className="lesson-level">{lesson.level}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              {(getLessonsByLevel ? getLessonsByLevel(selectedSourceLevel) : lessons.filter(l => l.level === selectedSourceLevel && !l.parentId)).length === 0 && (
+                <div className="empty-message">
+                  Chưa có bài học nào ở cấp độ {selectedSourceLevel}
+                </div>
+              )}
+            </div>
+
+            {/* Linked Summary */}
+            {(currentTopic.linkedLessonIds?.length || 0) > 0 && (
+              <div className="linked-summary">
+                <span className="linked-count">
+                  Đã liên kết: {currentTopic.linkedLessonIds?.length} bài học
+                </span>
               </div>
-            ) : (
-              currentQuestions.map(renderQuestionCard)
             )}
           </div>
         )}
 
-        {/* Question Form Modal */}
+        {/* Questions Session */}
+        {detailSessionTab === 'questions' && (
+          <div className="questions-session">
+            <div className="questions-header">
+              <p className="questions-description">
+                Tạo câu hỏi để AI sử dụng khi bắt đầu hội thoại với bạn.
+              </p>
+              <button className="btn btn-primary" onClick={() => handleOpenQuestionForm()}>
+                <Plus size={16} /> Thêm câu hỏi
+              </button>
+            </div>
+
+            <div className="questions-list">
+              {currentQuestions.length === 0 ? (
+                <div className="empty-message">
+                  Chưa có câu hỏi. Bấm "Thêm câu hỏi" để tạo.
+                </div>
+              ) : (
+                currentQuestions.map((q, i) => renderQuestionCard(q, i))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Question Form Modal - Conversation Format */}
         {showQuestionForm && (
           <div className="modal-overlay" onClick={() => setShowQuestionForm(false)}>
             <div className="question-modal" onClick={e => e.stopPropagation()}>
               <div className="modal-header">
-                <h3>{editingQuestion ? 'Sửa câu hỏi' : 'Thêm câu hỏi mới'}</h3>
+                <h3>{editingQuestion ? 'Sửa câu hỏi hội thoại' : 'Thêm câu hỏi hội thoại'}</h3>
                 <button className="btn-close" onClick={() => setShowQuestionForm(false)}>×</button>
               </div>
               <div className="modal-body">
                 <div className="form-section">
-                  <label>Câu hỏi *</label>
-                  <textarea
-                    className="form-input"
-                    rows={3}
-                    placeholder="Nhập nội dung câu hỏi..."
-                    value={questionForm.question}
-                    onChange={e => setQuestionForm({ ...questionForm, question: e.target.value })}
-                  />
-                </div>
-                <div className="form-section">
-                  <label>Đáp án (chọn đáp án đúng)</label>
-                  <div className="answers-grid">
-                    {questionForm.answers.map((answer, index) => (
-                      <div key={index} className="answer-input-row">
-                        <input
-                          type="radio"
-                          name="correctAnswer"
-                          checked={answer.isCorrect}
-                          onChange={() => handleCorrectAnswerChange(index)}
-                        />
-                        <input
-                          type="text"
-                          placeholder={`Đáp án ${index + 1}`}
-                          value={answer.text}
-                          onChange={e => handleAnswerChange(index, e.target.value)}
-                          className={answer.isCorrect ? 'correct-answer' : ''}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="form-section">
-                  <label>Giải thích (không bắt buộc)</label>
+                  <label>Câu hỏi tiếng Nhật *</label>
                   <textarea
                     className="form-input"
                     rows={2}
-                    placeholder="Giải thích đáp án đúng..."
-                    value={questionForm.explanation}
-                    onChange={e => setQuestionForm({ ...questionForm, explanation: e.target.value })}
+                    placeholder="VD: 今日の調子はどうですか？"
+                    value={questionForm.questionJa}
+                    onChange={e => setQuestionForm({ ...questionForm, questionJa: e.target.value })}
                   />
+                </div>
+                <div className="form-section">
+                  <label>Dịch nghĩa tiếng Việt</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="VD: Hôm nay bạn thấy thế nào?"
+                    value={questionForm.questionVi || ''}
+                    onChange={e => setQuestionForm({ ...questionForm, questionVi: e.target.value })}
+                  />
+                </div>
+                <div className="form-section">
+                  <label>Tình huống / Ngữ cảnh</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="VD: Khi gặp đồng nghiệp vào buổi sáng"
+                    value={questionForm.situationContext || ''}
+                    onChange={e => setQuestionForm({ ...questionForm, situationContext: e.target.value })}
+                  />
+                </div>
+                <div className="form-section">
+                  <label>Gợi ý câu trả lời ({(questionForm.suggestedAnswers || []).length})</label>
+                  <p className="form-hint">Các mẫu câu trả lời để AI tham khảo khi đánh giá</p>
+                  <div className="suggested-answers-list">
+                    {(questionForm.suggestedAnswers || []).map((answer, index) => (
+                      <div key={index} className="suggested-answer-row">
+                        <span className="answer-number">{index + 1}.</span>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="VD: 元気です、ありがとうございます"
+                          value={answer}
+                          onChange={e => handleUpdateSuggestedAnswer(index, e.target.value)}
+                        />
+                        <button className="btn-icon danger" onClick={() => handleRemoveSuggestedAnswer(index)}>
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    <button className="btn btn-secondary btn-small" onClick={handleAddSuggestedAnswer}>
+                      <Plus size={14} /> Thêm gợi ý
+                    </button>
+                  </div>
                 </div>
               </div>
               <div className="modal-footer">
                 <button className="btn btn-secondary" onClick={() => setShowQuestionForm(false)}>Hủy</button>
-                <button className="btn btn-primary" onClick={handleSaveQuestion}>
+                <button className="btn btn-primary" onClick={handleSaveQuestion} disabled={!questionForm.questionJa.trim()}>
                   {editingQuestion ? 'Cập nhật' : 'Thêm'}
                 </button>
               </div>
@@ -872,65 +881,77 @@ export function CustomTopicsTab({
           {currentQuestions.length === 0 ? (
             <div className="empty-message">Chưa có câu hỏi. Nhấn "Thêm câu hỏi" để thêm.</div>
           ) : (
-            currentQuestions.map(renderQuestionCard)
+            currentQuestions.map((q, i) => renderQuestionCard(q, i))
           )}
         </div>
 
-        {/* Question Form Modal */}
+        {/* Question Form Modal - Conversation Format */}
         {showQuestionForm && (
           <div className="modal-overlay" onClick={() => setShowQuestionForm(false)}>
             <div className="question-modal" onClick={e => e.stopPropagation()}>
               <div className="modal-header">
-                <h3>{editingQuestion ? 'Sửa câu hỏi' : 'Thêm câu hỏi mới'}</h3>
+                <h3>{editingQuestion ? 'Sửa câu hỏi hội thoại' : 'Thêm câu hỏi hội thoại'}</h3>
                 <button className="btn-close" onClick={() => setShowQuestionForm(false)}>×</button>
               </div>
               <div className="modal-body">
                 <div className="form-section">
-                  <label>Câu hỏi *</label>
-                  <textarea
-                    className="form-input"
-                    rows={3}
-                    placeholder="Nhập nội dung câu hỏi..."
-                    value={questionForm.question}
-                    onChange={e => setQuestionForm({ ...questionForm, question: e.target.value })}
-                  />
-                </div>
-                <div className="form-section">
-                  <label>Đáp án (chọn đáp án đúng)</label>
-                  <div className="answers-grid">
-                    {questionForm.answers.map((answer, index) => (
-                      <div key={index} className="answer-input-row">
-                        <input
-                          type="radio"
-                          name="correctAnswer"
-                          checked={answer.isCorrect}
-                          onChange={() => handleCorrectAnswerChange(index)}
-                        />
-                        <input
-                          type="text"
-                          placeholder={`Đáp án ${index + 1}`}
-                          value={answer.text}
-                          onChange={e => handleAnswerChange(index, e.target.value)}
-                          className={answer.isCorrect ? 'correct-answer' : ''}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="form-section">
-                  <label>Giải thích (không bắt buộc)</label>
+                  <label>Câu hỏi tiếng Nhật *</label>
                   <textarea
                     className="form-input"
                     rows={2}
-                    placeholder="Giải thích đáp án đúng..."
-                    value={questionForm.explanation}
-                    onChange={e => setQuestionForm({ ...questionForm, explanation: e.target.value })}
+                    placeholder="VD: 今日の調子はどうですか？"
+                    value={questionForm.questionJa}
+                    onChange={e => setQuestionForm({ ...questionForm, questionJa: e.target.value })}
                   />
+                </div>
+                <div className="form-section">
+                  <label>Dịch nghĩa tiếng Việt</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="VD: Hôm nay bạn thấy thế nào?"
+                    value={questionForm.questionVi || ''}
+                    onChange={e => setQuestionForm({ ...questionForm, questionVi: e.target.value })}
+                  />
+                </div>
+                <div className="form-section">
+                  <label>Tình huống / Ngữ cảnh</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="VD: Khi gặp đồng nghiệp vào buổi sáng"
+                    value={questionForm.situationContext || ''}
+                    onChange={e => setQuestionForm({ ...questionForm, situationContext: e.target.value })}
+                  />
+                </div>
+                <div className="form-section">
+                  <label>Gợi ý câu trả lời ({(questionForm.suggestedAnswers || []).length})</label>
+                  <p className="form-hint">Các mẫu câu trả lời để AI tham khảo khi đánh giá</p>
+                  <div className="suggested-answers-list">
+                    {(questionForm.suggestedAnswers || []).map((answer, index) => (
+                      <div key={index} className="suggested-answer-row">
+                        <span className="answer-number">{index + 1}.</span>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="VD: 元気です、ありがとうございます"
+                          value={answer}
+                          onChange={e => handleUpdateSuggestedAnswer(index, e.target.value)}
+                        />
+                        <button className="btn-icon danger" onClick={() => handleRemoveSuggestedAnswer(index)}>
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    <button className="btn btn-secondary btn-small" onClick={handleAddSuggestedAnswer}>
+                      <Plus size={14} /> Thêm gợi ý
+                    </button>
+                  </div>
                 </div>
               </div>
               <div className="modal-footer">
                 <button className="btn btn-secondary" onClick={() => setShowQuestionForm(false)}>Hủy</button>
-                <button className="btn btn-primary" onClick={handleSaveQuestion}>
+                <button className="btn btn-primary" onClick={handleSaveQuestion} disabled={!questionForm.questionJa.trim()}>
                   {editingQuestion ? 'Cập nhật' : 'Thêm'}
                 </button>
               </div>

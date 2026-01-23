@@ -8,6 +8,7 @@ import type { KaiwaDefaultQuestion, KaiwaQuestionFormData, KaiwaFolder } from '.
 import type { JLPTLevel as KaiwaJLPTLevel, ConversationTopic, ConversationStyle } from '../../types/kaiwa';
 import type { Classroom } from '../../types/classroom';
 import type { KaiwaAdvancedTopic, KaiwaAdvancedQuestion, KaiwaAdvancedTopicFormData, KaiwaAdvancedQuestionFormData } from '../../types/kaiwa-advanced';
+import type { CustomTopic, CustomTopicFolder, CustomTopicQuestion, CustomTopicFormData, CustomTopicQuestionFormData } from '../../types/custom-topic';
 
 export type ManagementTab = 'flashcards' | 'lectures' | 'jlpt' | 'kaiwa' | 'custom_topics' | 'game' | 'assignments' | 'tests' | 'users';
 
@@ -104,6 +105,22 @@ export interface KaiwaTabProps {
   onAddAdvancedQuestion?: (data: KaiwaAdvancedQuestionFormData) => Promise<KaiwaAdvancedQuestion | null>;
   onUpdateAdvancedQuestion?: (id: string, data: Partial<KaiwaAdvancedQuestionFormData>) => Promise<boolean>;
   onDeleteAdvancedQuestion?: (id: string) => Promise<boolean>;
+  // Custom Topics props (moved from separate tab)
+  customTopics?: CustomTopic[];
+  customTopicFolders?: CustomTopicFolder[];
+  customTopicQuestions?: CustomTopicQuestion[];
+  onAddCustomTopic?: (data: CustomTopicFormData) => Promise<CustomTopic | null>;
+  onUpdateCustomTopic?: (id: string, data: Partial<CustomTopicFormData>) => Promise<boolean>;
+  onDeleteCustomTopic?: (id: string) => Promise<boolean>;
+  onAddCustomTopicFolder?: (topicId: string, name: string, level?: KaiwaJLPTLevel) => Promise<CustomTopicFolder | null>;
+  onUpdateCustomTopicFolder?: (id: string, name: string, level?: KaiwaJLPTLevel) => Promise<boolean>;
+  onDeleteCustomTopicFolder?: (id: string) => Promise<boolean>;
+  onAddCustomTopicQuestion?: (data: CustomTopicQuestionFormData) => Promise<CustomTopicQuestion | null>;
+  onUpdateCustomTopicQuestion?: (id: string, data: Partial<CustomTopicQuestionFormData>) => Promise<boolean>;
+  onDeleteCustomTopicQuestion?: (id: string) => Promise<boolean>;
+  // Flashcard lessons for custom topic linking
+  lessons?: Lesson[];
+  getLessonsByLevel?: (level: JLPTLevel) => Lesson[];
   currentUser: CurrentUser;
   isSuperAdmin: boolean;
 }
@@ -142,4 +159,5 @@ export type {
   KaiwaDefaultQuestion, KaiwaQuestionFormData, KaiwaFolder,
   KaiwaJLPTLevel, ConversationTopic, ConversationStyle,
   Classroom,
+  CustomTopic, CustomTopicFolder, CustomTopicQuestion, CustomTopicFormData, CustomTopicQuestionFormData,
 };
