@@ -193,7 +193,8 @@ export function FlashcardsTab({
     };
 
     const { range, fn } = config[level];
-    if (!confirm(`Tạo ${range} cho ${level} với cấu trúc thư mục con?\n(Từ vựng, Kanji, Ngữ pháp, Đọc hiểu, Mở rộng)`)) return;
+    const folders = level === 'N5' ? '(Từ vựng, Kanji, Ngữ pháp, Đọc hiểu, Mở rộng)' : '(Từ vựng, Kanji, Mở rộng)';
+    if (!confirm(`Tạo ${range} cho ${level} với cấu trúc thư mục con?\n${folders}`)) return;
 
     setSeeding(true);
     try {

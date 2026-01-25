@@ -46,7 +46,7 @@ export function KaiwaTab({
   getFoldersByLevelAndTopic,
   getQuestionsByFolder,
   // Advanced Topics props (unused but kept for API compatibility)
-  advancedTopics = [],
+  advancedTopics: _advancedTopics = [],
   advancedQuestions: _advancedQuestions = [],
   onAddAdvancedTopic: _onAddAdvancedTopic,
   onUpdateAdvancedTopic: _onUpdateAdvancedTopic,
@@ -119,24 +119,6 @@ export function KaiwaTab({
   const canModifyQuestion = (q: KaiwaDefaultQuestion) => isSuperAdmin || q.createdBy === currentUser.id;
   const canModifyFolder = (f: KaiwaFolder) => isSuperAdmin || f.createdBy === currentUser.id;
 
-  // Stats calculations
-  const stats = useMemo(() => {
-    const byLevel: Record<string, number> = {};
-    const byTopic: Record<string, number> = {};
-    const byStyle: Record<string, number> = {};
-
-    KAIWA_LEVELS.forEach(l => byLevel[l] = 0);
-    CONVERSATION_TOPICS.forEach(t => byTopic[t.value] = 0);
-    CONVERSATION_STYLES.forEach(s => byStyle[s.value] = 0);
-
-    questions.forEach(q => {
-      byLevel[q.level] = (byLevel[q.level] || 0) + 1;
-      byTopic[q.topic] = (byTopic[q.topic] || 0) + 1;
-      byStyle[q.style] = (byStyle[q.style] || 0) + 1;
-    });
-
-    return { total: questions.length, byLevel, byTopic, byStyle };
-  }, [questions]);
 
   // Filter questions
   const filteredQuestions = useMemo(() => {

@@ -12,6 +12,7 @@ import { useLectures } from '../../hooks/use-lectures';
 import { useTestTemplates } from '../../hooks/use-classrooms';
 import { useCustomTopics } from '../../hooks/use-custom-topics';
 import { useGrammarCards } from '../../hooks/use-grammar-cards';
+import { useGrammarLessons } from '../../hooks/use-grammar-lessons';
 import { TestBankPanel } from '../classroom/test-bank-panel';
 import {
   importLesson,
@@ -65,6 +66,7 @@ interface CardsPageProps {
   // Lesson lock/hide props
   onToggleLock: (lessonId: string) => void;
   onToggleHide: (lessonId: string) => void;
+  onReorderLessons: (reorderedLessons: { id: string; order: number }[]) => Promise<void>;
   // Lecture props
   onNavigateToLectureEditor?: (lectureId?: string, folderId?: string, level?: JLPTLevel) => void;
   // Kaiwa props
@@ -97,7 +99,7 @@ export function CardsPage({
   onAddJLPTFolder, onUpdateJLPTFolder, onDeleteJLPTFolder,
   getFoldersByLevelAndCategory, getQuestionsByFolder,
   users, onUpdateUserRole, onDeleteUser, onUpdateVipExpiration, onRegister,
-  onToggleLock, onToggleHide,
+  onToggleLock, onToggleHide, onReorderLessons,
   onNavigateToLectureEditor,
   kaiwaQuestions = [], kaiwaFolders = [],
   onAddKaiwaQuestion, onUpdateKaiwaQuestion, onDeleteKaiwaQuestion,
@@ -143,6 +145,20 @@ export function CardsPage({
     updateGrammarCard,
     deleteGrammarCard,
   } = useGrammarCards();
+
+  // Grammar lessons hook (separate from vocabulary lessons)
+  const {
+    lessons: grammarLessons,
+    getParentLessonsByLevel: getGrammarParentLessonsByLevel,
+    getChildLessons: getGrammarChildLessons,
+    hasChildren: grammarHasChildren,
+    getLessonCountByLevel: getGrammarLessonCountByLevel,
+    addLesson: addGrammarLesson,
+    updateLesson: updateGrammarLesson,
+    deleteLesson: deleteGrammarLesson,
+    seedLessons: seedGrammarLessons,
+    reorderLessons: reorderGrammarLessons,
+  } = useGrammarLessons();
 
   // Reading passages hook
   const {
@@ -196,6 +212,7 @@ export function CardsPage({
           onDeleteLesson={onDeleteLesson}
           onToggleLock={onToggleLock}
           onToggleHide={onToggleHide}
+          onReorderLessons={onReorderLessons}
           onImportLesson={importLesson}
           onImportFlashcard={importFlashcard}
           currentUser={currentUser}
@@ -210,11 +227,16 @@ export function CardsPage({
           onAddGrammarCard={addGrammarCard}
           onUpdateGrammarCard={updateGrammarCard}
           onDeleteGrammarCard={deleteGrammarCard}
-          lessons={lessons}
-          getLessonsByLevel={getLessonsByLevel}
-          getChildLessons={getChildLessons}
-          onToggleLock={onToggleLock}
-          onToggleHide={onToggleHide}
+          grammarLessons={grammarLessons}
+          getParentLessonsByLevel={getGrammarParentLessonsByLevel}
+          getChildLessons={getGrammarChildLessons}
+          hasChildren={grammarHasChildren}
+          getLessonCountByLevel={getGrammarLessonCountByLevel}
+          onAddLesson={addGrammarLesson}
+          onUpdateLesson={updateGrammarLesson}
+          onDeleteLesson={deleteGrammarLesson}
+          onSeedLessons={seedGrammarLessons}
+          onReorderLessons={reorderGrammarLessons}
           onImportGrammarCard={importGrammarCard}
           currentUser={currentUser}
           isSuperAdmin={isSuperAdmin}

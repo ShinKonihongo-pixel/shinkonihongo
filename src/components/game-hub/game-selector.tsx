@@ -2,9 +2,9 @@
 // Shows all available games with rich cards and visibility filtering
 
 import { useState, useEffect, useMemo } from 'react';
-import { Search, Users, Zap, Star, Sparkles, Trophy, ArrowRight, Plus, Home, EyeOff } from 'lucide-react';
+import { Search, Users, Zap, Star, Sparkles, Trophy, ArrowRight, Home, EyeOff } from 'lucide-react';
 import type { GameType, GameInfo } from '../../types/game-hub';
-import { GAMES, getVisibleGames, getVisibleRacingGames } from '../../types/game-hub';
+import { GAMES, getVisibleGames } from '../../types/game-hub';
 import { getHiddenGames } from '../../services/game-visibility-storage';
 import { WaitingRoom } from './waiting-room';
 
@@ -31,7 +31,6 @@ export function GameSelector({ onSelectGame, onQuickJoin }: GameSelectorProps) {
 
   // Get visible games only
   const visibleGames = useMemo(() => getVisibleGames(hiddenGames), [hiddenGames]);
-  const visibleRacingGames = useMemo(() => getVisibleRacingGames(hiddenGames), [hiddenGames]);
 
   // Filter games by search
   const filteredGames = useMemo(() => {
@@ -43,11 +42,11 @@ export function GameSelector({ onSelectGame, onQuickJoin }: GameSelectorProps) {
 
   // Separate featured and regular games
   const featuredGames = useMemo(() => {
-    return filteredGames.filter(g => (g.isPopular || g.isNew) && g.category !== 'racing');
+    return filteredGames.filter(g => g.isPopular || g.isNew);
   }, [filteredGames]);
 
   const regularGames = useMemo(() => {
-    return filteredGames.filter(g => !g.isPopular && !g.isNew && g.category !== 'racing');
+    return filteredGames.filter(g => !g.isPopular && !g.isNew);
   }, [filteredGames]);
 
   const handleJoinGame = (gameType: GameType) => {
@@ -171,27 +170,6 @@ export function GameSelector({ onSelectGame, onQuickJoin }: GameSelectorProps) {
               </div>
             )}
           </div>
-
-          {/* Racing Games Section - Special with room options */}
-          {visibleRacingGames.length > 0 && (
-            <section className="game-section racing-section">
-              <h2 className="section-title">
-                <span className="racing-icon">🏁</span>
-                <span>Trò Chơi Đua</span>
-              </h2>
-              <div className="racing-games-grid">
-                {visibleRacingGames.map(game => (
-                  <RacingGameCard
-                    key={game.id}
-                    game={game}
-                    onPlay={() => onSelectGame(game.id)}
-                    onJoin={() => handleJoinGame(game.id)}
-                    onBrowseRooms={() => handleOpenWaitingRoom(game.id)}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
 
           {/* Featured Games */}
           {featuredGames.length > 0 && (
@@ -388,50 +366,3 @@ function GameCard({ game, onPlay, onJoin, getDifficultyLabel }: GameCardProps) {
   );
 }
 
-// Racing Game Card - Special card with room options
-interface RacingCardProps {
-  game: GameInfo;
-  onPlay: () => void;
-  onJoin: () => void;
-  onBrowseRooms: () => void;
-}
-
-function RacingGameCard({ game, onPlay, onJoin, onBrowseRooms }: RacingCardProps) {
-  return (
-    <div className="racing-game-card" style={{ borderColor: game.color }}>
-      <div className="racing-card-header" style={{ background: game.gradient }}>
-        <span className="racing-card-icon">{game.icon}</span>
-        <div className="racing-card-info">
-          <h3>{game.name}</h3>
-          <p>{game.description}</p>
-        </div>
-        {game.isNew && <span className="badge-new">MỚI</span>}
-      </div>
-
-      <div className="racing-card-features">
-        {game.features.map((feature, idx) => (
-          <span key={idx} className="feature-chip">{feature}</span>
-        ))}
-      </div>
-
-      <div className="racing-card-actions">
-        <button className="racing-btn primary" onClick={onPlay} style={{ background: game.gradient }}>
-          <Plus size={16} />
-          Tạo Phòng
-        </button>
-        <button className="racing-btn secondary" onClick={onJoin}>
-          🔑 Nhập Mã
-        </button>
-        <button className="racing-btn tertiary" onClick={onBrowseRooms}>
-          <Home size={16} />
-          Phòng Chờ
-        </button>
-      </div>
-
-      <div className="racing-card-meta">
-        <span><Users size={14} /> {game.playerRange} người chơi</span>
-        <span>🤖 Bot tự động tham gia</span>
-      </div>
-    </div>
-  );
-}

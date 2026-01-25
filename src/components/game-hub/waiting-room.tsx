@@ -14,7 +14,7 @@ interface WaitingRoomProps {
 
 // Mock data for available games (in production, this would come from a server)
 const generateMockGames = (): WaitingRoomGame[] => {
-  const gameTypes: GameType[] = ['boat-racing', 'horse-racing', 'quiz', 'golden-bell'];
+  const gameTypes: GameType[] = ['quiz', 'golden-bell', 'bingo', 'speed-quiz'];
   const hosts = [
     { name: 'Minh', avatar: '👨' },
     { name: 'Linh', avatar: '👩' },
@@ -27,7 +27,7 @@ const generateMockGames = (): WaitingRoomGame[] => {
   return Array.from({ length: 8 }, (_, i) => {
     const gameType = gameTypes[i % gameTypes.length];
     const host = hosts[i % hosts.length];
-    const maxPlayers = gameType.includes('racing') ? 8 : gameType === 'golden-bell' ? 100 : 20;
+    const maxPlayers = gameType === 'golden-bell' ? 100 : gameType === 'bingo' ? 30 : 20;
     const playerCount = Math.floor(Math.random() * (maxPlayers / 2)) + 1;
 
     return {
@@ -106,7 +106,6 @@ export function WaitingRoom({ onJoinGame, onBack, filterGameType }: WaitingRoomP
 
   const categories = [
     { id: null, label: 'Tất cả', icon: '🎮' },
-    { id: 'racing', label: 'Đua xe', icon: '🏁' },
     { id: 'quiz', label: 'Quiz', icon: '🎯' },
     { id: 'elimination', label: 'Loại trừ', icon: '🔔' },
   ];

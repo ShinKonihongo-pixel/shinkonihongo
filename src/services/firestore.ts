@@ -15,7 +15,7 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import type { Flashcard, FlashcardFormData, Lesson, JLPTLevel, GrammarCard, GrammarCardFormData } from '../types/flashcard';
+import type { Flashcard, FlashcardFormData, Lesson, JLPTLevel, GrammarCard, GrammarCardFormData, GrammarLesson } from '../types/flashcard';
 import type { User, StudySession, GameSession, JLPTSession } from '../types/user';
 import type { JLPTQuestion, JLPTQuestionFormData, JLPTFolder } from '../types/jlpt-question';
 import type { KaiwaDefaultQuestion, KaiwaQuestionFormData, KaiwaFolder } from '../types/kaiwa-question';
@@ -26,6 +26,7 @@ import { getDefaultSM2Values } from '../lib/spaced-repetition';
 const COLLECTIONS = {
   FLASHCARDS: 'flashcards',
   GRAMMAR_CARDS: 'grammarCards',
+  GRAMMAR_LESSONS: 'grammarLessons',
   LESSONS: 'lessons',
   USERS: 'users',
   SETTINGS: 'settings',
@@ -143,6 +144,44 @@ export async function deleteGrammarCardsByLesson(lessonId: string): Promise<void
   const snapshot = await getDocs(q);
   const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
   await Promise.all(deletePromises);
+}
+
+// ============ GRAMMAR LESSONS ============
+
+export async function getAllGrammarLessons(): Promise<GrammarLesson[]> {
+  const snapshot = await getDocs(collection(db, COLLECTIONS.GRAMMAR_LESSONS));
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GrammarLesson));
+}
+
+export function subscribeToGrammarLessons(callback: (lessons: GrammarLesson[]) => void): Unsubscribe {
+  return onSnapshot(collection(db, COLLECTIONS.GRAMMAR_LESSONS), (snapshot) => {
+    const lessons = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GrammarLesson));
+    callback(lessons);
+  });
+}
+
+export async function addGrammarLesson(data: Omit<GrammarLesson, 'id'>): Promise<GrammarLesson> {
+  const docRef = await addDoc(collection(db, COLLECTIONS.GRAMMAR_LESSONS), data);
+  return { id: docRef.id, ...data };
+}
+
+export async function updateGrammarLesson(id: string, data: Partial<GrammarLesson>): Promise<void> {
+  const docRef = doc(db, COLLECTIONS.GRAMMAR_LESSONS, id);
+  await updateDoc(docRef, data);
+}
+
+export async function deleteGrammarLesson(id: string): Promise<void> {
+  // Delete all grammar cards in this lesson first
+  await deleteGrammarCardsByLesson(id);
+  // Then delete the lesson
+  const docRef = doc(db, COLLECTIONS.GRAMMAR_LESSONS, id);
+  await deleteDoc(docRef);
+}
+
+export async function getGrammarLessonChildren(parentId: string): Promise<GrammarLesson[]> {
+  const q = query(collection(db, COLLECTIONS.GRAMMAR_LESSONS), where('parentId', '==', parentId));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GrammarLesson));
 }
 
 // ============ LESSONS ============

@@ -386,7 +386,7 @@ export function JLPTTab({
           </div>
 
           {/* Audio upload for listening questions */}
-          {navState.type !== 'root' && navState.type !== 'level' && navState.category === 'listening' && (
+          {navState.category === 'listening' && (
             <div className="form-group audio-upload-group">
               <label>File âm thanh (cho câu hỏi nghe)</label>
               <input

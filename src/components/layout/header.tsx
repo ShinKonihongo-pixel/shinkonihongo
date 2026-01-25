@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { CurrentUser } from '../../types/user';
 
-export type Page = 'home' | 'cards' | 'study' | 'grammar-study' | 'reading' | 'progress' | 'game-hub' | 'quiz' | 'racing' | 'golden-bell' | 'picture-guess' | 'jlpt' | 'kaiwa' | 'lectures' | 'lecture-editor' | 'chat' | 'settings' | 'profile' | 'classroom' | 'branches' | 'teachers' | 'salary' | 'my-teaching' | 'notifications' | 'daily-words' | 'listening';
+export type Page = 'home' | 'cards' | 'study' | 'grammar-study' | 'reading' | 'progress' | 'game-hub' | 'quiz' | 'golden-bell' | 'picture-guess' | 'jlpt' | 'kaiwa' | 'lectures' | 'lecture-editor' | 'chat' | 'settings' | 'profile' | 'classroom' | 'branches' | 'teachers' | 'salary' | 'my-teaching' | 'notifications' | 'daily-words' | 'listening';
 
 // Helper to get role display name
 const getRoleBadge = (role: string): { label: string; className: string } | null => {

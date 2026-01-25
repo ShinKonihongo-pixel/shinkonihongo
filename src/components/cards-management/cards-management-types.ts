@@ -1,6 +1,6 @@
 // Cards Management Types - Shared types for all card management tabs
 
-import type { Flashcard, FlashcardFormData, Lesson, JLPTLevel, GrammarCard, GrammarCardFormData } from '../../types/flashcard';
+import type { Flashcard, FlashcardFormData, Lesson, JLPTLevel, GrammarCard, GrammarCardFormData, GrammarLesson } from '../../types/flashcard';
 import type { CurrentUser, User, UserRole } from '../../types/user';
 import type { JLPTQuestion, JLPTQuestionFormData, JLPTLevel as JLPTQuestionLevel, QuestionCategory, JLPTAnswer, JLPTFolder } from '../../types/jlpt-question';
 import type { Lecture, LectureFolder } from '../../types/lecture';
@@ -69,6 +69,7 @@ export interface VocabularyTabProps {
   onDeleteLesson: (id: string) => void;
   onToggleLock: (lessonId: string) => void;
   onToggleHide: (lessonId: string) => void;
+  onReorderLessons: (reorderedLessons: { id: string; order: number }[]) => Promise<void>;
   // Import handlers
   onImportLesson?: (data: Omit<Lesson, 'id'>) => Promise<Lesson>;
   onImportFlashcard?: (data: Omit<Flashcard, 'id'>) => Promise<Flashcard>;
@@ -81,13 +82,17 @@ export interface GrammarTabProps {
   onAddGrammarCard: (data: GrammarCardFormData, createdBy?: string) => void;
   onUpdateGrammarCard: (id: string, data: Partial<GrammarCard>) => void;
   onDeleteGrammarCard: (id: string) => void;
-  // Lessons (shared from vocabulary)
-  lessons: Lesson[];
-  getLessonsByLevel: (level: JLPTLevel) => Lesson[];
-  getChildLessons: (parentId: string) => Lesson[];
-  // Lesson management (optional - for full feature parity with VocabularyTab)
-  onToggleLock?: (lessonId: string) => void;
-  onToggleHide?: (lessonId: string) => void;
+  // Grammar lessons (separate from vocabulary)
+  grammarLessons: GrammarLesson[];
+  getParentLessonsByLevel: (level: JLPTLevel) => GrammarLesson[];
+  getChildLessons: (parentId: string) => GrammarLesson[];
+  hasChildren: (lessonId: string) => boolean;
+  getLessonCountByLevel: (level: JLPTLevel) => number;
+  onAddLesson: (name: string, level: JLPTLevel, parentId: string | null, createdBy: string) => Promise<GrammarLesson>;
+  onUpdateLesson: (id: string, name: string) => Promise<void>;
+  onDeleteLesson: (id: string) => Promise<void>;
+  onSeedLessons: (level: JLPTLevel, startNum: number, endNum: number, childFolders: string[], createdBy: string) => Promise<number>;
+  onReorderLessons: (reorderedLessons: { id: string; order: number }[]) => Promise<void>;
   // Import handlers
   onImportGrammarCard?: (data: Omit<GrammarCard, 'id'>) => Promise<GrammarCard>;
   currentUser: CurrentUser;
@@ -188,7 +193,7 @@ export interface UsersTabProps {
 
 // Re-export needed types
 export type {
-  Flashcard, FlashcardFormData, Lesson, JLPTLevel, GrammarCard, GrammarCardFormData,
+  Flashcard, FlashcardFormData, Lesson, JLPTLevel, GrammarCard, GrammarCardFormData, GrammarLesson,
   CurrentUser, User, UserRole,
   JLPTQuestion, JLPTQuestionFormData, JLPTQuestionLevel, QuestionCategory, JLPTAnswer, JLPTFolder,
   Lecture, LectureFolder,

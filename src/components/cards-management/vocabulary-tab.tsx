@@ -1,7 +1,8 @@
 // Vocabulary Tab - Flashcard (vocabulary) management only
+// Features: Drag-and-drop reordering, lock/hide, import/export
 
 import { useState, useRef } from 'react';
-import { Download, Upload } from 'lucide-react';
+import { Download, Upload, GripVertical } from 'lucide-react';
 import { FlashcardForm } from '../flashcard/flashcard-form';
 import { FlashcardList } from '../flashcard/flashcard-list';
 import { ConfirmModal } from '../ui/confirm-modal';
@@ -62,6 +63,7 @@ export function VocabularyTab({
   onDeleteLesson,
   onToggleLock,
   onToggleHide,
+  onReorderLessons,
   onImportLesson,
   onImportFlashcard,
   currentUser,
@@ -80,6 +82,10 @@ export function VocabularyTab({
   const [isImporting, setIsImporting] = useState(false);
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Drag-and-drop state
+  const [draggedLesson, setDraggedLesson] = useState<Lesson | null>(null);
+  const [dragOverLesson, setDragOverLesson] = useState<string | null>(null);
 
   // Export vocabulary data
   const handleExport = () => {
@@ -201,7 +207,8 @@ export function VocabularyTab({
     };
 
     const { range, fn } = config[level];
-    if (!confirm(`Tạo ${range} cho ${level} với cấu trúc thư mục con?\n(Từ vựng, Kanji, Ngữ pháp, Đọc hiểu, Mở rộng)`)) return;
+    const folders = level === 'N5' ? '(Từ vựng, Kanji, Ngữ pháp, Đọc hiểu, Mở rộng)' : '(Từ vựng, Kanji, Mở rộng)';
+    if (!confirm(`Tạo ${range} cho ${level} với cấu trúc thư mục con?\n${folders}`)) return;
 
     setSeeding(true);
     try {
@@ -245,6 +252,64 @@ export function VocabularyTab({
 
   const canModifyLesson = (lesson: Lesson) => isSuperAdmin || lesson.createdBy === currentUser.id;
   const canModifyCard = (card: Flashcard) => isSuperAdmin || card.createdBy === currentUser.id;
+
+  // Drag-and-drop handlers
+  const handleDragStart = (e: React.DragEvent, lesson: Lesson) => {
+    setDraggedLesson(lesson);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', lesson.id);
+  };
+
+  const handleDragOver = (e: React.DragEvent, lessonId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (draggedLesson && draggedLesson.id !== lessonId) {
+      setDragOverLesson(lessonId);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverLesson(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedLesson(null);
+    setDragOverLesson(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetLesson: Lesson, lessonList: Lesson[]) => {
+    e.preventDefault();
+    if (!draggedLesson || draggedLesson.id === targetLesson.id) {
+      setDraggedLesson(null);
+      setDragOverLesson(null);
+      return;
+    }
+
+    // Calculate new order
+    const sortedLessons = [...lessonList].sort((a, b) => a.order - b.order);
+    const draggedIndex = sortedLessons.findIndex(l => l.id === draggedLesson.id);
+    const targetIndex = sortedLessons.findIndex(l => l.id === targetLesson.id);
+
+    // Remove dragged and insert at target position
+    const reordered = [...sortedLessons];
+    reordered.splice(draggedIndex, 1);
+    reordered.splice(targetIndex, 0, draggedLesson);
+
+    // Create update array with new order values
+    const updates = reordered.map((lesson, index) => ({
+      id: lesson.id,
+      order: index + 1,
+    }));
+
+    try {
+      await onReorderLessons(updates);
+    } catch (err) {
+      console.error('Failed to reorder lessons:', err);
+    }
+
+    setDraggedLesson(null);
+    setDragOverLesson(null);
+  };
 
   const getCurrentLevel = (): JLPTLevel | null => navState.type === 'root' ? null : navState.level;
   const getCurrentLessonId = (): string | null => {
@@ -318,57 +383,73 @@ export function VocabularyTab({
     return [];
   };
 
-  const renderLessonItem = (lesson: Lesson, isChild: boolean = false) => (
-    <div
-      key={lesson.id}
-      className="folder-item"
-      onClick={() => {
-        if (isChild) {
-          setNavState({ type: 'childLesson', level: (navState as any).level, parentId: (navState as any).lessonId, parentName: (navState as any).lessonName, lessonId: lesson.id, lessonName: lesson.name });
-        } else {
-          setNavState({ type: 'parentLesson', level: (navState as any).level, lessonId: lesson.id, lessonName: lesson.name });
-        }
-      }}
-    >
-      {canModifyLesson(lesson) && (
-        <>
-          <button className={`lock-btn ${lesson.isLocked ? 'locked' : ''}`} onClick={(e) => { e.stopPropagation(); onToggleLock(lesson.id); }} title={lesson.isLocked ? 'Mở khóa' : 'Khóa'}>
-            {lesson.isLocked ? '🔒' : '🔓'}
-          </button>
-          <button className={`hide-btn ${lesson.isHidden ? 'hidden' : ''}`} onClick={(e) => { e.stopPropagation(); onToggleHide(lesson.id); }} title={lesson.isHidden ? 'Hiện' : 'Ẩn'}>
-            {lesson.isHidden ? '👁️‍🗨️' : '👁️'}
-          </button>
-        </>
-      )}
-      <span className="folder-icon">{isChild ? '📄' : '📂'}</span>
-      {editingLessonId === lesson.id ? (
-        <input
-          type="text"
-          className="edit-input inline"
-          value={editingLessonName}
-          onChange={(e) => setEditingLessonName(e.target.value)}
-          onBlur={() => handleUpdateLesson(lesson.id)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') handleUpdateLesson(lesson.id);
-            if (e.key === 'Escape') { setEditingLessonId(null); setEditingLessonName(''); }
-          }}
-          onClick={(e) => e.stopPropagation()}
-          autoFocus
-        />
-      ) : (
-        <span className="folder-name" onDoubleClick={(e) => { e.stopPropagation(); setEditingLessonId(lesson.id); setEditingLessonName(lesson.name); }}>{lesson.name}</span>
-      )}
-      <span className="folder-count">({isChild ? getCardCountByLesson(lesson.id) : getCardCountByLessonRecursive(lesson.id)} từ)</span>
-      {lesson.isLocked && <span className="locked-badge">Đã khóa</span>}
-      {lesson.isHidden && <span className="hidden-badge">Đã ẩn</span>}
-      {canModifyLesson(lesson) && (
-        <>
-          <button className="edit-btn" onClick={(e) => { e.stopPropagation(); setEditingLessonId(lesson.id); setEditingLessonName(lesson.name); }} title="Sửa tên">✎</button>
-          <button className="delete-btn" onClick={(e) => { e.stopPropagation(); setDeleteLessonTarget(lesson); }} title="Xóa">×</button>
-        </>
-      )}
-    </div>
-  );
+  const renderLessonItem = (lesson: Lesson, isChild: boolean = false, lessonList: Lesson[] = []) => {
+    const isDragging = draggedLesson?.id === lesson.id;
+    const isDragOver = dragOverLesson === lesson.id;
+
+    return (
+      <div
+        key={lesson.id}
+        className={`folder-item ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
+        draggable={canModifyLesson(lesson)}
+        onDragStart={(e) => handleDragStart(e, lesson)}
+        onDragOver={(e) => handleDragOver(e, lesson.id)}
+        onDragLeave={handleDragLeave}
+        onDragEnd={handleDragEnd}
+        onDrop={(e) => handleDrop(e, lesson, lessonList)}
+        onClick={() => {
+          if (isChild) {
+            setNavState({ type: 'childLesson', level: (navState as any).level, parentId: (navState as any).lessonId, parentName: (navState as any).lessonName, lessonId: lesson.id, lessonName: lesson.name });
+          } else {
+            setNavState({ type: 'parentLesson', level: (navState as any).level, lessonId: lesson.id, lessonName: lesson.name });
+          }
+        }}
+      >
+        {canModifyLesson(lesson) && (
+          <span className="drag-handle" title="Kéo để thay đổi vị trí">
+            <GripVertical size={16} />
+          </span>
+        )}
+        {canModifyLesson(lesson) && (
+          <>
+            <button className={`lock-btn ${lesson.isLocked ? 'locked' : ''}`} onClick={(e) => { e.stopPropagation(); onToggleLock(lesson.id); }} title={lesson.isLocked ? 'Mở khóa' : 'Khóa'}>
+              {lesson.isLocked ? '🔒' : '🔓'}
+            </button>
+            <button className={`hide-btn ${lesson.isHidden ? 'hidden' : ''}`} onClick={(e) => { e.stopPropagation(); onToggleHide(lesson.id); }} title={lesson.isHidden ? 'Hiện' : 'Ẩn'}>
+              {lesson.isHidden ? '👁️‍🗨️' : '👁️'}
+            </button>
+          </>
+        )}
+        <span className="folder-icon">{isChild ? '📄' : '📂'}</span>
+        {editingLessonId === lesson.id ? (
+          <input
+            type="text"
+            className="edit-input inline"
+            value={editingLessonName}
+            onChange={(e) => setEditingLessonName(e.target.value)}
+            onBlur={() => handleUpdateLesson(lesson.id)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleUpdateLesson(lesson.id);
+              if (e.key === 'Escape') { setEditingLessonId(null); setEditingLessonName(''); }
+            }}
+            onClick={(e) => e.stopPropagation()}
+            autoFocus
+          />
+        ) : (
+          <span className="folder-name" onDoubleClick={(e) => { e.stopPropagation(); setEditingLessonId(lesson.id); setEditingLessonName(lesson.name); }}>{lesson.name}</span>
+        )}
+        <span className="folder-count">({isChild ? getCardCountByLesson(lesson.id) : getCardCountByLessonRecursive(lesson.id)} từ)</span>
+        {lesson.isLocked && <span className="locked-badge">Đã khóa</span>}
+        {lesson.isHidden && <span className="hidden-badge">Đã ẩn</span>}
+        {canModifyLesson(lesson) && (
+          <>
+            <button className="edit-btn" onClick={(e) => { e.stopPropagation(); setEditingLessonId(lesson.id); setEditingLessonName(lesson.name); }} title="Sửa tên">✎</button>
+            <button className="delete-btn" onClick={(e) => { e.stopPropagation(); setDeleteLessonTarget(lesson); }} title="Xóa">×</button>
+          </>
+        )}
+      </div>
+    );
+  };
 
   return (
     <>
@@ -451,7 +532,7 @@ export function VocabularyTab({
 
           {navState.type === 'level' && (
             <div className="folder-list">
-              {getLessonsByLevel(navState.level).map(lesson => renderLessonItem(lesson))}
+              {getLessonsByLevel(navState.level).map(lesson => renderLessonItem(lesson, false, getLessonsByLevel(navState.level)))}
               {getLessonsByLevel(navState.level).length === 0 && <p className="empty-message">Chưa có bài học nào. Nhấn "+ Tạo bài học" để thêm.</p>}
               {/* Admin buttons */}
               {isSuperAdmin && navState.level === 'N5' && (
@@ -478,7 +559,7 @@ export function VocabularyTab({
 
           {navState.type === 'parentLesson' && (
             <div className="folder-list">
-              {getChildLessons(navState.lessonId).map(lesson => renderLessonItem(lesson, true))}
+              {getChildLessons(navState.lessonId).map(lesson => renderLessonItem(lesson, true, getChildLessons(navState.lessonId)))}
               {getChildLessons(navState.lessonId).length === 0 && (
                 currentCards.length > 0 ? (
                   <FlashcardList cards={currentCards} onEdit={(card) => { setEditingCard(card); setShowForm(true); }} onDelete={onDeleteCard} canEdit={canModifyCard} canDelete={canModifyCard} />

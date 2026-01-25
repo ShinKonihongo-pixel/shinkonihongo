@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Gamepad2, Settings, ChevronRight, TrendingUp, Users, Clock, Zap,
-  Activity, Volume2, Bot, RefreshCw, Eye, EyeOff, Check, AlertCircle, Save
+  Activity, Volume2, Bot, RefreshCw, Eye, EyeOff, Check, AlertCircle
 } from 'lucide-react';
 import { PictureGuessPuzzleEditor } from '../picture-guess/picture-guess-puzzle-editor';
 import { BingoGameManager } from '../bingo-game/bingo-game-manager';
@@ -132,32 +132,6 @@ const ALL_GAMES: GameConfig[] = [
     hasManager: false,
     isNew: false,
     stats: { questions: null, played: 312, avgScore: 71 },
-  },
-  {
-    id: 'boat-racing',
-    title: 'Đua Thuyền',
-    shortTitle: 'Boat Race',
-    description: 'Đua thuyền học từ vựng realtime',
-    emoji: '🚣',
-    gradient: 'linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%)',
-    color: '#4ECDC4',
-    category: 'racing',
-    hasManager: false,
-    isNew: false,
-    stats: { questions: null, played: 178, avgScore: 76 },
-  },
-  {
-    id: 'horse-racing',
-    title: 'Chạy Đua',
-    shortTitle: 'Horse Race',
-    description: 'Phi nước đại cùng kiến thức',
-    emoji: '🏇',
-    gradient: 'linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%)',
-    color: '#8B5CF6',
-    category: 'racing',
-    hasManager: false,
-    isNew: true,
-    stats: { questions: null, played: 95, avgScore: 74 },
   },
   {
     id: 'golden-bell',
@@ -421,7 +395,7 @@ export function GameTab() {
                         Quản lý <ChevronRight size={14} />
                       </span>
                     ) : (
-                      <span className="gm-no-manager-hint">{game.category === 'racing' ? 'Dùng Flashcard' : 'Tự động'}</span>
+                      <span className="gm-no-manager-hint">Tự động</span>
                     )}
                   </div>
                 </div>

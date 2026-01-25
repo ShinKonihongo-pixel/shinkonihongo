@@ -2,7 +2,7 @@
 // 27 AI opponents, 9 per session, premium card styling
 
 import { useState } from 'react';
-import { Lock, Swords, ChevronLeft, Crown, Sparkles, Zap, Trophy } from 'lucide-react';
+import { Lock, Swords, ChevronLeft, Crown, Sparkles, Trophy } from 'lucide-react';
 import type { AIDifficulty, AIOpponent } from '../../types/ai-challenge';
 import { getAllAIsSorted } from '../../types/ai-challenge';
 import { useSettings } from '../../hooks/use-settings';

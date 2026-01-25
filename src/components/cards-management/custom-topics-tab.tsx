@@ -112,7 +112,6 @@ export function CustomTopicsTab({
 
   // Permissions
   const canModifyTopic = (t: CustomTopic) => isSuperAdmin || t.createdBy === currentUser.id;
-  const canModifyFolder = (f: CustomTopicFolder) => isSuperAdmin || f.createdBy === currentUser.id;
   const canModifyQuestion = (q: CustomTopicQuestion) => isSuperAdmin || q.createdBy === currentUser.id;
 
   // Get current topic
@@ -155,8 +154,6 @@ export function CustomTopicsTab({
   // Get question count for topic
   const getTopicQuestionCount = (topicId: string) => questions.filter(q => q.topicId === topicId).length;
 
-  // Get question count for folder
-  const getFolderQuestionCount = (folderId: string) => questions.filter(q => q.folderId === folderId).length;
 
   // ==================== HANDLERS ====================
 
@@ -200,22 +197,6 @@ export function CustomTopicsTab({
       icon: template.icon,
       color: template.color,
     });
-  };
-
-  // Folder handlers
-  const handleAddFolder = async () => {
-    if (!newFolderName.trim() || !navState.topicId) return;
-    await onAddFolder(navState.topicId, newFolderName.trim(), newFolderLevel);
-    setNewFolderName('');
-    setNewFolderLevel('N5');
-    setShowAddFolder(false);
-  };
-
-  const handleUpdateFolder = async (id: string) => {
-    if (!editingFolderName.trim()) return;
-    await onUpdateFolder(id, editingFolderName.trim());
-    setEditingFolderId(null);
-    setEditingFolderName('');
   };
 
   // Question handlers
@@ -282,7 +263,6 @@ export function CustomTopicsTab({
       setNavState({ type: 'topics' });
     }
     setShowQuestionForm(false);
-    setShowAddFolder(false);
   };
 
   // ==================== RENDER ====================
@@ -675,7 +655,7 @@ export function CustomTopicsTab({
 
             {/* Lessons Grid */}
             <div className="lessons-source-grid">
-              {(getLessonsByLevel ? getLessonsByLevel(selectedSourceLevel) : lessons.filter(l => l.level === selectedSourceLevel && !l.parentId))
+              {(getLessonsByLevel ? getLessonsByLevel(selectedSourceLevel) : lessons.filter(l => l.jlptLevel === selectedSourceLevel && !l.parentId))
                 .map(lesson => {
                   const isLinked = currentTopic.linkedLessonIds?.includes(lesson.id);
                   return (
@@ -695,12 +675,12 @@ export function CustomTopicsTab({
                       </div>
                       <div className="lesson-info">
                         <span className="lesson-name">{lesson.name}</span>
-                        <span className="lesson-level">{lesson.level}</span>
+                        <span className="lesson-level">{lesson.jlptLevel}</span>
                       </div>
                     </div>
                   );
                 })}
-              {(getLessonsByLevel ? getLessonsByLevel(selectedSourceLevel) : lessons.filter(l => l.level === selectedSourceLevel && !l.parentId)).length === 0 && (
+              {(getLessonsByLevel ? getLessonsByLevel(selectedSourceLevel) : lessons.filter(l => l.jlptLevel === selectedSourceLevel && !l.parentId)).length === 0 && (
                 <div className="empty-message">
                   Chưa có bài học nào ở cấp độ {selectedSourceLevel}
                 </div>
@@ -824,7 +804,7 @@ export function CustomTopicsTab({
           confirmText="Xóa"
           onConfirm={async () => {
             if (deleteFolderTarget) {
-              await onDeleteFolder(deleteFolderTarget.id);
+              await _onDeleteFolder(deleteFolderTarget.id);
               setDeleteFolderTarget(null);
             }
           }}

@@ -1,6 +1,6 @@
 // Hook for managing user history (study sessions, game sessions, JLPT sessions)
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { StudySession, GameSession, JLPTSession, UserStats } from '../types/user';
 import * as firestoreService from '../services/firestore';
 
@@ -41,20 +41,33 @@ export function useUserHistory(userId: string | undefined) {
     fetchHistory();
   }, [userId]);
 
-  // Calculate user stats
-  const stats: UserStats = {
-    totalStudySessions: studySessions.length,
-    totalCardsStudied: studySessions.reduce((sum, s) => sum + s.cardsStudied, 0),
-    totalStudyTime: studySessions.reduce((sum, s) => sum + s.duration, 0),
-    totalGamesPlayed: gameSessions.length,
-    totalGameWins: gameSessions.filter(g => g.rank === 1).length,
-    averageGameRank: gameSessions.length > 0
-      ? gameSessions.reduce((sum, g) => sum + g.rank, 0) / gameSessions.length
-      : 0,
-    totalJLPTSessions: jlptSessions.length,
-    totalJLPTCorrect: jlptSessions.reduce((sum, s) => sum + s.correctCount, 0),
-    totalJLPTQuestions: jlptSessions.reduce((sum, s) => sum + s.totalQuestions, 0),
-  };
+  // Calculate user stats (memoized to avoid recalculation on every render)
+  const stats: UserStats = useMemo(() => {
+    // Count medals by rank
+    const goldMedals = gameSessions.filter(g => g.rank === 1).length;
+    const silverMedals = gameSessions.filter(g => g.rank === 2).length;
+    const bronzeMedals = gameSessions.filter(g => g.rank === 3).length;
+
+    return {
+      totalStudySessions: studySessions.length,
+      totalCardsStudied: studySessions.reduce((sum, s) => sum + s.cardsStudied, 0),
+      totalStudyTime: studySessions.reduce((sum, s) => sum + s.duration, 0),
+      totalGamesPlayed: gameSessions.length,
+      totalGameWins: goldMedals, // Wins = rank 1
+      averageGameRank: gameSessions.length > 0
+        ? Math.round((gameSessions.reduce((sum, g) => sum + g.rank, 0) / gameSessions.length) * 10) / 10
+        : 0,
+      // Medal tracking
+      goldMedals,
+      silverMedals,
+      bronzeMedals,
+      totalMedals: goldMedals + silverMedals + bronzeMedals,
+      // JLPT stats
+      totalJLPTSessions: jlptSessions.length,
+      totalJLPTCorrect: jlptSessions.reduce((sum, s) => sum + s.correctCount, 0),
+      totalJLPTQuestions: jlptSessions.reduce((sum, s) => sum + s.totalQuestions, 0),
+    };
+  }, [studySessions, gameSessions, jlptSessions]);
 
   // Add study session
   const addStudySession = useCallback(async (data: Omit<StudySession, 'id' | 'userId'>) => {

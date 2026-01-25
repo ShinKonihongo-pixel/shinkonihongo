@@ -1,17 +1,43 @@
-// Grammar Tab - Grammar card management (similar to VocabularyTab)
-// Uses shared lessons from vocabulary but manages grammar cards
+// Grammar Tab - Level-based lesson structure
+// Navigation: Level → Parent Lesson → Child Lesson → Cards
 
 import { useState, useRef } from 'react';
-import { Download, Upload } from 'lucide-react';
+import { Download, Upload, BookOpen, FolderOpen, FileText, ChevronRight, Plus, Trash2, Edit2, GripVertical } from 'lucide-react';
 import { GrammarCardForm } from '../flashcard/grammar-card-form';
 import { GrammarCardList } from '../flashcard/grammar-card-list';
-import type { GrammarTabProps, FlashcardNavState, GrammarCard, Lesson, JLPTLevel } from './cards-management-types';
-import { JLPT_LEVELS } from './cards-management-types';
+import type { GrammarTabProps, GrammarCard, GrammarLesson, JLPTLevel } from './cards-management-types';
 
-// Simple export/import utilities
+// JLPT Levels
+const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
+
+// Level metadata
+const LEVEL_META: Record<JLPTLevel, { desc: string; color: string }> = {
+  N5: { desc: 'Sơ cấp', color: 'n5' },
+  N4: { desc: 'Sơ trung cấp', color: 'n4' },
+  N3: { desc: 'Trung cấp', color: 'n3' },
+  N2: { desc: 'Trung cao cấp', color: 'n2' },
+  N1: { desc: 'Cao cấp', color: 'n1' },
+};
+
+// Seed config for each level
+const SEED_CONFIG: Record<JLPTLevel, { start: number; end: number; folders: string[] }> = {
+  N5: { start: 1, end: 25, folders: ['Ngữ pháp', 'Mở rộng'] },
+  N4: { start: 26, end: 50, folders: ['Ngữ pháp', 'Mở rộng'] },
+  N3: { start: 1, end: 20, folders: ['Ngữ pháp', 'Mở rộng'] },
+  N2: { start: 1, end: 20, folders: ['Ngữ pháp', 'Mở rộng'] },
+  N1: { start: 1, end: 20, folders: ['Ngữ pháp', 'Mở rộng'] },
+};
+
+// Navigation state
+type NavState =
+  | { type: 'root' }
+  | { type: 'level'; level: JLPTLevel }
+  | { type: 'parent'; level: JLPTLevel; lessonId: string; lessonName: string }
+  | { type: 'child'; level: JLPTLevel; parentId: string; parentName: string; lessonId: string; lessonName: string };
+
+// Export/Import utilities
 function downloadAsJSON(data: unknown, filename: string) {
-  const json = JSON.stringify(data, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -23,29 +49,10 @@ function downloadAsJSON(data: unknown, filename: string) {
 function readJSONFile(file: File): Promise<unknown> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        resolve(JSON.parse(reader.result as string));
-      } catch (e) {
-        reject(e);
-      }
-    };
+    reader.onload = () => resolve(JSON.parse(reader.result as string));
     reader.onerror = reject;
     reader.readAsText(file);
   });
-}
-
-function generateExportFilename(prefix: string): string {
-  const date = new Date().toISOString().split('T')[0];
-  return `${prefix}-export-${date}.json`;
-}
-
-interface GrammarExportData {
-  version: string;
-  exportedAt: string;
-  type: 'grammar';
-  grammarCards: Omit<GrammarCard, 'id'>[];
-  lessonIdMap: Record<string, { name: string; jlptLevel: JLPTLevel }>;
 }
 
 export function GrammarTab({
@@ -53,291 +60,559 @@ export function GrammarTab({
   onAddGrammarCard,
   onUpdateGrammarCard,
   onDeleteGrammarCard,
-  lessons,
-  getLessonsByLevel,
+  grammarLessons,
+  getParentLessonsByLevel,
   getChildLessons,
-  onToggleLock,
-  onToggleHide,
+  hasChildren,
+  getLessonCountByLevel,
+  onAddLesson,
+  onUpdateLesson,
+  onDeleteLesson,
+  onSeedLessons,
+  onReorderLessons,
   onImportGrammarCard,
   currentUser,
   isSuperAdmin,
 }: GrammarTabProps) {
-  const [navState, setNavState] = useState<FlashcardNavState>({ type: 'root' });
+  const [navState, setNavState] = useState<NavState>({ type: 'root' });
   const [showForm, setShowForm] = useState(false);
   const [editingCard, setEditingCard] = useState<GrammarCard | null>(null);
+  const [showAddLesson, setShowAddLesson] = useState(false);
+  const [newLessonName, setNewLessonName] = useState('');
+  const [editingLesson, setEditingLesson] = useState<GrammarLesson | null>(null);
+  const [isSeeding, setIsSeeding] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
-  const [importStatus, setImportStatus] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Export grammar data
-  const handleExport = () => {
-    setIsExporting(true);
-    try {
-      const lessonIdMap: Record<string, { name: string; jlptLevel: JLPTLevel }> = {};
-      lessons.forEach(l => { lessonIdMap[l.id] = { name: l.name, jlptLevel: l.jlptLevel }; });
+  // Drag-and-drop state
+  const [draggedLesson, setDraggedLesson] = useState<GrammarLesson | null>(null);
+  const [dragOverLesson, setDragOverLesson] = useState<string | null>(null);
 
-      const exportData: GrammarExportData = {
-        version: '1.0',
-        exportedAt: new Date().toISOString(),
-        type: 'grammar',
-        grammarCards: grammarCards.map(({ id, ...rest }) => rest),
-        lessonIdMap,
-      };
-      const filename = generateExportFilename('grammar');
-      downloadAsJSON(exportData, filename);
-    } catch (error) {
-      console.error('Export error:', error);
-      alert('Có lỗi khi xuất dữ liệu');
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  // Import grammar data
-  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!onImportGrammarCard) {
-      alert('Import chưa được cấu hình');
-      return;
-    }
-
-    setIsImporting(true);
-    setImportStatus('Đang đọc file...');
-
-    try {
-      const data = await readJSONFile(file) as GrammarExportData;
-
-      if (!data.type || data.type !== 'grammar') {
-        throw new Error('File không phải là dữ liệu ngữ pháp hợp lệ');
-      }
-
-      // Map old lessonId to new lessonId by matching name + jlptLevel
-      const oldToNewLessonIdMap: Record<string, string> = {};
-      for (const [oldId, info] of Object.entries(data.lessonIdMap)) {
-        const existingLesson = lessons.find(
-          l => l.name === info.name && l.jlptLevel === info.jlptLevel
-        );
-        if (existingLesson) {
-          oldToNewLessonIdMap[oldId] = existingLesson.id;
-        }
-      }
-
-      // Import grammar cards
-      setImportStatus(`Đang import ${data.grammarCards.length} thẻ ngữ pháp...`);
-      let importedCount = 0;
-      for (const cardData of data.grammarCards) {
-        const newLessonId = oldToNewLessonIdMap[cardData.lessonId] || cardData.lessonId;
-
-        // Check if card already exists
-        const existingCard = grammarCards.find(
-          g => g.title === cardData.title && g.lessonId === newLessonId
-        );
-        if (existingCard) continue;
-
-        await onImportGrammarCard({ ...cardData, lessonId: newLessonId });
-        importedCount++;
-      }
-
-      setImportStatus(null);
-      alert(`Import thành công!\n- ${importedCount} thẻ ngữ pháp`);
-    } catch (error) {
-      console.error('Import error:', error);
-      alert(`Lỗi import: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setIsImporting(false);
-      setImportStatus(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
-  const canModifyLesson = (lesson: Lesson) => isSuperAdmin || lesson.createdBy === currentUser.id;
-  const canModifyCard = (card: GrammarCard) => isSuperAdmin || card.createdBy === currentUser.id;
-
-  const getCurrentLevel = (): JLPTLevel | null => navState.type === 'root' ? null : navState.level;
+  // Get current lesson ID for adding cards
   const getCurrentLessonId = (): string | null => {
-    if (navState.type === 'childLesson') return navState.lessonId;
-    if (navState.type === 'parentLesson' && getChildLessons(navState.lessonId).length === 0) return navState.lessonId;
+    if (navState.type === 'child') return navState.lessonId;
+    if (navState.type === 'parent' && !hasChildren(navState.lessonId)) return navState.lessonId;
     return null;
   };
 
-  const getCardCountByLevel = (level: JLPTLevel) => grammarCards.filter(c => c.jlptLevel === level).length;
-  const getCardCountByLesson = (lessonId: string) => grammarCards.filter(c => c.lessonId === lessonId).length;
-  const getCardCountByLessonRecursive = (lessonId: string) => {
-    const directCount = grammarCards.filter(c => c.lessonId === lessonId).length;
-    const childrenCount = getChildLessons(lessonId).reduce((sum, child) => sum + getCardCountByLesson(child.id), 0);
-    return directCount + childrenCount;
-  };
-
+  // Get cards for current view
   const getCardsForCurrentView = (): GrammarCard[] => {
-    if (navState.type === 'childLesson') return grammarCards.filter(c => c.lessonId === navState.lessonId);
-    if (navState.type === 'parentLesson' && getChildLessons(navState.lessonId).length === 0) return grammarCards.filter(c => c.lessonId === navState.lessonId);
-    return [];
+    const lessonId = getCurrentLessonId();
+    if (!lessonId) return [];
+    return grammarCards.filter(c => c.lessonId === lessonId);
   };
 
-  const getBreadcrumb = (): string[] => {
-    const crumbs: string[] = ['Tất cả'];
-    if (navState.type === 'level') crumbs.push(navState.level);
-    if (navState.type === 'parentLesson') crumbs.push(navState.level, navState.lessonName);
-    if (navState.type === 'childLesson') crumbs.push(navState.level, navState.parentName, navState.lessonName);
-    return crumbs;
+  // Get card count for a level
+  const getCardCountByLevel = (level: JLPTLevel): number => {
+    return grammarCards.filter(c => c.jlptLevel === level).length;
   };
 
+  // Get card count for a lesson (recursive)
+  const getCardCount = (lessonId: string): number => {
+    const direct = grammarCards.filter(c => c.lessonId === lessonId).length;
+    const children = getChildLessons(lessonId);
+    return direct + children.reduce((sum, child) => sum + getCardCount(child.id), 0);
+  };
+
+  // Navigation
   const goBack = () => {
     if (navState.type === 'level') setNavState({ type: 'root' });
-    else if (navState.type === 'parentLesson') setNavState({ type: 'level', level: navState.level });
-    else if (navState.type === 'childLesson') setNavState({ type: 'parentLesson', level: navState.level, lessonId: navState.parentId, lessonName: navState.parentName });
+    else if (navState.type === 'parent') setNavState({ type: 'level', level: navState.level });
+    else if (navState.type === 'child') {
+      setNavState({ type: 'parent', level: navState.level, lessonId: navState.parentId, lessonName: navState.parentName });
+    }
     setShowForm(false);
+    setShowAddLesson(false);
   };
 
+  // Seed lessons for current level
+  const handleSeed = async () => {
+    if (navState.type !== 'level') return;
+    const config = SEED_CONFIG[navState.level];
+    if (!confirm(`Tạo Bài ${config.start} đến Bài ${config.end} cho ${navState.level}?`)) return;
+
+    setIsSeeding(true);
+    try {
+      const count = await onSeedLessons(navState.level, config.start, config.end, config.folders, currentUser.id);
+      alert(`Đã tạo ${count} bài học mới`);
+    } catch (err) {
+      console.error(err);
+      alert('Có lỗi khi tạo bài học');
+    }
+    setIsSeeding(false);
+  };
+
+  // Add lesson
+  const handleAddLesson = async () => {
+    if (!newLessonName.trim() || navState.type === 'root') return;
+    const level = navState.type === 'level' ? navState.level : navState.level;
+    const parentId = navState.type === 'parent' ? navState.lessonId : null;
+    await onAddLesson(newLessonName.trim(), level, parentId, currentUser.id);
+    setNewLessonName('');
+    setShowAddLesson(false);
+  };
+
+  // Update lesson
+  const handleUpdateLesson = async () => {
+    if (!editingLesson || !newLessonName.trim()) return;
+    await onUpdateLesson(editingLesson.id, newLessonName.trim());
+    setEditingLesson(null);
+    setNewLessonName('');
+  };
+
+  // Delete lesson
+  const handleDeleteLesson = async (lesson: GrammarLesson) => {
+    if (!confirm(`Xoá "${lesson.name}" và tất cả nội dung bên trong?`)) return;
+    await onDeleteLesson(lesson.id);
+  };
+
+  // Submit grammar card
   const handleSubmit = (data: any) => {
-    if (editingCard) onUpdateGrammarCard(editingCard.id, data);
-    else onAddGrammarCard(data, currentUser.id);
+    if (editingCard) {
+      onUpdateGrammarCard(editingCard.id, data);
+    } else {
+      onAddGrammarCard(data, currentUser.id);
+    }
     setShowForm(false);
     setEditingCard(null);
   };
 
-  const breadcrumb = getBreadcrumb();
-  const currentCards = getCardsForCurrentView();
-  const parentHasNoChildren = navState.type === 'parentLesson' && getChildLessons(navState.lessonId).length === 0;
-  const canAddCard = navState.type === 'childLesson' || parentHasNoChildren;
-
-  const getLessonsForForm = (): Lesson[] => {
-    if (navState.type === 'childLesson') return getChildLessons(navState.parentId);
-    return [];
+  // Export
+  const handleExport = () => {
+    setIsExporting(true);
+    try {
+      const exportData = {
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        type: 'grammar',
+        grammarCards: grammarCards.map(({ id, ...rest }) => rest),
+        grammarLessons: grammarLessons.map(({ id, ...rest }) => rest),
+      };
+      downloadAsJSON(exportData, `grammar-export-${new Date().toISOString().split('T')[0]}.json`);
+    } catch (err) {
+      alert('Có lỗi khi xuất dữ liệu');
+    }
+    setIsExporting(false);
   };
 
-  const renderLessonItem = (lesson: Lesson, isChild: boolean = false) => (
-    <div
-      key={lesson.id}
-      className="folder-item"
-      onClick={() => {
-        if (isChild) {
-          setNavState({ type: 'childLesson', level: (navState as any).level, parentId: (navState as any).lessonId, parentName: (navState as any).lessonName, lessonId: lesson.id, lessonName: lesson.name });
-        } else {
-          setNavState({ type: 'parentLesson', level: (navState as any).level, lessonId: lesson.id, lessonName: lesson.name });
-        }
-      }}
-    >
-      {/* Lock/Hide buttons - show if user can modify or has onToggle handlers */}
-      {canModifyLesson(lesson) && onToggleLock && onToggleHide && (
+  // Import
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !onImportGrammarCard) return;
+
+    setIsImporting(true);
+    try {
+      const data = await readJSONFile(file) as any;
+      if (data.type !== 'grammar') throw new Error('File không hợp lệ');
+      let count = 0;
+      for (const card of data.grammarCards) {
+        await onImportGrammarCard(card);
+        count++;
+      }
+      alert(`Import thành công ${count} thẻ`);
+    } catch (err) {
+      alert(`Lỗi: ${err instanceof Error ? err.message : 'Unknown'}`);
+    }
+    setIsImporting(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const canModifyCard = (card: GrammarCard) => isSuperAdmin || card.createdBy === currentUser.id;
+  const canModifyLesson = (lesson: GrammarLesson) => isSuperAdmin || lesson.createdBy === currentUser.id;
+  const currentCards = getCardsForCurrentView();
+  const canAddCard = getCurrentLessonId() !== null;
+
+  // Drag-and-drop handlers
+  const handleDragStart = (e: React.DragEvent, lesson: GrammarLesson) => {
+    setDraggedLesson(lesson);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', lesson.id);
+  };
+
+  const handleDragOver = (e: React.DragEvent, lessonId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (draggedLesson && draggedLesson.id !== lessonId) {
+      setDragOverLesson(lessonId);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverLesson(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedLesson(null);
+    setDragOverLesson(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetLesson: GrammarLesson, lessonList: GrammarLesson[]) => {
+    e.preventDefault();
+    if (!draggedLesson || draggedLesson.id === targetLesson.id) {
+      setDraggedLesson(null);
+      setDragOverLesson(null);
+      return;
+    }
+
+    // Calculate new order
+    const sortedLessons = [...lessonList].sort((a, b) => a.order - b.order);
+    const draggedIndex = sortedLessons.findIndex(l => l.id === draggedLesson.id);
+    const targetIndex = sortedLessons.findIndex(l => l.id === targetLesson.id);
+
+    // Remove dragged and insert at target position
+    const reordered = [...sortedLessons];
+    reordered.splice(draggedIndex, 1);
+    reordered.splice(targetIndex, 0, draggedLesson);
+
+    // Create update array with new order values
+    const updates = reordered.map((lesson, index) => ({
+      id: lesson.id,
+      order: index + 1,
+    }));
+
+    try {
+      await onReorderLessons(updates);
+    } catch (err) {
+      console.error('Failed to reorder lessons:', err);
+    }
+
+    setDraggedLesson(null);
+    setDragOverLesson(null);
+  };
+
+  // Render breadcrumb
+  const renderBreadcrumb = () => (
+    <div className="grammar-breadcrumb">
+      <span
+        className={`grammar-breadcrumb-chip ${navState.type === 'root' ? 'current' : 'clickable'}`}
+        onClick={() => navState.type !== 'root' && setNavState({ type: 'root' })}
+      >
+        <BookOpen size={14} />
+        Ngữ pháp
+      </span>
+
+      {navState.type !== 'root' && (
         <>
-          <button className={`lock-btn ${lesson.isLocked ? 'locked' : ''}`} onClick={(e) => { e.stopPropagation(); onToggleLock(lesson.id); }} title={lesson.isLocked ? 'Mở khóa' : 'Khóa'}>
-            {lesson.isLocked ? '🔒' : '🔓'}
-          </button>
-          <button className={`hide-btn ${lesson.isHidden ? 'hidden' : ''}`} onClick={(e) => { e.stopPropagation(); onToggleHide(lesson.id); }} title={lesson.isHidden ? 'Hiện' : 'Ẩn'}>
-            {lesson.isHidden ? '👁️‍🗨️' : '👁️'}
-          </button>
+          <ChevronRight size={14} className="grammar-breadcrumb-separator" />
+          <span
+            className={`grammar-breadcrumb-chip level-${navState.level.toLowerCase()} ${navState.type === 'level' ? 'current' : 'clickable'}`}
+            onClick={() => navState.type !== 'level' && setNavState({ type: 'level', level: navState.level })}
+          >
+            {navState.level}
+          </span>
         </>
       )}
-      <span className="folder-icon">{isChild ? '📄' : '📂'}</span>
-      <span className="folder-name">{lesson.name}</span>
-      <span className="folder-count">({isChild ? getCardCountByLesson(lesson.id) : getCardCountByLessonRecursive(lesson.id)} mẫu)</span>
-      {lesson.isLocked && <span className="locked-badge">Đã khóa</span>}
-      {lesson.isHidden && <span className="hidden-badge">Đã ẩn</span>}
+
+      {(navState.type === 'parent' || navState.type === 'child') && (
+        <>
+          <ChevronRight size={14} className="grammar-breadcrumb-separator" />
+          <span
+            className={`grammar-breadcrumb-chip ${navState.type === 'parent' ? 'current' : 'clickable'}`}
+            onClick={() => navState.type === 'child' && setNavState({ type: 'parent', level: navState.level, lessonId: navState.parentId, lessonName: navState.parentName })}
+          >
+            <FolderOpen size={14} />
+            {navState.type === 'parent' ? navState.lessonName : navState.parentName}
+          </span>
+        </>
+      )}
+
+      {navState.type === 'child' && (
+        <>
+          <ChevronRight size={14} className="grammar-breadcrumb-separator" />
+          <span className="grammar-breadcrumb-chip current">
+            <FileText size={14} />
+            {navState.lessonName}
+          </span>
+        </>
+      )}
+    </div>
+  );
+
+  // Render level card
+  const renderLevelCard = (level: JLPTLevel) => {
+    const meta = LEVEL_META[level];
+    const lessonCount = getLessonCountByLevel(level);
+    const cardCount = getCardCountByLevel(level);
+
+    return (
+      <div
+        key={level}
+        className={`grammar-level-card level-${meta.color}`}
+        onClick={() => setNavState({ type: 'level', level })}
+      >
+        <div className="level-header">
+          <span className="level-badge">{level}</span>
+          <span className="level-desc">{meta.desc}</span>
+        </div>
+        <div className="level-stats">
+          <span className="count">{lessonCount} bài • {cardCount} thẻ</span>
+        </div>
+        <ChevronRight size={20} className="level-arrow" />
+      </div>
+    );
+  };
+
+  // Render lesson card
+  const renderLessonCard = (lesson: GrammarLesson, isChild: boolean = false, lessonList: GrammarLesson[] = []) => {
+    const cardCount = getCardCount(lesson.id);
+    const childrenCount = getChildLessons(lesson.id).length;
+    const levelClass = `level-${lesson.jlptLevel.toLowerCase()}`;
+    const isDragging = draggedLesson?.id === lesson.id;
+    const isDragOver = dragOverLesson === lesson.id;
+
+    return (
+      <div
+        key={lesson.id}
+        className={`grammar-lesson-card ${levelClass} ${isChild ? 'is-child' : 'is-parent'} ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
+        draggable={canModifyLesson(lesson)}
+        onDragStart={(e) => handleDragStart(e, lesson)}
+        onDragOver={(e) => handleDragOver(e, lesson.id)}
+        onDragLeave={handleDragLeave}
+        onDragEnd={handleDragEnd}
+        onDrop={(e) => handleDrop(e, lesson, lessonList)}
+        onClick={() => {
+          if (isChild) {
+            setNavState({
+              type: 'child',
+              level: navState.type === 'parent' ? navState.level : (navState as any).level,
+              parentId: (navState as any).lessonId,
+              parentName: (navState as any).lessonName,
+              lessonId: lesson.id,
+              lessonName: lesson.name
+            });
+          } else if (navState.type === 'level') {
+            setNavState({ type: 'parent', level: navState.level, lessonId: lesson.id, lessonName: lesson.name });
+          }
+        }}
+      >
+        {canModifyLesson(lesson) && (
+          <span className="drag-handle" title="Kéo để thay đổi vị trí">
+            <GripVertical size={16} />
+          </span>
+        )}
+
+        <div className="lesson-icon">
+          {isChild ? <FileText size={20} /> : <FolderOpen size={20} />}
+        </div>
+
+        <div className="lesson-info">
+          <div className="lesson-name">{lesson.name}</div>
+          <div className="lesson-count">
+            {cardCount} thẻ{!isChild && childrenCount > 0 && ` • ${childrenCount} thư mục`}
+          </div>
+        </div>
+
+        {canModifyLesson(lesson) && (
+          <div className="lesson-actions" onClick={e => e.stopPropagation()}>
+            <button
+              className="lesson-action-btn"
+              onClick={() => { setEditingLesson(lesson); setNewLessonName(lesson.name); }}
+              title="Sửa"
+            >
+              <Edit2 size={16} />
+            </button>
+            <button
+              className="lesson-action-btn danger"
+              onClick={() => handleDeleteLesson(lesson)}
+              title="Xoá"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+        )}
+
+        <ChevronRight size={20} className="lesson-arrow" />
+      </div>
+    );
+  };
+
+  // Render add lesson form
+  const renderAddLessonForm = () => (
+    <div className="add-lesson-form">
+      <input
+        type="text"
+        value={newLessonName}
+        onChange={e => setNewLessonName(e.target.value)}
+        placeholder={navState.type === 'level' ? 'Tên bài học...' : 'Tên thư mục con...'}
+        className="input"
+        autoFocus
+        onKeyDown={e => e.key === 'Enter' && handleAddLesson()}
+      />
+      <button className="btn btn-primary" onClick={handleAddLesson} disabled={!newLessonName.trim()}>
+        Thêm
+      </button>
+      <button className="btn btn-secondary" onClick={() => { setShowAddLesson(false); setNewLessonName(''); }}>
+        Huỷ
+      </button>
+    </div>
+  );
+
+  // Render edit lesson modal
+  const renderEditLessonModal = () => editingLesson && (
+    <div className="modal-overlay" onClick={() => setEditingLesson(null)}>
+      <div className="modal-content small" onClick={e => e.stopPropagation()}>
+        <h3>Sửa tên</h3>
+        <input
+          type="text"
+          value={newLessonName}
+          onChange={e => setNewLessonName(e.target.value)}
+          className="input"
+          autoFocus
+          onKeyDown={e => e.key === 'Enter' && handleUpdateLesson()}
+        />
+        <div className="modal-actions">
+          <button className="btn btn-secondary" onClick={() => { setEditingLesson(null); setNewLessonName(''); }}>
+            Huỷ
+          </button>
+          <button className="btn btn-primary" onClick={handleUpdateLesson} disabled={!newLessonName.trim()}>
+            Lưu
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Empty state
+  const renderEmptyState = (message: string, description?: string) => (
+    <div className="grammar-empty-state">
+      <BookOpen size={64} className="empty-icon" />
+      <div className="empty-title">{message}</div>
+      {description && <div className="empty-desc">{description}</div>}
     </div>
   );
 
   return (
-    <>
-      <div className="breadcrumb">
-        {breadcrumb.map((crumb, idx) => (
-          <span key={idx}>
-            {idx > 0 && ' / '}
-            <span className={idx === breadcrumb.length - 1 ? 'current' : 'clickable'} onClick={() => idx === 0 && setNavState({ type: 'root' })}>{crumb}</span>
-          </span>
-        ))}
+    <div className="grammar-tab-container">
+      {/* Header */}
+      <div className="grammar-header-actions">
+        <div className="action-group">
+          {renderBreadcrumb()}
+        </div>
+
+        <div className="action-group">
+          {navState.type !== 'root' && (
+            <button className="btn btn-secondary" onClick={goBack}>
+              ← Quay lại
+            </button>
+          )}
+
+          {/* Seed button for level view */}
+          {navState.type === 'level' && isSuperAdmin && (
+            <button className="btn btn-secondary" onClick={handleSeed} disabled={isSeeding}>
+              {isSeeding ? 'Đang tạo...' : `Tạo Bài ${SEED_CONFIG[navState.level].start}-${SEED_CONFIG[navState.level].end}`}
+            </button>
+          )}
+
+          {/* Add lesson button */}
+          {(navState.type === 'level' || (navState.type === 'parent' && (hasChildren(navState.lessonId) || getChildLessons(navState.lessonId).length === 0))) && !showAddLesson && !showForm && (
+            <button className="btn btn-primary" onClick={() => setShowAddLesson(true)}>
+              <Plus size={16} />
+              {navState.type === 'level' ? 'Thêm bài' : 'Thêm thư mục'}
+            </button>
+          )}
+
+          {/* Add grammar card button */}
+          {canAddCard && !showForm && !showAddLesson && (
+            <button className="btn btn-grammar" onClick={() => setShowForm(true)}>
+              <Plus size={16} />
+              Tạo thẻ ngữ pháp
+            </button>
+          )}
+
+          {/* Export/Import at root */}
+          {navState.type === 'root' && isSuperAdmin && (
+            <>
+              <input type="file" ref={fileInputRef} accept=".json" onChange={handleImportFile} style={{ display: 'none' }} />
+              <button className="btn btn-secondary" onClick={handleExport} disabled={isExporting}>
+                <Download size={16} />
+                Export
+              </button>
+              <button className="btn btn-secondary" onClick={() => fileInputRef.current?.click()} disabled={isImporting}>
+                <Upload size={16} />
+                Import
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
-      {navState.type !== 'root' && <button className="btn btn-back" onClick={goBack}>← Quay lại</button>}
+      {/* Add lesson form */}
+      {showAddLesson && renderAddLessonForm()}
 
-      {/* Export/Import buttons at root level */}
-      {navState.type === 'root' && isSuperAdmin && (
-        <div className="export-import-actions" style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
-          <input
-            type="file"
-            ref={fileInputRef}
-            accept=".json"
-            onChange={handleImportFile}
-            style={{ display: 'none' }}
-          />
-          <button
-            className="btn btn-secondary"
-            onClick={handleExport}
-            disabled={isExporting}
-            title="Xuất tất cả ngữ pháp"
-          >
-            <Download size={16} style={{ marginRight: '0.25rem' }} />
-            {isExporting ? 'Đang xuất...' : 'Export'}
-          </button>
-          <button
-            className="btn btn-secondary"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isImporting || !onImportGrammarCard}
-            title="Nhập dữ liệu từ file JSON"
-          >
-            <Upload size={16} style={{ marginRight: '0.25rem' }} />
-            {isImporting ? 'Đang nhập...' : 'Import'}
-          </button>
-          {importStatus && <span className="import-status" style={{ color: '#666', fontSize: '0.875rem' }}>{importStatus}</span>}
-        </div>
-      )}
-
-      {!showForm && (
-        <div className="folder-actions">
-          {canAddCard && <button className="btn btn-grammar" onClick={() => setShowForm(true)}>+ Tạo thẻ ngữ pháp</button>}
-        </div>
-      )}
-
+      {/* Grammar card form */}
       {showForm && (
-        <GrammarCardForm onSubmit={handleSubmit} onCancel={() => { setShowForm(false); setEditingCard(null); }} initialData={editingCard || undefined} lessons={getLessonsForForm()} fixedLevel={getCurrentLevel()} fixedLessonId={getCurrentLessonId()} />
+        <GrammarCardForm
+          onSubmit={handleSubmit}
+          onCancel={() => { setShowForm(false); setEditingCard(null); }}
+          initialData={editingCard || undefined}
+          lessons={[]}
+          fixedLevel={navState.type !== 'root' ? navState.level : null}
+          fixedLessonId={getCurrentLessonId()}
+        />
       )}
 
-      {!showForm && (
-        <div className="folder-content">
+      {/* Content */}
+      {!showForm && !showAddLesson && (
+        <>
+          {/* Root: Level Grid */}
           {navState.type === 'root' && (
-            <div className="folder-list">
-              {JLPT_LEVELS.map(level => (
-                <div key={level} className="folder-item" onClick={() => setNavState({ type: 'level', level })}>
-                  <span className="folder-icon">📁</span>
-                  <span className="folder-name">{level}</span>
-                  <span className="folder-count">({getCardCountByLevel(level)} mẫu)</span>
-                </div>
-              ))}
+            <div className="grammar-level-grid">
+              {JLPT_LEVELS.map(level => renderLevelCard(level))}
             </div>
           )}
 
+          {/* Level: Lesson List */}
           {navState.type === 'level' && (
-            <div className="folder-list">
-              {getLessonsByLevel(navState.level).map(lesson => renderLessonItem(lesson))}
-              {getLessonsByLevel(navState.level).length === 0 && <p className="empty-message">Chưa có bài học nào. Vui lòng tạo bài học ở tab Từ Vựng trước.</p>}
+            <div className="grammar-lesson-list">
+              {getParentLessonsByLevel(navState.level).map(lesson => renderLessonCard(lesson, false, getParentLessonsByLevel(navState.level)))}
+              {getParentLessonsByLevel(navState.level).length === 0 && renderEmptyState(
+                'Chưa có bài học',
+                isSuperAdmin ? `Nhấn "Tạo Bài ${SEED_CONFIG[navState.level].start}-${SEED_CONFIG[navState.level].end}" để tạo tự động` : 'Chưa có bài học nào'
+              )}
             </div>
           )}
 
-          {navState.type === 'parentLesson' && (
-            <div className="folder-list">
-              {getChildLessons(navState.lessonId).map(lesson => renderLessonItem(lesson, true))}
-              {getChildLessons(navState.lessonId).length === 0 && (
+          {/* Parent Lesson: Child folders or cards */}
+          {navState.type === 'parent' && (
+            <div className="grammar-lesson-list">
+              {hasChildren(navState.lessonId) ? (
+                getChildLessons(navState.lessonId).map(lesson => renderLessonCard(lesson, true, getChildLessons(navState.lessonId)))
+              ) : (
                 currentCards.length > 0 ? (
-                  <GrammarCardList cards={currentCards} onEdit={(card) => { setEditingCard(card); setShowForm(true); }} onDelete={onDeleteGrammarCard} canEdit={canModifyCard} canDelete={canModifyCard} />
+                  <GrammarCardList
+                    cards={currentCards}
+                    onEdit={card => { setEditingCard(card); setShowForm(true); }}
+                    onDelete={onDeleteGrammarCard}
+                    canEdit={canModifyCard}
+                    canDelete={canModifyCard}
+                  />
                 ) : (
-                  <p className="empty-message">Chưa có thẻ ngữ pháp nào. Nhấn "+ Tạo thẻ ngữ pháp" để thêm.</p>
+                  renderEmptyState('Chưa có nội dung', 'Thêm thư mục con hoặc tạo thẻ ngữ pháp')
                 )
               )}
             </div>
           )}
 
-          {navState.type === 'childLesson' && (
+          {/* Child Lesson: Cards only */}
+          {navState.type === 'child' && (
             currentCards.length > 0 ? (
-              <GrammarCardList cards={currentCards} onEdit={(card) => { setEditingCard(card); setShowForm(true); }} onDelete={onDeleteGrammarCard} canEdit={canModifyCard} canDelete={canModifyCard} />
+              <GrammarCardList
+                cards={currentCards}
+                onEdit={card => { setEditingCard(card); setShowForm(true); }}
+                onDelete={onDeleteGrammarCard}
+                canEdit={canModifyCard}
+                canDelete={canModifyCard}
+              />
             ) : (
-              <p className="empty-message">Chưa có thẻ ngữ pháp nào. Nhấn "+ Tạo thẻ ngữ pháp" để thêm.</p>
+              renderEmptyState('Chưa có thẻ ngữ pháp', 'Nhấn "Tạo thẻ ngữ pháp" để thêm')
             )
           )}
-        </div>
+        </>
       )}
-    </>
+
+      {/* Edit lesson modal */}
+      {renderEditLessonModal()}
+    </div>
   );
 }

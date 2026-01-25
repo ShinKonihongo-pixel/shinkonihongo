@@ -113,12 +113,28 @@ export function useLessons() {
     return lessons.find(l => l.id === id) || null;
   }, [lessons]);
 
-  // Reorder lesson
+  // Reorder lesson (single)
   const reorderLesson = useCallback(async (id: string, newOrder: number) => {
     try {
       await firestoreService.updateLesson(id, { order: newOrder });
     } catch (err) {
       console.error('Error reordering lesson:', err);
+      throw err;
+    }
+  }, []);
+
+  // Reorder lessons (batch - for drag and drop)
+  const reorderLessons = useCallback(async (
+    reorderedLessons: { id: string; order: number }[]
+  ): Promise<void> => {
+    try {
+      await Promise.all(
+        reorderedLessons.map(({ id, order }) =>
+          firestoreService.updateLesson(id, { order })
+        )
+      );
+    } catch (err) {
+      console.error('Error reordering lessons:', err);
       throw err;
     }
   }, []);
@@ -133,6 +149,7 @@ export function useLessons() {
     getChildLessons,
     getLesson,
     reorderLesson,
+    reorderLessons,
     toggleLock,
     toggleHide,
   };

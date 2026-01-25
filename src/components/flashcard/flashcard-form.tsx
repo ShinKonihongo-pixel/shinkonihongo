@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Sparkles, RefreshCw } from 'lucide-react';
 import type { FlashcardFormData, JLPTLevel, Flashcard, Lesson, DifficultyLevel } from '../../types/flashcard';
-import { generateKanjiInfo, generateExample } from '../../services/kanji-ai-service';
+import { generateKanjiInfo, generateExample, generateMeaningFromVocabulary } from '../../services/kanji-ai-service';
 
 interface FlashcardFormProps {
   onSubmit: (data: FlashcardFormData) => void;
@@ -45,6 +45,7 @@ export function FlashcardForm({
 
   // AI loading states
   const [isGeneratingInfo, setIsGeneratingInfo] = useState(false);
+  const [isGeneratingMeaning, setIsGeneratingMeaning] = useState(false);
   const [generatingExampleIndex, setGeneratingExampleIndex] = useState<number | null>(null);
 
   useEffect(() => {
@@ -89,6 +90,31 @@ export function FlashcardForm({
       ...prev,
       examples: prev.examples.filter((_, i) => i !== index),
     }));
+  };
+
+  // AI: Auto-fill meaning from vocabulary
+  const handleAutoFillFromVocabulary = async () => {
+    const word = formData.vocabulary.trim() || formData.kanji.trim();
+    if (!word) {
+      alert('Vui lòng nhập từ vựng trước!');
+      return;
+    }
+
+    setIsGeneratingMeaning(true);
+    try {
+      const info = await generateMeaningFromVocabulary(word);
+      if (info) {
+        setFormData(prev => ({
+          ...prev,
+          meaning: info.meaning || prev.meaning,
+          sinoVietnamese: info.sinoVietnamese || prev.sinoVietnamese,
+        }));
+      }
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Lỗi khi tạo nghĩa');
+    } finally {
+      setIsGeneratingMeaning(false);
+    }
   };
 
   // AI: Auto-fill from kanji
@@ -200,7 +226,23 @@ export function FlashcardForm({
       </div>
 
       <div className="form-group">
-        <label htmlFor="vocabulary">Từ vựng (Hiragana) *</label>
+        <label htmlFor="vocabulary">
+          Từ vựng (Hiragana) *
+          <button
+            type="button"
+            className="btn-ai"
+            onClick={handleAutoFillFromVocabulary}
+            disabled={isGeneratingMeaning || (!formData.vocabulary.trim() && !formData.kanji.trim())}
+            title="Tự động điền nghĩa tiếng Việt"
+          >
+            {isGeneratingMeaning ? (
+              <RefreshCw size={14} className="spin" />
+            ) : (
+              <Sparkles size={14} />
+            )}
+            Nghĩa
+          </button>
+        </label>
         <input
           type="text"
           id="vocabulary"

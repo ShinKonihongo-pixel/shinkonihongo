@@ -135,6 +135,11 @@ export interface UserStats {
   totalGamesPlayed: number;
   totalGameWins: number;
   averageGameRank: number;
+  // Medal tracking (ranks 1, 2, 3)
+  goldMedals: number;    // Hạng 1
+  silverMedals: number;  // Hạng 2
+  bronzeMedals: number;  // Hạng 3
+  totalMedals: number;   // Tổng huy chương (1+2+3)
   totalJLPTSessions: number;
   totalJLPTCorrect: number;
   totalJLPTQuestions: number;
@@ -182,13 +187,22 @@ export function getTitleForLevel(level: number): string {
 
 // Calculate user level from stats
 export function calculateUserLevel(stats: UserStats): UserLevel {
-  // XP formula: study sessions * 10 + games * 5 + wins * 20 + JLPT sessions * 15
+  // XP formula:
+  // - Study sessions: 10 XP each
+  // - Games played: 5 XP each
+  // - Gold medals (rank 1): 30 XP each
+  // - Silver medals (rank 2): 20 XP each
+  // - Bronze medals (rank 3): 10 XP each
+  // - JLPT sessions: 15 XP each
+  // - Study time: 1 XP per minute
   const totalXp =
     stats.totalStudySessions * 10 +
     stats.totalGamesPlayed * 5 +
-    stats.totalGameWins * 20 +
+    stats.goldMedals * 30 +
+    stats.silverMedals * 20 +
+    stats.bronzeMedals * 10 +
     stats.totalJLPTSessions * 15 +
-    Math.floor(stats.totalStudyTime / 60); // 1 XP per minute studied
+    Math.floor(stats.totalStudyTime / 60);
 
   // Calculate level from XP
   let level = 1;

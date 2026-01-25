@@ -95,3 +95,14 @@ export interface GrammarCardFormData {
   jlptLevel: JLPTLevel;
   lessonId: string;
 }
+
+// Bài học ngữ pháp - riêng biệt với bài học từ vựng
+export interface GrammarLesson {
+  id: string;
+  name: string;           // Tên bài học
+  jlptLevel: JLPTLevel;   // Level JLPT
+  parentId: string | null; // ID bài học cha (null nếu là bài học gốc)
+  order: number;          // Thứ tự sắp xếp
+  createdBy?: string;     // User ID của người tạo
+  createdAt?: string;     // ISO date string
+}

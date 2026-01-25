@@ -317,7 +317,6 @@ export function KaiwaTopicsManagement({
 
   // Topic Card
   const renderTopicCard = (topic: KaiwaAdvancedTopic) => {
-    const questionCount = questions.filter(q => q.topicId === topic.id).length;
 
     return (
       <div

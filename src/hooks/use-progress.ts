@@ -141,9 +141,9 @@ function calculateStreak(
     if (i === 0) {
       tempStreak = 1;
     } else {
-      const prevDate = new Date(ascDates[i - 1]);
-      const currDate = new Date(ascDates[i]);
-      const diffDays = Math.round((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+      const prevDate = new Date(ascDates[i - 1] + 'T12:00:00'); // Use noon to avoid DST issues
+      const currDate = new Date(ascDates[i] + 'T12:00:00');
+      const diffDays = Math.floor((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24) + 0.5);
 
       if (diffDays === 1) {
         tempStreak++;

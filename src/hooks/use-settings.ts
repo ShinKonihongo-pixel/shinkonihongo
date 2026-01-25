@@ -154,6 +154,7 @@ export interface AppSettings {
   aiChallengeTimePerQuestion: number;      // 5-30 seconds, default 15
   aiChallengeAccuracyModifier: number;     // -20 to +20, default 0 (global fallback)
   aiChallengeSpeedMultiplier: number;      // 0.5-2.0, default 1.0 (global fallback)
+  aiChallengeAutoAddDifficulty: AutoAddDifficulty; // Difficulty when auto-adding cards
   aiChallengeLevel: 'all' | 'N5' | 'N4' | 'N3' | 'N2' | 'N1';  // JLPT level filter for questions
   aiChallengePerAISettings: Record<AIDifficultyId, AICustomSettings>; // Per-AI settings
   aiChallengePerLevelConfig: Record<JLPTLevelKey, JLPTLevelQuestionConfig>; // Per-level question sources
@@ -241,6 +242,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   aiChallengeTimePerQuestion: 15,
   aiChallengeAccuracyModifier: 0,
   aiChallengeSpeedMultiplier: 1.0,
+  aiChallengeAutoAddDifficulty: 'random',
   aiChallengeLevel: 'all',
   // Per-AI settings with progressive difficulty
   // Note: selectedLessonIds empty = all lessons in that level

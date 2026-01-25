@@ -79,8 +79,8 @@ function App() {
       setCurrentPage('game-hub');
       window.history.replaceState({}, '', window.location.pathname);
     } else if (racingCode) {
-      // Default to boat-racing for legacy racing links
-      setInitialGameType('boat-racing');
+      // Legacy racing links - redirect to quiz game
+      setInitialGameType('quiz');
       setInitialGameJoinCode(racingCode.toUpperCase());
       setCurrentPage('game-hub');
       window.history.replaceState({}, '', window.location.pathname);
@@ -167,6 +167,7 @@ function App() {
     getChildLessons,
     toggleLock,
     toggleHide: toggleLessonHide,
+    reorderLessons,
   } = useLessons();
 
   // Grammar cards
@@ -452,6 +453,7 @@ function App() {
             // Lesson locking/hiding props
             onToggleLock={toggleLock}
             onToggleHide={toggleLessonHide}
+            onReorderLessons={reorderLessons}
             // Lecture management props
             onNavigateToLectureEditor={(lectureId, folderId, level) => {
               setEditingLectureId(lectureId);

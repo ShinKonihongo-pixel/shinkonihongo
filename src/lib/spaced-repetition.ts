@@ -47,10 +47,10 @@ export function calculateNextReview(
     repetitions += 1;
   }
 
-  // Update ease factor (minimum 1.3)
+  // Update ease factor (clamped between 1.3 and 3.0)
   // EF' = EF + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
   const efChange = 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02);
-  easeFactor = Math.max(1.3, easeFactor + efChange);
+  easeFactor = Math.min(3.0, Math.max(1.3, easeFactor + efChange));
 
   return {
     easeFactor,

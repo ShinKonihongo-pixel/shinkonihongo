@@ -10,8 +10,13 @@ export interface KanjiInfo {
 }
 
 export interface ExampleSentence {
-  japanese: string;
+  japanese: string;       // With furigana: 食(た)べます
   vietnamese: string;
+}
+
+export interface VocabularyMeaning {
+  meaning: string;        // Vietnamese meaning
+  sinoVietnamese?: string; // Optional sino-vietnamese
 }
 
 // Get API key from environment
@@ -96,6 +101,68 @@ Lưu ý:
   }
 }
 
+// Generate meaning from vocabulary (hiragana/katakana/kanji)
+export async function generateMeaningFromVocabulary(vocabulary: string): Promise<VocabularyMeaning | null> {
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    throw new Error('Chưa cấu hình VITE_GROQ_API_KEY');
+  }
+
+  const prompt = `Cho từ tiếng Nhật: "${vocabulary}"
+
+Trả về nghĩa tiếng Việt theo JSON (không markdown):
+{
+  "meaning": "nghĩa tiếng Việt ngắn gọn",
+  "sinoVietnamese": "ÂM HÁN VIỆT nếu có kanji (hoặc để trống)"
+}
+
+Ví dụ với たべる:
+{
+  "meaning": "Ăn",
+  "sinoVietnamese": "THỰC"
+}
+
+Ví dụ với きれい:
+{
+  "meaning": "Đẹp, sạch sẽ",
+  "sinoVietnamese": ""
+}`;
+
+  try {
+    const response = await fetch(GROQ_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.3,
+        max_tokens: 150,
+      }),
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const data = await response.json();
+    const text = data.choices?.[0]?.message?.content;
+    if (!text) throw new Error('Không nhận được phản hồi');
+
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('Không tìm thấy JSON');
+
+    const parsed = JSON.parse(jsonMatch[0]) as VocabularyMeaning;
+    return {
+      meaning: parsed.meaning || '',
+      sinoVietnamese: (parsed.sinoVietnamese || '').toUpperCase(),
+    };
+  } catch (error) {
+    console.error('generateMeaningFromVocabulary error:', error);
+    throw error;
+  }
+}
+
 // Generate example sentence for a word
 export async function generateExample(
   vocabulary: string,
@@ -118,12 +185,19 @@ export async function generateExample(
 Yêu cầu:
 - Câu ngắn gọn, dễ hiểu, phù hợp trình độ N5-N4
 - Phải sử dụng từ "${word}" trong câu
+- Kèm furigana cho kanji: viết theo format 漢字(かんじ) - furigana trong ngoặc đơn ngay sau kanji
 - Kèm nghĩa tiếng Việt
 
 Trả về JSON (không markdown):
 {
-  "japanese": "câu tiếng Nhật",
+  "japanese": "câu tiếng Nhật có furigana, ví dụ: 私(わたし)は食(た)べます",
   "vietnamese": "nghĩa tiếng Việt"
+}
+
+Ví dụ output:
+{
+  "japanese": "毎日(まいにち)日本語(にほんご)を勉強(べんきょう)します。",
+  "vietnamese": "Tôi học tiếng Nhật mỗi ngày."
 }`;
 
   try {

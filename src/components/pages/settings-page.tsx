@@ -2209,14 +2209,34 @@ export function SettingsPage({
                   <span className="stat-label">Game đã chơi</span>
                 </div>
                 <div className="stat-card">
-                  <span className="stat-icon">🏆</span>
-                  <span className="stat-value">{stats.totalGameWins}</span>
-                  <span className="stat-label">Chiến thắng</span>
-                </div>
-                <div className="stat-card">
                   <span className="stat-icon">📝</span>
                   <span className="stat-value">{stats.totalJLPTSessions}</span>
                   <span className="stat-label">Phiên JLPT</span>
+                </div>
+              </div>
+
+              {/* Medal Statistics */}
+              <h4 style={{ marginTop: '1.5rem', marginBottom: '0.75rem', color: 'var(--gray-dark)' }}>Thành tích Game</h4>
+              <div className="stats-grid medals-grid">
+                <div className="stat-card medal-card gold">
+                  <span className="stat-icon">🥇</span>
+                  <span className="stat-value">{stats.goldMedals}</span>
+                  <span className="stat-label">Hạng 1</span>
+                </div>
+                <div className="stat-card medal-card silver">
+                  <span className="stat-icon">🥈</span>
+                  <span className="stat-value">{stats.silverMedals}</span>
+                  <span className="stat-label">Hạng 2</span>
+                </div>
+                <div className="stat-card medal-card bronze">
+                  <span className="stat-icon">🥉</span>
+                  <span className="stat-value">{stats.bronzeMedals}</span>
+                  <span className="stat-label">Hạng 3</span>
+                </div>
+                <div className="stat-card medal-card total">
+                  <span className="stat-icon">🏅</span>
+                  <span className="stat-value">{stats.totalMedals}</span>
+                  <span className="stat-label">Tổng huy chương</span>
                 </div>
               </div>
             </section>

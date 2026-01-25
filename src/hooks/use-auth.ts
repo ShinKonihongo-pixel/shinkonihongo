@@ -230,7 +230,7 @@ export function useAuth() {
   // Update JLPT level
   const updateJlptLevel = useCallback(async (userId: string, jlptLevel: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      await firestoreService.updateUser(userId, { jlptLevel });
+      await firestoreService.updateUser(userId, { jlptLevel: jlptLevel as 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | undefined });
       // Update current user state
       if (currentUser?.id === userId) {
         setCurrentUser(prev => prev ? { ...prev, jlptLevel: jlptLevel as any } : null);

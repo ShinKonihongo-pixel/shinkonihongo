@@ -1,4 +1,5 @@
-// List of grammar cards with CRUD actions
+// Grammar Card List - 2-column grid with gradient level badges
+// Features: Expandable cards, level-colored borders, gradient JLPT badges
 
 import { useState } from 'react';
 import { Edit3, Trash2, ChevronDown, ChevronUp, BookOpen } from 'lucide-react';
@@ -28,28 +29,42 @@ export function GrammarCardList({ cards, onEdit, onDelete, canEdit, canDelete }:
     }
   };
 
+  const getLevelClass = (level: string) => `level-${level.toLowerCase()}`;
+  const getBadgeClass = (level: string) => `badge-${level.toLowerCase()}`;
+
   if (cards.length === 0) {
-    return <p className="empty-message">Chưa có thẻ ngữ pháp nào. Hãy tạo thẻ mới!</p>;
+    return (
+      <div className="grammar-empty-state">
+        <BookOpen size={64} className="empty-icon" />
+        <div className="empty-title">Chưa có thẻ ngữ pháp nào</div>
+        <div className="empty-desc">Hãy tạo thẻ mới để bắt đầu!</div>
+      </div>
+    );
   }
 
   return (
     <div className="grammar-card-list">
       <p className="card-count">Hiển thị {cards.length} thẻ ngữ pháp</p>
 
-      <div className="grammar-cards">
+      <div className="grammar-card-grid">
         {cards.map(card => {
           const isExpanded = expandedId === card.id;
+          const levelClass = getLevelClass(card.jlptLevel);
+          const badgeClass = getBadgeClass(card.jlptLevel);
 
           return (
-            <div key={card.id} className={`grammar-card-item ${isExpanded ? 'expanded' : ''}`}>
+            <div
+              key={card.id}
+              className={`grammar-card-item has-level-badge ${levelClass} ${isExpanded ? 'expanded' : ''}`}
+            >
               <div className="grammar-card-header" onClick={() => toggleExpand(card.id)}>
                 <div className="grammar-card-info">
                   <BookOpen size={18} className="grammar-icon" />
                   <span className="grammar-title">{card.title}</span>
-                  <span className="grammar-formula">{card.formula}</span>
+                  {card.formula && <span className="grammar-formula">{card.formula}</span>}
                 </div>
                 <div className="grammar-card-actions">
-                  <span className="jlpt-badge-small">{card.jlptLevel}</span>
+                  <span className={`grammar-jlpt-badge ${badgeClass}`}>{card.jlptLevel}</span>
                   {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                 </div>
               </div>

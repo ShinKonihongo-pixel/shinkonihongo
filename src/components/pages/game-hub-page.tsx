@@ -13,8 +13,6 @@ import { GameSelector } from '../game-hub/game-selector';
 
 // Lazy load game pages for code splitting
 const QuizGamePage = lazy(() => import('./quiz-game-page').then(m => ({ default: m.QuizGamePage })));
-const BoatRacingPage = lazy(() => import('./boat-racing-page').then(m => ({ default: m.BoatRacingPage })));
-const HorseRacingPage = lazy(() => import('./horse-racing-page').then(m => ({ default: m.HorseRacingPage })));
 const GoldenBellPage = lazy(() => import('./golden-bell-page').then(m => ({ default: m.GoldenBellPage })));
 const PictureGuessPage = lazy(() => import('./picture-guess-page').then(m => ({ default: m.PictureGuessPage })));
 const BingoPage = lazy(() => import('./bingo-page').then(m => ({ default: m.BingoPage })));
@@ -130,32 +128,6 @@ export function GameHubPage({
           settings={settings}
           friends={friends}
           onInviteFriend={onInviteFriend}
-        />
-      )}
-
-      {selectedGame === 'boat-racing' && (
-        <BoatRacingPage
-          currentUser={{
-            id: currentUser.id,
-            displayName: currentUser.displayName || currentUser.username,
-            avatar: currentUser.avatar || '🚣',
-            role: currentUser.role,
-          }}
-          flashcards={flashcards}
-          initialJoinCode={joinCode || undefined}
-        />
-      )}
-
-      {selectedGame === 'horse-racing' && (
-        <HorseRacingPage
-          currentUser={{
-            id: currentUser.id,
-            displayName: currentUser.displayName || currentUser.username,
-            avatar: currentUser.avatar || '🏇',
-            role: currentUser.role,
-          }}
-          flashcards={flashcards}
-          initialJoinCode={joinCode || undefined}
         />
       )}
 

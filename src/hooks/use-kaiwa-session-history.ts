@@ -41,11 +41,11 @@ function calculateStreak(dailyRecords: KaiwaDailyRecord[]): { current: number; l
   if (startDate === today || startDate === yesterday) {
     currentStreak = 1;
 
-    // Count consecutive days backwards
+    // Count consecutive days backwards (use noon to avoid DST issues)
     for (let i = 1; i < sorted.length; i++) {
-      const prevDate = new Date(sorted[i - 1].date);
-      const currDate = new Date(sorted[i].date);
-      const dayDiff = (prevDate.getTime() - currDate.getTime()) / 86400000;
+      const prevDate = new Date(sorted[i - 1].date + 'T12:00:00');
+      const currDate = new Date(sorted[i].date + 'T12:00:00');
+      const dayDiff = Math.floor((prevDate.getTime() - currDate.getTime()) / 86400000 + 0.5);
 
       if (dayDiff === 1) {
         currentStreak++;
@@ -55,12 +55,12 @@ function calculateStreak(dailyRecords: KaiwaDailyRecord[]): { current: number; l
     }
   }
 
-  // Calculate longest streak
+  // Calculate longest streak (use noon to avoid DST issues)
   tempStreak = 1;
   for (let i = 1; i < sorted.length; i++) {
-    const prevDate = new Date(sorted[i - 1].date);
-    const currDate = new Date(sorted[i].date);
-    const dayDiff = (prevDate.getTime() - currDate.getTime()) / 86400000;
+    const prevDate = new Date(sorted[i - 1].date + 'T12:00:00');
+    const currDate = new Date(sorted[i].date + 'T12:00:00');
+    const dayDiff = Math.floor((prevDate.getTime() - currDate.getTime()) / 86400000 + 0.5);
 
     if (dayDiff === 1) {
       tempStreak++;

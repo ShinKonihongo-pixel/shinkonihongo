@@ -85,6 +85,9 @@ const defaultSettings: AppSettings = {
   aiChallengeAccuracyModifier: 0,
   aiChallengeSpeedMultiplier: 1.0,
   aiChallengeAutoAddDifficulty: 'random',
+  aiChallengeLevel: 'all',
+  aiChallengePerAISettings: {} as any,
+  aiChallengePerLevelConfig: {} as any,
   // JLPT defaults
   jlptDefaultQuestionCount: 20,
   jlptShowExplanation: true,
@@ -131,6 +134,47 @@ function getFrameAnimationClass(settings: AppSettings): string {
   }
   const framePreset = CARD_FRAME_PRESETS.find(f => f.id === settings.cardFrame);
   return framePreset?.animationClass || '';
+}
+
+// Parse furigana and separate Vietnamese translation
+function parseFurigana(text: string): React.ReactNode {
+  // Split by newline to separate Japanese and Vietnamese
+  const lines = text.split('\n');
+  const japaneseLine = lines[0] || '';
+  const vietnameseLine = lines.slice(1).join('\n').trim();
+
+  // Parse furigana in Japanese line: 漢字(かんじ) → <ruby>漢字<rt>かんじ</rt></ruby>
+  const furiganaRegex = /([一-龯々]+)\(([ぁ-んァ-ン]+)\)/g;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = furiganaRegex.exec(japaneseLine)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(japaneseLine.slice(lastIndex, match.index));
+    }
+    parts.push(
+      <ruby key={match.index}>
+        {match[1]}
+        <rt>{match[2]}</rt>
+      </ruby>
+    );
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < japaneseLine.length) {
+    parts.push(japaneseLine.slice(lastIndex));
+  }
+
+  // Return with Vietnamese translation on new line
+  return (
+    <>
+      <span className="example-japanese">{parts.length > 0 ? parts : japaneseLine}</span>
+      {vietnameseLine && (
+        <span className="example-translation">{vietnameseLine}</span>
+      )}
+    </>
+  );
 }
 
 // Check if current screen is mobile
@@ -224,40 +268,47 @@ export function FlashcardItem({
           <p className="flip-hint">Nhấn để lật thẻ</p>
         </div>
 
-        {/* Back side - Answer */}
+        {/* Back side - Answer (2-column layout) */}
         <div className={`flashcard-face flashcard-back ${getFrameAnimationClass(settings)}`} style={getCardFrameStyle(settings)}>
           <span className="jlpt-badge">{levelBadge}</span>
-          <div className="card-content">
-            {settings.showSinoVietnamese && card.sinoVietnamese && (
-              <div className="sino-vietnamese" style={{ fontSize: `${sinoVietnameseFontSize}px` }}>
-                {card.sinoVietnamese}
-              </div>
-            )}
-            {settings.showVocabulary && (
-              <div className="vocabulary-with-speaker">
-                <div className="vocabulary" style={{ fontSize: `${vocabularyFontSize}px` }}>
-                  {card.vocabulary}
+          <div className="card-content card-content-split">
+            {/* Left column: Main info */}
+            <div className="card-column card-column-left">
+              {settings.showSinoVietnamese && card.sinoVietnamese && (
+                <div className="sino-vietnamese" style={{ fontSize: `${sinoVietnameseFontSize}px` }}>
+                  {card.sinoVietnamese}
                 </div>
-                <button
-                  className={`speak-btn ${isSpeaking ? 'speaking' : ''}`}
-                  onClick={handleSpeak}
-                  title="Nghe phát âm"
-                >
-                  <Volume2 size={18} />
-                </button>
-              </div>
-            )}
-            {settings.showMeaning && (
-              <div className="meaning" style={{ fontSize: `${meaningFontSize}px` }}>
-                {card.meaning}
-              </div>
-            )}
+              )}
+              {settings.showVocabulary && (
+                <div className="vocabulary-with-speaker">
+                  <div className="vocabulary" style={{ fontSize: `${vocabularyFontSize}px` }}>
+                    {card.vocabulary}
+                  </div>
+                  <button
+                    className={`speak-btn ${isSpeaking ? 'speaking' : ''}`}
+                    onClick={handleSpeak}
+                    title="Nghe phát âm"
+                  >
+                    <Volume2 size={18} />
+                  </button>
+                </div>
+              )}
+              {settings.showMeaning && (
+                <div className="meaning" style={{ fontSize: `${meaningFontSize}px` }}>
+                  {card.meaning}
+                </div>
+              )}
+            </div>
+
+            {/* Right column: Examples with furigana */}
             {settings.showExample && card.examples && card.examples.length > 0 && (
-              <div className="example">
-                <span className="example-label">Ví dụ:</span>
-                {card.examples.map((ex, idx) => (
-                  <p key={idx}>{ex}</p>
-                ))}
+              <div className="card-column card-column-right">
+                <div className="example">
+                  <span className="example-label">Ví dụ:</span>
+                  {card.examples.map((ex, idx) => (
+                    <p key={idx}>{parseFurigana(ex)}</p>
+                  ))}
+                </div>
               </div>
             )}
           </div>

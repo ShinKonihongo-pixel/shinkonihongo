@@ -1,10 +1,7 @@
 // Game Hub Types - Unified game center for all mini-games
 
 // Available games in the hub
-export type GameType = 'quiz' | 'boat-racing' | 'horse-racing' | 'golden-bell' | 'picture-guess' | 'bingo' | 'speed-quiz' | 'word-match' | 'ai-challenge' | 'image-word';
-
-// Racing sub-types
-export type RacingType = 'boat' | 'horse';
+export type GameType = 'quiz' | 'golden-bell' | 'picture-guess' | 'bingo' | 'speed-quiz' | 'word-match' | 'ai-challenge' | 'image-word';
 
 // Game info for display
 export interface GameInfo {
@@ -91,31 +88,6 @@ export const GAMES: Record<GameType, GameInfo> = {
     difficulty: 'medium',
     isPopular: true,
     category: 'quiz',
-  },
-  'boat-racing': {
-    id: 'boat-racing',
-    name: 'Đua Thuyền',
-    description: 'Đua thuyền học từ vựng - trả lời nhanh để về đích',
-    icon: '🚣',
-    color: '#4ECDC4',
-    gradient: 'linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%)',
-    playerRange: '2-8',
-    features: ['Đua realtime', 'Phòng chờ', 'Auto-match bots'],
-    difficulty: 'easy',
-    category: 'racing',
-  },
-  'horse-racing': {
-    id: 'horse-racing',
-    name: 'Chạy Đua',
-    description: 'Phi nước đại cùng kiến thức - về đích đầu tiên!',
-    icon: '🏇',
-    color: '#8B5CF6',
-    gradient: 'linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%)',
-    playerRange: '2-8',
-    features: ['Đua realtime', 'Phòng chờ', 'Auto-match bots'],
-    difficulty: 'easy',
-    category: 'racing',
-    isNew: true,
   },
   'golden-bell': {
     id: 'golden-bell',
@@ -228,14 +200,6 @@ export const getPopularGames = (): GameInfo[] =>
 // Get new games
 export const getNewGames = (): GameInfo[] =>
   getAllGames().filter(g => g.isNew);
-
-// Get racing games
-export const getRacingGames = (): GameInfo[] =>
-  getAllGames().filter(g => g.category === 'racing');
-
-// Get visible racing games
-export const getVisibleRacingGames = (hiddenGameIds: GameType[]): GameInfo[] =>
-  getRacingGames().filter(g => !hiddenGameIds.includes(g.id));
 
 // Get games by category
 export const getGamesByCategory = (category: string): GameInfo[] =>

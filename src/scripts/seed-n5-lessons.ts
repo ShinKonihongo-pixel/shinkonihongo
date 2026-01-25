@@ -4,14 +4,16 @@
 import { addLesson, updateLesson } from '../services/firestore';
 import type { Lesson, JLPTLevel } from '../types/flashcard';
 
-const CHILD_FOLDERS = ['Từ vựng', 'Kanji', 'Ngữ pháp', 'Đọc hiểu', 'Mở rộng'];
+const CHILD_FOLDERS_N5 = ['Từ vựng', 'Kanji', 'Ngữ pháp', 'Đọc hiểu', 'Mở rộng'];
+const CHILD_FOLDERS_N4 = ['Từ vựng', 'Kanji', 'Mở rộng']; // N4 không có Ngữ pháp, Đọc hiểu
 
 // Generic function to seed lessons for any level
 async function seedLessons(
   level: JLPTLevel,
   startNum: number,
   endNum: number,
-  createdBy: string
+  createdBy: string,
+  childFolders: string[]
 ): Promise<{ success: boolean; created: number }> {
   let created = 0;
 
@@ -34,9 +36,9 @@ async function seedLessons(
       created++;
 
       // Create child folders
-      for (let j = 0; j < CHILD_FOLDERS.length; j++) {
+      for (let j = 0; j < childFolders.length; j++) {
         const childLesson: Omit<Lesson, 'id'> = {
-          name: CHILD_FOLDERS[j],
+          name: childFolders[j],
           jlptLevel: level,
           parentId: newParent.id,
           order: j + 1,
@@ -49,7 +51,7 @@ async function seedLessons(
         created++;
       }
 
-      console.log(`[${level}] Created ${lessonName} with ${CHILD_FOLDERS.length} child folders`);
+      console.log(`[${level}] Created ${lessonName} with ${childFolders.length} child folders`);
     }
 
     return { success: true, created };
@@ -59,14 +61,14 @@ async function seedLessons(
   }
 }
 
-// N5: Bài 2-25
+// N5: Bài 2-25 (có Ngữ pháp, Đọc hiểu)
 export async function seedN5Lessons(createdBy: string): Promise<{ success: boolean; created: number }> {
-  return seedLessons('N5', 2, 25, createdBy);
+  return seedLessons('N5', 2, 25, createdBy, CHILD_FOLDERS_N5);
 }
 
-// N4: Bài 26-50
+// N4: Bài 26-50 (không có Ngữ pháp, Đọc hiểu)
 export async function seedN4Lessons(createdBy: string): Promise<{ success: boolean; created: number }> {
-  return seedLessons('N4', 26, 50, createdBy);
+  return seedLessons('N4', 26, 50, createdBy, CHILD_FOLDERS_N4);
 }
 
 // Fix order for a specific lesson (make Bài 1 appear first)

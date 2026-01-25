@@ -34,7 +34,7 @@ export function AIChallengePage({
   const currentLevel: JLPTLevel = (appSettings.aiChallengeLevel === 'all' ? 'N5' : appSettings.aiChallengeLevel) as JLPTLevel;
 
   // Local state for quick settings (can override app settings)
-  const [localSettings, setLocalSettings] = useState({
+  const [localSettings, _setLocalSettings] = useState({
     questionCount: settings?.aiChallengeQuestionCount ?? 10,
     timePerQuestion: settings?.aiChallengeTimePerQuestion ?? 15,
     accuracyModifier: settings?.aiChallengeAccuracyModifier ?? 0,
