@@ -1,6 +1,6 @@
 // Cards Management Types - Shared types for all card management tabs
 
-import type { Flashcard, FlashcardFormData, Lesson, JLPTLevel } from '../../types/flashcard';
+import type { Flashcard, FlashcardFormData, Lesson, JLPTLevel, GrammarCard, GrammarCardFormData } from '../../types/flashcard';
 import type { CurrentUser, User, UserRole } from '../../types/user';
 import type { JLPTQuestion, JLPTQuestionFormData, JLPTLevel as JLPTQuestionLevel, QuestionCategory, JLPTAnswer, JLPTFolder } from '../../types/jlpt-question';
 import type { Lecture, LectureFolder } from '../../types/lecture';
@@ -10,7 +10,7 @@ import type { Classroom } from '../../types/classroom';
 import type { KaiwaAdvancedTopic, KaiwaAdvancedQuestion, KaiwaAdvancedTopicFormData, KaiwaAdvancedQuestionFormData } from '../../types/kaiwa-advanced';
 import type { CustomTopic, CustomTopicFolder, CustomTopicQuestion, CustomTopicFormData, CustomTopicQuestionFormData } from '../../types/custom-topic';
 
-export type ManagementTab = 'flashcards' | 'lectures' | 'jlpt' | 'kaiwa' | 'custom_topics' | 'game' | 'assignments' | 'tests' | 'users';
+export type ManagementTab = 'vocabulary' | 'grammar' | 'reading' | 'lectures' | 'jlpt' | 'kaiwa' | 'custom_topics' | 'game' | 'assignments' | 'tests' | 'users';
 
 // Navigation state types
 export type FlashcardNavState =
@@ -55,11 +55,13 @@ export const defaultAnswers: JLPTAnswer[] = [
 ];
 
 // Tab Props Interfaces
-export interface FlashcardsTabProps {
+export interface VocabularyTabProps {
   cards: Flashcard[];
   onAddCard: (data: FlashcardFormData, createdBy?: string) => void;
   onUpdateCard: (id: string, data: Partial<Flashcard>) => void;
   onDeleteCard: (id: string) => void;
+  // Lessons
+  lessons: Lesson[];
   getLessonsByLevel: (level: JLPTLevel) => Lesson[];
   getChildLessons: (parentId: string) => Lesson[];
   onAddLesson: (name: string, level: JLPTLevel, parentId?: string | null, createdBy?: string) => void;
@@ -67,12 +69,43 @@ export interface FlashcardsTabProps {
   onDeleteLesson: (id: string) => void;
   onToggleLock: (lessonId: string) => void;
   onToggleHide: (lessonId: string) => void;
+  // Import handlers
+  onImportLesson?: (data: Omit<Lesson, 'id'>) => Promise<Lesson>;
+  onImportFlashcard?: (data: Omit<Flashcard, 'id'>) => Promise<Flashcard>;
   currentUser: CurrentUser;
   isSuperAdmin: boolean;
 }
 
+export interface GrammarTabProps {
+  grammarCards: GrammarCard[];
+  onAddGrammarCard: (data: GrammarCardFormData, createdBy?: string) => void;
+  onUpdateGrammarCard: (id: string, data: Partial<GrammarCard>) => void;
+  onDeleteGrammarCard: (id: string) => void;
+  // Lessons (shared from vocabulary)
+  lessons: Lesson[];
+  getLessonsByLevel: (level: JLPTLevel) => Lesson[];
+  getChildLessons: (parentId: string) => Lesson[];
+  // Lesson management (optional - for full feature parity with VocabularyTab)
+  onToggleLock?: (lessonId: string) => void;
+  onToggleHide?: (lessonId: string) => void;
+  // Import handlers
+  onImportGrammarCard?: (data: Omit<GrammarCard, 'id'>) => Promise<GrammarCard>;
+  currentUser: CurrentUser;
+  isSuperAdmin: boolean;
+}
+
+// Legacy alias for FlashcardsTabProps (combines both for backward compatibility)
+export interface FlashcardsTabProps extends VocabularyTabProps {
+  grammarCards: GrammarCard[];
+  onAddGrammarCard: (data: GrammarCardFormData, createdBy?: string) => void;
+  onUpdateGrammarCard: (id: string, data: Partial<GrammarCard>) => void;
+  onDeleteGrammarCard: (id: string) => void;
+  onImportGrammarCard?: (data: Omit<GrammarCard, 'id'>) => Promise<GrammarCard>;
+}
+
 export interface JLPTTabProps {
   questions: JLPTQuestion[];
+  folders: JLPTFolder[]; // Full array for export
   onAddQuestion: (data: JLPTQuestionFormData) => Promise<void>;
   onUpdateQuestion: (id: string, data: Partial<JLPTQuestion>) => Promise<void>;
   onDeleteQuestion: (id: string) => Promise<void>;
@@ -81,6 +114,9 @@ export interface JLPTTabProps {
   onDeleteFolder: (id: string) => Promise<void>;
   getFoldersByLevelAndCategory: (level: JLPTQuestionLevel, category: QuestionCategory) => JLPTFolder[];
   getQuestionsByFolder: (folderId: string) => JLPTQuestion[];
+  // Import handlers
+  onImportFolder?: (data: Omit<JLPTFolder, 'id'>) => Promise<JLPTFolder>;
+  onImportQuestion?: (data: Omit<JLPTQuestion, 'id'>) => Promise<JLPTQuestion>;
   currentUser: CurrentUser;
   isSuperAdmin: boolean;
 }
@@ -152,7 +188,7 @@ export interface UsersTabProps {
 
 // Re-export needed types
 export type {
-  Flashcard, FlashcardFormData, Lesson, JLPTLevel,
+  Flashcard, FlashcardFormData, Lesson, JLPTLevel, GrammarCard, GrammarCardFormData,
   CurrentUser, User, UserRole,
   JLPTQuestion, JLPTQuestionFormData, JLPTQuestionLevel, QuestionCategory, JLPTAnswer, JLPTFolder,
   Lecture, LectureFolder,

@@ -11,9 +11,19 @@ import type { KaiwaAdvancedTopic, KaiwaAdvancedQuestion, KaiwaAdvancedTopicFormD
 import { useLectures } from '../../hooks/use-lectures';
 import { useTestTemplates } from '../../hooks/use-classrooms';
 import { useCustomTopics } from '../../hooks/use-custom-topics';
+import { useGrammarCards } from '../../hooks/use-grammar-cards';
 import { TestBankPanel } from '../classroom/test-bank-panel';
 import {
-  FlashcardsTab,
+  importLesson,
+  importFlashcard,
+  importGrammarCard,
+  importJLPTFolder,
+  importJLPTQuestion,
+} from '../../services/firestore';
+import {
+  VocabularyTab,
+  GrammarTab,
+  ReadingTab,
   LecturesTab,
   JLPTTab,
   KaiwaTab,
@@ -21,6 +31,7 @@ import {
   UsersTab,
   type ManagementTab,
 } from '../cards-management';
+import { useReading } from '../../hooks/use-reading';
 
 interface CardsPageProps {
   cards: Flashcard[];
@@ -36,6 +47,7 @@ interface CardsPageProps {
   currentUser: CurrentUser;
   // JLPT props
   jlptQuestions: JLPTQuestion[];
+  jlptFolders: JLPTFolder[];
   onAddJLPTQuestion: (data: JLPTQuestionFormData) => Promise<void>;
   onUpdateJLPTQuestion: (id: string, data: Partial<JLPTQuestion>) => Promise<void>;
   onDeleteJLPTQuestion: (id: string) => Promise<void>;
@@ -81,7 +93,7 @@ export function CardsPage({
   cards, onAddCard, onUpdateCard, onDeleteCard,
   lessons, getLessonsByLevel, getChildLessons, onAddLesson, onUpdateLesson, onDeleteLesson,
   currentUser,
-  jlptQuestions, onAddJLPTQuestion, onUpdateJLPTQuestion, onDeleteJLPTQuestion,
+  jlptQuestions, jlptFolders, onAddJLPTQuestion, onUpdateJLPTQuestion, onDeleteJLPTQuestion,
   onAddJLPTFolder, onUpdateJLPTFolder, onDeleteJLPTFolder,
   getFoldersByLevelAndCategory, getQuestionsByFolder,
   users, onUpdateUserRole, onDeleteUser, onUpdateVipExpiration, onRegister,
@@ -97,7 +109,7 @@ export function CardsPage({
   onAddAdvancedKaiwaQuestion, onUpdateAdvancedKaiwaQuestion, onDeleteAdvancedKaiwaQuestion,
 }: CardsPageProps) {
   const isSuperAdmin = currentUser.role === 'super_admin';
-  const [activeTab, setActiveTab] = useState<ManagementTab>('flashcards');
+  const [activeTab, setActiveTab] = useState<ManagementTab>('vocabulary');
 
   // Lectures hook
   const {
@@ -124,6 +136,28 @@ export function CardsPage({
     addCustomTopicQuestion, updateCustomTopicQuestion, deleteCustomTopicQuestion,
   } = useCustomTopics();
 
+  // Grammar cards hook
+  const {
+    grammarCards,
+    addGrammarCard,
+    updateGrammarCard,
+    deleteGrammarCard,
+  } = useGrammarCards();
+
+  // Reading passages hook
+  const {
+    passages: readingPassages,
+    folders: readingFolders,
+    addPassage: addReadingPassage,
+    updatePassage: updateReadingPassage,
+    deletePassage: deleteReadingPassage,
+    addFolder: addReadingFolder,
+    updateFolder: updateReadingFolder,
+    deleteFolder: deleteReadingFolder,
+    getFoldersByLevel: getReadingFoldersByLevel,
+    getPassagesByFolder: getReadingPassagesByFolder,
+  } = useReading();
+
   // Filter visible users based on role
   const visibleUsers = isSuperAdmin
     ? users
@@ -134,7 +168,9 @@ export function CardsPage({
       <div className="page-header">
         <h2>Quản Lí</h2>
         <div className="tab-buttons">
-          <button className={`tab-btn ${activeTab === 'flashcards' ? 'active' : ''}`} onClick={() => setActiveTab('flashcards')}>Flash Card</button>
+          <button className={`tab-btn ${activeTab === 'vocabulary' ? 'active' : ''}`} onClick={() => setActiveTab('vocabulary')}>Từ Vựng ({cards.length})</button>
+          <button className={`tab-btn ${activeTab === 'grammar' ? 'active' : ''}`} onClick={() => setActiveTab('grammar')}>Ngữ Pháp ({grammarCards.length})</button>
+          <button className={`tab-btn ${activeTab === 'reading' ? 'active' : ''}`} onClick={() => setActiveTab('reading')}>Đọc Hiểu ({readingPassages.length})</button>
           <button className={`tab-btn ${activeTab === 'lectures' ? 'active' : ''}`} onClick={() => setActiveTab('lectures')}>Bài giảng ({lectures.length})</button>
           <button className={`tab-btn ${activeTab === 'jlpt' ? 'active' : ''}`} onClick={() => setActiveTab('jlpt')}>JLPT</button>
           <button className={`tab-btn ${activeTab === 'kaiwa' ? 'active' : ''}`} onClick={() => setActiveTab('kaiwa')}>Kaiwa ({kaiwaQuestions.length})</button>
@@ -145,13 +181,14 @@ export function CardsPage({
         </div>
       </div>
 
-      {/* Flashcards Tab */}
-      {activeTab === 'flashcards' && (
-        <FlashcardsTab
+      {/* Vocabulary Tab */}
+      {activeTab === 'vocabulary' && (
+        <VocabularyTab
           cards={cards}
           onAddCard={onAddCard}
           onUpdateCard={onUpdateCard}
           onDeleteCard={onDeleteCard}
+          lessons={lessons}
           getLessonsByLevel={getLessonsByLevel}
           getChildLessons={getChildLessons}
           onAddLesson={onAddLesson}
@@ -159,6 +196,44 @@ export function CardsPage({
           onDeleteLesson={onDeleteLesson}
           onToggleLock={onToggleLock}
           onToggleHide={onToggleHide}
+          onImportLesson={importLesson}
+          onImportFlashcard={importFlashcard}
+          currentUser={currentUser}
+          isSuperAdmin={isSuperAdmin}
+        />
+      )}
+
+      {/* Grammar Tab */}
+      {activeTab === 'grammar' && (
+        <GrammarTab
+          grammarCards={grammarCards}
+          onAddGrammarCard={addGrammarCard}
+          onUpdateGrammarCard={updateGrammarCard}
+          onDeleteGrammarCard={deleteGrammarCard}
+          lessons={lessons}
+          getLessonsByLevel={getLessonsByLevel}
+          getChildLessons={getChildLessons}
+          onToggleLock={onToggleLock}
+          onToggleHide={onToggleHide}
+          onImportGrammarCard={importGrammarCard}
+          currentUser={currentUser}
+          isSuperAdmin={isSuperAdmin}
+        />
+      )}
+
+      {/* Reading Tab */}
+      {activeTab === 'reading' && (
+        <ReadingTab
+          passages={readingPassages}
+          folders={readingFolders}
+          onAddPassage={addReadingPassage}
+          onUpdatePassage={updateReadingPassage}
+          onDeletePassage={deleteReadingPassage}
+          onAddFolder={addReadingFolder}
+          onUpdateFolder={updateReadingFolder}
+          onDeleteFolder={deleteReadingFolder}
+          getFoldersByLevel={getReadingFoldersByLevel}
+          getPassagesByFolder={getReadingPassagesByFolder}
           currentUser={currentUser}
           isSuperAdmin={isSuperAdmin}
         />
@@ -186,6 +261,7 @@ export function CardsPage({
       {activeTab === 'jlpt' && (
         <JLPTTab
           questions={jlptQuestions}
+          folders={jlptFolders}
           onAddQuestion={onAddJLPTQuestion}
           onUpdateQuestion={onUpdateJLPTQuestion}
           onDeleteQuestion={onDeleteJLPTQuestion}
@@ -194,6 +270,8 @@ export function CardsPage({
           onDeleteFolder={onDeleteJLPTFolder}
           getFoldersByLevelAndCategory={getFoldersByLevelAndCategory}
           getQuestionsByFolder={getQuestionsByFolder}
+          onImportFolder={importJLPTFolder}
+          onImportQuestion={importJLPTQuestion}
           currentUser={currentUser}
           isSuperAdmin={isSuperAdmin}
         />
