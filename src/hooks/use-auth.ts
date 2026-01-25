@@ -77,6 +77,7 @@ export function useAuth() {
       displayName: user.displayName,
       avatar: user.avatar,
       profileBackground: user.profileBackground,
+      jlptLevel: user.jlptLevel,
     });
     return { success: true };
   }, [users]);
@@ -226,6 +227,21 @@ export function useAuth() {
     }
   }, [currentUser]);
 
+  // Update JLPT level
+  const updateJlptLevel = useCallback(async (userId: string, jlptLevel: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      await firestoreService.updateUser(userId, { jlptLevel });
+      // Update current user state
+      if (currentUser?.id === userId) {
+        setCurrentUser(prev => prev ? { ...prev, jlptLevel: jlptLevel as any } : null);
+      }
+      return { success: true };
+    } catch (err) {
+      console.error('Error updating JLPT level:', err);
+      return { success: false, error: 'Cập nhật cấp độ thất bại' };
+    }
+  }, [currentUser]);
+
   // Update VIP expiration date
   const updateVipExpiration = useCallback(async (userId: string, expirationDate: string | undefined) => {
     try {
@@ -280,6 +296,7 @@ export function useAuth() {
     updateDisplayName,
     updateAvatar,
     updateProfileBackground,
+    updateJlptLevel,
     updateVipExpiration,
   };
 }

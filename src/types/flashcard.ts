@@ -44,7 +44,7 @@ export type SimpleRating = 'again' | 'hard' | 'good' | 'easy';
 
 // Memorization and difficulty system
 export type MemorizationStatus = 'memorized' | 'not_memorized' | 'unset';
-export type DifficultyLevel = 'hard' | 'medium' | 'easy' | 'unset';
+export type DifficultyLevel = 'super_hard' | 'hard' | 'medium' | 'easy' | 'unset';
 
 export interface StudyStats {
   totalCards: number;
@@ -66,3 +66,32 @@ export interface FlashcardFormData {
 
 // Keep Category as alias for backward compatibility during migration
 export type Category = Lesson;
+
+// Grammar Card - thẻ ngữ pháp với công thức và ví dụ
+export interface GrammarCard {
+  id: string;
+  title: string;           // Tên ngữ pháp (vd: "〜てから", "〜ながら")
+  formula: string;         // Công thức (vd: "V-て + から")
+  meaning: string;         // Nghĩa tiếng Việt
+  explanation?: string;    // Giải thích chi tiết (optional)
+  examples: GrammarExample[]; // Danh sách ví dụ
+  jlptLevel: JLPTLevel;    // Level JLPT
+  lessonId: string;        // ID bài học
+  createdAt: string;       // ISO date string
+  createdBy?: string;      // User ID
+}
+
+export interface GrammarExample {
+  japanese: string;        // Câu ví dụ tiếng Nhật
+  vietnamese: string;      // Nghĩa tiếng Việt
+}
+
+export interface GrammarCardFormData {
+  title: string;
+  formula: string;
+  meaning: string;
+  explanation?: string;
+  examples: GrammarExample[];
+  jlptLevel: JLPTLevel;
+  lessonId: string;
+}

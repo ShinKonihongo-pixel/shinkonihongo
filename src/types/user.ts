@@ -53,6 +53,19 @@ export function isAdminLevel(role: UserRole): boolean {
   return USER_ROLE_LEVEL[role] >= USER_ROLE_LEVEL.branch_admin;
 }
 
+// JLPT Level type for user's study level
+export type UserJLPTLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1';
+
+export const USER_JLPT_LEVELS: UserJLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
+
+export const USER_JLPT_LEVEL_LABELS: Record<UserJLPTLevel, string> = {
+  N5: 'N5 - Sơ cấp',
+  N4: 'N4 - Sơ trung cấp',
+  N3: 'N3 - Trung cấp',
+  N2: 'N2 - Trung cao cấp',
+  N1: 'N1 - Cao cấp',
+};
+
 export interface User {
   id: string;
   username: string;
@@ -62,6 +75,7 @@ export interface User {
   email?: string; // User email
   avatar?: string; // Avatar URL or emoji
   profileBackground?: string; // Profile background gradient/color
+  jlptLevel?: UserJLPTLevel; // User's current JLPT study level
   vipExpirationDate?: string; // VIP expiration date (YYYY-MM-DD), auto convert to user when expired
   createdBy?: string; // ID of admin who created this user
   createdAt: string;
@@ -77,6 +91,7 @@ export interface CurrentUser {
   displayName?: string;
   avatar?: string;
   profileBackground?: string;
+  jlptLevel?: UserJLPTLevel;
 }
 
 // User statistics and history

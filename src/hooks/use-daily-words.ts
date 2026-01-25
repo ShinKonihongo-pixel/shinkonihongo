@@ -84,6 +84,7 @@ interface UseDailyWordsOptions {
   allCards: Flashcard[];
   targetCount: 5 | 10 | 15 | 20;
   enabled: boolean;
+  userJlptLevel?: string; // User's JLPT level to filter cards
 }
 
 interface DailyWordsReturn {
@@ -103,7 +104,7 @@ interface DailyWordsReturn {
   dismissNotification: () => void; // Dismiss notification for today
 }
 
-export function useDailyWords({ allCards, targetCount, enabled }: UseDailyWordsOptions): DailyWordsReturn {
+export function useDailyWords({ allCards, targetCount, enabled, userJlptLevel }: UseDailyWordsOptions): DailyWordsReturn {
   const [state, setState] = useState<DailyWordsState>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
@@ -194,9 +195,14 @@ export function useDailyWords({ allCards, targetCount, enabled }: UseDailyWordsO
           longestStreak: Math.max(prev.longestStreak, streaks.longest),
         }));
       } else {
-        // Select new random words - prioritize non-memorized
-        const notMemorized = allCards.filter(c => c.memorizationStatus !== 'memorized');
-        const pool = notMemorized.length >= targetCount ? notMemorized : allCards;
+        // Select new random words - filter by JLPT level if specified, then prioritize non-memorized
+        const levelFilteredCards = userJlptLevel
+          ? allCards.filter(c => c.jlptLevel === userJlptLevel)
+          : allCards;
+        // If no cards at user's level, fall back to all cards
+        const basePool = levelFilteredCards.length >= targetCount ? levelFilteredCards : allCards;
+        const notMemorized = basePool.filter(c => c.memorizationStatus !== 'memorized');
+        const pool = notMemorized.length >= targetCount ? notMemorized : basePool;
         const selectedWords = shuffleArray(pool).slice(0, targetCount);
 
         const newSession: DailyWordsSession = {
@@ -227,7 +233,7 @@ export function useDailyWords({ allCards, targetCount, enabled }: UseDailyWordsO
     }
 
     setIsInitialized(true);
-  }, [allCards, enabled, targetCount]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [allCards, enabled, targetCount, userJlptLevel]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Mark single word as learned
   const markWordLearned = useCallback((wordId: string) => {
@@ -298,8 +304,13 @@ export function useDailyWords({ allCards, targetCount, enabled }: UseDailyWordsO
   const refreshWords = useCallback(() => {
     if (!enabled || allCards.length === 0) return;
 
-    const notMemorized = allCards.filter(c => c.memorizationStatus !== 'memorized');
-    const pool = notMemorized.length >= targetCount ? notMemorized : allCards;
+    // Filter by JLPT level if specified
+    const levelFilteredCards = userJlptLevel
+      ? allCards.filter(c => c.jlptLevel === userJlptLevel)
+      : allCards;
+    const basePool = levelFilteredCards.length >= targetCount ? levelFilteredCards : allCards;
+    const notMemorized = basePool.filter(c => c.memorizationStatus !== 'memorized');
+    const pool = notMemorized.length >= targetCount ? notMemorized : basePool;
     const selectedWords = shuffleArray(pool).slice(0, targetCount);
 
     const newSession: DailyWordsSession = {
@@ -316,7 +327,7 @@ export function useDailyWords({ allCards, targetCount, enabled }: UseDailyWordsO
       currentSession: newSession,
       todayWords: selectedWords,
     }));
-  }, [allCards, targetCount, enabled]);
+  }, [allCards, targetCount, enabled, userJlptLevel]);
 
   // Detect completion for animation trigger
   useEffect(() => {

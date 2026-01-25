@@ -20,13 +20,16 @@ import {
 } from '../types/ai-challenge';
 import type { Flashcard } from '../types/flashcard';
 
-// Storage key for player progress
-const STORAGE_KEY = 'ai_challenge_progress';
+// Storage key for player progress (per JLPT level)
+const STORAGE_KEY_PREFIX = 'ai_challenge_progress_';
 
-// Load progress from localStorage
-function loadProgress(): { totalWins: number; totalGames: number } {
+// JLPT levels
+export type JLPTLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1';
+
+// Load progress from localStorage for specific level
+function loadProgress(level: JLPTLevel): { totalWins: number; totalGames: number } {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(STORAGE_KEY_PREFIX + level);
     if (saved) {
       return JSON.parse(saved);
     }
@@ -36,13 +39,23 @@ function loadProgress(): { totalWins: number; totalGames: number } {
   return { totalWins: 0, totalGames: 0 };
 }
 
-// Save progress to localStorage
-function saveProgress(totalWins: number, totalGames: number): void {
+// Save progress to localStorage for specific level
+function saveProgress(level: JLPTLevel, totalWins: number, totalGames: number): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ totalWins, totalGames }));
+    localStorage.setItem(STORAGE_KEY_PREFIX + level, JSON.stringify({ totalWins, totalGames }));
   } catch (e) {
     console.error('Failed to save AI Challenge progress:', e);
   }
+}
+
+// Load progress for all levels
+function loadAllProgress(): Record<JLPTLevel, { totalWins: number; totalGames: number }> {
+  const levels: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
+  const result: Record<string, { totalWins: number; totalGames: number }> = {};
+  for (const level of levels) {
+    result[level] = loadProgress(level);
+  }
+  return result as Record<JLPTLevel, { totalWins: number; totalGames: number }>;
 }
 
 // Generate unique ID
@@ -109,14 +122,16 @@ interface UseAIChallengeProps {
   };
   flashcards: Flashcard[];
   aiSettings?: AIChallengeAppSettings;
+  currentLevel: JLPTLevel;
 }
 
-export function useAIChallenge({ currentUser, flashcards, aiSettings }: UseAIChallengeProps) {
+export function useAIChallenge({ currentUser, flashcards, aiSettings, currentLevel }: UseAIChallengeProps) {
   const [game, setGame] = useState<AIChallengeGame | null>(null);
   const [result, setResult] = useState<AIChallengeResult | null>(null);
 
-  // Load saved progress
-  const [progress, setProgress] = useState(loadProgress);
+  // Load saved progress for current level
+  const [progressByLevel, setProgressByLevel] = useState(loadAllProgress);
+  const progress = progressByLevel[currentLevel] || { totalWins: 0, totalGames: 0 };
 
   // Refs for timers
   const aiTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -451,9 +466,12 @@ export function useAIChallenge({ currentUser, flashcards, aiSettings }: UseAICha
         unlockedAI: isNewUnlock ? previousNextLocked : null,
       };
 
-      // Save progress
-      saveProgress(newTotalWins, newTotalGames);
-      setProgress({ totalWins: newTotalWins, totalGames: newTotalGames });
+      // Save progress for current level
+      saveProgress(currentLevel, newTotalWins, newTotalGames);
+      setProgressByLevel(prev => ({
+        ...prev,
+        [currentLevel]: { totalWins: newTotalWins, totalGames: newTotalGames }
+      }));
 
       setGame((prev) => (prev ? { ...prev, status: 'finished' } : null));
       setResult(gameResult);
@@ -470,7 +488,7 @@ export function useAIChallenge({ currentUser, flashcards, aiSettings }: UseAICha
           : null
       );
     }
-  }, [game, progress]);
+  }, [game, progress, currentLevel]);
 
   // Reset game
   const resetGame = useCallback(() => {

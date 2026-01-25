@@ -28,10 +28,15 @@ import { MyTeachingPage } from './components/pages/my-teaching-page';
 import { NotificationsPage } from './components/pages/notifications-page';
 import { GameHubPage } from './components/pages/game-hub-page';
 import { DailyWordsPage } from './components/pages/daily-words-page';
+import { ListeningPracticePage } from './components/pages/listening-practice-page';
+import { GrammarStudyPage } from './components/pages/grammar-study-page';
+import { ReadingPracticePage } from './components/pages/reading-practice-page';
+import { useReading } from './hooks/use-reading';
 import type { GameType } from './types/game-hub';
 import { useJLPTQuestions } from './hooks/use-jlpt-questions';
 import { useKaiwaQuestions } from './hooks/use-kaiwa-questions';
 import { useKaiwaTopics } from './hooks/use-kaiwa-topics';
+import { useCustomTopics } from './hooks/use-custom-topics';
 import { useUserHistory } from './hooks/use-user-history';
 import { useProgress } from './hooks/use-progress';
 import { useNotifications } from './hooks/use-notifications';
@@ -39,9 +44,12 @@ import { useOffline } from './hooks/use-offline';
 import { useFriendships, useBadges, useGameInvitations, useFriendNotifications } from './hooks/use-friendships';
 import { useClassroomNotifications } from './hooks/use-classrooms';
 import { useDailyWords } from './hooks/use-daily-words';
+import { useGrammarCards } from './hooks/use-grammar-cards';
 import { OfflineIndicator } from './components/common/offline-indicator';
 import { FloatingChatButton } from './components/common/floating-chat-button';
 import { FloatingChatPanel } from './components/common/floating-chat-panel';
+import { JLPTLevelModal } from './components/common/jlpt-level-modal';
+import type { UserJLPTLevel } from './types/user';
 import './App.css';
 
 function App() {
@@ -104,8 +112,22 @@ function App() {
     updateDisplayName,
     updateAvatar,
     updateProfileBackground,
+    updateJlptLevel,
     updateVipExpiration,
   } = useAuth();
+
+  // JLPT level modal state - show if logged in but no level set
+  const [showJlptLevelModal, setShowJlptLevelModal] = useState(false);
+  const [jlptLevelSkipped, setJlptLevelSkipped] = useState(false);
+
+  // Show JLPT level modal on first login
+  useEffect(() => {
+    if (isLoggedIn && currentUser && !currentUser.jlptLevel && !jlptLevelSkipped) {
+      setShowJlptLevelModal(true);
+    } else {
+      setShowJlptLevelModal(false);
+    }
+  }, [isLoggedIn, currentUser, jlptLevelSkipped]);
 
   // Reset to home page when user logs in (unless joining via QR code)
   useEffect(() => {
@@ -147,18 +169,31 @@ function App() {
     toggleHide: toggleLessonHide,
   } = useLessons();
 
+  // Grammar cards
+  const { grammarCards } = useGrammarCards();
+
+  // Reading passages
+  const {
+    passages: readingPassages,
+    folders: readingFolders,
+    getFoldersByLevel: getReadingFoldersByLevel,
+    getPassagesByFolder: getReadingPassagesByFolder,
+  } = useReading();
+
   const { settings, updateSetting, resetSettings } = useSettings();
   const { theme, applyPreset, resetTheme } = useGlobalTheme();
 
-  // Daily words learning
+  // Daily words learning - filtered by user's JLPT level
   const dailyWords = useDailyWords({
     allCards: cards,
     targetCount: settings.dailyWordsTarget,
     enabled: settings.dailyWordsEnabled,
+    userJlptLevel: currentUser?.jlptLevel,
   });
 
   const {
     questions: jlptQuestions,
+    folders: jlptFolders,
     addJLPTQuestion,
     updateJLPTQuestion,
     deleteJLPTQuestion,
@@ -195,6 +230,13 @@ function App() {
     deleteQuestion: deleteAdvancedKaiwaQuestion,
     getQuestionsByTopic: getAdvancedKaiwaQuestionsByTopic,
   } = useKaiwaTopics({ currentUserId: currentUser?.id ?? '' });
+
+  // Custom topics for Kaiwa conversation practice
+  const {
+    topics: customTopics,
+    questions: customTopicQuestions,
+    getQuestionsByTopic: getCustomTopicQuestionsByTopic,
+  } = useCustomTopics();
 
   // Check if user is VIP (can access locked lessons)
   const isVip = currentUser?.role === 'vip_user';
@@ -372,6 +414,7 @@ function App() {
             onDeleteLesson={deleteLesson}
             currentUser={currentUser}
             jlptQuestions={jlptQuestions}
+            jlptFolders={jlptFolders}
             onAddJLPTQuestion={async (data) => { await addJLPTQuestion(data, currentUser.id); }}
             onUpdateJLPTQuestion={updateJLPTQuestion}
             onDeleteJLPTQuestion={deleteJLPTQuestion}
@@ -430,6 +473,36 @@ function App() {
           />
         )}
 
+        {currentPage === 'listening' && (
+          <ListeningPracticePage
+            cards={cards}
+            lessons={lessons}
+            getLessonsByLevel={getLessonsByLevel}
+            getChildLessons={getChildLessons}
+            onGoHome={() => setCurrentPage('home')}
+          />
+        )}
+
+        {currentPage === 'grammar-study' && (
+          <GrammarStudyPage
+            grammarCards={grammarCards}
+            lessons={lessons}
+            getLessonsByLevel={filteredGetLessonsByLevel}
+            getChildLessons={filteredGetChildLessons}
+            onGoHome={() => setCurrentPage('home')}
+          />
+        )}
+
+        {currentPage === 'reading' && (
+          <ReadingPracticePage
+            passages={readingPassages}
+            folders={readingFolders}
+            getFoldersByLevel={getReadingFoldersByLevel}
+            getPassagesByFolder={getReadingPassagesByFolder}
+            onGoHome={() => setCurrentPage('home')}
+          />
+        )}
+
         {currentPage === 'progress' && (
           <ProgressPage
             progress={progress}
@@ -437,11 +510,12 @@ function App() {
           />
         )}
 
-        {currentPage === 'settings' && (
+        {(currentPage === 'settings' || currentPage === 'profile') && (
           <SettingsPage
             settings={settings}
             onUpdateSetting={updateSetting}
             onReset={resetSettings}
+            initialTab={currentPage === 'profile' ? 'profile' : undefined}
             currentUser={currentUser}
             onUpdateDisplayName={async (name) => {
               if (!currentUser) return { success: false, error: 'Chưa đăng nhập' };
@@ -463,6 +537,10 @@ function App() {
             onUpdateProfileBackground={async (bg) => {
               if (!currentUser) return { success: false, error: 'Chưa đăng nhập' };
               return updateProfileBackground(currentUser.id, bg);
+            }}
+            onUpdateJlptLevel={async (level) => {
+              if (!currentUser) return { success: false, error: 'Chưa đăng nhập' };
+              return updateJlptLevel(currentUser.id, level);
             }}
             studySessions={studySessions}
             gameSessions={gameSessions}
@@ -542,6 +620,10 @@ function App() {
             advancedTopics={advancedKaiwaTopics}
             advancedQuestions={advancedKaiwaQuestions}
             getAdvancedQuestionsByTopic={getAdvancedKaiwaQuestionsByTopic}
+            // Custom topics props
+            customTopics={customTopics}
+            customTopicQuestions={customTopicQuestions}
+            getCustomTopicQuestionsByTopic={getCustomTopicQuestionsByTopic}
           />
         )}
 
@@ -638,6 +720,20 @@ function App() {
             onClose={() => setIsChatOpen(false)}
           />
         </>
+      )}
+
+      {/* JLPT Level Selection Modal - First login prompt */}
+      {showJlptLevelModal && currentUser && (
+        <JLPTLevelModal
+          onSelect={async (level: UserJLPTLevel) => {
+            await updateJlptLevel(currentUser.id, level);
+            setShowJlptLevelModal(false);
+          }}
+          onSkip={() => {
+            setJlptLevelSkipped(true);
+            setShowJlptLevelModal(false);
+          }}
+        />
       )}
     </div>
   );

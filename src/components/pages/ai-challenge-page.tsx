@@ -4,7 +4,8 @@
 import { useCallback, useState } from 'react';
 import type { Flashcard } from '../../types/flashcard';
 import type { AppSettings } from '../../hooks/use-settings';
-import { useAIChallenge } from '../../hooks/use-ai-challenge';
+import { useSettings } from '../../hooks/use-settings';
+import { useAIChallenge, type JLPTLevel } from '../../hooks/use-ai-challenge';
 import { AIChallengeMenu } from '../ai-challenge/ai-challenge-menu';
 import { AIChallengePlay } from '../ai-challenge/ai-challenge-play';
 import { AIChallengeResults } from '../ai-challenge/ai-challenge-results';
@@ -27,6 +28,11 @@ export function AIChallengePage({
   onClose,
   settings,
 }: AIChallengePageProps) {
+  const { settings: appSettings } = useSettings();
+
+  // Get current JLPT level from settings (default to N5)
+  const currentLevel: JLPTLevel = (appSettings.aiChallengeLevel === 'all' ? 'N5' : appSettings.aiChallengeLevel) as JLPTLevel;
+
   // Local state for quick settings (can override app settings)
   const [localSettings, setLocalSettings] = useState({
     questionCount: settings?.aiChallengeQuestionCount ?? 10,
@@ -51,6 +57,7 @@ export function AIChallengePage({
   } = useAIChallenge({
     currentUser,
     flashcards,
+    currentLevel,
     aiSettings: {
       ...localSettings,
       autoAddDifficulty: settings?.aiChallengeAutoAddDifficulty ?? 'random',
@@ -108,9 +115,6 @@ export function AIChallengePage({
         progress={progress}
         onSelectAI={startGame}
         onClose={handleClose}
-        initialSettings={localSettings}
-        onSettingsChange={setLocalSettings}
-        autoAddDifficulty={settings?.aiChallengeAutoAddDifficulty ?? 'random'}
       />
     </div>
   );

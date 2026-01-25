@@ -32,6 +32,7 @@ export interface JLPTQuestion {
   question: string;           // Nội dung câu hỏi
   answers: JLPTAnswer[];      // 4 đáp án
   explanation?: string;       // Giải thích đáp án (optional)
+  audioUrl?: string;          // URL file audio cho câu hỏi nghe
   createdBy?: string;         // User ID của người tạo
   createdAt: string;
 }
@@ -43,4 +44,5 @@ export interface JLPTQuestionFormData {
   question: string;
   answers: JLPTAnswer[];
   explanation?: string;
+  audioUrl?: string;          // URL file audio cho câu hỏi nghe
 }

@@ -1,12 +1,10 @@
-// Daily Words Task - Professional daily learning component
-// Features: progress tracking, streak display, animations, motivational feedback
+// Daily Words Task - Modal-based daily learning component
+// Features: modal display, progress tracking, streak display, animations
 
 import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import {
   BookOpen,
   CheckCircle2,
-  ChevronDown,
-  ChevronUp,
   RefreshCw,
   Volume2,
   Trophy,
@@ -16,6 +14,7 @@ import {
   Target,
   Star,
   Zap,
+  X,
 } from 'lucide-react';
 import type { Flashcard } from '../../types/flashcard';
 
@@ -96,7 +95,7 @@ const WordItem = memo(function WordItem({
       style={{ animationDelay: `${index * 50}ms` }}
     >
       <span className="daily-word-index">
-        {isLearned ? <CheckCircle2 size={14} /> : index + 1}
+        {isLearned ? <CheckCircle2 size={12} /> : index + 1}
       </span>
       <div className="daily-word-content">
         <span className="daily-word-vocabulary">
@@ -118,7 +117,7 @@ const WordItem = memo(function WordItem({
             title="Nghe phát âm"
             aria-label="Nghe phát âm"
           >
-            <Volume2 size={16} />
+            <Volume2 size={14} />
           </button>
         )}
         {onStudyWord && (
@@ -128,7 +127,7 @@ const WordItem = memo(function WordItem({
             title="Học từ này"
             aria-label="Học chi tiết"
           >
-            <Play size={16} />
+            <Play size={14} />
           </button>
         )}
         {!isLearned ? (
@@ -138,11 +137,11 @@ const WordItem = memo(function WordItem({
             title="Đánh dấu đã học"
             aria-label="Hoàn thành"
           >
-            <CheckCircle2 size={16} />
+            <CheckCircle2 size={14} />
           </button>
         ) : (
           <span className="daily-word-done" aria-label="Đã hoàn thành">
-            <CheckCircle2 size={16} />
+            <CheckCircle2 size={14} />
           </span>
         )}
       </div>
@@ -164,7 +163,7 @@ export function DailyWordsTask({
   justCompleted = false,
   completedWordIds = new Set(),
 }: DailyWordsTaskProps) {
-  const [isExpanded, setIsExpanded] = useState(!isCompleted);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [animatingId, setAnimatingId] = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
 
@@ -179,12 +178,9 @@ export function DailyWordsTask({
 
   // Handle mark learned with animation
   const handleMarkLearned = useCallback((wordId: string) => {
-    // Use completedWordIds from hook (persisted)
     if (completedWordIds.has(wordId)) return;
 
     setAnimatingId(wordId);
-
-    // Delay to allow animation then call hook
     setTimeout(() => {
       onMarkLearned(wordId);
       setAnimatingId(null);
@@ -206,158 +202,190 @@ export function DailyWordsTask({
     return Array.from({ length: progress.target }, (_, i) => i < progress.completed);
   }, [progress.target, progress.completed]);
 
-  return (
-    <div className={`daily-words-task ${isCompleted ? 'completed' : ''} ${justCompleted ? 'just-completed' : ''}`}>
-      {/* Confetti effect */}
-      {showConfetti && (
-        <div className="daily-words-confetti" aria-hidden="true">
-          {Array.from({ length: 30 }).map((_, i) => (
-            <span key={i} className="confetti-piece" style={{
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 0.5}s`,
-              backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'][Math.floor(Math.random() * 5)],
-            }} />
-          ))}
-        </div>
-      )}
+  // Close modal on escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isModalOpen) {
+        setIsModalOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isModalOpen]);
 
-      {/* Header */}
+  return (
+    <>
+      {/* Trigger Card */}
       <button
-        className="daily-words-header"
-        onClick={() => setIsExpanded(!isExpanded)}
-        aria-expanded={isExpanded}
-        aria-controls="daily-words-content"
+        className={`daily-words-trigger ${isCompleted ? 'completed' : ''}`}
+        onClick={() => setIsModalOpen(true)}
       >
-        <div className="daily-words-icon-wrapper">
-          <div className={`daily-words-icon ${isCompleted ? 'completed' : ''}`}>
-            {isCompleted ? <Trophy size={22} /> : <Target size={22} />}
-          </div>
+        <div className="daily-words-trigger-icon">
+          {isCompleted ? <Trophy size={20} /> : <Target size={20} />}
           {streak > 0 && (
-            <div className="daily-words-streak-mini" style={{ background: streakTier.color }}>
+            <span className="trigger-streak" style={{ background: streakTier.color }}>
               <StreakIcon size={10} />
-              <span>{streak}</span>
-            </div>
+              {streak}
+            </span>
           )}
         </div>
-
-        <div className="daily-words-info">
-          <span className="daily-words-title">
+        <div className="daily-words-trigger-info">
+          <span className="trigger-title">
             {isCompleted ? 'Hoàn thành!' : 'Nhiệm vụ hôm nay'}
           </span>
-          <div className="daily-words-meta">
-            <span className="daily-words-progress-text">
-              {progress.completed}/{progress.target} từ
-            </span>
-            <span className="daily-words-motivation">{motivationalMessage}</span>
-          </div>
-        </div>
-
-        <div className="daily-words-right">
-          <div className="daily-words-percent" data-complete={isCompleted}>
-            {progress.percent}%
-          </div>
-          <span className="daily-words-chevron" aria-hidden="true">
-            {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          <span className="trigger-progress">
+            {progress.completed}/{progress.target} từ • {progress.percent}%
           </span>
+        </div>
+        <div className="daily-words-trigger-bar">
+          <div
+            className="trigger-bar-fill"
+            style={{ width: `${progress.percent}%` }}
+          />
         </div>
       </button>
 
-      {/* Progress bar with segments */}
-      <div className="daily-words-progress" role="progressbar" aria-valuenow={progress.percent} aria-valuemin={0} aria-valuemax={100}>
-        <div className="daily-words-progress-segments">
-          {progressSegments.map((filled, i) => (
-            <div key={i} className={`progress-segment ${filled ? 'filled' : ''}`} />
-          ))}
-        </div>
-        <div className="daily-words-progress-fill" style={{ width: `${progress.percent}%` }} />
-      </div>
-
-      {/* Expanded content */}
-      <div
-        id="daily-words-content"
-        className={`daily-words-content ${isExpanded ? 'expanded' : ''}`}
-        aria-hidden={!isExpanded}
-      >
-        {isCompleted ? (
-          <div className="daily-words-complete">
-            <div className="complete-trophy">
-              <Trophy size={56} />
-              <div className="trophy-glow" />
-            </div>
-            <h3>Xuất sắc!</h3>
-            <p>Bạn đã hoàn thành nhiệm vụ học từ hôm nay</p>
-
-            {streak > 0 && (
-              <div className="daily-words-streak-display" style={{ borderColor: streakTier.color }}>
-                <div className="streak-icon-large" style={{ background: streakTier.color }}>
-                  <StreakIcon size={24} />
-                </div>
-                <div className="streak-info">
-                  <span className="streak-count">{streak} ngày liên tiếp</span>
-                  {streakTier.label && (
-                    <span className="streak-tier" style={{ color: streakTier.color }}>
-                      {streakTier.label}
-                    </span>
-                  )}
-                </div>
-                {longestStreak > streak && (
-                  <span className="streak-record">Kỷ lục: {longestStreak}</span>
-                )}
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="daily-words-modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div
+            className={`daily-words-modal ${isCompleted ? 'completed' : ''} ${justCompleted ? 'just-completed' : ''}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Confetti effect */}
+            {showConfetti && (
+              <div className="daily-words-confetti" aria-hidden="true">
+                {Array.from({ length: 30 }).map((_, i) => (
+                  <span key={i} className="confetti-piece" style={{
+                    left: `${Math.random() * 100}%`,
+                    animationDelay: `${Math.random() * 0.5}s`,
+                    backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'][Math.floor(Math.random() * 5)],
+                  }} />
+                ))}
               </div>
             )}
 
-            <button
-              className="daily-words-action review"
-              onClick={() => setIsExpanded(false)}
-            >
-              <BookOpen size={16} />
-              <span>Thu gọn</span>
-            </button>
+            {/* Modal Header */}
+            <div className="daily-words-modal-header">
+              <div className="modal-header-left">
+                <div className={`modal-icon ${isCompleted ? 'completed' : ''}`}>
+                  {isCompleted ? <Trophy size={20} /> : <Target size={20} />}
+                </div>
+                <div className="modal-title-group">
+                  <h3>{isCompleted ? 'Hoàn thành!' : 'Nhiệm vụ hôm nay'}</h3>
+                  <span className="modal-subtitle">{motivationalMessage}</span>
+                </div>
+              </div>
+              <button
+                className="modal-close-btn"
+                onClick={() => setIsModalOpen(false)}
+                aria-label="Đóng"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Progress bar with segments */}
+            <div className="daily-words-modal-progress">
+              <div className="modal-progress-info">
+                <span>{progress.completed}/{progress.target} từ</span>
+                <span className="modal-percent">{progress.percent}%</span>
+              </div>
+              <div className="modal-progress-bar">
+                <div className="modal-progress-segments">
+                  {progressSegments.map((filled, i) => (
+                    <div key={i} className={`modal-segment ${filled ? 'filled' : ''}`} />
+                  ))}
+                </div>
+                <div className="modal-progress-fill" style={{ width: `${progress.percent}%` }} />
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="daily-words-modal-content">
+              {isCompleted ? (
+                <div className="daily-words-complete">
+                  <div className="complete-trophy">
+                    <Trophy size={48} />
+                    <div className="trophy-glow" />
+                  </div>
+                  <h4>Xuất sắc!</h4>
+                  <p>Bạn đã hoàn thành nhiệm vụ học từ hôm nay</p>
+
+                  {streak > 0 && (
+                    <div className="daily-words-streak-display" style={{ borderColor: streakTier.color }}>
+                      <div className="streak-icon-large" style={{ background: streakTier.color }}>
+                        <StreakIcon size={20} />
+                      </div>
+                      <div className="streak-info">
+                        <span className="streak-count">{streak} ngày liên tiếp</span>
+                        {streakTier.label && (
+                          <span className="streak-tier" style={{ color: streakTier.color }}>
+                            {streakTier.label}
+                          </span>
+                        )}
+                      </div>
+                      {longestStreak > streak && (
+                        <span className="streak-record">Kỷ lục: {longestStreak}</span>
+                      )}
+                    </div>
+                  )}
+
+                  <button
+                    className="daily-words-action review"
+                    onClick={() => setIsModalOpen(false)}
+                  >
+                    <BookOpen size={14} />
+                    <span>Đóng</span>
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* Words list */}
+                  <div className="daily-words-list" role="list">
+                    {todayWords.map((word, index) => {
+                      const isLearned = completedWordIds.has(word.id);
+                      const isAnimating = animatingId === word.id;
+
+                      return (
+                        <WordItem
+                          key={word.id}
+                          word={word}
+                          index={index}
+                          isLearned={isLearned}
+                          isAnimating={isAnimating}
+                          onSpeak={onSpeak}
+                          onStudyWord={onStudyWord}
+                          onMarkLearned={handleMarkLearned}
+                        />
+                      );
+                    })}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="daily-words-modal-actions">
+                    <button
+                      className="daily-words-action secondary"
+                      onClick={onRefresh}
+                      title="Đổi từ khác"
+                    >
+                      <RefreshCw size={14} />
+                      <span>Đổi từ</span>
+                    </button>
+                    <button
+                      className="daily-words-action primary"
+                      onClick={onMarkAllLearned}
+                    >
+                      <Sparkles size={14} />
+                      <span>Hoàn thành tất cả</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        ) : (
-          <>
-            {/* Words list */}
-            <div className="daily-words-list" role="list">
-              {todayWords.map((word, index) => {
-                const isLearned = completedWordIds.has(word.id);
-                const isAnimating = animatingId === word.id;
-
-                return (
-                  <WordItem
-                    key={word.id}
-                    word={word}
-                    index={index}
-                    isLearned={isLearned}
-                    isAnimating={isAnimating}
-                    onSpeak={onSpeak}
-                    onStudyWord={onStudyWord}
-                    onMarkLearned={handleMarkLearned}
-                  />
-                );
-              })}
-            </div>
-
-            {/* Actions */}
-            <div className="daily-words-actions">
-              <button
-                className="daily-words-action secondary"
-                onClick={onRefresh}
-                title="Đổi từ khác"
-              >
-                <RefreshCw size={16} />
-                <span>Đổi từ</span>
-              </button>
-              <button
-                className="daily-words-action primary"
-                onClick={onMarkAllLearned}
-              >
-                <Sparkles size={16} />
-                <span>Hoàn thành tất cả</span>
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+    </>
   );
 }

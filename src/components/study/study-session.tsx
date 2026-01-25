@@ -55,6 +55,7 @@ const MEMORIZATION_OPTIONS: { value: MemorizationStatus | 'all'; label: string }
 const DIFFICULTY_OPTIONS: { value: DifficultyLevel | 'all'; label: string }[] = [
   { value: 'all', label: 'Tất cả' },
   { value: 'unset', label: 'Chưa đánh giá' },
+  { value: 'super_hard', label: 'Siêu khó' },
   { value: 'hard', label: 'Khó nhớ' },
   { value: 'medium', label: 'Vừa' },
   { value: 'easy', label: 'Dễ nhớ' },
@@ -359,6 +360,12 @@ export function StudySession({
         <span className="action-separator">|</span>
         <div className="action-group">
           <span>Độ khó:</span>
+          <button
+            className={`diff-btn super-hard ${currentCard.difficultyLevel === 'super_hard' ? 'active' : ''}`}
+            onClick={() => handleDifficultyClick('super_hard')}
+          >
+            💀 Siêu khó
+          </button>
           <button
             className={`diff-btn hard ${currentCard.difficultyLevel === 'hard' ? 'active' : ''}`}
             onClick={() => handleDifficultyClick('hard')}

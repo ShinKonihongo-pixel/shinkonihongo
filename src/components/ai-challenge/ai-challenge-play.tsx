@@ -90,18 +90,26 @@ export function AIChallengePlay({
 
   useEffect(() => {
     if (!isPlaying) return;
+
     const interval = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(interval);
-          onTimeout();
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
+
     return () => clearInterval(interval);
-  }, [isPlaying, game.currentQuestionIndex, onTimeout]);
+  }, [isPlaying, game.currentQuestionIndex]);
+
+  // Handle timeout separately to avoid setState during render
+  useEffect(() => {
+    if (isPlaying && timeLeft === 0) {
+      onTimeout();
+    }
+  }, [isPlaying, timeLeft, onTimeout]);
 
   // Impact effect when revealing
   useEffect(() => {

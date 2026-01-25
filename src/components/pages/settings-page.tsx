@@ -5,10 +5,10 @@ import type { AppSettings, GameQuestionContent, GameAnswerContent, GlobalTheme, 
 import { CARD_FRAME_PRESETS } from '../../hooks/use-settings';
 import { useGameSounds, MUSIC_CATEGORY_LABELS, type MusicCategory } from '../../hooks/use-game-sounds';
 import { Volume2, VolumeX, Music, Music2 } from 'lucide-react';
-import type { CurrentUser, StudySession, GameSession, JLPTSession, UserStats, User } from '../../types/user';
+import type { CurrentUser, StudySession, GameSession, JLPTSession, UserStats, User, UserJLPTLevel } from '../../types/user';
 import type { Flashcard, Lesson } from '../../types/flashcard';
 import type { BadgeType, FriendWithUser, UserBadgeStats, BadgeGift } from '../../types/friendship';
-import { calculateUserLevel } from '../../types/user';
+import { calculateUserLevel, USER_JLPT_LEVELS, USER_JLPT_LEVEL_LABELS } from '../../types/user';
 import { ExportImportModal } from '../common/export-import-modal';
 import type { ExportData } from '../../lib/data-export';
 import { FriendsPanel } from '../friends/friends-panel';
@@ -40,12 +40,15 @@ interface SettingsPageProps {
   settings: AppSettings;
   onUpdateSetting: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
   onReset: () => void;
+  // Initial tab to show (for navigation from profile page)
+  initialTab?: SettingsTab;
   // Profile management props
   currentUser?: CurrentUser | null;
   onUpdateDisplayName?: (displayName: string) => Promise<{ success: boolean; error?: string }>;
   onChangePassword?: (oldPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   onUpdateAvatar?: (avatar: string) => Promise<{ success: boolean; error?: string }>;
   onUpdateProfileBackground?: (background: string) => Promise<{ success: boolean; error?: string }>;
+  onUpdateJlptLevel?: (level: string) => Promise<{ success: boolean; error?: string }>;
   // History props
   studySessions?: StudySession[];
   gameSessions?: GameSession[];
@@ -643,11 +646,13 @@ export function SettingsPage({
   settings,
   onUpdateSetting,
   onReset,
+  initialTab,
   currentUser,
   onUpdateDisplayName,
   onChangePassword,
   onUpdateAvatar,
   onUpdateProfileBackground,
+  onUpdateJlptLevel,
   studySessions = [],
   gameSessions = [],
   jlptSessions = [],
@@ -673,8 +678,8 @@ export function SettingsPage({
   onSendBadge,
   isFriend = () => false,
 }: SettingsPageProps) {
-  // Tab state
-  const [activeTab, setActiveTab] = useState<SettingsTab>('general');
+  // Tab state - use initialTab if provided
+  const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab || 'general');
   const [generalSubTab, setGeneralSubTab] = useState<GeneralSubTab>('flashcard');
   const [showExportModal, setShowExportModal] = useState(false);
 
@@ -709,6 +714,7 @@ export function SettingsPage({
   const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
   const [activeHistoryTab, setActiveHistoryTab] = useState<'study' | 'game' | 'jlpt'>('study');
   const [badgeGiftTarget, setBadgeGiftTarget] = useState<{ id: string; name: string } | null>(null);
+  const [jlptLevelMessage, setJlptLevelMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const handleUpdateDisplayName = async () => {
     if (!onUpdateDisplayName) return;
@@ -760,6 +766,17 @@ export function SettingsPage({
       setProfileMessage({ type: 'error', text: result.error || 'Lỗi' });
       setTimeout(() => setProfileMessage(null), 3000);
     }
+  };
+
+  const handleUpdateJlptLevel = async (level: UserJLPTLevel) => {
+    if (!onUpdateJlptLevel) return;
+    const result = await onUpdateJlptLevel(level);
+    if (result.success) {
+      setJlptLevelMessage({ type: 'success', text: 'Đã cập nhật cấp độ học!' });
+    } else {
+      setJlptLevelMessage({ type: 'error', text: result.error || 'Lỗi' });
+    }
+    setTimeout(() => setJlptLevelMessage(null), 3000);
   };
 
   const isSuperAdmin = currentUser?.role === 'super_admin';
@@ -966,8 +983,8 @@ export function SettingsPage({
                             ))}
                           </div>
                           <div className="fc-palette">
-                            {GRADIENT_PRESETS.filter(g => gradientCategory === 'all' || g.category === gradientCategory).map((preset) => (
-                              <button key={preset.value} className={`fc-swatch ${settings.cardBackgroundGradient === preset.value ? 'active' : ''}`}
+                            {GRADIENT_PRESETS.filter(g => gradientCategory === 'all' || g.category === gradientCategory).map((preset, idx) => (
+                              <button key={`${preset.category}-${idx}`} className={`fc-swatch ${settings.cardBackgroundGradient === preset.value ? 'active' : ''}`}
                                 style={{ background: preset.value }} onClick={() => onUpdateSetting('cardBackgroundGradient', preset.value)} title={preset.label} />
                             ))}
                           </div>
@@ -2146,6 +2163,27 @@ export function SettingsPage({
               </div>
               {passwordMessage && (
                 <p className={`form-message ${passwordMessage.type}`}>{passwordMessage.text}</p>
+              )}
+            </div>
+
+            {/* JLPT Level */}
+            <div className="profile-form-group">
+              <label>Cấp độ học JLPT</label>
+              <p className="form-hint">Chọn cấp độ để nhận bài tập phù hợp với trình độ của bạn</p>
+              <div className="jlpt-level-options">
+                {USER_JLPT_LEVELS.map((level) => (
+                  <button
+                    key={level}
+                    className={`jlpt-level-btn ${currentUser?.jlptLevel === level ? 'active' : ''}`}
+                    onClick={() => handleUpdateJlptLevel(level)}
+                  >
+                    <span className="jlpt-level-name">{level}</span>
+                    <span className="jlpt-level-desc">{USER_JLPT_LEVEL_LABELS[level].split(' - ')[1]}</span>
+                  </button>
+                ))}
+              </div>
+              {jlptLevelMessage && (
+                <p className={`form-message ${jlptLevelMessage.type}`}>{jlptLevelMessage.text}</p>
               )}
             </div>
           </section>

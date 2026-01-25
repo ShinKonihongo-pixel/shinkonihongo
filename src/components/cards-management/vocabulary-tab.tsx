@@ -1,35 +1,59 @@
-// Flashcards Management Tab - Flashcard folder navigation and CRUD
+// Vocabulary Tab - Flashcard (vocabulary) management only
 
 import { useState, useRef } from 'react';
 import { Download, Upload } from 'lucide-react';
 import { FlashcardForm } from '../flashcard/flashcard-form';
 import { FlashcardList } from '../flashcard/flashcard-list';
-import { GrammarCardForm } from '../flashcard/grammar-card-form';
-import { GrammarCardList } from '../flashcard/grammar-card-list';
 import { ConfirmModal } from '../ui/confirm-modal';
-import type { FlashcardsTabProps, FlashcardNavState, Flashcard, Lesson, JLPTLevel, GrammarCard } from './cards-management-types';
+import type { VocabularyTabProps, FlashcardNavState, Flashcard, Lesson, JLPTLevel } from './cards-management-types';
 import { JLPT_LEVELS } from './cards-management-types';
 import { seedN5Lessons, seedN4Lessons, fixLessonOrder } from '../../scripts/seed-n5-lessons';
-import {
-  exportFlashcardsData,
-  downloadAsJSON,
-  readJSONFile,
-  validateFlashcardsImport,
-  generateExportFilename,
-  type FlashcardsExportData,
-} from '../../utils/data-export-import';
+// Simple export/import utilities
+function downloadAsJSON(data: unknown, filename: string) {
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
-type FormMode = 'none' | 'flashcard' | 'grammar';
+function readJSONFile(file: File): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        resolve(JSON.parse(reader.result as string));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    reader.onerror = reject;
+    reader.readAsText(file);
+  });
+}
 
-export function FlashcardsTab({
+function generateExportFilename(prefix: string): string {
+  const date = new Date().toISOString().split('T')[0];
+  return `${prefix}-export-${date}.json`;
+}
+
+interface VocabularyExportData {
+  version: string;
+  exportedAt: string;
+  type: 'vocabulary';
+  flashcards: Omit<Flashcard, 'id'>[];
+  lessons: Omit<Lesson, 'id'>[];
+  lessonIdMap: Record<string, { name: string; jlptLevel: JLPTLevel }>;
+}
+
+export function VocabularyTab({
   cards,
   onAddCard,
   onUpdateCard,
   onDeleteCard,
-  grammarCards,
-  onAddGrammarCard,
-  onUpdateGrammarCard,
-  onDeleteGrammarCard,
   lessons,
   getLessonsByLevel,
   getChildLessons,
@@ -40,14 +64,12 @@ export function FlashcardsTab({
   onToggleHide,
   onImportLesson,
   onImportFlashcard,
-  onImportGrammarCard,
   currentUser,
   isSuperAdmin,
-}: FlashcardsTabProps) {
+}: VocabularyTabProps) {
   const [navState, setNavState] = useState<FlashcardNavState>({ type: 'root' });
-  const [formMode, setFormMode] = useState<FormMode>('none');
+  const [showForm, setShowForm] = useState(false);
   const [editingCard, setEditingCard] = useState<Flashcard | null>(null);
-  const [editingGrammarCard, setEditingGrammarCard] = useState<GrammarCard | null>(null);
   const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
   const [editingLessonName, setEditingLessonName] = useState('');
   const [addingLesson, setAddingLesson] = useState(false);
@@ -59,12 +81,22 @@ export function FlashcardsTab({
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Export flashcards data
+  // Export vocabulary data
   const handleExport = () => {
     setIsExporting(true);
     try {
-      const exportData = exportFlashcardsData(cards, lessons, grammarCards);
-      const filename = generateExportFilename('flashcards');
+      const lessonIdMap: Record<string, { name: string; jlptLevel: JLPTLevel }> = {};
+      lessons.forEach(l => { lessonIdMap[l.id] = { name: l.name, jlptLevel: l.jlptLevel }; });
+
+      const exportData: VocabularyExportData = {
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        type: 'vocabulary',
+        flashcards: cards.map(({ id, ...rest }) => rest),
+        lessons: lessons.map(({ id, ...rest }) => rest),
+        lessonIdMap,
+      };
+      const filename = generateExportFilename('vocabulary');
       downloadAsJSON(exportData, filename);
     } catch (error) {
       console.error('Export error:', error);
@@ -74,12 +106,12 @@ export function FlashcardsTab({
     }
   };
 
-  // Import flashcards data
+  // Import vocabulary data
   const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!onImportLesson || !onImportFlashcard || !onImportGrammarCard) {
+    if (!onImportLesson || !onImportFlashcard) {
       alert('Import chưa được cấu hình');
       return;
     }
@@ -88,33 +120,28 @@ export function FlashcardsTab({
     setImportStatus('Đang đọc file...');
 
     try {
-      const data = await readJSONFile(file);
+      const data = await readJSONFile(file) as VocabularyExportData;
 
-      if (!validateFlashcardsImport(data)) {
-        throw new Error('File không phải là dữ liệu flashcards hợp lệ');
+      if (!data.type || (data.type !== 'vocabulary' && data.type !== 'flashcards')) {
+        throw new Error('File không phải là dữ liệu từ vựng hợp lệ');
       }
 
-      const importData = data as FlashcardsExportData;
-
-      // Step 1: Import lessons (parent lessons first, then children)
-      setImportStatus(`Đang import ${importData.lessons.length} bài học...`);
+      // Step 1: Import lessons
+      setImportStatus(`Đang import ${data.lessons.length} bài học...`);
       const oldToNewLessonIdMap: Record<string, string> = {};
 
-      // Sort lessons: parents first (parentId === null), then children
-      const sortedLessons = [...importData.lessons].sort((a, b) => {
+      const sortedLessons = [...data.lessons].sort((a, b) => {
         if (a.parentId === null && b.parentId !== null) return -1;
         if (a.parentId !== null && b.parentId === null) return 1;
         return 0;
       });
 
       for (const lessonData of sortedLessons) {
-        // Find old lesson ID from lessonIdMap
-        const oldId = Object.keys(importData.lessonIdMap).find(
-          id => importData.lessonIdMap[id].name === lessonData.name &&
-                importData.lessonIdMap[id].jlptLevel === lessonData.jlptLevel
+        const oldId = Object.keys(data.lessonIdMap).find(
+          id => data.lessonIdMap[id].name === lessonData.name &&
+                data.lessonIdMap[id].jlptLevel === lessonData.jlptLevel
         );
 
-        // Check if lesson already exists
         const existingLesson = lessons.find(
           l => l.name === lessonData.name &&
                l.jlptLevel === lessonData.jlptLevel &&
@@ -128,7 +155,6 @@ export function FlashcardsTab({
           continue;
         }
 
-        // Create new lesson with updated parentId
         const newLessonData = {
           ...lessonData,
           parentId: lessonData.parentId ? oldToNewLessonIdMap[lessonData.parentId] || null : null,
@@ -139,13 +165,11 @@ export function FlashcardsTab({
       }
 
       // Step 2: Import flashcards
-      setImportStatus(`Đang import ${importData.flashcards.length} flashcard...`);
+      setImportStatus(`Đang import ${data.flashcards.length} từ vựng...`);
       let importedCards = 0;
-      for (const cardData of importData.flashcards) {
-        // Map old lessonId to new lessonId
+      for (const cardData of data.flashcards) {
         const newLessonId = oldToNewLessonIdMap[cardData.lessonId] || cardData.lessonId;
 
-        // Check if card already exists (by vocabulary + lessonId)
         const existingCard = cards.find(
           c => c.vocabulary === cardData.vocabulary && c.lessonId === newLessonId
         );
@@ -155,24 +179,8 @@ export function FlashcardsTab({
         importedCards++;
       }
 
-      // Step 3: Import grammar cards
-      setImportStatus(`Đang import ${importData.grammarCards.length} thẻ ngữ pháp...`);
-      let importedGrammar = 0;
-      for (const grammarData of importData.grammarCards) {
-        const newLessonId = oldToNewLessonIdMap[grammarData.lessonId] || grammarData.lessonId;
-
-        // Check if grammar card already exists
-        const existingGrammar = grammarCards.find(
-          g => g.title === grammarData.title && g.lessonId === newLessonId
-        );
-        if (existingGrammar) continue;
-
-        await onImportGrammarCard({ ...grammarData, lessonId: newLessonId });
-        importedGrammar++;
-      }
-
       setImportStatus(null);
-      alert(`Import thành công!\n- ${Object.keys(oldToNewLessonIdMap).length} bài học\n- ${importedCards} flashcard\n- ${importedGrammar} thẻ ngữ pháp`);
+      alert(`Import thành công!\n- ${Object.keys(oldToNewLessonIdMap).length} bài học\n- ${importedCards} từ vựng`);
     } catch (error) {
       console.error('Import error:', error);
       alert(`Lỗi import: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -183,7 +191,7 @@ export function FlashcardsTab({
     }
   };
 
-  // Seed lessons - admin only, one-time use
+  // Seed lessons - admin only
   const handleSeedLessons = async (level: 'N5' | 'N4') => {
     if (!isSuperAdmin) return;
 
@@ -211,12 +219,11 @@ export function FlashcardsTab({
     }
   };
 
-  // Fix Bài 1 order to appear first
   const handleFixBai1Order = async () => {
     if (!isSuperAdmin) return;
 
-    const lessons = getLessonsByLevel('N5');
-    const bai1 = lessons.find(l => l.name === 'Bài 1');
+    const levelLessons = getLessonsByLevel('N5');
+    const bai1 = levelLessons.find(l => l.name === 'Bài 1');
     if (!bai1) {
       alert('Không tìm thấy Bài 1');
       return;
@@ -228,7 +235,7 @@ export function FlashcardsTab({
     }
 
     try {
-      await fixLessonOrder(lessons, 'Bài 1', 'N5', 1);
+      await fixLessonOrder(levelLessons, 'Bài 1', 'N5', 1);
       alert('Đã đưa Bài 1 lên đầu!');
     } catch (error) {
       console.error('Fix order error:', error);
@@ -238,7 +245,6 @@ export function FlashcardsTab({
 
   const canModifyLesson = (lesson: Lesson) => isSuperAdmin || lesson.createdBy === currentUser.id;
   const canModifyCard = (card: Flashcard) => isSuperAdmin || card.createdBy === currentUser.id;
-  const canModifyGrammarCard = (card: GrammarCard) => isSuperAdmin || card.createdBy === currentUser.id;
 
   const getCurrentLevel = (): JLPTLevel | null => navState.type === 'root' ? null : navState.level;
   const getCurrentLessonId = (): string | null => {
@@ -261,19 +267,6 @@ export function FlashcardsTab({
     return [];
   };
 
-  const getGrammarCardsForCurrentView = (): GrammarCard[] => {
-    if (navState.type === 'childLesson') return grammarCards.filter(c => c.lessonId === navState.lessonId);
-    if (navState.type === 'parentLesson' && getChildLessons(navState.lessonId).length === 0) return grammarCards.filter(c => c.lessonId === navState.lessonId);
-    return [];
-  };
-
-  const getGrammarCardCountByLesson = (lessonId: string) => grammarCards.filter(c => c.lessonId === lessonId).length;
-  const getGrammarCardCountByLessonRecursive = (lessonId: string) => {
-    const directCount = grammarCards.filter(c => c.lessonId === lessonId).length;
-    const childrenCount = getChildLessons(lessonId).reduce((sum, child) => sum + getGrammarCardCountByLesson(child.id), 0);
-    return directCount + childrenCount;
-  };
-
   const getBreadcrumb = (): string[] => {
     const crumbs: string[] = ['Tất cả'];
     if (navState.type === 'level') crumbs.push(navState.level);
@@ -286,22 +279,15 @@ export function FlashcardsTab({
     if (navState.type === 'level') setNavState({ type: 'root' });
     else if (navState.type === 'parentLesson') setNavState({ type: 'level', level: navState.level });
     else if (navState.type === 'childLesson') setNavState({ type: 'parentLesson', level: navState.level, lessonId: navState.parentId, lessonName: navState.parentName });
-    setFormMode('none');
+    setShowForm(false);
     setAddingLesson(false);
   };
 
   const handleSubmit = (data: any) => {
     if (editingCard) onUpdateCard(editingCard.id, data);
     else onAddCard(data, currentUser.id);
-    setFormMode('none');
+    setShowForm(false);
     setEditingCard(null);
-  };
-
-  const handleGrammarSubmit = (data: any) => {
-    if (editingGrammarCard) onUpdateGrammarCard(editingGrammarCard.id, data);
-    else onAddGrammarCard(data, currentUser.id);
-    setFormMode('none');
-    setEditingGrammarCard(null);
   };
 
   const handleAddLesson = () => {
@@ -322,7 +308,6 @@ export function FlashcardsTab({
 
   const breadcrumb = getBreadcrumb();
   const currentCards = getCardsForCurrentView();
-  const currentGrammarCards = getGrammarCardsForCurrentView();
   const canAddParentLesson = navState.type === 'level';
   const canAddChildLesson = navState.type === 'parentLesson';
   const parentHasNoChildren = navState.type === 'parentLesson' && getChildLessons(navState.lessonId).length === 0;
@@ -373,7 +358,7 @@ export function FlashcardsTab({
       ) : (
         <span className="folder-name" onDoubleClick={(e) => { e.stopPropagation(); setEditingLessonId(lesson.id); setEditingLessonName(lesson.name); }}>{lesson.name}</span>
       )}
-      <span className="folder-count">({isChild ? getCardCountByLesson(lesson.id) : getCardCountByLessonRecursive(lesson.id)} từ vựng, {isChild ? getGrammarCardCountByLesson(lesson.id) : getGrammarCardCountByLessonRecursive(lesson.id)} ngữ pháp)</span>
+      <span className="folder-count">({isChild ? getCardCountByLesson(lesson.id) : getCardCountByLessonRecursive(lesson.id)} từ)</span>
       {lesson.isLocked && <span className="locked-badge">Đã khóa</span>}
       {lesson.isHidden && <span className="hidden-badge">Đã ẩn</span>}
       {canModifyLesson(lesson) && (
@@ -412,7 +397,7 @@ export function FlashcardsTab({
             className="btn btn-secondary"
             onClick={handleExport}
             disabled={isExporting}
-            title="Xuất tất cả flashcard, ngữ pháp và bài học"
+            title="Xuất tất cả từ vựng và bài học"
           >
             <Download size={16} style={{ marginRight: '0.25rem' }} />
             {isExporting ? 'Đang xuất...' : 'Export'}
@@ -430,10 +415,9 @@ export function FlashcardsTab({
         </div>
       )}
 
-      {formMode === 'none' && !addingLesson && (
+      {!showForm && !addingLesson && (
         <div className="folder-actions">
-          {canAddCard && <button className="btn btn-primary" onClick={() => setFormMode('flashcard')}>+ Tạo thẻ từ vựng</button>}
-          {canAddCard && <button className="btn btn-grammar" onClick={() => setFormMode('grammar')}>+ Tạo thẻ ngữ pháp</button>}
+          {canAddCard && <button className="btn btn-primary" onClick={() => setShowForm(true)}>+ Tạo thẻ từ vựng</button>}
           {canAddParentLesson && <button className="btn btn-secondary" onClick={() => setAddingLesson(true)}>+ Tạo bài học</button>}
           {canAddChildLesson && <button className="btn btn-secondary" onClick={() => setAddingLesson(true)}>+ Tạo bài học con</button>}
         </div>
@@ -447,15 +431,11 @@ export function FlashcardsTab({
         </div>
       )}
 
-      {formMode === 'flashcard' && (
-        <FlashcardForm onSubmit={handleSubmit} onCancel={() => { setFormMode('none'); setEditingCard(null); }} initialData={editingCard || undefined} lessons={getLessonsForForm()} fixedLevel={getCurrentLevel()} fixedLessonId={getCurrentLessonId()} />
+      {showForm && (
+        <FlashcardForm onSubmit={handleSubmit} onCancel={() => { setShowForm(false); setEditingCard(null); }} initialData={editingCard || undefined} lessons={getLessonsForForm()} fixedLevel={getCurrentLevel()} fixedLessonId={getCurrentLessonId()} />
       )}
 
-      {formMode === 'grammar' && (
-        <GrammarCardForm onSubmit={handleGrammarSubmit} onCancel={() => { setFormMode('none'); setEditingGrammarCard(null); }} initialData={editingGrammarCard || undefined} lessons={getLessonsForForm()} fixedLevel={getCurrentLevel()} fixedLessonId={getCurrentLessonId()} />
-      )}
-
-      {formMode === 'none' && !addingLesson && (
+      {!showForm && !addingLesson && (
         <div className="folder-content">
           {navState.type === 'root' && (
             <div className="folder-list">
@@ -463,7 +443,7 @@ export function FlashcardsTab({
                 <div key={level} className="folder-item" onClick={() => setNavState({ type: 'level', level })}>
                   <span className="folder-icon">📁</span>
                   <span className="folder-name">{level}</span>
-                  <span className="folder-count">({getCardCountByLevel(level)} thẻ)</span>
+                  <span className="folder-count">({getCardCountByLevel(level)} từ)</span>
                 </div>
               ))}
             </div>
@@ -500,15 +480,8 @@ export function FlashcardsTab({
             <div className="folder-list">
               {getChildLessons(navState.lessonId).map(lesson => renderLessonItem(lesson, true))}
               {getChildLessons(navState.lessonId).length === 0 && (
-                (currentCards.length > 0 || currentGrammarCards.length > 0) ? (
-                  <>
-                    {currentCards.length > 0 && (
-                      <FlashcardList cards={currentCards} onEdit={(card) => { setEditingCard(card); setFormMode('flashcard'); }} onDelete={onDeleteCard} canEdit={canModifyCard} canDelete={canModifyCard} />
-                    )}
-                    {currentGrammarCards.length > 0 && (
-                      <GrammarCardList cards={currentGrammarCards} onEdit={(card) => { setEditingGrammarCard(card); setFormMode('grammar'); }} onDelete={onDeleteGrammarCard} canEdit={canModifyGrammarCard} canDelete={canModifyGrammarCard} />
-                    )}
-                  </>
+                currentCards.length > 0 ? (
+                  <FlashcardList cards={currentCards} onEdit={(card) => { setEditingCard(card); setShowForm(true); }} onDelete={onDeleteCard} canEdit={canModifyCard} canDelete={canModifyCard} />
                 ) : (
                   <p className="empty-message">Chưa có thẻ nào. Nhấn "+ Tạo thẻ" để thêm hoặc tạo bài học con.</p>
                 )
@@ -517,15 +490,8 @@ export function FlashcardsTab({
           )}
 
           {navState.type === 'childLesson' && (
-            (currentCards.length > 0 || currentGrammarCards.length > 0) ? (
-              <>
-                {currentCards.length > 0 && (
-                  <FlashcardList cards={currentCards} onEdit={(card) => { setEditingCard(card); setFormMode('flashcard'); }} onDelete={onDeleteCard} canEdit={canModifyCard} canDelete={canModifyCard} />
-                )}
-                {currentGrammarCards.length > 0 && (
-                  <GrammarCardList cards={currentGrammarCards} onEdit={(card) => { setEditingGrammarCard(card); setFormMode('grammar'); }} onDelete={onDeleteGrammarCard} canEdit={canModifyGrammarCard} canDelete={canModifyGrammarCard} />
-                )}
-              </>
+            currentCards.length > 0 ? (
+              <FlashcardList cards={currentCards} onEdit={(card) => { setEditingCard(card); setShowForm(true); }} onDelete={onDeleteCard} canEdit={canModifyCard} canDelete={canModifyCard} />
             ) : (
               <p className="empty-message">Chưa có thẻ nào. Nhấn "+ Tạo thẻ" để thêm.</p>
             )

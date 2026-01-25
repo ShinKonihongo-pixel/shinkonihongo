@@ -6,11 +6,9 @@ import type { Page } from './header';
 import { isImageAvatar } from '../../utils/avatar-icons';
 import {
   Home,
-  LayoutDashboard,
   Layers,
   Gamepad2,
   Award,
-  GraduationCap,
   MessageCircle,
   Settings,
   LogOut,
@@ -21,6 +19,11 @@ import {
   Building2,
   BookOpen,
   Flame,
+  Headphones,
+  FileText,
+  BookOpenCheck,
+  LayoutGrid,
+  User,
 } from 'lucide-react';
 import { useClassroomNotifications } from '../../hooks/use-classrooms';
 import { useFriendNotifications } from '../../hooks/use-friendships';
@@ -57,21 +60,27 @@ interface NavItem {
 
 const iconProps = { size: 20, strokeWidth: 1.75 };
 
-const navItems: NavItem[] = [
+// Section 1: Learning tabs (includes admin management)
+const learningItems: NavItem[] = [
   { page: 'home', label: 'Trang chủ', icon: <Home {...iconProps} /> },
-  { page: 'cards', label: 'Quản Lí', icon: <LayoutDashboard {...iconProps} />, roles: ['admin', 'super_admin'] },
-  { page: 'study', label: 'Flash Card', icon: <Layers {...iconProps} /> },
-  { page: 'game-hub', label: 'Game', icon: <Gamepad2 {...iconProps} /> },
-  { page: 'jlpt', label: 'JLPT', icon: <Award {...iconProps} /> },
-  { page: 'lectures', label: 'Bài giảng', icon: <GraduationCap {...iconProps} /> },
-  { page: 'classroom', label: 'Lớp Học', icon: <School {...iconProps} /> },
-  { page: 'kaiwa', label: '会話', icon: <MessageCircle {...iconProps} />, roles: ['vip_user', 'admin', 'super_admin', 'director', 'branch_admin', 'main_teacher'] },
-  // Branch management - unified page with teachers, salaries, staff management
-  { page: 'branches', label: 'Quản lý', icon: <Building2 {...iconProps} />, roles: ['director', 'branch_admin', 'super_admin'] },
-  // Teacher self-service
-  { page: 'my-teaching', label: 'Giảng dạy', icon: <GraduationCap {...iconProps} />, roles: ['main_teacher', 'part_time_teacher', 'assistant'] },
-  { page: 'settings', label: 'Cài đặt', icon: <Settings {...iconProps} /> },
+  { page: 'cards', label: 'Quản lí', icon: <LayoutGrid {...iconProps} />, roles: ['admin', 'super_admin'] },
+  { page: 'study', label: 'Từ Vựng', icon: <Layers {...iconProps} /> },
+  { page: 'grammar-study', label: 'Ngữ Pháp', icon: <FileText {...iconProps} /> },
+  { page: 'reading', label: 'Đọc Hiểu', icon: <BookOpenCheck {...iconProps} /> },
+  { page: 'listening', label: 'Nghe Hiểu', icon: <Headphones {...iconProps} /> },
 ];
+
+// Section 2: Management/Activity tabs
+const managementItems: NavItem[] = [
+  { page: 'branches', label: 'Trung tâm', icon: <Building2 {...iconProps} />, roles: ['director', 'branch_admin', 'super_admin'] },
+  { page: 'classroom', label: 'Lớp Học', icon: <School {...iconProps} /> },
+  { page: 'jlpt', label: 'JLPT', icon: <Award {...iconProps} /> },
+  { page: 'kaiwa', label: '会話', icon: <MessageCircle {...iconProps} />, roles: ['vip_user', 'admin', 'super_admin', 'director', 'branch_admin', 'main_teacher'] },
+  { page: 'game-hub', label: 'Game', icon: <Gamepad2 {...iconProps} /> },
+];
+
+// No more role-specific items needed (moved to managementItems)
+const roleSpecificItems: NavItem[] = [];
 
 export function Sidebar({
   currentPage,
@@ -84,6 +93,7 @@ export function Sidebar({
 }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showAvatarMenu, setShowAvatarMenu] = useState(false);
 
   // Classroom notifications
   const { notifications: classroomNotifications, unreadCount: classroomUnread, markAsRead: markClassroomRead, markAllAsRead: markAllClassroomRead } = useClassroomNotifications(currentUser?.id || null);
@@ -106,6 +116,25 @@ export function Sidebar({
     if (!item.roles) return true;
     if (!currentUser) return false;
     return item.roles.includes(currentUser.role);
+  };
+
+  // Get avatar value for display
+  const avatarValue = currentUser?.avatar;
+  const isAvatarImage = avatarValue ? isImageAvatar(avatarValue) : false;
+
+  const renderNavItem = (item: NavItem) => {
+    if (!canAccess(item)) return null;
+    return (
+      <button
+        key={item.page}
+        className={`sidebar-nav-btn ${currentPage === item.page ? 'active' : ''}`}
+        onClick={() => handleNavigate(item.page)}
+        title={isCollapsed ? item.label : undefined}
+      >
+        <span className="sidebar-nav-icon">{item.icon}</span>
+        {!isCollapsed && <span className="sidebar-nav-label">{item.label}</span>}
+      </button>
+    );
   };
 
   return (
@@ -146,35 +175,63 @@ export function Sidebar({
 
         {/* User info */}
         {currentUser && (
-          <div className="sidebar-user">
-            <div className="sidebar-user-avatar">
-              {currentUser.avatar && isImageAvatar(currentUser.avatar) ? (
-                <img src={currentUser.avatar} alt="avatar" />
-              ) : (
-                currentUser.avatar || (currentUser.displayName || currentUser.username).charAt(0).toUpperCase()
+          <div className={`sidebar-user ${isCollapsed ? 'collapsed' : ''}`}>
+            {/* Notification bell - top right corner */}
+            <button
+              className="sidebar-notification-btn"
+              onClick={() => { setShowNotifications(!showNotifications); setShowAvatarMenu(false); }}
+              title="Thông báo"
+            >
+              <Bell size={18} />
+              {totalUnread > 0 && (
+                <span className="notification-badge-count">{totalUnread > 9 ? '9+' : totalUnread}</span>
+              )}
+            </button>
+
+            {/* Avatar - centered, clickable */}
+            <div className="sidebar-avatar-wrapper">
+              <button
+                className={`sidebar-user-avatar ${isAvatarImage ? 'has-image' : ''}`}
+                onClick={() => { setShowAvatarMenu(!showAvatarMenu); setShowNotifications(false); }}
+                title={isCollapsed ? (currentUser.displayName || currentUser.username) : undefined}
+                style={isAvatarImage ? { backgroundImage: `url(${avatarValue})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+              >
+                {!isAvatarImage && (avatarValue || (currentUser.displayName || currentUser.username).charAt(0).toUpperCase())}
+              </button>
+
+              {/* Avatar dropdown menu */}
+              {showAvatarMenu && (
+                <div className="sidebar-avatar-menu">
+                  <button
+                    className="avatar-menu-item"
+                    onClick={() => { onNavigate('settings'); setShowAvatarMenu(false); setMobileOpen(false); }}
+                  >
+                    <Settings size={16} /> Cài đặt
+                  </button>
+                  <button
+                    className="avatar-menu-item"
+                    onClick={() => { onNavigate('profile'); setShowAvatarMenu(false); setMobileOpen(false); }}
+                  >
+                    <User size={16} /> Cá nhân
+                  </button>
+                  <button
+                    className="avatar-menu-item logout"
+                    onClick={() => { onLogout(); setShowAvatarMenu(false); }}
+                  >
+                    <LogOut size={16} /> Đăng xuất
+                  </button>
+                </div>
               )}
             </div>
+
+            {/* Username - below avatar */}
             {!isCollapsed && (
-              <div className="sidebar-user-info">
-                <span className={`sidebar-username role-name-${currentUser.role}`}>
-                  {currentUser.displayName || currentUser.username}
-                </span>
-              </div>
+              <span className={`sidebar-username role-name-${currentUser.role}`}>
+                {currentUser.displayName || currentUser.username}
+              </span>
             )}
-            {/* Notification bell - only show when expanded */}
-            {!isCollapsed && (
-              <button
-                className="sidebar-notification-btn"
-                onClick={() => setShowNotifications(!showNotifications)}
-                title="Thông báo"
-              >
-                <Bell size={18} />
-                {totalUnread > 0 && (
-                  <span className="notification-badge-count">{totalUnread > 9 ? '9+' : totalUnread}</span>
-                )}
-              </button>
-            )}
-            {/* Notification dropdown - inside user section for proper positioning */}
+
+            {/* Notification dropdown */}
             {showNotifications && (
           <div className="sidebar-notifications">
             <div className="sidebar-notifications-header">
@@ -318,37 +375,25 @@ export function Sidebar({
           </div>
         )}
 
-        {/* Navigation */}
+        {/* Navigation - Section 1: Learning */}
         <nav className="sidebar-nav">
-          {navItems.map((item) => {
-            if (!canAccess(item)) return null;
-            return (
-              <button
-                key={item.page}
-                className={`sidebar-nav-btn ${currentPage === item.page ? 'active' : ''}`}
-                onClick={() => handleNavigate(item.page)}
-                title={isCollapsed ? item.label : undefined}
-              >
-                <span className="sidebar-nav-icon">{item.icon}</span>
-                {!isCollapsed && <span className="sidebar-nav-label">{item.label}</span>}
-              </button>
-            );
-          })}
+          {learningItems.map(renderNavItem)}
+
+          {/* Separator between sections */}
+          <div className="sidebar-nav-separator" />
+
+          {/* Section 2: Management */}
+          {managementItems.map(renderNavItem)}
+
+          {/* Role-specific items (if any) */}
+          {roleSpecificItems.length > 0 && roleSpecificItems.some(item => canAccess(item)) && (
+            <>
+              <div className="sidebar-nav-separator" />
+              {roleSpecificItems.map(renderNavItem)}
+            </>
+          )}
         </nav>
 
-        {/* Logout */}
-        {currentUser && (
-          <div className="sidebar-footer">
-            <button
-              className="sidebar-logout-btn"
-              onClick={onLogout}
-              title={isCollapsed ? 'Đăng xuất' : undefined}
-            >
-              <span className="sidebar-nav-icon"><LogOut {...iconProps} /></span>
-              {!isCollapsed && <span className="sidebar-nav-label">Đăng xuất</span>}
-            </button>
-          </div>
-        )}
       </aside>
     </>
   );

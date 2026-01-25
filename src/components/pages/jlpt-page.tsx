@@ -362,14 +362,18 @@ export function JLPTPage({
   };
 
   // Convert custom topic question to JLPT-compatible format for practice
+  // Note: Custom topics are now designed for conversation practice, not quiz
+  // This conversion creates a simple quiz format from the conversation question
   const convertCustomToJLPT = (q: CustomTopicQuestion): JLPTQuestion => {
     return {
       id: q.id,
       level: 'N5', // Default level for custom questions
       category: 'vocabulary', // Default category
-      question: q.question,
-      answers: q.answers,
-      explanation: q.explanation,
+      question: q.questionJa, // Use Japanese question
+      answers: (q.suggestedAnswers && q.suggestedAnswers.length > 0)
+        ? q.suggestedAnswers.slice(0, 4).map((text, i) => ({ text, isCorrect: i === 0 }))
+        : [{ text: '---', isCorrect: true }, { text: '---', isCorrect: false }],
+      explanation: q.questionVi || q.situationContext || '',
       // Store custom topic info in question for display
       folderId: q.topicId, // Reuse folderId to store topicId
       createdBy: q.createdBy,

@@ -1,12 +1,22 @@
 // JLPT Questions Management Tab - JLPT question folder navigation and CRUD
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { Upload, X, Volume2, Download } from 'lucide-react';
 import { ConfirmModal } from '../ui/confirm-modal';
 import type { JLPTTabProps, JLPTNavState, JLPTQuestion, JLPTFolder, JLPTQuestionFormData } from './cards-management-types';
 import { JLPT_QUESTION_LEVELS, QUESTION_CATEGORIES, defaultAnswers } from './cards-management-types';
+import {
+  exportJLPTData,
+  downloadAsJSON,
+  readJSONFile,
+  validateJLPTImport,
+  generateExportFilename,
+  type JLPTExportData,
+} from '../../utils/data-export-import';
 
 export function JLPTTab({
   questions,
+  folders,
   onAddQuestion,
   onUpdateQuestion,
   onDeleteQuestion,
@@ -15,19 +25,28 @@ export function JLPTTab({
   onDeleteFolder,
   getFoldersByLevelAndCategory,
   getQuestionsByFolder,
+  onImportFolder,
+  onImportQuestion,
   currentUser,
   isSuperAdmin,
 }: JLPTTabProps) {
   const [navState, setNavState] = useState<JLPTNavState>({ type: 'root' });
   const [isAddingQuestion, setIsAddingQuestion] = useState(false);
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<JLPTQuestionFormData>({ level: 'N5', category: 'vocabulary', question: '', answers: [...defaultAnswers], explanation: '' });
+  const [formData, setFormData] = useState<JLPTQuestionFormData>({ level: 'N5', category: 'vocabulary', question: '', answers: [...defaultAnswers], explanation: '', audioUrl: '' });
   const [isAddingFolder, setIsAddingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
   const [editingFolderName, setEditingFolderName] = useState('');
   const [deleteFolderTarget, setDeleteFolderTarget] = useState<JLPTFolder | null>(null);
   const [deleteQuestionTarget, setDeleteQuestionTarget] = useState<JLPTQuestion | null>(null);
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importStatus, setImportStatus] = useState<string | null>(null);
+  const audioInputRef = useRef<HTMLInputElement>(null);
+  const audioPreviewRef = useRef<HTMLAudioElement>(null);
+  const importFileInputRef = useRef<HTMLInputElement>(null);
 
   const canModifyQuestion = (q: JLPTQuestion) => isSuperAdmin || q.createdBy === currentUser.id;
   const canModifyFolder = (f: JLPTFolder) => isSuperAdmin || f.createdBy === currentUser.id;
@@ -52,6 +71,105 @@ export function JLPTTab({
 
   const categoryHasFolders = () => navState.type === 'category' && getFoldersByLevelAndCategory(navState.level, navState.category).length > 0;
 
+  // Export JLPT data
+  const handleExport = () => {
+    setIsExporting(true);
+    try {
+      const exportData = exportJLPTData(questions, folders);
+      const filename = generateExportFilename('jlpt');
+      downloadAsJSON(exportData, filename);
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Có lỗi khi xuất dữ liệu');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Import JLPT data
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!onImportFolder || !onImportQuestion) {
+      alert('Import chưa được cấu hình');
+      return;
+    }
+
+    setIsImporting(true);
+    setImportStatus('Đang đọc file...');
+
+    try {
+      const data = await readJSONFile(file);
+
+      if (!validateJLPTImport(data)) {
+        throw new Error('File không phải là dữ liệu JLPT hợp lệ');
+      }
+
+      const importData = data as JLPTExportData;
+
+      // Step 1: Import folders
+      setImportStatus(`Đang import ${importData.folders.length} thư mục...`);
+      const oldToNewFolderIdMap: Record<string, string> = {};
+
+      for (const folderData of importData.folders) {
+        // Find old folder ID from folderIdMap
+        const oldId = Object.keys(importData.folderIdMap).find(
+          id => importData.folderIdMap[id].name === folderData.name &&
+                importData.folderIdMap[id].level === folderData.level &&
+                importData.folderIdMap[id].category === folderData.category
+        );
+
+        // Check if folder already exists
+        const existingFolder = folders.find(
+          f => f.name === folderData.name &&
+               f.level === folderData.level &&
+               f.category === folderData.category
+        );
+
+        if (existingFolder) {
+          if (oldId) oldToNewFolderIdMap[oldId] = existingFolder.id;
+          continue;
+        }
+
+        const newFolder = await onImportFolder(folderData);
+        if (oldId) oldToNewFolderIdMap[oldId] = newFolder.id;
+      }
+
+      // Step 2: Import questions
+      setImportStatus(`Đang import ${importData.questions.length} câu hỏi...`);
+      let importedQuestions = 0;
+
+      for (const questionData of importData.questions) {
+        // Map old folderId to new folderId
+        const newFolderId = questionData.folderId
+          ? oldToNewFolderIdMap[questionData.folderId] || questionData.folderId
+          : undefined;
+
+        // Check if question already exists (by question text + level + category)
+        const existingQuestion = questions.find(
+          q => q.question === questionData.question &&
+               q.level === questionData.level &&
+               q.category === questionData.category
+        );
+        if (existingQuestion) continue;
+
+        await onImportQuestion({ ...questionData, folderId: newFolderId });
+        importedQuestions++;
+      }
+
+      setImportStatus(null);
+      alert(`Import thành công!\n- ${Object.keys(oldToNewFolderIdMap).length} thư mục\n- ${importedQuestions} câu hỏi`);
+    } catch (error) {
+      console.error('Import error:', error);
+      alert(`Lỗi import: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsImporting(false);
+      setImportStatus(null);
+      if (importFileInputRef.current) importFileInputRef.current.value = '';
+    }
+  };
+
   const getBreadcrumb = (): string[] => {
     const crumbs: string[] = ['Tất cả'];
     if (navState.type === 'level') crumbs.push(navState.level);
@@ -69,7 +187,49 @@ export function JLPTTab({
     setIsAddingFolder(false);
   };
 
-  const resetForm = () => setFormData({ level: 'N5', category: 'vocabulary', question: '', answers: [...defaultAnswers], explanation: '' });
+  const resetForm = () => setFormData({ level: 'N5', category: 'vocabulary', question: '', answers: [...defaultAnswers], explanation: '', audioUrl: '' });
+
+  // Handle audio file upload - convert to base64 data URL
+  const handleAudioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('audio/')) {
+      alert('Vui lòng chọn file âm thanh (mp3, wav, ogg, ...)');
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File quá lớn. Vui lòng chọn file dưới 10MB');
+      return;
+    }
+
+    setIsUploadingAudio(true);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      setFormData(prev => ({ ...prev, audioUrl: base64 }));
+      setIsUploadingAudio(false);
+    };
+    reader.onerror = () => {
+      alert('Lỗi đọc file. Vui lòng thử lại.');
+      setIsUploadingAudio(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeAudio = () => {
+    setFormData(prev => ({ ...prev, audioUrl: '' }));
+    if (audioInputRef.current) audioInputRef.current.value = '';
+  };
+
+  const playAudioPreview = () => {
+    if (audioPreviewRef.current && formData.audioUrl) {
+      audioPreviewRef.current.play();
+    }
+  };
 
   const handleAddFolder = async () => {
     if (!newFolderName.trim() || navState.type !== 'category') return;
@@ -95,7 +255,7 @@ export function JLPTTab({
 
   const handleEditQuestion = (q: JLPTQuestion) => {
     setEditingQuestionId(q.id);
-    setFormData({ level: q.level, category: q.category, question: q.question, answers: [...q.answers], explanation: q.explanation || '' });
+    setFormData({ level: q.level, category: q.category, question: q.question, answers: [...q.answers], explanation: q.explanation || '', audioUrl: q.audioUrl || '' });
   };
 
   const handleUpdateQuestion = async () => {
@@ -121,6 +281,11 @@ export function JLPTTab({
   const renderQuestionCard = (question: JLPTQuestion) => (
     <div key={question.id} className="question-card">
       <div className="question-header">
+        {question.audioUrl && (
+          <span className="audio-indicator" title="Có file âm thanh">
+            <Volume2 size={14} /> Audio
+          </span>
+        )}
         {canModifyQuestion(question) && (
           <div className="question-actions">
             <button className="btn-icon" onClick={() => handleEditQuestion(question)} title="Sửa">✎</button>
@@ -130,6 +295,9 @@ export function JLPTTab({
       </div>
       <div className="question-content">
         <p className="question-text">{question.question}</p>
+        {question.audioUrl && (
+          <audio controls src={question.audioUrl} className="question-audio-player" />
+        )}
         <div className="question-answers">
           {question.answers.map((answer, index) => (
             <div key={index} className={`answer-item ${answer.isCorrect ? 'correct' : ''}`}>
@@ -153,6 +321,38 @@ export function JLPTTab({
       </div>
 
       {navState.type !== 'root' && <button className="btn btn-back" onClick={goBack}>← Quay lại</button>}
+
+      {/* Export/Import buttons at root level */}
+      {navState.type === 'root' && isSuperAdmin && (
+        <div className="export-import-actions" style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
+          <input
+            type="file"
+            ref={importFileInputRef}
+            accept=".json"
+            onChange={handleImportFile}
+            style={{ display: 'none' }}
+          />
+          <button
+            className="btn btn-secondary"
+            onClick={handleExport}
+            disabled={isExporting}
+            title="Xuất tất cả câu hỏi JLPT và thư mục"
+          >
+            <Download size={16} style={{ marginRight: '0.25rem' }} />
+            {isExporting ? 'Đang xuất...' : 'Export'}
+          </button>
+          <button
+            className="btn btn-secondary"
+            onClick={() => importFileInputRef.current?.click()}
+            disabled={isImporting || !onImportFolder}
+            title="Nhập dữ liệu từ file JSON"
+          >
+            <Upload size={16} style={{ marginRight: '0.25rem' }} />
+            {isImporting ? 'Đang nhập...' : 'Import'}
+          </button>
+          {importStatus && <span className="import-status" style={{ color: '#666', fontSize: '0.875rem' }}>{importStatus}</span>}
+        </div>
+      )}
 
       {isAddingFolder && navState.type === 'category' && (
         <div className="add-category-inline">
@@ -184,6 +384,44 @@ export function JLPTTab({
             <label>Giải thích (không bắt buộc)</label>
             <textarea value={formData.explanation} onChange={(e) => setFormData({ ...formData, explanation: e.target.value })} placeholder="Giải thích đáp án đúng..." rows={2} />
           </div>
+
+          {/* Audio upload for listening questions */}
+          {navState.type !== 'root' && navState.type !== 'level' && navState.category === 'listening' && (
+            <div className="form-group audio-upload-group">
+              <label>File âm thanh (cho câu hỏi nghe)</label>
+              <input
+                type="file"
+                ref={audioInputRef}
+                accept="audio/*"
+                onChange={handleAudioUpload}
+                style={{ display: 'none' }}
+              />
+              {!formData.audioUrl ? (
+                <button
+                  type="button"
+                  className="btn btn-secondary audio-upload-btn"
+                  onClick={() => audioInputRef.current?.click()}
+                  disabled={isUploadingAudio}
+                >
+                  <Upload size={16} />
+                  {isUploadingAudio ? 'Đang tải...' : 'Tải file âm thanh'}
+                </button>
+              ) : (
+                <div className="audio-preview">
+                  <audio ref={audioPreviewRef} src={formData.audioUrl} />
+                  <button type="button" className="btn btn-icon" onClick={playAudioPreview} title="Nghe thử">
+                    <Volume2 size={18} />
+                  </button>
+                  <span className="audio-status">Đã tải file âm thanh</span>
+                  <button type="button" className="btn btn-icon danger" onClick={removeAudio} title="Xóa">
+                    <X size={18} />
+                  </button>
+                </div>
+              )}
+              <p className="form-hint">Hỗ trợ: MP3, WAV, OGG (tối đa 10MB)</p>
+            </div>
+          )}
+
           <div className="form-actions">
             <button className="btn btn-secondary" onClick={() => { resetForm(); setIsAddingQuestion(false); setEditingQuestionId(null); }}>Hủy</button>
             <button className="btn btn-primary" onClick={editingQuestionId ? handleUpdateQuestion : handleAddQuestion}>{editingQuestionId ? 'Cập nhật' : 'Thêm'}</button>

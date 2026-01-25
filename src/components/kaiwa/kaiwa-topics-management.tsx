@@ -14,6 +14,8 @@ import type {
   KaiwaAdvancedTopicFormData,
   KaiwaAdvancedQuestionFormData,
   KaiwaVocabulary,
+  KaiwaQuestionBankItem,
+  KaiwaAnswerBankItem,
 } from '../../types/kaiwa-advanced';
 import {
   KAIWA_TOPIC_ICONS,
@@ -85,6 +87,24 @@ export function KaiwaTopicsManagement({
     example: '',
   });
 
+  // Question bank inline add
+  const [showQuestionBankInput, setShowQuestionBankInput] = useState(false);
+  const [questionBankForm, setQuestionBankForm] = useState<Omit<KaiwaQuestionBankItem, 'id'>>({
+    questionJa: '',
+    questionVi: '',
+    level: 'N4',
+    tags: [],
+  });
+
+  // Answer bank inline add
+  const [showAnswerBankInput, setShowAnswerBankInput] = useState(false);
+  const [answerBankForm, setAnswerBankForm] = useState<Omit<KaiwaAnswerBankItem, 'id'>>({
+    answerJa: '',
+    answerVi: '',
+    level: 'N4',
+    tags: [],
+  });
+
   // Delete confirmation
   const [deleteTopicTarget, setDeleteTopicTarget] = useState<KaiwaAdvancedTopic | null>(null);
   const [deleteQuestionTarget, setDeleteQuestionTarget] = useState<KaiwaAdvancedQuestion | null>(null);
@@ -134,6 +154,8 @@ export function KaiwaTopicsManagement({
         level: topic.level,
         style: topic.style,
         vocabulary: topic.vocabulary || [],
+        questionBank: topic.questionBank || [],
+        answerBank: topic.answerBank || [],
         isPublic: topic.isPublic,
       });
     } else {
@@ -222,6 +244,50 @@ export function KaiwaTopicsManagement({
     });
   };
 
+  // Question bank handlers
+  const handleAddQuestionBank = () => {
+    if (!questionBankForm.questionJa.trim()) return;
+    const newItem: KaiwaQuestionBankItem = {
+      id: `qb-${Date.now()}`,
+      ...questionBankForm,
+    };
+    setTopicForm({
+      ...topicForm,
+      questionBank: [...(topicForm.questionBank || []), newItem],
+    });
+    setQuestionBankForm({ questionJa: '', questionVi: '', level: topicForm.level, tags: [] });
+    setShowQuestionBankInput(false);
+  };
+
+  const handleRemoveQuestionBank = (itemId: string) => {
+    setTopicForm({
+      ...topicForm,
+      questionBank: (topicForm.questionBank || []).filter(q => q.id !== itemId),
+    });
+  };
+
+  // Answer bank handlers
+  const handleAddAnswerBank = () => {
+    if (!answerBankForm.answerJa.trim()) return;
+    const newItem: KaiwaAnswerBankItem = {
+      id: `ab-${Date.now()}`,
+      ...answerBankForm,
+    };
+    setTopicForm({
+      ...topicForm,
+      answerBank: [...(topicForm.answerBank || []), newItem],
+    });
+    setAnswerBankForm({ answerJa: '', answerVi: '', level: topicForm.level, tags: [] });
+    setShowAnswerBankInput(false);
+  };
+
+  const handleRemoveAnswerBank = (itemId: string) => {
+    setTopicForm({
+      ...topicForm,
+      answerBank: (topicForm.answerBank || []).filter(a => a.id !== itemId),
+    });
+  };
+
   // Suggested answers handlers
   const handleAddSuggestedAnswer = () => {
     setQuestionForm({
@@ -281,10 +347,10 @@ export function KaiwaTopicsManagement({
           <div className="topic-meta">
             <span className="topic-level">{topic.level}</span>
             <span className="topic-count">
-              <MessageCircle size={14} /> {questionCount} câu hỏi
+              <MessageCircle size={14} /> {(topic.questionBank?.length || 0) + (topic.answerBank?.length || 0)} mẫu
             </span>
             <span className="topic-vocab">
-              <BookOpen size={14} /> {topic.vocabulary?.length || 0} từ vựng
+              <BookOpen size={14} /> {topic.vocabulary?.length || 0} từ
             </span>
             <span className="topic-visibility">
               {topic.isPublic ? <Eye size={14} /> : <EyeOff size={14} />}
@@ -592,6 +658,148 @@ export function KaiwaTopicsManagement({
                   </div>
                 </div>
 
+                {/* Question Bank Section */}
+                <div className="form-section">
+                  <label>
+                    <MessageCircle size={16} />
+                    Kho câu hỏi ({(topicForm.questionBank || []).length})
+                  </label>
+                  <p className="form-hint">AI sẽ dùng các câu hỏi này để bắt đầu hội thoại với người học</p>
+                  <div className="bank-list">
+                    {(topicForm.questionBank || []).map(item => (
+                      <div key={item.id} className="bank-item">
+                        <div className="bank-content">
+                          <span className="bank-ja">{item.questionJa}</span>
+                          {item.questionVi && <span className="bank-vi">{item.questionVi}</span>}
+                          <span className="bank-level">{item.level}</span>
+                        </div>
+                        <button
+                          className="btn-icon small danger"
+                          onClick={() => handleRemoveQuestionBank(item.id)}
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                    {showQuestionBankInput ? (
+                      <div className="bank-input-row">
+                        <textarea
+                          placeholder="Câu hỏi tiếng Nhật"
+                          value={questionBankForm.questionJa}
+                          onChange={e => setQuestionBankForm({ ...questionBankForm, questionJa: e.target.value })}
+                          rows={2}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Dịch nghĩa (tùy chọn)"
+                          value={questionBankForm.questionVi}
+                          onChange={e => setQuestionBankForm({ ...questionBankForm, questionVi: e.target.value })}
+                        />
+                        <select
+                          value={questionBankForm.level}
+                          onChange={e => setQuestionBankForm({ ...questionBankForm, level: e.target.value as JLPTLevel })}
+                        >
+                          {JLPT_LEVELS.map(l => (
+                            <option key={l.value} value={l.value}>{l.label}</option>
+                          ))}
+                        </select>
+                        <div className="bank-input-actions">
+                          <button className="btn btn-primary btn-small" onClick={handleAddQuestionBank}>
+                            Thêm
+                          </button>
+                          <button
+                            className="btn btn-secondary btn-small"
+                            onClick={() => {
+                              setShowQuestionBankInput(false);
+                              setQuestionBankForm({ questionJa: '', questionVi: '', level: topicForm.level, tags: [] });
+                            }}
+                          >
+                            Hủy
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        className="btn btn-secondary btn-small add-bank-btn"
+                        onClick={() => setShowQuestionBankInput(true)}
+                      >
+                        <Plus size={14} /> Thêm câu hỏi
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Answer Bank Section */}
+                <div className="form-section">
+                  <label>
+                    <MessageCircle size={16} />
+                    Kho câu trả lời ({(topicForm.answerBank || []).length})
+                  </label>
+                  <p className="form-hint">Các mẫu câu trả lời để AI hiểu ngữ cảnh và đánh giá người học</p>
+                  <div className="bank-list">
+                    {(topicForm.answerBank || []).map(item => (
+                      <div key={item.id} className="bank-item">
+                        <div className="bank-content">
+                          <span className="bank-ja">{item.answerJa}</span>
+                          {item.answerVi && <span className="bank-vi">{item.answerVi}</span>}
+                          <span className="bank-level">{item.level}</span>
+                        </div>
+                        <button
+                          className="btn-icon small danger"
+                          onClick={() => handleRemoveAnswerBank(item.id)}
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                    {showAnswerBankInput ? (
+                      <div className="bank-input-row">
+                        <textarea
+                          placeholder="Câu trả lời tiếng Nhật"
+                          value={answerBankForm.answerJa}
+                          onChange={e => setAnswerBankForm({ ...answerBankForm, answerJa: e.target.value })}
+                          rows={2}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Dịch nghĩa (tùy chọn)"
+                          value={answerBankForm.answerVi}
+                          onChange={e => setAnswerBankForm({ ...answerBankForm, answerVi: e.target.value })}
+                        />
+                        <select
+                          value={answerBankForm.level}
+                          onChange={e => setAnswerBankForm({ ...answerBankForm, level: e.target.value as JLPTLevel })}
+                        >
+                          {JLPT_LEVELS.map(l => (
+                            <option key={l.value} value={l.value}>{l.label}</option>
+                          ))}
+                        </select>
+                        <div className="bank-input-actions">
+                          <button className="btn btn-primary btn-small" onClick={handleAddAnswerBank}>
+                            Thêm
+                          </button>
+                          <button
+                            className="btn btn-secondary btn-small"
+                            onClick={() => {
+                              setShowAnswerBankInput(false);
+                              setAnswerBankForm({ answerJa: '', answerVi: '', level: topicForm.level, tags: [] });
+                            }}
+                          >
+                            Hủy
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        className="btn btn-secondary btn-small add-bank-btn"
+                        onClick={() => setShowAnswerBankInput(true)}
+                      >
+                        <Plus size={14} /> Thêm câu trả lời
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 {/* Preview */}
                 <div className="form-section">
                   <label>Xem trước</label>
@@ -666,8 +874,12 @@ export function KaiwaTopicsManagement({
         <div className="topic-detail-info">
           <div className="topic-stats">
             <div className="stat-item">
-              <span className="stat-value">{currentQuestions.length}</span>
-              <span className="stat-label">Câu hỏi</span>
+              <span className="stat-value">{currentTopic.questionBank?.length || 0}</span>
+              <span className="stat-label">Kho câu hỏi</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-value">{currentTopic.answerBank?.length || 0}</span>
+              <span className="stat-label">Kho trả lời</span>
             </div>
             <div className="stat-item">
               <span className="stat-value">{currentTopic.vocabulary?.length || 0}</span>
@@ -678,6 +890,58 @@ export function KaiwaTopicsManagement({
               <span className="stat-label">Cấp độ</span>
             </div>
           </div>
+
+          {/* Question Bank Display */}
+          {currentTopic.questionBank && currentTopic.questionBank.length > 0 && (
+            <div className="topic-bank-section">
+              <h4><MessageCircle size={16} /> Kho câu hỏi</h4>
+              <p className="bank-hint">AI sử dụng các câu hỏi này để bắt đầu hội thoại</p>
+              <div className="bank-display-list">
+                {currentTopic.questionBank.map(item => (
+                  <div key={item.id} className="bank-display-item">
+                    <span className="bank-level-badge">{item.level}</span>
+                    <div className="bank-text">
+                      <span className="bank-ja">{item.questionJa}</span>
+                      {item.questionVi && <span className="bank-vi">{item.questionVi}</span>}
+                    </div>
+                    <button
+                      className="btn-icon small"
+                      title="Sao chép"
+                      onClick={() => navigator.clipboard.writeText(item.questionJa)}
+                    >
+                      <Copy size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Answer Bank Display */}
+          {currentTopic.answerBank && currentTopic.answerBank.length > 0 && (
+            <div className="topic-bank-section">
+              <h4><MessageCircle size={16} /> Kho câu trả lời</h4>
+              <p className="bank-hint">Các mẫu câu trả lời để AI đánh giá người học</p>
+              <div className="bank-display-list">
+                {currentTopic.answerBank.map(item => (
+                  <div key={item.id} className="bank-display-item answer">
+                    <span className="bank-level-badge">{item.level}</span>
+                    <div className="bank-text">
+                      <span className="bank-ja">{item.answerJa}</span>
+                      {item.answerVi && <span className="bank-vi">{item.answerVi}</span>}
+                    </div>
+                    <button
+                      className="btn-icon small"
+                      title="Sao chép"
+                      onClick={() => navigator.clipboard.writeText(item.answerJa)}
+                    >
+                      <Copy size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Vocabulary Display */}
           {currentTopic.vocabulary && currentTopic.vocabulary.length > 0 && (

@@ -15,7 +15,7 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import type { Flashcard, FlashcardFormData, Lesson, JLPTLevel } from '../types/flashcard';
+import type { Flashcard, FlashcardFormData, Lesson, JLPTLevel, GrammarCard, GrammarCardFormData } from '../types/flashcard';
 import type { User, StudySession, GameSession, JLPTSession } from '../types/user';
 import type { JLPTQuestion, JLPTQuestionFormData, JLPTFolder } from '../types/jlpt-question';
 import type { KaiwaDefaultQuestion, KaiwaQuestionFormData, KaiwaFolder } from '../types/kaiwa-question';
@@ -25,6 +25,7 @@ import { getDefaultSM2Values } from '../lib/spaced-repetition';
 // Collection names
 const COLLECTIONS = {
   FLASHCARDS: 'flashcards',
+  GRAMMAR_CARDS: 'grammarCards',
   LESSONS: 'lessons',
   USERS: 'users',
   SETTINGS: 'settings',
@@ -108,6 +109,42 @@ export async function deleteFlashcardsByLesson(lessonId: string): Promise<void> 
   await Promise.all(deletePromises);
 }
 
+// ============ GRAMMAR CARDS ============
+
+export function subscribeToGrammarCards(callback: (cards: GrammarCard[]) => void): Unsubscribe {
+  return onSnapshot(collection(db, COLLECTIONS.GRAMMAR_CARDS), (snapshot) => {
+    const cards = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GrammarCard));
+    callback(cards);
+  });
+}
+
+export async function addGrammarCard(data: GrammarCardFormData, createdBy?: string): Promise<GrammarCard> {
+  const newCard: Omit<GrammarCard, 'id'> = {
+    ...data,
+    createdAt: getTodayISO(),
+    createdBy,
+  };
+  const docRef = await addDoc(collection(db, COLLECTIONS.GRAMMAR_CARDS), newCard);
+  return { id: docRef.id, ...newCard } as GrammarCard;
+}
+
+export async function updateGrammarCard(id: string, data: Partial<GrammarCard>): Promise<void> {
+  const docRef = doc(db, COLLECTIONS.GRAMMAR_CARDS, id);
+  await updateDoc(docRef, data);
+}
+
+export async function deleteGrammarCard(id: string): Promise<void> {
+  const docRef = doc(db, COLLECTIONS.GRAMMAR_CARDS, id);
+  await deleteDoc(docRef);
+}
+
+export async function deleteGrammarCardsByLesson(lessonId: string): Promise<void> {
+  const q = query(collection(db, COLLECTIONS.GRAMMAR_CARDS), where('lessonId', '==', lessonId));
+  const snapshot = await getDocs(q);
+  const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+  await Promise.all(deletePromises);
+}
+
 // ============ LESSONS ============
 
 export async function getAllLessons(): Promise<Lesson[]> {
@@ -133,8 +170,9 @@ export async function updateLesson(id: string, data: Partial<Lesson>): Promise<v
 }
 
 export async function deleteLesson(id: string): Promise<void> {
-  // Delete all flashcards in this lesson first
+  // Delete all flashcards and grammar cards in this lesson first
   await deleteFlashcardsByLesson(id);
+  await deleteGrammarCardsByLesson(id);
   // Then delete the lesson
   const docRef = doc(db, COLLECTIONS.LESSONS, id);
   await deleteDoc(docRef);
@@ -516,4 +554,36 @@ export async function deleteCustomTopicQuestion(id: string): Promise<void> {
   }
 
   await deleteDoc(docRef);
+}
+
+// ============ IMPORT FUNCTIONS (for data import feature) ============
+
+// Import a lesson directly (used by import feature)
+export async function importLesson(data: Omit<Lesson, 'id'>): Promise<Lesson> {
+  const docRef = await addDoc(collection(db, COLLECTIONS.LESSONS), data);
+  return { id: docRef.id, ...data };
+}
+
+// Import a flashcard directly (used by import feature)
+export async function importFlashcard(data: Omit<Flashcard, 'id'>): Promise<Flashcard> {
+  const docRef = await addDoc(collection(db, COLLECTIONS.FLASHCARDS), data);
+  return { id: docRef.id, ...data } as Flashcard;
+}
+
+// Import a grammar card directly (used by import feature)
+export async function importGrammarCard(data: Omit<GrammarCard, 'id'>): Promise<GrammarCard> {
+  const docRef = await addDoc(collection(db, COLLECTIONS.GRAMMAR_CARDS), data);
+  return { id: docRef.id, ...data } as GrammarCard;
+}
+
+// Import a JLPT folder directly (used by import feature)
+export async function importJLPTFolder(data: Omit<JLPTFolder, 'id'>): Promise<JLPTFolder> {
+  const docRef = await addDoc(collection(db, COLLECTIONS.JLPT_FOLDERS), data);
+  return { id: docRef.id, ...data };
+}
+
+// Import a JLPT question directly (used by import feature)
+export async function importJLPTQuestion(data: Omit<JLPTQuestion, 'id'>): Promise<JLPTQuestion> {
+  const docRef = await addDoc(collection(db, COLLECTIONS.JLPT_QUESTIONS), data);
+  return { id: docRef.id, ...data } as JLPTQuestion;
 }

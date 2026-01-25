@@ -34,6 +34,43 @@ export type JLPTLevelOption = 'N5' | 'N4' | 'N3' | 'N2' | 'N1';
 export type MemorizationFilter = 'all' | 'memorized' | 'not_memorized';
 export type AutoAddDifficulty = 'random' | 'easy' | 'medium' | 'hard';
 
+// JLPT Level keys
+export type JLPTLevelKey = 'N5' | 'N4' | 'N3' | 'N2' | 'N1';
+
+// Per-AI custom settings
+export type FlashcardDifficulty = 'easy' | 'medium' | 'hard' | 'super_hard';
+export interface AICustomSettings {
+  accuracyModifier: number;      // -20 to +20, adjusts AI accuracy
+  speedMultiplier: number;       // 0.5 to 2.0, adjusts AI speed
+  minDifficulty: FlashcardDifficulty; // Minimum question difficulty
+  // Per-level lesson selection: which lessons to pull questions from
+  // Empty array = all lessons in that level
+  selectedLessonIds: Record<JLPTLevelKey, string[]>;
+}
+
+// All 27 AI IDs
+export type AIDifficultyId =
+  | 'gentle' | 'friendly' | 'curious' | 'eager' | 'clever' | 'diligent' | 'quick' | 'smart' | 'sharp'
+  | 'skilled' | 'excellent' | 'talented' | 'brilliant' | 'genius' | 'elite' | 'master' | 'grandmaster' | 'sage'
+  | 'superior' | 'unbeatable' | 'mythical' | 'legendary' | 'immortal' | 'divine' | 'celestial' | 'supreme' | 'champion';
+
+// Default AI custom settings (empty selectedLessonIds = all lessons)
+export const DEFAULT_AI_CUSTOM_SETTINGS: AICustomSettings = {
+  accuracyModifier: 0,
+  speedMultiplier: 1.0,
+  minDifficulty: 'easy',
+  selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] },
+};
+
+// Question source types (used in question generation)
+export type QuestionSource = 'vocabulary' | 'kanji' | 'grammar';
+
+// Per-JLPT-level question configuration
+export interface JLPTLevelQuestionConfig {
+  sources: QuestionSource[];
+  difficulties: FlashcardDifficulty[];
+}
+
 // Global theme settings (controlled by super_admin)
 export interface GlobalTheme {
   primaryColor: string;
@@ -115,9 +152,11 @@ export interface AppSettings {
   // AI Challenge Settings
   aiChallengeQuestionCount: number;        // 5-20, default 10
   aiChallengeTimePerQuestion: number;      // 5-30 seconds, default 15
-  aiChallengeAccuracyModifier: number;     // -20 to +20, default 0
-  aiChallengeSpeedMultiplier: number;      // 0.5-2.0, default 1.0
-  aiChallengeAutoAddDifficulty: AutoAddDifficulty;
+  aiChallengeAccuracyModifier: number;     // -20 to +20, default 0 (global fallback)
+  aiChallengeSpeedMultiplier: number;      // 0.5-2.0, default 1.0 (global fallback)
+  aiChallengeLevel: 'all' | 'N5' | 'N4' | 'N3' | 'N2' | 'N1';  // JLPT level filter for questions
+  aiChallengePerAISettings: Record<AIDifficultyId, AICustomSettings>; // Per-AI settings
+  aiChallengePerLevelConfig: Record<JLPTLevelKey, JLPTLevelQuestionConfig>; // Per-level question sources
 
   // JLPT Practice Settings
   jlptDefaultQuestionCount: number;        // Default question count per session
@@ -202,7 +241,49 @@ const DEFAULT_SETTINGS: AppSettings = {
   aiChallengeTimePerQuestion: 15,
   aiChallengeAccuracyModifier: 0,
   aiChallengeSpeedMultiplier: 1.0,
-  aiChallengeAutoAddDifficulty: 'random',
+  aiChallengeLevel: 'all',
+  // Per-AI settings with progressive difficulty
+  // Note: selectedLessonIds empty = all lessons in that level
+  aiChallengePerAISettings: {
+    // Session 1: Khởi Đầu (easy questions, low accuracy, slow)
+    gentle:    { accuracyModifier: -15, speedMultiplier: 0.6, minDifficulty: 'easy', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    friendly:  { accuracyModifier: -12, speedMultiplier: 0.65, minDifficulty: 'easy', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    curious:   { accuracyModifier: -10, speedMultiplier: 0.7, minDifficulty: 'easy', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    eager:     { accuracyModifier: -8, speedMultiplier: 0.75, minDifficulty: 'easy', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    clever:    { accuracyModifier: -6, speedMultiplier: 0.8, minDifficulty: 'easy', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    diligent:  { accuracyModifier: -4, speedMultiplier: 0.85, minDifficulty: 'easy', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    quick:     { accuracyModifier: -2, speedMultiplier: 0.9, minDifficulty: 'medium', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    smart:     { accuracyModifier: 0, speedMultiplier: 0.95, minDifficulty: 'medium', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    sharp:     { accuracyModifier: 2, speedMultiplier: 1.0, minDifficulty: 'medium', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    // Session 2: Thử Thách (medium questions, moderate accuracy, faster)
+    skilled:     { accuracyModifier: 3, speedMultiplier: 1.05, minDifficulty: 'medium', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    excellent:   { accuracyModifier: 4, speedMultiplier: 1.1, minDifficulty: 'medium', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    talented:    { accuracyModifier: 5, speedMultiplier: 1.15, minDifficulty: 'medium', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    brilliant:   { accuracyModifier: 6, speedMultiplier: 1.2, minDifficulty: 'hard', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    genius:      { accuracyModifier: 7, speedMultiplier: 1.25, minDifficulty: 'hard', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    elite:       { accuracyModifier: 8, speedMultiplier: 1.3, minDifficulty: 'hard', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    master:      { accuracyModifier: 9, speedMultiplier: 1.35, minDifficulty: 'hard', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    grandmaster: { accuracyModifier: 10, speedMultiplier: 1.4, minDifficulty: 'hard', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    sage:        { accuracyModifier: 11, speedMultiplier: 1.45, minDifficulty: 'hard', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    // Session 3: Huyền Thoại (hard questions, high accuracy, fastest)
+    superior:   { accuracyModifier: 12, speedMultiplier: 1.5, minDifficulty: 'hard', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    unbeatable: { accuracyModifier: 13, speedMultiplier: 1.55, minDifficulty: 'hard', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    mythical:   { accuracyModifier: 14, speedMultiplier: 1.6, minDifficulty: 'super_hard', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    legendary:  { accuracyModifier: 15, speedMultiplier: 1.65, minDifficulty: 'super_hard', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    immortal:   { accuracyModifier: 16, speedMultiplier: 1.7, minDifficulty: 'super_hard', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    divine:     { accuracyModifier: 17, speedMultiplier: 1.75, minDifficulty: 'super_hard', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    celestial:  { accuracyModifier: 18, speedMultiplier: 1.8, minDifficulty: 'super_hard', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    supreme:    { accuracyModifier: 19, speedMultiplier: 1.9, minDifficulty: 'super_hard', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+    champion:   { accuracyModifier: 20, speedMultiplier: 2.0, minDifficulty: 'super_hard', selectedLessonIds: { N5: [], N4: [], N3: [], N2: [], N1: [] } },
+  },
+  // Per-JLPT-level question source configuration
+  aiChallengePerLevelConfig: {
+    N5: { sources: ['vocabulary', 'kanji', 'grammar'], difficulties: ['easy', 'medium'] },
+    N4: { sources: ['vocabulary', 'kanji', 'grammar'], difficulties: ['easy', 'medium', 'hard'] },
+    N3: { sources: ['vocabulary', 'kanji', 'grammar'], difficulties: ['medium', 'hard'] },
+    N2: { sources: ['vocabulary', 'kanji', 'grammar'], difficulties: ['medium', 'hard', 'super_hard'] },
+    N1: { sources: ['vocabulary', 'kanji', 'grammar'], difficulties: ['hard', 'super_hard'] },
+  },
   // JLPT defaults
   jlptDefaultQuestionCount: 20,
   jlptShowExplanation: true,

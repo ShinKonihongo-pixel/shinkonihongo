@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { CustomTopic, CustomTopicFolder, CustomTopicQuestion, CustomTopicFormData, CustomTopicQuestionFormData } from '../types/custom-topic';
+import type { JLPTLevel } from '../types/kaiwa';
 import {
   subscribeToCustomTopics,
   addCustomTopic as addTopic,
@@ -90,9 +91,9 @@ export function useCustomTopics() {
   }, []);
 
   // Folder CRUD
-  const addCustomTopicFolder = useCallback(async (topicId: string, name: string, createdBy: string): Promise<CustomTopicFolder | null> => {
+  const addCustomTopicFolder = useCallback(async (topicId: string, name: string, createdBy: string, level: JLPTLevel = 'N5'): Promise<CustomTopicFolder | null> => {
     try {
-      return await addFolder(topicId, name, createdBy);
+      return await addFolder(topicId, name, createdBy, level);
     } catch (error) {
       console.error('Error adding custom topic folder:', error);
       return null;

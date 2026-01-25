@@ -1,13 +1,17 @@
 // AI Challenge Menu - PREMIUM DESIGN with 3 Sessions
-// 27 AI opponents, 9 per session, premium card styling + Quick Settings + Auto-Add
+// 27 AI opponents, 9 per session, premium card styling
 
 import { useState } from 'react';
-import { Lock, Swords, ChevronLeft, Crown, Sparkles, Zap, Trophy, Settings, Dice6 } from 'lucide-react';
+import { Lock, Swords, ChevronLeft, Crown, Sparkles, Zap, Trophy } from 'lucide-react';
 import type { AIDifficulty, AIOpponent } from '../../types/ai-challenge';
 import { getAllAIsSorted } from '../../types/ai-challenge';
-import type { AutoAddDifficulty } from '../../hooks/use-settings';
+import { useSettings } from '../../hooks/use-settings';
 
-// Session configuration
+// JLPT levels - each level has 27 AI opponents
+const JLPT_LEVELS = ['N5', 'N4', 'N3', 'N2', 'N1'] as const;
+type JLPTLevel = typeof JLPT_LEVELS[number];
+
+// Session configuration (sub-tabs within each JLPT level)
 const SESSIONS = [
   { id: 1, name: 'Khởi Đầu', range: [0, 9] as const },
   { id: 2, name: 'Thử Thách', range: [9, 18] as const },
@@ -18,23 +22,11 @@ interface AIOpponentWithStatus extends AIOpponent {
   isUnlocked: boolean;
 }
 
-// Quick settings state
-interface QuickSettings {
-  questionCount: number;
-  timePerQuestion: number;
-  accuracyModifier: number;
-  speedMultiplier: number;
-}
-
 interface AIChallengeMenuProps {
   aiOpponents: AIOpponentWithStatus[];
   progress: { totalWins: number; totalGames: number };
   onSelectAI: (difficulty: AIDifficulty) => void;
   onClose: () => void;
-  // Quick settings props
-  initialSettings?: QuickSettings;
-  onSettingsChange?: (settings: QuickSettings) => void;
-  autoAddDifficulty?: AutoAddDifficulty;
 }
 
 // AI challenge taunts - unique personality for each (27 total)
@@ -86,55 +78,22 @@ export function AIChallengeMenu({
   progress,
   onSelectAI,
   onClose,
-  initialSettings,
-  onSettingsChange,
-  autoAddDifficulty = 'random',
 }: AIChallengeMenuProps) {
+  const { settings, updateSetting } = useSettings();
   const [selectedAI, setSelectedAI] = useState<AIDifficulty | null>(null);
   const [hoveredAI, setHoveredAI] = useState<AIDifficulty | null>(null);
   const [currentSession, setCurrentSession] = useState(1);
-  const [showQuickSettings, setShowQuickSettings] = useState(false);
 
-  // Quick settings state
-  const [quickSettings, setQuickSettings] = useState<QuickSettings>({
-    questionCount: initialSettings?.questionCount ?? 10,
-    timePerQuestion: initialSettings?.timePerQuestion ?? 15,
-    accuracyModifier: initialSettings?.accuracyModifier ?? 0,
-    speedMultiplier: initialSettings?.speedMultiplier ?? 1.0,
-  });
+  // Current JLPT level (default to N5 if 'all' was previously set)
+  const currentLevel = (settings.aiChallengeLevel === 'all' ? 'N5' : settings.aiChallengeLevel) as JLPTLevel;
 
   const selectedOpponent = selectedAI ? aiOpponents.find(ai => ai.id === selectedAI) : null;
 
-  // Handle quick settings change
-  const handleQuickSettingsChange = (key: keyof QuickSettings, value: number) => {
-    const newSettings = { ...quickSettings, [key]: value };
-    setQuickSettings(newSettings);
-    onSettingsChange?.(newSettings);
-  };
-
-  // Auto-add AI based on difficulty setting
-  const handleAutoAddAI = () => {
-    const unlockedAIs = aiOpponents.filter(ai => ai.isUnlocked);
-    if (unlockedAIs.length === 0) return;
-
-    let pool = unlockedAIs;
-
-    if (autoAddDifficulty === 'easy') {
-      pool = unlockedAIs.filter(ai => ai.page === 1);
-    } else if (autoAddDifficulty === 'medium') {
-      pool = unlockedAIs.filter(ai => ai.page === 2);
-    } else if (autoAddDifficulty === 'hard') {
-      pool = unlockedAIs.filter(ai => ai.page === 3);
-    }
-
-    // If no AIs in the selected pool, fall back to all unlocked
-    if (pool.length === 0) pool = unlockedAIs;
-
-    const randomAI = pool[Math.floor(Math.random() * pool.length)];
-    setSelectedAI(randomAI.id);
-
-    // Jump to the correct session
-    setCurrentSession(randomAI.page);
+  // Handle JLPT level change
+  const handleLevelChange = (level: JLPTLevel) => {
+    updateSetting('aiChallengeLevel', level);
+    setSelectedAI(null); // Clear selection when changing level
+    setCurrentSession(1); // Reset to first session
   };
 
   // Get all AIs sorted by unlock order
@@ -196,7 +155,20 @@ export function AIChallengeMenu({
           </div>
         </header>
 
-        {/* Session Tabs */}
+        {/* JLPT Level Tabs - Main Navigation */}
+        <div className="asp-level-tabs">
+          {JLPT_LEVELS.map(level => (
+            <button
+              key={level}
+              className={`asp-level-tab ${currentLevel === level ? 'active' : ''}`}
+              onClick={() => handleLevelChange(level)}
+            >
+              <span className="asp-level-name">{level}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Session Tabs - Sub Navigation */}
         <div className="asp-session-tabs">
           {SESSIONS.map(s => (
             <button
@@ -281,83 +253,29 @@ export function AIChallengeMenu({
           </div>
         </div>
 
-        {/* Quick Settings Panel */}
-        <div className="asp-quick-settings">
-          <button
-            className={`asp-settings-toggle ${showQuickSettings ? 'active' : ''}`}
-            onClick={() => setShowQuickSettings(!showQuickSettings)}
-          >
-            <Settings size={18} />
-            <span>Cài đặt nhanh</span>
-          </button>
-
-          {showQuickSettings && (
-            <div className="asp-settings-panel">
-              <div className="asp-setting-row">
-                <label>Số câu hỏi</label>
-                <input
-                  type="range"
-                  min="5"
-                  max="20"
-                  value={quickSettings.questionCount}
-                  onChange={(e) => handleQuickSettingsChange('questionCount', Number(e.target.value))}
-                />
-                <span className="asp-setting-value">{quickSettings.questionCount}</span>
-              </div>
-              <div className="asp-setting-row">
-                <label>Thời gian/câu</label>
-                <input
-                  type="range"
-                  min="5"
-                  max="30"
-                  value={quickSettings.timePerQuestion}
-                  onChange={(e) => handleQuickSettingsChange('timePerQuestion', Number(e.target.value))}
-                />
-                <span className="asp-setting-value">{quickSettings.timePerQuestion}s</span>
-              </div>
-              <div className="asp-setting-row">
-                <label>Độ chính xác AI</label>
-                <input
-                  type="range"
-                  min="-20"
-                  max="20"
-                  step="5"
-                  value={quickSettings.accuracyModifier}
-                  onChange={(e) => handleQuickSettingsChange('accuracyModifier', Number(e.target.value))}
-                />
-                <span className="asp-setting-value">{quickSettings.accuracyModifier > 0 ? '+' : ''}{quickSettings.accuracyModifier}%</span>
-              </div>
-              <div className="asp-setting-row">
-                <label>Tốc độ AI</label>
-                <input
-                  type="range"
-                  min="0.5"
-                  max="2"
-                  step="0.1"
-                  value={quickSettings.speedMultiplier}
-                  onChange={(e) => handleQuickSettingsChange('speedMultiplier', Number(e.target.value))}
-                />
-                <span className="asp-setting-value">{quickSettings.speedMultiplier.toFixed(1)}x</span>
-              </div>
-            </div>
-          )}
-        </div>
-
         {/* Action Bar - Bottom */}
         <div className="asp-action-bar">
-          <button className="asp-auto-ai-btn" onClick={handleAutoAddAI}>
-            <Dice6 size={20} />
-            <span>Auto AI</span>
-          </button>
-
           {selectedOpponent ? (
-            <button className="asp-battle-btn" onClick={handleStart}>
-              <span className="asp-btn-emoji">{selectedOpponent.emoji}</span>
-              <div className="asp-btn-text">
-                <span className="asp-btn-label">THÁCH ĐẤU</span>
-                <span className="asp-btn-name">{selectedOpponent.name}</span>
+            <button className="asp-battle-btn-pro" onClick={handleStart}>
+              <div className="asp-btn-glow" />
+              <div className="asp-btn-content">
+                <div className="asp-btn-left">
+                  <div className="asp-btn-avatar">
+                    <span>{selectedOpponent.emoji}</span>
+                  </div>
+                  <div className="asp-btn-info">
+                    <span className="asp-btn-vs">VS</span>
+                    <span className="asp-btn-name">{selectedOpponent.name}</span>
+                  </div>
+                </div>
+                <div className="asp-btn-right">
+                  <div className="asp-btn-action">
+                    <Swords size={20} />
+                    <span>BẮT ĐẦU</span>
+                  </div>
+                  <div className="asp-btn-level">{currentLevel}</div>
+                </div>
               </div>
-              <Zap size={24} className="asp-btn-icon" />
             </button>
           ) : (
             <div className="asp-hint">

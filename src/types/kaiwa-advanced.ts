@@ -45,6 +45,24 @@ export interface KaiwaVocabulary {
   example?: string;       // Example sentence
 }
 
+// Question bank item - AI uses these as conversation starters
+export interface KaiwaQuestionBankItem {
+  id: string;
+  questionJa: string;           // Japanese question
+  questionVi?: string;          // Vietnamese translation
+  level: JLPTLevel;             // Difficulty level
+  tags?: string[];              // Optional tags for categorization
+}
+
+// Answer bank item - Sample answers for AI to understand context
+export interface KaiwaAnswerBankItem {
+  id: string;
+  answerJa: string;             // Japanese answer
+  answerVi?: string;            // Vietnamese translation
+  level: JLPTLevel;             // Difficulty level
+  tags?: string[];              // Optional tags for categorization
+}
+
 // Question in advanced topic
 export interface KaiwaAdvancedQuestion {
   id: string;
@@ -69,6 +87,8 @@ export interface KaiwaAdvancedTopic {
   level: JLPTLevel;               // Recommended JLPT level
   style: ConversationStyle;       // Conversation style
   vocabulary: KaiwaVocabulary[];  // Common vocabulary for the topic
+  questionBank: KaiwaQuestionBankItem[];  // Question bank - AI conversation starters
+  answerBank: KaiwaAnswerBankItem[];      // Answer bank - sample responses
   questionCount: number;          // Cached count
   isPublic: boolean;              // Visible to all users
   createdBy: string;
@@ -85,6 +105,8 @@ export interface KaiwaAdvancedTopicFormData {
   level: JLPTLevel;
   style: ConversationStyle;
   vocabulary: KaiwaVocabulary[];
+  questionBank: KaiwaQuestionBankItem[];
+  answerBank: KaiwaAnswerBankItem[];
   isPublic: boolean;
 }
 
@@ -107,6 +129,8 @@ export const DEFAULT_KAIWA_TOPIC_FORM: KaiwaAdvancedTopicFormData = {
   level: 'N4',
   style: 'polite',
   vocabulary: [],
+  questionBank: [],
+  answerBank: [],
   isPublic: false,
 };
 
