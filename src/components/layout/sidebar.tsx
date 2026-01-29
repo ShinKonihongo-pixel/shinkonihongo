@@ -24,6 +24,7 @@ import {
   BookOpenCheck,
   LayoutGrid,
   User,
+  ClipboardList,
 } from 'lucide-react';
 import { useClassroomNotifications } from '../../hooks/use-classrooms';
 import { useFriendNotifications } from '../../hooks/use-friendships';
@@ -68,6 +69,7 @@ const learningItems: NavItem[] = [
   { page: 'grammar-study', label: 'Ngữ Pháp', icon: <FileText {...iconProps} /> },
   { page: 'reading', label: 'Đọc Hiểu', icon: <BookOpenCheck {...iconProps} /> },
   { page: 'listening', label: 'Nghe Hiểu', icon: <Headphones {...iconProps} /> },
+  { page: 'exercises', label: 'Bài Tập', icon: <ClipboardList {...iconProps} /> },
 ];
 
 // Section 2: Management/Activity tabs

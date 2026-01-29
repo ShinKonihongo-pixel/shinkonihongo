@@ -30,8 +30,10 @@ import {
   KaiwaTab,
   GameTab,
   UsersTab,
+  ExercisesTab,
   type ManagementTab,
 } from '../cards-management';
+import { useExercises } from '../../hooks/use-exercises';
 import { useReading } from '../../hooks/use-reading';
 
 interface CardsPageProps {
@@ -174,6 +176,15 @@ export function CardsPage({
     getPassagesByFolder: getReadingPassagesByFolder,
   } = useReading();
 
+  // Exercises hook
+  const {
+    exercises,
+    addExercise,
+    updateExercise,
+    deleteExercise,
+    togglePublish,
+  } = useExercises();
+
   // Filter visible users based on role
   const visibleUsers = isSuperAdmin
     ? users
@@ -191,7 +202,7 @@ export function CardsPage({
           <button className={`tab-btn ${activeTab === 'jlpt' ? 'active' : ''}`} onClick={() => setActiveTab('jlpt')}>JLPT</button>
           <button className={`tab-btn ${activeTab === 'kaiwa' ? 'active' : ''}`} onClick={() => setActiveTab('kaiwa')}>Kaiwa ({kaiwaQuestions.length})</button>
           <button className={`tab-btn ${activeTab === 'game' ? 'active' : ''}`} onClick={() => setActiveTab('game')}>Game</button>
-          <button className={`tab-btn ${activeTab === 'assignments' ? 'active' : ''}`} onClick={() => setActiveTab('assignments')}>Bài tập</button>
+          <button className={`tab-btn ${activeTab === 'assignments' ? 'active' : ''}`} onClick={() => setActiveTab('assignments')}>Bài tập ({exercises.length})</button>
           <button className={`tab-btn ${activeTab === 'tests' ? 'active' : ''}`} onClick={() => setActiveTab('tests')}>Bài kiểm tra ({testTemplates.length})</button>
           <button className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>Tài khoản ({visibleUsers.length})</button>
         </div>
@@ -215,6 +226,7 @@ export function CardsPage({
           onReorderLessons={onReorderLessons}
           onImportLesson={importLesson}
           onImportFlashcard={importFlashcard}
+          grammarCards={grammarCards}
           currentUser={currentUser}
           isSuperAdmin={isSuperAdmin}
         />
@@ -238,6 +250,7 @@ export function CardsPage({
           onSeedLessons={seedGrammarLessons}
           onReorderLessons={reorderGrammarLessons}
           onImportGrammarCard={importGrammarCard}
+          vocabularyCards={cards}
           currentUser={currentUser}
           isSuperAdmin={isSuperAdmin}
         />
@@ -348,15 +361,20 @@ export function CardsPage({
         <GameTab />
       )}
 
-      {/* Assignments Tab (placeholder) */}
+      {/* Assignments/Exercises Tab */}
       {activeTab === 'assignments' && (
-        <div className="assignments-tab-content">
-          <div className="empty-state">
-            <div className="empty-state-icon">📝</div>
-            <h3>Quản lý bài tập</h3>
-            <p>Tính năng đang được phát triển</p>
-          </div>
-        </div>
+        <ExercisesTab
+          exercises={exercises}
+          flashcards={cards}
+          getLessonsByLevel={getLessonsByLevel}
+          getChildLessons={getChildLessons}
+          onAddExercise={addExercise}
+          onUpdateExercise={updateExercise}
+          onDeleteExercise={deleteExercise}
+          onTogglePublish={togglePublish}
+          currentUser={currentUser}
+          isSuperAdmin={isSuperAdmin}
+        />
       )}
 
       {/* Tests Tab */}

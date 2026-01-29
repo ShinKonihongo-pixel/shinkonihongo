@@ -31,7 +31,9 @@ import { DailyWordsPage } from './components/pages/daily-words-page';
 import { ListeningPracticePage } from './components/pages/listening-practice-page';
 import { GrammarStudyPage } from './components/pages/grammar-study-page';
 import { ReadingPracticePage } from './components/pages/reading-practice-page';
+import { ExercisePage } from './components/pages/exercise-page';
 import { useReading } from './hooks/use-reading';
+import { useExercises } from './hooks/use-exercises';
 import type { GameType } from './types/game-hub';
 import { useJLPTQuestions } from './hooks/use-jlpt-questions';
 import { useKaiwaQuestions } from './hooks/use-kaiwa-questions';
@@ -54,7 +56,7 @@ import './App.css';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
-  const [initialFilterLevel, setInitialFilterLevel] = useState<JLPTLevel | 'all'>('all');
+  const [, setInitialFilterLevel] = useState<JLPTLevel | 'all'>('all');
   // Game Hub state - unified game join handling
   const [initialGameType, setInitialGameType] = useState<GameType | null>(null);
   const [initialGameJoinCode, setInitialGameJoinCode] = useState<string | null>(null);
@@ -172,6 +174,9 @@ function App() {
 
   // Grammar cards
   const { grammarCards } = useGrammarCards();
+
+  // Exercises
+  const { getPublishedExercises } = useExercises();
 
   // Reading passages
   const {
@@ -467,9 +472,10 @@ function App() {
         {currentPage === 'study' && (
           <StudyPage
             cards={cards}
+            getLessonsByLevel={filteredGetLessonsByLevel}
+            getChildLessons={filteredGetChildLessons}
             updateCard={updateCard}
             onGoHome={() => setCurrentPage('home')}
-            initialFilterLevel={initialFilterLevel}
             settings={settings}
             onSaveStudySession={addStudySession}
           />
@@ -492,6 +498,7 @@ function App() {
             getLessonsByLevel={filteredGetLessonsByLevel}
             getChildLessons={filteredGetChildLessons}
             onGoHome={() => setCurrentPage('home')}
+            settings={settings}
           />
         )}
 
@@ -501,6 +508,14 @@ function App() {
             folders={readingFolders}
             getFoldersByLevel={getReadingFoldersByLevel}
             getPassagesByFolder={getReadingPassagesByFolder}
+            onGoHome={() => setCurrentPage('home')}
+          />
+        )}
+
+        {currentPage === 'exercises' && (
+          <ExercisePage
+            exercises={getPublishedExercises()}
+            flashcards={cards}
             onGoHome={() => setCurrentPage('home')}
           />
         )}
