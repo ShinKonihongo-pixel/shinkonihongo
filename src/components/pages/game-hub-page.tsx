@@ -10,6 +10,7 @@ import type { JLPTQuestion } from '../../types/jlpt-question';
 import type { AppSettings } from '../../hooks/use-settings';
 import type { FriendWithUser } from '../../types/friendship';
 import { GameSelector } from '../game-hub/game-selector';
+import { FloatingMusicPlayer } from '../game-hub/floating-music-player';
 
 // Lazy load game pages for code splitting
 const QuizGamePage = lazy(() => import('./quiz-game-page').then(m => ({ default: m.QuizGamePage })));
@@ -63,6 +64,7 @@ export function GameHubPage({
 }: GameHubPageProps) {
   const [selectedGame, setSelectedGame] = useState<GameType | null>(initialGame || null);
   const [joinCode, setJoinCode] = useState<string | null>(initialJoinCode || null);
+  const [showMusicPlayer, setShowMusicPlayer] = useState(true);
 
   // Handle game selection - also collapse sidebar
   const handleSelectGame = useCallback((game: GameType) => {
@@ -226,6 +228,11 @@ export function GameHubPage({
         />
       )}
       </Suspense>
+
+      {/* Floating Music Player - Always available when playing games */}
+      {showMusicPlayer && (
+        <FloatingMusicPlayer onClose={() => setShowMusicPlayer(false)} />
+      )}
     </div>
   );
 }
