@@ -21,6 +21,7 @@ export interface Flashcard {
   kanji: string;           // Kanji (có thể trống nếu từ không có Kanji)
   sinoVietnamese: string;  // Âm Hán Việt
   meaning: string;         // Nghĩa tiếng Việt
+  english?: string;        // English meaning
   examples: string[];      // Danh sách câu ví dụ
   jlptLevel: JLPTLevel;    // Level (để filter nhanh)
   lessonId: string;        // ID của bài học
@@ -58,6 +59,7 @@ export interface FlashcardFormData {
   kanji: string;
   sinoVietnamese: string;
   meaning: string;
+  english?: string;        // English meaning
   examples: string[];
   jlptLevel: JLPTLevel;
   lessonId: string;

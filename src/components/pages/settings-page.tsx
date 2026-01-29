@@ -27,7 +27,7 @@ function getDeviceType(): DeviceType {
 }
 
 type SettingsTab = 'general' | 'profile' | 'friends';
-type GeneralSubTab = 'flashcard' | 'study' | 'game' | 'kaiwa' | 'system';
+type GeneralSubTab = 'flashcard' | 'study' | 'grammar' | 'game' | 'kaiwa' | 'system';
 
 interface ThemePreset {
   name: string;
@@ -850,6 +850,13 @@ export function SettingsPage({
               <span className="sub-tab-label">Học tập</span>
             </button>
             <button
+              className={`settings-sub-tab ${generalSubTab === 'grammar' ? 'active' : ''}`}
+              onClick={() => setGeneralSubTab('grammar')}
+            >
+              <span className="sub-tab-icon">📖</span>
+              <span className="sub-tab-label">Ngữ pháp</span>
+            </button>
+            <button
               className={`settings-sub-tab ${generalSubTab === 'game' ? 'active' : ''}`}
               onClick={() => setGeneralSubTab('game')}
             >
@@ -1229,6 +1236,237 @@ export function SettingsPage({
                 </div>
               </div>
             )}
+              </section>
+            </>
+          )}
+
+          {/* ==================== GRAMMAR SUB-TAB ==================== */}
+          {generalSubTab === 'grammar' && (
+            <>
+              <section className="settings-section">
+                <h3>Cài đặt thẻ Ngữ pháp</h3>
+                <p className="settings-description">Tùy chỉnh thông tin hiển thị trên thẻ ngữ pháp khi học</p>
+
+                {/* Front Side Settings */}
+                <div className="grammar-display-section">
+                  <h4>📋 Mặt trước (Câu hỏi)</h4>
+                  <div className="grammar-toggles-grid">
+                    <div className="setting-item compact">
+                      <label>Tiêu đề ngữ pháp</label>
+                      <label className="toggle">
+                        <input
+                          type="checkbox"
+                          checked={settings.grammarFrontShowTitle}
+                          onChange={(e) => onUpdateSetting('grammarFrontShowTitle', e.target.checked)}
+                        />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </div>
+                    <div className="setting-item compact">
+                      <label>Công thức</label>
+                      <label className="toggle">
+                        <input
+                          type="checkbox"
+                          checked={settings.grammarFrontShowFormula}
+                          onChange={(e) => onUpdateSetting('grammarFrontShowFormula', e.target.checked)}
+                        />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </div>
+                    <div className="setting-item compact">
+                      <label>Nghĩa</label>
+                      <label className="toggle">
+                        <input
+                          type="checkbox"
+                          checked={settings.grammarFrontShowMeaning}
+                          onChange={(e) => onUpdateSetting('grammarFrontShowMeaning', e.target.checked)}
+                        />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </div>
+                    <div className="setting-item compact">
+                      <label>Giải thích</label>
+                      <label className="toggle">
+                        <input
+                          type="checkbox"
+                          checked={settings.grammarFrontShowExplanation}
+                          onChange={(e) => onUpdateSetting('grammarFrontShowExplanation', e.target.checked)}
+                        />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </div>
+                    <div className="setting-item compact">
+                      <label>Ví dụ</label>
+                      <label className="toggle">
+                        <input
+                          type="checkbox"
+                          checked={settings.grammarFrontShowExamples}
+                          onChange={(e) => onUpdateSetting('grammarFrontShowExamples', e.target.checked)}
+                        />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </div>
+                    <div className="setting-item compact">
+                      <label>Badge JLPT</label>
+                      <label className="toggle">
+                        <input
+                          type="checkbox"
+                          checked={settings.grammarFrontShowLevel}
+                          onChange={(e) => onUpdateSetting('grammarFrontShowLevel', e.target.checked)}
+                        />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </div>
+                    <div className="setting-item compact">
+                      <label>Badge bài học</label>
+                      <label className="toggle">
+                        <input
+                          type="checkbox"
+                          checked={settings.grammarFrontShowLesson}
+                          onChange={(e) => onUpdateSetting('grammarFrontShowLesson', e.target.checked)}
+                        />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Back Side Settings */}
+                <div className="grammar-display-section">
+                  <h4>📝 Mặt sau (Đáp án)</h4>
+                  <div className="grammar-toggles-grid">
+                    <div className="setting-item compact">
+                      <label>Tiêu đề ngữ pháp</label>
+                      <label className="toggle">
+                        <input
+                          type="checkbox"
+                          checked={settings.grammarBackShowTitle}
+                          onChange={(e) => onUpdateSetting('grammarBackShowTitle', e.target.checked)}
+                        />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </div>
+                    <div className="setting-item compact">
+                      <label>Công thức</label>
+                      <label className="toggle">
+                        <input
+                          type="checkbox"
+                          checked={settings.grammarBackShowFormula}
+                          onChange={(e) => onUpdateSetting('grammarBackShowFormula', e.target.checked)}
+                        />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </div>
+                    <div className="setting-item compact">
+                      <label>Nghĩa</label>
+                      <label className="toggle">
+                        <input
+                          type="checkbox"
+                          checked={settings.grammarBackShowMeaning}
+                          onChange={(e) => onUpdateSetting('grammarBackShowMeaning', e.target.checked)}
+                        />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </div>
+                    <div className="setting-item compact">
+                      <label>Giải thích</label>
+                      <label className="toggle">
+                        <input
+                          type="checkbox"
+                          checked={settings.grammarBackShowExplanation}
+                          onChange={(e) => onUpdateSetting('grammarBackShowExplanation', e.target.checked)}
+                        />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </div>
+                    <div className="setting-item compact">
+                      <label>Ví dụ</label>
+                      <label className="toggle">
+                        <input
+                          type="checkbox"
+                          checked={settings.grammarBackShowExamples}
+                          onChange={(e) => onUpdateSetting('grammarBackShowExamples', e.target.checked)}
+                        />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Presets */}
+                <div className="grammar-presets">
+                  <h4>⚡ Cài đặt nhanh</h4>
+                  <div className="preset-buttons">
+                    <button
+                      className="preset-btn"
+                      onClick={() => {
+                        onUpdateSetting('grammarFrontShowTitle', true);
+                        onUpdateSetting('grammarFrontShowFormula', true);
+                        onUpdateSetting('grammarFrontShowMeaning', false);
+                        onUpdateSetting('grammarFrontShowExplanation', false);
+                        onUpdateSetting('grammarFrontShowExamples', false);
+                        onUpdateSetting('grammarBackShowTitle', false);
+                        onUpdateSetting('grammarBackShowFormula', false);
+                        onUpdateSetting('grammarBackShowMeaning', true);
+                        onUpdateSetting('grammarBackShowExplanation', true);
+                        onUpdateSetting('grammarBackShowExamples', true);
+                      }}
+                    >
+                      🎯 Mặc định
+                    </button>
+                    <button
+                      className="preset-btn"
+                      onClick={() => {
+                        onUpdateSetting('grammarFrontShowTitle', true);
+                        onUpdateSetting('grammarFrontShowFormula', false);
+                        onUpdateSetting('grammarFrontShowMeaning', false);
+                        onUpdateSetting('grammarFrontShowExplanation', false);
+                        onUpdateSetting('grammarFrontShowExamples', false);
+                        onUpdateSetting('grammarBackShowTitle', false);
+                        onUpdateSetting('grammarBackShowFormula', true);
+                        onUpdateSetting('grammarBackShowMeaning', true);
+                        onUpdateSetting('grammarBackShowExplanation', true);
+                        onUpdateSetting('grammarBackShowExamples', true);
+                      }}
+                    >
+                      📚 Chỉ tiêu đề
+                    </button>
+                    <button
+                      className="preset-btn"
+                      onClick={() => {
+                        onUpdateSetting('grammarFrontShowTitle', true);
+                        onUpdateSetting('grammarFrontShowFormula', true);
+                        onUpdateSetting('grammarFrontShowMeaning', true);
+                        onUpdateSetting('grammarFrontShowExplanation', false);
+                        onUpdateSetting('grammarFrontShowExamples', false);
+                        onUpdateSetting('grammarBackShowTitle', false);
+                        onUpdateSetting('grammarBackShowFormula', false);
+                        onUpdateSetting('grammarBackShowMeaning', false);
+                        onUpdateSetting('grammarBackShowExplanation', true);
+                        onUpdateSetting('grammarBackShowExamples', true);
+                      }}
+                    >
+                      🔄 Đảo nghĩa
+                    </button>
+                    <button
+                      className="preset-btn"
+                      onClick={() => {
+                        onUpdateSetting('grammarFrontShowTitle', true);
+                        onUpdateSetting('grammarFrontShowFormula', true);
+                        onUpdateSetting('grammarFrontShowMeaning', true);
+                        onUpdateSetting('grammarFrontShowExplanation', true);
+                        onUpdateSetting('grammarFrontShowExamples', true);
+                        onUpdateSetting('grammarBackShowTitle', true);
+                        onUpdateSetting('grammarBackShowFormula', true);
+                        onUpdateSetting('grammarBackShowMeaning', true);
+                        onUpdateSetting('grammarBackShowExplanation', true);
+                        onUpdateSetting('grammarBackShowExamples', true);
+                      }}
+                    >
+                      📖 Hiện tất cả
+                    </button>
+                  </div>
+                </div>
               </section>
             </>
           )}

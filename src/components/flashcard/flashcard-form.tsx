@@ -1,9 +1,9 @@
 // Form for creating/editing flashcards with AI auto-fill
 
 import { useState, useEffect } from 'react';
-import { Sparkles, RefreshCw } from 'lucide-react';
-import type { FlashcardFormData, JLPTLevel, Flashcard, Lesson, DifficultyLevel } from '../../types/flashcard';
-import { generateKanjiInfo, generateExample, generateMeaningFromVocabulary } from '../../services/kanji-ai-service';
+import { Sparkles, RefreshCw, BookOpen } from 'lucide-react';
+import type { FlashcardFormData, JLPTLevel, Flashcard, Lesson, DifficultyLevel, GrammarCard } from '../../types/flashcard';
+import { generateKanjiInfo, generateExample, generateMeaningFromVocabulary, generateExampleWithGrammar, type GrammarPattern } from '../../services/kanji-ai-service';
 
 interface FlashcardFormProps {
   onSubmit: (data: FlashcardFormData) => void;
@@ -13,6 +13,8 @@ interface FlashcardFormProps {
   // Fixed values from navigation - when set, these fields are auto-filled
   fixedLevel?: JLPTLevel | null;
   fixedLessonId?: string | null;
+  // Grammar cards for generating examples with grammar patterns
+  grammarCards?: GrammarCard[];
 }
 
 const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
@@ -31,12 +33,14 @@ export function FlashcardForm({
   lessons,
   fixedLevel,
   fixedLessonId,
+  grammarCards = [],
 }: FlashcardFormProps) {
   const [formData, setFormData] = useState<FlashcardFormData>({
     vocabulary: '',
     kanji: '',
     sinoVietnamese: '',
     meaning: '',
+    english: '',
     examples: [''],
     jlptLevel: fixedLevel || 'N5',
     lessonId: fixedLessonId || '',
@@ -47,6 +51,16 @@ export function FlashcardForm({
   const [isGeneratingInfo, setIsGeneratingInfo] = useState(false);
   const [isGeneratingMeaning, setIsGeneratingMeaning] = useState(false);
   const [generatingExampleIndex, setGeneratingExampleIndex] = useState<number | null>(null);
+  const [generatingGrammarIndex, setGeneratingGrammarIndex] = useState<number | null>(null);
+
+  // Get grammar patterns for the current lesson
+  const lessonGrammarPatterns: GrammarPattern[] = grammarCards
+    .filter(g => g.lessonId === (fixedLessonId || formData.lessonId))
+    .map(g => ({
+      title: g.title,
+      formula: g.formula,
+      meaning: g.meaning,
+    }));
 
   useEffect(() => {
     if (initialData) {
@@ -55,6 +69,7 @@ export function FlashcardForm({
         kanji: initialData.kanji,
         sinoVietnamese: initialData.sinoVietnamese,
         meaning: initialData.meaning,
+        english: initialData.english || '',
         examples: initialData.examples.length > 0 ? initialData.examples : [''],
         jlptLevel: initialData.jlptLevel,
         lessonId: initialData.lessonId,
@@ -108,6 +123,7 @@ export function FlashcardForm({
           ...prev,
           meaning: info.meaning || prev.meaning,
           sinoVietnamese: info.sinoVietnamese || prev.sinoVietnamese,
+          english: info.english || prev.english,
         }));
       }
     } catch (error) {
@@ -133,6 +149,7 @@ export function FlashcardForm({
           vocabulary: info.vocabulary || prev.vocabulary,
           sinoVietnamese: info.sinoVietnamese || prev.sinoVietnamese,
           meaning: info.meaning || prev.meaning,
+          english: info.english || prev.english,
         }));
       }
     } catch (error) {
@@ -172,6 +189,44 @@ export function FlashcardForm({
       alert(error instanceof Error ? error.message : 'Lỗi khi tạo ví dụ');
     } finally {
       setGeneratingExampleIndex(null);
+    }
+  };
+
+  // AI: Generate example using grammar patterns from the lesson
+  const handleGenerateWithGrammar = async (index: number) => {
+    const word = formData.kanji || formData.vocabulary;
+    if (!word.trim()) {
+      alert('Vui lòng nhập từ vựng hoặc kanji trước!');
+      return;
+    }
+
+    if (lessonGrammarPatterns.length === 0) {
+      alert('Không có ngữ pháp nào trong bài này!');
+      return;
+    }
+
+    setGeneratingGrammarIndex(index);
+    try {
+      const existingExamples = formData.examples.filter(e => e.trim());
+      const example = await generateExampleWithGrammar(
+        formData.vocabulary,
+        formData.kanji,
+        formData.meaning,
+        lessonGrammarPatterns,
+        existingExamples
+      );
+
+      if (example) {
+        const newExample = `${example.japanese}\n(${example.vietnamese})`;
+        setFormData(prev => ({
+          ...prev,
+          examples: prev.examples.map((ex, i) => (i === index ? newExample : ex)),
+        }));
+      }
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Lỗi khi tạo ví dụ');
+    } finally {
+      setGeneratingGrammarIndex(null);
     }
   };
 
@@ -279,6 +334,18 @@ export function FlashcardForm({
         />
       </div>
 
+      <div className="form-group">
+        <label htmlFor="english">English</label>
+        <input
+          type="text"
+          id="english"
+          name="english"
+          value={formData.english || ''}
+          onChange={handleChange}
+          placeholder="例: To eat"
+        />
+      </div>
+
       {/* Examples with AI generate button */}
       <div className="form-group">
         <label>
@@ -298,7 +365,7 @@ export function FlashcardForm({
                 type="button"
                 className="btn-ai-example"
                 onClick={() => handleGenerateExample(index)}
-                disabled={generatingExampleIndex === index}
+                disabled={generatingExampleIndex === index || generatingGrammarIndex === index}
                 title="Tạo ví dụ tự động"
               >
                 {generatingExampleIndex === index ? (
@@ -307,6 +374,21 @@ export function FlashcardForm({
                   <Sparkles size={14} />
                 )}
               </button>
+              {lessonGrammarPatterns.length > 0 && (
+                <button
+                  type="button"
+                  className="btn-grammar-example"
+                  onClick={() => handleGenerateWithGrammar(index)}
+                  disabled={generatingGrammarIndex === index || generatingExampleIndex === index}
+                  title={`Tạo ví dụ theo ngữ pháp bài (${lessonGrammarPatterns.length} mẫu)`}
+                >
+                  {generatingGrammarIndex === index ? (
+                    <RefreshCw size={14} className="spin" />
+                  ) : (
+                    <BookOpen size={14} />
+                  )}
+                </button>
+              )}
               {formData.examples.length > 1 && (
                 <button
                   type="button"
@@ -429,6 +511,28 @@ export function FlashcardForm({
           color: white;
         }
         .btn-ai-example:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .btn-grammar-example {
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid #0d9488;
+          background: white;
+          color: #0d9488;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .btn-grammar-example:hover:not(:disabled) {
+          background: #0d9488;
+          color: white;
+        }
+        .btn-grammar-example:disabled {
           opacity: 0.5;
           cursor: not-allowed;
         }

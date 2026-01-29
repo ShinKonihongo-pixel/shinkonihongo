@@ -1,7 +1,7 @@
 // Game Hub Types - Unified game center for all mini-games
 
 // Available games in the hub
-export type GameType = 'quiz' | 'golden-bell' | 'picture-guess' | 'bingo' | 'speed-quiz' | 'word-match' | 'ai-challenge' | 'image-word';
+export type GameType = 'quiz' | 'golden-bell' | 'picture-guess' | 'bingo' | 'speed-quiz' | 'word-match' | 'ai-challenge' | 'image-word' | 'word-scramble';
 
 // Game info for display
 export interface GameInfo {
@@ -177,6 +177,19 @@ export const GAMES: Record<GameType, GameInfo> = {
     playerRange: '1',
     features: ['Tự tạo bài', 'Ảnh tùy chỉnh', 'Lưu tiến độ'],
     difficulty: 'easy',
+    isNew: true,
+    category: 'puzzle',
+  },
+  'word-scramble': {
+    id: 'word-scramble',
+    name: 'Sắp Xếp Từ',
+    description: 'Sắp xếp các chữ cái bị xáo trộn thành từ vựng đúng',
+    icon: '🔀',
+    color: '#10B981',
+    gradient: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)',
+    playerRange: '1',
+    features: ['Chọn bài học', 'Gợi ý thông minh', 'Điểm theo thời gian'],
+    difficulty: 'medium',
     isNew: true,
     category: 'puzzle',
   },

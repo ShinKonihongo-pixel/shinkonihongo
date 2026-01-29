@@ -25,13 +25,15 @@ type PageView = 'menu' | 'setup' | 'lobby' | 'play' | 'results';
 interface BingoPageProps {
   currentUser: BingoUser;
   initialJoinCode?: string;
+  initialView?: PageView;
 }
 
 export function BingoPage({
   currentUser,
   initialJoinCode,
+  initialView = 'menu',
 }: BingoPageProps) {
-  const [view, setView] = useState<PageView>('menu');
+  const [view, setView] = useState<PageView>(initialView);
   const [showGuide, setShowGuide] = useState(false);
   const [showCountdown, setShowCountdown] = useState(false);
   const [countdown, setCountdown] = useState(3);

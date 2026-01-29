@@ -73,6 +73,8 @@ export interface VocabularyTabProps {
   // Import handlers
   onImportLesson?: (data: Omit<Lesson, 'id'>) => Promise<Lesson>;
   onImportFlashcard?: (data: Omit<Flashcard, 'id'>) => Promise<Flashcard>;
+  // Grammar cards for example generation
+  grammarCards?: GrammarCard[];
   currentUser: CurrentUser;
   isSuperAdmin: boolean;
 }
@@ -95,6 +97,8 @@ export interface GrammarTabProps {
   onReorderLessons: (reorderedLessons: { id: string; order: number }[]) => Promise<void>;
   // Import handlers
   onImportGrammarCard?: (data: Omit<GrammarCard, 'id'>) => Promise<GrammarCard>;
+  // Vocabulary for AI example generation
+  vocabularyCards?: Flashcard[];
   currentUser: CurrentUser;
   isSuperAdmin: boolean;
 }

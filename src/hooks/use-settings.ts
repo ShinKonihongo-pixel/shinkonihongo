@@ -168,6 +168,21 @@ export interface AppSettings {
   jlptCoverageMode: 'random' | 'balanced' | 'weak_first';  // Question selection strategy
   jlptShowLevelAssessment: boolean;        // Show detailed assessment after practice
   jlptTrackWeakAreas: boolean;             // Track and suggest weak areas
+
+  // Grammar Card Display Settings - Front side
+  grammarFrontShowTitle: boolean;          // Show grammar title on front
+  grammarFrontShowFormula: boolean;        // Show formula on front
+  grammarFrontShowMeaning: boolean;        // Show meaning on front
+  grammarFrontShowExplanation: boolean;    // Show explanation on front
+  grammarFrontShowExamples: boolean;       // Show examples on front
+  grammarFrontShowLevel: boolean;          // Show JLPT level badge on front
+  grammarFrontShowLesson: boolean;         // Show lesson badge on front
+  // Grammar Card Display Settings - Back side
+  grammarBackShowTitle: boolean;           // Show grammar title on back
+  grammarBackShowFormula: boolean;         // Show formula on back
+  grammarBackShowMeaning: boolean;         // Show meaning on back
+  grammarBackShowExplanation: boolean;     // Show explanation on back
+  grammarBackShowExamples: boolean;        // Show examples on back
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -295,6 +310,19 @@ const DEFAULT_SETTINGS: AppSettings = {
   jlptCoverageMode: 'balanced',
   jlptShowLevelAssessment: true,
   jlptTrackWeakAreas: true,
+  // Grammar card display defaults - Front: title + formula, Back: meaning + explanation + examples
+  grammarFrontShowTitle: true,
+  grammarFrontShowFormula: true,
+  grammarFrontShowMeaning: false,
+  grammarFrontShowExplanation: false,
+  grammarFrontShowExamples: false,
+  grammarFrontShowLevel: true,
+  grammarFrontShowLesson: true,
+  grammarBackShowTitle: false,
+  grammarBackShowFormula: false,
+  grammarBackShowMeaning: true,
+  grammarBackShowExplanation: true,
+  grammarBackShowExamples: true,
 };
 
 const STORAGE_KEY = 'flashcard-settings';

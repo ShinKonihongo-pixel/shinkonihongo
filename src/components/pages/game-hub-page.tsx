@@ -20,6 +20,7 @@ const SpeedQuizPage = lazy(() => import('./speed-quiz-page').then(m => ({ defaul
 const WordMatchPage = lazy(() => import('./word-match-page').then(m => ({ default: m.WordMatchPage })));
 const AIChallengePage = lazy(() => import('./ai-challenge-page').then(m => ({ default: m.AIChallengePage })));
 const ImageWordPage = lazy(() => import('./image-word-page').then(m => ({ default: m.ImageWordPage })));
+const WordScramblePage = lazy(() => import('./word-scramble-page').then(m => ({ default: m.WordScramblePage })));
 
 // Loading fallback component
 function GameLoadingFallback() {
@@ -160,6 +161,7 @@ export function GameHubPage({
             role: currentUser.role,
           }}
           initialJoinCode={joinCode || undefined}
+          initialView={joinCode ? 'menu' : 'setup'}
         />
       )}
 
@@ -173,6 +175,7 @@ export function GameHubPage({
             role: currentUser.role,
           }}
           flashcards={flashcards}
+          initialView={joinCode ? 'menu' : 'setup'}
         />
       )}
 
@@ -186,6 +189,7 @@ export function GameHubPage({
             role: currentUser.role,
           }}
           flashcards={flashcards}
+          initialView={joinCode ? 'menu' : 'setup'}
         />
       )}
 
@@ -205,6 +209,20 @@ export function GameHubPage({
       {selectedGame === 'image-word' && (
         <ImageWordPage
           onClose={handleBackToHub}
+          initialView="lessons"
+        />
+      )}
+
+      {selectedGame === 'word-scramble' && (
+        <WordScramblePage
+          onClose={handleBackToHub}
+          flashcards={flashcards}
+          currentUser={{
+            id: currentUser.id,
+            displayName: currentUser.displayName || currentUser.username,
+            avatar: currentUser.avatar || '🔀',
+            role: currentUser.role === 'super_admin' ? 'super_admin' : currentUser.role as 'user' | 'vip' | 'admin',
+          }}
         />
       )}
       </Suspense>

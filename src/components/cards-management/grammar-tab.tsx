@@ -71,6 +71,7 @@ export function GrammarTab({
   onSeedLessons,
   onReorderLessons,
   onImportGrammarCard,
+  vocabularyCards = [],
   currentUser,
   isSuperAdmin,
 }: GrammarTabProps) {
@@ -549,6 +550,7 @@ export function GrammarTab({
           lessons={[]}
           fixedLevel={navState.type !== 'root' ? navState.level : null}
           fixedLessonId={getCurrentLessonId()}
+          vocabularyCards={vocabularyCards}
         />
       )}
 

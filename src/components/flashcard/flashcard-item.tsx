@@ -100,6 +100,19 @@ const defaultSettings: AppSettings = {
   // Daily words
   dailyWordsEnabled: true,
   dailyWordsTarget: 5,
+  // Grammar card display defaults
+  grammarFrontShowTitle: true,
+  grammarFrontShowFormula: true,
+  grammarFrontShowMeaning: false,
+  grammarFrontShowExplanation: false,
+  grammarFrontShowExamples: false,
+  grammarFrontShowLevel: true,
+  grammarFrontShowLesson: true,
+  grammarBackShowTitle: false,
+  grammarBackShowFormula: false,
+  grammarBackShowMeaning: true,
+  grammarBackShowExplanation: true,
+  grammarBackShowExamples: true,
 };
 
 // Get card frame styles based on settings

@@ -1,6 +1,8 @@
 // Study session component with spaced repetition
+// JLPT level selection moved to level-lesson-selector
 
 import { useState, useEffect } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import type { Flashcard, JLPTLevel, MemorizationStatus, DifficultyLevel } from '../../types/flashcard';
 import type { AppSettings } from '../../hooks/use-settings';
 import { FlashcardItem } from '../flashcard/flashcard-item';
@@ -26,8 +28,6 @@ interface StudySessionProps {
   onFlip: () => void;
   onSetMemorization: (status: MemorizationStatus) => void;
   onSetDifficulty: (level: DifficultyLevel) => void;
-  filterLevel: JLPTLevel | 'all';
-  onFilterChange: (level: JLPTLevel | 'all') => void;
   filterMemorization: MemorizationStatus | 'all';
   onFilterMemorizationChange: (status: MemorizationStatus | 'all') => void;
   filterDifficulty: DifficultyLevel | 'all';
@@ -41,9 +41,9 @@ interface StudySessionProps {
   canGoNext: boolean;
   canGoPrev: boolean;
   settings: AppSettings;
+  onBack?: () => void;
+  selectedLevel?: JLPTLevel;
 }
-
-const JLPT_LEVELS: (JLPTLevel | 'all')[] = ['all', 'N5', 'N4', 'N3', 'N2', 'N1'];
 
 const MEMORIZATION_OPTIONS: { value: MemorizationStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'Tất cả' },
@@ -61,6 +61,14 @@ const DIFFICULTY_OPTIONS: { value: DifficultyLevel | 'all'; label: string }[] = 
   { value: 'easy', label: 'Dễ nhớ' },
 ];
 
+const LEVEL_COLORS: Record<JLPTLevel, { bg: string; text: string }> = {
+  N5: { bg: '#ecfdf5', text: '#059669' },
+  N4: { bg: '#eff6ff', text: '#2563eb' },
+  N3: { bg: '#fef3c7', text: '#d97706' },
+  N2: { bg: '#fce7f3', text: '#db2777' },
+  N1: { bg: '#fef2f2', text: '#dc2626' },
+};
+
 export function StudySession({
   currentCard,
   currentIndex,
@@ -69,8 +77,6 @@ export function StudySession({
   onFlip,
   onSetMemorization,
   onSetDifficulty,
-  filterLevel,
-  onFilterChange,
   filterMemorization,
   onFilterMemorizationChange,
   filterDifficulty,
@@ -84,6 +90,8 @@ export function StudySession({
   canGoNext,
   canGoPrev,
   settings,
+  onBack,
+  selectedLevel,
 }: StudySessionProps) {
   const isMobile = useIsMobile();
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -136,20 +144,13 @@ export function StudySession({
     return (
       <div className="study-empty">
         <h2>🎉 Không có thẻ nào cần ôn!</h2>
-        <p>Bạn đã hoàn thành tất cả các thẻ đến hạn hôm nay hoặc không có thẻ phù hợp với bộ lọc.</p>
+        <p>Bạn đã hoàn thành tất cả các thẻ hoặc không có thẻ phù hợp với bộ lọc.</p>
         <div className="filter-bar-inline">
-          <span className="filter-label">JLPT:</span>
-          <select
-            value={filterLevel}
-            onChange={(e) => onFilterChange(e.target.value as typeof filterLevel)}
-            className="filter-select"
-          >
-            {JLPT_LEVELS.map(level => (
-              <option key={level} value={level}>
-                {level === 'all' ? 'Tất cả' : level}
-              </option>
-            ))}
-          </select>
+          {onBack && (
+            <button className="back-btn-study" onClick={onBack}>
+              <ArrowLeft size={18} /> Chọn bài khác
+            </button>
+          )}
           <span className="filter-label">Trạng thái:</span>
           <select
             value={filterMemorization}
@@ -179,23 +180,26 @@ export function StudySession({
     );
   }
 
+  const levelColors = selectedLevel ? LEVEL_COLORS[selectedLevel] : null;
+
   return (
     <div className="study-session">
       <div className="study-header">
-        {/* Desktop: select dropdowns */}
+        {/* Desktop: filter bar */}
         <div className="filter-bar-inline filter-desktop">
-          <span className="filter-label">JLPT:</span>
-          <select
-            value={filterLevel}
-            onChange={(e) => onFilterChange(e.target.value as typeof filterLevel)}
-            className="filter-select"
-          >
-            {JLPT_LEVELS.map(level => (
-              <option key={level} value={level}>
-                {level === 'all' ? 'Tất cả' : level}
-              </option>
-            ))}
-          </select>
+          {onBack && (
+            <button className="back-btn-study" onClick={onBack}>
+              <ArrowLeft size={18} /> Chọn bài khác
+            </button>
+          )}
+          {selectedLevel && levelColors && (
+            <span
+              className="level-badge-study"
+              style={{ background: levelColors.bg, color: levelColors.text }}
+            >
+              {selectedLevel}
+            </span>
+          )}
           <span className="filter-label">Trạng thái:</span>
           <select
             value={filterMemorization}
@@ -237,21 +241,22 @@ export function StudySession({
           </button>
         </div>
 
-        {/* Mobile/Tablet: select dropdowns */}
+        {/* Mobile/Tablet: filter bar */}
         <div className="filter-bar-mobile">
-          <div className="filter-group">
-            <span className="filter-label">JLPT:</span>
-            <select
-              value={filterLevel}
-              onChange={(e) => onFilterChange(e.target.value as typeof filterLevel)}
-              className="filter-select"
-            >
-              {JLPT_LEVELS.map(level => (
-                <option key={level} value={level}>
-                  {level === 'all' ? 'Tất cả' : level}
-                </option>
-              ))}
-            </select>
+          <div className="filter-row-top">
+            {onBack && (
+              <button className="back-btn-study" onClick={onBack}>
+                <ArrowLeft size={18} />
+              </button>
+            )}
+            {selectedLevel && levelColors && (
+              <span
+                className="level-badge-study"
+                style={{ background: levelColors.bg, color: levelColors.text }}
+              >
+                {selectedLevel}
+              </span>
+            )}
           </div>
           <div className="filter-group">
             <span className="filter-label">Trạng thái:</span>

@@ -1,14 +1,14 @@
-// Game Selector - Professional game selection interface
-// Shows all available games with rich cards and visibility filtering
+// Game Selector - Modern game selection interface with 3-column grid
+// Shows all available games with clean minimal cards
 
 import { useState, useEffect, useMemo } from 'react';
-import { Search, Users, Zap, Star, Sparkles, Trophy, ArrowRight, Home, EyeOff } from 'lucide-react';
+import { Search, Users, Zap, Trophy, Home, EyeOff, Plus, DoorOpen } from 'lucide-react';
 import type { GameType, GameInfo } from '../../types/game-hub';
-import { GAMES, getVisibleGames } from '../../types/game-hub';
+import { getVisibleGames } from '../../types/game-hub';
 import { getHiddenGames } from '../../services/game-visibility-storage';
 import { WaitingRoom } from './waiting-room';
 
-type SelectorView = 'games' | 'waiting-room' | 'create-room';
+type SelectorView = 'games' | 'waiting-room';
 
 interface GameSelectorProps {
   onSelectGame: (game: GameType) => void;
@@ -17,9 +17,6 @@ interface GameSelectorProps {
 
 export function GameSelector({ onSelectGame, onQuickJoin }: GameSelectorProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [showJoinModal, setShowJoinModal] = useState(false);
-  const [joinCode, setJoinCode] = useState('');
-  const [selectedGameForJoin, setSelectedGameForJoin] = useState<GameType | null>(null);
   const [currentView, setCurrentView] = useState<SelectorView>('games');
   const [filterGameType, setFilterGameType] = useState<GameType | null>(null);
   const [hiddenGames, setHiddenGames] = useState<GameType[]>([]);
@@ -40,29 +37,7 @@ export function GameSelector({ onSelectGame, onQuickJoin }: GameSelectorProps) {
     );
   }, [visibleGames, searchQuery]);
 
-  // Separate featured and regular games
-  const featuredGames = useMemo(() => {
-    return filteredGames.filter(g => g.isPopular || g.isNew);
-  }, [filteredGames]);
-
-  const regularGames = useMemo(() => {
-    return filteredGames.filter(g => !g.isPopular && !g.isNew);
-  }, [filteredGames]);
-
-  const handleJoinGame = (gameType: GameType) => {
-    setSelectedGameForJoin(gameType);
-    setShowJoinModal(true);
-  };
-
-  const handleSubmitJoin = () => {
-    if (joinCode.trim().length >= 4 && selectedGameForJoin) {
-      onQuickJoin(selectedGameForJoin, joinCode.trim().toUpperCase());
-      setShowJoinModal(false);
-      setJoinCode('');
-    }
-  };
-
-  // Open waiting room
+  // Open waiting room with specific game filter
   const handleOpenWaitingRoom = (gameType?: GameType) => {
     setFilterGameType(gameType || null);
     setCurrentView('waiting-room');
@@ -171,47 +146,18 @@ export function GameSelector({ onSelectGame, onQuickJoin }: GameSelectorProps) {
             )}
           </div>
 
-          {/* Featured Games */}
-          {featuredGames.length > 0 && (
-            <section className="game-section featured-section">
-              <h2 className="section-title">
-                <Sparkles size={20} />
-                <span>Nổi Bật</span>
-              </h2>
-              <div className="featured-games-grid">
-                {featuredGames.map(game => (
-                  <GameCardFeatured
-                    key={game.id}
-                    game={game}
-                    onPlay={() => onSelectGame(game.id)}
-                    onJoin={() => handleJoinGame(game.id)}
-                    getDifficultyLabel={getDifficultyLabel}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* All Games (non-racing, non-featured) */}
-          {regularGames.length > 0 && (
-            <section className="game-section all-games-section">
-              <h2 className="section-title">
-                <Star size={20} />
-                <span>Các Game Khác</span>
-              </h2>
-              <div className="all-games-grid">
-                {regularGames.map(game => (
-                  <GameCard
-                    key={game.id}
-                    game={game}
-                    onPlay={() => onSelectGame(game.id)}
-                    onJoin={() => handleJoinGame(game.id)}
-                    getDifficultyLabel={getDifficultyLabel}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
+          {/* Games Grid - 3 columns */}
+          <div className="games-grid-3col">
+            {filteredGames.map(game => (
+              <GameCardMinimal
+                key={game.id}
+                game={game}
+                onCreateRoom={() => onSelectGame(game.id)}
+                onJoinWaitingRoom={() => handleOpenWaitingRoom(game.id)}
+                getDifficultyLabel={getDifficultyLabel}
+              />
+            ))}
+          </div>
 
           {/* No Results State */}
           {filteredGames.length === 0 && searchQuery && (
@@ -223,146 +169,61 @@ export function GameSelector({ onSelectGame, onQuickJoin }: GameSelectorProps) {
           )}
         </>
       )}
-
-      {/* Quick Join Modal */}
-      {showJoinModal && selectedGameForJoin && (
-        <div className="game-modal-overlay" onClick={() => setShowJoinModal(false)}>
-          <div className="game-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header" style={{ background: GAMES[selectedGameForJoin].gradient }}>
-              <span className="modal-icon">
-                {GAMES[selectedGameForJoin].iconImage ? (
-                  <img src={GAMES[selectedGameForJoin].iconImage} alt={GAMES[selectedGameForJoin].name} className="icon-image" />
-                ) : GAMES[selectedGameForJoin].icon}
-              </span>
-              <h3>Tham Gia {GAMES[selectedGameForJoin].name}</h3>
-            </div>
-            <div className="modal-body">
-              <p>Nhập mã phòng để tham gia trò chơi</p>
-              <input
-                type="text"
-                className="join-code-input"
-                value={joinCode}
-                onChange={e => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))}
-                placeholder="XXXXXX"
-                maxLength={6}
-                autoFocus
-              />
-            </div>
-            <div className="modal-actions">
-              <button className="btn-cancel" onClick={() => setShowJoinModal(false)}>
-                Hủy
-              </button>
-              <button
-                className="btn-join"
-                onClick={handleSubmitJoin}
-                disabled={joinCode.length < 4}
-                style={{ background: GAMES[selectedGameForJoin].gradient }}
-              >
-                Tham Gia
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }
 
-// Featured Game Card - Large, prominent display
-interface GameCardProps {
+// Minimal Game Card - Clean design without content overlay
+interface GameCardMinimalProps {
   game: GameInfo;
-  onPlay: () => void;
-  onJoin: () => void;
+  onCreateRoom: () => void;
+  onJoinWaitingRoom: () => void;
   getDifficultyLabel: (d: string) => { text: string; color: string };
 }
 
-function GameCardFeatured({ game, onPlay, onJoin, getDifficultyLabel }: GameCardProps) {
+function GameCardMinimal({ game, onCreateRoom, onJoinWaitingRoom, getDifficultyLabel }: GameCardMinimalProps) {
   const difficulty = getDifficultyLabel(game.difficulty);
 
   return (
-    <div className="game-card-featured" style={{ background: game.gradient }}>
-      {game.isNew && <span className="badge-new">MỚI</span>}
-      {game.isPopular && !game.isNew && <span className="badge-popular">HOT</span>}
+    <div className="game-card-minimal">
+      {/* Badge */}
+      {game.isNew && <span className="card-badge new">MỚI</span>}
+      {game.isPopular && !game.isNew && <span className="card-badge hot">HOT</span>}
 
-      <div className="card-content">
-        <div className="card-icon">
-          {game.iconImage ? (
-            <img src={game.iconImage} alt={game.name} className="icon-image" />
-          ) : game.icon}
-        </div>
-        <h3 className="card-title">{game.name}</h3>
-        <p className="card-description">{game.description}</p>
+      {/* Icon Area */}
+      <div className="card-icon-area" style={{ background: game.gradient }}>
+        {game.iconImage ? (
+          <img src={game.iconImage} alt={game.name} className="game-icon-img" />
+        ) : (
+          <span className="game-icon-emoji">{game.icon}</span>
+        )}
+      </div>
 
-        <div className="card-meta">
-          <span className="meta-item">
+      {/* Info */}
+      <div className="card-info">
+        <h3 className="card-name">{game.name}</h3>
+        <div className="card-meta-row">
+          <span className="meta-players">
             <Users size={14} />
-            {game.playerRange} người
-          </span>
-          <span className="meta-item difficulty" style={{ color: difficulty.color }}>
-            {difficulty.text}
-          </span>
-        </div>
-
-        <div className="card-features">
-          {game.features.slice(0, 3).map((feature, idx) => (
-            <span key={idx} className="feature-tag">{feature}</span>
-          ))}
-        </div>
-      </div>
-
-      <div className="card-actions">
-        <button className="btn-play" onClick={onPlay}>
-          Chơi Ngay
-          <ArrowRight size={18} />
-        </button>
-        <button className="btn-join-room" onClick={onJoin}>
-          Tham Gia Phòng
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// Regular Game Card - Compact display
-function GameCard({ game, onPlay, onJoin, getDifficultyLabel }: GameCardProps) {
-  const difficulty = getDifficultyLabel(game.difficulty);
-
-  return (
-    <div className="game-card">
-      <div className="card-header" style={{ background: game.gradient }}>
-        <span className="card-icon">
-          {game.iconImage ? (
-            <img src={game.iconImage} alt={game.name} className="icon-image" />
-          ) : game.icon}
-        </span>
-        {game.isNew && <span className="badge-new small">MỚI</span>}
-      </div>
-
-      <div className="card-body">
-        <h3 className="card-title">{game.name}</h3>
-        <p className="card-description">{game.description}</p>
-
-        <div className="card-meta">
-          <span className="meta-item">
-            <Users size={12} />
             {game.playerRange}
           </span>
-          <span className="meta-item difficulty" style={{ background: difficulty.color }}>
+          <span className="meta-difficulty" style={{ background: difficulty.color }}>
             {difficulty.text}
           </span>
         </div>
       </div>
 
-      <div className="card-actions">
-        <button className="btn-play-small" onClick={onPlay} style={{ background: game.color }}>
-          Chơi
+      {/* Actions */}
+      <div className="card-actions-row">
+        <button className="btn-create-room" onClick={onCreateRoom} style={{ background: game.color }}>
+          <Plus size={16} />
+          Tạo phòng
         </button>
-        <button className="btn-join-small" onClick={onJoin}>
-          Tham Gia
+        <button className="btn-join-waiting" onClick={onJoinWaitingRoom}>
+          <DoorOpen size={16} />
+          Tham gia
         </button>
       </div>
     </div>
   );
 }
-

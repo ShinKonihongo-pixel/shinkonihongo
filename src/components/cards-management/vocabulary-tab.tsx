@@ -66,6 +66,7 @@ export function VocabularyTab({
   onReorderLessons,
   onImportLesson,
   onImportFlashcard,
+  grammarCards = [],
   currentUser,
   isSuperAdmin,
 }: VocabularyTabProps) {
@@ -513,7 +514,7 @@ export function VocabularyTab({
       )}
 
       {showForm && (
-        <FlashcardForm onSubmit={handleSubmit} onCancel={() => { setShowForm(false); setEditingCard(null); }} initialData={editingCard || undefined} lessons={getLessonsForForm()} fixedLevel={getCurrentLevel()} fixedLessonId={getCurrentLessonId()} />
+        <FlashcardForm onSubmit={handleSubmit} onCancel={() => { setShowForm(false); setEditingCard(null); }} initialData={editingCard || undefined} lessons={getLessonsForForm()} fixedLevel={getCurrentLevel()} fixedLessonId={getCurrentLessonId()} grammarCards={grammarCards} />
       )}
 
       {!showForm && !addingLesson && (

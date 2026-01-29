@@ -23,14 +23,16 @@ interface WordMatchPageProps {
     role?: string;
   };
   flashcards?: Flashcard[];
+  initialView?: PageView;
 }
 
 export const WordMatchPage: React.FC<WordMatchPageProps> = ({
   onClose,
   currentUser = { id: 'user-1', displayName: 'Player', avatar: '👤' },
   flashcards = [],
+  initialView = 'menu',
 }) => {
-  const [view, setView] = useState<PageView>('menu');
+  const [view, setView] = useState<PageView>(initialView);
   const [notification, setNotification] = useState<{ message: string; type: 'info' | 'warning' } | null>(null);
 
   // Auto-hide notification after 3 seconds

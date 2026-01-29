@@ -1,8 +1,11 @@
 // Grammar study page - Practice grammar cards with flashcard-style review
+// Level/lesson selection first, then study mode
 
 import { useState, useEffect, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, RotateCcw, Shuffle, Volume2, Home, Filter } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RotateCcw, Shuffle, Volume2, ArrowLeft } from 'lucide-react';
 import type { GrammarCard, JLPTLevel, Lesson } from '../../types/flashcard';
+import type { AppSettings } from '../../hooks/use-settings';
+import { LevelLessonSelector } from '../study/level-lesson-selector';
 
 interface GrammarStudyPageProps {
   grammarCards: GrammarCard[];
@@ -10,9 +13,18 @@ interface GrammarStudyPageProps {
   getLessonsByLevel: (level: JLPTLevel) => Lesson[];
   getChildLessons: (parentId: string) => Lesson[];
   onGoHome: () => void;
+  settings?: AppSettings;
 }
 
-const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
+type ViewMode = 'select' | 'study';
+
+const LEVEL_COLORS: Record<JLPTLevel, { bg: string; text: string }> = {
+  N5: { bg: '#ecfdf5', text: '#059669' },
+  N4: { bg: '#eff6ff', text: '#2563eb' },
+  N3: { bg: '#fef3c7', text: '#d97706' },
+  N2: { bg: '#fce7f3', text: '#db2777' },
+  N1: { bg: '#fef2f2', text: '#dc2626' },
+};
 
 export function GrammarStudyPage({
   grammarCards,
@@ -20,32 +32,50 @@ export function GrammarStudyPage({
   getLessonsByLevel,
   getChildLessons,
   onGoHome,
+  settings,
 }: GrammarStudyPageProps) {
-  const [filterLevel, setFilterLevel] = useState<JLPTLevel | 'all'>('all');
-  const [filterLessonId, setFilterLessonId] = useState<string | 'all'>('all');
+  // View mode state
+  const [viewMode, setViewMode] = useState<ViewMode>('select');
+  const [selectedLevel, setSelectedLevel] = useState<JLPTLevel>('N5');
+  const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>([]);
+
+  // Grammar display settings with defaults
+  const frontShow = {
+    title: settings?.grammarFrontShowTitle ?? true,
+    formula: settings?.grammarFrontShowFormula ?? true,
+    meaning: settings?.grammarFrontShowMeaning ?? false,
+    explanation: settings?.grammarFrontShowExplanation ?? false,
+    examples: settings?.grammarFrontShowExamples ?? false,
+    level: settings?.grammarFrontShowLevel ?? true,
+    lesson: settings?.grammarFrontShowLesson ?? true,
+  };
+  const backShow = {
+    title: settings?.grammarBackShowTitle ?? false,
+    formula: settings?.grammarBackShowFormula ?? false,
+    meaning: settings?.grammarBackShowMeaning ?? true,
+    explanation: settings?.grammarBackShowExplanation ?? true,
+    examples: settings?.grammarBackShowExamples ?? true,
+  };
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isShuffled, setIsShuffled] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
 
-  // Filter cards based on level and lesson
+  // Filter cards based on selected lessons
   const filteredCards = useMemo(() => {
-    let result = [...grammarCards];
+    if (selectedLessonIds.length === 0) return [];
 
-    if (filterLevel !== 'all') {
-      result = result.filter(c => c.jlptLevel === filterLevel);
-    }
+    // Get all child lesson IDs for each selected lesson
+    const allLessonIds = new Set<string>();
+    selectedLessonIds.forEach(lessonId => {
+      allLessonIds.add(lessonId);
+      const children = getChildLessons(lessonId);
+      children.forEach(child => allLessonIds.add(child.id));
+    });
 
-    if (filterLessonId !== 'all') {
-      // Include cards from selected lesson and its children
-      const childLessons = getChildLessons(filterLessonId);
-      const lessonIds = [filterLessonId, ...childLessons.map(l => l.id)];
-      result = result.filter(c => lessonIds.includes(c.lessonId));
-    }
-
-    return result;
-  }, [grammarCards, filterLevel, filterLessonId, getChildLessons]);
+    return grammarCards.filter(card => allLessonIds.has(card.lessonId));
+  }, [grammarCards, selectedLessonIds, getChildLessons]);
 
   // Shuffled order
   const [shuffledIndices, setShuffledIndices] = useState<number[]>([]);
@@ -63,20 +93,11 @@ export function GrammarStudyPage({
 
   const currentCard = displayCards[currentIndex];
 
-  // Reset index when filter changes
-  useEffect(() => {
-    setCurrentIndex(0);
-    setIsFlipped(false);
-    setCompletedIds(new Set());
-  }, [filterLevel, filterLessonId]);
-
   const handleShuffle = () => {
     if (isShuffled) {
-      // Reset to original order
       setShuffledIndices(filteredCards.map((_, i) => i));
       setIsShuffled(false);
     } else {
-      // Fisher-Yates shuffle
       const indices = filteredCards.map((_, i) => i);
       for (let i = indices.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -127,12 +148,6 @@ export function GrammarStudyPage({
     speechSynthesis.speak(utterance);
   };
 
-  // Get lessons for filter dropdown
-  const lessonsForFilter = useMemo(() => {
-    if (filterLevel === 'all') return lessons.filter(l => !l.parentId);
-    return getLessonsByLevel(filterLevel).filter(l => !l.parentId);
-  }, [filterLevel, lessons, getLessonsByLevel]);
-
   // Get lesson name for display
   const getLessonName = (lessonId: string): string => {
     const lesson = lessons.find(l => l.id === lessonId);
@@ -144,57 +159,51 @@ export function GrammarStudyPage({
     return lesson.name;
   };
 
-  // Count by level
-  const countByLevel = useMemo(() => {
-    const counts: Record<string, number> = { all: grammarCards.length };
-    JLPT_LEVELS.forEach(level => {
-      counts[level] = grammarCards.filter(c => c.jlptLevel === level).length;
-    });
-    return counts;
-  }, [grammarCards]);
+  // Handle start from level selector
+  const handleStart = (lessonIds: string[], level: JLPTLevel) => {
+    setSelectedLessonIds(lessonIds);
+    setSelectedLevel(level);
+    setCurrentIndex(0);
+    setIsFlipped(false);
+    setIsShuffled(false);
+    setCompletedIds(new Set());
+    setViewMode('study');
+  };
 
-  if (grammarCards.length === 0) {
+  // Handle back to selection
+  const handleBackToSelect = () => {
+    setViewMode('select');
+    setSelectedLessonIds([]);
+  };
+
+  // Level selection screen
+  if (viewMode === 'select') {
     return (
-      <div className="grammar-study-page">
-        <div className="study-header">
-          <button className="btn btn-back" onClick={onGoHome}>
-            <Home size={18} /> Trang chủ
-          </button>
-          <h2>Luyện Ngữ Pháp</h2>
-        </div>
-        <div className="empty-state">
-          <div className="empty-state-icon">📚</div>
-          <h3>Chưa có ngữ pháp nào</h3>
-          <p>Vui lòng thêm ngữ pháp ở tab Quản Lí trước</p>
-        </div>
-      </div>
+      <LevelLessonSelector
+        type="grammar"
+        cards={grammarCards}
+        getLessonsByLevel={getLessonsByLevel}
+        getChildLessons={getChildLessons}
+        onStart={handleStart}
+        onGoHome={onGoHome}
+      />
     );
   }
 
+  // No cards available
   if (displayCards.length === 0) {
     return (
       <div className="grammar-study-page">
         <div className="study-header">
-          <button className="btn btn-back" onClick={onGoHome}>
-            <Home size={18} /> Trang chủ
+          <button className="btn btn-back" onClick={handleBackToSelect}>
+            <ArrowLeft size={18} /> Chọn bài khác
           </button>
           <h2>Luyện Ngữ Pháp</h2>
-        </div>
-        <div className="filter-section">
-          <div className="filter-row">
-            <label>Level:</label>
-            <select value={filterLevel} onChange={e => setFilterLevel(e.target.value as JLPTLevel | 'all')}>
-              <option value="all">Tất cả ({countByLevel.all})</option>
-              {JLPT_LEVELS.map(level => (
-                <option key={level} value={level}>{level} ({countByLevel[level]})</option>
-              ))}
-            </select>
-          </div>
         </div>
         <div className="empty-state">
           <div className="empty-state-icon">🔍</div>
           <h3>Không có ngữ pháp nào phù hợp</h3>
-          <p>Hãy thử chọn level hoặc bài học khác</p>
+          <p>Hãy thử chọn bài học khác</p>
         </div>
       </div>
     );
@@ -202,42 +211,22 @@ export function GrammarStudyPage({
 
   const progress = ((currentIndex + 1) / displayCards.length) * 100;
   const completedCount = completedIds.size;
+  const levelColors = LEVEL_COLORS[selectedLevel];
 
   return (
     <div className="grammar-study-page">
       <div className="study-header">
-        <button className="btn btn-back" onClick={onGoHome}>
-          <Home size={18} /> Trang chủ
+        <button className="btn btn-back" onClick={handleBackToSelect}>
+          <ArrowLeft size={18} /> Chọn bài khác
         </button>
+        <span
+          className="level-badge-grammar"
+          style={{ background: levelColors.bg, color: levelColors.text }}
+        >
+          {selectedLevel}
+        </span>
         <h2>Luyện Ngữ Pháp</h2>
-        <button className="btn btn-icon" onClick={() => setShowSettings(!showSettings)} title="Bộ lọc">
-          <Filter size={18} />
-        </button>
       </div>
-
-      {/* Filter section */}
-      {showSettings && (
-        <div className="filter-section">
-          <div className="filter-row">
-            <label>Level:</label>
-            <select value={filterLevel} onChange={e => { setFilterLevel(e.target.value as JLPTLevel | 'all'); setFilterLessonId('all'); }}>
-              <option value="all">Tất cả ({countByLevel.all})</option>
-              {JLPT_LEVELS.map(level => (
-                <option key={level} value={level}>{level} ({countByLevel[level]})</option>
-              ))}
-            </select>
-          </div>
-          <div className="filter-row">
-            <label>Bài học:</label>
-            <select value={filterLessonId} onChange={e => setFilterLessonId(e.target.value)}>
-              <option value="all">Tất cả</option>
-              {lessonsForFilter.map(lesson => (
-                <option key={lesson.id} value={lesson.id}>{lesson.name}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      )}
 
       {/* Progress bar */}
       <div className="study-progress">
@@ -254,33 +243,23 @@ export function GrammarStudyPage({
       {currentCard && (
         <div className={`grammar-card-container ${isFlipped ? 'flipped' : ''}`} onClick={handleFlip}>
           <div className="grammar-card">
-            {/* Front - Title and Formula */}
+            {/* Front side */}
             <div className="grammar-card-front">
-              <div className="grammar-level-badge">{currentCard.jlptLevel}</div>
-              <div className="grammar-lesson-badge">{getLessonName(currentCard.lessonId)}</div>
-              <h3 className="grammar-title">{currentCard.title}</h3>
-              <div className="grammar-formula">{currentCard.formula}</div>
-              <button
-                className="btn btn-speak"
-                onClick={(e) => { e.stopPropagation(); speakJapanese(currentCard.title); }}
-                title="Phát âm"
-              >
-                <Volume2 size={20} />
-              </button>
-              <p className="flip-hint">Nhấn để xem nghĩa</p>
-            </div>
-
-            {/* Back - Meaning, Explanation, Examples */}
-            <div className="grammar-card-back">
-              <div className="grammar-meaning">
-                <strong>Nghĩa:</strong> {currentCard.meaning}
-              </div>
-              {currentCard.explanation && (
+              {frontShow.level && <div className="grammar-level-badge">{currentCard.jlptLevel}</div>}
+              {frontShow.lesson && <div className="grammar-lesson-badge">{getLessonName(currentCard.lessonId)}</div>}
+              {frontShow.title && <h3 className="grammar-title">{currentCard.title}</h3>}
+              {frontShow.formula && <div className="grammar-formula">{currentCard.formula}</div>}
+              {frontShow.meaning && (
+                <div className="grammar-meaning">
+                  <strong>Nghĩa:</strong> {currentCard.meaning}
+                </div>
+              )}
+              {frontShow.explanation && currentCard.explanation && (
                 <div className="grammar-explanation">
                   <strong>Giải thích:</strong> {currentCard.explanation}
                 </div>
               )}
-              {currentCard.examples.length > 0 && (
+              {frontShow.examples && currentCard.examples.length > 0 && (
                 <div className="grammar-examples">
                   <strong>Ví dụ:</strong>
                   {currentCard.examples.map((ex, idx) => (
@@ -299,7 +278,50 @@ export function GrammarStudyPage({
                   ))}
                 </div>
               )}
-              <p className="flip-hint">Nhấn để quay lại</p>
+              <button
+                className="btn btn-speak"
+                onClick={(e) => { e.stopPropagation(); speakJapanese(currentCard.title); }}
+                title="Phát âm"
+              >
+                <Volume2 size={20} />
+              </button>
+              <p className="flip-hint">Nhấn để lật thẻ</p>
+            </div>
+
+            {/* Back side */}
+            <div className="grammar-card-back">
+              {backShow.title && <h3 className="grammar-title">{currentCard.title}</h3>}
+              {backShow.formula && <div className="grammar-formula">{currentCard.formula}</div>}
+              {backShow.meaning && (
+                <div className="grammar-meaning">
+                  <strong>Nghĩa:</strong> {currentCard.meaning}
+                </div>
+              )}
+              {backShow.explanation && currentCard.explanation && (
+                <div className="grammar-explanation">
+                  <strong>Giải thích:</strong> {currentCard.explanation}
+                </div>
+              )}
+              {backShow.examples && currentCard.examples.length > 0 && (
+                <div className="grammar-examples">
+                  <strong>Ví dụ:</strong>
+                  {currentCard.examples.map((ex, idx) => (
+                    <div key={idx} className="grammar-example">
+                      <div className="example-japanese">
+                        {ex.japanese}
+                        <button
+                          className="btn btn-speak-small"
+                          onClick={(e) => { e.stopPropagation(); speakJapanese(ex.japanese); }}
+                        >
+                          <Volume2 size={14} />
+                        </button>
+                      </div>
+                      <div className="example-vietnamese">{ex.vietnamese}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="flip-hint">Nhấn để lật thẻ</p>
             </div>
           </div>
         </div>
@@ -332,68 +354,57 @@ export function GrammarStudyPage({
 
       <style>{`
         .grammar-study-page {
-          padding: 1rem;
-          max-width: 800px;
+          padding: 0.5rem;
+          max-width: 100%;
           margin: 0 auto;
         }
 
         .study-header {
           display: flex;
           align-items: center;
-          gap: 1rem;
-          margin-bottom: 1rem;
+          gap: 0.5rem;
+          margin-bottom: 0.5rem;
+          padding: 0 0.25rem;
         }
 
         .study-header h2 {
           flex: 1;
           margin: 0;
+          font-size: 1.1rem;
         }
 
         .btn-back {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-        }
-
-        .filter-section {
+          gap: 0.25rem;
+          padding: 0.35rem 0.5rem;
+          font-size: 0.85rem;
           background: var(--card-bg, #fff);
-          border: 1px solid var(--border-color, #e2e8f0);
-          border-radius: 8px;
-          padding: 1rem;
-          margin-bottom: 1rem;
-        }
-
-        .filter-row {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          margin-bottom: 0.5rem;
-        }
-
-        .filter-row:last-child {
-          margin-bottom: 0;
-        }
-
-        .filter-row label {
-          min-width: 60px;
-          font-weight: 500;
-        }
-
-        .filter-row select {
-          flex: 1;
-          padding: 0.5rem;
           border: 1px solid var(--border-color, #ddd);
           border-radius: 6px;
+          cursor: pointer;
+        }
+
+        .btn-back:hover {
+          background: var(--bg-secondary, #f5f5f5);
+        }
+
+        .level-badge-grammar {
+          padding: 0.25rem 0.6rem;
+          border-radius: 6px;
+          font-size: 0.8rem;
+          font-weight: 700;
         }
 
         .study-progress {
-          margin-bottom: 1rem;
+          margin-bottom: 0.5rem;
+          padding: 0 0.25rem;
         }
 
         .progress-bar {
-          height: 8px;
+          height: 6px;
           background: var(--border-color, #e2e8f0);
-          border-radius: 4px;
+          border-radius: 3px;
           overflow: hidden;
         }
 
@@ -405,9 +416,9 @@ export function GrammarStudyPage({
 
         .progress-text {
           text-align: center;
-          font-size: 0.875rem;
+          font-size: 0.75rem;
           color: var(--text-secondary, #666);
-          margin-top: 0.5rem;
+          margin-top: 0.25rem;
         }
 
         .completed-count {
@@ -417,12 +428,12 @@ export function GrammarStudyPage({
         .grammar-card-container {
           perspective: 1000px;
           cursor: pointer;
-          margin-bottom: 1rem;
+          margin-bottom: 0.5rem;
         }
 
         .grammar-card {
           position: relative;
-          min-height: 350px;
+          min-height: 280px;
           transform-style: preserve-3d;
           transition: transform 0.5s ease;
         }
@@ -435,72 +446,79 @@ export function GrammarStudyPage({
         .grammar-card-back {
           position: absolute;
           width: 100%;
-          min-height: 350px;
+          min-height: 280px;
           backface-visibility: hidden;
           background: var(--card-bg, #fff);
           border: 1px solid var(--border-color, #e2e8f0);
-          border-radius: 12px;
-          padding: 1.5rem;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          border-radius: 8px;
+          padding: 0.75rem;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+          display: flex;
+          flex-direction: column;
         }
 
         .grammar-card-back {
           transform: rotateY(180deg);
           overflow-y: auto;
-          max-height: 400px;
+          max-height: 350px;
         }
 
         .grammar-level-badge {
           position: absolute;
-          top: 1rem;
-          left: 1rem;
+          top: 0.5rem;
+          left: 0.5rem;
           background: var(--primary-color, #4a90d9);
           color: white;
-          padding: 0.25rem 0.75rem;
-          border-radius: 12px;
-          font-size: 0.75rem;
+          padding: 0.15rem 0.5rem;
+          border-radius: 8px;
+          font-size: 0.7rem;
           font-weight: 600;
         }
 
         .grammar-lesson-badge {
           position: absolute;
-          top: 1rem;
-          right: 1rem;
+          top: 0.5rem;
+          right: 0.5rem;
           background: var(--border-color, #e2e8f0);
           color: var(--text-secondary, #666);
-          padding: 0.25rem 0.75rem;
-          border-radius: 12px;
-          font-size: 0.75rem;
+          padding: 0.15rem 0.5rem;
+          border-radius: 8px;
+          font-size: 0.7rem;
+          max-width: 45%;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .grammar-title {
           text-align: center;
-          font-size: 2rem;
-          margin: 2rem 0 1rem;
+          font-size: 1.6rem;
+          margin: 1.5rem 0 0.5rem;
           color: var(--text-primary, #1a1a1a);
         }
 
         .grammar-formula {
           text-align: center;
-          font-size: 1.25rem;
+          font-size: 1rem;
           color: var(--primary-color, #4a90d9);
           font-family: monospace;
           background: var(--bg-secondary, #f5f5f5);
-          padding: 0.75rem 1rem;
-          border-radius: 8px;
-          margin: 1rem auto;
+          padding: 0.5rem 0.75rem;
+          border-radius: 6px;
+          margin: 0.5rem auto;
           max-width: fit-content;
         }
 
         .btn-speak {
           display: block;
-          margin: 1rem auto;
-          padding: 0.5rem 1rem;
+          margin: 0.5rem auto;
+          padding: 0.35rem 0.75rem;
           background: var(--primary-color, #4a90d9);
           color: white;
           border: none;
-          border-radius: 8px;
+          border-radius: 6px;
           cursor: pointer;
+          font-size: 0.85rem;
         }
 
         .btn-speak:hover {
@@ -510,45 +528,47 @@ export function GrammarStudyPage({
         .flip-hint {
           text-align: center;
           color: var(--text-secondary, #999);
-          font-size: 0.875rem;
+          font-size: 0.75rem;
           margin-top: auto;
-          position: absolute;
-          bottom: 1rem;
-          left: 0;
-          right: 0;
+          padding-top: 0.5rem;
         }
 
         .grammar-meaning {
-          font-size: 1.1rem;
-          margin-bottom: 1rem;
-          line-height: 1.6;
+          font-size: 0.95rem;
+          margin-bottom: 0.5rem;
+          line-height: 1.5;
         }
 
         .grammar-explanation {
           background: var(--bg-secondary, #f5f5f5);
-          padding: 1rem;
-          border-radius: 8px;
-          margin-bottom: 1rem;
-          line-height: 1.6;
+          padding: 0.5rem 0.75rem;
+          border-radius: 6px;
+          margin-bottom: 0.5rem;
+          line-height: 1.5;
+          font-size: 0.9rem;
         }
 
         .grammar-examples {
-          margin-top: 1rem;
+          margin-top: 0.5rem;
+        }
+
+        .grammar-examples > strong {
+          font-size: 0.9rem;
         }
 
         .grammar-example {
           background: var(--bg-secondary, #f8f9fa);
-          padding: 0.75rem 1rem;
-          border-radius: 8px;
-          margin-top: 0.5rem;
-          border-left: 3px solid var(--primary-color, #4a90d9);
+          padding: 0.5rem 0.75rem;
+          border-radius: 6px;
+          margin-top: 0.35rem;
+          border-left: 2px solid var(--primary-color, #4a90d9);
         }
 
         .example-japanese {
-          font-size: 1.1rem;
+          font-size: 0.95rem;
           display: flex;
           align-items: center;
-          gap: 0.5rem;
+          gap: 0.35rem;
         }
 
         .btn-speak-small {
@@ -556,25 +576,26 @@ export function GrammarStudyPage({
           border: none;
           color: var(--primary-color, #4a90d9);
           cursor: pointer;
-          padding: 0.25rem;
+          padding: 0.15rem;
         }
 
         .example-vietnamese {
           color: var(--text-secondary, #666);
-          font-size: 0.95rem;
-          margin-top: 0.25rem;
+          font-size: 0.85rem;
+          margin-top: 0.15rem;
         }
 
         .study-controls {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 1rem;
+          gap: 0.5rem;
+          padding: 0 0.25rem;
         }
 
         .btn-nav {
-          width: 48px;
-          height: 48px;
+          width: 40px;
+          height: 40px;
           border-radius: 50%;
           display: flex;
           align-items: center;
@@ -598,7 +619,7 @@ export function GrammarStudyPage({
 
         .study-actions {
           display: flex;
-          gap: 0.5rem;
+          gap: 0.35rem;
           flex-wrap: wrap;
           justify-content: center;
         }
@@ -606,13 +627,13 @@ export function GrammarStudyPage({
         .btn-action {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          padding: 0.5rem 1rem;
+          gap: 0.25rem;
+          padding: 0.35rem 0.6rem;
           border: 1px solid var(--border-color, #ddd);
           background: var(--card-bg, #fff);
-          border-radius: 8px;
+          border-radius: 6px;
           cursor: pointer;
-          font-size: 0.875rem;
+          font-size: 0.8rem;
           transition: all 0.2s;
         }
 
@@ -633,42 +654,52 @@ export function GrammarStudyPage({
           color: white;
         }
 
-        .btn-icon {
-          padding: 0.5rem;
-          background: none;
-          border: 1px solid var(--border-color, #ddd);
-          border-radius: 8px;
-          cursor: pointer;
-        }
-
         .empty-state {
           text-align: center;
-          padding: 3rem;
+          padding: 2rem 1rem;
         }
 
         .empty-state-icon {
-          font-size: 4rem;
-          margin-bottom: 1rem;
+          font-size: 3rem;
+          margin-bottom: 0.75rem;
         }
 
         @media (max-width: 640px) {
+          .grammar-study-page {
+            padding: 0.35rem;
+          }
+
+          .grammar-card {
+            min-height: 250px;
+          }
+
           .grammar-card-front,
           .grammar-card-back {
-            min-height: 300px;
+            min-height: 250px;
+            padding: 0.5rem;
           }
 
           .grammar-title {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
+            margin: 1.25rem 0 0.35rem;
+          }
+
+          .grammar-formula {
+            font-size: 0.9rem;
           }
 
           .study-actions {
-            flex-direction: column;
-            width: 100%;
+            gap: 0.25rem;
           }
 
           .btn-action {
-            width: 100%;
-            justify-content: center;
+            padding: 0.3rem 0.5rem;
+            font-size: 0.75rem;
+          }
+
+          .btn-nav {
+            width: 36px;
+            height: 36px;
           }
         }
       `}</style>
