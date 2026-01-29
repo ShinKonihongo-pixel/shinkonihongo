@@ -2,7 +2,7 @@
 // Premium UI with Japanese-inspired design and glassmorphism effects
 
 import { useState, useMemo } from 'react';
-import { ChevronRight, Check, BookOpen, Layers, Play, Sparkles, Star, GraduationCap, Target } from 'lucide-react';
+import { ChevronRight, Check, BookOpen, Layers, Play, Sparkles, Star, GraduationCap } from 'lucide-react';
 import type { JLPTLevel, Lesson, Flashcard, GrammarCard } from '../../types/flashcard';
 
 interface LevelLessonSelectorProps {
@@ -84,11 +84,6 @@ export function LevelLessonSelector({
     });
     return counts;
   }, [cards, type]);
-
-  // Total cards
-  const totalCards = useMemo(() => {
-    return Object.values(countByLevel).reduce((sum, count) => sum + count, 0);
-  }, [countByLevel]);
 
   // Get lessons for selected level (only parent lessons)
   const levelLessons = useMemo(() => {
@@ -177,17 +172,6 @@ export function LevelLessonSelector({
                 {type === 'vocabulary' ? 'Học Từ Vựng' : 'Học Ngữ Pháp'}
               </h1>
               <p className="header-subtitle">Chọn cấp độ JLPT để bắt đầu</p>
-            </div>
-            <div className="header-stats">
-              <div className="stat-item">
-                <Target size={14} />
-                <span>{totalCards} {type === 'vocabulary' ? 'từ vựng' : 'mẫu câu'}</span>
-              </div>
-              <div className="stat-divider" />
-              <div className="stat-item">
-                <Star size={14} />
-                <span>5 cấp độ</span>
-              </div>
             </div>
           </header>
 
@@ -482,28 +466,6 @@ export function LevelLessonSelector({
           color: rgba(255, 255, 255, 0.5);
           font-size: 1rem;
           margin: 0;
-        }
-
-        .header-stats {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          margin-top: 0.5rem;
-        }
-
-        .stat-item {
-          display: flex;
-          align-items: center;
-          gap: 0.4rem;
-          color: rgba(255, 255, 255, 0.6);
-          font-size: 0.85rem;
-        }
-
-        .stat-divider {
-          width: 4px;
-          height: 4px;
-          background: rgba(255, 255, 255, 0.3);
-          border-radius: 50%;
         }
 
         /* ========== Level Cards Grid ========== */
@@ -968,14 +930,6 @@ export function LevelLessonSelector({
 
           .header-subtitle {
             font-size: 0.85rem;
-          }
-
-          .header-stats {
-            gap: 0.75rem;
-          }
-
-          .stat-item {
-            font-size: 0.75rem;
           }
 
           .levels-grid {
