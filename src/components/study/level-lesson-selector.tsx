@@ -1,8 +1,8 @@
 // Level and lesson selection component for study pages
-// Shows level selection first, then lessons for selected level
+// Premium UI with Japanese-inspired design and glassmorphism effects
 
 import { useState, useMemo } from 'react';
-import { ChevronRight, Check, BookOpen, Layers, Play, Home } from 'lucide-react';
+import { ChevronRight, Check, BookOpen, Layers, Play, Home, Sparkles, Star } from 'lucide-react';
 import type { JLPTLevel, Lesson, Flashcard, GrammarCard } from '../../types/flashcard';
 
 interface LevelLessonSelectorProps {
@@ -16,12 +16,49 @@ interface LevelLessonSelectorProps {
 
 const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 
-const LEVEL_COLORS: Record<JLPTLevel, { bg: string; border: string; text: string }> = {
-  N5: { bg: '#ecfdf5', border: '#10b981', text: '#059669' },
-  N4: { bg: '#eff6ff', border: '#3b82f6', text: '#2563eb' },
-  N3: { bg: '#fef3c7', border: '#f59e0b', text: '#d97706' },
-  N2: { bg: '#fce7f3', border: '#ec4899', text: '#db2777' },
-  N1: { bg: '#fef2f2', border: '#ef4444', text: '#dc2626' },
+// Premium color palette with gradients
+const LEVEL_THEMES: Record<JLPTLevel, {
+  gradient: string;
+  glow: string;
+  accent: string;
+  light: string;
+  icon: string;
+}> = {
+  N5: {
+    gradient: 'linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%)',
+    glow: 'rgba(16, 185, 129, 0.5)',
+    accent: '#10b981',
+    light: '#d1fae5',
+    icon: '🌱'
+  },
+  N4: {
+    gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%)',
+    glow: 'rgba(59, 130, 246, 0.5)',
+    accent: '#3b82f6',
+    light: '#dbeafe',
+    icon: '🌿'
+  },
+  N3: {
+    gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%)',
+    glow: 'rgba(245, 158, 11, 0.5)',
+    accent: '#f59e0b',
+    light: '#fef3c7',
+    icon: '🌸'
+  },
+  N2: {
+    gradient: 'linear-gradient(135deg, #ec4899 0%, #db2777 50%, #be185d 100%)',
+    glow: 'rgba(236, 72, 153, 0.5)',
+    accent: '#ec4899',
+    light: '#fce7f3',
+    icon: '🔥'
+  },
+  N1: {
+    gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%)',
+    glow: 'rgba(239, 68, 68, 0.5)',
+    accent: '#ef4444',
+    light: '#fee2e2',
+    icon: '👑'
+  },
 };
 
 export function LevelLessonSelector({
@@ -34,6 +71,7 @@ export function LevelLessonSelector({
 }: LevelLessonSelectorProps) {
   const [selectedLevel, setSelectedLevel] = useState<JLPTLevel | null>(null);
   const [selectedLessons, setSelectedLessons] = useState<string[]>([]);
+  const [hoveredLevel, setHoveredLevel] = useState<JLPTLevel | null>(null);
 
   // Count cards by level
   const countByLevel = useMemo(() => {
@@ -52,7 +90,6 @@ export function LevelLessonSelector({
   const levelLessons = useMemo(() => {
     if (!selectedLevel) return [];
     const allLessons = getLessonsByLevel(selectedLevel);
-    // Only show parent lessons (no parentId or parentId is null)
     return allLessons.filter(l => !l.parentId);
   }, [selectedLevel, getLessonsByLevel]);
 
@@ -81,7 +118,6 @@ export function LevelLessonSelector({
     return total;
   }, [selectedLessons, cardsPerLesson]);
 
-  // Toggle lesson selection
   const toggleLesson = (lessonId: string) => {
     setSelectedLessons(prev =>
       prev.includes(lessonId)
@@ -90,464 +126,885 @@ export function LevelLessonSelector({
     );
   };
 
-  // Select all lessons
   const selectAllLessons = () => {
-    setSelectedLessons(levelLessons.map(l => l.id));
+    const availableLessons = levelLessons.filter(l => (cardsPerLesson[l.id] || 0) > 0);
+    setSelectedLessons(availableLessons.map(l => l.id));
   };
 
-  // Deselect all
   const deselectAllLessons = () => {
     setSelectedLessons([]);
   };
 
-  // Handle start
   const handleStart = () => {
     if (selectedLevel && selectedLessons.length > 0) {
       onStart(selectedLessons, selectedLevel);
     }
   };
 
-  // Back to level selection
   const backToLevelSelect = () => {
     setSelectedLevel(null);
     setSelectedLessons([]);
   };
 
   return (
-    <div className="level-lesson-selector">
+    <div className="premium-selector">
+      {/* Animated Background */}
+      <div className="bg-aurora" />
+      <div className="bg-particles" />
+
+      {/* Home Button - Top Right */}
+      <button className="home-btn" onClick={onGoHome}>
+        <Home size={16} />
+        <span>Trang chủ</span>
+      </button>
+
       {/* Level Selection Screen */}
       {!selectedLevel && (
-        <div className="selector-screen">
-          <div className="selector-card">
-            <div className="selector-header">
-              <div className="selector-icon">
-                {type === 'vocabulary' ? <Layers size={32} /> : <BookOpen size={32} />}
-              </div>
-              <h1>{type === 'vocabulary' ? 'Học Từ Vựng' : 'Học Ngữ Pháp'}</h1>
-              <p className="selector-subtitle">Chọn cấp độ JLPT để bắt đầu</p>
+        <div className="selector-container">
+          {/* Header */}
+          <header className="selector-header">
+            <div className="header-icon">
+              {type === 'vocabulary' ? <Layers size={28} /> : <BookOpen size={28} />}
+              <Sparkles className="sparkle-icon" size={14} />
             </div>
+            <h1 className="header-title">
+              {type === 'vocabulary' ? 'Học Từ Vựng' : 'Học Ngữ Pháp'}
+            </h1>
+            <p className="header-subtitle">Chọn cấp độ JLPT để bắt đầu hành trình</p>
+          </header>
 
-            <div className="level-grid">
-              {JLPT_LEVELS.map(level => {
-                const colors = LEVEL_COLORS[level];
-                const count = countByLevel[level];
-                const disabled = count === 0;
+          {/* Level Cards Grid */}
+          <div className="levels-grid">
+            {JLPT_LEVELS.map((level, index) => {
+              const theme = LEVEL_THEMES[level];
+              const count = countByLevel[level];
+              const disabled = count === 0;
+              const isHovered = hoveredLevel === level;
 
-                return (
-                  <button
-                    key={level}
-                    className={`level-card ${disabled ? 'disabled' : ''}`}
-                    style={{
-                      '--level-bg': colors.bg,
-                      '--level-border': colors.border,
-                      '--level-text': colors.text,
-                    } as React.CSSProperties}
-                    onClick={() => !disabled && setSelectedLevel(level)}
-                    disabled={disabled}
-                  >
-                    <span className="level-name">{level}</span>
-                    <span className="level-count">{count} {type === 'vocabulary' ? 'từ' : 'mẫu'}</span>
-                    <ChevronRight size={20} className="level-arrow" />
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="selector-footer">
-              <button className="selector-btn ghost" onClick={onGoHome}>
-                <Home size={18} /> Trang chủ
-              </button>
-            </div>
+              return (
+                <button
+                  key={level}
+                  className={`level-card ${disabled ? 'disabled' : ''} ${isHovered ? 'hovered' : ''}`}
+                  style={{
+                    '--card-gradient': theme.gradient,
+                    '--card-glow': theme.glow,
+                    '--card-accent': theme.accent,
+                    '--card-light': theme.light,
+                    '--delay': `${index * 0.1}s`,
+                  } as React.CSSProperties}
+                  onClick={() => !disabled && setSelectedLevel(level)}
+                  onMouseEnter={() => setHoveredLevel(level)}
+                  onMouseLeave={() => setHoveredLevel(null)}
+                  disabled={disabled}
+                >
+                  <div className="card-glow" />
+                  <div className="card-content">
+                    <span className="card-icon">{theme.icon}</span>
+                    <span className="card-level">{level}</span>
+                    <span className="card-count">
+                      {count} {type === 'vocabulary' ? 'từ vựng' : 'mẫu câu'}
+                    </span>
+                    {!disabled && (
+                      <div className="card-arrow">
+                        <ChevronRight size={18} />
+                      </div>
+                    )}
+                  </div>
+                  {!disabled && <div className="card-shine" />}
+                </button>
+              );
+            })}
           </div>
+
+          {/* Decorative Elements */}
+          <div className="deco-circle deco-1" />
+          <div className="deco-circle deco-2" />
         </div>
       )}
 
       {/* Lesson Selection Screen */}
       {selectedLevel && (
-        <div className="selector-screen">
-          <div className="selector-card lesson-card">
-            <div className="selector-header compact">
-              <button className="back-btn" onClick={backToLevelSelect}>
-                ← Chọn lại cấp độ
-              </button>
-              <div className="level-badge" style={{
-                background: LEVEL_COLORS[selectedLevel].bg,
-                color: LEVEL_COLORS[selectedLevel].text,
-                borderColor: LEVEL_COLORS[selectedLevel].border,
-              }}>
-                {selectedLevel}
-              </div>
-              <h2>Chọn bài học</h2>
-              <p className="selector-subtitle">
-                {selectedLessons.length > 0
-                  ? `Đã chọn ${selectedLessons.length} bài (${totalSelectedCards} ${type === 'vocabulary' ? 'từ' : 'mẫu'})`
-                  : 'Chọn một hoặc nhiều bài để học'}
-              </p>
+        <div className="lesson-container">
+          {/* Lesson Header */}
+          <header className="lesson-header" style={{
+            '--header-gradient': LEVEL_THEMES[selectedLevel].gradient,
+            '--header-glow': LEVEL_THEMES[selectedLevel].glow,
+          } as React.CSSProperties}>
+            <button className="back-btn" onClick={backToLevelSelect}>
+              <ChevronRight size={16} style={{ transform: 'rotate(180deg)' }} />
+              <span>Chọn lại cấp độ</span>
+            </button>
+
+            <div className="level-indicator">
+              <span className="level-icon">{LEVEL_THEMES[selectedLevel].icon}</span>
+              <span className="level-text">{selectedLevel}</span>
             </div>
 
-            {/* Quick actions */}
-            <div className="quick-actions">
-              <button className="quick-btn" onClick={selectAllLessons}>
-                Chọn tất cả
-              </button>
-              <button className="quick-btn" onClick={deselectAllLessons} disabled={selectedLessons.length === 0}>
-                Bỏ chọn
-              </button>
-            </div>
+            <h2 className="lesson-title">Chọn bài học</h2>
+            <p className="lesson-subtitle">
+              {selectedLessons.length > 0
+                ? `Đã chọn ${selectedLessons.length} bài • ${totalSelectedCards} ${type === 'vocabulary' ? 'từ' : 'mẫu'}`
+                : 'Chọn một hoặc nhiều bài để bắt đầu'}
+            </p>
+          </header>
 
-            {/* Lessons list */}
-            <div className="lessons-list">
-              {levelLessons.length === 0 ? (
-                <div className="empty-lessons">
-                  <p>Không có bài học nào cho cấp độ này</p>
-                </div>
-              ) : (
-                levelLessons.map(lesson => {
-                  const isSelected = selectedLessons.includes(lesson.id);
-                  const cardCount = cardsPerLesson[lesson.id] || 0;
-
-                  return (
-                    <button
-                      key={lesson.id}
-                      className={`lesson-item ${isSelected ? 'selected' : ''} ${cardCount === 0 ? 'disabled' : ''}`}
-                      onClick={() => cardCount > 0 && toggleLesson(lesson.id)}
-                      disabled={cardCount === 0}
-                    >
-                      <div className="lesson-check">
-                        {isSelected && <Check size={16} />}
-                      </div>
-                      <div className="lesson-info">
-                        <span className="lesson-name">{lesson.name}</span>
-                        <span className="lesson-count">{cardCount} {type === 'vocabulary' ? 'từ' : 'mẫu'}</span>
-                      </div>
-                    </button>
-                  );
-                })
-              )}
-            </div>
-
-            <div className="selector-footer">
-              <button className="selector-btn ghost" onClick={onGoHome}>
-                <Home size={18} /> Thoát
-              </button>
-              <button
-                className="selector-btn primary"
-                onClick={handleStart}
-                disabled={selectedLessons.length === 0}
-              >
-                <Play size={18} /> Bắt đầu học ({totalSelectedCards} {type === 'vocabulary' ? 'từ' : 'mẫu'})
-              </button>
-            </div>
+          {/* Quick Actions */}
+          <div className="quick-actions">
+            <button className="action-btn" onClick={selectAllLessons}>
+              <Star size={14} />
+              Chọn tất cả
+            </button>
+            <button
+              className="action-btn"
+              onClick={deselectAllLessons}
+              disabled={selectedLessons.length === 0}
+            >
+              Bỏ chọn
+            </button>
           </div>
+
+          {/* Lessons Grid */}
+          <div className="lessons-grid">
+            {levelLessons.length === 0 ? (
+              <div className="empty-state">
+                <BookOpen size={48} strokeWidth={1} />
+                <p>Chưa có bài học nào</p>
+              </div>
+            ) : (
+              levelLessons.map((lesson, index) => {
+                const isSelected = selectedLessons.includes(lesson.id);
+                const cardCount = cardsPerLesson[lesson.id] || 0;
+                const disabled = cardCount === 0;
+
+                return (
+                  <button
+                    key={lesson.id}
+                    className={`lesson-card ${isSelected ? 'selected' : ''} ${disabled ? 'disabled' : ''}`}
+                    style={{
+                      '--accent': LEVEL_THEMES[selectedLevel].accent,
+                      '--glow': LEVEL_THEMES[selectedLevel].glow,
+                      '--delay': `${index * 0.05}s`,
+                    } as React.CSSProperties}
+                    onClick={() => !disabled && toggleLesson(lesson.id)}
+                    disabled={disabled}
+                  >
+                    <div className={`check-box ${isSelected ? 'checked' : ''}`}>
+                      {isSelected && <Check size={14} strokeWidth={3} />}
+                    </div>
+                    <div className="lesson-info">
+                      <span className="lesson-name">{lesson.name}</span>
+                      <span className="lesson-count">
+                        {cardCount} {type === 'vocabulary' ? 'từ vựng' : 'mẫu câu'}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+
+          {/* Footer */}
+          <footer className="lesson-footer">
+            <button className="footer-btn secondary" onClick={onGoHome}>
+              <Home size={16} />
+              Thoát
+            </button>
+            <button
+              className="footer-btn primary"
+              onClick={handleStart}
+              disabled={selectedLessons.length === 0}
+              style={{
+                '--btn-gradient': LEVEL_THEMES[selectedLevel].gradient,
+                '--btn-glow': LEVEL_THEMES[selectedLevel].glow,
+              } as React.CSSProperties}
+            >
+              <Play size={16} />
+              <span>Bắt đầu học</span>
+              {totalSelectedCards > 0 && (
+                <span className="btn-count">{totalSelectedCards}</span>
+              )}
+            </button>
+          </footer>
         </div>
       )}
 
       <style>{`
-        .level-lesson-selector {
-          min-height: 100vh;
-          background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        /* ========== Premium Selector Base ========== */
+        .premium-selector {
+          position: relative;
+          width: 100%;
+          height: 100vh;
+          overflow: hidden;
+          background: linear-gradient(135deg, #0c0a1d 0%, #1a1333 50%, #0f172a 100%);
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        /* ========== Animated Background ========== */
+        .bg-aurora {
+          position: absolute;
+          inset: 0;
+          background:
+            radial-gradient(ellipse 80% 50% at 20% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+            radial-gradient(ellipse 60% 40% at 80% 80%, rgba(236, 72, 153, 0.12) 0%, transparent 50%),
+            radial-gradient(ellipse 50% 30% at 50% 50%, rgba(16, 185, 129, 0.08) 0%, transparent 50%);
+          animation: aurora 15s ease-in-out infinite alternate;
+        }
+
+        @keyframes aurora {
+          0% { opacity: 0.8; transform: scale(1) rotate(0deg); }
+          100% { opacity: 1; transform: scale(1.1) rotate(3deg); }
+        }
+
+        .bg-particles {
+          position: absolute;
+          inset: 0;
+          background-image:
+            radial-gradient(circle at 25% 25%, rgba(255,255,255,0.02) 1px, transparent 1px),
+            radial-gradient(circle at 75% 75%, rgba(255,255,255,0.015) 1px, transparent 1px);
+          background-size: 60px 60px, 90px 90px;
+          animation: particles 20s linear infinite;
+        }
+
+        @keyframes particles {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(-60px); }
+        }
+
+        /* ========== Home Button ========== */
+        .home-btn {
+          position: absolute;
+          top: 1rem;
+          right: 1rem;
+          z-index: 100;
           display: flex;
           align-items: center;
-          justify-content: center;
-          padding: 1rem;
+          gap: 0.5rem;
+          padding: 0.6rem 1rem;
+          background: rgba(255, 255, 255, 0.08);
+          backdrop-filter: blur(12px);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 12px;
+          color: rgba(255, 255, 255, 0.85);
+          font-size: 0.85rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .selector-screen {
-          width: 100%;
-          max-width: 500px;
+        .home-btn:hover {
+          background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.25);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
         }
 
-        .selector-card {
-          background: rgba(255,255,255,0.95);
-          backdrop-filter: blur(20px);
-          border-radius: 24px;
-          overflow: hidden;
-          box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-        }
-
-        .selector-card.lesson-card {
-          max-height: 85vh;
+        /* ========== Level Selection Container ========== */
+        .selector-container {
+          position: relative;
+          z-index: 10;
+          height: 100vh;
           display: flex;
           flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 2rem;
         }
 
+        /* ========== Header ========== */
         .selector-header {
-          padding: 2rem 2rem 1.5rem;
-          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
           text-align: center;
-          color: white;
+          margin-bottom: 2.5rem;
+          animation: fadeInDown 0.6s ease-out;
         }
 
-        .selector-header.compact {
-          padding: 1.5rem 2rem 1rem;
+        @keyframes fadeInDown {
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
-        .selector-icon {
+        .header-icon {
+          position: relative;
           width: 64px;
           height: 64px;
-          background: rgba(255,255,255,0.2);
-          border-radius: 16px;
+          margin: 0 auto 1rem;
+          background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 20px;
           display: flex;
           align-items: center;
           justify-content: center;
-          margin: 0 auto 1rem;
+          color: white;
+          box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);
         }
 
-        .selector-header h1 {
-          font-size: 1.75rem;
+        .sparkle-icon {
+          position: absolute;
+          top: -4px;
+          right: -4px;
+          color: #fbbf24;
+          animation: sparkle 2s ease-in-out infinite;
+        }
+
+        @keyframes sparkle {
+          0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+          50% { transform: scale(1.2) rotate(15deg); opacity: 0.8; }
+        }
+
+        .header-title {
+          font-size: 2rem;
           font-weight: 800;
+          background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.8) 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          margin: 0 0 0.5rem;
+          letter-spacing: -0.02em;
+        }
+
+        .header-subtitle {
+          color: rgba(255, 255, 255, 0.6);
+          font-size: 0.95rem;
           margin: 0;
         }
 
-        .selector-header h2 {
-          font-size: 1.35rem;
-          font-weight: 700;
-          margin: 0.75rem 0 0;
+        /* ========== Level Cards Grid ========== */
+        .levels-grid {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 1rem;
+          max-width: 800px;
+          width: 100%;
+          animation: fadeInUp 0.6s ease-out 0.2s both;
         }
 
-        .selector-subtitle {
-          color: rgba(255,255,255,0.85);
-          margin: 0.5rem 0 0;
-          font-size: 0.95rem;
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ========== Level Card ========== */
+        .level-card {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 1.5rem 1rem;
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(12px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 20px;
+          cursor: pointer;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          overflow: hidden;
+          animation: cardAppear 0.5s ease-out var(--delay) both;
+        }
+
+        @keyframes cardAppear {
+          from { opacity: 0; transform: translateY(30px) scale(0.9); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .level-card .card-glow {
+          position: absolute;
+          inset: -2px;
+          background: var(--card-gradient);
+          border-radius: 22px;
+          opacity: 0;
+          transition: opacity 0.4s ease;
+          z-index: -1;
+        }
+
+        .level-card:hover:not(:disabled) .card-glow {
+          opacity: 0.4;
+        }
+
+        .level-card:hover:not(:disabled) {
+          transform: translateY(-8px) scale(1.02);
+          border-color: rgba(255, 255, 255, 0.25);
+          box-shadow:
+            0 20px 40px -10px var(--card-glow),
+            0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        .level-card:disabled {
+          opacity: 0.35;
+          cursor: not-allowed;
+        }
+
+        .level-card .card-content {
+          position: relative;
+          z-index: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .level-card .card-icon {
+          font-size: 1.75rem;
+          margin-bottom: 0.25rem;
+        }
+
+        .level-card .card-level {
+          font-size: 1.75rem;
+          font-weight: 900;
+          background: var(--card-gradient);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          letter-spacing: -0.02em;
+        }
+
+        .level-card .card-count {
+          font-size: 0.75rem;
+          color: rgba(255, 255, 255, 0.6);
+          font-weight: 500;
+          text-align: center;
+        }
+
+        .level-card .card-arrow {
+          position: absolute;
+          bottom: -30px;
+          opacity: 0;
+          color: var(--card-accent);
+          transition: all 0.3s ease;
+        }
+
+        .level-card:hover:not(:disabled) .card-arrow {
+          bottom: -20px;
+          opacity: 1;
+        }
+
+        .level-card .card-shine {
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+          transition: left 0.6s ease;
+        }
+
+        .level-card:hover:not(:disabled) .card-shine {
+          left: 100%;
+        }
+
+        /* ========== Decorative Elements ========== */
+        .deco-circle {
+          position: absolute;
+          border-radius: 50%;
+          pointer-events: none;
+        }
+
+        .deco-1 {
+          width: 300px;
+          height: 300px;
+          bottom: -100px;
+          left: -100px;
+          background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+          animation: float1 8s ease-in-out infinite;
+        }
+
+        .deco-2 {
+          width: 200px;
+          height: 200px;
+          top: -50px;
+          right: -50px;
+          background: radial-gradient(circle, rgba(236, 72, 153, 0.1) 0%, transparent 70%);
+          animation: float2 10s ease-in-out infinite;
+        }
+
+        @keyframes float1 {
+          0%, 100% { transform: translate(0, 0); }
+          50% { transform: translate(20px, -20px); }
+        }
+
+        @keyframes float2 {
+          0%, 100% { transform: translate(0, 0); }
+          50% { transform: translate(-15px, 15px); }
+        }
+
+        /* ========== Lesson Container ========== */
+        .lesson-container {
+          position: relative;
+          z-index: 10;
+          height: 100vh;
+          display: flex;
+          flex-direction: column;
+          animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        /* ========== Lesson Header ========== */
+        .lesson-header {
+          position: relative;
+          padding: 1.25rem 1.5rem;
+          background: var(--header-gradient);
+          text-align: center;
+          overflow: hidden;
+        }
+
+        .lesson-header::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2.5L25 18l-5 2.5z' fill='%23fff' fill-opacity='0.03'/%3E%3C/svg%3E");
         }
 
         .back-btn {
-          background: rgba(255,255,255,0.2);
-          border: none;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          padding: 0.45rem 0.9rem;
+          background: rgba(255, 255, 255, 0.15);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 10px;
           color: white;
-          padding: 0.5rem 1rem;
-          border-radius: 8px;
-          font-size: 0.85rem;
+          font-size: 0.8rem;
+          font-weight: 500;
           cursor: pointer;
+          transition: all 0.2s;
           margin-bottom: 0.75rem;
         }
 
         .back-btn:hover {
-          background: rgba(255,255,255,0.3);
+          background: rgba(255, 255, 255, 0.25);
+          transform: translateX(-4px);
         }
 
-        .level-badge {
-          display: inline-block;
-          padding: 0.35rem 1rem;
-          border-radius: 999px;
-          font-weight: 700;
-          font-size: 0.9rem;
-          border: 2px solid;
+        .level-indicator {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.4rem 1rem;
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 50px;
           margin-bottom: 0.5rem;
         }
 
-        .level-grid {
-          padding: 1.5rem 2rem;
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
+        .level-icon {
+          font-size: 1.1rem;
         }
 
-        .level-card {
+        .level-text {
+          font-weight: 800;
+          color: white;
+          font-size: 0.95rem;
+        }
+
+        .lesson-title {
+          font-size: 1.35rem;
+          font-weight: 700;
+          color: white;
+          margin: 0.25rem 0;
+        }
+
+        .lesson-subtitle {
+          font-size: 0.85rem;
+          color: rgba(255, 255, 255, 0.85);
+          margin: 0;
+        }
+
+        /* ========== Quick Actions ========== */
+        .quick-actions {
+          display: flex;
+          gap: 0.5rem;
+          padding: 0.75rem 1rem;
+          background: rgba(255, 255, 255, 0.03);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .action-btn {
           display: flex;
           align-items: center;
-          gap: 1rem;
-          padding: 1rem 1.25rem;
-          background: var(--level-bg);
-          border: 2px solid var(--level-border);
-          border-radius: 14px;
+          gap: 0.4rem;
+          padding: 0.5rem 0.9rem;
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 8px;
+          color: rgba(255, 255, 255, 0.8);
+          font-size: 0.8rem;
+          font-weight: 500;
           cursor: pointer;
           transition: all 0.2s;
         }
 
-        .level-card:hover:not(:disabled) {
-          transform: translateX(4px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        .action-btn:hover:not(:disabled) {
+          background: rgba(255, 255, 255, 0.15);
         }
 
-        .level-card:disabled {
+        .action-btn:disabled {
           opacity: 0.4;
           cursor: not-allowed;
         }
 
-        .level-name {
-          font-size: 1.35rem;
-          font-weight: 800;
-          color: var(--level-text);
-        }
-
-        .level-count {
-          flex: 1;
-          font-size: 0.9rem;
-          color: #6b7280;
-        }
-
-        .level-arrow {
-          color: var(--level-text);
-        }
-
-        .quick-actions {
-          display: flex;
-          gap: 0.5rem;
-          padding: 0.75rem 1.5rem;
-          border-bottom: 1px solid #e5e7eb;
-        }
-
-        .quick-btn {
-          padding: 0.5rem 1rem;
-          background: #f3f4f6;
-          border: none;
-          border-radius: 8px;
-          font-size: 0.85rem;
-          color: #4b5563;
-          cursor: pointer;
-        }
-
-        .quick-btn:hover:not(:disabled) {
-          background: #e5e7eb;
-        }
-
-        .quick-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .lessons-list {
+        /* ========== Lessons Grid ========== */
+        .lessons-grid {
           flex: 1;
           overflow-y: auto;
-          padding: 1rem 1.5rem;
+          padding: 1rem;
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+          gap: 0.65rem;
+          align-content: start;
+        }
+
+        .lessons-grid::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        .lessons-grid::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.02);
+        }
+
+        .lessons-grid::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 3px;
+        }
+
+        .empty-state {
+          grid-column: 1 / -1;
           display: flex;
           flex-direction: column;
-          gap: 0.5rem;
-          max-height: 350px;
+          align-items: center;
+          justify-content: center;
+          padding: 3rem;
+          color: rgba(255, 255, 255, 0.4);
+          gap: 1rem;
         }
 
-        .empty-lessons {
-          text-align: center;
-          padding: 2rem;
-          color: #6b7280;
-        }
-
-        .lesson-item {
+        /* ========== Lesson Card ========== */
+        .lesson-card {
           display: flex;
           align-items: center;
           gap: 0.75rem;
-          padding: 0.85rem 1rem;
-          background: #f9fafb;
-          border: 2px solid transparent;
-          border-radius: 10px;
+          padding: 0.9rem 1rem;
+          background: rgba(255, 255, 255, 0.04);
+          backdrop-filter: blur(8px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 14px;
           cursor: pointer;
-          transition: all 0.15s;
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
           text-align: left;
+          animation: lessonAppear 0.3s ease-out var(--delay) both;
         }
 
-        .lesson-item:hover:not(:disabled) {
-          background: #f3f4f6;
+        @keyframes lessonAppear {
+          from { opacity: 0; transform: translateX(-10px); }
+          to { opacity: 1; transform: translateX(0); }
         }
 
-        .lesson-item.selected {
-          background: #ecfdf5;
-          border-color: #10b981;
+        .lesson-card:hover:not(:disabled) {
+          background: rgba(255, 255, 255, 0.08);
+          border-color: rgba(255, 255, 255, 0.15);
+          transform: translateX(4px);
         }
 
-        .lesson-item:disabled {
-          opacity: 0.4;
+        .lesson-card.selected {
+          background: rgba(var(--accent-rgb, 16, 185, 129), 0.15);
+          border-color: var(--accent);
+          box-shadow: 0 0 20px -5px var(--glow);
+        }
+
+        .lesson-card:disabled {
+          opacity: 0.3;
           cursor: not-allowed;
         }
 
-        .lesson-check {
-          width: 24px;
-          height: 24px;
-          border: 2px solid #d1d5db;
-          border-radius: 6px;
+        .check-box {
+          width: 22px;
+          height: 22px;
+          border: 2px solid rgba(255, 255, 255, 0.25);
+          border-radius: 7px;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: white;
+          transition: all 0.2s;
           flex-shrink: 0;
         }
 
-        .lesson-item.selected .lesson-check {
-          background: #10b981;
-          border-color: #10b981;
+        .check-box.checked {
+          background: var(--accent);
+          border-color: var(--accent);
           color: white;
+          box-shadow: 0 2px 8px var(--glow);
         }
 
         .lesson-info {
           flex: 1;
           display: flex;
           flex-direction: column;
-          gap: 0.15rem;
+          gap: 0.2rem;
         }
 
         .lesson-name {
           font-weight: 600;
-          color: #1f2937;
-          font-size: 0.95rem;
+          color: rgba(255, 255, 255, 0.95);
+          font-size: 0.9rem;
         }
 
         .lesson-count {
-          font-size: 0.8rem;
-          color: #6b7280;
+          font-size: 0.75rem;
+          color: rgba(255, 255, 255, 0.5);
         }
 
-        .selector-footer {
+        /* ========== Footer ========== */
+        .lesson-footer {
           display: flex;
           gap: 0.75rem;
-          padding: 1.25rem 1.5rem;
-          border-top: 1px solid #e5e7eb;
+          padding: 1rem 1.25rem;
+          background: rgba(0, 0, 0, 0.4);
+          backdrop-filter: blur(16px);
+          border-top: 1px solid rgba(255, 255, 255, 0.06);
         }
 
-        .selector-btn {
+        .footer-btn {
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 0.5rem;
           padding: 0.85rem 1.25rem;
           border: none;
-          border-radius: 12px;
-          font-size: 0.95rem;
+          border-radius: 14px;
+          font-size: 0.9rem;
           font-weight: 600;
           cursor: pointer;
-          transition: all 0.2s;
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .selector-btn:disabled {
+        .footer-btn.secondary {
+          background: rgba(255, 255, 255, 0.08);
+          color: rgba(255, 255, 255, 0.8);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .footer-btn.secondary:hover {
+          background: rgba(255, 255, 255, 0.15);
+        }
+
+        .footer-btn.primary {
+          flex: 1;
+          background: var(--btn-gradient);
+          color: white;
+          box-shadow: 0 4px 20px -5px var(--btn-glow);
+        }
+
+        .footer-btn.primary:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 30px -5px var(--btn-glow);
+        }
+
+        .footer-btn.primary:disabled {
           opacity: 0.5;
           cursor: not-allowed;
         }
 
-        .selector-btn.ghost {
-          background: transparent;
-          color: #6b7280;
-          border: 2px solid #e5e7eb;
+        .btn-count {
+          background: rgba(255, 255, 255, 0.25);
+          padding: 0.15rem 0.5rem;
+          border-radius: 6px;
+          font-size: 0.8rem;
+          font-weight: 700;
         }
 
-        .selector-btn.ghost:hover {
-          background: #f3f4f6;
-        }
-
-        .selector-btn.primary {
-          flex: 1;
-          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-          color: white;
-          box-shadow: 0 4px 14px rgba(16,185,129,0.4);
-        }
-
-        .selector-btn.primary:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(16,185,129,0.5);
-        }
-
-        @media (max-width: 640px) {
-          .selector-header {
-            padding: 1.5rem;
+        /* ========== Responsive ========== */
+        @media (max-width: 768px) {
+          .selector-container {
+            padding: 1.5rem 1rem;
           }
 
-          .level-grid {
-            padding: 1rem 1.5rem;
+          .header-title {
+            font-size: 1.6rem;
           }
 
-          .selector-footer {
+          .header-icon {
+            width: 52px;
+            height: 52px;
+          }
+
+          .levels-grid {
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.5rem;
+          }
+
+          .level-card {
+            padding: 1rem 0.5rem;
+            border-radius: 14px;
+          }
+
+          .level-card .card-icon {
+            font-size: 1.25rem;
+          }
+
+          .level-card .card-level {
+            font-size: 1.25rem;
+          }
+
+          .level-card .card-count {
+            font-size: 0.65rem;
+          }
+
+          .home-btn {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+          }
+
+          .lessons-grid {
+            grid-template-columns: 1fr;
+            padding: 0.75rem;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .header-title {
+            font-size: 1.4rem;
+          }
+
+          .header-subtitle {
+            font-size: 0.85rem;
+          }
+
+          .levels-grid {
+            gap: 0.35rem;
+          }
+
+          .level-card {
+            padding: 0.85rem 0.35rem;
+            border-radius: 12px;
+          }
+
+          .level-card .card-icon {
+            font-size: 1.1rem;
+            margin-bottom: 0.1rem;
+          }
+
+          .level-card .card-level {
+            font-size: 1.1rem;
+          }
+
+          .level-card .card-count {
+            font-size: 0.6rem;
+          }
+
+          .home-btn span {
+            display: none;
+          }
+
+          .home-btn {
+            padding: 0.6rem;
+            border-radius: 10px;
+          }
+
+          .lesson-footer {
             flex-direction: column;
+            padding: 0.85rem;
           }
 
-          .selector-btn {
+          .footer-btn {
             width: 100%;
           }
         }
