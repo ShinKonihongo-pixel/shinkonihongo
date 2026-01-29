@@ -1,15 +1,16 @@
-// Exercises Management Tab - Professional UI for creating vocabulary exercises
-// Features: Level-based filtering, exercise CRUD, publish/unpublish
+// Exercises Management Tab - Updated UI
+// Features: Multiple types/levels selection, per-type question count, 2-column list
 
-import { useState } from 'react';
-import { Plus, Edit3, Trash2, Eye, EyeOff, BookOpen, Headphones, Target, FileText, ChevronLeft } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Plus, Edit3, Trash2, Eye, EyeOff, BookOpen, Headphones, FileText, ChevronLeft, Clock, Check } from 'lucide-react';
 import type { Exercise, ExerciseFormData, ExerciseType } from '../../types/exercise';
 import type { JLPTLevel, Lesson, Flashcard } from '../../types/flashcard';
 import type { CurrentUser } from '../../types/user';
-import { EXERCISE_TYPE_LABELS, QUESTION_COUNT_OPTIONS } from '../../types/exercise';
+import { EXERCISE_TYPE_LABELS, EXERCISE_TYPE_ICONS, QUESTION_COUNT_OPTIONS, TIME_PER_QUESTION_OPTIONS, getTotalQuestionCount, initQuestionCountByType } from '../../types/exercise';
 import { ConfirmModal } from '../ui/confirm-modal';
 
 const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
+const EXERCISE_TYPES: ExerciseType[] = ['vocabulary', 'meaning', 'kanji_to_vocab', 'vocab_to_kanji', 'listening_write'];
 
 // Level colors for visual distinction
 const LEVEL_COLORS: Record<JLPTLevel, { bg: string; text: string; border: string }> = {
@@ -18,14 +19,6 @@ const LEVEL_COLORS: Record<JLPTLevel, { bg: string; text: string; border: string
   N3: { bg: '#fff3e0', text: '#ef6c00', border: '#ffb74d' },
   N2: { bg: '#fce4ec', text: '#c2185b', border: '#f06292' },
   N1: { bg: '#f3e5f5', text: '#7b1fa2', border: '#ba68c8' },
-};
-
-// Exercise type icons
-const EXERCISE_TYPE_ICONS: Record<ExerciseType, React.ReactNode> = {
-  vocabulary: <BookOpen size={16} />,
-  kanji: <span style={{ fontWeight: 700, fontSize: '0.8rem' }}>漢</span>,
-  meaning: <Target size={16} />,
-  listening: <Headphones size={16} />,
 };
 
 interface ExercisesTabProps {
@@ -53,24 +46,26 @@ export function ExercisesTab({
   currentUser,
   isSuperAdmin,
 }: ExercisesTabProps) {
-  // Navigation state - null means showing all levels
   const [selectedLevel, setSelectedLevel] = useState<JLPTLevel | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Exercise | null>(null);
 
-  // Form state - use selected level if available
+  // Form state with multiple types and levels
   const [formData, setFormData] = useState<ExerciseFormData>({
     name: '',
     description: '',
-    type: 'vocabulary',
-    jlptLevel: selectedLevel || 'N5',
+    types: [],
+    jlptLevels: selectedLevel ? [selectedLevel] : [],
     lessonIds: [],
-    questionCount: 10,
+    questionCountByType: initQuestionCountByType(),
+    timePerQuestion: 0,
   });
 
-  // Get exercises filtered by level
-  const getExercisesByLevel = (level: JLPTLevel) => exercises.filter(e => e.jlptLevel === level);
+  // Get exercises filtered by level (check both new jlptLevels array and legacy jlptLevel)
+  const getExercisesByLevel = (level: JLPTLevel) => exercises.filter(e =>
+    e.jlptLevels?.includes(level) || e.jlptLevel === level
+  );
   const getExerciseCountByLevel = (level: JLPTLevel) => getExercisesByLevel(level).length;
   const filteredExercises = selectedLevel ? getExercisesByLevel(selectedLevel) : exercises;
 
@@ -80,20 +75,20 @@ export function ExercisesTab({
     setFormData({
       name: '',
       description: '',
-      type: 'vocabulary',
-      jlptLevel: selectedLevel || 'N5',
+      types: [],
+      jlptLevels: selectedLevel ? [selectedLevel] : [],
       lessonIds: [],
-      questionCount: 10,
+      questionCountByType: initQuestionCountByType(),
+      timePerQuestion: 0,
     });
     setEditingExercise(null);
     setShowForm(false);
   };
 
-  // Open form with selected level preset
   const handleShowForm = () => {
     setFormData(prev => ({
       ...prev,
-      jlptLevel: selectedLevel || 'N5',
+      jlptLevels: selectedLevel ? [selectedLevel] : [],
       lessonIds: [],
     }));
     setShowForm(true);
@@ -103,10 +98,11 @@ export function ExercisesTab({
     setFormData({
       name: exercise.name,
       description: exercise.description || '',
-      type: exercise.type,
-      jlptLevel: exercise.jlptLevel,
+      types: exercise.types || (exercise.type ? [exercise.type] : []),
+      jlptLevels: exercise.jlptLevels || (exercise.jlptLevel ? [exercise.jlptLevel] : []),
       lessonIds: exercise.lessonIds,
-      questionCount: exercise.questionCount,
+      questionCountByType: exercise.questionCountByType || initQuestionCountByType(),
+      timePerQuestion: exercise.timePerQuestion || 0,
     });
     setEditingExercise(exercise);
     setShowForm(true);
@@ -114,7 +110,7 @@ export function ExercisesTab({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim() || formData.lessonIds.length === 0) return;
+    if (!formData.name.trim() || formData.lessonIds.length === 0 || formData.types.length === 0) return;
 
     if (editingExercise) {
       await onUpdateExercise(editingExercise.id, formData);
@@ -122,6 +118,38 @@ export function ExercisesTab({
       await onAddExercise(formData, currentUser.id);
     }
     resetForm();
+  };
+
+  const handleTypeToggle = (type: ExerciseType) => {
+    setFormData(prev => ({
+      ...prev,
+      types: prev.types.includes(type)
+        ? prev.types.filter(t => t !== type)
+        : [...prev.types, type],
+    }));
+  };
+
+  const handleLevelToggle = (level: JLPTLevel) => {
+    setFormData(prev => {
+      const newLevels = prev.jlptLevels.includes(level)
+        ? prev.jlptLevels.filter(l => l !== level)
+        : [...prev.jlptLevels, level];
+      return {
+        ...prev,
+        jlptLevels: newLevels,
+        lessonIds: [], // Reset lessons when levels change
+      };
+    });
+  };
+
+  const handleQuestionCountChange = (type: ExerciseType, count: number) => {
+    setFormData(prev => ({
+      ...prev,
+      questionCountByType: {
+        ...prev.questionCountByType,
+        [type]: count,
+      },
+    }));
   };
 
   const handleLessonToggle = (lessonId: string) => {
@@ -133,7 +161,15 @@ export function ExercisesTab({
     }));
   };
 
-  // Select all lessons in current level
+  // Get all parent lessons for selected levels
+  const parentLessons = useMemo(() => {
+    const lessons: Lesson[] = [];
+    formData.jlptLevels.forEach(level => {
+      lessons.push(...getLessonsByLevel(level));
+    });
+    return lessons;
+  }, [formData.jlptLevels, getLessonsByLevel]);
+
   const handleSelectAll = () => {
     const allLessonIds: string[] = [];
     parentLessons.forEach(parent => {
@@ -147,25 +183,34 @@ export function ExercisesTab({
     setFormData(prev => ({ ...prev, lessonIds: allLessonIds }));
   };
 
-  // Clear all selections
   const handleClearAll = () => {
     setFormData(prev => ({ ...prev, lessonIds: [] }));
   };
 
-  // Get available lessons for selected level
-  const parentLessons = getLessonsByLevel(formData.jlptLevel);
-
-  // Count cards in selected lessons
   const getCardCount = (lessonIds: string[]) => {
     return flashcards.filter(c => lessonIds.includes(c.lessonId)).length;
   };
 
   const selectedCardCount = getCardCount(formData.lessonIds);
+  const totalQuestionCount = getTotalQuestionCount(formData.questionCountByType, formData.types);
 
-  // Stats - use filtered exercises when level is selected
-  const statsExercises = filteredExercises;
-  const publishedCount = statsExercises.filter(e => e.isPublished).length;
-  const draftCount = statsExercises.length - publishedCount;
+  // Get display types for an exercise (handle legacy)
+  const getExerciseTypes = (ex: Exercise): ExerciseType[] => {
+    return ex.types || (ex.type ? [ex.type] : []);
+  };
+
+  // Get display levels for an exercise (handle legacy)
+  const getExerciseLevels = (ex: Exercise): JLPTLevel[] => {
+    return ex.jlptLevels || (ex.jlptLevel ? [ex.jlptLevel] : []);
+  };
+
+  // Get total questions for an exercise (handle legacy)
+  const getExerciseTotalQuestions = (ex: Exercise): number => {
+    if (ex.questionCountByType && ex.types) {
+      return getTotalQuestionCount(ex.questionCountByType, ex.types);
+    }
+    return ex.questionCount || 0;
+  };
 
   return (
     <div className="exercises-tab">
@@ -215,25 +260,6 @@ export function ExercisesTab({
             <h3 style={{ color: LEVEL_COLORS[selectedLevel].text }}>
               Bài tập {selectedLevel}
             </h3>
-          </div>
-
-          {/* Header with stats */}
-          <div className="exercises-tab-header">
-            <div className="exercises-stats">
-              <div className="stat-item">
-                <span className="stat-value">{statsExercises.length}</span>
-                <span className="stat-label">Tổng bài tập</span>
-              </div>
-              <div className="stat-item published">
-                <span className="stat-value">{publishedCount}</span>
-                <span className="stat-label">Đã xuất bản</span>
-              </div>
-              <div className="stat-item draft">
-                <span className="stat-value">{draftCount}</span>
-                <span className="stat-label">Bản nháp</span>
-              </div>
-            </div>
-
             {!showForm && (
               <button className="btn btn-primary create-btn" onClick={handleShowForm}>
                 <Plus size={18} />
@@ -276,128 +302,172 @@ export function ExercisesTab({
               />
             </div>
 
-            <div className="form-grid-3">
-              <div className="form-section">
-                <label className="form-label">Loại bài tập <span className="required">*</span></label>
-                <div className="type-selector">
-                  {(Object.keys(EXERCISE_TYPE_LABELS) as ExerciseType[]).map(type => (
-                    <button
-                      key={type}
-                      type="button"
-                      className={`type-option ${formData.type === type ? 'active' : ''}`}
-                      onClick={() => setFormData({ ...formData, type })}
-                    >
-                      <span className="type-icon">{EXERCISE_TYPE_ICONS[type]}</span>
-                      <span className="type-name">{EXERCISE_TYPE_LABELS[type]}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="form-section">
-                <label className="form-label">Cấp độ <span className="required">*</span></label>
-                <select
-                  className="form-select"
-                  value={formData.jlptLevel}
-                  onChange={e => setFormData({ ...formData, jlptLevel: e.target.value as JLPTLevel, lessonIds: [] })}
-                >
-                  {JLPT_LEVELS.map(level => (
-                    <option key={level} value={level}>{level}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-section">
-                <label className="form-label">Số câu hỏi <span className="required">*</span></label>
-                <select
-                  className="form-select"
-                  value={formData.questionCount}
-                  onChange={e => setFormData({ ...formData, questionCount: Number(e.target.value) })}
-                >
-                  {QUESTION_COUNT_OPTIONS.map(count => (
-                    <option key={count} value={count}>{count} câu</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
+            {/* Exercise Types - Multiple selection with question count */}
             <div className="form-section">
-              <div className="lesson-selector-header">
-                <label className="form-label">
-                  Chọn bài học <span className="required">*</span>
-                  <span className="selection-count">
-                    ({formData.lessonIds.length} bài • {selectedCardCount} từ vựng)
-                  </span>
-                </label>
-                <div className="selector-actions">
-                  <button type="button" className="btn btn-xs btn-outline" onClick={handleSelectAll}>
-                    Chọn tất cả
-                  </button>
-                  <button type="button" className="btn btn-xs btn-outline" onClick={handleClearAll}>
-                    Bỏ chọn
-                  </button>
-                </div>
+              <label className="form-label">Loại bài tập <span className="required">*</span> (chọn nhiều)</label>
+              <div className="type-selector-multi">
+                {EXERCISE_TYPES.map(type => {
+                  const isSelected = formData.types.includes(type);
+                  return (
+                    <div key={type} className={`type-option-multi ${isSelected ? 'active' : ''}`}>
+                      <label className="type-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleTypeToggle(type)}
+                        />
+                        <span className="type-icon">{EXERCISE_TYPE_ICONS[type]}</span>
+                        <span className="type-name">{EXERCISE_TYPE_LABELS[type]}</span>
+                        {isSelected && <Check size={16} className="check-icon" />}
+                      </label>
+                      {isSelected && (
+                        <div className="type-question-count">
+                          <label>Số câu:</label>
+                          <select
+                            value={formData.questionCountByType[type]}
+                            onChange={e => handleQuestionCountChange(type, Number(e.target.value))}
+                            onClick={e => e.stopPropagation()}
+                          >
+                            {QUESTION_COUNT_OPTIONS.map(count => (
+                              <option key={count} value={count}>{count}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-              <div className="lesson-selector-pro">
-                {parentLessons.length === 0 ? (
-                  <p className="empty-lessons">Không có bài học nào ở cấp độ {formData.jlptLevel}</p>
-                ) : (
-                  parentLessons.map(parent => {
-                    const children = getChildLessons(parent.id);
-                    const hasDirectCards = flashcards.some(c => c.lessonId === parent.id);
+              {formData.types.length > 0 && (
+                <div className="total-questions-info">
+                  Tổng: <strong>{totalQuestionCount}</strong> câu hỏi
+                </div>
+              )}
+            </div>
 
-                    return (
-                      <div key={parent.id} className="lesson-group-pro">
-                        {children.length === 0 && hasDirectCards ? (
-                          <label className="lesson-item">
-                            <input
-                              type="checkbox"
-                              checked={formData.lessonIds.includes(parent.id)}
-                              onChange={() => handleLessonToggle(parent.id)}
-                            />
-                            <span className="lesson-name">{parent.name}</span>
-                            <span className="lesson-count">{getCardCount([parent.id])} từ</span>
-                          </label>
-                        ) : children.length > 0 && (
-                          <>
-                            <div className="parent-label-pro">📂 {parent.name}</div>
-                            <div className="children-list">
-                              {children.map(child => (
-                                <label key={child.id} className="lesson-item">
-                                  <input
-                                    type="checkbox"
-                                    checked={formData.lessonIds.includes(child.id)}
-                                    onChange={() => handleLessonToggle(child.id)}
-                                  />
-                                  <span className="lesson-name">{child.name}</span>
-                                  <span className="lesson-count">{getCardCount([child.id])} từ</span>
-                                </label>
-                              ))}
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
+            {/* JLPT Levels - Multiple selection */}
+            <div className="form-section">
+              <label className="form-label">Cấp độ <span className="required">*</span> (chọn nhiều)</label>
+              <div className="level-selector-multi">
+                {JLPT_LEVELS.map(level => {
+                  const isSelected = formData.jlptLevels.includes(level);
+                  const colors = LEVEL_COLORS[level];
+                  return (
+                    <label
+                      key={level}
+                      className={`level-option-multi ${isSelected ? 'active' : ''}`}
+                      style={isSelected ? { backgroundColor: colors.bg, borderColor: colors.border } : undefined}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleLevelToggle(level)}
+                      />
+                      <span style={{ color: isSelected ? colors.text : undefined }}>{level}</span>
+                      {isSelected && <Check size={14} className="check-icon" />}
+                    </label>
+                  );
+                })}
               </div>
             </div>
 
-            {formData.type === 'listening' && (
-              <div className="info-box-pro">
-                <Headphones size={20} />
-                <div>
-                  <strong>Bài tập nghe</strong>
-                  <p>Từ vựng sẽ được đọc tự động 3 lần, mỗi lần cách nhau 2 giây. Học sinh nghe và chọn từ đúng.</p>
+            {/* Time per question */}
+            <div className="form-section">
+              <label className="form-label">
+                <Clock size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
+                Thời gian mỗi câu
+              </label>
+              <select
+                className="form-select"
+                value={formData.timePerQuestion || 0}
+                onChange={e => setFormData({ ...formData, timePerQuestion: Number(e.target.value) })}
+              >
+                {TIME_PER_QUESTION_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Lesson selector */}
+            {formData.jlptLevels.length > 0 && (
+              <div className="form-section">
+                <div className="lesson-selector-header">
+                  <label className="form-label">
+                    Chọn bài học <span className="required">*</span>
+                    <span className="selection-count">
+                      ({formData.lessonIds.length} bài • {selectedCardCount} từ vựng)
+                    </span>
+                  </label>
+                  <div className="selector-actions">
+                    <button type="button" className="btn btn-xs btn-outline" onClick={handleSelectAll}>
+                      Chọn tất cả
+                    </button>
+                    <button type="button" className="btn btn-xs btn-outline" onClick={handleClearAll}>
+                      Bỏ chọn
+                    </button>
+                  </div>
+                </div>
+                <div className="lesson-selector-pro">
+                  {parentLessons.length === 0 ? (
+                    <p className="empty-lessons">Không có bài học nào ở cấp độ đã chọn</p>
+                  ) : (
+                    parentLessons.map(parent => {
+                      const children = getChildLessons(parent.id);
+                      const hasDirectCards = flashcards.some(c => c.lessonId === parent.id);
+
+                      return (
+                        <div key={parent.id} className="lesson-group-pro">
+                          {children.length === 0 && hasDirectCards ? (
+                            <label className="lesson-item">
+                              <input
+                                type="checkbox"
+                                checked={formData.lessonIds.includes(parent.id)}
+                                onChange={() => handleLessonToggle(parent.id)}
+                              />
+                              <span className="lesson-name">{parent.name}</span>
+                              <span className="lesson-count">{getCardCount([parent.id])} từ</span>
+                            </label>
+                          ) : children.length > 0 && (
+                            <>
+                              <div className="parent-label-pro">📂 {parent.name}</div>
+                              <div className="children-list">
+                                {children.map(child => (
+                                  <label key={child.id} className="lesson-item">
+                                    <input
+                                      type="checkbox"
+                                      checked={formData.lessonIds.includes(child.id)}
+                                      onChange={() => handleLessonToggle(child.id)}
+                                    />
+                                    <span className="lesson-name">{child.name}</span>
+                                    <span className="lesson-count">{getCardCount([child.id])} từ</span>
+                                  </label>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </div>
             )}
 
-            {selectedCardCount < formData.questionCount && (
+            {formData.types.includes('listening_write') && (
+              <div className="info-box-pro">
+                <Headphones size={20} />
+                <div>
+                  <strong>Nghe viết từ</strong>
+                  <p>Từ vựng sẽ được đọc tự động. Học sinh nghe và gõ từ đúng vào ô trả lời trong thời gian quy định.</p>
+                </div>
+              </div>
+            )}
+
+            {selectedCardCount < totalQuestionCount && formData.types.length > 0 && (
               <div className="warning-box-pro">
                 <span className="warning-icon">⚠️</span>
                 <span>
-                  Số từ vựng ({selectedCardCount}) ít hơn số câu hỏi ({formData.questionCount}).
+                  Số từ vựng ({selectedCardCount}) ít hơn tổng số câu hỏi ({totalQuestionCount}).
                   Chọn thêm bài học hoặc giảm số câu hỏi.
                 </span>
               </div>
@@ -411,7 +481,13 @@ export function ExercisesTab({
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={selectedCardCount < formData.questionCount || !formData.name.trim()}
+              disabled={
+                selectedCardCount < totalQuestionCount ||
+                !formData.name.trim() ||
+                formData.types.length === 0 ||
+                formData.jlptLevels.length === 0 ||
+                formData.lessonIds.length === 0
+              }
             >
               {editingExercise ? 'Lưu thay đổi' : 'Tạo bài tập'}
             </button>
@@ -419,9 +495,9 @@ export function ExercisesTab({
         </form>
       )}
 
-      {/* Exercise List - only show when level is selected */}
+      {/* Exercise List - 2 column layout */}
       {!showForm && selectedLevel && (
-        <div className="exercises-list-pro">
+        <div className="exercises-list-grid">
           {filteredExercises.length === 0 ? (
             <div className="empty-state-pro">
               <BookOpen size={48} strokeWidth={1.5} />
@@ -429,47 +505,67 @@ export function ExercisesTab({
               <p>Nhấn "Tạo bài tập mới" để bắt đầu</p>
             </div>
           ) : (
-            filteredExercises.map(exercise => (
-              <div key={exercise.id} className={`exercise-item-pro ${exercise.isPublished ? 'published' : 'draft'}`}>
-                <div className="exercise-icon-wrapper">
-                  {EXERCISE_TYPE_ICONS[exercise.type]}
-                </div>
+            filteredExercises.map(exercise => {
+              const types = getExerciseTypes(exercise);
+              const levels = getExerciseLevels(exercise);
+              const totalQ = getExerciseTotalQuestions(exercise);
 
-                <div className="exercise-content">
-                  <div className="exercise-title-row">
-                    <h4>{exercise.name}</h4>
+              return (
+                <div key={exercise.id} className={`exercise-item-card ${exercise.isPublished ? 'published' : 'draft'}`}>
+                  <div className="exercise-card-header">
+                    <div className="exercise-types-icons">
+                      {types.map(t => (
+                        <span key={t} className="type-icon-small" title={EXERCISE_TYPE_LABELS[t]}>
+                          {EXERCISE_TYPE_ICONS[t]}
+                        </span>
+                      ))}
+                    </div>
                     <span className={`publish-badge ${exercise.isPublished ? 'published' : 'draft'}`}>
                       {exercise.isPublished ? 'Đã xuất bản' : 'Bản nháp'}
                     </span>
                   </div>
-                  {exercise.description && <p className="exercise-desc-pro">{exercise.description}</p>}
-                  <div className="exercise-tags">
-                    <span className="tag type">{EXERCISE_TYPE_LABELS[exercise.type]}</span>
-                    <span className="tag level">{exercise.jlptLevel}</span>
-                    <span className="tag count">{exercise.questionCount} câu</span>
-                    <span className="tag lessons">{exercise.lessonIds.length} bài học</span>
-                  </div>
-                </div>
 
-                {canModify(exercise) && (
-                  <div className="exercise-actions-pro">
-                    <button
-                      className={`action-btn ${exercise.isPublished ? 'unpublish' : 'publish'}`}
-                      onClick={() => onTogglePublish(exercise.id)}
-                      title={exercise.isPublished ? 'Ẩn bài tập' : 'Xuất bản'}
-                    >
-                      {exercise.isPublished ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                    <button className="action-btn edit" onClick={() => handleEdit(exercise)} title="Chỉnh sửa">
-                      <Edit3 size={18} />
-                    </button>
-                    <button className="action-btn delete" onClick={() => setDeleteTarget(exercise)} title="Xóa">
-                      <Trash2 size={18} />
-                    </button>
+                  <h4 className="exercise-card-title">{exercise.name}</h4>
+                  {exercise.description && <p className="exercise-card-desc">{exercise.description}</p>}
+
+                  <div className="exercise-card-tags">
+                    {levels.map(l => (
+                      <span key={l} className="tag level" style={{ backgroundColor: LEVEL_COLORS[l].bg, color: LEVEL_COLORS[l].text }}>
+                        {l}
+                      </span>
+                    ))}
+                    <span className="tag count">{totalQ} câu</span>
+                    {exercise.timePerQuestion ? (
+                      <span className="tag time">⏱ {exercise.timePerQuestion}s</span>
+                    ) : null}
                   </div>
-                )}
-              </div>
-            ))
+
+                  <div className="exercise-card-types">
+                    {types.map(t => (
+                      <span key={t} className="type-tag">{EXERCISE_TYPE_LABELS[t]}</span>
+                    ))}
+                  </div>
+
+                  {canModify(exercise) && (
+                    <div className="exercise-card-actions">
+                      <button
+                        className={`action-btn ${exercise.isPublished ? 'unpublish' : 'publish'}`}
+                        onClick={() => onTogglePublish(exercise.id)}
+                        title={exercise.isPublished ? 'Ẩn bài tập' : 'Xuất bản'}
+                      >
+                        {exercise.isPublished ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                      <button className="action-btn edit" onClick={() => handleEdit(exercise)} title="Chỉnh sửa">
+                        <Edit3 size={16} />
+                      </button>
+                      <button className="action-btn delete" onClick={() => setDeleteTarget(exercise)} title="Xóa">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
       )}

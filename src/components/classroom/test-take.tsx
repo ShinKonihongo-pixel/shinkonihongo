@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { ClassroomTest, ClassroomSubmission, SubmissionAnswer } from '../../types/classroom';
+import { ANSWER_OPTIONS } from '../../constants/answer-options';
 
 interface TestTakeProps {
   test: ClassroomTest;
@@ -166,7 +167,7 @@ export function TestTake({ test, submission, onSubmit, onCancel }: TestTakeProps
                     checked={answers[question.id] === idx}
                     onChange={() => handleAnswerChange(question.id, idx)}
                   />
-                  <span className="option-letter">{String.fromCharCode(65 + idx)}</span>
+                  <img src={ANSWER_OPTIONS[idx].icon} alt={ANSWER_OPTIONS[idx].label} className="option-icon-img" />
                   <span className="option-text">{opt}</span>
                 </label>
               ))}

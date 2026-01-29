@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Clock, Zap, Shield, Target, LogOut } from 'lucide-react';
 import type { RacingGame, RacingPlayer, RacingQuestion } from '../../types/racing-game';
 import { isImageAvatar } from '../../utils/avatar-icons';
+import { ANSWER_OPTIONS } from '../../constants/answer-options';
 
 // Effect types for the new system
 type EffectType = 'speed_boost' | 'imprisonment' | 'freeze' | 'sinkhole' | 'trap' | 'shield';
@@ -30,9 +31,6 @@ const EFFECTS: Record<EffectType, Effect> = {
 };
 
 const EFFECT_WHEEL: EffectType[] = ['speed_boost', 'imprisonment', 'freeze', 'sinkhole', 'trap', 'shield'];
-
-// Answer option labels
-const OPTION_LABELS = ['A', 'B', 'C', 'D'];
 
 // View types
 type GameView = 'track' | 'question' | 'wheel' | 'target' | 'sinkhole';
@@ -375,7 +373,7 @@ export function RacingGamePlayV2({
               onClick={() => handleSelectAnswer(index)}
               disabled={hasSubmitted}
             >
-              <span className="option-label">{OPTION_LABELS[index]}</span>
+              <img src={ANSWER_OPTIONS[index].icon} alt={ANSWER_OPTIONS[index].label} className="option-icon-img" />
               <span className="option-text">{option}</span>
               {isCorrect && <span className="option-mark correct">✓</span>}
               {isWrong && <span className="option-mark wrong">✗</span>}

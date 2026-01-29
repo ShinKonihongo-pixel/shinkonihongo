@@ -1,21 +1,14 @@
-// Exercise Page - Professional vocabulary exercise UI
-// Features: Modern quiz UI, animations, progress tracking, sound indicators
+// Exercise Page - Updated for new exercise types
+// Features: Multi-type support, listening dictation, 2-column layout
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { ArrowLeft, Play, Volume2, VolumeX, RefreshCw, CheckCircle2, XCircle, Trophy, Target, Clock, BookOpen, Headphones, RotateCcw, Home, ChevronRight } from 'lucide-react';
-import type { Exercise, ExerciseQuestion, ExerciseSession } from '../../types/exercise';
+import { ArrowLeft, Play, Volume2, VolumeX, RefreshCw, CheckCircle2, XCircle, Trophy, Clock, BookOpen, RotateCcw, Home, ChevronRight } from 'lucide-react';
+import type { Exercise, ExerciseQuestion, ExerciseSession, ExerciseType } from '../../types/exercise';
 import type { Flashcard, JLPTLevel } from '../../types/flashcard';
-import { EXERCISE_TYPE_LABELS } from '../../types/exercise';
+import { EXERCISE_TYPE_LABELS, EXERCISE_TYPE_ICONS, getTotalQuestionCount } from '../../types/exercise';
+import { ANSWER_OPTIONS } from '../../constants/answer-options';
 
 const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
-
-// Exercise type icons
-const EXERCISE_ICONS: Record<string, React.ReactNode> = {
-  vocabulary: <BookOpen size={18} />,
-  kanji: <span className="kanji-icon">漢</span>,
-  meaning: <Target size={18} />,
-  listening: <Headphones size={18} />,
-};
 
 interface ExercisePageProps {
   exercises: Exercise[];
@@ -25,85 +18,193 @@ interface ExercisePageProps {
 
 type ViewState = 'list' | 'session' | 'result';
 
+// Helper to get exercise types (handle legacy)
+const getExerciseTypes = (ex: Exercise): ExerciseType[] => {
+  return ex.types || (ex.type ? [ex.type as ExerciseType] : []);
+};
+
+// Helper to get exercise levels (handle legacy)
+const getExerciseLevels = (ex: Exercise): JLPTLevel[] => {
+  return ex.jlptLevels || (ex.jlptLevel ? [ex.jlptLevel] : []);
+};
+
+// Helper to get total question count (handle legacy)
+const getExerciseQuestionCount = (ex: Exercise): number => {
+  if (ex.questionCountByType && ex.types) {
+    return getTotalQuestionCount(ex.questionCountByType, ex.types);
+  }
+  return ex.questionCount || 10;
+};
+
 export function ExercisePage({ exercises, flashcards, onGoHome }: ExercisePageProps) {
   const [view, setView] = useState<ViewState>('list');
   const [selectedLevel, setSelectedLevel] = useState<JLPTLevel | 'all'>('all');
   const [session, setSession] = useState<ExerciseSession | null>(null);
   const [currentExercise, setCurrentExercise] = useState<Exercise | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [textAnswer, setTextAnswer] = useState('');
   const [showResult, setShowResult] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [listenCount, setListenCount] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const speakTimeoutRef = useRef<NodeJS.Timeout[]>([]);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const textInputRef = useRef<HTMLInputElement>(null);
 
   // Filter published exercises
   const publishedExercises = exercises.filter(e => e.isPublished);
   const filteredExercises = selectedLevel === 'all'
     ? publishedExercises
-    : publishedExercises.filter(e => e.jlptLevel === selectedLevel);
+    : publishedExercises.filter(e => {
+        const levels = getExerciseLevels(e);
+        return levels.includes(selectedLevel);
+      });
 
   // Exercise counts by level
   const countByLevel = JLPT_LEVELS.reduce((acc, level) => {
-    acc[level] = publishedExercises.filter(e => e.jlptLevel === level).length;
+    acc[level] = publishedExercises.filter(e => {
+      const levels = getExerciseLevels(e);
+      return levels.includes(level);
+    }).length;
     return acc;
   }, {} as Record<string, number>);
 
-  // Clean up speak timeouts on unmount
+  // Clean up on unmount
   useEffect(() => {
     return () => {
       speakTimeoutRef.current.forEach(t => clearTimeout(t));
+      if (timerRef.current) clearInterval(timerRef.current);
       window.speechSynthesis.cancel();
     };
   }, []);
 
+  // Timer effect
+  useEffect(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    if (!currentExercise?.timePerQuestion || !session || showResult || view !== 'session') {
+      setTimeLeft(null);
+      return;
+    }
+
+    setTimeLeft(currentExercise.timePerQuestion);
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev === null || prev <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          handleAnswer(-1);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [session?.currentIndex, currentExercise, view, showResult]);
+
   // Generate questions from flashcards
   const generateQuestions = useCallback((exercise: Exercise): ExerciseQuestion[] => {
     const availableCards = flashcards.filter(c => exercise.lessonIds.includes(c.lessonId));
-    if (availableCards.length < exercise.questionCount) return [];
+    const types = getExerciseTypes(exercise);
+    const totalCount = getExerciseQuestionCount(exercise);
 
-    const shuffled = [...availableCards].sort(() => Math.random() - 0.5);
-    const selectedCards = shuffled.slice(0, exercise.questionCount);
+    if (availableCards.length < 4) return []; // Need at least 4 cards for options
 
-    return selectedCards.map((card, idx) => {
-      const otherCards = availableCards.filter(c => c.id !== card.id);
-      const wrongOptions = otherCards.sort(() => Math.random() - 0.5).slice(0, 3);
+    const questions: ExerciseQuestion[] = [];
+    const shuffledCards = [...availableCards].sort(() => Math.random() - 0.5);
 
-      let options: string[];
-      switch (exercise.type) {
-        case 'vocabulary':
-          options = [card.meaning, ...wrongOptions.map(c => c.meaning)];
-          break;
-        case 'kanji':
-        case 'meaning':
-        case 'listening':
-          options = [card.vocabulary, ...wrongOptions.map(c => c.vocabulary)];
-          break;
-        default:
-          options = [card.meaning, ...wrongOptions.map(c => c.meaning)];
+    // Calculate questions per type
+    const questionsPerType: Record<ExerciseType, number> = {} as Record<ExerciseType, number>;
+    if (exercise.questionCountByType) {
+      types.forEach(type => {
+        questionsPerType[type] = exercise.questionCountByType[type] || 0;
+      });
+    } else {
+      // Legacy: distribute evenly
+      const perType = Math.ceil(totalCount / types.length);
+      types.forEach(type => {
+        questionsPerType[type] = perType;
+      });
+    }
+
+    let cardIndex = 0;
+    types.forEach(type => {
+      const count = Math.min(questionsPerType[type], shuffledCards.length - cardIndex);
+
+      for (let i = 0; i < count && cardIndex < shuffledCards.length; i++, cardIndex++) {
+        const card = shuffledCards[cardIndex];
+        const otherCards = availableCards.filter(c => c.id !== card.id);
+        const wrongOptions = otherCards.sort(() => Math.random() - 0.5).slice(0, 3);
+
+        // For listening_write, no options needed
+        if (type === 'listening_write') {
+          questions.push({
+            id: `q-${questions.length}`,
+            type,
+            vocabularyId: card.id,
+            vocabulary: card.vocabulary,
+            kanji: card.kanji || '',
+            meaning: card.meaning,
+            correctAnswer: card.vocabulary,
+          });
+          continue;
+        }
+
+        // Generate options based on type
+        let options: string[];
+        switch (type) {
+          case 'vocabulary':
+            // Show vocab, answer is meaning
+            options = [card.meaning, ...wrongOptions.map(c => c.meaning)];
+            break;
+          case 'meaning':
+            // Show meaning, answer is vocab
+            options = [card.vocabulary, ...wrongOptions.map(c => c.vocabulary)];
+            break;
+          case 'kanji_to_vocab':
+            // Show kanji, answer is vocab
+            if (!card.kanji) continue; // Skip if no kanji
+            options = [card.vocabulary, ...wrongOptions.map(c => c.vocabulary)];
+            break;
+          case 'vocab_to_kanji':
+            // Show vocab, answer is kanji
+            if (!card.kanji) continue; // Skip if no kanji
+            options = [card.kanji, ...wrongOptions.filter(c => c.kanji).map(c => c.kanji!)];
+            if (options.length < 4) continue; // Not enough kanji options
+            break;
+          default:
+            options = [card.meaning, ...wrongOptions.map(c => c.meaning)];
+        }
+
+        const shuffledOptions = options.map((opt, idx) => ({ opt, isCorrect: idx === 0 }));
+        shuffledOptions.sort(() => Math.random() - 0.5);
+        const correctIndex = shuffledOptions.findIndex(o => o.isCorrect);
+
+        questions.push({
+          id: `q-${questions.length}`,
+          type,
+          vocabularyId: card.id,
+          vocabulary: card.vocabulary,
+          kanji: card.kanji || '',
+          meaning: card.meaning,
+          options: shuffledOptions.map(o => o.opt),
+          correctIndex,
+        });
       }
-
-      const shuffledOptions = options.map((opt, i) => ({ opt, isCorrect: i === 0 }));
-      shuffledOptions.sort(() => Math.random() - 0.5);
-      const newCorrectIndex = shuffledOptions.findIndex(o => o.isCorrect);
-
-      return {
-        id: `q-${idx}`,
-        vocabularyId: card.id,
-        vocabulary: card.vocabulary,
-        kanji: card.kanji,
-        meaning: card.meaning,
-        options: shuffledOptions.map(o => o.opt),
-        correctIndex: newCorrectIndex,
-      };
     });
+
+    return questions;
   }, [flashcards]);
 
   // Start exercise
   const startExercise = useCallback((exercise: Exercise) => {
     const questions = generateQuestions(exercise);
     if (questions.length === 0) {
-      alert('Không đủ từ vựng để tạo bài tập');
+      alert('Không đủ từ vựng để tạo bài tập. Cần ít nhất 4 từ vựng.');
       return;
     }
 
@@ -117,15 +218,17 @@ export function ExercisePage({ exercises, flashcards, onGoHome }: ExercisePagePr
     });
     setView('session');
     setSelectedAnswer(null);
+    setTextAnswer('');
     setShowResult(false);
     setIsAnimating(false);
 
-    if (exercise.type === 'listening') {
+    // If first question is listening, start speaking
+    if (questions[0].type === 'listening_write') {
       setTimeout(() => speakQuestion(questions[0].vocabulary), 500);
     }
   }, [generateQuestions]);
 
-  // Speak text 3 times with 2s delay
+  // Speak text
   const speakQuestion = useCallback((text: string) => {
     speakTimeoutRef.current.forEach(t => clearTimeout(t));
     speakTimeoutRef.current = [];
@@ -150,6 +253,8 @@ export function ExercisePage({ exercises, flashcards, onGoHome }: ExercisePagePr
           speakTimeoutRef.current.push(timeout);
         } else {
           setIsListening(false);
+          // Focus text input after speaking
+          setTimeout(() => textInputRef.current?.focus(), 100);
         }
       };
 
@@ -159,19 +264,31 @@ export function ExercisePage({ exercises, flashcards, onGoHome }: ExercisePagePr
     speak(0);
   }, []);
 
-  // Handle answer selection
-  const handleAnswer = useCallback((index: number) => {
+  // Handle answer
+  const handleAnswer = useCallback((answer: number | string) => {
     if (!session || showResult) return;
-    setSelectedAnswer(index);
+
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    if (typeof answer === 'number') {
+      setSelectedAnswer(answer);
+    }
+
     setShowResult(true);
     setIsAnimating(true);
 
     const newAnswers = [...session.answers];
-    newAnswers[session.currentIndex] = index;
+    newAnswers[session.currentIndex] = answer;
     setSession({ ...session, answers: newAnswers });
 
     setTimeout(() => setIsAnimating(false), 600);
   }, [session, showResult]);
+
+  // Submit text answer for listening
+  const handleTextSubmit = useCallback(() => {
+    if (!textAnswer.trim()) return;
+    handleAnswer(textAnswer.trim());
+  }, [textAnswer, handleAnswer]);
 
   // Next question
   const nextQuestion = useCallback(() => {
@@ -184,10 +301,12 @@ export function ExercisePage({ exercises, flashcards, onGoHome }: ExercisePagePr
     } else {
       setSession({ ...session, currentIndex: nextIndex });
       setSelectedAnswer(null);
+      setTextAnswer('');
       setShowResult(false);
 
-      if (currentExercise.type === 'listening') {
-        setTimeout(() => speakQuestion(session.questions[nextIndex].vocabulary), 300);
+      const nextQ = session.questions[nextIndex];
+      if (nextQ.type === 'listening_write') {
+        setTimeout(() => speakQuestion(nextQ.vocabulary), 300);
       }
     }
   }, [session, currentExercise, speakQuestion]);
@@ -196,7 +315,14 @@ export function ExercisePage({ exercises, flashcards, onGoHome }: ExercisePagePr
   const calculateScore = useCallback(() => {
     if (!session) return { correct: 0, total: 0, percentage: 0 };
     const correct = session.questions.reduce((sum, q, idx) => {
-      return sum + (session.answers[idx] === q.correctIndex ? 1 : 0);
+      const userAnswer = session.answers[idx];
+      if (q.type === 'listening_write') {
+        // For listening, compare text (case-insensitive, trim)
+        const isCorrect = typeof userAnswer === 'string' &&
+          userAnswer.toLowerCase().trim() === q.correctAnswer?.toLowerCase().trim();
+        return sum + (isCorrect ? 1 : 0);
+      }
+      return sum + (userAnswer === q.correctIndex ? 1 : 0);
     }, 0);
     return {
       correct,
@@ -205,20 +331,31 @@ export function ExercisePage({ exercises, flashcards, onGoHome }: ExercisePagePr
     };
   }, [session]);
 
-  // Get question display
-  const getQuestionText = () => {
-    if (!session || !currentExercise) return '';
-    const q = session.questions[session.currentIndex];
-
-    switch (currentExercise.type) {
+  // Get question display text
+  const getQuestionText = (q: ExerciseQuestion) => {
+    switch (q.type) {
       case 'vocabulary':
         return q.kanji ? `${q.vocabulary} (${q.kanji})` : q.vocabulary;
-      case 'kanji':
-        return q.kanji || q.vocabulary;
       case 'meaning':
         return q.meaning;
+      case 'kanji_to_vocab':
+        return q.kanji;
+      case 'vocab_to_kanji':
+        return q.vocabulary;
       default:
         return q.vocabulary;
+    }
+  };
+
+  // Get question type label
+  const getQuestionTypeLabel = (type: ExerciseType) => {
+    switch (type) {
+      case 'vocabulary': return '📖 Từ vựng → Nghĩa';
+      case 'meaning': return '🎯 Nghĩa → Từ vựng';
+      case 'kanji_to_vocab': return '漢 Kanji → Từ vựng';
+      case 'vocab_to_kanji': return 'あ Từ vựng → Kanji';
+      case 'listening_write': return '🎧 Nghe → Viết từ';
+      default: return '';
     }
   };
 
@@ -231,7 +368,7 @@ export function ExercisePage({ exercises, flashcards, onGoHome }: ExercisePagePr
     return { grade: 'D', color: '#ef4444', label: 'Cần cố gắng!' };
   };
 
-  // Render list view
+  // Render list view - 2 column grid
   if (view === 'list') {
     return (
       <div className="ex-page">
@@ -267,7 +404,7 @@ export function ExercisePage({ exercises, flashcards, onGoHome }: ExercisePagePr
           ))}
         </div>
 
-        <div className="ex-grid">
+        <div className="ex-grid-2col">
           {filteredExercises.length === 0 ? (
             <div className="ex-empty">
               <div className="ex-empty-icon">
@@ -277,30 +414,51 @@ export function ExercisePage({ exercises, flashcards, onGoHome }: ExercisePagePr
               <p>Các bài tập sẽ xuất hiện ở đây sau khi được tạo</p>
             </div>
           ) : (
-            filteredExercises.map(exercise => (
-              <article
-                key={exercise.id}
-                className="ex-card"
-                onClick={() => startExercise(exercise)}
-              >
-                <div className="ex-card-badge">{exercise.jlptLevel}</div>
-                <div className="ex-card-icon">
-                  {EXERCISE_ICONS[exercise.type]}
-                </div>
-                <h3 className="ex-card-title">{exercise.name}</h3>
-                {exercise.description && (
-                  <p className="ex-card-desc">{exercise.description}</p>
-                )}
-                <div className="ex-card-meta">
-                  <span className="ex-card-type">{EXERCISE_TYPE_LABELS[exercise.type]}</span>
-                  <span className="ex-card-questions">{exercise.questionCount} câu hỏi</span>
-                </div>
-                <button className="ex-card-btn">
-                  <Play size={16} />
-                  Bắt đầu
-                </button>
-              </article>
-            ))
+            filteredExercises.map(exercise => {
+              const types = getExerciseTypes(exercise);
+              const levels = getExerciseLevels(exercise);
+              const totalQ = getExerciseQuestionCount(exercise);
+
+              return (
+                <article
+                  key={exercise.id}
+                  className="ex-card"
+                  onClick={() => startExercise(exercise)}
+                >
+                  <div className="ex-card-badges">
+                    {levels.map(l => (
+                      <span key={l} className="ex-card-badge">{l}</span>
+                    ))}
+                  </div>
+                  <div className="ex-card-types">
+                    {types.map(t => (
+                      <span key={t} className="ex-type-icon" title={EXERCISE_TYPE_LABELS[t]}>
+                        {EXERCISE_TYPE_ICONS[t]}
+                      </span>
+                    ))}
+                  </div>
+                  <h3 className="ex-card-title">{exercise.name}</h3>
+                  {exercise.description && (
+                    <p className="ex-card-desc">{exercise.description}</p>
+                  )}
+                  <div className="ex-card-meta">
+                    <span className="ex-card-questions">{totalQ} câu hỏi</span>
+                    {exercise.timePerQuestion && (
+                      <span className="ex-card-time">⏱ {exercise.timePerQuestion}s</span>
+                    )}
+                  </div>
+                  <div className="ex-card-type-tags">
+                    {types.map(t => (
+                      <span key={t} className="ex-type-tag">{EXERCISE_TYPE_LABELS[t]}</span>
+                    ))}
+                  </div>
+                  <button className="ex-card-btn">
+                    <Play size={16} />
+                    Bắt đầu
+                  </button>
+                </article>
+              );
+            })
           )}
         </div>
       </div>
@@ -310,7 +468,17 @@ export function ExercisePage({ exercises, flashcards, onGoHome }: ExercisePagePr
   // Render session view
   if (view === 'session' && session && currentExercise) {
     const currentQ = session.questions[session.currentIndex];
-    const isCorrect = selectedAnswer === currentQ.correctIndex;
+    const isListeningType = currentQ.type === 'listening_write';
+
+    // Check if answer is correct
+    let isCorrect = false;
+    if (isListeningType) {
+      isCorrect = typeof session.answers[session.currentIndex] === 'string' &&
+        (session.answers[session.currentIndex] as string).toLowerCase().trim() === currentQ.correctAnswer?.toLowerCase().trim();
+    } else {
+      isCorrect = selectedAnswer === currentQ.correctIndex;
+    }
+
     const progress = ((session.currentIndex + (showResult ? 1 : 0)) / session.questions.length) * 100;
 
     return (
@@ -327,87 +495,147 @@ export function ExercisePage({ exercises, flashcards, onGoHome }: ExercisePagePr
               {session.currentIndex + 1} / {session.questions.length}
             </span>
           </div>
-          <div className="ex-session-type">
-            {EXERCISE_ICONS[currentExercise.type]}
+          {timeLeft !== null && !showResult && (
+            <div className={`ex-timer ${timeLeft <= 5 ? 'danger' : timeLeft <= 10 ? 'warning' : ''}`}>
+              <Clock size={18} />
+              <span>{timeLeft}s</span>
+            </div>
+          )}
+          <div className="ex-session-type-badge">
+            {getQuestionTypeLabel(currentQ.type)}
           </div>
         </header>
 
         <main className="ex-session-content">
           <div className={`ex-question-card ${isAnimating ? (isCorrect ? 'correct-shake' : 'wrong-shake') : ''}`}>
-            {currentExercise.type === 'listening' ? (
-              <div className="ex-listening">
+            {/* Listening Write Type */}
+            {isListeningType ? (
+              <div className="ex-listening-write">
                 <div className={`ex-sound-wave ${isListening ? 'active' : ''}`}>
-                  {isListening ? <Volume2 size={64} /> : <VolumeX size={64} />}
+                  {isListening ? <Volume2 size={48} /> : <VolumeX size={48} />}
                   <div className="ex-wave-rings">
                     <span></span><span></span><span></span>
                   </div>
                 </div>
                 <p className="ex-listening-status">
-                  {isListening ? `Đang phát lần ${listenCount}/3...` : 'Đã phát xong'}
+                  {isListening ? `Đang phát lần ${listenCount}/3...` : 'Nghe và viết từ vừa nghe'}
                 </p>
-                {!isListening && (
+                {!isListening && !showResult && (
                   <button className="ex-replay-btn" onClick={() => speakQuestion(currentQ.vocabulary)}>
-                    <RefreshCw size={18} />
+                    <RefreshCw size={16} />
                     Nghe lại
                   </button>
                 )}
+
+                {!showResult && (
+                  <div className="ex-text-input-wrapper">
+                    <input
+                      ref={textInputRef}
+                      type="text"
+                      className="ex-text-input"
+                      value={textAnswer}
+                      onChange={e => setTextAnswer(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleTextSubmit()}
+                      placeholder="Gõ từ bạn nghe được..."
+                      disabled={isListening}
+                    />
+                  </div>
+                )}
+
+                {showResult && (
+                  <div className={`ex-listening-result ${isCorrect ? 'correct' : 'wrong'}`}>
+                    <div className="ex-your-answer">
+                      <span className="label">Bạn viết:</span>
+                      <span className={`answer ${isCorrect ? 'correct' : 'wrong'}`}>
+                        {session.answers[session.currentIndex] as string || '(không trả lời)'}
+                        {isCorrect ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
+                      </span>
+                    </div>
+                    <div className="ex-correct-answer">
+                      <span className="label">Đáp án đúng:</span>
+                      <span className="answer correct">{currentQ.correctAnswer}</span>
+                    </div>
+                    <div className="ex-word-info">
+                      <span className="vocabulary">{currentQ.vocabulary}</span>
+                      {currentQ.kanji && <span className="kanji">({currentQ.kanji})</span>}
+                      <span className="meaning">= {currentQ.meaning}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="ex-question">
-                <span className="ex-question-label">
-                  {currentExercise.type === 'meaning' ? 'Nghĩa:' : 'Từ vựng:'}
-                </span>
-                <h2 className="ex-question-text">{getQuestionText()}</h2>
-              </div>
-            )}
-
-            <div className="ex-options">
-              {currentQ.options.map((option, idx) => {
-                let optionClass = 'ex-option';
-                if (showResult) {
-                  if (idx === currentQ.correctIndex) optionClass += ' correct';
-                  else if (idx === selectedAnswer) optionClass += ' wrong';
-                } else if (selectedAnswer === idx) {
-                  optionClass += ' selected';
-                }
-
-                return (
-                  <button
-                    key={idx}
-                    className={optionClass}
-                    onClick={() => handleAnswer(idx)}
-                    disabled={showResult}
-                  >
-                    <span className="ex-option-letter">{String.fromCharCode(65 + idx)}</span>
-                    <span className="ex-option-text">{option}</span>
-                    {showResult && idx === currentQ.correctIndex && (
-                      <CheckCircle2 className="ex-option-icon correct" size={22} />
-                    )}
-                    {showResult && idx === selectedAnswer && idx !== currentQ.correctIndex && (
-                      <XCircle className="ex-option-icon wrong" size={22} />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {showResult && (
-              <div className={`ex-feedback ${isCorrect ? 'correct' : 'wrong'}`}>
-                <div className="ex-feedback-icon">
-                  {isCorrect ? <CheckCircle2 size={28} /> : <XCircle size={28} />}
+              /* Multiple Choice Types */
+              <>
+                <div className="ex-question">
+                  <h2 className="ex-question-text">{getQuestionText(currentQ)}</h2>
+                  <p className="ex-question-hint">Chọn đáp án đúng</p>
                 </div>
-                <div className="ex-feedback-content">
-                  <strong>{isCorrect ? 'Chính xác!' : 'Chưa đúng!'}</strong>
-                  {currentExercise.type === 'listening' && (
-                    <p className="ex-feedback-detail">
-                      <span>{currentQ.kanji ? `${currentQ.vocabulary} (${currentQ.kanji})` : currentQ.vocabulary}</span>
-                      <span className="ex-feedback-meaning">= {currentQ.meaning}</span>
-                    </p>
-                  )}
+
+                <div className="ex-options">
+                  {currentQ.options?.map((option, idx) => {
+                    let optionClass = 'ex-option';
+                    if (showResult) {
+                      if (idx === currentQ.correctIndex) optionClass += ' correct';
+                      else if (idx === selectedAnswer) optionClass += ' wrong';
+                      if (selectedAnswer === -1 && idx === currentQ.correctIndex) optionClass += ' timeout-correct';
+                    } else if (selectedAnswer === idx) {
+                      optionClass += ' selected';
+                    }
+
+                    return (
+                      <button
+                        key={idx}
+                        className={optionClass}
+                        onClick={() => !showResult && setSelectedAnswer(idx)}
+                        disabled={showResult}
+                      >
+                        <img src={ANSWER_OPTIONS[idx].icon} alt={ANSWER_OPTIONS[idx].label} className="ex-option-icon-img" />
+                        <span className="ex-option-text">{option}</span>
+                        {showResult && idx === currentQ.correctIndex && (
+                          <CheckCircle2 className="ex-option-icon correct" size={22} />
+                        )}
+                        {showResult && idx === selectedAnswer && idx !== currentQ.correctIndex && (
+                          <XCircle className="ex-option-icon wrong" size={22} />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
-              </div>
+
+                {showResult && (
+                  <div className={`ex-feedback ${isCorrect ? 'correct' : 'wrong'} ${selectedAnswer === -1 ? 'timeout' : ''}`}>
+                    <div className="ex-feedback-icon">
+                      {isCorrect ? <CheckCircle2 size={24} /> : selectedAnswer === -1 ? <Clock size={24} /> : <XCircle size={24} />}
+                    </div>
+                    <div className="ex-feedback-content">
+                      <strong>{isCorrect ? 'Chính xác!' : selectedAnswer === -1 ? 'Hết giờ!' : 'Chưa đúng!'}</strong>
+                      <p className="ex-feedback-detail">
+                        <span className="ex-feedback-word">{currentQ.vocabulary}</span>
+                        {currentQ.kanji && <span className="ex-feedback-kanji">({currentQ.kanji})</span>}
+                        <span className="ex-feedback-meaning">= {currentQ.meaning}</span>
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
+
+          {/* Submit button for multiple choice */}
+          {!isListeningType && !showResult && selectedAnswer !== null && (
+            <button className="ex-submit-btn" onClick={() => handleAnswer(selectedAnswer)}>
+              <CheckCircle2 size={20} />
+              Trả lời
+            </button>
+          )}
+
+          {/* Submit button for listening */}
+          {isListeningType && !showResult && !isListening && textAnswer.trim() && (
+            <button className="ex-submit-btn" onClick={handleTextSubmit}>
+              <CheckCircle2 size={20} />
+              Trả lời
+            </button>
+          )}
 
           {showResult && (
             <button className="ex-next-btn" onClick={nextQuestion}>
@@ -479,10 +707,18 @@ export function ExercisePage({ exercises, flashcards, onGoHome }: ExercisePagePr
             <div className="ex-review-list">
               {session.questions.map((q, idx) => {
                 const userAnswer = session.answers[idx];
-                const correct = userAnswer === q.correctIndex;
+                let correct = false;
+                if (q.type === 'listening_write') {
+                  correct = typeof userAnswer === 'string' &&
+                    userAnswer.toLowerCase().trim() === q.correctAnswer?.toLowerCase().trim();
+                } else {
+                  correct = userAnswer === q.correctIndex;
+                }
+
                 return (
                   <div key={q.id} className={`ex-review-item ${correct ? 'correct' : 'wrong'}`}>
                     <span className="ex-review-num">{idx + 1}</span>
+                    <span className="ex-review-type">{EXERCISE_TYPE_ICONS[q.type]}</span>
                     <span className="ex-review-word">
                       {q.kanji ? `${q.vocabulary} (${q.kanji})` : q.vocabulary}
                     </span>

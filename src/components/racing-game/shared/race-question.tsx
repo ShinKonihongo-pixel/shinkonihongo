@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Clock, Zap, ChevronRight, Check, X } from 'lucide-react';
 import type { RacingQuestion, VehicleType } from '../../../types/racing-game';
+import { ANSWER_OPTIONS } from '../../../constants/answer-options';
 
 interface RaceQuestionProps {
   question: RacingQuestion;
@@ -15,14 +16,6 @@ interface RaceQuestionProps {
   onRevealAnswer: () => void;
   onNextQuestion: () => void;
 }
-
-// Professional answer option colors with A, B, C, D labels
-const OPTION_THEMES = [
-  { bg: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%)', label: 'A', color: '#ff6b6b' },
-  { bg: 'linear-gradient(135deg, #4ecdc4 0%, #26a69a 100%)', label: 'B', color: '#4ecdc4' },
-  { bg: 'linear-gradient(135deg, #ffd93d 0%, #f9a825 100%)', label: 'C', color: '#ffd93d' },
-  { bg: 'linear-gradient(135deg, #8B5CF6 0%, #7c3aed 100%)', label: 'D', color: '#8B5CF6' },
-];
 
 export function RaceQuestion({
   question,
@@ -142,7 +135,7 @@ export function RaceQuestion({
       {/* Answer Options */}
       <div className="answer-grid">
         {question.options.map((option, index) => {
-          const theme = OPTION_THEMES[index];
+          const answerOpt = ANSWER_OPTIONS[index];
           const isSelected = selectedAnswer === index;
           const isCorrect = showResult && index === question.correctIndex;
           const isWrong = showResult && isSelected && index !== question.correctIndex;
@@ -153,15 +146,15 @@ export function RaceQuestion({
               key={index}
               className={`answer-option ${isSelected ? 'selected' : ''} ${isCorrect ? 'correct' : ''} ${isWrong ? 'wrong' : ''}`}
               style={{
-                '--option-color': theme.color,
+                '--option-color': answerOpt.color,
                 background: isCorrect ? 'linear-gradient(135deg, #00c853 0%, #009624 100%)' :
                            isWrong ? 'linear-gradient(135deg, #ff4757 0%, #c62828 100%)' :
-                           theme.bg,
+                           answerOpt.bg,
               } as React.CSSProperties}
               onClick={() => handleAnswer(index)}
               disabled={isDisabled}
             >
-              <span className="option-label">{theme.label}</span>
+              <img src={answerOpt.icon} alt={answerOpt.label} className="option-icon-img" />
               <span className="option-text">{option}</span>
               {isCorrect && (
                 <span className="result-icon correct">

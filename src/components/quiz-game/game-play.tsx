@@ -6,6 +6,7 @@ import type { QuizGame, GamePlayer, GameQuestion, PowerUpType } from '../../type
 import { POWER_UPS } from '../../types/quiz-game';
 import { Trophy, Zap, Users, ChevronRight, Shield, Snowflake, Target, Crown, Medal, Award, LogOut } from 'lucide-react';
 import { useGameSounds } from '../../hooks/use-game-sounds';
+import { ANSWER_OPTIONS } from '../../constants/answer-options';
 
 interface GamePlayProps {
   game: QuizGame;
@@ -24,13 +25,6 @@ interface GamePlayProps {
   gameAnswerFontSize?: number;
 }
 
-// Answer option colors with A, B, C, D labels
-const ANSWER_COLORS = [
-  { bg: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)', label: 'A' },
-  { bg: 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)', label: 'B' },
-  { bg: 'linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)', label: 'C' },
-  { bg: 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)', label: 'D' },
-];
 
 export function GamePlay({
   game,
@@ -310,12 +304,12 @@ export function GamePlay({
                 className={`answer-card ${currentPlayer?.currentAnswer === index ? 'selected' : ''} ${hasAnswered ? 'disabled' : ''}`}
                 onClick={() => !hasAnswered && onSubmitAnswer(index)}
                 style={{
-                  background: ANSWER_COLORS[index].bg,
+                  background: ANSWER_OPTIONS[index].bg,
                   fontSize: `${gameAnswerFontSize}rem`
                 }}
                 disabled={hasAnswered}
               >
-                <span className="answer-label">{ANSWER_COLORS[index].label}</span>
+                <img src={ANSWER_OPTIONS[index].icon} alt={ANSWER_OPTIONS[index].label} className="answer-icon" />
                 <span className="answer-text">{option}</span>
               </button>
             ))}
@@ -382,9 +376,10 @@ export function GamePlay({
           <span className="correct-label">Đáp án đúng</span>
           <span
             className="correct-answer"
-            style={{ background: ANSWER_COLORS[currentQuestion.correctIndex].bg }}
+            style={{ background: ANSWER_OPTIONS[currentQuestion.correctIndex].bg }}
           >
-            {ANSWER_COLORS[currentQuestion.correctIndex].label} {currentQuestion.options[currentQuestion.correctIndex]}
+            <img src={ANSWER_OPTIONS[currentQuestion.correctIndex].icon} alt={ANSWER_OPTIONS[currentQuestion.correctIndex].label} className="correct-answer-icon" />
+            {currentQuestion.options[currentQuestion.correctIndex]}
           </span>
           <span className="answer-stats">{correctCount}/{sortedPlayers.length} trả lời đúng</span>
         </div>

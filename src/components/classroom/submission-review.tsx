@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { ClassroomTest, ClassroomSubmission, SubmissionAnswer } from '../../types/classroom';
+import { ANSWER_OPTIONS } from '../../constants/answer-options';
 
 interface SubmissionReviewProps {
   test: ClassroomTest;
@@ -121,7 +122,7 @@ export function SubmissionReview({
                         key={oIdx}
                         className={`option-display ${isSelected ? 'selected' : ''} ${isCorrectOption ? 'correct' : ''}`}
                       >
-                        <span className="option-letter">{String.fromCharCode(65 + oIdx)}</span>
+                        <img src={ANSWER_OPTIONS[oIdx].icon} alt={ANSWER_OPTIONS[oIdx].label} className="option-icon-img" />
                         <span className="option-text">{opt}</span>
                         {isCorrectOption && <span className="correct-badge">✓</span>}
                         {isSelected && !isCorrectOption && <span className="wrong-badge">✗</span>}

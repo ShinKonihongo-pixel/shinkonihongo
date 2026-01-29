@@ -26,6 +26,7 @@ import {
   loadWeakAreas,
   saveWeakAreas,
 } from './jlpt/jlpt-utils';
+import { ANSWER_OPTIONS } from '../../constants/answer-options';
 
 export function JLPTPage({
   questions,
@@ -988,7 +989,7 @@ export function JLPTPage({
                           key={aIdx}
                           className={`review-answer ${answer.isCorrect ? 'correct' : ''} ${result?.selectedAnswer === aIdx && !answer.isCorrect ? 'selected-wrong' : ''}`}
                         >
-                          <span className="answer-letter">{String.fromCharCode(65 + aIdx)}.</span>
+                          <img src={ANSWER_OPTIONS[aIdx].icon} alt={ANSWER_OPTIONS[aIdx].label} className="answer-icon-img" />
                           <span>{answer.text}</span>
                           {answer.isCorrect && <span className="correct-mark">✓</span>}
                           {result?.selectedAnswer === aIdx && !answer.isCorrect && <span className="wrong-mark">✗</span>}
@@ -1051,7 +1052,7 @@ export function JLPTPage({
                   onClick={() => handleSelectAnswer(index)}
                   disabled={showResult}
                 >
-                  <span className="answer-letter">{String.fromCharCode(65 + index)}.</span>
+                  <img src={ANSWER_OPTIONS[index].icon} alt={ANSWER_OPTIONS[index].label} className="answer-icon-img" />
                   <span className="answer-text">{answer.text}</span>
                   {showResult && answer.isCorrect && <CheckCircle size={20} className="correct-icon" />}
                   {showResult && selectedAnswer === index && !answer.isCorrect && <XCircle size={20} className="wrong-icon" />}

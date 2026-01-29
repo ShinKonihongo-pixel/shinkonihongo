@@ -58,14 +58,16 @@ export function GameSelector({ onSelectGame, onQuickJoin }: GameSelectorProps) {
     }
   };
 
-  // Show waiting room view
+  // Show waiting room view - only real rooms, no virtual/mock rooms
   if (currentView === 'waiting-room') {
     return (
       <div className="game-selector">
         <WaitingRoom
           onJoinGame={handleJoinFromWaitingRoom}
           onBack={() => setCurrentView('games')}
+          onCreateRoom={() => setCurrentView('games')}
           filterGameType={filterGameType}
+          realRooms={[]} // Only real rooms - fetched from server when available
         />
       </div>
     );

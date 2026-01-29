@@ -1,8 +1,8 @@
-// WaitingRoom - Redesigned lobby for browsing available game rooms
-// Users can browse and join any game from this list
+// WaitingRoom - Lobby for browsing available game rooms
+// Only shows REAL rooms created by users, no virtual/mock rooms
 
 import { useState, useEffect, useMemo } from 'react';
-import { Users, Clock, ArrowRight, RefreshCw, Search, Filter, ArrowLeft, Gamepad2 } from 'lucide-react';
+import { Users, Clock, ArrowRight, RefreshCw, Search, Filter, ArrowLeft, Gamepad2, Plus } from 'lucide-react';
 import type { GameType, WaitingRoomGame } from '../../types/game-hub';
 import { GAMES, getVisibleGames } from '../../types/game-hub';
 import { getHiddenGames } from '../../services/game-visibility-storage';
@@ -10,51 +10,13 @@ import { getHiddenGames } from '../../services/game-visibility-storage';
 interface WaitingRoomProps {
   onJoinGame: (gameType: GameType, code: string) => void;
   onBack: () => void;
+  onCreateRoom?: () => void;
   filterGameType?: GameType | null;
+  // Real rooms from server/database
+  realRooms?: WaitingRoomGame[];
 }
 
-// Mock data for available games (in production, this would come from a server)
-const generateMockGames = (): WaitingRoomGame[] => {
-  const hiddenGames = getHiddenGames();
-  const visibleGames = getVisibleGames(hiddenGames);
-  const gameTypes = visibleGames.map(g => g.id);
-
-  if (gameTypes.length === 0) return [];
-
-  const hosts = [
-    { name: 'Minh', avatar: '👨' },
-    { name: 'Linh', avatar: '👩' },
-    { name: 'Hùng', avatar: '🧑' },
-    { name: 'Mai', avatar: '👧' },
-    { name: 'Tuấn', avatar: '👦' },
-    { name: 'Hoa', avatar: '🧒' },
-    { name: 'Nam', avatar: '👤' },
-    { name: 'Lan', avatar: '👩‍🦰' },
-  ];
-
-  return Array.from({ length: 12 }, (_, i) => {
-    const gameType = gameTypes[i % gameTypes.length];
-    const host = hosts[i % hosts.length];
-    const gameInfo = GAMES[gameType];
-    const maxPlayers = gameType === 'golden-bell' ? 100 : gameType === 'bingo' ? 30 : 20;
-    const playerCount = Math.floor(Math.random() * (maxPlayers / 2)) + 1;
-
-    return {
-      id: `game-${i + 1}`,
-      code: `${String.fromCharCode(65 + i)}${Math.floor(1000 + Math.random() * 9000)}`,
-      gameType,
-      title: `${gameInfo.name} #${i + 1}`,
-      hostName: host.name,
-      hostAvatar: host.avatar,
-      playerCount,
-      maxPlayers,
-      createdAt: new Date(Date.now() - Math.random() * 300000).toISOString(),
-      status: 'waiting' as const,
-    };
-  });
-};
-
-export function WaitingRoom({ onJoinGame, onBack, filterGameType }: WaitingRoomProps) {
+export function WaitingRoom({ onJoinGame, onBack, onCreateRoom, filterGameType, realRooms = [] }: WaitingRoomProps) {
   const [games, setGames] = useState<WaitingRoomGame[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -69,15 +31,17 @@ export function WaitingRoom({ onJoinGame, onBack, filterGameType }: WaitingRoomP
   // Get visible games for filter options
   const visibleGames = useMemo(() => getVisibleGames(hiddenGames), [hiddenGames]);
 
-  // Load available games
+  // Load REAL rooms only - no mock/virtual rooms
   useEffect(() => {
     setIsLoading(true);
     const timer = setTimeout(() => {
-      setGames(generateMockGames());
+      // Only use real rooms passed from parent, filter out hidden game types
+      const filteredRealRooms = realRooms.filter(room => !hiddenGames.includes(room.gameType));
+      setGames(filteredRealRooms);
       setIsLoading(false);
-    }, 500);
+    }, 300);
     return () => clearTimeout(timer);
-  }, []);
+  }, [realRooms, hiddenGames]);
 
   // Filter games
   const filteredGames = useMemo(() => {
@@ -102,13 +66,14 @@ export function WaitingRoom({ onJoinGame, onBack, filterGameType }: WaitingRoomP
     return result;
   }, [games, selectedGameFilter, searchQuery]);
 
-  // Refresh games list
+  // Refresh games list - re-filter real rooms
   const handleRefresh = () => {
     setIsLoading(true);
     setTimeout(() => {
-      setGames(generateMockGames());
+      const filteredRealRooms = realRooms.filter(room => !hiddenGames.includes(room.gameType));
+      setGames(filteredRealRooms);
       setIsLoading(false);
-    }, 500);
+    }, 300);
   };
 
   // Format time ago
@@ -201,9 +166,15 @@ export function WaitingRoom({ onJoinGame, onBack, filterGameType }: WaitingRoomP
           </div>
         ) : filteredGames.length === 0 ? (
           <div className="wr-empty">
-            <span className="wr-empty-icon">🏠</span>
-            <h3>Chưa có phòng nào</h3>
-            <p>Hãy tạo phòng mới hoặc đợi người khác tạo</p>
+            <span className="wr-empty-icon">🎮</span>
+            <h3>Chưa có phòng chờ nào</h3>
+            <p>Hiện chưa có ai tạo phòng. Hãy là người đầu tiên!</p>
+            {onCreateRoom && (
+              <button className="wr-create-btn" onClick={onCreateRoom}>
+                <Plus size={18} />
+                Tạo phòng mới
+              </button>
+            )}
           </div>
         ) : (
           <div className="wr-games-grid">
