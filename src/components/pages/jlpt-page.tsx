@@ -5,110 +5,27 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { CheckCircle, XCircle, Settings, Play, RotateCcw, ChevronDown, ChevronUp, TrendingUp, AlertTriangle, Star, Target, BookOpen, Award, Lightbulb, Sparkles } from 'lucide-react';
 import type { JLPTQuestion, JLPTLevel, QuestionCategory } from '../../types/jlpt-question';
-import type { JLPTSession } from '../../types/user';
-import type { AppSettings } from '../../hooks/use-settings';
-import type { CustomTopic, CustomTopicQuestion } from '../../types/custom-topic';
-
-const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
-const QUESTION_CATEGORIES: { value: QuestionCategory; label: string; icon: string; description: string }[] = [
-  { value: 'vocabulary', label: 'Từ vựng', icon: '文', description: 'Kiểm tra vốn từ vựng' },
-  { value: 'grammar', label: 'Ngữ pháp', icon: '法', description: 'Cấu trúc ngữ pháp' },
-  { value: 'reading', label: 'Đọc hiểu', icon: '読', description: 'Đọc và hiểu văn bản' },
-  { value: 'listening', label: 'Nghe', icon: '聴', description: 'Nghe và hiểu' },
-];
-
-// Storage keys for persistence
-const HISTORY_STORAGE_KEY = 'jlpt_question_history';
-const WEAK_AREAS_STORAGE_KEY = 'jlpt_weak_areas';
-
-// Weak area tracking interface
-interface WeakAreaData {
-  category: QuestionCategory;
-  level: JLPTLevel;
-  wrongCount: number;
-  totalCount: number;
-  lastUpdated: number;
-}
-
-// Load weak areas from localStorage
-function loadWeakAreas(): WeakAreaData[] {
-  try {
-    const saved = localStorage.getItem(WEAK_AREAS_STORAGE_KEY);
-    return saved ? JSON.parse(saved) : [];
-  } catch {
-    return [];
-  }
-}
-
-// Save weak areas
-function saveWeakAreas(areas: WeakAreaData[]) {
-  localStorage.setItem(WEAK_AREAS_STORAGE_KEY, JSON.stringify(areas));
-}
-
-// Level assessment thresholds and messages
-const ASSESSMENT_LEVELS = {
-  excellent: { min: 90, label: '優秀', color: '#10b981', emoji: '🌟' },
-  good: { min: 75, label: '良好', color: '#3b82f6', emoji: '👍' },
-  pass: { min: 60, label: '合格', color: '#f59e0b', emoji: '✓' },
-  needsWork: { min: 0, label: '頑張れ', color: '#ef4444', emoji: '📚' },
-};
-
-interface JLPTPageProps {
-  questions: JLPTQuestion[];
-  onSaveJLPTSession?: (data: Omit<JLPTSession, 'id' | 'userId'>) => void;
-  settings?: AppSettings;
-  // Custom topics support
-  customTopics?: CustomTopic[];
-  customTopicQuestions?: CustomTopicQuestion[];
-}
-
-type PracticeState = 'setup' | 'practicing' | 'result';
-
-interface PracticeResult {
-  questionId: string;
-  selectedAnswer: number;
-  isCorrect: boolean;
-  category: QuestionCategory;
-  level: JLPTLevel;
-  timeSpent: number; // milliseconds
-}
-
-interface SectionConfig {
-  category: QuestionCategory;
-  questionCount: number;
-  available: number;
-}
-
-// Category performance breakdown
-interface CategoryPerformance {
-  category: QuestionCategory;
-  correct: number;
-  total: number;
-  percentage: number;
-  avgTime: number;
-}
-
-// Question history for anti-repetition
-interface QuestionHistory {
-  questionId: string;
-  answeredAt: number;
-  sessionCount: number;
-}
-
-// Load question history from localStorage
-function loadQuestionHistory(): QuestionHistory[] {
-  try {
-    const saved = localStorage.getItem(HISTORY_STORAGE_KEY);
-    return saved ? JSON.parse(saved) : [];
-  } catch {
-    return [];
-  }
-}
-
-// Save question history
-function saveQuestionHistory(history: QuestionHistory[]) {
-  localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
-}
+import type {
+  JLPTPageProps,
+  PracticeState,
+  PracticeResult,
+  SectionConfig,
+  CategoryPerformance,
+  QuestionHistory,
+  WeakAreaData,
+} from './jlpt/jlpt-types';
+import {
+  JLPT_LEVELS,
+  QUESTION_CATEGORIES,
+  ASSESSMENT_LEVELS,
+  getAssessmentLevel,
+} from './jlpt/jlpt-constants';
+import {
+  loadQuestionHistory,
+  saveQuestionHistory,
+  loadWeakAreas,
+  saveWeakAreas,
+} from './jlpt/jlpt-utils';
 
 export function JLPTPage({
   questions,

@@ -6,27 +6,9 @@ import {
   Repeat, Shuffle, Upload, ChevronLeft,
   Eye, EyeOff, Settings, SkipBack, SkipForward, Check
 } from 'lucide-react';
-import type { Flashcard, DifficultyLevel, JLPTLevel, Lesson } from '../../types/flashcard';
-
-interface ListeningPracticePageProps {
-  cards: Flashcard[];
-  lessons: Lesson[];
-  getLessonsByLevel: (level: JLPTLevel) => Lesson[];
-  getChildLessons: (parentId: string) => Lesson[];
-  onGoHome?: () => void;
-}
-
-const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
-
-const DIFFICULTY_OPTIONS: { value: DifficultyLevel | 'all'; label: string }[] = [
-  { value: 'all', label: 'Tất cả' },
-  { value: 'easy', label: 'Dễ' },
-  { value: 'medium', label: 'TB' },
-  { value: 'hard', label: 'Khó' },
-  { value: 'super_hard', label: 'Rất khó' },
-];
-
-type ViewMode = 'level-select' | 'vocabulary' | 'custom-audio';
+import type { DifficultyLevel, JLPTLevel, Lesson } from '../../types/flashcard';
+import type { ListeningPracticePageProps, ViewMode } from './listening-practice/listening-practice-types';
+import { JLPT_LEVELS, DIFFICULTY_OPTIONS } from './listening-practice/listening-practice-constants';
 
 export function ListeningPracticePage({
   cards,

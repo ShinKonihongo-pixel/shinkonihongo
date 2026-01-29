@@ -392,7 +392,6 @@ function App() {
             getLessonsByLevel={getLessonsByLevel}
             getChildLessons={getChildLessons}
             canAccessLocked={canAccessLocked}
-            onPracticeJLPT={() => setCurrentPage('jlpt')}
             onNavigate={(page) => setCurrentPage(page as Page)}
             userName={currentUser?.displayName || currentUser?.username}
             progress={progress}

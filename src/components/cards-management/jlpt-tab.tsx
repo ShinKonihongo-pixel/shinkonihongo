@@ -434,7 +434,7 @@ export function JLPTTab({
           {navState.type === 'root' && (
             <div className="folder-list">
               {JLPT_QUESTION_LEVELS.map(level => (
-                <div key={level} className="folder-item" onClick={() => setNavState({ type: 'level', level })}>
+                <div key={level} className="folder-item" data-level={level} onClick={() => setNavState({ type: 'level', level })}>
                   <span className="folder-icon">📁</span>
                   <span className="folder-name">{level}</span>
                   <span className="folder-count">({getQuestionCountByLevel(level)} câu hỏi)</span>

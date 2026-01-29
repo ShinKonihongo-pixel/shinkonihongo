@@ -6,6 +6,7 @@ import type { KaiwaMessage, KaiwaContext, JLPTLevel, ConversationStyle, Conversa
 import type { KaiwaDefaultQuestion, KaiwaFolder } from '../../types/kaiwa-question';
 import type { KaiwaAdvancedTopic, KaiwaAdvancedQuestion } from '../../types/kaiwa-advanced';
 import type { CustomTopic, CustomTopicQuestion } from '../../types/custom-topic';
+import type { KaiwaPageProps, SessionMode, QuestionSelectorState } from './kaiwa/kaiwa-page-types';
 import { useSpeech, comparePronunciation } from '../../hooks/use-speech';
 import { useGroq } from '../../hooks/use-groq';
 import { JLPT_LEVELS, CONVERSATION_STYLES, CONVERSATION_TOPICS, getStyleDisplay, getScenarioByTopic } from '../../constants/kaiwa';
@@ -39,33 +40,6 @@ import {
   BookOpen,
   MessageCircle,
 } from 'lucide-react';
-
-interface KaiwaPageProps {
-  settings: AppSettings;
-  defaultQuestions?: KaiwaDefaultQuestion[];
-  kaiwaFolders?: KaiwaFolder[];
-  getFoldersByLevelAndTopic?: (level: JLPTLevel, topic: ConversationTopic) => KaiwaFolder[];
-  getQuestionsByFolder?: (folderId: string) => KaiwaDefaultQuestion[];
-  getQuestionsByLevelAndTopic?: (level: JLPTLevel, topic: ConversationTopic) => KaiwaDefaultQuestion[];
-  // Advanced session props
-  advancedTopics?: KaiwaAdvancedTopic[];
-  advancedQuestions?: KaiwaAdvancedQuestion[];
-  getAdvancedQuestionsByTopic?: (topicId: string) => KaiwaAdvancedQuestion[];
-  // Custom topics props
-  customTopics?: CustomTopic[];
-  customTopicQuestions?: CustomTopicQuestion[];
-  getCustomTopicQuestionsByTopic?: (topicId: string) => CustomTopicQuestion[];
-}
-
-// Session mode type
-type SessionMode = 'default' | 'advanced' | 'custom';
-
-// Navigation state for question selector
-type QuestionSelectorState =
-  | { type: 'hidden' }
-  | { type: 'level' }
-  | { type: 'topic'; level: JLPTLevel }
-  | { type: 'list'; level: JLPTLevel; topic: ConversationTopic; folderId?: string; folderName?: string };
 
 export function KaiwaPage({
   settings,

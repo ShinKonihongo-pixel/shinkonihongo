@@ -1,142 +1,41 @@
 // Word Scramble Game - Professional multiplayer-style word arrangement game
 // Features: Multi-level selection, auto-hints, player leaderboard, auto-fill button
+// Modularized - types, constants, utils in separate files
+
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Home, Play, RotateCcw, Trophy, Clock, Target, ChevronRight, X, Check, Zap, Users, Award, Star, TrendingUp, Lightbulb, Plus } from 'lucide-react';
 import type { Flashcard, JLPTLevel } from '../../types/flashcard';
 import { useGameSounds } from '../../hooks/use-game-sounds';
 
-// Game configuration
-interface GameConfig {
-  selectedLevels: JLPTLevel[];
-  timePerQuestion: number;
-  totalQuestions: number;
-}
+// Import from modular files
+import type {
+  GameConfig,
+  Question,
+  Player,
+  HintState,
+  GamePhase,
+  GameState,
+  WordScramblePageProps,
+} from './word-scramble/word-scramble-types';
+import {
+  JLPT_LEVELS,
+  DEFAULT_TIME,
+  DEFAULT_QUESTIONS,
+  MIN_WORD_LENGTH,
+  AUTO_FILL_PENALTIES,
+  LEVEL_COLORS,
+  ROLE_COLORS,
+} from './word-scramble/word-scramble-constants';
+import {
+  scrambleWord,
+  calculateScore,
+  generateBots,
+  getPlayerNameColor,
+  createInitialHintState,
+} from './word-scramble/word-scramble-utils';
 
-// Question state
-interface Question {
-  word: Flashcard;
-  scrambledLetters: string[];
-  originalPositions: number[];
-}
-
-// Player role type
-type PlayerRole = 'user' | 'vip' | 'admin' | 'super_admin';
-
-// Player in leaderboard
-interface Player {
-  id: string;
-  name: string;
-  avatar: string;
-  score: number;
-  correctAnswers: number;
-  isCurrentUser: boolean;
-  role?: PlayerRole;
-}
-
-// Hint state - 3 hints
-interface HintState {
-  hint1Shown: boolean;
-  hint2Shown: boolean;
-  hint3Shown: boolean;
-  hint1Content: string;
-  hint2Content: string;
-  hint3Content: string;
-}
-
-// Game state
-type GamePhase = 'setup' | 'playing' | 'result';
-
-interface GameState {
-  phase: GamePhase;
-  currentQuestionIndex: number;
-  questions: Question[];
-  score: number;
-  totalTime: number;
-  correctAnswers: number;
-  wrongAnswers: number;
-  questionStartTime: number;
-  timeRemaining: number;
-  selectedLetters: number[];
-  hints: HintState;
-  isCorrect: boolean | null;
-  showResult: boolean;
-  streak: number;
-  maxStreak: number;
-  players: Player[];
-  autoFillUsed: number; // 0-3 uses
-  autoFilledPositions: number[]; // positions that were auto-filled
-  isSoloMode: boolean;
-}
-
-interface WordScramblePageProps {
-  onClose: () => void;
-  flashcards: Flashcard[];
-  currentUser?: { id: string; displayName: string; avatar: string; role?: PlayerRole };
-}
-
-const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
-const DEFAULT_TIME = 30;
-const DEFAULT_QUESTIONS = 10;
-const MIN_WORD_LENGTH = 3;
-
-// Auto-fill penalty percentages
-const AUTO_FILL_PENALTIES = [0.2, 0.4, 0.6]; // 20%, 40%, 60%
-
-// Level colors for visual distinction
-const LEVEL_COLORS: Record<JLPTLevel, { bg: string; border: string; text: string }> = {
-  N5: { bg: '#ecfdf5', border: '#10b981', text: '#059669' },
-  N4: { bg: '#eff6ff', border: '#3b82f6', text: '#2563eb' },
-  N3: { bg: '#fef3c7', border: '#f59e0b', text: '#d97706' },
-  N2: { bg: '#fce7f3', border: '#ec4899', text: '#db2777' },
-  N1: { bg: '#fef2f2', border: '#ef4444', text: '#dc2626' },
-};
-
-// Role colors
-const ROLE_COLORS: Record<PlayerRole, string> = {
-  user: '#ffffff',
-  vip: '#fbbf24',
-  admin: '#60a5fa',
-  super_admin: '#f472b6',
-};
-
-// Scramble word
-function scrambleWord(word: string): { letters: string[]; positions: number[] } {
-  const letters = word.split('');
-  const indices = letters.map((_, i) => i);
-  for (let i = indices.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [indices[i], indices[j]] = [indices[j], indices[i]];
-  }
-  if (indices.every((val, idx) => val === idx) && letters.length > 1) {
-    [indices[0], indices[1]] = [indices[1], indices[0]];
-  }
-  return { letters: indices.map(i => letters[i]), positions: indices };
-}
-
-// Calculate score with penalty
-function calculateScore(timeRemaining: number, totalTime: number, streak: number, autoFillPenalty: number = 0): number {
-  const baseScore = 100;
-  const timeBonus = Math.round((timeRemaining / totalTime) * 100);
-  const streakBonus = streak * 10;
-  const totalBeforePenalty = baseScore + timeBonus + streakBonus;
-  const penalty = Math.round(totalBeforePenalty * autoFillPenalty);
-  return Math.max(0, totalBeforePenalty - penalty);
-}
-
-// Generate bot players
-function generateBots(count: number): Player[] {
-  const names = ['Sakura', 'Yuki', 'Hana', 'Ryu', 'Kenji', 'Akira', 'Mei', 'Kaito', 'Sora', 'Rin'];
-  const avatars = ['🎭', '🦊', '🐱', '🐼', '🎨', '🌸', '⭐', '🔥', '💫', '🌙'];
-  return Array.from({ length: count }, (_, i) => ({
-    id: `bot-${i}`,
-    name: names[i % names.length] + Math.floor(Math.random() * 100),
-    avatar: avatars[i % avatars.length],
-    score: 0,
-    correctAnswers: 0,
-    isCurrentUser: false,
-    role: 'user' as PlayerRole,
-  }));
-}
+// Re-export types for external use
+export type { WordScramblePageProps } from './word-scramble/word-scramble-types';
 
 export const WordScramblePage: React.FC<WordScramblePageProps> = ({
   onClose,

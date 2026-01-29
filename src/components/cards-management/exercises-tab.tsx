@@ -1,7 +1,8 @@
 // Exercises Management Tab - Professional UI for creating vocabulary exercises
+// Features: Level-based filtering, exercise CRUD, publish/unpublish
 
 import { useState } from 'react';
-import { Plus, Edit3, Trash2, Eye, EyeOff, BookOpen, Headphones, Target, FileText } from 'lucide-react';
+import { Plus, Edit3, Trash2, Eye, EyeOff, BookOpen, Headphones, Target, FileText, ChevronLeft } from 'lucide-react';
 import type { Exercise, ExerciseFormData, ExerciseType } from '../../types/exercise';
 import type { JLPTLevel, Lesson, Flashcard } from '../../types/flashcard';
 import type { CurrentUser } from '../../types/user';
@@ -9,6 +10,15 @@ import { EXERCISE_TYPE_LABELS, QUESTION_COUNT_OPTIONS } from '../../types/exerci
 import { ConfirmModal } from '../ui/confirm-modal';
 
 const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
+
+// Level colors for visual distinction
+const LEVEL_COLORS: Record<JLPTLevel, { bg: string; text: string; border: string }> = {
+  N5: { bg: '#e8f5e9', text: '#2e7d32', border: '#81c784' },
+  N4: { bg: '#e3f2fd', text: '#1565c0', border: '#64b5f6' },
+  N3: { bg: '#fff3e0', text: '#ef6c00', border: '#ffb74d' },
+  N2: { bg: '#fce4ec', text: '#c2185b', border: '#f06292' },
+  N1: { bg: '#f3e5f5', text: '#7b1fa2', border: '#ba68c8' },
+};
 
 // Exercise type icons
 const EXERCISE_TYPE_ICONS: Record<ExerciseType, React.ReactNode> = {
@@ -43,19 +53,26 @@ export function ExercisesTab({
   currentUser,
   isSuperAdmin,
 }: ExercisesTabProps) {
+  // Navigation state - null means showing all levels
+  const [selectedLevel, setSelectedLevel] = useState<JLPTLevel | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Exercise | null>(null);
 
-  // Form state
+  // Form state - use selected level if available
   const [formData, setFormData] = useState<ExerciseFormData>({
     name: '',
     description: '',
     type: 'vocabulary',
-    jlptLevel: 'N5',
+    jlptLevel: selectedLevel || 'N5',
     lessonIds: [],
     questionCount: 10,
   });
+
+  // Get exercises filtered by level
+  const getExercisesByLevel = (level: JLPTLevel) => exercises.filter(e => e.jlptLevel === level);
+  const getExerciseCountByLevel = (level: JLPTLevel) => getExercisesByLevel(level).length;
+  const filteredExercises = selectedLevel ? getExercisesByLevel(selectedLevel) : exercises;
 
   const canModify = (exercise: Exercise) => isSuperAdmin || exercise.createdBy === currentUser.id;
 
@@ -64,12 +81,22 @@ export function ExercisesTab({
       name: '',
       description: '',
       type: 'vocabulary',
-      jlptLevel: 'N5',
+      jlptLevel: selectedLevel || 'N5',
       lessonIds: [],
       questionCount: 10,
     });
     setEditingExercise(null);
     setShowForm(false);
+  };
+
+  // Open form with selected level preset
+  const handleShowForm = () => {
+    setFormData(prev => ({
+      ...prev,
+      jlptLevel: selectedLevel || 'N5',
+      lessonIds: [],
+    }));
+    setShowForm(true);
   };
 
   const handleEdit = (exercise: Exercise) => {
@@ -135,39 +162,90 @@ export function ExercisesTab({
 
   const selectedCardCount = getCardCount(formData.lessonIds);
 
-  // Stats
-  const publishedCount = exercises.filter(e => e.isPublished).length;
-  const draftCount = exercises.length - publishedCount;
+  // Stats - use filtered exercises when level is selected
+  const statsExercises = filteredExercises;
+  const publishedCount = statsExercises.filter(e => e.isPublished).length;
+  const draftCount = statsExercises.length - publishedCount;
 
   return (
     <div className="exercises-tab">
-      {/* Header with stats */}
-      <div className="exercises-tab-header">
-        <div className="exercises-stats">
-          <div className="stat-item">
-            <span className="stat-value">{exercises.length}</span>
-            <span className="stat-label">Tổng bài tập</span>
-          </div>
-          <div className="stat-item published">
-            <span className="stat-value">{publishedCount}</span>
-            <span className="stat-label">Đã xuất bản</span>
-          </div>
-          <div className="stat-item draft">
-            <span className="stat-value">{draftCount}</span>
-            <span className="stat-label">Bản nháp</span>
+      {/* Level Navigation - Root view */}
+      {!selectedLevel && !showForm && (
+        <div className="exercises-level-nav">
+          <h3 className="level-nav-title">Chọn cấp độ</h3>
+          <div className="level-folders">
+            {JLPT_LEVELS.map(level => {
+              const count = getExerciseCountByLevel(level);
+              const publishedInLevel = getExercisesByLevel(level).filter(e => e.isPublished).length;
+              const colors = LEVEL_COLORS[level];
+              return (
+                <div
+                  key={level}
+                  className="level-folder"
+                  style={{
+                    backgroundColor: colors.bg,
+                    borderColor: colors.border,
+                  }}
+                  onClick={() => setSelectedLevel(level)}
+                >
+                  <span className="level-folder-icon">📂</span>
+                  <div className="level-folder-info">
+                    <span className="level-folder-name" style={{ color: colors.text }}>{level}</span>
+                    <span className="level-folder-count">
+                      {count} bài tập {publishedInLevel > 0 && <span className="published-mini">({publishedInLevel} đã xuất bản)</span>}
+                    </span>
+                  </div>
+                  <span className="level-folder-arrow" style={{ color: colors.text }}>→</span>
+                </div>
+              );
+            })}
           </div>
         </div>
+      )}
 
-        {!showForm && (
-          <button className="btn btn-primary create-btn" onClick={() => setShowForm(true)}>
-            <Plus size={18} />
-            Tạo bài tập mới
+      {/* Back button and header when level is selected */}
+      {selectedLevel && (
+        <>
+          <button className="btn btn-back exercises-back" onClick={() => { setSelectedLevel(null); setShowForm(false); }}>
+            <ChevronLeft size={18} />
+            Quay lại
           </button>
-        )}
-      </div>
 
-      {/* Form */}
-      {showForm && (
+          <div className="exercises-level-header" style={{ borderLeftColor: LEVEL_COLORS[selectedLevel].border }}>
+            <h3 style={{ color: LEVEL_COLORS[selectedLevel].text }}>
+              Bài tập {selectedLevel}
+            </h3>
+          </div>
+
+          {/* Header with stats */}
+          <div className="exercises-tab-header">
+            <div className="exercises-stats">
+              <div className="stat-item">
+                <span className="stat-value">{statsExercises.length}</span>
+                <span className="stat-label">Tổng bài tập</span>
+              </div>
+              <div className="stat-item published">
+                <span className="stat-value">{publishedCount}</span>
+                <span className="stat-label">Đã xuất bản</span>
+              </div>
+              <div className="stat-item draft">
+                <span className="stat-value">{draftCount}</span>
+                <span className="stat-label">Bản nháp</span>
+              </div>
+            </div>
+
+            {!showForm && (
+              <button className="btn btn-primary create-btn" onClick={handleShowForm}>
+                <Plus size={18} />
+                Tạo bài tập mới
+              </button>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Form - only show when level is selected */}
+      {showForm && selectedLevel && (
         <form className="exercise-form-pro" onSubmit={handleSubmit}>
           <div className="form-header">
             <FileText size={24} />
@@ -341,17 +419,17 @@ export function ExercisesTab({
         </form>
       )}
 
-      {/* Exercise List */}
-      {!showForm && (
+      {/* Exercise List - only show when level is selected */}
+      {!showForm && selectedLevel && (
         <div className="exercises-list-pro">
-          {exercises.length === 0 ? (
+          {filteredExercises.length === 0 ? (
             <div className="empty-state-pro">
               <BookOpen size={48} strokeWidth={1.5} />
-              <h3>Chưa có bài tập nào</h3>
+              <h3>Chưa có bài tập nào cho {selectedLevel}</h3>
               <p>Nhấn "Tạo bài tập mới" để bắt đầu</p>
             </div>
           ) : (
-            exercises.map(exercise => (
+            filteredExercises.map(exercise => (
               <div key={exercise.id} className={`exercise-item-pro ${exercise.isPublished ? 'published' : 'draft'}`}>
                 <div className="exercise-icon-wrapper">
                   {EXERCISE_TYPE_ICONS[exercise.type]}

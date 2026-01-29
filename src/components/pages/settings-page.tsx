@@ -1,646 +1,39 @@
 // Settings page component with tabs: General Settings and Personal Info
+// Modularized for better maintainability - constants, types, utils in separate files
 
-import { useState, useMemo, useEffect, useRef } from 'react';
-import type { AppSettings, GameQuestionContent, GameAnswerContent, GlobalTheme, CardFrameId, CustomFrameSettings, JLPTLevelOption, MemorizationFilter, AutoAddDifficulty } from '../../hooks/use-settings';
+import { useState, useMemo, useEffect } from 'react';
+import type { AppSettings, CardFrameId } from '../../hooks/use-settings';
 import { CARD_FRAME_PRESETS } from '../../hooks/use-settings';
-import { useGameSounds, MUSIC_CATEGORY_LABELS, type MusicCategory } from '../../hooks/use-game-sounds';
-import { Volume2, VolumeX, Music, Music2 } from 'lucide-react';
-import type { CurrentUser, StudySession, GameSession, JLPTSession, UserStats, User, UserJLPTLevel } from '../../types/user';
-import type { Flashcard, Lesson } from '../../types/flashcard';
-import type { BadgeType, FriendWithUser, UserBadgeStats, BadgeGift } from '../../types/friendship';
+import type { UserJLPTLevel } from '../../types/user';
 import { calculateUserLevel, USER_JLPT_LEVELS, USER_JLPT_LEVEL_LABELS } from '../../types/user';
 import { ExportImportModal } from '../common/export-import-modal';
-import type { ExportData } from '../../lib/data-export';
 import { FriendsPanel } from '../friends/friends-panel';
 import { BadgeGiftModal } from '../friends/badge-gift-modal';
 import { BadgeStatsDisplay } from '../friends/badge-stats-display';
 import { AVATAR_CATEGORIES, isImageAvatar } from '../../utils/avatar-icons';
 
-type DeviceType = 'desktop' | 'tablet' | 'mobile';
+// Import from modular settings files
+import type { SettingsPageProps, SettingsTab, GeneralSubTab } from './settings/settings-types';
+import {
+  PROFILE_BACKGROUND_OPTIONS,
+  GRADIENT_PRESETS,
+  GRADIENT_CATEGORIES,
+  KANJI_FONTS,
+  type GradientCategory,
+} from './settings/settings-constants';
+import {
+  getDeviceType,
+  formatDuration,
+  formatDate,
+  getPreviewBackground,
+  getCustomFrameStyle,
+} from './settings/settings-utils';
+import { GameSoundSettings } from './settings/settings-sound-panel';
 
-// Detect current device type based on screen width
-function getDeviceType(): DeviceType {
-  const width = window.innerWidth;
-  if (width > 1024) return 'desktop';
-  if (width >= 768) return 'tablet';
-  return 'mobile';
-}
+// Re-export SettingsPageProps for external use
+export type { SettingsPageProps } from './settings/settings-types';
 
-type SettingsTab = 'general' | 'profile' | 'friends';
-type GeneralSubTab = 'flashcard' | 'study' | 'grammar' | 'game' | 'kaiwa' | 'system';
-
-interface ThemePreset {
-  name: string;
-  primary: string;
-  dark: string;
-  gradient: string;
-}
-
-interface SettingsPageProps {
-  settings: AppSettings;
-  onUpdateSetting: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
-  onReset: () => void;
-  // Initial tab to show (for navigation from profile page)
-  initialTab?: SettingsTab;
-  // Profile management props
-  currentUser?: CurrentUser | null;
-  onUpdateDisplayName?: (displayName: string) => Promise<{ success: boolean; error?: string }>;
-  onChangePassword?: (oldPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
-  onUpdateAvatar?: (avatar: string) => Promise<{ success: boolean; error?: string }>;
-  onUpdateProfileBackground?: (background: string) => Promise<{ success: boolean; error?: string }>;
-  onUpdateJlptLevel?: (level: string) => Promise<{ success: boolean; error?: string }>;
-  // History props
-  studySessions?: StudySession[];
-  gameSessions?: GameSession[];
-  jlptSessions?: JLPTSession[];
-  stats?: UserStats;
-  historyLoading?: boolean;
-  // Theme settings (super_admin only)
-  theme?: GlobalTheme;
-  themePresets?: ThemePreset[];
-  onApplyThemePreset?: (preset: ThemePreset) => void;
-  onResetTheme?: () => void;
-  // Export/Import props
-  flashcards?: Flashcard[];
-  lessons?: Lesson[];
-  onImportData?: (data: ExportData) => Promise<void>;
-  // Friends & Badges props
-  allUsers?: User[];
-  friends?: FriendWithUser[];
-  pendingRequests?: Array<{
-    id: string;
-    fromUserId: string;
-    fromUserName: string;
-    fromUserAvatar?: string;
-    message?: string;
-    createdAt: string;
-  }>;
-  badgeStats?: UserBadgeStats | null;
-  receivedBadges?: Array<BadgeGift & { fromUserName: string }>;
-  friendsLoading?: boolean;
-  onSendFriendRequest?: (toUserId: string, message?: string) => Promise<{ success: boolean; error?: string }>;
-  onRespondFriendRequest?: (requestId: string, accept: boolean) => Promise<boolean>;
-  onRemoveFriend?: (friendshipId: string) => Promise<boolean>;
-  onSendBadge?: (badgeType: BadgeType, toUserId: string, message?: string) => Promise<boolean>;
-  isFriend?: (userId: string) => boolean;
-}
-
-// Avatar options are now imported from utils/avatar-icons.ts (100 icons)
-
-// Profile background options
-const PROFILE_BACKGROUND_OPTIONS = [
-  { value: 'transparent', label: 'Trong suốt' },
-  { value: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', label: 'Tím xanh' },
-  { value: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', label: 'Hồng' },
-  { value: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', label: 'Xanh dương' },
-  { value: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', label: 'Xanh lá' },
-  { value: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', label: 'Cam hồng' },
-  { value: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)', label: 'Pastel' },
-  { value: 'linear-gradient(135deg, #2c3e50 0%, #3498db 100%)', label: 'Xanh đậm' },
-  { value: 'linear-gradient(135deg, #232526 0%, #414345 100%)', label: 'Xám đen' },
-  { value: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)', label: 'Đỏ' },
-];
-
-// Preset gradients for card background - organized by category
-type GradientCategory = 'all' | 'japanese' | 'nature' | 'sunset' | 'ocean' | 'galaxy' | 'neon' | 'pastel' | 'dark' | 'pattern';
-
-interface GradientPreset {
-  value: string;
-  label: string;
-  category: GradientCategory;
-}
-
-const GRADIENT_PRESETS: GradientPreset[] = [
-  // Japanese-themed
-  { value: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', label: 'Tím Xanh (Mặc định)', category: 'japanese' },
-  { value: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)', label: 'Shu (Đỏ son)', category: 'japanese' },
-  { value: 'linear-gradient(135deg, #d4a574 0%, #c19a6b 100%)', label: 'Kincha (Vàng trà)', category: 'japanese' },
-  { value: 'linear-gradient(135deg, #2d5a27 0%, #1e3d14 100%)', label: 'Matcha (Trà xanh)', category: 'japanese' },
-  { value: 'linear-gradient(135deg, #ffb7c5 0%, #ff69b4 100%)', label: 'Sakura (Hoa anh đào)', category: 'japanese' },
-  { value: 'linear-gradient(180deg, #1a1a2e 0%, #3d1a4a 50%, #0f3460 100%)', label: 'Yoru (Đêm)', category: 'japanese' },
-
-  // Nature
-  { value: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', label: 'Rừng Xanh', category: 'nature' },
-  { value: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)', label: 'Lá Non', category: 'nature' },
-  { value: 'linear-gradient(135deg, #56ab2f 0%, #a8e063 100%)', label: 'Cỏ Mùa Xuân', category: 'nature' },
-  { value: 'linear-gradient(135deg, #134e5e 0%, #71b280 100%)', label: 'Rừng Sâu', category: 'nature' },
-  { value: 'linear-gradient(135deg, #8e9eab 0%, #eef2f3 100%)', label: 'Sương Mù', category: 'nature' },
-
-  // Sunset
-  { value: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', label: 'Hoàng Hôn', category: 'sunset' },
-  { value: 'linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%)', label: 'Bình Minh', category: 'sunset' },
-  { value: 'linear-gradient(135deg, #f12711 0%, #f5af19 100%)', label: 'Lửa Chiều', category: 'sunset' },
-  { value: 'linear-gradient(135deg, #ff6b6b 0%, #feca57 100%)', label: 'Cam Đỏ', category: 'sunset' },
-  { value: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)', label: 'Cam Nhạt', category: 'sunset' },
-
-  // Ocean
-  { value: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', label: 'Biển Xanh', category: 'ocean' },
-  { value: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', label: 'Đại Dương Sâu', category: 'ocean' },
-  { value: 'linear-gradient(180deg, #87ceeb 0%, #1e90ff 50%, #000080 100%)', label: 'Biển Sâu', category: 'ocean' },
-  { value: 'linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)', label: 'Sóng Biển', category: 'ocean' },
-  { value: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)', label: 'Biển Pastel', category: 'ocean' },
-
-  // Galaxy
-  { value: 'linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)', label: 'Thiên Hà', category: 'galaxy' },
-  { value: 'linear-gradient(135deg, #141e30 0%, #243b55 100%)', label: 'Vũ Trụ', category: 'galaxy' },
-  { value: 'linear-gradient(135deg, #1a1a2e 0%, #4a0080 100%)', label: 'Sao Đêm', category: 'galaxy' },
-  { value: 'linear-gradient(135deg, #200122 0%, #6f0000 100%)', label: 'Sao Hỏa', category: 'galaxy' },
-  { value: 'linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%)', label: 'Aurora', category: 'galaxy' },
-
-  // Neon
-  { value: 'linear-gradient(135deg, #ff00ff 0%, #00ffff 100%)', label: 'Neon Hồng-Xanh', category: 'neon' },
-  { value: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', label: 'Neon Hồng', category: 'neon' },
-  { value: 'linear-gradient(135deg, #00f3ff 0%, #0080ff 100%)', label: 'Neon Xanh', category: 'neon' },
-  { value: 'linear-gradient(135deg, #b721ff 0%, #21d4fd 100%)', label: 'Neon Tím', category: 'neon' },
-  { value: 'linear-gradient(135deg, #f7971e 0%, #ffd200 100%)', label: 'Neon Vàng', category: 'neon' },
-
-  // Pastel
-  { value: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)', label: 'Pastel Xanh-Hồng', category: 'pastel' },
-  { value: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)', label: 'Pastel Hồng', category: 'pastel' },
-  { value: 'linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)', label: 'Pastel Tím', category: 'pastel' },
-  { value: 'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)', label: 'Pastel Cầu Vồng', category: 'pastel' },
-  { value: 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)', label: 'Pastel Lavender', category: 'pastel' },
-
-  // Dark
-  { value: 'linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)', label: 'Đêm Tối', category: 'dark' },
-  { value: 'linear-gradient(135deg, #232526 0%, #414345 100%)', label: 'Xám Tối', category: 'dark' },
-  { value: 'linear-gradient(135deg, #c31432 0%, #240b36 100%)', label: 'Đỏ Đậm', category: 'dark' },
-  { value: 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)', label: 'Đen Xanh', category: 'dark' },
-  { value: 'linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%)', label: 'Than Đen', category: 'dark' },
-
-  // Patterns (CSS patterns)
-  { value: 'repeating-linear-gradient(45deg, #606dbc, #606dbc 10px, #465298 10px, #465298 20px)', label: 'Sọc Xéo', category: 'pattern' },
-  { value: 'repeating-linear-gradient(0deg, #e74c3c, #e74c3c 10px, #c0392b 10px, #c0392b 20px)', label: 'Sọc Ngang Đỏ', category: 'pattern' },
-  { value: 'repeating-linear-gradient(90deg, #667eea, #667eea 10px, #764ba2 10px, #764ba2 20px)', label: 'Sọc Dọc Tím', category: 'pattern' },
-  { value: 'radial-gradient(circle at 25% 25%, #667eea 2%, transparent 2%), radial-gradient(circle at 75% 75%, #667eea 2%, #764ba2 2%)', label: 'Chấm Bi', category: 'pattern' },
-  { value: 'conic-gradient(from 0deg at 50% 50%, #667eea, #764ba2, #667eea)', label: 'Xoáy Ốc', category: 'pattern' },
-];
-
-const GRADIENT_CATEGORIES: { key: GradientCategory; label: string; icon: string }[] = [
-  { key: 'all', label: 'Tất cả', icon: '🎨' },
-  { key: 'japanese', label: 'Nhật Bản', icon: '🎌' },
-  { key: 'nature', label: 'Thiên nhiên', icon: '🌿' },
-  { key: 'sunset', label: 'Hoàng hôn', icon: '🌅' },
-  { key: 'ocean', label: 'Đại dương', icon: '🌊' },
-  { key: 'galaxy', label: 'Vũ trụ', icon: '🌌' },
-  { key: 'neon', label: 'Neon', icon: '💜' },
-  { key: 'pastel', label: 'Pastel', icon: '🍬' },
-  { key: 'dark', label: 'Tối', icon: '🌑' },
-  { key: 'pattern', label: 'Họa tiết', icon: '🔲' },
-];
-
-// Get background style for preview
-function getPreviewBackground(settings: AppSettings): React.CSSProperties {
-  switch (settings.cardBackgroundType) {
-    case 'solid':
-      return { background: settings.cardBackgroundColor };
-    case 'image':
-      return settings.cardBackgroundImage
-        ? {
-            backgroundImage: `url(${settings.cardBackgroundImage})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }
-        : { background: settings.cardBackgroundGradient };
-    case 'gradient':
-    default:
-      return { background: settings.cardBackgroundGradient };
-  }
-}
-
-// Get custom frame style
-function getCustomFrameStyle(customFrame: CustomFrameSettings): React.CSSProperties {
-  const baseStyle: React.CSSProperties = {
-    border: `${customFrame.borderWidth}px ${customFrame.borderStyle} ${customFrame.borderColor}`,
-    borderRadius: `${customFrame.borderRadius}px`,
-  };
-
-  if (customFrame.glowEnabled) {
-    baseStyle.boxShadow = `0 0 ${customFrame.glowIntensity}px ${customFrame.glowColor}, 0 0 ${customFrame.glowIntensity * 2}px ${customFrame.glowColor}`;
-  }
-
-  return baseStyle;
-}
-
-const KANJI_FONTS = [
-  { value: 'Noto Serif JP', label: 'Noto Serif JP' },
-  { value: 'Shippori Mincho', label: 'Shippori Mincho' },
-  { value: 'Zen Old Mincho', label: 'Zen Old Mincho' },
-  { value: 'Zen Antique', label: 'Zen Antique' },
-  { value: 'Noto Sans JP', label: 'Noto Sans JP' },
-  { value: 'Zen Maru Gothic', label: 'Zen Maru Gothic' },
-  { value: 'Zen Kurenaido', label: 'Zen Kurenaido' },
-  { value: 'Klee One', label: 'Klee One (Giáo khoa)' },
-  { value: 'Hachi Maru Pop', label: 'Hachi Maru Pop (Dễ thương)' },
-  { value: 'MS Mincho', label: 'MS Mincho (Hệ thống)' },
-];
-
-// Format duration in seconds to readable string
-function formatDuration(seconds: number): string {
-  if (seconds < 60) return `${seconds} giây`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)} phút`;
-  const hours = Math.floor(seconds / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
-  return `${hours}h ${mins}m`;
-}
-
-// Format date to readable string
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-}
-
-// Game Sound Settings Component
-function GameSoundSettings() {
-  const {
-    settings: soundSettings,
-    updateSettings,
-    playCorrect,
-    playWrong,
-    playVictory,
-    playStart,
-    startMusic,
-    stopMusic,
-    isMusicPlaying,
-    currentTrack,
-    addCustomTrack,
-    removeCustomTrack,
-    allTracks,
-  } = useGameSounds();
-
-  const [showAddCustom, setShowAddCustom] = useState(false);
-  const [customTrackName, setCustomTrackName] = useState('');
-  const [customTrackUrl, setCustomTrackUrl] = useState('');
-  const [customTrackEmoji, setCustomTrackEmoji] = useState('🎵');
-  const [uploadMode, setUploadMode] = useState<'url' | 'file'>('url');
-  const [uploadedFileName, setUploadedFileName] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Get current selected track info
-  const selectedTrack = useMemo(() => {
-    return allTracks.find(t => t.id === soundSettings.musicTrack);
-  }, [allTracks, soundSettings.musicTrack]);
-
-  // Group tracks by category
-  const tracksByCategory = useMemo(() => {
-    const categories: MusicCategory[] = ['epic', 'chill', 'action', 'fun', 'japanese', 'custom'];
-    return categories.map(cat => ({
-      category: cat,
-      label: MUSIC_CATEGORY_LABELS[cat],
-      tracks: allTracks.filter(t => t.category === cat),
-    })).filter(g => g.tracks.length > 0);
-  }, [allTracks]);
-
-  const handleTestSound = (type: 'correct' | 'wrong' | 'victory' | 'start') => {
-    switch (type) {
-      case 'correct': playCorrect(); break;
-      case 'wrong': playWrong(); break;
-      case 'victory': playVictory(); break;
-      case 'start': playStart(); break;
-    }
-  };
-
-  const handleAddCustomTrack = () => {
-    if (!customTrackName.trim() || !customTrackUrl.trim()) return;
-
-    const trackId = `custom-${Date.now()}`;
-    addCustomTrack({
-      id: trackId,
-      name: customTrackName.trim(),
-      emoji: customTrackEmoji,
-      url: customTrackUrl.trim(),
-    });
-
-    // Reset form
-    resetCustomForm();
-  };
-
-  const resetCustomForm = () => {
-    setCustomTrackName('');
-    setCustomTrackUrl('');
-    setCustomTrackEmoji('🎵');
-    setUploadedFileName('');
-    setUploadMode('url');
-    setShowAddCustom(false);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/ogg', 'audio/wav', 'audio/webm', 'audio/aac'];
-    if (!validTypes.includes(file.type) && !file.name.match(/\.(mp3|ogg|wav|webm|aac|m4a)$/i)) {
-      alert('Chỉ hỗ trợ file âm thanh: MP3, OGG, WAV, WebM, AAC');
-      return;
-    }
-
-    // Max 10MB
-    if (file.size > 10 * 1024 * 1024) {
-      alert('File quá lớn! Tối đa 10MB');
-      return;
-    }
-
-    setUploadedFileName(file.name);
-
-    // Auto-fill name from filename if empty
-    if (!customTrackName.trim()) {
-      const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
-      setCustomTrackName(nameWithoutExt);
-    }
-
-    // Convert to data URL
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
-      setCustomTrackUrl(dataUrl);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  return (
-    <section className="settings-section sound-settings-section">
-      <h3>
-        <span className="section-icon">🔊</span>
-        Âm thanh & Nhạc nền
-      </h3>
-      <p className="settings-description">Cài đặt hiệu ứng âm thanh và nhạc nền cho trò chơi</p>
-
-      {/* Sound Effects Toggle */}
-      <div className="setting-item">
-        <label>
-          {soundSettings.soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
-          <span>Hiệu ứng âm thanh</span>
-        </label>
-        <label className="toggle">
-          <input
-            type="checkbox"
-            checked={soundSettings.soundEnabled}
-            onChange={(e) => updateSettings({ soundEnabled: e.target.checked })}
-          />
-          <span className="toggle-slider"></span>
-        </label>
-      </div>
-
-      {/* Sound Volume */}
-      {soundSettings.soundEnabled && (
-        <div className="setting-item">
-          <label>Âm lượng hiệu ứng: {soundSettings.soundVolume}%</label>
-          <div className="setting-control">
-            <input
-              type="range"
-              min="0"
-              max="100"
-              step="5"
-              value={soundSettings.soundVolume}
-              onChange={(e) => updateSettings({ soundVolume: Number(e.target.value) })}
-            />
-            <span className="setting-value">{soundSettings.soundVolume}%</span>
-          </div>
-        </div>
-      )}
-
-      {/* Sound Test Buttons */}
-      {soundSettings.soundEnabled && (
-        <div className="sound-test-section">
-          <label>Nghe thử:</label>
-          <div className="sound-test-buttons">
-            <button className="sound-test-btn correct" onClick={() => handleTestSound('correct')} title="Trả lời đúng">
-              ✓ Đúng
-            </button>
-            <button className="sound-test-btn wrong" onClick={() => handleTestSound('wrong')} title="Trả lời sai">
-              ✗ Sai
-            </button>
-            <button className="sound-test-btn victory" onClick={() => handleTestSound('victory')} title="Chiến thắng">
-              🏆 Thắng
-            </button>
-            <button className="sound-test-btn start" onClick={() => handleTestSound('start')} title="Bắt đầu">
-              🎮 Start
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="setting-divider"></div>
-
-      {/* Background Music Toggle */}
-      <div className="setting-item">
-        <label>
-          {soundSettings.musicEnabled ? <Music size={18} /> : <Music2 size={18} />}
-          <span>Nhạc nền</span>
-        </label>
-        <label className="toggle">
-          <input
-            type="checkbox"
-            checked={soundSettings.musicEnabled}
-            onChange={(e) => updateSettings({ musicEnabled: e.target.checked })}
-          />
-          <span className="toggle-slider"></span>
-        </label>
-      </div>
-
-      {/* Music Volume */}
-      {soundSettings.musicEnabled && (
-        <>
-          <div className="setting-item">
-            <label>Âm lượng nhạc: {soundSettings.musicVolume}%</label>
-            <div className="setting-control">
-              <input
-                type="range"
-                min="0"
-                max="100"
-                step="5"
-                value={soundSettings.musicVolume}
-                onChange={(e) => updateSettings({ musicVolume: Number(e.target.value) })}
-              />
-              <span className="setting-value">{soundSettings.musicVolume}%</span>
-            </div>
-          </div>
-
-          {/* Current Track Display */}
-          {selectedTrack && (
-            <div className="music-current-track">
-              <div className="current-track-info">
-                <span className="track-emoji">{selectedTrack.emoji}</span>
-                <div className="track-details">
-                  <span className="track-name">{selectedTrack.name}</span>
-                  <span className="track-category">{MUSIC_CATEGORY_LABELS[selectedTrack.category]}</span>
-                </div>
-              </div>
-              {isMusicPlaying && currentTrack && (
-                <div className="music-playing-badge">
-                  <span className="music-bar"></span>
-                  <span className="music-bar"></span>
-                  <span className="music-bar"></span>
-                  Đang phát
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Music Track Selection Grid */}
-          <div className="music-track-selector">
-            <label>Chọn bản nhạc</label>
-            <div className="music-categories">
-              {tracksByCategory.map(group => (
-                <div key={group.category} className="music-category-group">
-                  <div className="category-header">{group.label}</div>
-                  <div className="category-tracks">
-                    {group.tracks.map(track => (
-                      <button
-                        key={track.id}
-                        className={`track-btn ${soundSettings.musicTrack === track.id ? 'selected' : ''} ${track.url ? 'has-audio' : ''}`}
-                        onClick={() => {
-                          updateSettings({ musicTrack: track.id });
-                          // Auto stop if playing different track
-                          if (isMusicPlaying) {
-                            stopMusic();
-                          }
-                        }}
-                        title={track.url ? `${track.name} (Audio file)` : `${track.name} (Procedural)`}
-                      >
-                        <span className="track-emoji">{track.emoji}</span>
-                        <span className="track-name">{track.name}</span>
-                        {track.category === 'custom' && (
-                          <button
-                            className="track-remove-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeCustomTrack(track.id);
-                            }}
-                            title="Xóa bản nhạc"
-                          >
-                            ×
-                          </button>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Add Custom Track */}
-            <div className="add-custom-track-section">
-              {!showAddCustom ? (
-                <button className="add-custom-btn" onClick={() => setShowAddCustom(true)}>
-                  ➕ Thêm nhạc tùy chỉnh
-                </button>
-              ) : (
-                <div className="custom-track-form">
-                  {/* Mode Toggle */}
-                  <div className="upload-mode-toggle">
-                    <button
-                      className={`mode-btn ${uploadMode === 'url' ? 'active' : ''}`}
-                      onClick={() => setUploadMode('url')}
-                    >
-                      🔗 Từ URL
-                    </button>
-                    <button
-                      className={`mode-btn ${uploadMode === 'file' ? 'active' : ''}`}
-                      onClick={() => setUploadMode('file')}
-                    >
-                      📁 Tải file lên
-                    </button>
-                  </div>
-
-                  <div className="form-row">
-                    <select
-                      value={customTrackEmoji}
-                      onChange={(e) => setCustomTrackEmoji(e.target.value)}
-                      className="emoji-select"
-                    >
-                      {['🎵', '🎶', '🎸', '🎹', '🎺', '🎻', '🥁', '🎤', '🎧', '📻', '💿', '🌟', '❤️', '🔥', '⚡', '🌈'].map(e => (
-                        <option key={e} value={e}>{e}</option>
-                      ))}
-                    </select>
-                    <input
-                      type="text"
-                      placeholder="Tên bản nhạc"
-                      value={customTrackName}
-                      onChange={(e) => setCustomTrackName(e.target.value)}
-                      className="custom-track-name-input"
-                    />
-                  </div>
-
-                  {uploadMode === 'url' ? (
-                    <input
-                      type="url"
-                      placeholder="URL nhạc (mp3, ogg, wav...)"
-                      value={customTrackUrl}
-                      onChange={(e) => setCustomTrackUrl(e.target.value)}
-                      className="custom-track-url-input"
-                    />
-                  ) : (
-                    <div className="file-upload-area">
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="audio/*,.mp3,.ogg,.wav,.webm,.aac,.m4a"
-                        onChange={handleFileUpload}
-                        className="file-input-hidden"
-                        id="audio-file-input"
-                      />
-                      <label htmlFor="audio-file-input" className="file-upload-label">
-                        {uploadedFileName ? (
-                          <span className="file-selected">
-                            <span className="file-icon">🎵</span>
-                            <span className="file-name">{uploadedFileName}</span>
-                            <span className="file-change">Đổi file</span>
-                          </span>
-                        ) : (
-                          <span className="file-placeholder">
-                            <span className="upload-icon">📤</span>
-                            <span className="upload-text">Chọn file âm thanh</span>
-                            <span className="upload-hint">MP3, OGG, WAV, WebM (tối đa 10MB)</span>
-                          </span>
-                        )}
-                      </label>
-                    </div>
-                  )}
-
-                  <div className="form-actions">
-                    <button
-                      className="btn-add"
-                      onClick={handleAddCustomTrack}
-                      disabled={!customTrackName.trim() || !customTrackUrl.trim()}
-                    >
-                      Thêm
-                    </button>
-                    <button className="btn-cancel" onClick={resetCustomForm}>
-                      Hủy
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Music Play/Stop Button */}
-          <div className="music-control-section">
-            <button
-              className={`music-control-btn ${isMusicPlaying ? 'playing' : ''}`}
-              onClick={isMusicPlaying ? stopMusic : startMusic}
-            >
-              {isMusicPlaying ? (
-                <>⏹️ Dừng nhạc</>
-              ) : (
-                <>▶️ Nghe thử nhạc</>
-              )}
-            </button>
-          </div>
-        </>
-      )}
-
-      {/* Info note */}
-      <div className="sound-info-note">
-        <span className="info-icon">💡</span>
-        <span>Nhạc nền sẽ tự động phát khi game bắt đầu. Bạn có thể thêm nhạc riêng từ URL hoặc tải file lên.</span>
-      </div>
-    </section>
-  );
-}
+// NOTE: GameSoundSettings component has been moved to ./settings/settings-sound-panel.tsx
 
 export function SettingsPage({
   settings,
@@ -789,14 +182,33 @@ export function SettingsPage({
 
   return (
     <div className="settings-page">
-      {/* Professional Header */}
+      {/* Premium Header with Animated Background */}
       <div className="settings-header">
+        {/* Animated background orbs */}
+        <div className="settings-header-bg">
+          <div className="settings-orb settings-orb-1" />
+          <div className="settings-orb settings-orb-2" />
+          <div className="settings-orb settings-orb-3" />
+        </div>
+        {/* Bottom wave transition */}
+        <div className="settings-wave" />
         <div className="settings-header-content">
-          <h2>
-            <span className="header-icon">⚙️</span>
-            Cài đặt
-          </h2>
-          <p className="settings-header-subtitle">Tùy chỉnh trải nghiệm học tập của bạn</p>
+          <div className="settings-header-top">
+            <div className="settings-logo">
+              <span className="settings-logo-icon">設</span>
+              <span className="settings-logo-text">Settings</span>
+            </div>
+          </div>
+          <div className="settings-header-main">
+            <h2>
+              <span className="settings-title-jp">設定</span>
+              <span className="settings-title-vn">Cài đặt</span>
+            </h2>
+            <p className="settings-header-subtitle">
+              <span>Tùy chỉnh trải nghiệm học tập của bạn</span>
+              <span className="settings-subtitle-jp">あなたの学習体験をカスタマイズ</span>
+            </p>
+          </div>
         </div>
       </div>
 

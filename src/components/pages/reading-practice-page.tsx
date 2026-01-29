@@ -2,22 +2,9 @@
 
 import { useState, useMemo } from 'react';
 import { Home, ChevronRight, CheckCircle, XCircle, RotateCcw, Filter, Volume2 } from 'lucide-react';
-import type { ReadingPassage, ReadingFolder } from '../../types/reading';
 import type { JLPTLevel } from '../../types/flashcard';
-
-const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
-
-interface ReadingPracticePageProps {
-  passages: ReadingPassage[];
-  folders: ReadingFolder[];
-  getFoldersByLevel: (level: JLPTLevel) => ReadingFolder[];
-  getPassagesByFolder: (folderId: string) => ReadingPassage[];
-  onGoHome: () => void;
-}
-
-type ViewState =
-  | { type: 'select' }
-  | { type: 'practice'; passage: ReadingPassage };
+import type { ReadingPracticePageProps, ViewState } from './reading-practice/reading-practice-types';
+import { JLPT_LEVELS } from './reading-practice/reading-practice-constants';
 
 export function ReadingPracticePage({
   passages,
