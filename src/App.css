@@ -191,6 +191,891 @@ body {
   overflow-x: hidden;
 }
 
+/* ============================================================================
+   PREMIUM BUTTON DESIGN SYSTEM
+   Professional, modern button styles with glassmorphism and micro-interactions
+   ============================================================================ */
+
+/* Base Premium Button */
+.premium-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-family);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.premium-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.premium-btn:hover::before {
+  opacity: 1;
+}
+
+.premium-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.premium-btn__spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.premium-btn__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.premium-btn__text {
+  display: flex;
+  align-items: center;
+}
+
+/* ========== Button Sizes ========== */
+.premium-btn--xs {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  border-radius: 8px;
+  min-height: 28px;
+}
+
+.premium-btn--sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+  border-radius: 10px;
+  min-height: 34px;
+}
+
+.premium-btn--md {
+  padding: 0.65rem 1.25rem;
+  font-size: 0.875rem;
+  border-radius: 12px;
+  min-height: 42px;
+}
+
+.premium-btn--lg {
+  padding: 0.85rem 1.75rem;
+  font-size: 1rem;
+  border-radius: 14px;
+  min-height: 50px;
+}
+
+.premium-btn--xl {
+  padding: 1rem 2.25rem;
+  font-size: 1.125rem;
+  border-radius: 16px;
+  min-height: 58px;
+}
+
+/* ========== Button Variants ========== */
+
+/* Primary - Vibrant gradient with glow */
+.premium-btn--primary {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+  color: white;
+  box-shadow: 0 4px 15px -3px rgba(99, 102, 241, 0.5),
+              0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+.premium-btn--primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(99, 102, 241, 0.6),
+              0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+
+.premium-btn--primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px -2px rgba(99, 102, 241, 0.4),
+              0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+/* Secondary - Elegant dark */
+.premium-btn--secondary {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  color: white;
+  box-shadow: 0 4px 15px -3px rgba(30, 41, 59, 0.4),
+              0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+}
+
+.premium-btn--secondary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #334155 0%, #475569 100%);
+  box-shadow: 0 8px 25px -5px rgba(30, 41, 59, 0.5),
+              0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+}
+
+/* Success - Fresh green */
+.premium-btn--success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 4px 15px -3px rgba(16, 185, 129, 0.5),
+              0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+.premium-btn--success:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.6),
+              0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+}
+
+/* Danger - Bold red */
+.premium-btn--danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  box-shadow: 0 4px 15px -3px rgba(239, 68, 68, 0.5),
+              0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+.premium-btn--danger:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(239, 68, 68, 0.6),
+              0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+}
+
+/* Warning - Warm amber */
+.premium-btn--warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  box-shadow: 0 4px 15px -3px rgba(245, 158, 11, 0.5),
+              0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+.premium-btn--warning:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(245, 158, 11, 0.6),
+              0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+}
+
+/* Ghost - Transparent with hover effect */
+.premium-btn--ghost {
+  background: transparent;
+  color: var(--dark, #1f2937);
+  box-shadow: none;
+}
+
+.premium-btn--ghost:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+}
+
+.premium-btn--ghost:active:not(:disabled) {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Outline - Border only */
+.premium-btn--outline {
+  background: transparent;
+  color: #6366f1;
+  border: 2px solid #6366f1;
+  box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+}
+
+.premium-btn--outline:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.08);
+  box-shadow: 0 0 20px -5px rgba(99, 102, 241, 0.4);
+  transform: translateY(-2px);
+}
+
+/* Glass - Glassmorphism effect */
+.premium-btn--glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.premium-btn--glass:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* Gradient - Rainbow shimmer */
+.premium-btn--gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+  background-size: 300% 300%;
+  color: white;
+  animation: gradient-shift 4s ease infinite;
+  box-shadow: 0 4px 20px -3px rgba(102, 126, 234, 0.5);
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.premium-btn--gradient:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 30px -5px rgba(102, 126, 234, 0.6);
+}
+
+/* Neon - Glowing cyberpunk style */
+.premium-btn--neon {
+  background: transparent;
+  color: #00f5ff;
+  border: 2px solid #00f5ff;
+  box-shadow: 0 0 10px rgba(0, 245, 255, 0.3),
+              inset 0 0 10px rgba(0, 245, 255, 0.1);
+  text-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
+}
+
+.premium-btn--neon:hover:not(:disabled) {
+  background: rgba(0, 245, 255, 0.1);
+  box-shadow: 0 0 20px rgba(0, 245, 255, 0.5),
+              0 0 40px rgba(0, 245, 255, 0.3),
+              inset 0 0 15px rgba(0, 245, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* ========== Button Modifiers ========== */
+.premium-btn--full {
+  width: 100%;
+}
+
+.premium-btn--rounded {
+  border-radius: 9999px;
+}
+
+.premium-btn--glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 4px 15px -3px currentColor; }
+  50% { box-shadow: 0 4px 25px -3px currentColor, 0 0 40px -10px currentColor; }
+}
+
+.premium-btn--loading {
+  pointer-events: none;
+}
+
+/* ========== Icon Button ========== */
+.premium-icon-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.premium-icon-btn--xs {
+  width: 28px;
+  height: 28px;
+  font-size: 14px;
+}
+
+.premium-icon-btn--sm {
+  width: 34px;
+  height: 34px;
+  font-size: 16px;
+}
+
+.premium-icon-btn--md {
+  width: 42px;
+  height: 42px;
+  font-size: 18px;
+}
+
+.premium-icon-btn--lg {
+  width: 50px;
+  height: 50px;
+  font-size: 22px;
+}
+
+.premium-icon-btn--xl {
+  width: 58px;
+  height: 58px;
+  font-size: 26px;
+}
+
+.premium-icon-btn--rounded {
+  border-radius: 50%;
+}
+
+/* ========== Button Group ========== */
+.premium-btn-group {
+  display: inline-flex;
+  gap: 0.5rem;
+}
+
+.premium-btn-group--attached {
+  gap: 0;
+}
+
+.premium-btn-group--attached > .premium-btn:not(:first-child):not(:last-child) {
+  border-radius: 0;
+}
+
+.premium-btn-group--attached > .premium-btn:first-child {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.premium-btn-group--attached > .premium-btn:last-child {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.premium-btn-group--vertical {
+  flex-direction: column;
+}
+
+.premium-btn-group--vertical.premium-btn-group--attached > .premium-btn:first-child {
+  border-radius: 12px 12px 0 0;
+}
+
+.premium-btn-group--vertical.premium-btn-group--attached > .premium-btn:last-child {
+  border-radius: 0 0 12px 12px;
+}
+
+/* ============================================================================
+   QUICK ACTION BUTTONS (for common UI patterns)
+   ============================================================================ */
+
+/* Floating Action Button */
+.fab-btn {
+  position: fixed;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 6px 20px -3px rgba(99, 102, 241, 0.5);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1000;
+}
+
+.fab-btn:hover {
+  transform: scale(1.1) translateY(-2px);
+  box-shadow: 0 10px 30px -5px rgba(99, 102, 241, 0.6);
+}
+
+.fab-btn--bottom-right {
+  bottom: 24px;
+  right: 24px;
+}
+
+.fab-btn--bottom-left {
+  bottom: 24px;
+  left: 24px;
+}
+
+/* Action Card Button */
+.action-card-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 100px;
+}
+
+.action-card-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-4px);
+}
+
+.action-card-btn__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-card-btn__label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Chip Button (Tag-like) */
+.chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.85rem;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 9999px;
+  color: #6366f1;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chip-btn:hover {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.5);
+}
+
+.chip-btn--active {
+  background: #6366f1;
+  color: white;
+  border-color: #6366f1;
+}
+
+.chip-btn--success {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+
+.chip-btn--success:hover,
+.chip-btn--success.chip-btn--active {
+  background: #10b981;
+  color: white;
+}
+
+.chip-btn--danger {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.chip-btn--danger:hover,
+.chip-btn--danger.chip-btn--active {
+  background: #ef4444;
+  color: white;
+}
+
+/* ============================================================================
+   LEGACY BUTTON UPGRADES (for backwards compatibility)
+   ============================================================================ */
+
+/* Upgrade existing .btn classes */
+.btn,
+button.btn,
+a.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  font-family: var(--font-family);
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary,
+.btn.btn-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  box-shadow: 0 4px 15px -3px rgba(99, 102, 241, 0.5);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(99, 102, 241, 0.6);
+}
+
+.btn-secondary,
+.btn.btn-secondary {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  color: white;
+  box-shadow: 0 4px 15px -3px rgba(30, 41, 59, 0.4);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #334155 0%, #475569 100%);
+}
+
+.btn-success,
+.btn.btn-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 4px 15px -3px rgba(16, 185, 129, 0.5);
+}
+
+.btn-success:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.6);
+}
+
+.btn-danger,
+.btn.btn-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  box-shadow: 0 4px 15px -3px rgba(239, 68, 68, 0.5);
+}
+
+.btn-danger:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(239, 68, 68, 0.6);
+}
+
+.btn-warning,
+.btn.btn-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  box-shadow: 0 4px 15px -3px rgba(245, 158, 11, 0.5);
+}
+
+.btn-warning:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.btn-outline,
+.btn.btn-outline {
+  background: transparent;
+  color: #6366f1;
+  border: 2px solid #6366f1;
+}
+
+.btn-outline:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.1);
+  transform: translateY(-2px);
+}
+
+.btn-ghost,
+.btn.btn-ghost {
+  background: transparent;
+  color: inherit;
+  box-shadow: none;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.btn-sm,
+.btn.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+  border-radius: 10px;
+}
+
+.btn-lg,
+.btn.btn-lg {
+  padding: 0.85rem 1.75rem;
+  font-size: 1rem;
+  border-radius: 14px;
+}
+
+.btn-icon,
+.btn.btn-icon {
+  padding: 0.65rem;
+  aspect-ratio: 1;
+}
+
+.btn-full,
+.btn.btn-full {
+  width: 100%;
+}
+
+/* ============================================================================
+   PREMIUM ICON STYLING
+   ============================================================================ */
+
+/* Icon wrapper with background */
+.icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.icon-wrapper--xs {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+
+.icon-wrapper--sm {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+
+.icon-wrapper--md {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+
+.icon-wrapper--lg {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+}
+
+.icon-wrapper--xl {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+}
+
+/* Icon color variants */
+.icon-wrapper--primary {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+  color: #6366f1;
+}
+
+.icon-wrapper--success {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.15));
+  color: #10b981;
+}
+
+.icon-wrapper--danger {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.15));
+  color: #ef4444;
+}
+
+.icon-wrapper--warning {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.15));
+  color: #f59e0b;
+}
+
+.icon-wrapper--info {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.15));
+  color: #3b82f6;
+}
+
+.icon-wrapper--glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+/* Animated icon effects */
+.icon-pulse {
+  animation: icon-pulse 2s ease-in-out infinite;
+}
+
+@keyframes icon-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.icon-bounce {
+  animation: icon-bounce 1s ease infinite;
+}
+
+@keyframes icon-bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-6px); }
+  60% { transform: translateY(-3px); }
+}
+
+.icon-spin {
+  animation: spin 1s linear infinite;
+}
+
+.icon-float {
+  animation: icon-float 3s ease-in-out infinite;
+}
+
+@keyframes icon-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* Lucide icon enhancements */
+.lucide {
+  flex-shrink: 0;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+button:hover .lucide,
+a:hover .lucide {
+  transform: scale(1.05);
+}
+
+/* ============================================================================
+   CARD & CONTAINER ENHANCEMENTS
+   ============================================================================ */
+
+/* Premium Card */
+.premium-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.premium-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+.premium-card--dark {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: white;
+}
+
+.premium-card--glass {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Premium Badge */
+.premium-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.premium-badge--primary {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.premium-badge--success {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.15));
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.premium-badge--danger {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.15));
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.premium-badge--warning {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.15));
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.premium-badge--info {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.15));
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.premium-badge--glass {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Premium Input styling */
+.premium-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.premium-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+}
+
+.premium-input--dark {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.premium-input--dark::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.premium-input--dark:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+}
+
+/* Premium Select */
+.premium-select {
+  appearance: none;
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
+  font-size: 0.95rem;
+  background: rgba(255, 255, 255, 0.95) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E") no-repeat right 1rem center;
+  border: 2px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.premium-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+}
+
 /* Sidebar Layout */
 .app-with-sidebar {
   flex-direction: row;
