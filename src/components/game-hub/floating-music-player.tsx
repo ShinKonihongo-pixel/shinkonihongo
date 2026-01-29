@@ -19,6 +19,11 @@ import {
   ListMusic,
   Disc3,
   Sparkles,
+  Plus,
+  Trash2,
+  Link,
+  FileAudio,
+  ExternalLink,
 } from 'lucide-react';
 import {
   useGameSounds,
@@ -27,6 +32,14 @@ import {
   type MusicTrack,
   type MusicCategory,
 } from '../../hooks/use-game-sounds';
+
+// Popular free music sources
+const MUSIC_SOURCES = [
+  { name: 'Pixabay Music', url: 'https://pixabay.com/music/', icon: '🎵' },
+  { name: 'Free Music Archive', url: 'https://freemusicarchive.org/', icon: '📚' },
+  { name: 'Uppbeat', url: 'https://uppbeat.io/', icon: '🎧' },
+  { name: 'Mixkit', url: 'https://mixkit.co/free-stock-music/', icon: '🎼' },
+];
 
 interface FloatingMusicPlayerProps {
   onClose?: () => void;
@@ -40,6 +53,8 @@ export function FloatingMusicPlayer({ onClose }: FloatingMusicPlayerProps) {
     stopMusic,
     isMusicPlaying,
     allTracks,
+    addCustomTrack,
+    removeCustomTrack,
   } = useGameSounds();
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -49,6 +64,17 @@ export function FloatingMusicPlayer({ onClose }: FloatingMusicPlayerProps) {
   const [selectedCategory, setSelectedCategory] = useState<MusicCategory | 'all'>('all');
   const [isHovering, setIsHovering] = useState(false);
   const autoHideTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Custom track modal state
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newTrackUrl, setNewTrackUrl] = useState('');
+  const [newTrackName, setNewTrackName] = useState('');
+  const [newTrackEmoji, setNewTrackEmoji] = useState('🎵');
+  const [urlError, setUrlError] = useState('');
+  const [isValidating, setIsValidating] = useState(false);
+
+  // Quick emoji picker for custom tracks
+  const emojiOptions = ['🎵', '🎶', '🎼', '🎧', '🎤', '🎸', '🥁', '🎹', '🎺', '🎻', '🪕', '🎷', '💿', '📀', '🔊', '💫', '⭐', '🌟', '✨', '🌸', '🌺', '🌼', '🌻', '🔥', '❤️'];
 
   // Get current track info
   const selectedTrack = useMemo(() => {
@@ -71,7 +97,7 @@ export function FloatingMusicPlayer({ onClose }: FloatingMusicPlayerProps) {
     const cats: { value: MusicCategory | 'all'; label: string; count: number }[] = [
       { value: 'all', label: '🎵 Tất cả', count: allTracks.length },
     ];
-    const categoryKeys: MusicCategory[] = ['epic', 'chill', 'action', 'fun', 'japanese'];
+    const categoryKeys: MusicCategory[] = ['epic', 'chill', 'action', 'fun', 'japanese', 'custom'];
     categoryKeys.forEach(cat => {
       const count = allTracks.filter(t => t.category === cat).length;
       if (count > 0) {
@@ -80,6 +106,82 @@ export function FloatingMusicPlayer({ onClose }: FloatingMusicPlayerProps) {
     });
     return cats;
   }, [allTracks]);
+
+  // Count custom tracks
+  const customTrackCount = settings.customMusicTracks.length;
+
+  // Validate URL is audio
+  const validateAudioUrl = useCallback(async (url: string): Promise<boolean> => {
+    // Check basic URL format
+    try {
+      new URL(url);
+    } catch {
+      setUrlError('URL không hợp lệ');
+      return false;
+    }
+
+    // Check common audio extensions
+    const audioExtensions = ['.mp3', '.wav', '.ogg', '.m4a', '.aac', '.flac', '.webm'];
+    const hasAudioExt = audioExtensions.some(ext => url.toLowerCase().includes(ext));
+
+    // Also accept common streaming/CDN patterns
+    const isLikelyAudio = hasAudioExt ||
+      url.includes('soundcloud.com') ||
+      url.includes('pixabay.com/music') ||
+      url.includes('mixkit.co') ||
+      url.includes('freemusicarchive.org') ||
+      url.includes('uppbeat.io');
+
+    if (!isLikelyAudio) {
+      setUrlError('URL phải là file âm thanh (.mp3, .wav, .ogg, .m4a)');
+      return false;
+    }
+
+    setUrlError('');
+    return true;
+  }, []);
+
+  // Handle add custom track
+  const handleAddCustomTrack = useCallback(async () => {
+    if (!newTrackUrl.trim() || !newTrackName.trim()) {
+      setUrlError('Vui lòng nhập đầy đủ thông tin');
+      return;
+    }
+
+    setIsValidating(true);
+    const isValid = await validateAudioUrl(newTrackUrl.trim());
+    setIsValidating(false);
+
+    if (!isValid) return;
+
+    // Generate unique ID
+    const trackId = `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    addCustomTrack({
+      id: trackId,
+      name: newTrackName.trim(),
+      emoji: newTrackEmoji,
+      url: newTrackUrl.trim(),
+      duration: '?:??',
+    });
+
+    // Reset form
+    setNewTrackUrl('');
+    setNewTrackName('');
+    setNewTrackEmoji('🎵');
+    setShowAddModal(false);
+
+    // Switch to custom category to show new track
+    setSelectedCategory('custom');
+  }, [newTrackUrl, newTrackName, newTrackEmoji, validateAudioUrl, addCustomTrack]);
+
+  // Handle remove custom track
+  const handleRemoveTrack = useCallback((trackId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm('Xóa bài hát này?')) {
+      removeCustomTrack(trackId);
+    }
+  }, [removeCustomTrack]);
 
   // Auto-hide when not hovering (mini mode only)
   useEffect(() => {
@@ -421,7 +523,7 @@ export function FloatingMusicPlayer({ onClose }: FloatingMusicPlayerProps) {
         ))}
       </div>
 
-      {/* Track List Toggle */}
+      {/* Track List Toggle & Add Custom */}
       <div className="fp-track-toggle">
         <button
           className={`fp-tracks-btn ${showTrackList ? 'active' : ''}`}
@@ -430,6 +532,14 @@ export function FloatingMusicPlayer({ onClose }: FloatingMusicPlayerProps) {
           <ListMusic size={16} />
           <span>Danh sách phát</span>
           <ChevronUp size={14} className={`fp-toggle-icon ${showTrackList ? 'rotated' : ''}`} />
+        </button>
+        <button
+          className="fp-add-btn"
+          onClick={() => setShowAddModal(true)}
+          title="Thêm nhạc tuỳ chỉnh"
+        >
+          <Plus size={16} />
+          <span>Thêm nhạc</span>
         </button>
       </div>
 
@@ -455,22 +565,46 @@ export function FloatingMusicPlayer({ onClose }: FloatingMusicPlayerProps) {
             {filteredTracks.map((track, index) => (
               <button
                 key={track.id}
-                className={`fp-track-item ${track.id === settings.musicTrack ? 'active' : ''}`}
+                className={`fp-track-item ${track.id === settings.musicTrack ? 'active' : ''} ${track.category === 'custom' ? 'custom' : ''}`}
                 onClick={() => handleSelectTrack(track)}
               >
                 <span className="fp-track-num">{index + 1}</span>
                 <span className="fp-track-item-emoji">{track.emoji}</span>
                 <div className="fp-track-item-info">
                   <span className="fp-track-item-name">{track.name}</span>
-                  <span className="fp-track-item-cat">{MUSIC_CATEGORY_LABELS[track.category]}</span>
+                  <span className="fp-track-item-cat">
+                    {track.category === 'custom' && <Link size={10} className="fp-custom-icon" />}
+                    {MUSIC_CATEGORY_LABELS[track.category]}
+                  </span>
                 </div>
                 {track.id === settings.musicTrack && isMusicPlaying && (
                   <div className="fp-track-playing-indicator">
                     <span /><span /><span />
                   </div>
                 )}
+                {track.category === 'custom' && (
+                  <button
+                    className="fp-track-delete"
+                    onClick={(e) => handleRemoveTrack(track.id, e)}
+                    title="Xóa bài hát"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
               </button>
             ))}
+
+            {/* Empty state for custom category */}
+            {selectedCategory === 'custom' && customTrackCount === 0 && (
+              <div className="fp-empty-custom">
+                <FileAudio size={32} />
+                <p>Chưa có nhạc tuỳ chỉnh</p>
+                <button onClick={() => setShowAddModal(true)}>
+                  <Plus size={14} />
+                  Thêm nhạc ngay
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -481,6 +615,113 @@ export function FloatingMusicPlayer({ onClose }: FloatingMusicPlayerProps) {
         <span>•</span>
         <span>Ctrl+←/→: Prev/Next</span>
       </div>
+
+      {/* Add Custom Track Modal */}
+      {showAddModal && (
+        <div className="fp-modal-overlay" onClick={() => setShowAddModal(false)}>
+          <div className="fp-modal" onClick={e => e.stopPropagation()}>
+            <div className="fp-modal-header">
+              <h3>
+                <Plus size={18} />
+                Thêm nhạc tuỳ chỉnh
+              </h3>
+              <button className="fp-modal-close" onClick={() => setShowAddModal(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="fp-modal-body">
+              {/* Track name */}
+              <div className="fp-form-group">
+                <label>Tên bài hát</label>
+                <input
+                  type="text"
+                  placeholder="Nhập tên bài hát..."
+                  value={newTrackName}
+                  onChange={e => setNewTrackName(e.target.value)}
+                  maxLength={50}
+                />
+              </div>
+
+              {/* Track URL */}
+              <div className="fp-form-group">
+                <label>
+                  <Link size={14} />
+                  URL nhạc (MP3, WAV, OGG...)
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://example.com/music.mp3"
+                  value={newTrackUrl}
+                  onChange={e => {
+                    setNewTrackUrl(e.target.value);
+                    setUrlError('');
+                  }}
+                />
+                {urlError && <span className="fp-error">{urlError}</span>}
+              </div>
+
+              {/* Emoji picker */}
+              <div className="fp-form-group">
+                <label>Biểu tượng</label>
+                <div className="fp-emoji-picker">
+                  {emojiOptions.map(emoji => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      className={`fp-emoji-btn ${newTrackEmoji === emoji ? 'active' : ''}`}
+                      onClick={() => setNewTrackEmoji(emoji)}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Music sources */}
+              <div className="fp-music-sources">
+                <label>Nguồn nhạc miễn phí:</label>
+                <div className="fp-sources-list">
+                  {MUSIC_SOURCES.map(source => (
+                    <a
+                      key={source.url}
+                      href={source.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="fp-source-link"
+                    >
+                      <span>{source.icon}</span>
+                      <span>{source.name}</span>
+                      <ExternalLink size={12} />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="fp-modal-footer">
+              <button
+                className="fp-modal-cancel"
+                onClick={() => setShowAddModal(false)}
+              >
+                Huỷ
+              </button>
+              <button
+                className="fp-modal-submit"
+                onClick={handleAddCustomTrack}
+                disabled={!newTrackName.trim() || !newTrackUrl.trim() || isValidating}
+              >
+                {isValidating ? 'Đang kiểm tra...' : (
+                  <>
+                    <Plus size={16} />
+                    Thêm nhạc
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
