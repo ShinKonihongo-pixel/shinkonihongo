@@ -2,7 +2,7 @@
 // Premium UI with Japanese-inspired design and glassmorphism effects
 
 import { useState, useMemo } from 'react';
-import { ChevronRight, Check, BookOpen, Layers, Play, Home, Sparkles, Star } from 'lucide-react';
+import { ChevronRight, Check, BookOpen, Layers, Play, Sparkles, Star, GraduationCap, Target } from 'lucide-react';
 import type { JLPTLevel, Lesson, Flashcard, GrammarCard } from '../../types/flashcard';
 
 interface LevelLessonSelectorProps {
@@ -67,7 +67,6 @@ export function LevelLessonSelector({
   getLessonsByLevel,
   getChildLessons,
   onStart,
-  onGoHome,
 }: LevelLessonSelectorProps) {
   const [selectedLevel, setSelectedLevel] = useState<JLPTLevel | null>(null);
   const [selectedLessons, setSelectedLessons] = useState<string[]>([]);
@@ -85,6 +84,11 @@ export function LevelLessonSelector({
     });
     return counts;
   }, [cards, type]);
+
+  // Total cards
+  const totalCards = useMemo(() => {
+    return Object.values(countByLevel).reduce((sum, count) => sum + count, 0);
+  }, [countByLevel]);
 
   // Get lessons for selected level (only parent lessons)
   const levelLessons = useMemo(() => {
@@ -150,27 +154,41 @@ export function LevelLessonSelector({
     <div className="premium-selector">
       {/* Animated Background */}
       <div className="bg-aurora" />
-      <div className="bg-particles" />
-
-      {/* Home Button - Top Right */}
-      <button className="home-btn" onClick={onGoHome}>
-        <Home size={16} />
-        <span>Trang chủ</span>
-      </button>
+      <div className="bg-grid" />
 
       {/* Level Selection Screen */}
       {!selectedLevel && (
         <div className="selector-container">
-          {/* Header */}
-          <header className="selector-header">
-            <div className="header-icon">
-              {type === 'vocabulary' ? <Layers size={28} /> : <BookOpen size={28} />}
-              <Sparkles className="sparkle-icon" size={14} />
+          {/* Premium Header */}
+          <header className="premium-header">
+            <div className="header-badge">
+              <GraduationCap size={14} />
+              <span>JLPT Learning</span>
             </div>
-            <h1 className="header-title">
-              {type === 'vocabulary' ? 'Học Từ Vựng' : 'Học Ngữ Pháp'}
-            </h1>
-            <p className="header-subtitle">Chọn cấp độ JLPT để bắt đầu hành trình</p>
+            <div className="header-main">
+              <div className="header-icon-wrapper">
+                <div className="header-icon">
+                  {type === 'vocabulary' ? <Layers size={32} /> : <BookOpen size={32} />}
+                </div>
+                <Sparkles className="sparkle-effect sparkle-1" size={16} />
+                <Sparkles className="sparkle-effect sparkle-2" size={12} />
+              </div>
+              <h1 className="header-title">
+                {type === 'vocabulary' ? 'Học Từ Vựng' : 'Học Ngữ Pháp'}
+              </h1>
+              <p className="header-subtitle">Chọn cấp độ JLPT để bắt đầu</p>
+            </div>
+            <div className="header-stats">
+              <div className="stat-item">
+                <Target size={14} />
+                <span>{totalCards} {type === 'vocabulary' ? 'từ vựng' : 'mẫu câu'}</span>
+              </div>
+              <div className="stat-divider" />
+              <div className="stat-item">
+                <Star size={14} />
+                <span>5 cấp độ</span>
+              </div>
+            </div>
           </header>
 
           {/* Level Cards Grid */}
@@ -202,7 +220,7 @@ export function LevelLessonSelector({
                     <span className="card-icon">{theme.icon}</span>
                     <span className="card-level">{level}</span>
                     <span className="card-count">
-                      {count} {type === 'vocabulary' ? 'từ vựng' : 'mẫu câu'}
+                      {count} {type === 'vocabulary' ? 'từ' : 'mẫu'}
                     </span>
                     {!disabled && (
                       <div className="card-arrow">
@@ -215,37 +233,35 @@ export function LevelLessonSelector({
               );
             })}
           </div>
-
-          {/* Decorative Elements */}
-          <div className="deco-circle deco-1" />
-          <div className="deco-circle deco-2" />
         </div>
       )}
 
       {/* Lesson Selection Screen */}
       {selectedLevel && (
         <div className="lesson-container">
-          {/* Lesson Header */}
+          {/* Lesson Header - Redesigned */}
           <header className="lesson-header" style={{
             '--header-gradient': LEVEL_THEMES[selectedLevel].gradient,
             '--header-glow': LEVEL_THEMES[selectedLevel].glow,
           } as React.CSSProperties}>
-            <button className="back-btn" onClick={backToLevelSelect}>
-              <ChevronRight size={16} style={{ transform: 'rotate(180deg)' }} />
-              <span>Chọn lại cấp độ</span>
-            </button>
-
-            <div className="level-indicator">
-              <span className="level-icon">{LEVEL_THEMES[selectedLevel].icon}</span>
-              <span className="level-text">{selectedLevel}</span>
+            <div className="lesson-header-top">
+              <button className="back-btn" onClick={backToLevelSelect}>
+                <ChevronRight size={16} style={{ transform: 'rotate(180deg)' }} />
+                <span>Quay lại</span>
+              </button>
+              <div className="level-badge-container">
+                <span className="level-badge-icon">{LEVEL_THEMES[selectedLevel].icon}</span>
+                <span className="level-badge-text">{selectedLevel}</span>
+              </div>
             </div>
-
-            <h2 className="lesson-title">Chọn bài học</h2>
-            <p className="lesson-subtitle">
-              {selectedLessons.length > 0
-                ? `Đã chọn ${selectedLessons.length} bài • ${totalSelectedCards} ${type === 'vocabulary' ? 'từ' : 'mẫu'}`
-                : 'Chọn một hoặc nhiều bài để bắt đầu'}
-            </p>
+            <div className="lesson-header-content">
+              <h2 className="lesson-title">Chọn bài học</h2>
+              <p className="lesson-subtitle">
+                {selectedLessons.length > 0
+                  ? `Đã chọn ${selectedLessons.length} bài • ${totalSelectedCards} ${type === 'vocabulary' ? 'từ' : 'mẫu'}`
+                  : `${levelLessons.length} bài học có sẵn`}
+              </p>
+            </div>
           </header>
 
           {/* Quick Actions */}
@@ -303,14 +319,10 @@ export function LevelLessonSelector({
             )}
           </div>
 
-          {/* Footer */}
+          {/* Footer - Only Start Button */}
           <footer className="lesson-footer">
-            <button className="footer-btn secondary" onClick={onGoHome}>
-              <Home size={16} />
-              Thoát
-            </button>
             <button
-              className="footer-btn primary"
+              className="start-btn"
               onClick={handleStart}
               disabled={selectedLessons.length === 0}
               style={{
@@ -318,7 +330,7 @@ export function LevelLessonSelector({
                 '--btn-glow': LEVEL_THEMES[selectedLevel].glow,
               } as React.CSSProperties}
             >
-              <Play size={16} />
+              <Play size={18} />
               <span>Bắt đầu học</span>
               {totalSelectedCards > 0 && (
                 <span className="btn-count">{totalSelectedCards}</span>
@@ -355,47 +367,13 @@ export function LevelLessonSelector({
           100% { opacity: 1; transform: scale(1.1) rotate(3deg); }
         }
 
-        .bg-particles {
+        .bg-grid {
           position: absolute;
           inset: 0;
           background-image:
-            radial-gradient(circle at 25% 25%, rgba(255,255,255,0.02) 1px, transparent 1px),
-            radial-gradient(circle at 75% 75%, rgba(255,255,255,0.015) 1px, transparent 1px);
-          background-size: 60px 60px, 90px 90px;
-          animation: particles 20s linear infinite;
-        }
-
-        @keyframes particles {
-          0% { transform: translateY(0); }
-          100% { transform: translateY(-60px); }
-        }
-
-        /* ========== Home Button ========== */
-        .home-btn {
-          position: absolute;
-          top: 1rem;
-          right: 1rem;
-          z-index: 100;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.6rem 1rem;
-          background: rgba(255, 255, 255, 0.08);
-          backdrop-filter: blur(12px);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          border-radius: 12px;
-          color: rgba(255, 255, 255, 0.85);
-          font-size: 0.85rem;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .home-btn:hover {
-          background: rgba(255, 255, 255, 0.15);
-          border-color: rgba(255, 255, 255, 0.25);
-          transform: translateY(-2px);
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+          background-size: 50px 50px;
         }
 
         /* ========== Level Selection Container ========== */
@@ -408,12 +386,16 @@ export function LevelLessonSelector({
           align-items: center;
           justify-content: center;
           padding: 2rem;
+          gap: 2rem;
         }
 
-        /* ========== Header ========== */
-        .selector-header {
+        /* ========== Premium Header ========== */
+        .premium-header {
           text-align: center;
-          margin-bottom: 2.5rem;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1rem;
           animation: fadeInDown 0.6s ease-out;
         }
 
@@ -422,49 +404,106 @@ export function LevelLessonSelector({
           to { opacity: 1; transform: translateY(0); }
         }
 
-        .header-icon {
+        .header-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.4rem 1rem;
+          background: rgba(99, 102, 241, 0.15);
+          border: 1px solid rgba(99, 102, 241, 0.3);
+          border-radius: 50px;
+          color: #a5b4fc;
+          font-size: 0.75rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .header-main {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        .header-icon-wrapper {
           position: relative;
-          width: 64px;
-          height: 64px;
-          margin: 0 auto 1rem;
+        }
+
+        .header-icon {
+          width: 72px;
+          height: 72px;
           background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 20px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          border-radius: 24px;
           display: flex;
           align-items: center;
           justify-content: center;
           color: white;
-          box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);
+          box-shadow:
+            0 8px 32px rgba(99, 102, 241, 0.3),
+            inset 0 0 32px rgba(255,255,255,0.05);
         }
 
-        .sparkle-icon {
+        .sparkle-effect {
           position: absolute;
-          top: -4px;
-          right: -4px;
           color: #fbbf24;
           animation: sparkle 2s ease-in-out infinite;
         }
 
+        .sparkle-1 {
+          top: -8px;
+          right: -8px;
+        }
+
+        .sparkle-2 {
+          bottom: -4px;
+          left: -6px;
+          animation-delay: 0.5s;
+        }
+
         @keyframes sparkle {
           0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
-          50% { transform: scale(1.2) rotate(15deg); opacity: 0.8; }
+          50% { transform: scale(1.3) rotate(15deg); opacity: 0.7; }
         }
 
         .header-title {
-          font-size: 2rem;
+          font-size: 2.25rem;
           font-weight: 800;
-          background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.8) 100%);
+          background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.85) 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
-          margin: 0 0 0.5rem;
-          letter-spacing: -0.02em;
+          margin: 0;
+          letter-spacing: -0.03em;
         }
 
         .header-subtitle {
-          color: rgba(255, 255, 255, 0.6);
-          font-size: 0.95rem;
+          color: rgba(255, 255, 255, 0.5);
+          font-size: 1rem;
           margin: 0;
+        }
+
+        .header-stats {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          margin-top: 0.5rem;
+        }
+
+        .stat-item {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+          color: rgba(255, 255, 255, 0.6);
+          font-size: 0.85rem;
+        }
+
+        .stat-divider {
+          width: 4px;
+          height: 4px;
+          background: rgba(255, 255, 255, 0.3);
+          border-radius: 50%;
         }
 
         /* ========== Level Cards Grid ========== */
@@ -472,7 +511,7 @@ export function LevelLessonSelector({
           display: grid;
           grid-template-columns: repeat(5, 1fr);
           gap: 1rem;
-          max-width: 800px;
+          max-width: 850px;
           width: 100%;
           animation: fadeInUp 0.6s ease-out 0.2s both;
         }
@@ -541,7 +580,7 @@ export function LevelLessonSelector({
         }
 
         .level-card .card-icon {
-          font-size: 1.75rem;
+          font-size: 2rem;
           margin-bottom: 0.25rem;
         }
 
@@ -556,7 +595,7 @@ export function LevelLessonSelector({
         }
 
         .level-card .card-count {
-          font-size: 0.75rem;
+          font-size: 0.8rem;
           color: rgba(255, 255, 255, 0.6);
           font-weight: 500;
           text-align: center;
@@ -589,41 +628,6 @@ export function LevelLessonSelector({
           left: 100%;
         }
 
-        /* ========== Decorative Elements ========== */
-        .deco-circle {
-          position: absolute;
-          border-radius: 50%;
-          pointer-events: none;
-        }
-
-        .deco-1 {
-          width: 300px;
-          height: 300px;
-          bottom: -100px;
-          left: -100px;
-          background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
-          animation: float1 8s ease-in-out infinite;
-        }
-
-        .deco-2 {
-          width: 200px;
-          height: 200px;
-          top: -50px;
-          right: -50px;
-          background: radial-gradient(circle, rgba(236, 72, 153, 0.1) 0%, transparent 70%);
-          animation: float2 10s ease-in-out infinite;
-        }
-
-        @keyframes float1 {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(20px, -20px); }
-        }
-
-        @keyframes float2 {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(-15px, 15px); }
-        }
-
         /* ========== Lesson Container ========== */
         .lesson-container {
           position: relative;
@@ -639,12 +643,11 @@ export function LevelLessonSelector({
           to { opacity: 1; }
         }
 
-        /* ========== Lesson Header ========== */
+        /* ========== Lesson Header - Redesigned ========== */
         .lesson-header {
           position: relative;
-          padding: 1.25rem 1.5rem;
+          padding: 1rem 1.5rem 1.25rem;
           background: var(--header-gradient);
-          text-align: center;
           overflow: hidden;
         }
 
@@ -652,7 +655,17 @@ export function LevelLessonSelector({
           content: '';
           position: absolute;
           inset: 0;
-          background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2.5L25 18l-5 2.5z' fill='%23fff' fill-opacity='0.03'/%3E%3C/svg%3E");
+          background:
+            radial-gradient(circle at 0% 0%, rgba(255,255,255,0.15) 0%, transparent 50%),
+            radial-gradient(circle at 100% 100%, rgba(0,0,0,0.1) 0%, transparent 50%);
+        }
+
+        .lesson-header-top {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1rem;
+          position: relative;
         }
 
         .back-btn {
@@ -661,14 +674,13 @@ export function LevelLessonSelector({
           gap: 0.35rem;
           padding: 0.45rem 0.9rem;
           background: rgba(255, 255, 255, 0.15);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          border: 1px solid rgba(255, 255, 255, 0.25);
           border-radius: 10px;
           color: white;
           font-size: 0.8rem;
           font-weight: 500;
           cursor: pointer;
           transition: all 0.2s;
-          margin-bottom: 0.75rem;
         }
 
         .back-btn:hover {
@@ -676,35 +688,39 @@ export function LevelLessonSelector({
           transform: translateX(-4px);
         }
 
-        .level-indicator {
-          display: inline-flex;
+        .level-badge-container {
+          display: flex;
           align-items: center;
           gap: 0.5rem;
           padding: 0.4rem 1rem;
           background: rgba(255, 255, 255, 0.2);
           border-radius: 50px;
-          margin-bottom: 0.5rem;
         }
 
-        .level-icon {
+        .level-badge-icon {
           font-size: 1.1rem;
         }
 
-        .level-text {
+        .level-badge-text {
           font-weight: 800;
           color: white;
-          font-size: 0.95rem;
+          font-size: 0.9rem;
+        }
+
+        .lesson-header-content {
+          text-align: center;
+          position: relative;
         }
 
         .lesson-title {
-          font-size: 1.35rem;
+          font-size: 1.5rem;
           font-weight: 700;
           color: white;
-          margin: 0.25rem 0;
+          margin: 0 0 0.25rem;
         }
 
         .lesson-subtitle {
-          font-size: 0.85rem;
+          font-size: 0.9rem;
           color: rgba(255, 255, 255, 0.85);
           margin: 0;
         }
@@ -854,60 +870,45 @@ export function LevelLessonSelector({
 
         /* ========== Footer ========== */
         .lesson-footer {
-          display: flex;
-          gap: 0.75rem;
           padding: 1rem 1.25rem;
           background: rgba(0, 0, 0, 0.4);
           backdrop-filter: blur(16px);
           border-top: 1px solid rgba(255, 255, 255, 0.06);
         }
 
-        .footer-btn {
+        .start-btn {
+          width: 100%;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 0.5rem;
-          padding: 0.85rem 1.25rem;
+          gap: 0.6rem;
+          padding: 1rem 1.5rem;
+          background: var(--btn-gradient);
           border: none;
           border-radius: 14px;
-          font-size: 0.9rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .footer-btn.secondary {
-          background: rgba(255, 255, 255, 0.08);
-          color: rgba(255, 255, 255, 0.8);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-        }
-
-        .footer-btn.secondary:hover {
-          background: rgba(255, 255, 255, 0.15);
-        }
-
-        .footer-btn.primary {
-          flex: 1;
-          background: var(--btn-gradient);
           color: white;
+          font-size: 1rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           box-shadow: 0 4px 20px -5px var(--btn-glow);
         }
 
-        .footer-btn.primary:hover:not(:disabled) {
+        .start-btn:hover:not(:disabled) {
           transform: translateY(-2px);
           box-shadow: 0 8px 30px -5px var(--btn-glow);
         }
 
-        .footer-btn.primary:disabled {
+        .start-btn:disabled {
           opacity: 0.5;
           cursor: not-allowed;
         }
 
         .btn-count {
           background: rgba(255, 255, 255, 0.25);
-          padding: 0.15rem 0.5rem;
+          padding: 0.2rem 0.6rem;
           border-radius: 6px;
-          font-size: 0.8rem;
+          font-size: 0.85rem;
           font-weight: 700;
         }
 
@@ -915,15 +916,16 @@ export function LevelLessonSelector({
         @media (max-width: 768px) {
           .selector-container {
             padding: 1.5rem 1rem;
+            gap: 1.5rem;
           }
 
           .header-title {
-            font-size: 1.6rem;
+            font-size: 1.75rem;
           }
 
           .header-icon {
-            width: 52px;
-            height: 52px;
+            width: 60px;
+            height: 60px;
           }
 
           .levels-grid {
@@ -937,7 +939,7 @@ export function LevelLessonSelector({
           }
 
           .level-card .card-icon {
-            font-size: 1.25rem;
+            font-size: 1.5rem;
           }
 
           .level-card .card-level {
@@ -948,11 +950,6 @@ export function LevelLessonSelector({
             font-size: 0.65rem;
           }
 
-          .home-btn {
-            padding: 0.5rem 0.75rem;
-            font-size: 0.8rem;
-          }
-
           .lessons-grid {
             grid-template-columns: 1fr;
             padding: 0.75rem;
@@ -960,12 +957,25 @@ export function LevelLessonSelector({
         }
 
         @media (max-width: 480px) {
+          .header-badge {
+            font-size: 0.65rem;
+            padding: 0.3rem 0.75rem;
+          }
+
           .header-title {
-            font-size: 1.4rem;
+            font-size: 1.5rem;
           }
 
           .header-subtitle {
             font-size: 0.85rem;
+          }
+
+          .header-stats {
+            gap: 0.75rem;
+          }
+
+          .stat-item {
+            font-size: 0.75rem;
           }
 
           .levels-grid {
@@ -978,7 +988,7 @@ export function LevelLessonSelector({
           }
 
           .level-card .card-icon {
-            font-size: 1.1rem;
+            font-size: 1.25rem;
             margin-bottom: 0.1rem;
           }
 
@@ -990,22 +1000,21 @@ export function LevelLessonSelector({
             font-size: 0.6rem;
           }
 
-          .home-btn span {
-            display: none;
+          .lesson-header {
+            padding: 0.85rem 1rem 1rem;
           }
 
-          .home-btn {
-            padding: 0.6rem;
-            border-radius: 10px;
+          .lesson-title {
+            font-size: 1.25rem;
           }
 
           .lesson-footer {
-            flex-direction: column;
             padding: 0.85rem;
           }
 
-          .footer-btn {
-            width: 100%;
+          .start-btn {
+            padding: 0.85rem 1.25rem;
+            font-size: 0.95rem;
           }
         }
       `}</style>
