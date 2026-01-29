@@ -2,7 +2,14 @@
 // Modularized for better maintainability - constants, types, utils in separate files
 
 import { useState, useMemo, useEffect } from 'react';
-import type { AppSettings, CardFrameId } from '../../hooks/use-settings';
+import type {
+  CardFrameId,
+  GameQuestionContent,
+  GameAnswerContent,
+  JLPTLevelOption,
+  MemorizationFilter,
+  AutoAddDifficulty,
+} from '../../hooks/use-settings';
 import { CARD_FRAME_PRESETS } from '../../hooks/use-settings';
 import type { UserJLPTLevel } from '../../types/user';
 import { calculateUserLevel, USER_JLPT_LEVELS, USER_JLPT_LEVEL_LABELS } from '../../types/user';
@@ -13,7 +20,7 @@ import { BadgeStatsDisplay } from '../friends/badge-stats-display';
 import { AVATAR_CATEGORIES, isImageAvatar } from '../../utils/avatar-icons';
 
 // Import from modular settings files
-import type { SettingsPageProps, SettingsTab, GeneralSubTab } from './settings/settings-types';
+import type { SettingsPageProps, SettingsTab, GeneralSubTab, DeviceType } from './settings/settings-types';
 import {
   PROFILE_BACKGROUND_OPTIONS,
   GRADIENT_PRESETS,

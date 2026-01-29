@@ -1,7 +1,6 @@
 // Kaiwa (Japanese conversation) practice page with AI assistant
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import type { AppSettings } from '../../hooks/use-settings';
 import type { KaiwaMessage, KaiwaContext, JLPTLevel, ConversationStyle, ConversationTopic, PronunciationResult, AnswerTemplate, SuggestedAnswer, KaiwaScenario, KaiwaRole, KaiwaEvaluation, KaiwaMetrics } from '../../types/kaiwa';
 import type { KaiwaDefaultQuestion, KaiwaFolder } from '../../types/kaiwa-question';
 import type { KaiwaAdvancedTopic, KaiwaAdvancedQuestion } from '../../types/kaiwa-advanced';

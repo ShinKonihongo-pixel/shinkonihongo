@@ -85,6 +85,20 @@ const getJapaneseGreeting = () => {
   return { jp: 'こんばんは', vn: 'Chào buổi tối' };
 };
 
+// Motivational quotes about determination
+const MOTIVATIONAL_QUOTES = [
+  { jp: '七転び八起き', meaning: 'Ngã 7 lần, đứng dậy 8 lần', romaji: 'Nana korobi ya oki' },
+  { jp: '継続は力なり', meaning: 'Kiên trì là sức mạnh', romaji: 'Keizoku wa chikara nari' },
+  { jp: '一期一会', meaning: 'Trân trọng từng khoảnh khắc', romaji: 'Ichi go ichi e' },
+  { jp: '石の上にも三年', meaning: 'Kiên nhẫn sẽ thành công', romaji: 'Ishi no ue ni mo san nen' },
+  { jp: '夢は必ず叶う', meaning: 'Ước mơ sẽ thành hiện thực', romaji: 'Yume wa kanarazu kanau' },
+];
+
+const getTodayQuote = () => {
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+  return MOTIVATIONAL_QUOTES[dayOfYear % MOTIVATIONAL_QUOTES.length];
+};
+
 export function HomePage({
   statsByLevel,
   cards,
@@ -120,6 +134,7 @@ export function HomePage({
   };
 
   const greeting = getJapaneseGreeting();
+  const todayQuote = getTodayQuote();
 
   return (
     <div className="hp">
@@ -130,6 +145,12 @@ export function HomePage({
           <div className="hp-orb hp-orb-1" />
           <div className="hp-orb hp-orb-2" />
           <div className="hp-orb hp-orb-3" />
+          {/* Floating particles */}
+          <div className="hp-particles">
+            {[...Array(12)].map((_, i) => (
+              <div key={i} className={`hp-particle hp-particle-${i + 1}`} />
+            ))}
+          </div>
         </div>
 
         {/* Bottom wave transition */}
@@ -142,11 +163,11 @@ export function HomePage({
             <span className="hp-logo-text">Nihongo</span>
           </div>
           <div className="hp-header-stats">
-            <div className="hp-stat-badge">
+            <div className="hp-stat-badge hp-stat-streak">
               <Flame size={16} className="hp-stat-icon fire" />
               <span>{streak?.currentStreak || 0}</span>
             </div>
-            <div className="hp-stat-badge">
+            <div className="hp-stat-badge hp-stat-xp">
               <Zap size={16} className="hp-stat-icon bolt" />
               <span>{totalXP.toLocaleString()}</span>
             </div>
@@ -155,45 +176,82 @@ export function HomePage({
 
         {/* Main hero content */}
         <div className="hp-hero-content">
-          {/* Greeting */}
+          {/* Greeting with determination spirit */}
           <div className="hp-greeting">
             <span className="hp-greeting-jp">{greeting.jp}</span>
             <span className="hp-greeting-vn">{greeting.vn}, {userName || 'Bạn'}</span>
           </div>
 
-          {/* Main title with slogan */}
-          <div className="hp-hero-title">
-            <h1 className="hp-title-main">
-              <span className="hp-title-jp">日本語マスター</span>
-              <span className="hp-title-en">Japanese Master</span>
-            </h1>
-            <p className="hp-slogan">
-              <span className="hp-slogan-text">Chinh phục tiếng Nhật mỗi ngày</span>
-              <span className="hp-slogan-jp">毎日、日本語を極める</span>
-            </p>
+          {/* Central focus: Progress Ring with Level */}
+          <div className="hp-progress-ring-container">
+            <div className="hp-progress-ring">
+              <svg viewBox="0 0 120 120" className="hp-ring-svg">
+                {/* Background circle */}
+                <circle
+                  cx="60" cy="60" r="52"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.1)"
+                  strokeWidth="8"
+                />
+                {/* Progress arc */}
+                <circle
+                  cx="60" cy="60" r="52"
+                  fill="none"
+                  stroke="url(#progressGradient)"
+                  strokeWidth="8"
+                  strokeLinecap="round"
+                  strokeDasharray={`${masteryPercent * 3.27} 327`}
+                  transform="rotate(-90 60 60)"
+                  className="hp-ring-progress"
+                />
+                <defs>
+                  <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#fcd34d" />
+                    <stop offset="50%" stopColor="#f59e0b" />
+                    <stop offset="100%" stopColor="#dc2626" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div className="hp-ring-content">
+                <span className="hp-ring-level">Lv.{currentLevel}</span>
+                <span className="hp-ring-percent">{masteryPercent}%</span>
+              </div>
+              {/* Glowing effect */}
+              <div className="hp-ring-glow" />
+            </div>
           </div>
 
-          {/* Stats cards */}
+          {/* Motivational Quote - Spirit of Determination */}
+          <div className="hp-motivation">
+            <div className="hp-quote-kanji">{todayQuote.jp}</div>
+            <div className="hp-quote-romaji">{todayQuote.romaji}</div>
+            <div className="hp-quote-meaning">{todayQuote.meaning}</div>
+          </div>
+
+          {/* Compact Stats Row */}
           <div className="hp-hero-stats">
             <div className="hp-hero-stat">
+              <span className="hp-hero-stat-icon"><BookOpen size={16} /></span>
               <span className="hp-hero-stat-value">{totalCards.toLocaleString()}</span>
               <span className="hp-hero-stat-label">Từ vựng</span>
             </div>
-            <div className="hp-hero-stat-divider" />
             <div className="hp-hero-stat">
-              <span className="hp-hero-stat-value">{masteryPercent}%</span>
-              <span className="hp-hero-stat-label">Tiến độ</span>
+              <span className="hp-hero-stat-icon"><Flame size={16} /></span>
+              <span className="hp-hero-stat-value">{streak?.currentStreak || 0}</span>
+              <span className="hp-hero-stat-label">Ngày liên tiếp</span>
             </div>
-            <div className="hp-hero-stat-divider" />
             <div className="hp-hero-stat">
-              <span className="hp-hero-stat-value">Lv.{currentLevel}</span>
-              <span className="hp-hero-stat-label">Cấp độ</span>
+              <span className="hp-hero-stat-icon"><Trophy size={16} /></span>
+              <span className="hp-hero-stat-value">{totalMemorized}</span>
+              <span className="hp-hero-stat-label">Đã thuộc</span>
             </div>
           </div>
         </div>
 
-        {/* Decorative accent */}
-        <div className="hp-torii" />
+        {/* Decorative kanji watermark */}
+        <div className="hp-kanji-watermark">
+          <span>頑張る</span>
+        </div>
       </div>
 
       {/* ===== MAIN CTA BUTTON ===== */}

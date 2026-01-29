@@ -5,6 +5,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { CheckCircle, XCircle, Settings, Play, RotateCcw, ChevronDown, ChevronUp, TrendingUp, AlertTriangle, Star, Target, BookOpen, Award, Lightbulb, Sparkles } from 'lucide-react';
 import type { JLPTQuestion, JLPTLevel, QuestionCategory } from '../../types/jlpt-question';
+import type { CustomTopicQuestion } from '../../types/custom-topic';
 import type {
   JLPTPageProps,
   PracticeState,
@@ -18,7 +19,6 @@ import {
   JLPT_LEVELS,
   QUESTION_CATEGORIES,
   ASSESSMENT_LEVELS,
-  getAssessmentLevel,
 } from './jlpt/jlpt-constants';
 import {
   loadQuestionHistory,

@@ -1,7 +1,7 @@
 // JLPT page constants
 // Extracted from jlpt-page.tsx for better maintainability
 
-import type { JLPTLevel, QuestionCategory } from '../../../types/jlpt-question';
+import type { JLPTLevel } from '../../../types/jlpt-question';
 import type { AssessmentLevel, CategoryConfig } from './jlpt-types';
 
 // JLPT levels

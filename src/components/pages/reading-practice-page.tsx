@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { Home, ChevronRight, CheckCircle, XCircle, RotateCcw, Filter, Volume2 } from 'lucide-react';
 import type { JLPTLevel } from '../../types/flashcard';
+import type { ReadingPassage } from '../../types/reading';
 import type { ReadingPracticePageProps, ViewState } from './reading-practice/reading-practice-types';
 import { JLPT_LEVELS } from './reading-practice/reading-practice-constants';
 

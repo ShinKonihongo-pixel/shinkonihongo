@@ -12,8 +12,6 @@ import type {
   GameConfig,
   Question,
   Player,
-  HintState,
-  GamePhase,
   GameState,
   WordScramblePageProps,
 } from './word-scramble/word-scramble-types';
@@ -30,8 +28,6 @@ import {
   scrambleWord,
   calculateScore,
   generateBots,
-  getPlayerNameColor,
-  createInitialHintState,
 } from './word-scramble/word-scramble-utils';
 
 // Re-export types for external use
