@@ -25,6 +25,7 @@ import {
   VocabularyTab,
   GrammarTab,
   ReadingTab,
+  // ListeningTab, // TODO: Enable when hook is ready
   LecturesTab,
   JLPTTab,
   KaiwaTab,
@@ -185,26 +186,22 @@ export function CardsPage({
     togglePublish,
   } = useExercises();
 
-  // Filter visible users based on role
-  const visibleUsers = isSuperAdmin
-    ? users
-    : users.filter(u => u.role === 'user' || u.role === 'vip_user');
-
   return (
     <div className="cards-page">
       <div className="page-header">
         <h2>Quản Lí</h2>
         <div className="tab-buttons">
-          <button className={`tab-btn ${activeTab === 'vocabulary' ? 'active' : ''}`} onClick={() => setActiveTab('vocabulary')}>Từ Vựng ({cards.length})</button>
-          <button className={`tab-btn ${activeTab === 'grammar' ? 'active' : ''}`} onClick={() => setActiveTab('grammar')}>Ngữ Pháp ({grammarCards.length})</button>
-          <button className={`tab-btn ${activeTab === 'reading' ? 'active' : ''}`} onClick={() => setActiveTab('reading')}>Đọc Hiểu ({readingPassages.length})</button>
-          <button className={`tab-btn ${activeTab === 'lectures' ? 'active' : ''}`} onClick={() => setActiveTab('lectures')}>Bài giảng ({lectures.length})</button>
+          <button className={`tab-btn ${activeTab === 'vocabulary' ? 'active' : ''}`} onClick={() => setActiveTab('vocabulary')}>Từ Vựng</button>
+          <button className={`tab-btn ${activeTab === 'grammar' ? 'active' : ''}`} onClick={() => setActiveTab('grammar')}>Ngữ Pháp</button>
+          <button className={`tab-btn ${activeTab === 'reading' ? 'active' : ''}`} onClick={() => setActiveTab('reading')}>Đọc Hiểu</button>
+          <button className={`tab-btn ${activeTab === 'listening' ? 'active' : ''}`} onClick={() => setActiveTab('listening')}>Nghe Hiểu</button>
+          <button className={`tab-btn ${activeTab === 'lectures' ? 'active' : ''}`} onClick={() => setActiveTab('lectures')}>Bài giảng</button>
           <button className={`tab-btn ${activeTab === 'jlpt' ? 'active' : ''}`} onClick={() => setActiveTab('jlpt')}>JLPT</button>
-          <button className={`tab-btn ${activeTab === 'kaiwa' ? 'active' : ''}`} onClick={() => setActiveTab('kaiwa')}>Kaiwa ({kaiwaQuestions.length})</button>
+          <button className={`tab-btn ${activeTab === 'kaiwa' ? 'active' : ''}`} onClick={() => setActiveTab('kaiwa')}>Kaiwa</button>
           <button className={`tab-btn ${activeTab === 'game' ? 'active' : ''}`} onClick={() => setActiveTab('game')}>Game</button>
-          <button className={`tab-btn ${activeTab === 'assignments' ? 'active' : ''}`} onClick={() => setActiveTab('assignments')}>Bài tập ({exercises.length})</button>
-          <button className={`tab-btn ${activeTab === 'tests' ? 'active' : ''}`} onClick={() => setActiveTab('tests')}>Bài kiểm tra ({testTemplates.length})</button>
-          <button className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>Tài khoản ({visibleUsers.length})</button>
+          <button className={`tab-btn ${activeTab === 'assignments' ? 'active' : ''}`} onClick={() => setActiveTab('assignments')}>Bài tập</button>
+          <button className={`tab-btn ${activeTab === 'tests' ? 'active' : ''}`} onClick={() => setActiveTab('tests')}>Bài kiểm tra</button>
+          <button className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>Tài khoản</button>
         </div>
       </div>
 
@@ -272,6 +269,38 @@ export function CardsPage({
           currentUser={currentUser}
           isSuperAdmin={isSuperAdmin}
         />
+      )}
+
+      {/* Listening Tab */}
+      {activeTab === 'listening' && (
+        <div className="listening-tab-placeholder">
+          <div className="placeholder-content">
+            <h3>Quản lí Nghe Hiểu</h3>
+            <p>Tính năng đang được phát triển...</p>
+            <p className="placeholder-note">Bạn có thể tải và quản lí các file nghe, câu hỏi luyện nghe tại đây.</p>
+          </div>
+          <style>{`
+            .listening-tab-placeholder {
+              padding: 3rem;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+            }
+            .placeholder-content {
+              text-align: center;
+              color: var(--gray);
+            }
+            .placeholder-content h3 {
+              font-size: 1.5rem;
+              margin-bottom: 0.5rem;
+              color: var(--dark);
+            }
+            .placeholder-note {
+              font-size: 0.9rem;
+              margin-top: 1rem;
+            }
+          `}</style>
+        </div>
       )}
 
       {/* Lectures Tab */}

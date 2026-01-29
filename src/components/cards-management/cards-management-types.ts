@@ -10,7 +10,7 @@ import type { Classroom } from '../../types/classroom';
 import type { KaiwaAdvancedTopic, KaiwaAdvancedQuestion, KaiwaAdvancedTopicFormData, KaiwaAdvancedQuestionFormData } from '../../types/kaiwa-advanced';
 import type { CustomTopic, CustomTopicFolder, CustomTopicQuestion, CustomTopicFormData, CustomTopicQuestionFormData } from '../../types/custom-topic';
 
-export type ManagementTab = 'vocabulary' | 'grammar' | 'reading' | 'lectures' | 'jlpt' | 'kaiwa' | 'custom_topics' | 'game' | 'assignments' | 'tests' | 'users';
+export type ManagementTab = 'vocabulary' | 'grammar' | 'reading' | 'listening' | 'lectures' | 'jlpt' | 'kaiwa' | 'custom_topics' | 'game' | 'assignments' | 'tests' | 'users';
 
 // Navigation state types
 export type FlashcardNavState =

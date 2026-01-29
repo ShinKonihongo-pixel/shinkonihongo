@@ -10,6 +10,7 @@ export { GameTab } from './game-tab';
 export { UsersTab } from './users-tab';
 export { CustomTopicsTab } from './custom-topics-tab';
 export { ReadingTab } from './reading-tab';
+export { ListeningTab } from './listening-tab';
 export { ExercisesTab } from './exercises-tab';
 
 export * from './cards-management-types';
