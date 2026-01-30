@@ -1,6 +1,7 @@
-// Classroom create/edit modal with optimized UX
+// Classroom create/edit modal with unified Room Modal design system
 
 import { useState, useEffect } from 'react';
+import { X, GraduationCap, Calendar, Clock, Sparkles } from 'lucide-react';
 import type { Classroom, ClassroomFormData, ClassSchedule, ClassroomLevel } from '../../types/classroom';
 import { CLASSROOM_LEVELS, DAY_OF_WEEK_LABELS } from '../../types/classroom';
 
@@ -10,33 +11,33 @@ const SCHEDULE_TEMPLATES = [
     id: 'evening-2',
     label: '2 buổi tối/tuần',
     schedules: [
-      { dayOfWeek: 2, startTime: '19:00', endTime: '21:00' }, // Thứ 3
-      { dayOfWeek: 5, startTime: '19:00', endTime: '21:00' }, // Thứ 6
+      { dayOfWeek: 2, startTime: '19:00', endTime: '21:00' },
+      { dayOfWeek: 5, startTime: '19:00', endTime: '21:00' },
     ],
   },
   {
     id: 'evening-3',
     label: '3 buổi tối/tuần',
     schedules: [
-      { dayOfWeek: 2, startTime: '19:00', endTime: '21:00' }, // Thứ 3
-      { dayOfWeek: 4, startTime: '19:00', endTime: '21:00' }, // Thứ 5
-      { dayOfWeek: 6, startTime: '19:00', endTime: '21:00' }, // Thứ 7
+      { dayOfWeek: 2, startTime: '19:00', endTime: '21:00' },
+      { dayOfWeek: 4, startTime: '19:00', endTime: '21:00' },
+      { dayOfWeek: 6, startTime: '19:00', endTime: '21:00' },
     ],
   },
   {
     id: 'weekend',
     label: 'Cuối tuần',
     schedules: [
-      { dayOfWeek: 6, startTime: '09:00', endTime: '11:00' }, // Thứ 7
-      { dayOfWeek: 0, startTime: '09:00', endTime: '11:00' }, // Chủ nhật
+      { dayOfWeek: 6, startTime: '09:00', endTime: '11:00' },
+      { dayOfWeek: 0, startTime: '09:00', endTime: '11:00' },
     ],
   },
   {
     id: 'morning-2',
     label: '2 buổi sáng/tuần',
     schedules: [
-      { dayOfWeek: 3, startTime: '08:00', endTime: '10:00' }, // Thứ 4
-      { dayOfWeek: 6, startTime: '08:00', endTime: '10:00' }, // Thứ 7
+      { dayOfWeek: 3, startTime: '08:00', endTime: '10:00' },
+      { dayOfWeek: 6, startTime: '08:00', endTime: '10:00' },
     ],
   },
 ];
@@ -48,11 +49,18 @@ const LEVEL_NAME_SUGGESTIONS: Record<ClassroomLevel, string[]> = {
   advanced: ['Lớp N3 - Buổi tối', 'Lớp Nâng cao', 'Lớp N2-N1', 'Lớp Luyện thi'],
 };
 
+// Level colors for pills
+const LEVEL_COLORS: Record<ClassroomLevel, string> = {
+  basic: '#22c55e',
+  intermediate: '#3b82f6',
+  advanced: '#f59e0b',
+};
+
 interface ClassroomCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: ClassroomFormData) => Promise<boolean>;
-  classroom?: Classroom; // For editing
+  classroom?: Classroom;
 }
 
 export function ClassroomCreateModal({
@@ -91,7 +99,6 @@ export function ClassroomCreateModal({
   // Handle level change - show name suggestions for new classroom
   const handleLevelChange = (newLevel: ClassroomLevel) => {
     setLevel(newLevel);
-    // Only show suggestions for new classroom and if name is empty or matches a suggestion
     if (!classroom && (!name || Object.values(LEVEL_NAME_SUGGESTIONS).flat().includes(name))) {
       setShowNameSuggestions(true);
     }
@@ -109,10 +116,8 @@ export function ClassroomCreateModal({
   const handleToggleDay = (dayOfWeek: number) => {
     const existing = schedule.find(s => s.dayOfWeek === dayOfWeek);
     if (existing) {
-      // Remove this day
       setSchedule(schedule.filter(s => s.dayOfWeek !== dayOfWeek));
     } else {
-      // Add this day with default time
       const defaultTime = getDefaultTimeForDay(dayOfWeek);
       setSchedule([...schedule, { dayOfWeek, ...defaultTime }].sort((a, b) => a.dayOfWeek - b.dayOfWeek));
     }
@@ -167,153 +172,205 @@ export function ClassroomCreateModal({
   const selectedDays = new Set(schedule.map(s => s.dayOfWeek));
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content classroom-modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>{classroom ? 'Sửa lớp học' : 'Tạo lớp học mới'}</h2>
-          <button className="btn-close" onClick={onClose}>×</button>
-        </div>
+    <div className="rm-overlay" onClick={onClose}>
+      <div className="rm-modal" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <header className="rm-header">
+          <div
+            className="rm-header-gradient"
+            style={{ background: `linear-gradient(135deg, ${LEVEL_COLORS[level]} 0%, ${LEVEL_COLORS[level]}80 100%)` }}
+          />
+          <div className="rm-header-icon" style={{ background: LEVEL_COLORS[level] }}>
+            <GraduationCap size={24} color="white" />
+          </div>
+          <div className="rm-header-content">
+            <h1 className="rm-title">{classroom ? 'Sửa lớp học' : 'Tạo lớp học mới'}</h1>
+            <span className="rm-subtitle">Quản lý lớp học của bạn</span>
+          </div>
+          <button className="rm-close-btn" onClick={onClose} type="button">
+            <X size={20} />
+          </button>
+        </header>
 
-        <form onSubmit={handleSubmit}>
-          <div className="modal-body">
-            {error && <div className="error-message">{error}</div>}
-
-            {/* Level selection - moved to top for better flow */}
-            <div className="form-group">
-              <label>Cấp độ *</label>
-              <div className="level-buttons">
-                {CLASSROOM_LEVELS.map(l => (
-                  <button
-                    key={l.value}
-                    type="button"
-                    className={`level-btn ${level === l.value ? 'active' : ''}`}
-                    onClick={() => handleLevelChange(l.value)}
-                    data-level={l.value}
-                  >
-                    {l.label}
-                  </button>
-                ))}
-              </div>
+        {/* Body */}
+        <form className="rm-body" onSubmit={handleSubmit}>
+          {error && (
+            <div className="rm-error">
+              <span>⚠️</span>
+              <span>{error}</span>
             </div>
+          )}
 
-            {/* Name with suggestions */}
-            <div className="form-group">
-              <label>Tên lớp học *</label>
-              <input
-                type="text"
-                value={name}
-                onChange={e => {
-                  setName(e.target.value);
-                  setShowNameSuggestions(false);
-                }}
-                onFocus={() => !classroom && setShowNameSuggestions(true)}
-                placeholder="VD: Lớp N5 - Buổi tối"
-                className="form-input"
-                autoFocus
-              />
-              {showNameSuggestions && !classroom && (
-                <div className="name-suggestions">
-                  {LEVEL_NAME_SUGGESTIONS[level].map(suggestion => (
-                    <button
-                      key={suggestion}
-                      type="button"
-                      className="suggestion-btn"
-                      onClick={() => {
-                        setName(suggestion);
-                        setShowNameSuggestions(false);
-                      }}
-                    >
-                      {suggestion}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Description - collapsible for cleaner UI */}
-            <div className="form-group">
-              <label>Mô tả <span className="optional-label">(tùy chọn)</span></label>
-              <textarea
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-                placeholder="Mô tả ngắn về lớp học..."
-                className="form-textarea"
-                rows={2}
-              />
-            </div>
-
-            {/* Schedule section with templates */}
-            <div className="form-group">
-              <label>Thời khóa biểu</label>
-
-              {/* Quick templates */}
-              <div className="schedule-templates">
-                <span className="template-label">Mẫu nhanh:</span>
-                {SCHEDULE_TEMPLATES.map(template => (
-                  <button
-                    key={template.id}
-                    type="button"
-                    className="template-btn"
-                    onClick={() => handleApplyTemplate(template.id)}
-                  >
-                    {template.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Day selector as grid */}
-              <div className="day-selector">
-                {[1, 2, 3, 4, 5, 6, 0].map(day => (
-                  <button
-                    key={day}
-                    type="button"
-                    className={`day-btn ${selectedDays.has(day) ? 'active' : ''}`}
-                    onClick={() => handleToggleDay(day)}
-                  >
-                    {DAY_OF_WEEK_LABELS[day].replace('Thứ ', 'T').replace('Chủ nhật', 'CN')}
-                  </button>
-                ))}
-              </div>
-
-              {/* Time inputs for selected days */}
-              {schedule.length > 0 && (
-                <div className="schedule-times">
-                  {schedule.sort((a, b) => (a.dayOfWeek === 0 ? 7 : a.dayOfWeek) - (b.dayOfWeek === 0 ? 7 : b.dayOfWeek)).map(s => (
-                    <div key={s.dayOfWeek} className="schedule-time-row">
-                      <span className="day-label">{DAY_OF_WEEK_LABELS[s.dayOfWeek]}</span>
-                      <input
-                        type="time"
-                        value={s.startTime}
-                        onChange={e => handleTimeChange(s.dayOfWeek, 'startTime', e.target.value)}
-                        className="time-input"
-                      />
-                      <span className="time-separator">→</span>
-                      <input
-                        type="time"
-                        value={s.endTime}
-                        onChange={e => handleTimeChange(s.dayOfWeek, 'endTime', e.target.value)}
-                        className="time-input"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {schedule.length === 0 && (
-                <p className="schedule-hint">Chọn mẫu nhanh hoặc click vào ngày để thêm lịch học</p>
-              )}
+          {/* Level Selection */}
+          <div className="rm-field">
+            <label className="rm-label">
+              <GraduationCap size={16} />
+              <span>Cấp độ</span>
+            </label>
+            <div className="rm-pills">
+              {CLASSROOM_LEVELS.map(l => (
+                <button
+                  key={l.value}
+                  type="button"
+                  className={`rm-pill ${level === l.value ? 'active' : ''}`}
+                  onClick={() => handleLevelChange(l.value)}
+                  style={level === l.value ? {
+                    background: LEVEL_COLORS[l.value],
+                    borderColor: LEVEL_COLORS[l.value],
+                    boxShadow: `0 0 15px ${LEVEL_COLORS[l.value]}40`
+                  } : undefined}
+                >
+                  {l.label}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="modal-footer">
-            <button type="button" className="btn btn-secondary" onClick={onClose}>
-              Hủy
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? 'Đang lưu...' : classroom ? 'Cập nhật' : 'Tạo lớp'}
-            </button>
+          {/* Name with suggestions */}
+          <div className="rm-field">
+            <label className="rm-label">
+              <Sparkles size={16} />
+              <span>Tên lớp học</span>
+            </label>
+            <input
+              type="text"
+              className="rm-input"
+              value={name}
+              onChange={e => {
+                setName(e.target.value);
+                setShowNameSuggestions(false);
+              }}
+              onFocus={() => !classroom && setShowNameSuggestions(true)}
+              placeholder="VD: Lớp N5 - Buổi tối"
+              autoFocus
+            />
+            {showNameSuggestions && !classroom && (
+              <div className="rm-suggestions">
+                {LEVEL_NAME_SUGGESTIONS[level].map(suggestion => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    className="rm-suggestion-btn"
+                    onClick={() => {
+                      setName(suggestion);
+                      setShowNameSuggestions(false);
+                    }}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Description */}
+          <div className="rm-field">
+            <label className="rm-label">
+              <span>Mô tả</span>
+              <span className="rm-label-hint">(tùy chọn)</span>
+            </label>
+            <textarea
+              className="rm-textarea"
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              placeholder="Mô tả ngắn về lớp học..."
+              rows={2}
+            />
+          </div>
+
+          {/* Schedule Section */}
+          <div className="rm-section">
+            <div className="rm-section-title">
+              <Calendar size={16} />
+              <span>Thời khóa biểu</span>
+            </div>
+
+            {/* Quick templates */}
+            <div className="rm-templates">
+              <span className="rm-template-label">Mẫu nhanh:</span>
+              {SCHEDULE_TEMPLATES.map(template => (
+                <button
+                  key={template.id}
+                  type="button"
+                  className="rm-template-btn"
+                  onClick={() => handleApplyTemplate(template.id)}
+                >
+                  {template.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Day selector as grid */}
+            <div className="rm-day-grid">
+              {[1, 2, 3, 4, 5, 6, 0].map(day => (
+                <button
+                  key={day}
+                  type="button"
+                  className={`rm-day-btn ${selectedDays.has(day) ? 'active' : ''}`}
+                  onClick={() => handleToggleDay(day)}
+                >
+                  {DAY_OF_WEEK_LABELS[day].replace('Thứ ', 'T').replace('Chủ nhật', 'CN')}
+                </button>
+              ))}
+            </div>
+
+            {/* Time inputs for selected days */}
+            {schedule.length > 0 && (
+              <div className="rm-schedule-times">
+                {schedule.sort((a, b) => (a.dayOfWeek === 0 ? 7 : a.dayOfWeek) - (b.dayOfWeek === 0 ? 7 : b.dayOfWeek)).map(s => (
+                  <div key={s.dayOfWeek} className="rm-time-row">
+                    <span className="rm-time-label">{DAY_OF_WEEK_LABELS[s.dayOfWeek]}</span>
+                    <input
+                      type="time"
+                      value={s.startTime}
+                      onChange={e => handleTimeChange(s.dayOfWeek, 'startTime', e.target.value)}
+                      className="rm-time-input"
+                    />
+                    <span className="rm-time-separator">→</span>
+                    <input
+                      type="time"
+                      value={s.endTime}
+                      onChange={e => handleTimeChange(s.dayOfWeek, 'endTime', e.target.value)}
+                      className="rm-time-input"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {schedule.length === 0 && (
+              <div className="rm-info-box" style={{ marginTop: 'var(--rm-space-md)' }}>
+                <p>
+                  <Clock size={14} style={{ verticalAlign: 'middle', marginRight: '6px' }} />
+                  Chọn mẫu nhanh hoặc click vào ngày để thêm lịch học
+                </p>
+              </div>
+            )}
           </div>
         </form>
+
+        {/* Footer */}
+        <footer className="rm-footer">
+          <button type="button" className="rm-btn rm-btn-ghost" onClick={onClose}>
+            Hủy
+          </button>
+          <button
+            type="submit"
+            className="rm-btn rm-btn-primary rm-btn-lg"
+            disabled={saving}
+            onClick={handleSubmit}
+            style={{ background: LEVEL_COLORS[level] }}
+          >
+            {saving ? (
+              <>
+                <span className="rm-spinner" />
+                <span>Đang lưu...</span>
+              </>
+            ) : (
+              <span>{classroom ? 'Cập nhật' : 'Tạo lớp'}</span>
+            )}
+          </button>
+        </footer>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-// Unified Game Room Setup - Professional, consistent room creation across all games
+// Unified Game Room Setup - Professional UI with Glass Morphism Dark Theme
 // Features: Clean design, game-specific config, live preview, responsive layout
 
 import { useState, useMemo } from 'react';
@@ -14,6 +14,7 @@ import {
   Zap,
   Eye,
   ChevronDown,
+  X,
 } from 'lucide-react';
 import type { GameType, GameInfo } from '../../types/game-hub';
 import { GAMES } from '../../types/game-hub';
@@ -107,14 +108,6 @@ interface GameRoomSetupProps {
 
 const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 
-const JLPT_COLORS: Record<JLPTLevel, string> = {
-  N5: '#22c55e',
-  N4: '#06b6d4',
-  N3: '#3b82f6',
-  N2: '#8b5cf6',
-  N1: '#f59e0b',
-};
-
 // ============ SUB COMPONENTS ============
 
 // Slider Input with labels
@@ -136,12 +129,15 @@ function SliderInput({
   const percent = ((value - config.min) / (config.max - config.min)) * 100;
 
   return (
-    <div className="grs-field">
-      <label className="grs-label">
+    <div className="rm-field">
+      <label className="rm-label">
         {icon}
-        <span>{label}: <strong>{value}{suffix}</strong></span>
+        <span>{label}</span>
+        <span className="rm-label-hint">
+          <span className="rm-label-value">{value}{suffix}</span>
+        </span>
       </label>
-      <div className="grs-slider-wrap">
+      <div className="rm-slider-wrap">
         <input
           type="range"
           min={config.min}
@@ -149,11 +145,11 @@ function SliderInput({
           step={config.step}
           value={value}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="grs-slider"
+          className="rm-slider"
           style={{ '--progress': `${percent}%` } as React.CSSProperties}
         />
         {config.labels && (
-          <div className="grs-slider-labels">
+          <div className="rm-slider-labels">
             {config.labels.map((lbl, i) => (
               <span key={i}>{lbl}</span>
             ))}
@@ -175,28 +171,26 @@ function ToggleSwitch({
   onChange: (enabled: boolean) => void;
 }) {
   return (
-    <div className="grs-toggle-row">
-      <div className="grs-toggle-info">
-        {option.icon && <span className="grs-toggle-icon">{option.icon}</span>}
-        <div className="grs-toggle-text">
-          <span className="grs-toggle-label">{option.label}</span>
+    <div className="rm-toggle-row">
+      <div className="rm-toggle-info">
+        {option.icon && <span className="rm-toggle-icon">{option.icon}</span>}
+        <div className="rm-toggle-text">
+          <span className="rm-toggle-label">{option.label}</span>
           {option.description && (
-            <span className="grs-toggle-desc">{option.description}</span>
+            <span className="rm-toggle-desc">{option.description}</span>
           )}
         </div>
       </div>
       <button
         type="button"
-        className={`grs-toggle-btn ${enabled ? 'active' : ''}`}
+        className={`rm-toggle-btn ${enabled ? 'active' : ''}`}
         onClick={() => onChange(!enabled)}
-      >
-        <span className="grs-toggle-knob" />
-      </button>
+      />
     </div>
   );
 }
 
-// Select Buttons (single or multi-select)
+// Select Buttons (Pills)
 function SelectButtons({
   options,
   selected,
@@ -224,19 +218,17 @@ function SelectButtons({
     }
   };
 
+  const sizeClass = size === 'small' ? 'sm' : size === 'large' ? 'lg' : '';
+
   return (
-    <div className={`grs-select-buttons ${size}`}>
+    <div className="rm-pills">
       {options.map((opt) => (
         <button
           key={opt.value}
           type="button"
-          className={`grs-select-btn ${selected.includes(opt.value) ? 'active' : ''}`}
+          className={`rm-pill ${sizeClass} ${selected.includes(opt.value) ? 'active' : ''}`}
           onClick={() => handleClick(opt.value)}
-          style={
-            selected.includes(opt.value) && opt.color
-              ? { backgroundColor: opt.color, borderColor: opt.color }
-              : undefined
-          }
+          data-level={typeof opt.value === 'string' && opt.value.startsWith('N') ? opt.value : undefined}
         >
           {opt.label}
         </button>
@@ -280,7 +272,7 @@ export function GameRoomSetup({
     return initial;
   });
 
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showRules, setShowRules] = useState(false);
 
   // Build room config
   const roomConfig = useMemo<GameRoomConfig>(() => ({
@@ -309,249 +301,263 @@ export function GameRoomSetup({
   };
 
   return (
-    <div className="grs">
-      {/* Header */}
-      <header className="grs-header" style={{ background: gameInfo.gradient }}>
-        <button className="grs-back" onClick={onBack} type="button">
-          <ArrowLeft size={20} />
-        </button>
-        <div className="grs-header-info">
-          <div className="grs-game-icon">
+    <div className="rm-overlay" onClick={onBack}>
+      <div className="rm-modal large" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <header className="rm-header">
+          <div className="rm-header-gradient" style={{ background: gameInfo.gradient }} />
+          <button className="rm-back-btn" onClick={onBack} type="button">
+            <ArrowLeft size={20} />
+          </button>
+          <div className="rm-header-icon" style={{ background: gameInfo.gradient }}>
             {gameInfo.iconImage ? (
               <img src={gameInfo.iconImage} alt={gameInfo.name} />
             ) : (
               <span>{gameInfo.icon}</span>
             )}
           </div>
-          <div className="grs-header-text">
-            <h1>Tạo Phòng</h1>
-            <span className="grs-game-name">{gameInfo.name}</span>
+          <div className="rm-header-content">
+            <h1 className="rm-title">Tạo Phòng Chơi</h1>
+            <span className="rm-subtitle">{gameInfo.name}</span>
           </div>
-        </div>
-      </header>
-
-      {/* Error Message */}
-      {error && (
-        <div className="grs-error">
-          <span>⚠️</span>
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* Form */}
-      <form className="grs-form" onSubmit={handleSubmit}>
-        {/* Room Title */}
-        {config.showTitle !== false && (
-          <div className="grs-field">
-            <label className="grs-label">
-              <Settings size={16} />
-              <span>Tên phòng</span>
-            </label>
-            <input
-              type="text"
-              className="grs-input"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={config.titlePlaceholder || `Phòng ${gameInfo.name}`}
-              maxLength={config.maxTitleLength || 40}
-            />
-          </div>
-        )}
-
-        {/* JLPT Level */}
-        {config.showJLPTLevel && (
-          <div className="grs-field">
-            <label className="grs-label">
-              <Layers size={16} />
-              <span>Cấp độ JLPT</span>
-            </label>
-            <SelectButtons
-              options={JLPT_LEVELS.map(lvl => ({
-                value: lvl,
-                label: lvl,
-                color: JLPT_COLORS[lvl],
-              }))}
-              selected={[jlptLevel]}
-              onChange={(sel) => setJlptLevel(sel[0] as JLPTLevel)}
-              size="medium"
-            />
-          </div>
-        )}
-
-        {/* Categories */}
-        {config.showCategories && config.categories && (
-          <div className="grs-field">
-            <label className="grs-label">
-              <HelpCircle size={16} />
-              <span>Loại câu hỏi</span>
-            </label>
-            <SelectButtons
-              options={config.categories}
-              selected={selectedCategories}
-              onChange={setSelectedCategories}
-              multiSelect={config.multiSelectCategories}
-              size="small"
-            />
-          </div>
-        )}
-
-        {/* Max Players - Button Options */}
-        {config.showMaxPlayers && config.maxPlayersOptions && (
-          <div className="grs-field">
-            <label className="grs-label">
-              <Users size={16} />
-              <span>Số người chơi tối đa</span>
-            </label>
-            <SelectButtons
-              options={config.maxPlayersOptions.map(n => ({ value: n, label: `${n}` }))}
-              selected={[maxPlayers]}
-              onChange={(sel) => setMaxPlayers(sel[0] as number)}
-              size="medium"
-            />
-          </div>
-        )}
-
-        {/* Max Players - Slider */}
-        {config.showMaxPlayers && config.maxPlayersSlider && !config.maxPlayersOptions && (
-          <SliderInput
-            value={maxPlayers}
-            onChange={setMaxPlayers}
-            config={config.maxPlayersSlider}
-            label="Số người chơi tối đa"
-            icon={<Users size={16} />}
-            suffix=" người"
-          />
-        )}
-
-        {/* Total Rounds / Questions */}
-        {config.showTotalRounds && config.roundsSlider && (
-          <SliderInput
-            value={totalRounds}
-            onChange={setTotalRounds}
-            config={config.roundsSlider}
-            label={config.roundsLabel || 'Số câu hỏi'}
-            icon={<HelpCircle size={16} />}
-            suffix=" câu"
-          />
-        )}
-
-        {/* Time Per Question */}
-        {config.showTimePerQuestion && config.timeSlider && (
-          <SliderInput
-            value={timePerQuestion}
-            onChange={setTimePerQuestion}
-            config={config.timeSlider}
-            label="Thời gian mỗi câu"
-            icon={<Clock size={16} />}
-            suffix="s"
-          />
-        )}
-
-        {/* Toggle Options */}
-        {config.toggles && config.toggles.length > 0 && (
-          <div className="grs-toggles">
-            {config.toggles.map((toggle) => (
-              <ToggleSwitch
-                key={toggle.id}
-                option={toggle}
-                enabled={toggleStates[toggle.id] ?? true}
-                onChange={(enabled) => handleToggle(toggle.id, enabled)}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Custom Sections */}
-        {config.customSections}
-
-        {/* Advanced Settings Toggle */}
-        {config.rules && config.rules.length > 0 && (
-          <button
-            type="button"
-            className="grs-advanced-toggle"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-          >
-            <Eye size={16} />
-            <span>Xem trước luật chơi</span>
-            <ChevronDown size={16} className={showAdvanced ? 'rotated' : ''} />
+          <button className="rm-close-btn" onClick={onBack} type="button">
+            <X size={20} />
           </button>
-        )}
+        </header>
 
-        {/* Rules Preview */}
-        {showAdvanced && config.rules && (
-          <div className="grs-rules">
-            <h4>Luật chơi</h4>
-            <ul>
-              {config.rules.map((rule, i) => (
-                <li key={i}>{rule}</li>
+        {/* Body */}
+        <form className="rm-body" onSubmit={handleSubmit}>
+          {/* Error Message */}
+          {error && (
+            <div className="rm-error">
+              <span>⚠️</span>
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Room Title */}
+          {config.showTitle !== false && (
+            <div className="rm-field">
+              <label className="rm-label">
+                <Settings size={16} />
+                <span>Tên phòng</span>
+              </label>
+              <input
+                type="text"
+                className="rm-input"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={config.titlePlaceholder || `Phòng ${gameInfo.name}`}
+                maxLength={config.maxTitleLength || 40}
+              />
+            </div>
+          )}
+
+          {/* JLPT Level */}
+          {config.showJLPTLevel && (
+            <div className="rm-field">
+              <label className="rm-label">
+                <Layers size={16} />
+                <span>Cấp độ JLPT</span>
+              </label>
+              <SelectButtons
+                options={JLPT_LEVELS.map(lvl => ({
+                  value: lvl,
+                  label: lvl,
+                }))}
+                selected={[jlptLevel]}
+                onChange={(sel) => setJlptLevel(sel[0] as JLPTLevel)}
+                size="medium"
+              />
+            </div>
+          )}
+
+          {/* Categories */}
+          {config.showCategories && config.categories && (
+            <div className="rm-field">
+              <label className="rm-label">
+                <HelpCircle size={16} />
+                <span>Loại câu hỏi</span>
+              </label>
+              <SelectButtons
+                options={config.categories}
+                selected={selectedCategories}
+                onChange={setSelectedCategories}
+                multiSelect={config.multiSelectCategories}
+                size="small"
+              />
+            </div>
+          )}
+
+          {/* Max Players - Button Options */}
+          {config.showMaxPlayers && config.maxPlayersOptions && (
+            <div className="rm-field">
+              <label className="rm-label">
+                <Users size={16} />
+                <span>Số người chơi tối đa</span>
+              </label>
+              <SelectButtons
+                options={config.maxPlayersOptions.map(n => ({ value: n, label: `${n}` }))}
+                selected={[maxPlayers]}
+                onChange={(sel) => setMaxPlayers(sel[0] as number)}
+                size="medium"
+              />
+            </div>
+          )}
+
+          {/* Max Players - Slider */}
+          {config.showMaxPlayers && config.maxPlayersSlider && !config.maxPlayersOptions && (
+            <SliderInput
+              value={maxPlayers}
+              onChange={setMaxPlayers}
+              config={config.maxPlayersSlider}
+              label="Số người chơi tối đa"
+              icon={<Users size={16} />}
+              suffix=" người"
+            />
+          )}
+
+          {/* Total Rounds / Questions */}
+          {config.showTotalRounds && config.roundsSlider && (
+            <SliderInput
+              value={totalRounds}
+              onChange={setTotalRounds}
+              config={config.roundsSlider}
+              label={config.roundsLabel || 'Số câu hỏi'}
+              icon={<HelpCircle size={16} />}
+              suffix=" câu"
+            />
+          )}
+
+          {/* Time Per Question */}
+          {config.showTimePerQuestion && config.timeSlider && (
+            <SliderInput
+              value={timePerQuestion}
+              onChange={setTimePerQuestion}
+              config={config.timeSlider}
+              label="Thời gian mỗi câu"
+              icon={<Clock size={16} />}
+              suffix="s"
+            />
+          )}
+
+          {/* Toggle Options */}
+          {config.toggles && config.toggles.length > 0 && (
+            <div className="rm-toggles">
+              {config.toggles.map((toggle) => (
+                <ToggleSwitch
+                  key={toggle.id}
+                  option={toggle}
+                  enabled={toggleStates[toggle.id] ?? true}
+                  onChange={(enabled) => handleToggle(toggle.id, enabled)}
+                />
               ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Preview Card */}
-        <div className="grs-preview" style={{ borderColor: gameInfo.color }}>
-          <div className="grs-preview-header">
-            <span className="grs-preview-icon" style={{ background: gameInfo.gradient }}>
-              {gameInfo.icon}
-            </span>
-            <div className="grs-preview-title">
-              <span className="grs-preview-name">{title || gameInfo.name}</span>
-              <span className="grs-preview-game">{gameInfo.name}</span>
             </div>
-          </div>
-          <div className="grs-preview-stats">
-            <div className="grs-preview-stat">
-              <Users size={14} />
-              <span>{maxPlayers} người</span>
-            </div>
-            {config.showTotalRounds && (
-              <div className="grs-preview-stat">
-                <HelpCircle size={14} />
-                <span>{totalRounds} câu</span>
-              </div>
-            )}
-            {config.showTimePerQuestion && (
-              <div className="grs-preview-stat">
-                <Clock size={14} />
-                <span>{timePerQuestion}s/câu</span>
-              </div>
-            )}
-            {config.showJLPTLevel && (
-              <div className="grs-preview-stat">
-                <Layers size={14} />
-                <span>{jlptLevel}</span>
-              </div>
-            )}
-            {toggleStates['skills'] && (
-              <div className="grs-preview-stat highlight">
-                <Sparkles size={14} />
-                <span>Kỹ năng</span>
-              </div>
-            )}
-          </div>
-        </div>
+          )}
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          className="grs-submit"
-          disabled={loading}
-          style={{ background: gameInfo.gradient }}
-        >
-          {loading ? (
+          {/* Custom Sections */}
+          {config.customSections}
+
+          {/* Rules Toggle */}
+          {config.rules && config.rules.length > 0 && (
             <>
-              <span className="grs-spinner" />
-              <span>Đang tạo...</span>
-            </>
-          ) : (
-            <>
-              <Play size={20} fill="white" />
-              <span>Tạo Phòng</span>
+              <button
+                type="button"
+                className={`rm-rules-toggle ${showRules ? 'open' : ''}`}
+                onClick={() => setShowRules(!showRules)}
+              >
+                <Eye size={16} />
+                <span>Xem trước luật chơi</span>
+                <ChevronDown size={16} />
+              </button>
+
+              {showRules && (
+                <div className="rm-rules">
+                  <h4 className="rm-rules-title">Luật chơi</h4>
+                  <ul className="rm-rules-list">
+                    {config.rules.map((rule, i) => (
+                      <li key={i}>{rule}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </>
           )}
-        </button>
-      </form>
+
+          {/* Preview Card */}
+          <div className="rm-preview">
+            <div className="rm-preview-header">
+              <span className="rm-preview-icon" style={{ background: gameInfo.gradient }}>
+                {gameInfo.icon}
+              </span>
+              <div className="rm-preview-title">
+                <span className="rm-preview-name">{title || gameInfo.name}</span>
+                <span className="rm-preview-game">{gameInfo.name}</span>
+              </div>
+            </div>
+            <div className="rm-preview-stats">
+              <div className="rm-preview-stat">
+                <Users size={14} />
+                <span>{maxPlayers} người</span>
+              </div>
+              {config.showTotalRounds && (
+                <div className="rm-preview-stat">
+                  <HelpCircle size={14} />
+                  <span>{totalRounds} câu</span>
+                </div>
+              )}
+              {config.showTimePerQuestion && (
+                <div className="rm-preview-stat">
+                  <Clock size={14} />
+                  <span>{timePerQuestion}s/câu</span>
+                </div>
+              )}
+              {config.showJLPTLevel && (
+                <div className="rm-preview-stat">
+                  <Layers size={14} />
+                  <span>{jlptLevel}</span>
+                </div>
+              )}
+              {toggleStates['skills'] && (
+                <div className="rm-preview-stat highlight">
+                  <Sparkles size={14} />
+                  <span>Kỹ năng</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </form>
+
+        {/* Footer */}
+        <footer className="rm-footer">
+          <button
+            type="button"
+            className="rm-btn rm-btn-ghost"
+            onClick={onBack}
+          >
+            Hủy
+          </button>
+          <button
+            type="submit"
+            className="rm-btn rm-btn-primary rm-btn-lg"
+            disabled={loading}
+            onClick={handleSubmit}
+            style={{ background: gameInfo.gradient }}
+          >
+            {loading ? (
+              <>
+                <span className="rm-spinner" />
+                <span>Đang tạo...</span>
+              </>
+            ) : (
+              <>
+                <Play size={20} fill="white" />
+                <span>Tạo Phòng</span>
+              </>
+            )}
+          </button>
+        </footer>
+      </div>
     </div>
   );
 }

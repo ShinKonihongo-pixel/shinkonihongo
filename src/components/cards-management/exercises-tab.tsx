@@ -1,5 +1,5 @@
 // Exercises Management Tab - Updated UI
-// Features: Multiple types/levels selection, per-type question count, 2-column list
+// Features: Multiple types/levels selection, per-type question count, 3-column list, sentence translation
 
 import { useState, useMemo } from 'react';
 import { Plus, Edit3, Trash2, Eye, EyeOff, BookOpen, Headphones, FileText, ChevronLeft, Clock, Check } from 'lucide-react';
@@ -10,7 +10,7 @@ import { EXERCISE_TYPE_LABELS, EXERCISE_TYPE_ICONS, QUESTION_COUNT_OPTIONS, TIME
 import { ConfirmModal } from '../ui/confirm-modal';
 
 const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
-const EXERCISE_TYPES: ExerciseType[] = ['vocabulary', 'meaning', 'kanji_to_vocab', 'vocab_to_kanji', 'listening_write'];
+const EXERCISE_TYPES: ExerciseType[] = ['vocabulary', 'meaning', 'kanji_to_vocab', 'vocab_to_kanji', 'listening_write', 'sentence_translation'];
 
 // Level colors for visual distinction
 const LEVEL_COLORS: Record<JLPTLevel, { bg: string; text: string; border: string }> = {
@@ -463,6 +463,16 @@ export function ExercisesTab({
               </div>
             )}
 
+            {formData.types.includes('sentence_translation') && (
+              <div className="info-box-pro sentence-translation">
+                <span style={{ fontSize: '1.5rem' }}>🔄</span>
+                <div>
+                  <strong>Dịch câu (Việt → Nhật)</strong>
+                  <p>Hiển thị câu tiếng Việt ngẫu nhiên hoặc tự nhập. Học sinh gõ câu tiếng Nhật tương ứng. Chấm điểm thông minh: đúng hoàn toàn hoặc gần đúng nghĩa đều được tính.</p>
+                </div>
+              </div>
+            )}
+
             {selectedCardCount < totalQuestionCount && formData.types.length > 0 && (
               <div className="warning-box-pro">
                 <span className="warning-icon">⚠️</span>
@@ -495,7 +505,7 @@ export function ExercisesTab({
         </form>
       )}
 
-      {/* Exercise List - 2 column layout */}
+      {/* Exercise List - 3 column layout */}
       {!showForm && selectedLevel && (
         <div className="exercises-list-grid">
           {filteredExercises.length === 0 ? (
