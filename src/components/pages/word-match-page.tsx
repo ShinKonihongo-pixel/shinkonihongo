@@ -1,5 +1,5 @@
 // Word Match Page - Main game page
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   WordMatchMenu,
   WordMatchSetup,
@@ -11,6 +11,7 @@ import {
 import { useWordMatch } from '../../hooks/use-word-match';
 import type { CreateWordMatchData, WordMatchEffectType } from '../../types/word-match';
 import type { Flashcard } from '../../types/flashcard';
+import type { GameSession } from '../../types/user';
 
 type PageView = 'menu' | 'setup' | 'lobby' | 'play' | 'results' | 'guide';
 
@@ -24,6 +25,8 @@ interface WordMatchPageProps {
   };
   flashcards?: Flashcard[];
   initialView?: PageView;
+  // XP tracking
+  onSaveGameSession?: (data: Omit<GameSession, 'id' | 'userId'>) => void;
 }
 
 export const WordMatchPage: React.FC<WordMatchPageProps> = ({
@@ -31,9 +34,11 @@ export const WordMatchPage: React.FC<WordMatchPageProps> = ({
   currentUser = { id: 'user-1', displayName: 'Player', avatar: '👤' },
   flashcards = [],
   initialView = 'menu',
+  onSaveGameSession,
 }) => {
   const [view, setView] = useState<PageView>(initialView);
   const [notification, setNotification] = useState<{ message: string; type: 'info' | 'warning' } | null>(null);
+  const gameSessionSaved = useRef(false);
 
   // Auto-hide notification after 3 seconds
   useEffect(() => {
@@ -134,6 +139,32 @@ export const WordMatchPage: React.FC<WordMatchPageProps> = ({
       setView('play');
     }
   }, [game?.status, gameResults]);
+
+  // Save game session when game finishes (for XP tracking)
+  useEffect(() => {
+    if (game?.status === 'finished' && !gameSessionSaved.current && onSaveGameSession && gameResults) {
+      gameSessionSaved.current = true;
+
+      // Find current player's result from rankings
+      const myResult = gameResults.rankings.find(p => p.odinhId === currentUser.id);
+      if (myResult) {
+        onSaveGameSession({
+          date: new Date().toISOString().split('T')[0],
+          gameTitle: 'Word Match',
+          rank: myResult.rank,
+          totalPlayers: gameResults.rankings.length,
+          score: myResult.score,
+          correctAnswers: myResult.correctPairs,
+          totalQuestions: gameResults.totalRounds,
+        });
+      }
+    }
+
+    // Reset flag when game changes (new game)
+    if (!game || game.status !== 'finished') {
+      gameSessionSaved.current = false;
+    }
+  }, [game, gameResults, currentUser.id, onSaveGameSession]);
 
   // Render based on view
   const renderContent = () => {

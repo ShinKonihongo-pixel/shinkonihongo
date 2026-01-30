@@ -1,11 +1,12 @@
 // Main Quiz Game page that manages game state and renders appropriate UI
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Flashcard, JLPTLevel, Lesson } from '../../types/flashcard';
 import type { JLPTQuestion } from '../../types/jlpt-question';
 import type { CreateGameData } from '../../types/quiz-game';
 import type { AppSettings } from '../../hooks/use-settings';
 import type { FriendWithUser } from '../../types/friendship';
+import type { GameSession } from '../../types/user';
 import { useQuizGame } from '../../hooks/use-quiz-game';
 import { GameCreate } from '../quiz-game/game-create';
 import { GameLobby } from '../quiz-game/game-lobby';
@@ -29,6 +30,8 @@ interface QuizGamePageProps {
   // Friends integration
   friends?: FriendWithUser[];
   onInviteFriend?: (gameId: string, gameCode: string, gameTitle: string, friendId: string) => Promise<boolean>;
+  // XP tracking
+  onSaveGameSession?: (data: Omit<GameSession, 'id' | 'userId'>) => void;
 }
 
 type GameView = 'menu' | 'create' | 'join' | 'lobby' | 'play' | 'results';
@@ -47,6 +50,7 @@ export function QuizGamePage({
   settings,
   friends = [],
   onInviteFriend,
+  onSaveGameSession,
 }: QuizGamePageProps) {
   const [view, setView] = useState<GameView>(initialJoinCode ? 'join' : 'menu');
   const [joinCode, setJoinCode] = useState(initialJoinCode || '');
@@ -54,6 +58,7 @@ export function QuizGamePage({
   const [autoJoinAttempted, setAutoJoinAttempted] = useState(false);
   const [showFriendInvite, setShowFriendInvite] = useState(false);
   const [gameAvatar, setGameAvatar] = useState(currentUserAvatar || '');
+  const gameSessionSaved = useRef(false);
 
   const {
     game,
@@ -113,6 +118,32 @@ export function QuizGamePage({
       });
     }
   }, [initialJoinCode, autoJoinAttempted, game, joinGame, onJoinCodeUsed]);
+
+  // Save game session when game finishes (for XP tracking)
+  useEffect(() => {
+    if (game?.status === 'finished' && !gameSessionSaved.current && onSaveGameSession && gameResults) {
+      gameSessionSaved.current = true;
+
+      // Find current player's result from rankings
+      const myResult = gameResults.rankings.find(r => r.playerId === currentUserId);
+      if (myResult) {
+        onSaveGameSession({
+          date: new Date().toISOString().split('T')[0],
+          gameTitle: gameResults.gameTitle || 'Quiz Game',
+          rank: myResult.rank,
+          totalPlayers: gameResults.totalPlayers,
+          score: myResult.score,
+          correctAnswers: myResult.correctAnswers,
+          totalQuestions: gameResults.totalRounds,
+        });
+      }
+    }
+
+    // Reset flag when game changes (new game)
+    if (!game || game.status !== 'finished') {
+      gameSessionSaved.current = false;
+    }
+  }, [game, gameResults, currentUserId, onSaveGameSession]);
 
   // Determine current view based on game state
   const getCurrentView = (): GameView => {

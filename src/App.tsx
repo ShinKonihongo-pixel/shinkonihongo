@@ -148,7 +148,7 @@ function App() {
     stats: userStats,
     loading: historyLoading,
     addStudySession,
-    addGameSession: _addGameSession, // TODO: integrate with quiz game page
+    addGameSession,
     addJLPTSession,
   } = useUserHistory(currentUser?.id);
 
@@ -522,6 +522,7 @@ function App() {
         {currentPage === 'progress' && (
           <ProgressPage
             progress={progress}
+            stats={userStats}
             onStartStudy={() => setCurrentPage('study')}
           />
         )}
@@ -614,6 +615,7 @@ function App() {
             initialGame={initialGameType}
             initialJoinCode={initialGameJoinCode}
             onCollapseSidebar={() => setSidebarCollapsed(true)}
+            onSaveGameSession={addGameSession}
           />
         )}
 

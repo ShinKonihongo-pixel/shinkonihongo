@@ -1,7 +1,7 @@
 // Golden Bell Page - Main page for the elimination quiz game
 // Orchestrates all Golden Bell components based on game state
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useGoldenBell } from '../../hooks/use-golden-bell';
 import { GoldenBellMenu } from '../golden-bell/golden-bell-menu';
 import { GoldenBellSetup } from '../golden-bell/golden-bell-setup';
@@ -10,6 +10,7 @@ import { GoldenBellPlay } from '../golden-bell/golden-bell-play';
 import { GoldenBellResultsView } from '../golden-bell/golden-bell-results';
 import type { CreateGoldenBellData, GoldenBellGame } from '../../types/golden-bell';
 import type { Flashcard } from '../../types/flashcard';
+import type { GameSession } from '../../types/user';
 
 // Simple user interface for props
 interface GoldenBellUser {
@@ -26,14 +27,18 @@ interface GoldenBellPageProps {
   currentUser: GoldenBellUser;
   flashcards: Flashcard[];
   initialJoinCode?: string;
+  // XP tracking
+  onSaveGameSession?: (data: Omit<GameSession, 'id' | 'userId'>) => void;
 }
 
 export function GoldenBellPage({
   currentUser,
   flashcards,
   initialJoinCode,
+  onSaveGameSession,
 }: GoldenBellPageProps) {
   const [view, setView] = useState<PageView>('menu');
+  const gameSessionSaved = useRef(false);
 
   const {
     game,
@@ -100,6 +105,32 @@ export function GoldenBellPage({
         break;
     }
   }, [game, gameResults, view]);
+
+  // Save game session when game finishes (for XP tracking)
+  useEffect(() => {
+    if (game?.status === 'finished' && !gameSessionSaved.current && onSaveGameSession && gameResults) {
+      gameSessionSaved.current = true;
+
+      // Find current player's result from rankings
+      const myResult = gameResults.rankings.find(p => p.odinhId === currentUser.id);
+      if (myResult) {
+        onSaveGameSession({
+          date: new Date().toISOString().split('T')[0],
+          gameTitle: 'Golden Bell',
+          rank: myResult.rank,
+          totalPlayers: gameResults.totalPlayers,
+          score: myResult.correctAnswers * 100, // Score based on correct answers
+          correctAnswers: myResult.correctAnswers,
+          totalQuestions: gameResults.totalQuestions,
+        });
+      }
+    }
+
+    // Reset flag when game changes (new game)
+    if (!game || game.status !== 'finished') {
+      gameSessionSaved.current = false;
+    }
+  }, [game, gameResults, currentUser.id, onSaveGameSession]);
 
   // Handle create game from menu
   const handleCreateGame = () => {

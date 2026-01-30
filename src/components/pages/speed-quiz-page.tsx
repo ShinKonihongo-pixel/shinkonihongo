@@ -1,5 +1,5 @@
 // Speed Quiz Page - Main game page
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   SpeedQuizMenu,
   SpeedQuizSetup,
@@ -11,6 +11,7 @@ import {
 import { useSpeedQuiz } from '../../hooks/use-speed-quiz';
 import type { CreateSpeedQuizData, SpeedQuizSkillType } from '../../types/speed-quiz';
 import type { Flashcard } from '../../types/flashcard';
+import type { GameSession } from '../../types/user';
 
 type PageView = 'menu' | 'setup' | 'lobby' | 'play' | 'results' | 'guide';
 
@@ -24,6 +25,8 @@ interface SpeedQuizPageProps {
   };
   flashcards?: Flashcard[];
   initialView?: PageView;
+  // XP tracking
+  onSaveGameSession?: (data: Omit<GameSession, 'id' | 'userId'>) => void;
 }
 
 export const SpeedQuizPage: React.FC<SpeedQuizPageProps> = ({
@@ -31,9 +34,11 @@ export const SpeedQuizPage: React.FC<SpeedQuizPageProps> = ({
   currentUser = { id: 'user-1', displayName: 'Player', avatar: '👤' },
   flashcards = [],
   initialView = 'menu',
+  onSaveGameSession,
 }) => {
   const [view, setView] = useState<PageView>(initialView);
   const [notification, setNotification] = useState<{ message: string; type: 'info' | 'warning' } | null>(null);
+  const gameSessionSaved = useRef(false);
 
   // Auto-hide notification after 3 seconds
   useEffect(() => {
@@ -147,6 +152,32 @@ export const SpeedQuizPage: React.FC<SpeedQuizPageProps> = ({
       // Stay in lobby
     }
   }, [game?.status, gameResults]);
+
+  // Save game session when game finishes (for XP tracking)
+  useEffect(() => {
+    if (game?.status === 'finished' && !gameSessionSaved.current && onSaveGameSession && gameResults) {
+      gameSessionSaved.current = true;
+
+      // Find current player's result from rankings
+      const myResult = gameResults.rankings.find(p => p.odinhId === currentUser.id);
+      if (myResult) {
+        onSaveGameSession({
+          date: new Date().toISOString().split('T')[0],
+          gameTitle: 'Speed Quiz',
+          rank: myResult.rank,
+          totalPlayers: gameResults.totalPlayers,
+          score: myResult.score,
+          correctAnswers: myResult.correctAnswers,
+          totalQuestions: gameResults.totalRounds,
+        });
+      }
+    }
+
+    // Reset flag when game changes (new game)
+    if (!game || game.status !== 'finished') {
+      gameSessionSaved.current = false;
+    }
+  }, [game, gameResults, currentUser.id, onSaveGameSession]);
 
   // Render based on view
   const renderContent = () => {

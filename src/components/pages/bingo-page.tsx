@@ -1,7 +1,7 @@
 // Bingo Page - Main page for Bingo game
 // Complete game flow: Menu -> Setup -> Lobby -> Play -> Results
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useBingoGame } from '../../hooks/use-bingo-game';
 import {
   BingoGameMenu,
@@ -12,6 +12,7 @@ import {
   BingoGameGuide,
 } from '../bingo-game';
 import type { CreateBingoGameData } from '../../types/bingo-game';
+import type { GameSession } from '../../types/user';
 
 interface BingoUser {
   id: string;
@@ -26,17 +27,21 @@ interface BingoPageProps {
   currentUser: BingoUser;
   initialJoinCode?: string;
   initialView?: PageView;
+  // XP tracking
+  onSaveGameSession?: (data: Omit<GameSession, 'id' | 'userId'>) => void;
 }
 
 export function BingoPage({
   currentUser,
   initialJoinCode,
   initialView = 'menu',
+  onSaveGameSession,
 }: BingoPageProps) {
   const [view, setView] = useState<PageView>(initialView);
   const [showGuide, setShowGuide] = useState(false);
   const [showCountdown, setShowCountdown] = useState(false);
   const [countdown, setCountdown] = useState(3);
+  const gameSessionSaved = useRef(false);
 
   const {
     game,
@@ -122,6 +127,32 @@ export function BingoPage({
 
     return () => clearInterval(timer);
   }, [showCountdown]);
+
+  // Save game session when game finishes (for XP tracking)
+  useEffect(() => {
+    if (game?.status === 'finished' && !gameSessionSaved.current && onSaveGameSession && gameResults) {
+      gameSessionSaved.current = true;
+
+      // Find current player's result from rankings
+      const myResult = gameResults.rankings.find(p => p.odinhId === currentUser.id);
+      if (myResult) {
+        onSaveGameSession({
+          date: new Date().toISOString().split('T')[0],
+          gameTitle: 'Bingo',
+          rank: myResult.rank,
+          totalPlayers: gameResults.totalPlayers,
+          score: myResult.completedRows * 100 + myResult.markedCount * 10,
+          correctAnswers: myResult.completedRows,
+          totalQuestions: gameResults.totalTurns,
+        });
+      }
+    }
+
+    // Reset flag when game changes (new game)
+    if (!game || game.status !== 'finished') {
+      gameSessionSaved.current = false;
+    }
+  }, [game, gameResults, currentUser.id, onSaveGameSession]);
 
   // Handlers
   const handleCreateGame = useCallback(() => {

@@ -4,7 +4,7 @@
 
 import { useState, useCallback, lazy, Suspense } from 'react';
 import type { GameType } from '../../types/game-hub';
-import type { CurrentUser } from '../../types/user';
+import type { CurrentUser, GameSession } from '../../types/user';
 import type { Flashcard, JLPTLevel, Lesson } from '../../types/flashcard';
 import type { JLPTQuestion } from '../../types/jlpt-question';
 import type { AppSettings } from '../../hooks/use-settings';
@@ -47,6 +47,8 @@ interface GameHubPageProps {
   initialJoinCode?: string | null;
   // Collapse sidebar when entering game
   onCollapseSidebar?: () => void;
+  // Save game session for XP tracking
+  onSaveGameSession?: (data: Omit<GameSession, 'id' | 'userId'>) => void;
 }
 
 export function GameHubPage({
@@ -61,6 +63,7 @@ export function GameHubPage({
   initialGame,
   initialJoinCode,
   onCollapseSidebar,
+  onSaveGameSession,
 }: GameHubPageProps) {
   const [selectedGame, setSelectedGame] = useState<GameType | null>(initialGame || null);
   const [joinCode, setJoinCode] = useState<string | null>(initialJoinCode || null);
@@ -131,6 +134,7 @@ export function GameHubPage({
           settings={settings}
           friends={friends}
           onInviteFriend={onInviteFriend}
+          onSaveGameSession={onSaveGameSession}
         />
       )}
 
@@ -144,6 +148,7 @@ export function GameHubPage({
           }}
           flashcards={flashcards}
           initialJoinCode={joinCode || undefined}
+          onSaveGameSession={onSaveGameSession}
         />
       )}
 
@@ -164,6 +169,7 @@ export function GameHubPage({
           }}
           initialJoinCode={joinCode || undefined}
           initialView={joinCode ? 'menu' : 'setup'}
+          onSaveGameSession={onSaveGameSession}
         />
       )}
 
@@ -178,6 +184,7 @@ export function GameHubPage({
           }}
           flashcards={flashcards}
           initialView={joinCode ? 'menu' : 'setup'}
+          onSaveGameSession={onSaveGameSession}
         />
       )}
 
@@ -192,6 +199,7 @@ export function GameHubPage({
           }}
           flashcards={flashcards}
           initialView={joinCode ? 'menu' : 'setup'}
+          onSaveGameSession={onSaveGameSession}
         />
       )}
 

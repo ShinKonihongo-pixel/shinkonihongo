@@ -178,17 +178,19 @@ export function Sidebar({
         {/* User info */}
         {currentUser && (
           <div className={`sidebar-user ${isCollapsed ? 'collapsed' : ''}`}>
-            {/* Notification bell - top right corner */}
-            <button
-              className="sidebar-notification-btn"
-              onClick={() => { setShowNotifications(!showNotifications); setShowAvatarMenu(false); }}
-              title="Thông báo"
-            >
-              <Bell size={18} />
-              {totalUnread > 0 && (
-                <span className="notification-badge-count">{totalUnread > 9 ? '9+' : totalUnread}</span>
-              )}
-            </button>
+            {/* Notification bell - only show when sidebar is expanded */}
+            {!isCollapsed && (
+              <button
+                className="sidebar-notification-btn"
+                onClick={() => { setShowNotifications(!showNotifications); setShowAvatarMenu(false); }}
+                title="Thông báo"
+              >
+                <Bell size={18} />
+                {totalUnread > 0 && (
+                  <span className="notification-badge-count">{totalUnread > 9 ? '9+' : totalUnread}</span>
+                )}
+              </button>
+            )}
 
             {/* Avatar - centered, clickable */}
             <div className="sidebar-avatar-wrapper">
