@@ -8,6 +8,7 @@ import type { CustomTopic, CustomTopicQuestion } from '../../types/custom-topic'
 import type { KaiwaPageProps, SessionMode, QuestionSelectorState } from './kaiwa/kaiwa-page-types';
 import { useSpeech, comparePronunciation } from '../../hooks/use-speech';
 import { useGroq } from '../../hooks/use-groq';
+import { useGroqAdvanced } from '../../hooks/use-groq-advanced';
 import { JLPT_LEVELS, CONVERSATION_STYLES, CONVERSATION_TOPICS, getStyleDisplay, getScenarioByTopic } from '../../constants/kaiwa';
 import { KaiwaMessageItem, KaiwaPracticeModal, KaiwaAnalysisModal, KaiwaAnswerTemplate, KaiwaEvaluationModal } from '../kaiwa';
 import type { VocabularyHint } from '../../types/kaiwa';
@@ -140,6 +141,10 @@ export function KaiwaPage({
     voiceRate: settings.kaiwaVoiceRate,
   });
   const groq = useGroq();
+  const groqAdvanced = useGroqAdvanced();
+
+  // Combined loading state for both AI hooks
+  const isAiLoading = groq.isLoading || groqAdvanced.isLoading;
 
   // Get current speech rate
   const getSpeechRate = useCallback(() => slowMode ? 0.6 : settings.kaiwaVoiceRate, [slowMode, settings.kaiwaVoiceRate]);
@@ -197,10 +202,10 @@ export function KaiwaPage({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     // Auto-focus input after AI responds
-    if (!groq.isLoading) {
+    if (!isAiLoading) {
       inputRef.current?.focus();
     }
-  }, [messages, groq.isLoading]);
+  }, [messages, isAiLoading]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -266,6 +271,7 @@ export function KaiwaPage({
     setTotalAccuracy(0);
     setEvaluation(null);
     groq.clearConversation();
+    groqAdvanced.clearConversation();
 
     // If a default question is selected, use its context
     const contextToUse = getContext();
@@ -281,55 +287,45 @@ export function KaiwaPage({
       };
     } | undefined;
 
-    // Handle advanced session mode
+    // Handle advanced session mode - Use specialized AI teacher
     if (sessionMode === 'advanced' && selectedAdvancedTopic) {
       contextToUse.level = selectedAdvancedTopic.level;
       contextToUse.style = selectedAdvancedTopic.style;
-      contextToUse.topic = 'free'; // Advanced topics are custom
+      contextToUse.topic = 'free';
 
-      // Build advanced topic context for AI
-      const advancedContext = {
-        topicName: selectedAdvancedTopic.name,
-        topicDescription: selectedAdvancedTopic.description,
-        vocabulary: (selectedAdvancedTopic.vocabulary || []).map(v => ({
-          word: v.word,
-          reading: v.reading,
-          meaning: v.meaning,
-        })),
-      };
+      // Use the specialized advanced AI for better teaching
+      const specificQuestion = selectedAdvancedQuestion ? {
+        id: selectedAdvancedQuestion.id,
+        questionJa: selectedAdvancedQuestion.questionJa,
+        questionVi: selectedAdvancedQuestion.questionVi,
+        level: selectedAdvancedTopic.level,
+      } : undefined;
 
-      // If a specific question is selected, use it
-      if (selectedAdvancedQuestion) {
-        questionData = {
-          questionJa: selectedAdvancedQuestion.questionJa,
-          questionVi: selectedAdvancedQuestion.questionVi,
-          situationContext: selectedAdvancedQuestion.situationContext,
-          suggestedAnswers: selectedAdvancedQuestion.suggestedAnswers,
-          advancedTopicContext: advancedContext,
+      const response = await groqAdvanced.startAdvancedConversation(
+        selectedAdvancedTopic,
+        contextToUse,
+        specificQuestion
+      );
+
+      if (response) {
+        const assistantMessage: KaiwaMessage = {
+          id: `msg-${Date.now()}`,
+          role: 'assistant',
+          content: response.text,
+          timestamp: new Date().toISOString(),
         };
-      } else {
-        // Get a random question from the topic
-        const topicQuestions = getAdvancedQuestionsForTopic();
-        const randomQuestion = topicQuestions.length > 0
-          ? topicQuestions[Math.floor(Math.random() * topicQuestions.length)]
-          : null;
-
-        if (randomQuestion) {
-          questionData = {
-            questionJa: randomQuestion.questionJa,
-            questionVi: randomQuestion.questionVi,
-            situationContext: randomQuestion.situationContext,
-            suggestedAnswers: randomQuestion.suggestedAnswers,
-            advancedTopicContext: advancedContext,
-          };
-        } else {
-          // No questions, just use topic context
-          questionData = {
-            questionJa: '',
-            advancedTopicContext: advancedContext,
-          };
+        setMessages([assistantMessage]);
+        if (response.answerTemplate) {
+          setAnswerTemplate(response.answerTemplate);
+        }
+        if (response.suggestions) {
+          setSuggestedAnswers(response.suggestions);
+        }
+        if (response.suggestedQuestions) {
+          setSuggestedQuestions(response.suggestedQuestions);
         }
       }
+      return; // Exit early - handled by advanced hook
     } else if (sessionMode === 'custom' && selectedCustomTopic) {
       // Custom topic mode
       contextToUse.topic = 'free'; // Custom topics are custom
@@ -410,7 +406,8 @@ export function KaiwaPage({
 
   // Send user message
   const handleSend = async (text: string) => {
-    if (!text.trim() || groq.isLoading) return;
+    const isAdvancedMode = sessionMode === 'advanced' && selectedAdvancedTopic;
+    if (!text.trim() || isAiLoading) return;
 
     const userMessage: KaiwaMessage = {
       id: `msg-${Date.now()}`,
@@ -425,7 +422,11 @@ export function KaiwaPage({
     setSuggestedQuestions([]);
     setActiveSuggestionTab(null);
 
-    const response = await groq.sendMessage(text.trim(), getContext());
+    // Use advanced AI for advanced topics
+    const response = isAdvancedMode
+      ? await groqAdvanced.sendMessage(text.trim(), getContext(), selectedAdvancedTopic)
+      : await groq.sendMessage(text.trim(), getContext());
+
     if (response) {
       const assistantMessage: KaiwaMessage = {
         id: `msg-${Date.now() + 1}`,
@@ -504,6 +505,7 @@ export function KaiwaPage({
     setSelectedCustomQuestion(null);
     speech.stopSpeaking();
     groq.clearConversation();
+    groqAdvanced.clearConversation();
   };
 
   // Handle evaluation modal close
@@ -1294,7 +1296,7 @@ export function KaiwaPage({
           <button
             className="kaiwa-restart-btn"
             onClick={() => handleStart()}
-            disabled={groq.isLoading}
+            disabled={isAiLoading}
             title="Bắt đầu lại từ đầu"
           >
             <RefreshCw size={14} /> Lại từ đầu
@@ -1343,7 +1345,7 @@ export function KaiwaPage({
             <button
               className="kaiwa-eval-btn"
               onClick={() => handleEnd(false)}
-              disabled={groq.isLoading || isEvaluating}
+              disabled={isAiLoading || isEvaluating}
               title="Đánh giá và kết thúc"
             >
               <Award size={14} /> Đánh giá
@@ -1371,7 +1373,7 @@ export function KaiwaPage({
           />
         ))}
 
-        {groq.isLoading && (
+        {isAiLoading && (
           <div className="kaiwa-message assistant">
             <div className="kaiwa-message-avatar">🤖</div>
             <div className="kaiwa-message-content">
@@ -1531,7 +1533,7 @@ export function KaiwaPage({
                           key={suggestion.id}
                           className={`kaiwa-suggestion-btn ${inputText.includes(removeFurigana(suggestion.text.replace(/【[^】]+】/g, '').trim()).substring(0, 20)) ? 'selected' : ''}`}
                           onClick={() => handleSuggestedAnswer(suggestion.text)}
-                          disabled={groq.isLoading}
+                          disabled={isAiLoading}
                         >
                           <FuriganaText text={suggestion.text} showFurigana={showFurigana} />
                         </button>
@@ -1548,7 +1550,7 @@ export function KaiwaPage({
                           key={idx}
                           className="kaiwa-question-btn"
                           onClick={() => handleSuggestedQuestion(question)}
-                          disabled={groq.isLoading}
+                          disabled={isAiLoading}
                         >
                           <FuriganaText text={question} showFurigana={showFurigana} />
                         </button>
@@ -1584,7 +1586,7 @@ export function KaiwaPage({
             <button
               className={`kaiwa-mic-btn ${speech.isListening ? 'listening' : ''}`}
               onClick={handleMicClick}
-              disabled={groq.isLoading}
+              disabled={isAiLoading}
             >
               <Mic size={18} />
             </button>
@@ -1601,14 +1603,14 @@ export function KaiwaPage({
               onChange={e => setInputText(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSend(inputText)}
               placeholder="Nhập hoặc nói tiếng Nhật..."
-              disabled={groq.isLoading || speech.isListening}
+              disabled={isAiLoading || speech.isListening}
             />
           </div>
 
           <button
             className="kaiwa-send-btn"
             onClick={() => handleSend(inputText)}
-            disabled={!inputText.trim() || groq.isLoading}
+            disabled={!inputText.trim() || isAiLoading}
           >
             <Send size={18} />
           </button>
