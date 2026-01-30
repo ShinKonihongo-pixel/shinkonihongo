@@ -30,38 +30,8 @@ export const MUSIC_CATEGORY_LABELS: Record<MusicCategory, string> = {
   custom: '📁 Tuỳ Chỉnh',
 };
 
-// Built-in music tracks (procedural + optional URLs)
-export const MUSIC_TRACKS: MusicTrack[] = [
-  // Epic/Dramatic - Procedural (no URL)
-  { id: 'epic-battle', name: 'Epic Battle', category: 'epic', emoji: '⚔️', duration: '∞' },
-  { id: 'victory-fanfare', name: 'Victory Fanfare', category: 'epic', emoji: '🏆', duration: '∞' },
-  { id: 'hero-theme', name: 'Hero Theme', category: 'epic', emoji: '🦸', duration: '∞' },
-  { id: 'boss-fight', name: 'Boss Fight', category: 'epic', emoji: '👹', duration: '∞' },
-
-  // Chill/Relaxed - Procedural
-  { id: 'chill-study', name: 'Chill Study', category: 'chill', emoji: '📚', duration: '∞' },
-  { id: 'lofi-beats', name: 'Lo-Fi Beats', category: 'chill', emoji: '🎧', duration: '∞' },
-  { id: 'peaceful-piano', name: 'Peaceful Piano', category: 'chill', emoji: '🎹', duration: '∞' },
-  { id: 'night-cafe', name: 'Night Café', category: 'chill', emoji: '🌙', duration: '∞' },
-
-  // Action/Intense - Procedural
-  { id: 'race-adrenaline', name: 'Race Adrenaline', category: 'action', emoji: '🏎️', duration: '∞' },
-  { id: 'countdown-pulse', name: 'Countdown Pulse', category: 'action', emoji: '⏱️', duration: '∞' },
-  { id: 'chase-music', name: 'Chase Music', category: 'action', emoji: '🚀', duration: '∞' },
-  { id: 'time-attack', name: 'Time Attack', category: 'action', emoji: '⚡', duration: '∞' },
-
-  // Fun/Playful - Procedural
-  { id: 'happy-game', name: 'Happy Game', category: 'fun', emoji: '🎮', duration: '∞' },
-  { id: 'party-time', name: 'Party Time', category: 'fun', emoji: '🎉', duration: '∞' },
-  { id: 'quirky-adventure', name: 'Quirky Adventure', category: 'fun', emoji: '🌟', duration: '∞' },
-  { id: 'pixel-world', name: 'Pixel World', category: 'fun', emoji: '👾', duration: '∞' },
-
-  // Japanese Theme - Procedural
-  { id: 'sakura-spring', name: 'Sakura Spring', category: 'japanese', emoji: '🌸', duration: '∞' },
-  { id: 'zen-garden', name: 'Zen Garden', category: 'japanese', emoji: '🏯', duration: '∞' },
-  { id: 'tokyo-nights', name: 'Tokyo Nights', category: 'japanese', emoji: '🗼', duration: '∞' },
-  { id: 'anime-opening', name: 'Anime Opening', category: 'japanese', emoji: '✨', duration: '∞' },
-];
+// Built-in music tracks - empty by default, users can add custom tracks
+export const MUSIC_TRACKS: MusicTrack[] = [];
 
 // Sound effect frequencies and durations for Web Audio API
 const SOUND_CONFIGS: Record<SoundEffectType, { frequencies: number[]; durations: number[]; type: OscillatorType; gain: number }> = {
@@ -220,6 +190,13 @@ function createBackgroundMusic(
   return { oscillators, gainNode, lfoNodes };
 }
 
+// Custom sound effect configuration
+export interface CustomSoundEffect {
+  id: string;
+  name: string;
+  url: string;  // Data URL or external URL
+}
+
 export interface GameSoundSettings {
   soundEnabled: boolean;
   soundVolume: number; // 0-100
@@ -227,6 +204,11 @@ export interface GameSoundSettings {
   musicVolume: number; // 0-100
   musicTrack: string;
   customMusicTracks: MusicTrack[];  // User-added custom tracks
+  // Custom sound effects (override procedural sounds)
+  customCorrectSound?: CustomSoundEffect;
+  customWrongSound?: CustomSoundEffect;
+  customVictorySound?: CustomSoundEffect;
+  customDefeatSound?: CustomSoundEffect;
 }
 
 export interface UseGameSoundsReturn {
@@ -258,6 +240,10 @@ export interface UseGameSoundsReturn {
   addCustomTrack: (track: Omit<MusicTrack, 'category'>) => void;
   removeCustomTrack: (trackId: string) => void;
   allTracks: MusicTrack[];  // Built-in + custom tracks
+
+  // Custom sound effects management
+  setCustomSound: (type: 'correct' | 'wrong' | 'victory' | 'defeat', sound: CustomSoundEffect | null) => void;
+  getCustomSound: (type: 'correct' | 'wrong' | 'victory' | 'defeat') => CustomSoundEffect | undefined;
 }
 
 const STORAGE_KEY = 'game-sound-settings';
@@ -314,10 +300,36 @@ export function useGameSounds(): UseGameSoundsReturn {
     return audioContextRef.current;
   }, []);
 
-  // Play sound effect using Web Audio API
+  // Play custom audio file
+  const playCustomAudio = useCallback((url: string, volume: number) => {
+    try {
+      const audio = new Audio(url);
+      audio.volume = volume;
+      audio.play().catch(err => console.warn('Custom audio playback failed:', err));
+    } catch (error) {
+      console.warn('Failed to play custom audio:', error);
+    }
+  }, []);
+
+  // Play sound effect using Web Audio API or custom audio
   const playSound = useCallback((type: SoundEffectType) => {
     if (!settings.soundEnabled) return;
 
+    // Check for custom sound first
+    const customSoundMap: Record<string, CustomSoundEffect | undefined> = {
+      correct: settings.customCorrectSound,
+      wrong: settings.customWrongSound,
+      victory: settings.customVictorySound,
+      defeat: settings.customDefeatSound,
+    };
+
+    const customSound = customSoundMap[type];
+    if (customSound?.url) {
+      playCustomAudio(customSound.url, settings.soundVolume / 100);
+      return;
+    }
+
+    // Fall back to procedural sound
     try {
       const audioContext = getAudioContext();
       const config = SOUND_CONFIGS[type];
@@ -346,7 +358,7 @@ export function useGameSounds(): UseGameSoundsReturn {
     } catch (error) {
       console.warn('Failed to play sound:', error);
     }
-  }, [settings.soundEnabled, settings.soundVolume, getAudioContext]);
+  }, [settings.soundEnabled, settings.soundVolume, settings.customCorrectSound, settings.customWrongSound, settings.customVictorySound, settings.customDefeatSound, getAudioContext, playCustomAudio]);
 
   // Convenience methods
   const playCorrect = useCallback(() => playSound('correct'), [playSound]);
@@ -512,10 +524,36 @@ export function useGameSounds(): UseGameSoundsReturn {
     setSettings(prev => ({
       ...prev,
       customMusicTracks: prev.customMusicTracks.filter(t => t.id !== trackId),
-      // If removed track was selected, switch to default
-      musicTrack: prev.musicTrack === trackId ? 'happy-game' : prev.musicTrack,
+      // If removed track was selected, clear it
+      musicTrack: prev.musicTrack === trackId ? '' : prev.musicTrack,
     }));
   }, []);
+
+  // Set custom sound effect
+  const setCustomSound = useCallback((type: 'correct' | 'wrong' | 'victory' | 'defeat', sound: CustomSoundEffect | null) => {
+    const keyMap: Record<string, keyof GameSoundSettings> = {
+      correct: 'customCorrectSound',
+      wrong: 'customWrongSound',
+      victory: 'customVictorySound',
+      defeat: 'customDefeatSound',
+    };
+    const key = keyMap[type];
+    setSettings(prev => ({
+      ...prev,
+      [key]: sound || undefined,
+    }));
+  }, []);
+
+  // Get custom sound effect
+  const getCustomSound = useCallback((type: 'correct' | 'wrong' | 'victory' | 'defeat'): CustomSoundEffect | undefined => {
+    const soundMap: Record<string, CustomSoundEffect | undefined> = {
+      correct: settings.customCorrectSound,
+      wrong: settings.customWrongSound,
+      victory: settings.customVictorySound,
+      defeat: settings.customDefeatSound,
+    };
+    return soundMap[type];
+  }, [settings.customCorrectSound, settings.customWrongSound, settings.customVictorySound, settings.customDefeatSound]);
 
   return {
     playSound,
@@ -539,6 +577,8 @@ export function useGameSounds(): UseGameSoundsReturn {
     addCustomTrack,
     removeCustomTrack,
     allTracks,
+    setCustomSound,
+    getCustomSound,
   };
 }
 

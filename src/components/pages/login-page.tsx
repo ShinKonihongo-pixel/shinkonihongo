@@ -114,11 +114,6 @@ export function LoginPage({ onLogin, onRegister }: LoginPageProps) {
           </button>
         </p>
 
-        {!isRegisterMode && (
-          <p className="login-hint">
-            Tài khoản demo: admin / admin
-          </p>
-        )}
       </div>
 
       {showSuccessModal && (
