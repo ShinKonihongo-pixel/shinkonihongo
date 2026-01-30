@@ -83,7 +83,7 @@ interface NavState {
   folderId?: string;
 }
 
-import type { Lesson } from '../../types/flashcard';
+import type { Lesson, GrammarLesson } from '../../types/flashcard';
 
 // Detail session tabs
 type DetailSessionTab = 'sources' | 'questions';
@@ -97,6 +97,9 @@ interface CustomTopicsTabProps {
   // Flashcard lessons for linking
   lessons?: Lesson[];
   getLessonsByLevel?: (level: JLPTLevel) => Lesson[];
+  // Grammar lessons for linking
+  grammarLessons?: GrammarLesson[];
+  getGrammarLessonsByLevel?: (level: JLPTLevel) => GrammarLesson[];
   // Topic CRUD
   onAddTopic: (data: CustomTopicFormData) => Promise<CustomTopic | null>;
   onUpdateTopic: (id: string, data: Partial<CustomTopicFormData>) => Promise<boolean>;
@@ -122,6 +125,8 @@ export function CustomTopicsTab({
   isSuperAdmin,
   lessons = [],
   getLessonsByLevel,
+  grammarLessons = [],
+  getGrammarLessonsByLevel,
   onAddTopic,
   onUpdateTopic,
   onDeleteTopic,
@@ -147,6 +152,7 @@ export function CustomTopicsTab({
   // Detail session tab
   const [detailSessionTab, setDetailSessionTab] = useState<DetailSessionTab>('sources');
   const [selectedSourceLevel, setSelectedSourceLevel] = useState<JLPTLevel>('N5');
+  const [selectedSourceType, setSelectedSourceType] = useState<'vocabulary' | 'grammar'>('vocabulary');
 
   // Question states
   const [showQuestionForm, setShowQuestionForm] = useState(false);
@@ -576,6 +582,24 @@ export function CustomTopicsTab({
                     Nguồn từ vựng / Ngữ pháp tham khảo
                   </label>
                   <p className="form-hint">Chọn bài học để AI sử dụng khi hội thoại với bạn</p>
+
+                  {/* Source Type Tabs */}
+                  <div className="source-type-tabs">
+                    <button
+                      className={`type-tab ${selectedSourceType === 'vocabulary' ? 'active' : ''}`}
+                      onClick={() => setSelectedSourceType('vocabulary')}
+                    >
+                      📚 Từ vựng
+                    </button>
+                    <button
+                      className={`type-tab ${selectedSourceType === 'grammar' ? 'active' : ''}`}
+                      onClick={() => setSelectedSourceType('grammar')}
+                    >
+                      📖 Ngữ pháp
+                    </button>
+                  </div>
+
+                  {/* Level Tabs */}
                   <div className="source-level-tabs">
                     {JLPT_LEVELS.map(level => (
                       <button
@@ -587,32 +611,68 @@ export function CustomTopicsTab({
                       </button>
                     ))}
                   </div>
+
+                  {/* Lessons Grid */}
                   <div className="lessons-source-compact">
-                    {(getLessonsByLevel ? getLessonsByLevel(selectedSourceLevel) : lessons.filter(l => l.jlptLevel === selectedSourceLevel && !l.parentId))
-                      .slice(0, 8)
-                      .map(lesson => {
-                        const currentLinked = topicForm.linkedLessonIds || [];
-                        const isLinked = currentLinked.includes(lesson.id);
-                        return (
-                          <div
-                            key={lesson.id}
-                            className={`lesson-source-chip ${isLinked ? 'linked' : ''}`}
-                            onClick={() => {
-                              const newLinked = isLinked
-                                ? currentLinked.filter(id => id !== lesson.id)
-                                : [...currentLinked, lesson.id];
-                              setTopicForm({ ...topicForm, linkedLessonIds: newLinked });
-                            }}
-                          >
-                            {isLinked ? <CheckCircle size={14} /> : <Circle size={14} />}
-                            <span>{lesson.name}</span>
-                          </div>
-                        );
-                      })}
-                    {(getLessonsByLevel ? getLessonsByLevel(selectedSourceLevel) : lessons.filter(l => l.jlptLevel === selectedSourceLevel && !l.parentId)).length === 0 && (
-                      <span className="no-lessons">Chưa có bài học ở cấp độ này</span>
+                    {selectedSourceType === 'vocabulary' ? (
+                      // Vocabulary lessons
+                      <>
+                        {(getLessonsByLevel ? getLessonsByLevel(selectedSourceLevel) : lessons.filter(l => l.jlptLevel === selectedSourceLevel && !l.parentId))
+                          .slice(0, 10)
+                          .map(lesson => {
+                            const currentLinked = topicForm.linkedLessonIds || [];
+                            const isLinked = currentLinked.includes(lesson.id);
+                            return (
+                              <div
+                                key={lesson.id}
+                                className={`lesson-source-chip ${isLinked ? 'linked' : ''}`}
+                                onClick={() => {
+                                  const newLinked = isLinked
+                                    ? currentLinked.filter(id => id !== lesson.id)
+                                    : [...currentLinked, lesson.id];
+                                  setTopicForm({ ...topicForm, linkedLessonIds: newLinked });
+                                }}
+                              >
+                                {isLinked ? <CheckCircle size={14} /> : <Circle size={14} />}
+                                <span>{lesson.name}</span>
+                              </div>
+                            );
+                          })}
+                        {(getLessonsByLevel ? getLessonsByLevel(selectedSourceLevel) : lessons.filter(l => l.jlptLevel === selectedSourceLevel && !l.parentId)).length === 0 && (
+                          <span className="no-lessons">Chưa có bài từ vựng ở cấp độ này</span>
+                        )}
+                      </>
+                    ) : (
+                      // Grammar lessons
+                      <>
+                        {(getGrammarLessonsByLevel ? getGrammarLessonsByLevel(selectedSourceLevel) : grammarLessons.filter(l => l.jlptLevel === selectedSourceLevel && !l.parentId))
+                          .slice(0, 10)
+                          .map(lesson => {
+                            const currentLinked = topicForm.linkedLessonIds || [];
+                            const isLinked = currentLinked.includes(lesson.id);
+                            return (
+                              <div
+                                key={lesson.id}
+                                className={`lesson-source-chip grammar ${isLinked ? 'linked' : ''}`}
+                                onClick={() => {
+                                  const newLinked = isLinked
+                                    ? currentLinked.filter(id => id !== lesson.id)
+                                    : [...currentLinked, lesson.id];
+                                  setTopicForm({ ...topicForm, linkedLessonIds: newLinked });
+                                }}
+                              >
+                                {isLinked ? <CheckCircle size={14} /> : <Circle size={14} />}
+                                <span>{lesson.name}</span>
+                              </div>
+                            );
+                          })}
+                        {(getGrammarLessonsByLevel ? getGrammarLessonsByLevel(selectedSourceLevel) : grammarLessons.filter(l => l.jlptLevel === selectedSourceLevel && !l.parentId)).length === 0 && (
+                          <span className="no-lessons">Chưa có bài ngữ pháp ở cấp độ này</span>
+                        )}
+                      </>
                     )}
                   </div>
+
                   {(topicForm.linkedLessonIds?.length || 0) > 0 && (
                     <div className="linked-count-badge">
                       Đã chọn: {topicForm.linkedLessonIds?.length} bài học

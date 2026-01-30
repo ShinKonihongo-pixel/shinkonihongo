@@ -16,3 +16,7 @@ export { KaiwaConversationHeader } from './kaiwa-conversation-header';
 export { KaiwaInputArea } from './kaiwa-input-area';
 export { KaiwaStatsDashboard } from './kaiwa-stats-dashboard';
 export { KaiwaShadowingMode } from './kaiwa-shadowing-mode';
+
+// Speaking practice components
+export { SpeakingPracticeMode } from './speaking';
+export { SpeakingTopicSelector, SpeakingDialogueView, SpeakingEvaluationCard } from './speaking';

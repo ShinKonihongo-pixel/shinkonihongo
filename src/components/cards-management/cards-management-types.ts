@@ -166,6 +166,9 @@ export interface KaiwaTabProps {
   // Flashcard lessons for custom topic linking
   lessons?: Lesson[];
   getLessonsByLevel?: (level: JLPTLevel) => Lesson[];
+  // Grammar lessons for custom topic linking
+  grammarLessons?: GrammarLesson[];
+  getGrammarLessonsByLevel?: (level: JLPTLevel) => GrammarLesson[];
   currentUser: CurrentUser;
   isSuperAdmin: boolean;
 }

@@ -70,6 +70,9 @@ export function KaiwaTab({
   // Flashcard lessons
   lessons = [],
   getLessonsByLevel,
+  // Grammar lessons
+  grammarLessons = [],
+  getGrammarLessonsByLevel,
   currentUser,
   isSuperAdmin,
 }: KaiwaTabProps) {
@@ -539,6 +542,8 @@ export function KaiwaTab({
           isSuperAdmin={isSuperAdmin}
           lessons={lessons}
           getLessonsByLevel={getLessonsByLevel}
+          grammarLessons={grammarLessons}
+          getGrammarLessonsByLevel={getGrammarLessonsByLevel}
           onAddTopic={onAddCustomTopic}
           onUpdateTopic={onUpdateCustomTopic}
           onDeleteTopic={onDeleteCustomTopic}

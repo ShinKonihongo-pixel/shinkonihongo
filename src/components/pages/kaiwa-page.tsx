@@ -10,7 +10,7 @@ import { useSpeech, comparePronunciation } from '../../hooks/use-speech';
 import { useGroq } from '../../hooks/use-groq';
 import { useGroqAdvanced } from '../../hooks/use-groq-advanced';
 import { JLPT_LEVELS, CONVERSATION_STYLES, CONVERSATION_TOPICS, getStyleDisplay, getScenarioByTopic } from '../../constants/kaiwa';
-import { KaiwaMessageItem, KaiwaPracticeModal, KaiwaAnalysisModal, KaiwaAnswerTemplate, KaiwaEvaluationModal } from '../kaiwa';
+import { KaiwaMessageItem, KaiwaPracticeModal, KaiwaAnalysisModal, KaiwaAnswerTemplate, KaiwaEvaluationModal, SpeakingPracticeMode } from '../kaiwa';
 import type { VocabularyHint } from '../../types/kaiwa';
 import { removeFurigana } from '../../lib/furigana-utils';
 import { FuriganaText } from '../common/furigana-text';
@@ -750,52 +750,76 @@ export function KaiwaPage({
           </p>
 
           {/* Session Mode Selector */}
-          {(advancedTopics.length > 0 || customTopics.length > 0) && (
-            <div className="kaiwa-session-mode-selector">
+          <div className="kaiwa-session-mode-selector">
+            <button
+              className={`session-mode-btn ${sessionMode === 'default' ? 'active' : ''}`}
+              onClick={() => {
+                setSessionMode('default');
+                setSelectedAdvancedTopic(null);
+                setSelectedAdvancedQuestion(null);
+                setSelectedCustomTopic(null);
+                setSelectedCustomQuestion(null);
+              }}
+            >
+              <MessagesSquare size={18} />
+              <span>Hội thoại</span>
+            </button>
+            <button
+              className={`session-mode-btn ${sessionMode === 'speaking' ? 'active' : ''}`}
+              onClick={() => {
+                setSessionMode('speaking');
+                setSelectedDefaultQuestion(null);
+                setQuestionSelectorState({ type: 'hidden' });
+                setSelectedAdvancedTopic(null);
+                setSelectedAdvancedQuestion(null);
+                setSelectedCustomTopic(null);
+                setSelectedCustomQuestion(null);
+              }}
+            >
+              <Mic size={18} />
+              <span>Luyện nói</span>
+            </button>
+            {advancedTopics.length > 0 && (
               <button
-                className={`session-mode-btn ${sessionMode === 'default' ? 'active' : ''}`}
+                className={`session-mode-btn ${sessionMode === 'advanced' ? 'active' : ''}`}
                 onClick={() => {
-                  setSessionMode('default');
-                  setSelectedAdvancedTopic(null);
-                  setSelectedAdvancedQuestion(null);
+                  setSessionMode('advanced');
+                  setSelectedDefaultQuestion(null);
+                  setQuestionSelectorState({ type: 'hidden' });
                   setSelectedCustomTopic(null);
                   setSelectedCustomQuestion(null);
                 }}
               >
-                <MessagesSquare size={18} />
-                <span>Hội thoại cơ bản</span>
+                <Star size={18} />
+                <span>Nâng cao</span>
               </button>
-              {advancedTopics.length > 0 && (
-                <button
-                  className={`session-mode-btn ${sessionMode === 'advanced' ? 'active' : ''}`}
-                  onClick={() => {
-                    setSessionMode('advanced');
-                    setSelectedDefaultQuestion(null);
-                    setQuestionSelectorState({ type: 'hidden' });
-                    setSelectedCustomTopic(null);
-                    setSelectedCustomQuestion(null);
-                  }}
-                >
-                  <Star size={18} />
-                  <span>Session nâng cao</span>
-                </button>
-              )}
-              {customTopics.length > 0 && (
-                <button
-                  className={`session-mode-btn ${sessionMode === 'custom' ? 'active' : ''}`}
-                  onClick={() => {
-                    setSessionMode('custom');
-                    setSelectedDefaultQuestion(null);
-                    setQuestionSelectorState({ type: 'hidden' });
-                    setSelectedAdvancedTopic(null);
-                    setSelectedAdvancedQuestion(null);
-                  }}
-                >
-                  <BookOpen size={18} />
-                  <span>Chủ đề mở rộng</span>
-                </button>
-              )}
-            </div>
+            )}
+            {customTopics.length > 0 && (
+              <button
+                className={`session-mode-btn ${sessionMode === 'custom' ? 'active' : ''}`}
+                onClick={() => {
+                  setSessionMode('custom');
+                  setSelectedDefaultQuestion(null);
+                  setQuestionSelectorState({ type: 'hidden' });
+                  setSelectedAdvancedTopic(null);
+                  setSelectedAdvancedQuestion(null);
+                }}
+              >
+                <BookOpen size={18} />
+                <span>Mở rộng</span>
+              </button>
+            )}
+          </div>
+
+          {/* Speaking Practice Mode */}
+          {sessionMode === 'speaking' && (
+            <SpeakingPracticeMode
+              defaultLevel={settings.kaiwaDefaultLevel}
+              voiceGender={settings.kaiwaVoiceGender}
+              voiceRate={settings.kaiwaVoiceRate}
+              showFurigana={settings.kaiwaShowFurigana}
+              onClose={() => setSessionMode('default')}
+            />
           )}
 
           {/* Advanced Session - Topic Selector */}
@@ -1139,8 +1163,8 @@ export function KaiwaPage({
             </div>
           )}
 
-          {/* Free conversation setup (only show if no default question selected and not in advanced/custom mode) */}
-          {!selectedDefaultQuestion && sessionMode !== 'advanced' && sessionMode !== 'custom' && (
+          {/* Free conversation setup (only show if no default question selected and not in advanced/custom/speaking mode) */}
+          {!selectedDefaultQuestion && sessionMode !== 'advanced' && sessionMode !== 'custom' && sessionMode !== 'speaking' && (
             <div className="kaiwa-setup">
               <div className="kaiwa-setup-row">
                 <div className="kaiwa-setup-item">
@@ -1203,8 +1227,8 @@ export function KaiwaPage({
             </div>
           )}
 
-          {/* Options row - hide in custom mode */}
-          {sessionMode !== 'custom' && (
+          {/* Options row - hide in custom/speaking mode */}
+          {sessionMode !== 'custom' && sessionMode !== 'speaking' && (
             <div className="kaiwa-setup-item kaiwa-options-row">
               <label>
                 <input
@@ -1220,14 +1244,14 @@ export function KaiwaPage({
             </div>
           )}
 
-          {!speech.recognitionSupported && (
+          {!speech.recognitionSupported && sessionMode !== 'speaking' && (
             <p className="kaiwa-warning">
               Trình duyệt không hỗ trợ nhận dạng giọng nói. Vui lòng dùng Chrome.
             </p>
           )}
 
-          {/* Start button - hide in custom mode (has its own button) */}
-          {sessionMode !== 'custom' && (
+          {/* Start button - hide in custom/speaking mode (has their own controls) */}
+          {sessionMode !== 'custom' && sessionMode !== 'speaking' && (
             <button
               className="btn btn-primary btn-large"
               onClick={handleStart}

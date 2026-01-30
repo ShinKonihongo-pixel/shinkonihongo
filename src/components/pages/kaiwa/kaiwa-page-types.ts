@@ -26,7 +26,7 @@ export interface KaiwaPageProps {
 }
 
 // Session mode type - determines which question bank to use
-export type SessionMode = 'default' | 'advanced' | 'custom';
+export type SessionMode = 'default' | 'advanced' | 'custom' | 'speaking';
 
 // Navigation state for question selector - handles multi-level navigation
 export type QuestionSelectorState =

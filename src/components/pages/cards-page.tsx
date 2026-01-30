@@ -379,6 +379,9 @@ export function CardsPage({
           // Flashcard lessons for custom topic linking
           lessons={lessons}
           getLessonsByLevel={getLessonsByLevel}
+          // Grammar lessons for custom topic linking
+          grammarLessons={grammarLessons}
+          getGrammarLessonsByLevel={getGrammarParentLessonsByLevel}
           currentUser={currentUser}
           isSuperAdmin={isSuperAdmin}
         />
