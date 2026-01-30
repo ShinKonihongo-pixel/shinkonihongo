@@ -67044,6 +67044,132 @@ a.jp-link:hover {
   animation: modalSlideIn 0.3s ease;
 }
 
+.topic-modal-large {
+  max-width: 720px;
+}
+
+/* Icon Select with Preview */
+.icon-select {
+  padding-right: 60px;
+}
+
+.icon-preview {
+  position: absolute;
+  right: 8px;
+  top: 32px;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+.color-select {
+  transition: border-left-color 0.2s;
+}
+
+/* Source Level Tabs */
+.source-level-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  background: #f3f4f6;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.source-level-tabs .level-tab {
+  flex: 1;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #6b7280;
+}
+
+.source-level-tabs .level-tab:hover {
+  background: rgba(255,255,255,0.6);
+}
+
+.source-level-tabs .level-tab.active {
+  background: white;
+  color: var(--primary);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Lessons Source Compact Grid */
+.lessons-source-compact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-height: 140px;
+  overflow-y: auto;
+  padding: 8px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.lesson-source-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #6b7280;
+}
+
+.lesson-source-chip:hover {
+  border-color: var(--primary);
+  background: #f0f9ff;
+}
+
+.lesson-source-chip.linked {
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  color: white;
+  border-color: transparent;
+}
+
+.lesson-source-chip.linked svg {
+  color: white;
+}
+
+.no-lessons {
+  color: #9ca3af;
+  font-size: 0.85rem;
+  padding: 8px;
+}
+
+.linked-count-badge {
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  display: inline-block;
+}
+
+/* Folder Parent Topic */
+.folder-parent-topic {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
 @keyframes modalSlideIn {
   from {
     opacity: 0;
@@ -67117,6 +67243,7 @@ a.jp-link:hover {
 .form-section.half {
   flex: 1;
   min-width: 0;
+  position: relative;
 }
 
 .form-row {

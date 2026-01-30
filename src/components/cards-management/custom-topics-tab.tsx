@@ -2,7 +2,7 @@
 // Professional UI for creating and managing custom question sets beyond JLPT
 
 import { useState, useMemo } from 'react';
-import { Plus, Edit2, Trash2, FileQuestion, ArrowLeft, Search, Grid, List, Download, Upload, Settings, Eye, EyeOff, Star, BookOpen, Circle, CheckCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, FileQuestion, ArrowLeft, Search, Grid, List, Download, Upload, Settings, Eye, EyeOff, Star, BookOpen, Circle, CheckCircle, Briefcase, Building2, Handshake, Presentation, Landmark, GraduationCap, Library, PencilRuler, Brain, Laptop, Code2, Database, Globe, Smartphone, Plane, MapPin, Compass, Mountain, HeartPulse, Stethoscope, Home, Users, Utensils, MessageSquare, Mic, Mail, Phone, Video, Palette, Music, Camera, Film, Sparkles } from 'lucide-react';
 import { ConfirmModal } from '../ui/confirm-modal';
 import type {
   CustomTopic,
@@ -18,11 +18,59 @@ const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 import {
   TOPIC_ICONS,
   TOPIC_COLORS,
-  TOPIC_TEMPLATES,
+  TOPIC_ICON_LABELS,
   DIFFICULTY_LABELS,
   DEFAULT_TOPIC_FORM,
   DEFAULT_QUESTION_FORM,
 } from '../../types/custom-topic';
+
+// Icon name to Lucide component mapping
+const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+  'briefcase': Briefcase,
+  'building-2': Building2,
+  'handshake': Handshake,
+  'presentation': Presentation,
+  'landmark': Landmark,
+  'graduation-cap': GraduationCap,
+  'book-open': BookOpen,
+  'library': Library,
+  'pencil-ruler': PencilRuler,
+  'brain': Brain,
+  'laptop': Laptop,
+  'code-2': Code2,
+  'database': Database,
+  'globe': Globe,
+  'smartphone': Smartphone,
+  'plane': Plane,
+  'map-pin': MapPin,
+  'compass': Compass,
+  'mountain': Mountain,
+  'heart-pulse': HeartPulse,
+  'stethoscope': Stethoscope,
+  'home': Home,
+  'users': Users,
+  'utensils': Utensils,
+  'message-square': MessageSquare,
+  'mic': Mic,
+  'mail': Mail,
+  'phone': Phone,
+  'video': Video,
+  'palette': Palette,
+  'music': Music,
+  'camera': Camera,
+  'film': Film,
+  'sparkles': Sparkles,
+};
+
+// Render icon component from name
+function renderTopicIcon(iconName: string, size: number = 20, className?: string) {
+  const IconComponent = ICON_MAP[iconName];
+  if (IconComponent) {
+    return <IconComponent size={size} className={className} />;
+  }
+  // Fallback for legacy emoji icons
+  return <span style={{ fontSize: size }}>{iconName}</span>;
+}
 import type { CurrentUser } from '../../types/user';
 
 // Navigation state types
@@ -169,11 +217,13 @@ export function CustomTopicsTab({
         difficulty: topic.difficulty,
         tags: topic.tags,
         isPublic: topic.isPublic,
+        linkedLessonIds: topic.linkedLessonIds || [],
       });
     } else {
       setEditingTopic(null);
       setTopicForm(DEFAULT_TOPIC_FORM);
     }
+    setSelectedSourceLevel('N5'); // Reset level selection
     setShowTopicModal(true);
   };
 
@@ -187,16 +237,6 @@ export function CustomTopicsTab({
     setShowTopicModal(false);
     setEditingTopic(null);
     setTopicForm(DEFAULT_TOPIC_FORM);
-  };
-
-  const handleUseTemplate = (template: typeof TOPIC_TEMPLATES[number]) => {
-    setTopicForm({
-      ...topicForm,
-      name: template.name,
-      description: template.description,
-      icon: template.icon,
-      color: template.color,
-    });
   };
 
   // Question handlers
@@ -280,8 +320,8 @@ export function CustomTopicsTab({
         onClick={() => setNavState({ type: 'topic-detail', topicId: topic.id })}
       >
         <div className="topic-card-header">
-          <span className="topic-icon" style={{ backgroundColor: `${topic.color}20` }}>
-            {topic.icon}
+          <span className="topic-icon" style={{ backgroundColor: `${topic.color}20`, color: topic.color }}>
+            {renderTopicIcon(topic.icon, 24)}
           </span>
         </div>
         <div className="topic-card-body">
@@ -416,65 +456,13 @@ export function CustomTopicsTab({
         {/* Topic Modal */}
         {showTopicModal && (
           <div className="modal-overlay" onClick={() => setShowTopicModal(false)}>
-            <div className="topic-modal" onClick={e => e.stopPropagation()}>
+            <div className="topic-modal topic-modal-large" onClick={e => e.stopPropagation()}>
               <div className="modal-header">
                 <h3>{editingTopic ? 'Chỉnh sửa chủ đề' : 'Tạo chủ đề mới'}</h3>
                 <button className="btn-close" onClick={() => setShowTopicModal(false)}>×</button>
               </div>
 
               <div className="modal-body">
-                {/* Quick Templates */}
-                {!editingTopic && (
-                  <div className="form-section">
-                    <label>Mẫu có sẵn</label>
-                    <div className="templates-grid">
-                      {TOPIC_TEMPLATES.map((template, i) => (
-                        <button
-                          key={i}
-                          className="template-btn"
-                          style={{ borderColor: template.color }}
-                          onClick={() => handleUseTemplate(template)}
-                        >
-                          <span className="template-icon">{template.icon}</span>
-                          <span className="template-name">{template.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Icon & Color Picker */}
-                <div className="form-row">
-                  <div className="form-section half">
-                    <label>Biểu tượng</label>
-                    <div className="icon-picker">
-                      {TOPIC_ICONS.map((icon, i) => (
-                        <button
-                          key={i}
-                          className={`icon-btn ${topicForm.icon === icon ? 'selected' : ''}`}
-                          onClick={() => setTopicForm({ ...topicForm, icon })}
-                        >
-                          {icon}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="form-section half">
-                    <label>Màu sắc</label>
-                    <div className="color-picker">
-                      {TOPIC_COLORS.map(color => (
-                        <button
-                          key={color.id}
-                          className={`color-btn ${topicForm.color === color.value ? 'selected' : ''}`}
-                          style={{ backgroundColor: color.value }}
-                          onClick={() => setTopicForm({ ...topicForm, color: color.value })}
-                          title={color.label}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
                 {/* Name & Description */}
                 <div className="form-section">
                   <label>Tên chủ đề *</label>
@@ -495,6 +483,42 @@ export function CustomTopicsTab({
                     value={topicForm.description}
                     onChange={e => setTopicForm({ ...topicForm, description: e.target.value })}
                   />
+                </div>
+
+                {/* Icon & Color in row */}
+                <div className="form-row">
+                  <div className="form-section half">
+                    <label>Biểu tượng</label>
+                    <select
+                      className="form-input icon-select"
+                      value={topicForm.icon}
+                      onChange={e => setTopicForm({ ...topicForm, icon: e.target.value })}
+                    >
+                      {TOPIC_ICONS.map((icon) => (
+                        <option key={icon} value={icon}>
+                          {TOPIC_ICON_LABELS[icon] || icon}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="icon-preview" style={{ backgroundColor: `${topicForm.color}15`, color: topicForm.color }}>
+                      {renderTopicIcon(topicForm.icon, 28)}
+                    </div>
+                  </div>
+                  <div className="form-section half">
+                    <label>Màu sắc</label>
+                    <select
+                      className="form-input color-select"
+                      value={topicForm.color}
+                      onChange={e => setTopicForm({ ...topicForm, color: e.target.value })}
+                      style={{ borderLeftColor: topicForm.color, borderLeftWidth: 4 }}
+                    >
+                      {TOPIC_COLORS.map(color => (
+                        <option key={color.id} value={color.value}>
+                          {color.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 {/* Difficulty & Visibility */}
@@ -545,12 +569,63 @@ export function CustomTopicsTab({
                   />
                 </div>
 
+                {/* Lesson Sources Selection */}
+                <div className="form-section">
+                  <label>
+                    <BookOpen size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+                    Nguồn từ vựng / Ngữ pháp tham khảo
+                  </label>
+                  <p className="form-hint">Chọn bài học để AI sử dụng khi hội thoại với bạn</p>
+                  <div className="source-level-tabs">
+                    {JLPT_LEVELS.map(level => (
+                      <button
+                        key={level}
+                        className={`level-tab ${selectedSourceLevel === level ? 'active' : ''}`}
+                        onClick={() => setSelectedSourceLevel(level)}
+                      >
+                        {level}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="lessons-source-compact">
+                    {(getLessonsByLevel ? getLessonsByLevel(selectedSourceLevel) : lessons.filter(l => l.jlptLevel === selectedSourceLevel && !l.parentId))
+                      .slice(0, 8)
+                      .map(lesson => {
+                        const currentLinked = topicForm.linkedLessonIds || [];
+                        const isLinked = currentLinked.includes(lesson.id);
+                        return (
+                          <div
+                            key={lesson.id}
+                            className={`lesson-source-chip ${isLinked ? 'linked' : ''}`}
+                            onClick={() => {
+                              const newLinked = isLinked
+                                ? currentLinked.filter(id => id !== lesson.id)
+                                : [...currentLinked, lesson.id];
+                              setTopicForm({ ...topicForm, linkedLessonIds: newLinked });
+                            }}
+                          >
+                            {isLinked ? <CheckCircle size={14} /> : <Circle size={14} />}
+                            <span>{lesson.name}</span>
+                          </div>
+                        );
+                      })}
+                    {(getLessonsByLevel ? getLessonsByLevel(selectedSourceLevel) : lessons.filter(l => l.jlptLevel === selectedSourceLevel && !l.parentId)).length === 0 && (
+                      <span className="no-lessons">Chưa có bài học ở cấp độ này</span>
+                    )}
+                  </div>
+                  {(topicForm.linkedLessonIds?.length || 0) > 0 && (
+                    <div className="linked-count-badge">
+                      Đã chọn: {topicForm.linkedLessonIds?.length} bài học
+                    </div>
+                  )}
+                </div>
+
                 {/* Preview */}
                 <div className="form-section">
                   <label>Xem trước</label>
                   <div className="topic-preview" style={{ '--topic-color': topicForm.color } as React.CSSProperties}>
-                    <span className="preview-icon" style={{ backgroundColor: `${topicForm.color}20` }}>
-                      {topicForm.icon}
+                    <span className="preview-icon" style={{ backgroundColor: `${topicForm.color}20`, color: topicForm.color }}>
+                      {renderTopicIcon(topicForm.icon, 24)}
                     </span>
                     <div className="preview-info">
                       <strong>{topicForm.name || 'Tên chủ đề'}</strong>
@@ -600,8 +675,8 @@ export function CustomTopicsTab({
             <ArrowLeft size={18} /> Quay lại
           </button>
           <div className="detail-title">
-            <span className="detail-icon" style={{ backgroundColor: `${currentTopic.color}20` }}>
-              {currentTopic.icon}
+            <span className="detail-icon" style={{ backgroundColor: `${currentTopic.color}20`, color: currentTopic.color }}>
+              {renderTopicIcon(currentTopic.icon, 28)}
             </span>
             <div>
               <h2>{currentTopic.name}</h2>
@@ -844,7 +919,10 @@ export function CustomTopicsTab({
             <span className="detail-icon folder">📁</span>
             <div>
               <h2>{currentFolder.name}</h2>
-              <p>{currentTopic.icon} {currentTopic.name}</p>
+              <p className="folder-parent-topic">
+                <span style={{ color: currentTopic.color }}>{renderTopicIcon(currentTopic.icon, 14)}</span>
+                {currentTopic.name}
+              </p>
             </div>
           </div>
         </div>

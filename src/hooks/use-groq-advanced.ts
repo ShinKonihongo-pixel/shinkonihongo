@@ -15,6 +15,58 @@ export interface AdvancedTopicContext {
   usedQuestionIds: string[];
 }
 
+// Level-specific configuration for response length and complexity
+const LEVEL_CONFIG: Record<string, { maxSentences: number; responseGuidance: string; vocabGuidance: string }> = {
+  N5: {
+    maxSentences: 2,
+    responseGuidance: `## ⚠️ N5 BEGINNER RULES - BẮT BUỘC TUÂN THỦ
+- **RESPONSE TỐI ĐA 1-2 CÂU NGẮN!**
+- Chỉ dùng từ vựng N5: です、ます、động từ cơ bản (食べる、飲む、行く、見る、する)
+- Ngữ pháp: ONLY です/ます form, て form đơn giản, trợ từ cơ bản (は、が、を、に、で、へ)
+- CẤM dùng: ～たり、～ながら、điều kiện、thể bị động
+- Cấu trúc đơn giản: Chủ ngữ + Tân ngữ + Động từ
+- VÍ DỤ TỐT: [私|わたし]は[映画|えいが]が[好|す]きです。
+- VÍ DỤ XẤU (quá phức tạp): [映画|えいが]を[見|み]ながら、ポップコーンを[食|た]べます。`,
+    vocabGuidance: 'Chỉ dùng từ N5: số đếm, màu sắc, gia đình, thời gian, hành động cơ bản, tính từ đơn giản'
+  },
+  N4: {
+    maxSentences: 3,
+    responseGuidance: `## ⚠️ N4 ELEMENTARY RULES - BẮT BUỘC TUÂN THỦ
+- **RESPONSE TỐI ĐA 2-3 CÂU NGẮN!**
+- Chỉ dùng từ vựng N4/N5: cuộc sống hàng ngày, tính từ cơ bản, động từ thông dụng
+- Ngữ pháp: て form, た form, ～たい, ～ている, ～から (lý do) đơn giản
+- CẤM dùng: ～ようにする、～ことにする、～かもしれない
+- Câu ngắn và rõ ràng
+- VÍ DỤ TỐT: [昨日|きのう][映画|えいが]を[見|み]ました。[面白|おもしろ]かったです。
+- VÍ DỤ XẤU: [昨日|きのう][友達|ともだち]と[新|あたら]しいカフェに[行|い]って、ケーキを[食|た]べてから[映画|えいが]を[見|み]ました。`,
+    vocabGuidance: 'Dùng từ N4/N5: sinh hoạt hàng ngày, mua sắm, thời tiết, chỉ đường, cảm xúc cơ bản'
+  },
+  N3: {
+    maxSentences: 4,
+    responseGuidance: `## N3 INTERMEDIATE RULES
+- RESPONSE: 2-4 câu, độ phức tạp vừa phải
+- Dùng từ vựng N3: ý kiến, so sánh, biểu hiện thông dụng
+- Ngữ pháp: ～ようにする、～ことにする、～たら、～ば, thể thông thường`,
+    vocabGuidance: 'Dùng từ vựng hàng ngày phù hợp với trình độ trung cấp'
+  },
+  N2: {
+    maxSentences: 5,
+    responseGuidance: `## N2 UPPER-INTERMEDIATE RULES
+- RESPONSE: 3-5 câu với dòng chảy tự nhiên
+- Dùng từ vựng đa dạng bao gồm thành ngữ
+- Ngữ pháp: mẫu câu formal, ～ものの、～にもかかわらず, etc.`,
+    vocabGuidance: 'Dùng từ vựng tinh tế với sắc thái'
+  },
+  N1: {
+    maxSentences: 6,
+    responseGuidance: `## N1 ADVANCED RULES
+- RESPONSE: Độ dài tự nhiên, biểu đạt tinh tế
+- Dùng từ vựng nâng cao, thành ngữ, tham chiếu văn hóa
+- Ngữ pháp: tất cả mẫu câu bao gồm văn viết và formal`,
+    vocabGuidance: 'Dùng toàn bộ phạm vi tiếng Nhật bao gồm thuật ngữ chuyên ngành'
+  }
+};
+
 // Build professional teacher system prompt for advanced topics
 function buildAdvancedTeacherPrompt(
   topic: KaiwaAdvancedTopic,
@@ -33,6 +85,8 @@ function buildAdvancedTeacherPrompt(
     polite: 'thể lịch sự (です/ます)',
     formal: 'thể trang trọng/kính ngữ (敬語)',
   };
+
+  const levelConfig = LEVEL_CONFIG[context.level];
 
   // Build vocabulary list
   const vocabList = topic.vocabulary
@@ -58,6 +112,8 @@ function buildAdvancedTeacherPrompt(
 ベトナム人学習者のために特別に開発されました。
 学生が楽しく自然に日本語を話せるようになることが目標です。
 
+${levelConfig.responseGuidance}
+
 ## 👤 YOUR PERSONA (Shinkoのキャラクター)
 
 【性格】
@@ -78,6 +134,8 @@ function buildAdvancedTeacherPrompt(
 説明: ${topic.description}
 レベル: ${levelDescriptions[context.level]}
 スタイル: ${styleDescriptions[context.style]}
+**語彙制限**: ${levelConfig.vocabGuidance}
+**最大文数**: ${levelConfig.maxSentences}文まで
 
 ## 📖 VOCABULARY TO USE (必ず使う語彙)
 
@@ -117,10 +175,21 @@ ${answerPatterns || '（なし）'}
 必ず以下の全セクションを含めてください：
 
 ---RESPONSE---
-構成: [リアクション・共感] + [自分の経験/意見 1-2文] + [関連する質問]
+**⚠️ 最大${levelConfig.maxSentences}文まで！**
+構成: [リアクション・共感] + [自分の経験/意見] + [関連する質問]
 
-良い例:
-「へえ、[映画|えいが]が[好|す]きなんですね！[私|わたし]も[映画|えいが]が[大好|だいす]きです。[先週|せんしゅう]、[日本|にほん]の[映画|えいが]を[見|み]ました。とても[面白|おもしろ]かったです！〇〇さんは、どんな[映画|えいが]が[好|す]きですか？」
+${context.level === 'N5' ? `【N5用・良い例】(最大2文)
+「[映画|えいが]が[好|す]きですか。[私|わたし]も[好|す]きです！」
+
+【N5用・悪い例】(長すぎる)
+「へえ、映画が好きなんですね！私も映画が大好きです。先週、日本の映画を見ました。とても面白かったです！」` :
+context.level === 'N4' ? `【N4用・良い例】(最大3文)
+「そうですか！[私|わたし]も[映画|えいが]が[好|す]きです。どんな[映画|えいが]が[好|す]きですか？」
+
+【N4用・悪い例】(長すぎる・文法複雑すぎ)
+「へえ、映画が好きなんですね！私も映画が大好きで、先週日本の映画を見たんですけど、とても面白かったので...」` :
+`良い例:
+「へえ、[映画|えいが]が[好|す]きなんですね！[私|わたし]も[映画|えいが]が[大好|だいす]きです。[先週|せんしゅう]、[日本|にほん]の[映画|えいが]を[見|み]ました。どんな[映画|えいが]が[好|す]きですか？」`}
 
 悪い例:
 「どんな映画が好きですか？」（質問だけ、リアクションなし）
@@ -139,12 +208,19 @@ ${answerPatterns || '（なし）'}
 
 ---SUGGESTIONS---
 【重要】語彙リストの単語を必ず使った回答例を5つ：
+${context.level === 'N5' || context.level === 'N4' ? `
+⚠️ **${context.level}レベル**: すべてのSUGGESTIONSは**短い1-2文**にしてください！
 
+- 【シンプル】1文だけ（例：はい、[好|す]きです。）
+- 【はい/いいえ＋少し】はい/いいえ＋1文（例：はい、よく[見|み]ます。）
+- 【基本＋理由】1文＋「〜から」（例：[好|す]きです。[楽|たの]しいですから。）
+- 【質問返し】短い答え＋「〜は？」（例：[好|す]きです。〇〇さんは？）
+- 【感想】短い感想（例：とても[面白|おもしろ]いです。）` : `
 - 【シンプル】1文の短い回答
 - 【理由付き】回答＋「〜からです」「〜ので」
 - 【共感＋展開】「そうですね」＋回答＋感想
 - 【質問返し】回答＋「〇〇さんは？」（会話のキャッチボール）
-- 【詳細＋例】具体例を含む2-3文の回答
+- 【詳細＋例】具体例を含む2-3文の回答`}
 
 ---QUESTIONS---
 学生が先生に聞き返せる質問（会話を続ける練習）：

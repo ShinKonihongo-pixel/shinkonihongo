@@ -7,38 +7,77 @@ import type { JLPTLevel } from './kaiwa';
 // Difficulty levels for custom topics
 export type TopicDifficulty = 'beginner' | 'intermediate' | 'advanced' | 'mixed';
 
-// Predefined topic icons for quick selection
+// Professional topic icon identifiers (Lucide icon names)
 export const TOPIC_ICONS = [
-  '💼', '✈️', '🎌', '🎮', '📺', '🎵', '🏥', '⚖️', '💻', '🔬',
-  '📚', '🎨', '🍣', '⚽', '🎬', '🗾', '🏯', '🌸', '🎎', '📰',
-  '🗣️', '✍️', '📝', '🎓', '🏢', '🛒', '🚗', '🏠', '💑', '👨‍👩‍👧',
+  // Business & Work
+  'briefcase', 'building-2', 'handshake', 'presentation', 'landmark',
+  // Education & Learning
+  'graduation-cap', 'book-open', 'library', 'pencil-ruler', 'brain',
+  // Technology
+  'laptop', 'code-2', 'database', 'globe', 'smartphone',
+  // Travel & Culture
+  'plane', 'map-pin', 'compass', 'mountain', 'landmark',
+  // Health & Life
+  'heart-pulse', 'stethoscope', 'home', 'users', 'utensils',
+  // Communication
+  'message-square', 'mic', 'mail', 'phone', 'video',
+  // Creative
+  'palette', 'music', 'camera', 'film', 'sparkles',
 ] as const;
 
-// Predefined topic colors
+// Map icon names to display labels
+export const TOPIC_ICON_LABELS: Record<string, string> = {
+  'briefcase': 'Kinh doanh',
+  'building-2': 'Công ty',
+  'handshake': 'Giao dịch',
+  'presentation': 'Thuyết trình',
+  'landmark': 'Địa danh',
+  'graduation-cap': 'Giáo dục',
+  'book-open': 'Sách',
+  'library': 'Thư viện',
+  'pencil-ruler': 'Học tập',
+  'brain': 'Tư duy',
+  'laptop': 'Máy tính',
+  'code-2': 'Lập trình',
+  'database': 'Dữ liệu',
+  'globe': 'Toàn cầu',
+  'smartphone': 'Di động',
+  'plane': 'Du lịch',
+  'map-pin': 'Địa điểm',
+  'compass': 'Khám phá',
+  'mountain': 'Thiên nhiên',
+  'heart-pulse': 'Sức khỏe',
+  'stethoscope': 'Y tế',
+  'home': 'Gia đình',
+  'users': 'Xã hội',
+  'utensils': 'Ẩm thực',
+  'message-square': 'Giao tiếp',
+  'mic': 'Nói chuyện',
+  'mail': 'Email',
+  'phone': 'Điện thoại',
+  'video': 'Video',
+  'palette': 'Nghệ thuật',
+  'music': 'Âm nhạc',
+  'camera': 'Nhiếp ảnh',
+  'film': 'Phim',
+  'sparkles': 'Sáng tạo',
+};
+
+// Predefined topic colors with categories
 export const TOPIC_COLORS = [
-  { id: 'red', value: '#ef4444', label: 'Đỏ' },
-  { id: 'orange', value: '#f97316', label: 'Cam' },
-  { id: 'amber', value: '#f59e0b', label: 'Vàng' },
-  { id: 'green', value: '#22c55e', label: 'Xanh lá' },
-  { id: 'teal', value: '#14b8a6', label: 'Xanh ngọc' },
-  { id: 'blue', value: '#3b82f6', label: 'Xanh dương' },
-  { id: 'indigo', value: '#6366f1', label: 'Chàm' },
-  { id: 'purple', value: '#a855f7', label: 'Tím' },
-  { id: 'pink', value: '#ec4899', label: 'Hồng' },
-  { id: 'slate', value: '#64748b', label: 'Xám' },
+  { id: 'blue', value: '#3b82f6', label: '🔵 Xanh Dương - Chuyên nghiệp' },
+  { id: 'indigo', value: '#6366f1', label: '🟣 Chàm - Công nghệ' },
+  { id: 'teal', value: '#14b8a6', label: '🩵 Ngọc - Học tập' },
+  { id: 'green', value: '#22c55e', label: '🟢 Xanh Lá - Du lịch' },
+  { id: 'amber', value: '#f59e0b', label: '🟡 Vàng - Năng lượng' },
+  { id: 'orange', value: '#f97316', label: '🟠 Cam - Sáng tạo' },
+  { id: 'red', value: '#ef4444', label: '🔴 Đỏ - Quan trọng' },
+  { id: 'pink', value: '#ec4899', label: '🩷 Hồng - Văn hóa' },
+  { id: 'purple', value: '#a855f7', label: '💜 Tím - Giải trí' },
+  { id: 'slate', value: '#64748b', label: '⚪ Xám - Tin tức' },
 ] as const;
 
-// Predefined topic templates for quick start
-export const TOPIC_TEMPLATES = [
-  { icon: '💼', name: 'Tiếng Nhật Kinh Doanh', description: 'Từ vựng và mẫu câu dùng trong công việc, họp hành, email', color: '#3b82f6' },
-  { icon: '✈️', name: 'Du Lịch Nhật Bản', description: 'Giao tiếp tại sân bay, khách sạn, nhà hàng, mua sắm', color: '#22c55e' },
-  { icon: '🎮', name: 'Anime & Manga', description: 'Từ vựng thông dụng trong anime, manga, game', color: '#a855f7' },
-  { icon: '💻', name: 'IT & Công Nghệ', description: 'Thuật ngữ lập trình, công nghệ, internet bằng tiếng Nhật', color: '#6366f1' },
-  { icon: '🏥', name: 'Y Tế & Sức Khỏe', description: 'Từ vựng y tế, triệu chứng, khám bệnh', color: '#ef4444' },
-  { icon: '🍣', name: 'Ẩm Thực Nhật Bản', description: 'Tên món ăn, nguyên liệu, cách gọi món', color: '#f97316' },
-  { icon: '📰', name: 'Tin Tức & Thời Sự', description: 'Từ vựng báo chí, chính trị, xã hội', color: '#64748b' },
-  { icon: '🎬', name: 'Phim & Giải Trí', description: 'Từ vựng điện ảnh, âm nhạc, giải trí', color: '#ec4899' },
-] as const;
+// Removed TOPIC_TEMPLATES - users create topics from scratch
 
 // Custom Topic - A themed question collection
 export interface CustomTopic {
@@ -128,7 +167,7 @@ export interface CustomTopicStats {
 export const DEFAULT_TOPIC_FORM: CustomTopicFormData = {
   name: '',
   description: '',
-  icon: '📚',
+  icon: 'book-open',
   color: '#3b82f6',
   difficulty: 'mixed',
   tags: [],

@@ -20,6 +20,61 @@ const TOPIC_PROMPTS: Record<string, string> = {
   directions: 'Practice asking/giving directions (道案内). Role-play asking for directions to stations, shops, or landmarks.',
 };
 
+// Level-specific configuration for response length and complexity
+const LEVEL_CONFIG: Record<string, { maxSentences: number; responseGuidance: string; vocabGuidance: string }> = {
+  N5: {
+    maxSentences: 2,
+    responseGuidance: `【N5 BEGINNER RULES - CRITICAL】
+- RESPONSE: Maximum 1-2 short sentences only!
+- Use ONLY N5 vocabulary: です、ます、basic verbs (食べる、飲む、行く、見る、する)
+- Grammar: です/ます form ONLY, simple て form, basic particles (は、が、を、に、で、へ)
+- NO complex grammar: NO ～たり、NO ～ながら、NO conditionals、NO passive
+- Keep it SIMPLE: Subject + Object + Verb structure
+- Example good: [私|わたし]は[映画|えいが]が[好|す]きです。
+- Example bad (too complex): [映画|えいが]を[見|み]ながら、ポップコーンを[食|た]べるのが[好|す]きです。`,
+    vocabGuidance: 'Use ONLY basic N5 words: numbers, colors, family, time, basic actions, simple adjectives'
+  },
+  N4: {
+    maxSentences: 3,
+    responseGuidance: `【N4 ELEMENTARY RULES - CRITICAL】
+- RESPONSE: Maximum 2-3 short sentences only!
+- Use N4/N5 vocabulary only: daily life words, basic adjectives, common verbs
+- Grammar: て form, た form, ～たい, ～ている, simple ～から (reason)
+- NO complex grammar: NO ～ようにする、NO ～ことにする、NO ～かもしれない
+- Keep sentences short and clear
+- Example good: [昨日|きのう][映画|えいが]を[見|み]ました。とても[面白|おもしろ]かったです。
+- Example bad (too long): [昨日|きのう][友達|ともだち]と[一緒|いっしょ]に[新|あたら]しいカフェに[行|い]って、[美味|おい]しいケーキを[食|た]べてから、[映画|えいが]を[見|み]ました。`,
+    vocabGuidance: 'Use N4/N5 words: daily routines, shopping, weather, directions, basic emotions'
+  },
+  N3: {
+    maxSentences: 4,
+    responseGuidance: `【N3 INTERMEDIATE RULES】
+- RESPONSE: 2-4 sentences, moderate complexity
+- Use N3 vocabulary: opinions, comparisons, common expressions
+- Grammar: ～ようにする、～ことにする、～たら、～ば、casual forms
+- Can use some compound sentences`,
+    vocabGuidance: 'Use everyday vocabulary appropriate for intermediate learners'
+  },
+  N2: {
+    maxSentences: 5,
+    responseGuidance: `【N2 UPPER-INTERMEDIATE RULES】
+- RESPONSE: 3-5 sentences with natural flow
+- Use varied vocabulary including idiomatic expressions
+- Grammar: formal patterns, ～ものの、～にもかかわらず、etc.
+- Natural conversation with explanations and opinions`,
+    vocabGuidance: 'Use sophisticated vocabulary with nuance'
+  },
+  N1: {
+    maxSentences: 6,
+    responseGuidance: `【N1 ADVANCED RULES】
+- RESPONSE: Natural length, sophisticated expression
+- Use advanced vocabulary, idioms, and cultural references
+- Grammar: all patterns including literary and formal styles
+- Demonstrate native-like fluency`,
+    vocabGuidance: 'Use full range of Japanese including literary and specialized terms'
+  }
+};
+
 // Build system prompt based on context
 function buildSystemPrompt(context: KaiwaContext): string {
   const levelDescriptions: Record<string, string> = {
@@ -37,28 +92,38 @@ function buildSystemPrompt(context: KaiwaContext): string {
   };
 
   const topicPrompt = TOPIC_PROMPTS[context.topic] || TOPIC_PROMPTS.free;
+  const levelConfig = LEVEL_CONFIG[context.level];
 
   return `You are a Japanese conversation practice partner. Your role is to help users practice NATURAL Japanese conversation skills using 会話のキャッチボール (conversation catch-ball) technique.
 
+${levelConfig.responseGuidance}
+
 RULES:
 - ABSOLUTELY NO ROMAJI! Use hiragana/katakana/kanji only. Foreign words must be in katakana (e.g. マーベル not Marvel)
-- Use JLPT ${levelDescriptions[context.level]} vocabulary/grammar
+- Use JLPT ${levelDescriptions[context.level]} vocabulary/grammar STRICTLY - ${levelConfig.vocabGuidance}
 - Use ${styleDescriptions[context.style]}
 - IMPORTANT: Don't just ask questions! Share your own thoughts/experiences FIRST, then ask
 - Response format: [React to user] + [Share about yourself] + [Ask question]
 - Add furigana for ALL kanji: [kanji|reading] e.g. [今日|きょう]
 - All sentences must be COMPLETE and grammatically correct - no fragments!
+- MAXIMUM ${levelConfig.maxSentences} sentences in your RESPONSE section!
 
 TOPIC: ${topicPrompt}
 
 FORMAT (MUST INCLUDE ALL SECTIONS):
 
 ---RESPONSE---
-[React to user's answer if any] + [Share your thought/experience 1-2 sentences] + [Ask a follow-up question]
-Example: そうですか、いいですね！[私|わたし]も[映画|えいが]が[好|す]きです。[最近|さいきん]、[日本|にほん]の[映画|えいが]を[見|み]ました。どんな[映画|えいが]が[好|す]きですか？
+⚠️ MAXIMUM ${levelConfig.maxSentences} sentences!
+[React to user's answer if any] + [Share your thought/experience] + [Ask a follow-up question]
+${context.level === 'N5' ? `【N5 Example - MAX 2 sentences】
+いいですね！[私|わたし]も[好|す]きです。` :
+context.level === 'N4' ? `【N4 Example - MAX 3 sentences】
+そうですか！[私|わたし]も[好|す]きです。どんな[映画|えいが]が[好|す]きですか？` :
+`Example: そうですか、いいですね！[私|わたし]も[映画|えいが]が[好|す]きです。[最近|さいきん]、[日本|にほん]の[映画|えいが]を[見|み]ました。どんな[映画|えいが]が[好|す]きですか？`}
 
 ---TEMPLATE---
 [Sentence pattern using ①, ②, ③ for blanks. Mark each blank position clearly]
+${context.level === 'N5' || context.level === 'N4' ? '⚠️ Keep templates SHORT and SIMPLE for this level!' : ''}
 
 ---HINTS---
 Group hints by blank position. If template has multiple blanks (①, ②...), provide options for EACH:
@@ -70,24 +135,42 @@ Group hints by blank position. If template has multiple blanks (①, ②...), pr
 - word2 = meaning
 
 ---SUGGESTIONS---
-Provide 4-5 different answer options using these strategies:
+${context.level === 'N5' ? `⚠️ N5 LEVEL: ALL suggestions must be SHORT 1-2 sentences only!
+
+1. 【シンプル】One sentence only (e.g., はい、[好|す]きです。)
+2. 【はい/いいえ＋少し】Yes/No + 1 short sentence
+3. 【基本＋理由】Basic answer + 「〜から」
+4. 【質問返し】Short answer + 「〜は？」
+5. 【感想】Short impression (e.g., いいですね。)` :
+context.level === 'N4' ? `⚠️ N4 LEVEL: ALL suggestions must be SHORT 2-3 sentences max!
+
+1. 【シンプル】Simple 1-2 sentence answer
+2. 【はい/いいえ＋理由】Yes/No + simple reason
+3. 【基本＋感想】Answer + short impression
+4. 【質問返し】Answer + 「〇〇さんは？」
+5. 【少し詳しく】Slightly detailed (2-3 sentences max)` :
+`Provide 4-5 different answer options using these strategies:
 
 1. 【シンプル】Simple direct answer (1 sentence)
 2. 【直接＋理由】Answer + reason/experience (2 sentences)
 3. 【共感＋展開】Aizuchi + answer + personal touch (2-3 sentences)
 4. 【答え＋質問返し】Answer + question back (会話のキャッチボール)
-5. 【詳細】Detailed answer with examples (2-3 sentences)
+5. 【詳細】Detailed answer with examples (2-3 sentences)`}
 
 ---QUESTIONS---
 User can ask back using these patterns:
-
+${context.level === 'N5' || context.level === 'N4' ? `
+1. 【そうですか】Simple reaction: そうですか。
+2. 【基本質問】Simple question: 〇〇は[何|なに]ですか？
+3. 【質問返し】Question back: 〇〇さんは？` :
+`
 1. 【確認・感想】Confirmation/Reaction: そうですか？/本当ですか？/いいですね！+ follow-up
 2. 【詳細質問】Ask for details: いつ/どこで/誰と/どうやって + ですか？
-3. 【意見質問】Ask opinion: どう思いますか？/おすすめは何ですか？
+3. 【意見質問】Ask opinion: どう思いますか？/おすすめは何ですか？`}
 
-EXAMPLE (After user said they like watching movies):
+${context.level === 'N5' || context.level === 'N4' ? '' : `EXAMPLE (After user said they like watching movies):
 ---RESPONSE---
-へえ、[映画|えいが]が[好|す]きなんですね！[私|わたし]も[映画|えいが]が[大好|だいす]きです。[先週|せんしゅう]、[日本|にほん]のアニメ[映画|えいが]を[見|み]ました。どんなジャンルの[映画|えいが]が[好|す]きですか？
+へえ、[映画|えいが]が[好|す]きなんですね！[私|わたし]も[映画|えいが]が[大好|だいす]きです。[先週|せんしゅう]、[日本|にほん]のアニメ[映画|えいが]を[見|み]ました。どんなジャンルの[映画|えいが]が[好|す]きですか？`}
 
 ---TEMPLATE---
 ①が[好|す]きです。[特|とく]に②が[好|す]きです。
