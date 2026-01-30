@@ -159,8 +159,10 @@ export function HomePage({
         {/* Top bar with stats */}
         <header className="hp-header">
           <div className="hp-logo">
-            <span className="hp-logo-icon">鶴</span>
-            <span className="hp-logo-text">Nihongo</span>
+            <span className="hp-logo-text">
+              <span className="hp-logo-shinko">Shinko</span>
+              <span className="hp-logo-jp">日本語</span>
+            </span>
           </div>
           <div className="hp-header-stats">
             <div className="hp-stat-badge hp-stat-streak">

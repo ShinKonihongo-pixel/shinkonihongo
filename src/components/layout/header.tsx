@@ -33,7 +33,7 @@ export function Header({ currentPage, onNavigate, currentUser, onLogout }: Heade
   return (
     <header className="header">
       <div className="header-top">
-        <h1 className="header-title">日本語 Flashcards</h1>
+        <h1 className="header-title">Shinko 日本語</h1>
         <nav className={`nav ${menuOpen ? 'nav-open' : ''}`}>
           {/* User info and logout at top of mobile menu */}
           {currentUser && (

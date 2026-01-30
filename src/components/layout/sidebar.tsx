@@ -164,7 +164,7 @@ export function Sidebar({
         {/* Logo/Title */}
         <div className="sidebar-header">
           <h1 className="sidebar-title">
-            {isCollapsed ? '日' : '日本語 Flashcards'}
+            {isCollapsed ? 'S' : 'Shinko 日本語'}
           </h1>
           <button
             className="sidebar-collapse-btn"
