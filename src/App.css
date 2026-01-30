@@ -38730,125 +38730,161 @@ html:has(.ppt-editor) {
   background-clip: text;
 }
 
-/* ===== HEADER BAR ===== */
+/* ===== HEADER BAR - Premium Design ===== */
 .hp-header {
   position: relative;
   z-index: 10;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0;
-  margin-bottom: 1.25rem;
+  padding: 0.5rem 0;
+  margin-bottom: 0.5rem;
 }
 
-/* Logo - Premium Professional Design */
+/* Logo - Grand Professional Design */
 .hp-logo {
   display: flex;
   align-items: center;
+  position: relative;
+}
+
+.hp-logo::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(165, 180, 252, 0.15) 0%, transparent 60%);
+  pointer-events: none;
+  animation: logo-aura 4s ease-in-out infinite;
+}
+
+@keyframes logo-aura {
+  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
 }
 
 .hp-logo-text {
   display: flex;
   align-items: baseline;
-  gap: 0.35rem;
+  gap: 0.5rem;
   font-weight: 800;
   letter-spacing: -0.02em;
+  position: relative;
 }
 
 .hp-logo-shinko {
-  font-size: 1.75rem;
-  font-weight: 800;
-  background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 50%, #a5b4fc 100%);
+  font-size: 2.5rem;
+  font-weight: 900;
+  background: linear-gradient(180deg, #ffffff 0%, #e0e7ff 40%, #c7d2fe 60%, #a5b4fc 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-shadow: none;
-  filter: drop-shadow(0 2px 8px rgba(165, 180, 252, 0.4));
+  filter: drop-shadow(0 4px 12px rgba(165, 180, 252, 0.6)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  animation: logo-shimmer 6s ease-in-out infinite;
+}
+
+@keyframes logo-shimmer {
+  0%, 100% { filter: drop-shadow(0 4px 12px rgba(165, 180, 252, 0.6)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)); }
+  50% { filter: drop-shadow(0 6px 20px rgba(165, 180, 252, 0.8)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)); }
 }
 
 .hp-logo-jp {
-  font-size: 1.25rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #fcd34d 0%, #f59e0b 50%, #dc2626 100%);
+  font-size: 1.75rem;
+  font-weight: 800;
+  background: linear-gradient(180deg, #fef3c7 0%, #fcd34d 30%, #f59e0b 60%, #dc2626 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  filter: drop-shadow(0 2px 6px rgba(245, 158, 11, 0.5));
+  filter: drop-shadow(0 3px 10px rgba(245, 158, 11, 0.6));
   font-family: 'Noto Sans JP', sans-serif;
+  line-height: 1;
+  animation: jp-glow 3s ease-in-out infinite;
 }
 
-/* Stats badges */
+@keyframes jp-glow {
+  0%, 100% { filter: drop-shadow(0 3px 10px rgba(245, 158, 11, 0.6)); }
+  50% { filter: drop-shadow(0 4px 16px rgba(245, 158, 11, 0.9)); }
+}
+
+/* Stats badges - Premium Glass Style */
 .hp-header-stats {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.625rem;
 }
 
 .hp-stat-badge {
   display: flex;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.875rem;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
   color: white;
-  font-size: 0.8rem;
-  font-weight: 600;
-  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  font-weight: 700;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .hp-stat-badge:hover {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08));
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.08));
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 /* Streak badge with fire glow */
 .hp-stat-streak {
-  background: linear-gradient(135deg, rgba(251, 146, 60, 0.2), rgba(251, 146, 60, 0.08));
-  border-color: rgba(251, 146, 60, 0.3);
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.25), rgba(251, 113, 41, 0.1));
+  border-color: rgba(251, 146, 60, 0.4);
+  box-shadow: 0 4px 20px rgba(251, 146, 60, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .hp-stat-streak:hover {
-  background: linear-gradient(135deg, rgba(251, 146, 60, 0.3), rgba(251, 146, 60, 0.12));
-  box-shadow: 0 4px 16px rgba(251, 146, 60, 0.25);
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.35), rgba(251, 113, 41, 0.15));
+  box-shadow: 0 8px 32px rgba(251, 146, 60, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 /* XP badge with electric glow */
 .hp-stat-xp {
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(56, 189, 248, 0.05));
-  border-color: rgba(56, 189, 248, 0.25);
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(14, 165, 233, 0.08));
+  border-color: rgba(56, 189, 248, 0.35);
+  box-shadow: 0 4px 20px rgba(56, 189, 248, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .hp-stat-xp:hover {
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(56, 189, 248, 0.1));
-  box-shadow: 0 4px 16px rgba(56, 189, 248, 0.2);
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.3), rgba(14, 165, 233, 0.12));
+  box-shadow: 0 8px 32px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .hp-stat-icon.fire {
   color: #fb923c;
-  filter: drop-shadow(0 0 6px rgba(251, 146, 60, 0.7));
+  filter: drop-shadow(0 0 8px rgba(251, 146, 60, 0.8));
   animation: fire-pulse 2s ease-in-out infinite;
 }
 
 .hp-stat-icon.bolt {
   color: #38bdf8;
-  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.7));
+  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.8));
   animation: bolt-pulse 1.5s ease-in-out infinite;
 }
 
 @keyframes fire-pulse {
-  0%, 100% { filter: drop-shadow(0 0 4px rgba(251, 146, 60, 0.6)); }
-  50% { filter: drop-shadow(0 0 10px rgba(251, 146, 60, 0.9)); }
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(251, 146, 60, 0.7)); }
+  50% { filter: drop-shadow(0 0 14px rgba(251, 146, 60, 1)); }
 }
 
 @keyframes bolt-pulse {
-  0%, 100% { filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.5)); transform: scale(1); }
-  50% { filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.8)); transform: scale(1.1); }
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.6)); transform: scale(1); }
+  50% { filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.95)); transform: scale(1.15); }
 }
 
 /* ===== HERO CONTENT ===== */
@@ -38857,31 +38893,36 @@ html:has(.ppt-editor) {
   z-index: 5;
   text-align: center;
   color: white;
-  padding: 0.25rem 0;
+  padding: 0.5rem 0;
 }
 
-/* Greeting */
+/* Greeting - Grand Welcome */
 .hp-greeting {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
-  margin-bottom: 1rem;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .hp-greeting-jp {
-  font-size: 1.5rem;
-  font-weight: 300;
-  letter-spacing: 0.15em;
-  color: rgba(255, 255, 255, 0.85);
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  font-size: 2.25rem;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.8) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+  font-family: 'Noto Sans JP', sans-serif;
 }
 
 .hp-greeting-vn {
-  font-size: 0.8rem;
-  opacity: 0.75;
-  font-weight: 400;
-  letter-spacing: 0.02em;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* ===== PROGRESS RING - Central Focus ===== */
@@ -38950,15 +38991,16 @@ html:has(.ppt-editor) {
 
 /* ===== MOTIVATIONAL QUOTE - Spirit of Determination ===== */
 .hp-motivation {
-  margin-bottom: 1.5rem;
-  padding: 1rem 1.25rem;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  margin-bottom: 1.75rem;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   position: relative;
   overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .hp-motivation::before {
@@ -38967,21 +39009,22 @@ html:has(.ppt-editor) {
   top: 0;
   left: 0;
   right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(252, 211, 77, 0.5), transparent);
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(252, 211, 77, 0.6) 30%, rgba(245, 158, 11, 0.8) 50%, rgba(252, 211, 77, 0.6) 70%, transparent 100%);
 }
 
 .hp-quote-kanji {
-  font-size: 1.75rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  background: linear-gradient(135deg, #ffffff 0%, #fef3c7 30%, #fcd34d 50%, #f59e0b 70%, #fef3c7 100%);
+  font-size: 2.25rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  background: linear-gradient(135deg, #ffffff 0%, #fef3c7 25%, #fcd34d 45%, #f59e0b 55%, #fef3c7 75%, #ffffff 100%);
   background-size: 400% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: quote-shimmer 8s linear infinite;
-  margin-bottom: 0.375rem;
+  animation: quote-shimmer 6s linear infinite;
+  margin-bottom: 0.5rem;
+  filter: drop-shadow(0 2px 8px rgba(245, 158, 11, 0.3));
 }
 
 @keyframes quote-shimmer {
@@ -38990,11 +39033,11 @@ html:has(.ppt-editor) {
 }
 
 .hp-quote-romaji {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.5);
-  letter-spacing: 0.1em;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.08em;
   font-style: italic;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.625rem;
 }
 
 .hp-quote-meaning {
@@ -39664,11 +39707,25 @@ html:has(.ppt-editor) {
   }
 
   .hp-logo-shinko {
-    font-size: 1.35rem;
+    font-size: 1.85rem;
   }
 
   .hp-logo-jp {
-    font-size: 1rem;
+    font-size: 1.35rem;
+  }
+
+  .hp-greeting-jp {
+    font-size: 1.75rem;
+    letter-spacing: 0.15em;
+  }
+
+  .hp-greeting-vn {
+    font-size: 0.9rem;
+  }
+
+  .hp-stat-badge {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
   }
 
   .hp-stat-badge {
