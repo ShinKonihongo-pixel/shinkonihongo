@@ -16,6 +16,7 @@ interface StudyPageProps {
   updateCard: (id: string, data: Partial<Flashcard>) => void;
   onGoHome: () => void;
   settings: AppSettings;
+  onUpdateSetting?: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
   onSaveStudySession?: (data: Omit<StudySessionType, 'id' | 'userId'>) => void;
 }
 
@@ -28,6 +29,7 @@ export function StudyPage({
   updateCard,
   onGoHome,
   settings,
+  onUpdateSetting,
   onSaveStudySession,
 }: StudyPageProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('select');
@@ -35,6 +37,7 @@ export function StudyPage({
   const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>([]);
   const [filterMemorization, setFilterMemorization] = useState<MemorizationStatus | 'all'>('all');
   const [filterDifficulty, setFilterDifficulty] = useState<DifficultyLevel | 'all'>('all');
+  const [frontFontSize, setFrontFontSize] = useState<number>(settings.kanjiFontSize);
   const sessionStartTime = useRef<number>(Date.now());
   const sessionSaved = useRef<boolean>(false);
 
@@ -113,6 +116,12 @@ export function StudyPage({
     }
   }, [isSessionComplete, viewMode]);
 
+  // Create modified settings with current font size (must be before early returns)
+  const studySettings = useMemo(() => ({
+    ...settings,
+    kanjiFontSize: frontFontSize,
+  }), [settings, frontFontSize]);
+
   // Handle start from level selector
   const handleStart = (lessonIds: string[], level: JLPTLevel) => {
     setSelectedLessonIds(lessonIds);
@@ -181,9 +190,12 @@ export function StudyPage({
       onPrev={goToPrev}
       canGoNext={canGoNext}
       canGoPrev={canGoPrev}
-      settings={settings}
+      settings={studySettings}
+      onSettingsChange={onUpdateSetting}
       onBack={handleBackToSelect}
       selectedLevel={selectedLevel}
+      frontFontSize={frontFontSize}
+      onFrontFontSizeChange={setFrontFontSize}
     />
   );
 }

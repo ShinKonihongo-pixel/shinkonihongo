@@ -408,7 +408,7 @@ export function ExercisePage({ exercises, flashcards, onGoHome }: ExercisePagePr
                 disabled={countByLevel[level] === 0}
                 style={selectedLevel === level ? { background: theme.gradient } : undefined}
               >
-                <span>{theme.icon} {level}</span>
+                <span>{level}</span>
                 <span className="chip-count">{countByLevel[level]}</span>
               </button>
             );
@@ -442,7 +442,7 @@ export function ExercisePage({ exercises, flashcards, onGoHome }: ExercisePagePr
                     <div className="card-levels">
                       {levels.map(l => (
                         <span key={l} className="level-badge" style={{ background: LEVEL_THEMES[l].gradient }}>
-                          {LEVEL_THEMES[l].icon} {l}
+                          {l}
                         </span>
                       ))}
                     </div>
@@ -850,7 +850,7 @@ export function ExercisePage({ exercises, flashcards, onGoHome }: ExercisePagePr
             <h2 className="session-title">{currentExercise.name}</h2>
             <div className="session-meta">
               <span className="session-level" style={{ background: theme.gradient }}>
-                {theme.icon} {primaryLevel}
+                {primaryLevel}
               </span>
               <span className="session-type">{getQuestionTypeLabel(currentQ.type)}</span>
             </div>

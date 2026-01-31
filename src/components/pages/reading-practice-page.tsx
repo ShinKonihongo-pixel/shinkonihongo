@@ -185,7 +185,6 @@ export function ReadingPracticePage({
                 >
                   <div className="card-header">
                     <span className="level-badge" style={{ background: theme.gradient }}>
-                      <span className="level-icon">{theme.icon}</span>
                       {passage.jlptLevel}
                     </span>
                     <span className="question-count">{passage.questions.length} câu hỏi</span>

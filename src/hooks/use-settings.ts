@@ -86,6 +86,7 @@ export interface AppSettings {
   vocabularyFontSize: number;
   sinoVietnameseFontSize: number;
   meaningFontSize: number;
+  backFontSize: number; // Scale factor for back side (100 = 100%)
   // Mobile font sizes
   mobileKanjiFontSize: number;
   mobileVocabularyFontSize: number;
@@ -192,6 +193,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   vocabularyFontSize: 28,
   sinoVietnameseFontSize: 32,
   meaningFontSize: 24,
+  backFontSize: 100, // 100% default scale
   // Mobile font sizes (smaller defaults for mobile screens)
   mobileKanjiFontSize: 120,
   mobileVocabularyFontSize: 20,

@@ -26,6 +26,7 @@ const defaultSettings: AppSettings = {
   vocabularyFontSize: 28,
   sinoVietnameseFontSize: 32,
   meaningFontSize: 24,
+  backFontSize: 100,
   mobileKanjiFontSize: 120,
   mobileVocabularyFontSize: 20,
   mobileSinoVietnameseFontSize: 22,
@@ -238,19 +239,21 @@ export function FlashcardItem({
   const kanjiText = card.kanji || card.vocabulary;
 
   // Get font sizes based on screen size (auto scale down 50% on mobile)
+  // Apply backFontSize scale (100 = 100%) for back side elements
   const mobileScale = 0.5;
+  const backScale = (settings.backFontSize || 100) / 100;
   const kanjiFontSize = isMobile
     ? Math.max(settings.kanjiFontSize * mobileScale, 80)
     : settings.kanjiFontSize;
   const vocabularyFontSize = isMobile
-    ? Math.max(settings.vocabularyFontSize * mobileScale, 14)
-    : settings.vocabularyFontSize;
+    ? Math.max(settings.vocabularyFontSize * mobileScale * backScale, 14)
+    : settings.vocabularyFontSize * backScale;
   const sinoVietnameseFontSize = isMobile
-    ? Math.max(settings.sinoVietnameseFontSize * mobileScale, 14)
-    : settings.sinoVietnameseFontSize;
+    ? Math.max(settings.sinoVietnameseFontSize * mobileScale * backScale, 14)
+    : settings.sinoVietnameseFontSize * backScale;
   const meaningFontSize = isMobile
-    ? Math.max(settings.meaningFontSize * mobileScale, 12)
-    : settings.meaningFontSize;
+    ? Math.max(settings.meaningFontSize * mobileScale * backScale, 12)
+    : settings.meaningFontSize * backScale;
 
   // Speak the vocabulary (use vocabulary for correct pronunciation)
   const handleSpeak = (e: React.MouseEvent) => {
@@ -281,29 +284,29 @@ export function FlashcardItem({
           <p className="flip-hint">Nhấn để lật thẻ</p>
         </div>
 
-        {/* Back side - Answer (2-column layout) */}
+        {/* Back side - Answer */}
         <div className={`flashcard-face flashcard-back ${getFrameAnimationClass(settings)}`} style={getCardFrameStyle(settings)}>
-          <span className="jlpt-badge">{levelBadge}</span>
-          <div className="card-content card-content-split">
-            {/* Left column: Main info */}
-            <div className="card-column card-column-left">
+          <div className="card-back-header">
+            <span className="jlpt-badge jlpt-badge-left">{levelBadge}</span>
+            <button
+              className={`speak-btn-header ${isSpeaking ? 'speaking' : ''}`}
+              onClick={handleSpeak}
+              title="Nghe phát âm"
+            >
+              <Volume2 size={isMobile ? 16 : 18} />
+            </button>
+          </div>
+          <div className={`card-content card-back-content ${!isMobile ? 'desktop-split' : ''}`}>
+            {/* Main info section */}
+            <div className="card-main-info">
               {settings.showSinoVietnamese && card.sinoVietnamese && (
                 <div className="sino-vietnamese" style={{ fontSize: `${sinoVietnameseFontSize}px` }}>
                   {card.sinoVietnamese}
                 </div>
               )}
               {settings.showVocabulary && (
-                <div className="vocabulary-with-speaker">
-                  <div className="vocabulary" style={{ fontSize: `${vocabularyFontSize}px` }}>
-                    {card.vocabulary}
-                  </div>
-                  <button
-                    className={`speak-btn ${isSpeaking ? 'speaking' : ''}`}
-                    onClick={handleSpeak}
-                    title="Nghe phát âm"
-                  >
-                    <Volume2 size={18} />
-                  </button>
+                <div className="vocabulary" style={{ fontSize: `${vocabularyFontSize}px` }}>
+                  {card.vocabulary}
                 </div>
               )}
               {settings.showMeaning && (
@@ -313,15 +316,13 @@ export function FlashcardItem({
               )}
             </div>
 
-            {/* Right column: Examples with furigana */}
+            {/* Example section */}
             {settings.showExample && card.examples && card.examples.length > 0 && (
-              <div className="card-column card-column-right">
-                <div className="example">
-                  <span className="example-label">Ví dụ:</span>
-                  {card.examples.map((ex, idx) => (
-                    <p key={idx}>{parseFurigana(ex)}</p>
-                  ))}
-                </div>
+              <div className="card-example-section">
+                <span className="example-label">Ví dụ:</span>
+                {card.examples.map((ex, idx) => (
+                  <p key={idx}>{parseFurigana(ex)}</p>
+                ))}
               </div>
             )}
           </div>

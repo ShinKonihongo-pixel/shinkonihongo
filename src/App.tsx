@@ -47,6 +47,7 @@ import { useFriendships, useBadges, useGameInvitations, useFriendNotifications }
 import { useClassroomNotifications } from './hooks/use-classrooms';
 import { useDailyWords } from './hooks/use-daily-words';
 import { useGrammarCards } from './hooks/use-grammar-cards';
+import { useGrammarLessons } from './hooks/use-grammar-lessons';
 import { OfflineIndicator } from './components/common/offline-indicator';
 import { FloatingChatButton } from './components/common/floating-chat-button';
 import { FloatingChatPanel } from './components/common/floating-chat-panel';
@@ -174,6 +175,13 @@ function App() {
 
   // Grammar cards
   const { grammarCards } = useGrammarCards();
+
+  // Grammar lessons (separate from vocabulary lessons)
+  const {
+    lessons: grammarLessons,
+    getParentLessonsByLevel: getGrammarLessonsByLevel,
+    getChildLessons: getGrammarChildLessons,
+  } = useGrammarLessons();
 
   // Exercises
   const { getPublishedExercises } = useExercises();
@@ -476,6 +484,7 @@ function App() {
             updateCard={updateCard}
             onGoHome={() => setCurrentPage('home')}
             settings={settings}
+            onUpdateSetting={updateSetting}
             onSaveStudySession={addStudySession}
           />
         )}
@@ -493,9 +502,9 @@ function App() {
         {currentPage === 'grammar-study' && (
           <GrammarStudyPage
             grammarCards={grammarCards}
-            lessons={lessons}
-            getLessonsByLevel={filteredGetLessonsByLevel}
-            getChildLessons={filteredGetChildLessons}
+            lessons={grammarLessons}
+            getLessonsByLevel={getGrammarLessonsByLevel}
+            getChildLessons={getGrammarChildLessons}
             onGoHome={() => setCurrentPage('home')}
             settings={settings}
           />

@@ -349,8 +349,7 @@ export function ListeningPracticePage({
                   onClick={() => selectLevel(level)}
                   style={{ '--card-delay': `${idx * 0.1}s`, '--level-gradient': theme.gradient, '--level-glow': theme.glow } as React.CSSProperties}
                 >
-                  <div className="level-icon">{theme.icon}</div>
-                  <span className="level-name">{level}</span>
+                                    <span className="level-name">{level}</span>
                   <span className="level-count">{count} từ</span>
                   <div className="card-shine" />
                 </button>
@@ -377,7 +376,7 @@ export function ListeningPracticePage({
               <ChevronLeft size={20} />
             </button>
             <span className="current-level" style={{ background: LEVEL_THEMES[selectedLevel].gradient }}>
-              {LEVEL_THEMES[selectedLevel].icon} {selectedLevel}
+              {selectedLevel}
             </span>
             <button
               className={`btn-settings ${showLessonPicker ? 'active' : ''}`}

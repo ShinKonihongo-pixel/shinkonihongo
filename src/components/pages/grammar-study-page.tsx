@@ -3,15 +3,15 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, RotateCcw, Shuffle, Volume2, ArrowLeft } from 'lucide-react';
-import type { GrammarCard, JLPTLevel, Lesson } from '../../types/flashcard';
+import type { GrammarCard, JLPTLevel, GrammarLesson } from '../../types/flashcard';
 import type { AppSettings } from '../../hooks/use-settings';
 import { LevelLessonSelector } from '../study/level-lesson-selector';
 
 interface GrammarStudyPageProps {
   grammarCards: GrammarCard[];
-  lessons: Lesson[];
-  getLessonsByLevel: (level: JLPTLevel) => Lesson[];
-  getChildLessons: (parentId: string) => Lesson[];
+  lessons: GrammarLesson[];
+  getLessonsByLevel: (level: JLPTLevel) => GrammarLesson[];
+  getChildLessons: (parentId: string) => GrammarLesson[];
   onGoHome: () => void;
   settings?: AppSettings;
 }
