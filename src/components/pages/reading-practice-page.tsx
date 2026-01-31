@@ -1,11 +1,14 @@
 // Reading Practice Page - Premium UI with glassmorphism design
 
-import { useState, useMemo } from 'react';
-import { ChevronRight, CheckCircle, XCircle, RotateCcw, Filter, Volume2, BookOpen, ArrowLeft, Sparkles } from 'lucide-react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { ChevronRight, CheckCircle, XCircle, RotateCcw, Filter, Volume2, VolumeX, BookOpen, ArrowLeft, Sparkles, Pin, PinOff, ChevronDown, ChevronUp, Trophy, Target, Clock, Zap, Pause, Play, Square } from 'lucide-react';
 import type { JLPTLevel } from '../../types/flashcard';
 import type { ReadingPassage } from '../../types/reading';
 import type { ReadingPracticePageProps, ViewState } from './reading-practice/reading-practice-types';
 import { JLPT_LEVELS } from './reading-practice/reading-practice-constants';
+import { ReadingSettingsModal, ReadingSettingsButton } from '../ui/reading-settings-modal';
+import { FuriganaText } from '../ui/furigana-text';
+import { useReadingSettings } from '../../contexts/reading-settings-context';
 
 // Level theme configurations
 const LEVEL_THEMES: Record<JLPTLevel, { gradient: string; glow: string; icon: string }> = {
@@ -32,6 +35,27 @@ export function ReadingPracticePage({
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [showResults, setShowResults] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+
+  // Mobile pin state - must be declared at top level (Rules of Hooks)
+  const [isPinned, setIsPinned] = useState(false);
+  const [isQuestionCollapsed, setIsQuestionCollapsed] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Settings modal state
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+
+  // Audio playback state
+  const [audioState, setAudioState] = useState<'idle' | 'playing' | 'paused'>('idle');
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+
+  // Detect mobile screen
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 900);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Filter passages
   const filteredPassages = useMemo(() => {
@@ -94,12 +118,58 @@ export function ReadingPracticePage({
     setIsCompleted(false);
   };
 
-  const speakJapanese = (text: string) => {
+  // Audio control functions
+  const startSpeaking = useCallback((text: string) => {
+    // Cancel any existing speech
+    speechSynthesis.cancel();
+
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'ja-JP';
     utterance.rate = 0.85;
+
+    utterance.onend = () => setAudioState('idle');
+    utterance.onerror = () => setAudioState('idle');
+
+    utteranceRef.current = utterance;
     speechSynthesis.speak(utterance);
-  };
+    setAudioState('playing');
+  }, []);
+
+  const pauseSpeaking = useCallback(() => {
+    if (speechSynthesis.speaking) {
+      speechSynthesis.pause();
+      setAudioState('paused');
+    }
+  }, []);
+
+  const resumeSpeaking = useCallback(() => {
+    if (speechSynthesis.paused) {
+      speechSynthesis.resume();
+      setAudioState('playing');
+    }
+  }, []);
+
+  const stopSpeaking = useCallback(() => {
+    speechSynthesis.cancel();
+    setAudioState('idle');
+  }, []);
+
+  const handleAudioToggle = useCallback((text: string) => {
+    if (audioState === 'idle') {
+      startSpeaking(text);
+    } else if (audioState === 'playing') {
+      stopSpeaking();
+    } else if (audioState === 'paused') {
+      startSpeaking(text); // Start from beginning
+    }
+  }, [audioState, startSpeaking, stopSpeaking]);
+
+  // Cleanup speech on unmount
+  useEffect(() => {
+    return () => {
+      speechSynthesis.cancel();
+    };
+  }, []);
 
   // Calculate score
   const calculateScore = () => {
@@ -682,197 +752,474 @@ export function ReadingPracticePage({
     );
   }
 
-  // Practice view with questions
+  // Practice view with split layout
+  const { settings } = useReadingSettings();
+
   return (
-    <div className="reading-practice-page">
-      {/* Practice Header */}
-      <div className="practice-header">
-        <button className="btn-back" onClick={() => setViewState({ type: 'select' })}>
-          <ArrowLeft size={20} />
+    <div className="reading-practice-page practice-mode">
+      {/* Settings Modal */}
+      <ReadingSettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+      />
+
+      {/* Compact Practice Header */}
+      <header className="practice-header-compact">
+        <button className="btn-back-compact" onClick={() => { stopSpeaking(); setViewState({ type: 'select' }); }}>
+          <ArrowLeft size={18} />
         </button>
-        <div className="header-info">
-          <h2>{passage.title}</h2>
-          <span className="level-tag" style={{ background: theme.gradient }}>{passage.jlptLevel}</span>
+        <div className="header-center">
+          <span className="level-pill" style={{ background: theme.gradient }}>
+            {passage.jlptLevel}
+          </span>
+          <h1 className="header-title-compact">{passage.title}</h1>
+          <span className="progress-indicator">
+            {Object.keys(selectedAnswers).length}/{passage.questions.length}
+          </span>
         </div>
-      </div>
+        <ReadingSettingsButton onClick={() => setShowSettingsModal(true)} />
+      </header>
 
-      {/* Progress Bar */}
-      <div className="practice-progress">
-        <div className="progress-bar">
-          <div className="progress-fill" style={{ width: `${((currentQuestionIndex + 1) / passage.questions.length) * 100}%`, background: theme.gradient }} />
+      {/* Progress Section */}
+      <div className="progress-section-pro">
+        <div className="progress-bar-pro">
+          <div
+            className="progress-fill-pro"
+            style={{
+              width: `${((currentQuestionIndex + 1) / passage.questions.length) * 100}%`,
+              background: theme.gradient
+            }}
+          />
         </div>
-        <span className="progress-text">Câu {currentQuestionIndex + 1}/{passage.questions.length}</span>
-      </div>
-
-      {/* Passage Content */}
-      <div className="passage-content">
-        <div className="passage-text">{passage.content}</div>
-        <button className="btn-speak" onClick={() => speakJapanese(passage.content)}>
-          <Volume2 size={18} /> Nghe đọc
-        </button>
-      </div>
-
-      {/* Question Section */}
-      <div className="question-section">
-        <h3 className="question-text">{currentQuestion.question}</h3>
-
-        <div className="answers-list">
-          {currentQuestion.answers.map((answer, idx) => {
-            const isSelected = selectedAnswer === idx;
-            const isCorrect = answer.isCorrect;
-            let className = 'answer-option';
-            if (showResults) {
-              if (isCorrect) className += ' correct';
-              else if (isSelected && !isCorrect) className += ' incorrect';
-            } else if (isSelected) {
-              className += ' selected';
-            }
-
-            return (
-              <button
-                key={idx}
-                className={className}
-                onClick={() => handleSelectAnswer(idx)}
-                disabled={showResults}
-              >
-                <span className="answer-letter">{String.fromCharCode(65 + idx)}</span>
-                <span className="answer-text">{answer.text}</span>
-                {showResults && isCorrect && <CheckCircle size={20} className="result-icon correct" />}
-                {showResults && isSelected && !isCorrect && <XCircle size={20} className="result-icon incorrect" />}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Explanation */}
-        {showResults && currentQuestion.explanation && (
-          <div className="explanation">
-            <strong>Giải thích:</strong> {currentQuestion.explanation}
-          </div>
-        )}
-
-        {/* Actions */}
-        <div className="question-actions">
-          {!showResults ? (
+        <div className="progress-steps">
+          {passage.questions.map((_, idx) => (
             <button
-              className="btn btn-primary"
-              onClick={handleShowResult}
-              disabled={selectedAnswer === undefined}
+              key={idx}
+              className={`progress-step ${idx === currentQuestionIndex ? 'active' : ''} ${selectedAnswers[idx] !== undefined ? 'answered' : ''}`}
+              onClick={() => { setCurrentQuestionIndex(idx); setShowResults(false); }}
+              style={{ '--step-color': theme.gradient } as React.CSSProperties}
             >
-              Kiểm tra
+              {idx + 1}
             </button>
-          ) : (
-            <button className="btn btn-primary" onClick={handleNextQuestion}>
-              {currentQuestionIndex < passage.questions.length - 1 ? 'Câu tiếp theo' : 'Xem kết quả'}
-            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Mobile Pinned Question Header */}
+      {isMobile && isPinned && (
+        <div className={`pinned-question-header ${isQuestionCollapsed ? 'collapsed' : ''}`}>
+          <div className="pinned-header-row" onClick={() => setIsQuestionCollapsed(!isQuestionCollapsed)}>
+            <span className="pinned-label">
+              <Pin size={14} /> Câu {currentQuestionIndex + 1}
+            </span>
+            <div className="pinned-actions">
+              <button className="btn-icon-sm" onClick={(e) => { e.stopPropagation(); setIsPinned(false); }}>
+                <PinOff size={14} />
+              </button>
+              {isQuestionCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+            </div>
+          </div>
+          {!isQuestionCollapsed && (
+            <div className="pinned-content">
+              <p className="pinned-question-text">{currentQuestion.question}</p>
+              <div className="pinned-answers">
+                {currentQuestion.answers.map((answer, idx) => {
+                  const isSelected = selectedAnswer === idx;
+                  const isCorrect = answer.isCorrect;
+                  let className = 'pinned-answer';
+                  if (showResults) {
+                    if (isCorrect) className += ' correct';
+                    else if (isSelected && !isCorrect) className += ' incorrect';
+                  } else if (isSelected) {
+                    className += ' selected';
+                  }
+                  return (
+                    <button
+                      key={idx}
+                      className={className}
+                      onClick={() => handleSelectAnswer(idx)}
+                      disabled={showResults}
+                    >
+                      <span className="answer-letter-mini">{String.fromCharCode(65 + idx)}</span>
+                      <span className="answer-text-mini">{answer.text}</span>
+                      {showResults && isCorrect && <CheckCircle size={14} className="result-icon correct" />}
+                      {showResults && isSelected && !isCorrect && <XCircle size={14} className="result-icon incorrect" />}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="pinned-action-buttons">
+                {!showResults ? (
+                  <button className="btn-check-pinned" onClick={handleShowResult} disabled={selectedAnswer === undefined}>
+                    Kiểm tra
+                  </button>
+                ) : (
+                  <button className="btn-next-pinned" onClick={handleNextQuestion}>
+                    {currentQuestionIndex < passage.questions.length - 1 ? 'Tiếp' : 'Kết quả'}
+                  </button>
+                )}
+              </div>
+            </div>
           )}
+        </div>
+      )}
+
+      {/* Split Layout Container */}
+      <div className={`split-layout ${isMobile && isPinned ? 'with-pinned' : ''}`}>
+        {/* Left Panel - Reading Content (Wider) */}
+        <div className="content-panel" ref={contentRef}>
+          <div className="content-card">
+            <div className="content-header">
+              <div className="content-icon">
+                <BookOpen size={20} />
+              </div>
+              <h2>Nội dung bài đọc</h2>
+              <div className="audio-controls">
+                {/* Main Play/Stop button */}
+                <button
+                  className={`btn-audio ${audioState !== 'idle' ? 'active' : ''}`}
+                  onClick={() => handleAudioToggle(passage.content)}
+                  title={audioState === 'idle' ? 'Nghe' : 'Dừng'}
+                >
+                  {audioState === 'idle' ? <Volume2 size={18} /> : <Square size={16} />}
+                </button>
+                {/* Pause/Resume button - only show when playing or paused */}
+                {audioState !== 'idle' && (
+                  <button
+                    className={`btn-audio ${audioState === 'paused' ? 'paused' : ''}`}
+                    onClick={() => audioState === 'playing' ? pauseSpeaking() : resumeSpeaking()}
+                    title={audioState === 'playing' ? 'Tạm dừng' : 'Tiếp tục'}
+                  >
+                    {audioState === 'playing' ? <Pause size={16} /> : <Play size={16} />}
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="content-body">
+              <div className="passage-text-pro" style={{ fontSize: `${settings.fontSize}rem` }}>
+                <FuriganaText text={passage.content} />
+              </div>
+            </div>
+            <div className="content-footer">
+              <div className="word-count">
+                <Clock size={14} />
+                <span>~{Math.ceil(passage.content.length / 400)} phút đọc</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Panel - Questions (Narrower, Scrollable) */}
+        <div className="question-panel">
+          <div className="question-card">
+            {/* Question Panel Header with Pin Button (Mobile) */}
+            <div className="question-panel-header">
+              <div className="question-number-badge" style={{ background: theme.gradient }}>
+                Câu {currentQuestionIndex + 1}/{passage.questions.length}
+              </div>
+              {isMobile && !isPinned && (
+                <button className="btn-pin" onClick={() => setIsPinned(true)} title="Ghim câu hỏi">
+                  <Pin size={16} />
+                  <span>Ghim</span>
+                </button>
+              )}
+            </div>
+
+            {/* Question Content */}
+            <div className="question-content-scroll">
+              <h3 className="question-text-pro" style={{ fontSize: `${settings.fontSize * 1.05}rem` }}>
+                <FuriganaText text={currentQuestion.question} />
+              </h3>
+
+              <div className="answers-grid">
+                {currentQuestion.answers.map((answer, idx) => {
+                  const isSelected = selectedAnswer === idx;
+                  const isCorrect = answer.isCorrect;
+                  let className = 'answer-card';
+                  if (showResults) {
+                    if (isCorrect) className += ' correct';
+                    else if (isSelected && !isCorrect) className += ' incorrect';
+                  } else if (isSelected) {
+                    className += ' selected';
+                  }
+
+                  return (
+                    <button
+                      key={idx}
+                      className={className}
+                      onClick={() => handleSelectAnswer(idx)}
+                      disabled={showResults}
+                      style={{ fontSize: `${settings.fontSize * 0.95}rem` }}
+                    >
+                      <div className="answer-indicator">
+                        <span className="answer-letter-pro">{String.fromCharCode(65 + idx)}</span>
+                        {showResults && isCorrect && <CheckCircle size={18} className="check-icon" />}
+                        {showResults && isSelected && !isCorrect && <XCircle size={18} className="x-icon" />}
+                      </div>
+                      <span className="answer-content"><FuriganaText text={answer.text} /></span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Explanation */}
+              {showResults && currentQuestion.explanation && (
+                <div className="explanation-card">
+                  <div className="explanation-header">
+                    <Sparkles size={16} />
+                    <span>Giải thích</span>
+                  </div>
+                  <p>{currentQuestion.explanation}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Question Actions */}
+            <div className="question-actions-pro">
+              {!showResults ? (
+                <button
+                  className="btn-action-pro btn-check"
+                  onClick={handleShowResult}
+                  disabled={selectedAnswer === undefined}
+                  style={{ '--btn-gradient': theme.gradient } as React.CSSProperties}
+                >
+                  <Target size={18} />
+                  Kiểm tra đáp án
+                </button>
+              ) : (
+                <button
+                  className="btn-action-pro btn-next"
+                  onClick={handleNextQuestion}
+                  style={{ '--btn-gradient': theme.gradient } as React.CSSProperties}
+                >
+                  {currentQuestionIndex < passage.questions.length - 1 ? (
+                    <>Câu tiếp theo <ChevronRight size={18} /></>
+                  ) : (
+                    <><Trophy size={18} /> Xem kết quả</>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
       <style>{`
-        .reading-practice-page {
-          min-height: 100vh;
+        .reading-practice-page.practice-mode {
+          height: 100vh;
+          max-height: 100vh;
           background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
-          padding: 1.5rem;
+          padding: 1.25rem;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
         }
 
-        .practice-header {
+        /* Compact Practice Header */
+        .practice-header-compact {
           display: flex;
           align-items: center;
-          gap: 1rem;
-          margin-bottom: 1.5rem;
+          gap: 0.75rem;
+          padding: 0.625rem 0.875rem;
+          background: rgba(255, 255, 255, 0.02);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-radius: 12px;
+          margin-bottom: 0.75rem;
         }
 
-        .btn-back {
-          width: 44px;
-          height: 44px;
-          border-radius: 12px;
+        .btn-back-compact {
+          width: 34px;
+          height: 34px;
+          border-radius: 8px;
           border: 1px solid rgba(255, 255, 255, 0.1);
-          background: rgba(255, 255, 255, 0.05);
+          background: rgba(255, 255, 255, 0.03);
           color: rgba(255, 255, 255, 0.7);
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all 0.3s ease;
+          transition: all 0.2s ease;
+          flex-shrink: 0;
         }
 
-        .btn-back:hover {
-          background: rgba(255, 255, 255, 0.1);
+        .btn-back-compact:hover {
+          background: rgba(255, 255, 255, 0.08);
           color: white;
         }
 
-        .header-info {
+        .header-center {
           flex: 1;
           display: flex;
           align-items: center;
-          gap: 1rem;
+          gap: 0.6rem;
+          min-width: 0;
         }
 
-        .header-info h2 {
+        .level-pill {
+          padding: 0.25rem 0.6rem;
+          border-radius: 6px;
+          font-size: 0.7rem;
+          font-weight: 600;
+          color: white;
+          flex-shrink: 0;
+        }
+
+        .header-title-compact {
           margin: 0;
-          font-size: 1.25rem;
+          font-size: 0.9rem;
+          font-weight: 500;
           color: white;
-          font-weight: 600;
-        }
-
-        .level-tag {
-          padding: 0.35rem 0.75rem;
-          border-radius: 8px;
-          font-size: 0.8rem;
-          font-weight: 600;
-          color: white;
-        }
-
-        .practice-progress {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          margin-bottom: 1.5rem;
-        }
-
-        .progress-bar {
-          flex: 1;
-          height: 6px;
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 3px;
-          overflow: hidden;
-        }
-
-        .progress-fill {
-          height: 100%;
-          border-radius: 3px;
-          transition: width 0.4s ease;
-        }
-
-        .progress-text {
-          font-size: 0.875rem;
-          color: rgba(255, 255, 255, 0.5);
           white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          flex: 1;
+          min-width: 0;
         }
 
-        .passage-content {
-          background: rgba(255, 255, 255, 0.03);
-          backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 20px;
-          padding: 1.5rem;
-          margin-bottom: 1.5rem;
+        .progress-indicator {
+          padding: 0.2rem 0.5rem;
+          background: rgba(255, 255, 255, 0.06);
+          border-radius: 6px;
+          font-size: 0.75rem;
+          font-weight: 500;
+          color: rgba(255, 255, 255, 0.6);
+          flex-shrink: 0;
         }
 
-        .passage-text {
-          font-size: 1.1rem;
-          line-height: 2;
-          white-space: pre-wrap;
-          color: rgba(255, 255, 255, 0.9);
+        /* Progress Section */
+        .progress-section-pro {
           margin-bottom: 1rem;
         }
 
-        .btn-speak {
-          display: inline-flex;
-          align-items: center;
+        .progress-bar-pro {
+          height: 4px;
+          background: rgba(255, 255, 255, 0.08);
+          border-radius: 2px;
+          overflow: hidden;
+          margin-bottom: 0.75rem;
+        }
+
+        .progress-fill-pro {
+          height: 100%;
+          border-radius: 2px;
+          transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .progress-steps {
+          display: flex;
           gap: 0.5rem;
-          padding: 0.625rem 1rem;
+          flex-wrap: wrap;
+        }
+
+        .progress-step {
+          width: 32px;
+          height: 32px;
+          border-radius: 10px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.03);
+          color: rgba(255, 255, 255, 0.5);
+          font-size: 0.8rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .progress-step:hover {
+          background: rgba(255, 255, 255, 0.08);
+          color: white;
+        }
+
+        .progress-step.active {
+          background: var(--step-color);
+          border-color: transparent;
+          color: white;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .progress-step.answered {
+          background: rgba(34, 197, 94, 0.2);
+          border-color: rgba(34, 197, 94, 0.4);
+          color: #22c55e;
+        }
+
+        .progress-step.active.answered {
+          background: var(--step-color);
+          color: white;
+        }
+
+        /* Split Layout */
+        .split-layout {
+          flex: 1;
+          display: grid;
+          grid-template-columns: 1.5fr 1fr;
+          gap: 1.25rem;
+          min-height: 0;
+          overflow: hidden;
+        }
+
+        .split-layout.with-pinned {
+          margin-top: 0;
+        }
+
+        /* Content Panel (Left - Wider) */
+        .content-panel {
+          display: flex;
+          flex-direction: column;
+          min-height: 0;
+          overflow: hidden;
+        }
+
+        .content-card {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          background: rgba(255, 255, 255, 0.02);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-radius: 20px;
+          overflow: hidden;
+          min-height: 0;
+        }
+
+        .content-header {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 1rem 1.25rem;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .content-icon {
+          width: 36px;
+          height: 36px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+          border-radius: 10px;
+          color: white;
+        }
+
+        .content-header h2 {
+          margin: 0;
+          flex: 1;
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: white;
+        }
+
+        .audio-controls {
+          display: flex;
+          gap: 0.4rem;
+        }
+
+        .btn-audio {
+          width: 36px;
+          height: 36px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           background: rgba(255, 255, 255, 0.05);
           border: 1px solid rgba(255, 255, 255, 0.1);
           border-radius: 10px;
@@ -881,163 +1228,556 @@ export function ReadingPracticePage({
           transition: all 0.3s ease;
         }
 
-        .btn-speak:hover {
-          background: rgba(59, 130, 246, 0.2);
-          border-color: rgba(59, 130, 246, 0.5);
+        .btn-audio:hover {
+          background: rgba(59, 130, 246, 0.15);
+          border-color: rgba(59, 130, 246, 0.4);
           color: #3b82f6;
         }
 
-        .question-section {
-          background: rgba(255, 255, 255, 0.03);
-          backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 20px;
-          padding: 1.5rem;
+        .btn-audio.active {
+          background: rgba(239, 68, 68, 0.15);
+          border-color: rgba(239, 68, 68, 0.4);
+          color: #ef4444;
         }
 
-        .question-text {
-          margin: 0 0 1.5rem;
+        .btn-audio.active:hover {
+          background: rgba(239, 68, 68, 0.25);
+        }
+
+        .btn-audio.paused {
+          background: rgba(34, 197, 94, 0.15);
+          border-color: rgba(34, 197, 94, 0.4);
+          color: #22c55e;
+        }
+
+        .btn-audio.paused:hover {
+          background: rgba(34, 197, 94, 0.25);
+        }
+
+        .content-body {
+          flex: 1;
+          padding: 1.5rem;
+          overflow-y: auto;
+        }
+
+        .passage-text-pro {
           font-size: 1.1rem;
+          line-height: 2.1;
+          white-space: pre-wrap;
+          color: rgba(255, 255, 255, 0.9);
+        }
+
+        .content-footer {
+          padding: 0.75rem 1.25rem;
+          border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .word-count {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+          font-size: 0.8rem;
+          color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Question Panel (Right - Narrower) */
+        .question-panel {
+          display: flex;
+          flex-direction: column;
+          min-height: 0;
+          overflow: hidden;
+        }
+
+        .question-card {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          background: rgba(255, 255, 255, 0.02);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-radius: 20px;
+          overflow: hidden;
+          min-height: 0;
+        }
+
+        .question-panel-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 1rem 1.25rem;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .question-number-badge {
+          padding: 0.4rem 1rem;
+          border-radius: 20px;
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: white;
+        }
+
+        .btn-pin {
+          display: none;
+        }
+
+        .question-content-scroll {
+          flex: 1;
+          padding: 1.25rem;
+          overflow-y: auto;
+        }
+
+        .question-text-pro {
+          margin: 0 0 1.25rem;
+          font-size: 1.05rem;
           font-weight: 500;
           color: white;
-          line-height: 1.6;
+          line-height: 1.7;
         }
 
-        .answers-list {
+        .answers-grid {
           display: flex;
           flex-direction: column;
           gap: 0.75rem;
-          margin-bottom: 1.5rem;
         }
 
-        .answer-option {
+        .answer-card {
           display: flex;
-          align-items: center;
-          gap: 1rem;
-          padding: 1rem 1.25rem;
-          background: rgba(255, 255, 255, 0.03);
-          border: 2px solid rgba(255, 255, 255, 0.1);
+          align-items: flex-start;
+          gap: 0.75rem;
+          padding: 1rem;
+          background: rgba(255, 255, 255, 0.02);
+          border: 2px solid rgba(255, 255, 255, 0.08);
           border-radius: 14px;
           cursor: pointer;
           text-align: left;
           transition: all 0.3s ease;
-          color: rgba(255, 255, 255, 0.9);
+          color: rgba(255, 255, 255, 0.85);
         }
 
-        .answer-option:hover:not(:disabled) {
-          background: rgba(255, 255, 255, 0.06);
-          border-color: rgba(255, 255, 255, 0.2);
+        .answer-card:hover:not(:disabled) {
+          background: rgba(255, 255, 255, 0.05);
+          border-color: rgba(255, 255, 255, 0.15);
+          transform: translateX(4px);
         }
 
-        .answer-option.selected {
+        .answer-card.selected {
           border-color: #3b82f6;
           background: rgba(59, 130, 246, 0.1);
         }
 
-        .answer-option.correct {
+        .answer-card.correct {
           border-color: #22c55e;
           background: rgba(34, 197, 94, 0.1);
         }
 
-        .answer-option.incorrect {
+        .answer-card.incorrect {
           border-color: #ef4444;
           background: rgba(239, 68, 68, 0.1);
         }
 
-        .answer-letter {
+        .answer-indicator {
+          position: relative;
+          flex-shrink: 0;
+        }
+
+        .answer-letter-pro {
           width: 32px;
           height: 32px;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.08);
           border-radius: 10px;
           font-weight: 600;
-          flex-shrink: 0;
+          font-size: 0.9rem;
+          transition: all 0.3s ease;
         }
 
-        .answer-option.selected .answer-letter {
+        .answer-card.selected .answer-letter-pro {
           background: #3b82f6;
           color: white;
         }
 
-        .answer-option.correct .answer-letter {
+        .answer-card.correct .answer-letter-pro {
           background: #22c55e;
           color: white;
         }
 
-        .answer-option.incorrect .answer-letter {
+        .answer-card.incorrect .answer-letter-pro {
           background: #ef4444;
           color: white;
         }
 
-        .answer-text {
+        .check-icon, .x-icon {
+          position: absolute;
+          top: -6px;
+          right: -6px;
+          background: white;
+          border-radius: 50%;
+        }
+
+        .check-icon { color: #22c55e; }
+        .x-icon { color: #ef4444; }
+
+        .answer-content {
           flex: 1;
-          line-height: 1.5;
-        }
-
-        .result-icon {
-          flex-shrink: 0;
-        }
-
-        .result-icon.correct { color: #22c55e; }
-        .result-icon.incorrect { color: #ef4444; }
-
-        .explanation {
-          background: rgba(59, 130, 246, 0.1);
-          border-left: 4px solid #3b82f6;
-          padding: 1rem 1.25rem;
-          border-radius: 0 12px 12px 0;
-          margin-bottom: 1.5rem;
-          color: rgba(255, 255, 255, 0.8);
           line-height: 1.6;
+          padding-top: 0.25rem;
         }
 
-        .explanation strong {
-          color: #3b82f6;
+        /* Explanation Card */
+        .explanation-card {
+          margin-top: 1.25rem;
+          padding: 1rem;
+          background: rgba(59, 130, 246, 0.08);
+          border: 1px solid rgba(59, 130, 246, 0.2);
+          border-radius: 14px;
+          animation: fadeInUp 0.4s ease;
         }
 
-        .question-actions {
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .explanation-header {
           display: flex;
-          justify-content: center;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 0.5rem;
+          color: #3b82f6;
+          font-weight: 600;
+          font-size: 0.9rem;
         }
 
-        .btn {
+        .explanation-card p {
+          margin: 0;
+          color: rgba(255, 255, 255, 0.8);
+          line-height: 1.7;
+          font-size: 0.95rem;
+        }
+
+        /* Question Actions */
+        .question-actions-pro {
+          padding: 1rem 1.25rem;
+          border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .btn-action-pro {
+          width: 100%;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 0.5rem;
-          padding: 0.875rem 2rem;
-          border-radius: 12px;
-          font-weight: 500;
-          font-size: 1rem;
+          padding: 1rem;
+          border-radius: 14px;
+          font-weight: 600;
+          font-size: 0.95rem;
           cursor: pointer;
           transition: all 0.3s ease;
           border: none;
-          min-width: 160px;
         }
 
-        .btn-primary {
-          background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        .btn-check {
+          background: var(--btn-gradient);
           color: white;
         }
 
-        .btn-primary:hover:not(:disabled) {
-          box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+        .btn-check:hover:not(:disabled) {
           transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
         }
 
-        .btn-primary:disabled {
+        .btn-check:disabled {
           opacity: 0.5;
           cursor: not-allowed;
         }
 
-        @media (max-width: 640px) {
-          .reading-practice-page { padding: 1rem; }
-          .header-info h2 { font-size: 1rem; }
-          .passage-text { font-size: 1rem; line-height: 1.8; }
-          .question-text { font-size: 1rem; }
-          .answer-option { padding: 0.875rem 1rem; }
+        .btn-next {
+          background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+          color: white;
+        }
+
+        .btn-next:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(34, 197, 94, 0.4);
+        }
+
+        /* Pinned Question Header (Mobile) */
+        .pinned-question-header {
+          position: sticky;
+          top: 0;
+          z-index: 100;
+          background: rgba(15, 15, 26, 0.95);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 16px;
+          margin-bottom: 1rem;
+          overflow: hidden;
+          animation: slideDown 0.3s ease;
+        }
+
+        .pinned-header-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0.75rem 1rem;
+          cursor: pointer;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .pinned-label {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-weight: 600;
+          color: #3b82f6;
+          font-size: 0.9rem;
+        }
+
+        .pinned-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        .btn-icon-sm {
+          width: 28px;
+          height: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(255, 255, 255, 0.05);
+          border: none;
+          border-radius: 8px;
+          color: rgba(255, 255, 255, 0.6);
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .btn-icon-sm:hover {
+          background: rgba(239, 68, 68, 0.2);
+          color: #ef4444;
+        }
+
+        .pinned-content {
+          padding: 1rem;
+        }
+
+        .pinned-question-text {
+          margin: 0 0 0.75rem;
+          font-size: 0.95rem;
+          font-weight: 500;
+          color: white;
+          line-height: 1.5;
+        }
+
+        .pinned-answers {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+          margin-bottom: 0.75rem;
+        }
+
+        .pinned-answer {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          padding: 0.6rem 0.8rem;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 10px;
+          cursor: pointer;
+          text-align: left;
+          transition: all 0.2s ease;
+          color: rgba(255, 255, 255, 0.8);
+          font-size: 0.85rem;
+        }
+
+        .pinned-answer:hover:not(:disabled) {
+          background: rgba(255, 255, 255, 0.06);
+        }
+
+        .pinned-answer.selected {
+          border-color: #3b82f6;
+          background: rgba(59, 130, 246, 0.1);
+        }
+
+        .pinned-answer.correct {
+          border-color: #22c55e;
+          background: rgba(34, 197, 94, 0.1);
+        }
+
+        .pinned-answer.incorrect {
+          border-color: #ef4444;
+          background: rgba(239, 68, 68, 0.1);
+        }
+
+        .answer-letter-mini {
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 6px;
+          font-weight: 600;
+          font-size: 0.75rem;
+          flex-shrink: 0;
+        }
+
+        .pinned-answer.selected .answer-letter-mini {
+          background: #3b82f6;
+          color: white;
+        }
+
+        .pinned-answer.correct .answer-letter-mini {
+          background: #22c55e;
+          color: white;
+        }
+
+        .pinned-answer.incorrect .answer-letter-mini {
+          background: #ef4444;
+          color: white;
+        }
+
+        .answer-text-mini {
+          flex: 1;
+          line-height: 1.4;
+        }
+
+        .pinned-action-buttons {
+          display: flex;
+          gap: 0.5rem;
+        }
+
+        .btn-check-pinned, .btn-next-pinned {
+          flex: 1;
+          padding: 0.6rem;
+          border: none;
+          border-radius: 10px;
+          font-weight: 600;
+          font-size: 0.85rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .btn-check-pinned {
+          background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+          color: white;
+        }
+
+        .btn-check-pinned:disabled {
+          opacity: 0.5;
+        }
+
+        .btn-next-pinned {
+          background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+          color: white;
+        }
+
+        .pinned-question-header.collapsed .pinned-header-row {
+          border-bottom: none;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 900px) {
+          .split-layout {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+          }
+
+          .btn-pin {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 0.8rem;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 10px;
+            color: #3b82f6;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+          }
+
+          .btn-pin:hover {
+            background: rgba(59, 130, 246, 0.2);
+          }
+
+          .header-title-section h1 {
+            font-size: 1rem;
+          }
+
+          .header-stats {
+            display: none;
+          }
+
+          .progress-steps {
+            gap: 0.4rem;
+          }
+
+          .progress-step {
+            width: 28px;
+            height: 28px;
+            font-size: 0.75rem;
+          }
+
+          .content-body {
+            padding: 1rem;
+          }
+
+          .passage-text-pro {
+            font-size: 1rem;
+            line-height: 1.9;
+          }
+
+          .question-content-scroll {
+            padding: 1rem;
+          }
+
+          .question-text-pro {
+            font-size: 1rem;
+          }
+
+          .answer-card {
+            padding: 0.875rem;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .reading-practice-page.practice-mode {
+            padding: 0.75rem;
+          }
+
+          .practice-header-pro {
+            padding: 0.75rem;
+          }
+
+          .btn-back-pro {
+            width: 36px;
+            height: 36px;
+          }
+
+          .header-title-section h1 {
+            font-size: 0.9rem;
+          }
+
+          .content-header h2 {
+            font-size: 0.85rem;
+          }
+
+          .btn-audio {
+            width: 32px;
+            height: 32px;
+          }
+
+          .progress-step {
+            width: 26px;
+            height: 26px;
+          }
         }
       `}</style>
     </div>

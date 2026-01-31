@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import type { Flashcard, DifficultyLevel } from '../../types/flashcard';
 import { ConfirmModal } from '../ui/confirm-modal';
-import { Edit3, Trash2, LayoutGrid, List } from 'lucide-react';
+import { ResetCardModal } from '../ui/reset-card-modal';
+import { Edit3, Trash2, LayoutGrid, List, RotateCcw } from 'lucide-react';
 
 type ViewMode = 'grid' | 'by-difficulty';
 
@@ -23,13 +24,15 @@ interface FlashcardListProps {
   cards: Flashcard[];
   onEdit: (card: Flashcard) => void;
   onDelete: (id: string) => void;
+  onReset?: (card: Flashcard) => void;
   canEdit?: (card: Flashcard) => boolean;
   canDelete?: (card: Flashcard) => boolean;
 }
 
-export function FlashcardList({ cards, onEdit, onDelete, canEdit, canDelete }: FlashcardListProps) {
+export function FlashcardList({ cards, onEdit, onDelete, onReset, canEdit, canDelete }: FlashcardListProps) {
   const [flippedId, setFlippedId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Flashcard | null>(null);
+  const [resetTarget, setResetTarget] = useState<Flashcard | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
   const handleFlip = (id: string) => {
@@ -45,6 +48,19 @@ export function FlashcardList({ cards, onEdit, onDelete, canEdit, canDelete }: F
       onDelete(deleteTarget.id);
       setDeleteTarget(null);
     }
+  };
+
+  const handleResetConfirm = () => {
+    if (resetTarget && onReset) {
+      onReset(resetTarget);
+      setResetTarget(null);
+    }
+  };
+
+  // Check if card has changes that can be reset
+  const canResetCard = (card: Flashcard) => {
+    return card.memorizationStatus !== 'unset' ||
+           card.difficultyLevel !== (card.originalDifficultyLevel || 'unset');
   };
 
   // Group cards by difficulty level
@@ -75,6 +91,11 @@ export function FlashcardList({ cards, onEdit, onDelete, canEdit, canDelete }: F
           </div>
         </div>
         <div className="card-item-actions">
+          {onReset && canResetCard(card) && (
+            <button className="btn-icon btn-reset" onClick={() => setResetTarget(card)} title="Reset về mặc định">
+              <RotateCcw size={16} />
+            </button>
+          )}
           {(!canEdit || canEdit(card)) && (
             <button className="btn-icon" onClick={() => onEdit(card)} title="Sửa">
               <Edit3 size={16} />
@@ -151,6 +172,13 @@ export function FlashcardList({ cards, onEdit, onDelete, canEdit, canDelete }: F
         confirmText="Xóa"
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeleteTarget(null)}
+      />
+
+      <ResetCardModal
+        isOpen={resetTarget !== null}
+        card={resetTarget}
+        onConfirm={handleResetConfirm}
+        onCancel={() => setResetTarget(null)}
       />
     </div>
   );

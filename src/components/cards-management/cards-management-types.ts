@@ -60,6 +60,7 @@ export interface VocabularyTabProps {
   onAddCard: (data: FlashcardFormData, createdBy?: string) => void;
   onUpdateCard: (id: string, data: Partial<Flashcard>) => void;
   onDeleteCard: (id: string) => void;
+  onResetCard?: (card: Flashcard) => void;
   // Lessons
   lessons: Lesson[];
   getLessonsByLevel: (level: JLPTLevel) => Lesson[];

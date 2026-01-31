@@ -212,6 +212,13 @@ export function CardsPage({
           onAddCard={onAddCard}
           onUpdateCard={onUpdateCard}
           onDeleteCard={onDeleteCard}
+          onResetCard={(card) => {
+            // Reset card to original state
+            onUpdateCard(card.id, {
+              memorizationStatus: 'unset',
+              difficultyLevel: card.originalDifficultyLevel || 'unset',
+            });
+          }}
           lessons={lessons}
           getLessonsByLevel={getLessonsByLevel}
           getChildLessons={getChildLessons}

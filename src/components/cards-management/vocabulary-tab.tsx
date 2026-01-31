@@ -55,6 +55,7 @@ export function VocabularyTab({
   onAddCard,
   onUpdateCard,
   onDeleteCard,
+  onResetCard,
   lessons,
   getLessonsByLevel,
   getChildLessons,
@@ -563,7 +564,7 @@ export function VocabularyTab({
               {getChildLessons(navState.lessonId).map(lesson => renderLessonItem(lesson, true, getChildLessons(navState.lessonId)))}
               {getChildLessons(navState.lessonId).length === 0 && (
                 currentCards.length > 0 ? (
-                  <FlashcardList cards={currentCards} onEdit={(card) => { setEditingCard(card); setShowForm(true); }} onDelete={onDeleteCard} canEdit={canModifyCard} canDelete={canModifyCard} />
+                  <FlashcardList cards={currentCards} onEdit={(card) => { setEditingCard(card); setShowForm(true); }} onDelete={onDeleteCard} onReset={onResetCard} canEdit={canModifyCard} canDelete={canModifyCard} />
                 ) : (
                   <p className="empty-message">Chưa có thẻ nào. Nhấn "+ Tạo thẻ" để thêm hoặc tạo bài học con.</p>
                 )
@@ -573,7 +574,7 @@ export function VocabularyTab({
 
           {navState.type === 'childLesson' && (
             currentCards.length > 0 ? (
-              <FlashcardList cards={currentCards} onEdit={(card) => { setEditingCard(card); setShowForm(true); }} onDelete={onDeleteCard} canEdit={canModifyCard} canDelete={canModifyCard} />
+              <FlashcardList cards={currentCards} onEdit={(card) => { setEditingCard(card); setShowForm(true); }} onDelete={onDeleteCard} onReset={onResetCard} canEdit={canModifyCard} canDelete={canModifyCard} />
             ) : (
               <p className="empty-message">Chưa có thẻ nào. Nhấn "+ Tạo thẻ" để thêm.</p>
             )

@@ -35,6 +35,7 @@ export interface Flashcard {
   // Memorization tracking
   memorizationStatus: MemorizationStatus;
   difficultyLevel: DifficultyLevel;
+  originalDifficultyLevel?: DifficultyLevel; // Độ khó ban đầu khi tạo thẻ
 }
 
 // Quality rating cho SM-2 algorithm
