@@ -52,6 +52,8 @@ import { OfflineIndicator } from './components/common/offline-indicator';
 import { FloatingChatButton } from './components/common/floating-chat-button';
 import { FloatingChatPanel } from './components/common/floating-chat-panel';
 import { JLPTLevelModal } from './components/common/jlpt-level-modal';
+import { ReadingSettingsProvider } from './contexts/reading-settings-context';
+import { ListeningSettingsProvider } from './contexts/listening-settings-context';
 import type { UserJLPTLevel } from './types/user';
 import './App.css';
 
@@ -353,6 +355,8 @@ function App() {
   }
 
   return (
+    <ReadingSettingsProvider>
+    <ListeningSettingsProvider>
     <div className={`app app-with-sidebar ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
       <Sidebar
         currentPage={currentPage}
@@ -763,6 +767,8 @@ function App() {
         />
       )}
     </div>
+    </ListeningSettingsProvider>
+    </ReadingSettingsProvider>
   );
 }
 

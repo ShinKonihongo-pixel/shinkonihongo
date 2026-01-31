@@ -1,15 +1,25 @@
 // Listening Tab - Manage listening practice content and audio files
+// Premium dark glassmorphism design
 
 import { useState, useRef } from 'react';
 import {
   Trash2, Edit2, Save, X, ChevronRight, ChevronLeft,
-  Upload, Music, FolderPlus, Folder, Play, Pause
+  Upload, Music, FolderPlus, Folder, Play, Pause, Headphones, Sparkles
 } from 'lucide-react';
 import type { JLPTLevel } from '../../types/flashcard';
 import type { CurrentUser } from '../../types/user';
 import type { ListeningAudio, ListeningFolder } from '../../types/listening';
 
 const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
+
+// Level theme configurations
+const LEVEL_THEMES: Record<JLPTLevel, { gradient: string; glow: string; border: string }> = {
+  N5: { gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', glow: 'rgba(16, 185, 129, 0.4)', border: 'rgba(16, 185, 129, 0.3)' },
+  N4: { gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', glow: 'rgba(59, 130, 246, 0.4)', border: 'rgba(59, 130, 246, 0.3)' },
+  N3: { gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', glow: 'rgba(139, 92, 246, 0.4)', border: 'rgba(139, 92, 246, 0.3)' },
+  N2: { gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', glow: 'rgba(245, 158, 11, 0.4)', border: 'rgba(245, 158, 11, 0.3)' },
+  N1: { gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', glow: 'rgba(239, 68, 68, 0.4)', border: 'rgba(239, 68, 68, 0.3)' },
+};
 
 type NavState =
   | { type: 'root' }
@@ -153,45 +163,118 @@ export function ListeningTab({
   if (navState.type === 'root') {
     return (
       <div className="listening-tab">
-        <div className="tab-header">
-          <h3>Quản lí Nghe Hiểu</h3>
-          <p className="tab-subtitle">Chọn cấp độ để quản lí nội dung luyện nghe</p>
+        {/* Premium Header */}
+        <div className="premium-header">
+          <div className="header-content">
+            <div className="header-icon">
+              <Headphones size={24} />
+              <Sparkles className="sparkle sparkle-1" size={10} />
+              <Sparkles className="sparkle sparkle-2" size={8} />
+            </div>
+            <div className="header-text">
+              <h3>Quản lí Nghe Hiểu</h3>
+              <p>Chọn cấp độ để quản lí nội dung luyện nghe</p>
+            </div>
+          </div>
         </div>
 
         <div className="level-grid">
-          {JLPT_LEVELS.map(level => (
-            <button key={level} className="level-card" onClick={() => goToLevel(level)}>
-              <span className="level-name">{level}</span>
-              <span className="level-count">{getCountByLevel(level)} file</span>
-              <ChevronRight size={18} className="level-arrow" />
-            </button>
-          ))}
+          {JLPT_LEVELS.map((level, idx) => {
+            const theme = LEVEL_THEMES[level];
+            const count = getCountByLevel(level);
+            return (
+              <button
+                key={level}
+                className="level-card"
+                onClick={() => goToLevel(level)}
+                style={{
+                  '--card-delay': `${idx * 0.1}s`,
+                  '--level-gradient': theme.gradient,
+                  '--level-glow': theme.glow,
+                  '--level-border': theme.border,
+                } as React.CSSProperties}
+              >
+                <span className="level-name">{level}</span>
+                <span className="level-count">{count} file</span>
+                <ChevronRight size={18} className="level-arrow" />
+                <div className="card-shine" />
+              </button>
+            );
+          })}
         </div>
 
         <audio ref={audioRef} onEnded={() => setPlayingAudioId(null)} />
 
         <style>{`
           .listening-tab {
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100%;
             padding: 1.5rem;
           }
 
-          .tab-header {
+          /* Premium Header */
+          .premium-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 1.5rem;
+            padding: 1rem 1.25rem;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
           }
 
-          .tab-header h3 {
+          .header-content {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+          }
+
+          .header-icon {
+            position: relative;
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.3);
+          }
+
+          .sparkle {
+            position: absolute;
+            color: #fbbf24;
+            animation: sparkle 2s ease-in-out infinite;
+          }
+
+          .sparkle-1 { top: -3px; right: -3px; animation-delay: 0s; }
+          .sparkle-2 { bottom: -2px; left: -2px; animation-delay: 0.5s; }
+
+          @keyframes sparkle {
+            0%, 100% { opacity: 0; transform: scale(0.5) rotate(0deg); }
+            50% { opacity: 1; transform: scale(1) rotate(180deg); }
+          }
+
+          .header-text h3 {
+            margin: 0;
             font-size: 1.25rem;
             font-weight: 700;
-            color: var(--dark);
-            margin: 0 0 0.25rem;
+            background: linear-gradient(135deg, #fff 0%, #c4b5fd 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
           }
 
-          .tab-subtitle {
-            font-size: 0.9rem;
-            color: var(--gray);
-            margin: 0;
+          .header-text p {
+            margin: 0.25rem 0 0;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
           }
 
+          /* Level Grid */
           .level-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -199,34 +282,66 @@ export function ListeningTab({
           }
 
           .level-card {
+            position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 0.5rem;
             padding: 1.5rem;
-            background: white;
-            border: 2px solid var(--border);
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--level-border);
             border-radius: 16px;
             cursor: pointer;
-            transition: all 0.2s;
-            position: relative;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: cardAppear 0.5s ease backwards;
+            animation-delay: var(--card-delay);
+            overflow: hidden;
+          }
+
+          @keyframes cardAppear {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
           }
 
           .level-card:hover {
-            border-color: var(--primary);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 40px var(--level-glow);
+          }
+
+          .level-card:hover .card-shine {
+            transform: translateX(100%);
+          }
+
+          .level-card:hover .level-arrow {
+            color: white;
+            transform: translateY(-50%) translateX(3px);
+          }
+
+          .card-shine {
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: transform 0.6s ease;
+            pointer-events: none;
           }
 
           .level-name {
             font-size: 1.5rem;
             font-weight: 800;
-            color: var(--primary);
+            background: var(--level-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
           }
 
           .level-count {
             font-size: 0.85rem;
-            color: var(--gray);
+            color: rgba(255, 255, 255, 0.5);
           }
 
           .level-arrow {
@@ -234,12 +349,8 @@ export function ListeningTab({
             right: 1rem;
             top: 50%;
             transform: translateY(-50%);
-            color: var(--gray-light);
-            transition: color 0.2s;
-          }
-
-          .level-card:hover .level-arrow {
-            color: var(--primary);
+            color: rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
           }
         `}</style>
       </div>
@@ -249,6 +360,7 @@ export function ListeningTab({
   // Level view - Folder list
   if (navState.type === 'level') {
     const levelFolders = getFoldersByLevel(navState.level);
+    const theme = LEVEL_THEMES[navState.level];
 
     return (
       <div className="listening-tab">
@@ -256,9 +368,12 @@ export function ListeningTab({
           <button className="back-btn" onClick={goBack}>
             <ChevronLeft size={18} /> Quay lại
           </button>
-          <h3>{navState.level} - Thư mục</h3>
+          <span className="current-level" style={{ background: theme.gradient }}>
+            {navState.level}
+          </span>
+          <h3>Thư mục</h3>
           <button className="add-btn" onClick={() => setShowAddFolder(true)}>
-            <FolderPlus size={18} /> Thêm thư mục
+            <FolderPlus size={18} /> Thêm
           </button>
         </div>
 
@@ -279,12 +394,19 @@ export function ListeningTab({
         <div className="folder-list">
           {levelFolders.length === 0 ? (
             <div className="empty-state">
-              <Folder size={48} strokeWidth={1} />
+              <div className="empty-icon">
+                <Folder size={48} strokeWidth={1} />
+              </div>
               <p>Chưa có thư mục nào</p>
+              <span className="empty-hint">Nhấn "Thêm" để tạo thư mục mới</span>
             </div>
           ) : (
-            levelFolders.map(folder => (
-              <div key={folder.id} className="folder-item">
+            levelFolders.map((folder, idx) => (
+              <div
+                key={folder.id}
+                className="folder-item"
+                style={{ '--item-delay': `${idx * 0.05}s` } as React.CSSProperties}
+              >
                 {editingFolder?.id === folder.id ? (
                   <div className="edit-form">
                     <input
@@ -306,7 +428,7 @@ export function ListeningTab({
                     </button>
                     <div className="folder-actions">
                       <button onClick={() => setEditingFolder({ id: folder.id, name: folder.name })}><Edit2 size={16} /></button>
-                      <button onClick={() => handleDeleteFolder(folder.id)}><Trash2 size={16} /></button>
+                      <button className="delete-btn" onClick={() => handleDeleteFolder(folder.id)}><Trash2 size={16} /></button>
                     </div>
                   </>
                 )}
@@ -319,6 +441,8 @@ export function ListeningTab({
 
         <style>{`
           .listening-tab {
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100%;
             padding: 1.5rem;
           }
 
@@ -331,9 +455,18 @@ export function ListeningTab({
 
           .nav-header h3 {
             flex: 1;
-            font-size: 1.25rem;
-            font-weight: 700;
+            font-size: 1.1rem;
+            font-weight: 600;
             margin: 0;
+            color: white;
+          }
+
+          .current-level {
+            padding: 0.35rem 0.75rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: white;
           }
 
           .back-btn, .add-btn {
@@ -341,26 +474,30 @@ export function ListeningTab({
             align-items: center;
             gap: 0.35rem;
             padding: 0.5rem 1rem;
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
             font-size: 0.85rem;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
+            color: rgba(255, 255, 255, 0.8);
           }
 
           .back-btn:hover, .add-btn:hover {
-            background: var(--gray-light);
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: white;
           }
 
           .add-btn {
-            background: var(--primary);
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            border-color: transparent;
             color: white;
-            border-color: var(--primary);
           }
 
           .add-btn:hover {
-            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
           }
 
           .add-form, .edit-form {
@@ -368,33 +505,63 @@ export function ListeningTab({
             gap: 0.5rem;
             margin-bottom: 1rem;
             padding: 1rem;
-            background: var(--light);
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            animation: slideDown 0.3s ease;
+          }
+
+          @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
           }
 
           .add-form input, .edit-form input {
             flex: 1;
-            padding: 0.5rem 1rem;
-            border: 1px solid var(--border);
-            border-radius: 6px;
+            padding: 0.6rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
             font-size: 0.9rem;
-          }
-
-          .btn-save, .btn-cancel {
-            padding: 0.5rem;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-          }
-
-          .btn-save {
-            background: var(--success);
             color: white;
           }
 
+          .add-form input::placeholder, .edit-form input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+          }
+
+          .add-form input:focus, .edit-form input:focus {
+            outline: none;
+            border-color: rgba(139, 92, 246, 0.5);
+          }
+
+          .btn-save, .btn-cancel {
+            padding: 0.6rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+
+          .btn-save {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+          }
+
+          .btn-save:hover {
+            transform: scale(1.05);
+          }
+
           .btn-cancel {
-            background: var(--gray-light);
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+          }
+
+          .btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.15);
           }
 
           .folder-list {
@@ -407,10 +574,23 @@ export function ListeningTab({
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
             overflow: hidden;
+            animation: itemAppear 0.3s ease backwards;
+            animation-delay: var(--item-delay);
+            transition: all 0.3s ease;
+          }
+
+          @keyframes itemAppear {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+          }
+
+          .folder-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.12);
           }
 
           .folder-btn {
@@ -423,30 +603,46 @@ export function ListeningTab({
             border: none;
             cursor: pointer;
             text-align: left;
-            transition: background 0.2s;
+            transition: all 0.2s;
+            color: rgba(255, 255, 255, 0.8);
           }
 
           .folder-btn:hover {
-            background: var(--light);
+            color: white;
+          }
+
+          .folder-btn svg:first-child {
+            color: #8b5cf6;
           }
 
           .folder-name {
             flex: 1;
-            font-weight: 600;
+            font-weight: 500;
+            color: inherit;
           }
 
           .folder-count {
-            font-size: 0.8rem;
-            color: var(--gray);
-            background: var(--light);
-            padding: 0.2rem 0.6rem;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.08);
+            padding: 0.25rem 0.6rem;
             border-radius: 10px;
+          }
+
+          .folder-btn > svg:last-child {
+            color: rgba(255, 255, 255, 0.3);
+            transition: all 0.2s;
+          }
+
+          .folder-item:hover .folder-btn > svg:last-child {
+            color: rgba(255, 255, 255, 0.6);
+            transform: translateX(3px);
           }
 
           .folder-actions {
             display: flex;
             gap: 0.25rem;
-            padding-right: 0.5rem;
+            padding-right: 0.75rem;
           }
 
           .folder-actions button {
@@ -454,23 +650,63 @@ export function ListeningTab({
             background: none;
             border: none;
             cursor: pointer;
-            color: var(--gray);
-            border-radius: 6px;
+            color: rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
             transition: all 0.2s;
           }
 
           .folder-actions button:hover {
-            background: var(--light);
-            color: var(--dark);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+          }
+
+          .folder-actions .delete-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
           }
 
           .empty-state {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 1rem;
-            padding: 3rem;
-            color: var(--gray);
+            gap: 0.75rem;
+            padding: 4rem 2rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+          }
+
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+
+          .empty-icon {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            animation: pulse 3s ease-in-out infinite;
+          }
+
+          @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.05); opacity: 0.7; }
+          }
+
+          .empty-state p {
+            margin: 0;
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.7);
+          }
+
+          .empty-hint {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.4);
           }
         `}</style>
       </div>
@@ -479,6 +715,7 @@ export function ListeningTab({
 
   // Folder view - Audio list
   const folderAudios = getAudiosByFolder(navState.folderId);
+  const theme = LEVEL_THEMES[navState.level];
 
   return (
     <div className="listening-tab">
@@ -488,7 +725,7 @@ export function ListeningTab({
         </button>
         <h3>{navState.folderName}</h3>
         <button className="add-btn" onClick={() => setShowAddAudio(true)}>
-          <Upload size={18} /> Tải file nghe
+          <Upload size={18} /> Tải file
         </button>
       </div>
 
@@ -496,12 +733,15 @@ export function ListeningTab({
         <div className="upload-form">
           <div className="form-row">
             <label>File nghe:</label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="audio/*"
-              onChange={handleFileSelect}
-            />
+            <div className="file-input-wrapper">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="audio/*"
+                onChange={handleFileSelect}
+              />
+              {selectedFile && <span className="file-name">{selectedFile.name}</span>}
+            </div>
           </div>
           {selectedFile && (
             <>
@@ -542,15 +782,23 @@ export function ListeningTab({
       <div className="audio-list">
         {folderAudios.length === 0 ? (
           <div className="empty-state">
-            <Music size={48} strokeWidth={1} />
+            <div className="empty-icon">
+              <Music size={48} strokeWidth={1} />
+            </div>
             <p>Chưa có file nghe nào</p>
+            <span className="empty-hint">Nhấn "Tải file" để thêm nội dung mới</span>
           </div>
         ) : (
-          folderAudios.map(audio => (
-            <div key={audio.id} className="audio-item">
+          folderAudios.map((audio, idx) => (
+            <div
+              key={audio.id}
+              className="audio-item"
+              style={{ '--item-delay': `${idx * 0.05}s` } as React.CSSProperties}
+            >
               <button
                 className={`play-btn ${playingAudioId === audio.id ? 'playing' : ''}`}
                 onClick={() => togglePlayAudio(audio.id, audio.audioUrl)}
+                style={{ '--level-gradient': theme.gradient } as React.CSSProperties}
               >
                 {playingAudioId === audio.id ? <Pause size={20} /> : <Play size={20} />}
               </button>
@@ -559,7 +807,7 @@ export function ListeningTab({
                 {audio.description && <span className="audio-desc">{audio.description}</span>}
               </div>
               <div className="audio-actions">
-                <button onClick={() => handleDeleteAudio(audio.id)}><Trash2 size={16} /></button>
+                <button className="delete-btn" onClick={() => handleDeleteAudio(audio.id)}><Trash2 size={16} /></button>
               </div>
             </div>
           ))
@@ -570,6 +818,8 @@ export function ListeningTab({
 
       <style>{`
         .listening-tab {
+          background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+          min-height: 100%;
           padding: 1.5rem;
         }
 
@@ -582,9 +832,10 @@ export function ListeningTab({
 
         .nav-header h3 {
           flex: 1;
-          font-size: 1.25rem;
-          font-weight: 700;
+          font-size: 1.1rem;
+          font-weight: 600;
           margin: 0;
+          color: white;
         }
 
         .back-btn, .add-btn {
@@ -592,53 +843,89 @@ export function ListeningTab({
           align-items: center;
           gap: 0.35rem;
           padding: 0.5rem 1rem;
-          background: white;
-          border: 1px solid var(--border);
-          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
           font-size: 0.85rem;
           cursor: pointer;
-          transition: all 0.2s;
+          transition: all 0.3s ease;
+          color: rgba(255, 255, 255, 0.8);
         }
 
         .back-btn:hover, .add-btn:hover {
-          background: var(--gray-light);
+          background: rgba(255, 255, 255, 0.12);
+          border-color: rgba(255, 255, 255, 0.2);
+          color: white;
         }
 
         .add-btn {
-          background: var(--primary);
+          background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+          border-color: transparent;
           color: white;
-          border-color: var(--primary);
         }
 
         .add-btn:hover {
-          background: var(--primary-dark);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
         }
 
         .upload-form {
           margin-bottom: 1.5rem;
           padding: 1.25rem;
-          background: var(--light);
-          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 16px;
+          animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
         .form-row {
           display: flex;
           flex-direction: column;
-          gap: 0.35rem;
+          gap: 0.4rem;
           margin-bottom: 1rem;
         }
 
         .form-row label {
           font-size: 0.85rem;
-          font-weight: 600;
-          color: var(--dark);
+          font-weight: 500;
+          color: rgba(255, 255, 255, 0.7);
         }
 
-        .form-row input, .form-row textarea {
-          padding: 0.65rem 1rem;
-          border: 1px solid var(--border);
-          border-radius: 8px;
+        .file-input-wrapper {
+          position: relative;
+        }
+
+        .form-row input[type="file"] {
+          padding: 0.6rem;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
+          color: rgba(255, 255, 255, 0.8);
+          width: 100%;
+        }
+
+        .form-row input[type="text"], .form-row textarea {
+          padding: 0.7rem 1rem;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
           font-size: 0.9rem;
+          color: white;
+          resize: none;
+        }
+
+        .form-row input::placeholder, .form-row textarea::placeholder {
+          color: rgba(255, 255, 255, 0.4);
+        }
+
+        .form-row input:focus, .form-row textarea:focus {
+          outline: none;
+          border-color: rgba(139, 92, 246, 0.5);
         }
 
         .form-actions {
@@ -651,8 +938,31 @@ export function ListeningTab({
           display: flex;
           align-items: center;
           gap: 0.35rem;
-          padding: 0.5rem 1rem;
-          border-radius: 8px;
+          padding: 0.6rem 1rem;
+          border-radius: 10px;
+          font-size: 0.85rem;
+          cursor: pointer;
+          transition: all 0.2s;
+          border: none;
+        }
+
+        .form-actions .btn-save {
+          background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+          color: white;
+        }
+
+        .form-actions .btn-save:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(34, 197, 94, 0.4);
+        }
+
+        .form-actions .btn-cancel {
+          background: rgba(255, 255, 255, 0.08);
+          color: rgba(255, 255, 255, 0.7);
+        }
+
+        .form-actions .btn-cancel:hover {
+          background: rgba(255, 255, 255, 0.12);
         }
 
         .audio-list {
@@ -665,33 +975,56 @@ export function ListeningTab({
           display: flex;
           align-items: center;
           gap: 0.75rem;
-          padding: 0.75rem 1rem;
-          background: white;
-          border: 1px solid var(--border);
-          border-radius: 10px;
+          padding: 0.875rem 1rem;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 12px;
+          animation: itemAppear 0.3s ease backwards;
+          animation-delay: var(--item-delay);
+          transition: all 0.3s ease;
+        }
+
+        @keyframes itemAppear {
+          from { opacity: 0; transform: translateX(-10px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+
+        .audio-item:hover {
+          background: rgba(255, 255, 255, 0.05);
+          border-color: rgba(255, 255, 255, 0.12);
         }
 
         .play-btn {
-          width: 42px;
-          height: 42px;
+          width: 44px;
+          height: 44px;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: var(--light);
-          border: none;
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.1);
           border-radius: 50%;
           cursor: pointer;
-          transition: all 0.2s;
+          transition: all 0.3s ease;
+          color: rgba(255, 255, 255, 0.7);
         }
 
         .play-btn:hover {
-          background: var(--primary);
+          background: var(--level-gradient);
+          border-color: transparent;
           color: white;
+          transform: scale(1.05);
         }
 
         .play-btn.playing {
-          background: var(--primary);
+          background: var(--level-gradient);
+          border-color: transparent;
           color: white;
+          animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
         }
 
         .audio-info {
@@ -702,13 +1035,13 @@ export function ListeningTab({
         }
 
         .audio-title {
-          font-weight: 600;
-          color: var(--dark);
+          font-weight: 500;
+          color: white;
         }
 
         .audio-desc {
           font-size: 0.8rem;
-          color: var(--gray);
+          color: rgba(255, 255, 255, 0.5);
         }
 
         .audio-actions button {
@@ -716,23 +1049,53 @@ export function ListeningTab({
           background: none;
           border: none;
           cursor: pointer;
-          color: var(--gray);
-          border-radius: 6px;
+          color: rgba(255, 255, 255, 0.4);
+          border-radius: 8px;
           transition: all 0.2s;
         }
 
-        .audio-actions button:hover {
-          background: var(--danger-light);
-          color: var(--danger);
+        .audio-actions .delete-btn:hover {
+          background: rgba(239, 68, 68, 0.2);
+          color: #f87171;
         }
 
         .empty-state {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 1rem;
-          padding: 3rem;
-          color: var(--gray);
+          gap: 0.75rem;
+          padding: 4rem 2rem;
+          color: rgba(255, 255, 255, 0.5);
+          text-align: center;
+          animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        .empty-icon {
+          width: 80px;
+          height: 80px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 20px;
+          animation: pulse 3s ease-in-out infinite;
+        }
+
+        .empty-state p {
+          margin: 0;
+          font-size: 1rem;
+          color: rgba(255, 255, 255, 0.7);
+        }
+
+        .empty-hint {
+          font-size: 0.85rem;
+          color: rgba(255, 255, 255, 0.4);
         }
       `}</style>
     </div>

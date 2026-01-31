@@ -9,6 +9,8 @@ import {
 import type { DifficultyLevel, JLPTLevel, Lesson } from '../../types/flashcard';
 import type { ListeningPracticePageProps, ViewMode } from './listening-practice/listening-practice-types';
 import { JLPT_LEVELS, DIFFICULTY_OPTIONS } from './listening-practice/listening-practice-constants';
+import { useListeningSettings } from '../../contexts/listening-settings-context';
+import { ListeningSettingsModal, ListeningSettingsButton } from '../ui/listening-settings-modal';
 
 // Level theme configurations
 const LEVEL_THEMES: Record<JLPTLevel, { gradient: string; glow: string; icon: string }> = {
@@ -25,6 +27,9 @@ export function ListeningPracticePage({
   getLessonsByLevel,
   getChildLessons,
 }: ListeningPracticePageProps) {
+  // Listening settings context
+  const { settings: listeningSettings } = useListeningSettings();
+
   // View & Level state
   const [viewMode, setViewMode] = useState<ViewMode>('level-select');
   const [selectedLevel, setSelectedLevel] = useState<JLPTLevel | null>(null);
@@ -36,18 +41,18 @@ export function ListeningPracticePage({
   // Difficulty filter
   const [selectedDifficulties, setSelectedDifficulties] = useState<(DifficultyLevel | 'all')[]>(['all']);
 
-  // Playback state
+  // Playback state - initialize from context settings
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [playbackSpeed, setPlaybackSpeed] = useState(listeningSettings.defaultPlaybackSpeed);
   const [isLooping, setIsLooping] = useState(false);
   const [isShuffled, setIsShuffled] = useState(false);
-  const [showVocabulary, setShowVocabulary] = useState(true);
-  const [showMeaning, setShowMeaning] = useState(false);
-  const [autoPlayNext, setAutoPlayNext] = useState(true);
-  const [repeatCount, setRepeatCount] = useState(1);
+  const [showVocabulary, setShowVocabulary] = useState(listeningSettings.showVocabulary);
+  const [showMeaning, setShowMeaning] = useState(listeningSettings.showMeaning);
+  const [autoPlayNext, setAutoPlayNext] = useState(listeningSettings.autoPlayNext);
+  const [repeatCount, setRepeatCount] = useState(listeningSettings.defaultRepeatCount);
   const [currentRepeat, setCurrentRepeat] = useState(0);
-  const [delayBetweenWords, setDelayBetweenWords] = useState(2);
+  const [delayBetweenWords, setDelayBetweenWords] = useState(listeningSettings.delayBetweenWords);
 
   // Custom audio state
   const [customAudioUrl, setCustomAudioUrl] = useState<string | null>(null);
@@ -59,6 +64,8 @@ export function ListeningPracticePage({
 
   // Settings panel
   const [showSettings, setShowSettings] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showKanji, setShowKanji] = useState(listeningSettings.showKanji);
 
   // Refs
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -167,6 +174,19 @@ export function ListeningPracticePage({
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
+
+  // Sync local state when settings modal is closed (settings may have changed)
+  useEffect(() => {
+    if (!showSettingsModal) {
+      setPlaybackSpeed(listeningSettings.defaultPlaybackSpeed);
+      setRepeatCount(listeningSettings.defaultRepeatCount);
+      setDelayBetweenWords(listeningSettings.delayBetweenWords);
+      setAutoPlayNext(listeningSettings.autoPlayNext);
+      setShowVocabulary(listeningSettings.showVocabulary);
+      setShowMeaning(listeningSettings.showMeaning);
+      setShowKanji(listeningSettings.showKanji);
+    }
+  }, [showSettingsModal, listeningSettings]);
 
   // Select a level
   const selectLevel = (level: JLPTLevel) => {
@@ -334,7 +354,14 @@ export function ListeningPracticePage({
                 <p>Rèn luyện kỹ năng nghe tiếng Nhật</p>
               </div>
             </div>
+            <ListeningSettingsButton onClick={() => setShowSettingsModal(true)} />
           </div>
+
+          {/* Settings Modal */}
+          <ListeningSettingsModal
+            isOpen={showSettingsModal}
+            onClose={() => setShowSettingsModal(false)}
+          />
 
           <p className="selection-hint">Chọn cấp độ để bắt đầu luyện nghe</p>
 
@@ -378,6 +405,7 @@ export function ListeningPracticePage({
             <span className="current-level" style={{ background: LEVEL_THEMES[selectedLevel].gradient }}>
               {selectedLevel}
             </span>
+            <ListeningSettingsButton onClick={() => setShowSettingsModal(true)} />
             <button
               className={`btn-settings ${showLessonPicker ? 'active' : ''}`}
               onClick={() => setShowLessonPicker(s => !s)}
@@ -385,6 +413,12 @@ export function ListeningPracticePage({
               <Settings size={20} />
             </button>
           </div>
+
+          {/* Settings Modal */}
+          <ListeningSettingsModal
+            isOpen={showSettingsModal}
+            onClose={() => setShowSettingsModal(false)}
+          />
 
           {/* Lesson Picker */}
           {showLessonPicker && (
@@ -461,7 +495,7 @@ export function ListeningPracticePage({
                 {showVocabulary && (
                   <>
                     <div className="vocabulary-text">{currentCard.vocabulary}</div>
-                    {currentCard.kanji && <div className="kanji-text">{currentCard.kanji}</div>}
+                    {showKanji && currentCard.kanji && <div className="kanji-text">{currentCard.kanji}</div>}
                   </>
                 )}
                 {showMeaning && (
@@ -476,6 +510,9 @@ export function ListeningPracticePage({
               <div className="visibility-toggles">
                 <button className={`toggle-btn ${showVocabulary ? 'active' : ''}`} onClick={() => setShowVocabulary(v => !v)}>
                   {showVocabulary ? <Eye size={18} /> : <EyeOff size={18} />} Từ
+                </button>
+                <button className={`toggle-btn ${showKanji ? 'active' : ''}`} onClick={() => setShowKanji(v => !v)}>
+                  {showKanji ? <Eye size={18} /> : <EyeOff size={18} />} Kanji
                 </button>
                 <button className={`toggle-btn ${showMeaning ? 'active' : ''}`} onClick={() => setShowMeaning(v => !v)}>
                   {showMeaning ? <Eye size={18} /> : <EyeOff size={18} />} Nghĩa

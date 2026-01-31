@@ -36,6 +36,8 @@ import {
   getCustomFrameStyle,
 } from './settings/settings-utils';
 import { GameSoundSettings } from './settings/settings-sound-panel';
+import { useListeningSettings } from '../../contexts/listening-settings-context';
+import type { JLPTLevel } from '../../types/flashcard';
 
 // Re-export SettingsPageProps for external use
 export type { SettingsPageProps } from './settings/settings-types';
@@ -181,6 +183,9 @@ export function SettingsPage({
 
   const isSuperAdmin = currentUser?.role === 'super_admin';
 
+  // Listening settings
+  const { settings: listeningSettings, updateSettings: updateListeningSettings } = useListeningSettings();
+
   // Calculate user level from stats
   const userLevel = useMemo(() => {
     if (!stats) return null;
@@ -288,6 +293,13 @@ export function SettingsPage({
             >
               <span className="sub-tab-icon">💬</span>
               <span className="sub-tab-label">Hội thoại</span>
+            </button>
+            <button
+              className={`settings-sub-tab ${generalSubTab === 'listening' ? 'active' : ''}`}
+              onClick={() => setGeneralSubTab('listening')}
+            >
+              <span className="sub-tab-icon">🎧</span>
+              <span className="sub-tab-label">Nghe Hiểu</span>
             </button>
             <button
               className={`settings-sub-tab ${generalSubTab === 'system' ? 'active' : ''}`}
@@ -1497,6 +1509,175 @@ export function SettingsPage({
                 </select>
               </div>
             </div>
+              </section>
+            </>
+          )}
+
+          {/* ==================== LISTENING SUB-TAB ==================== */}
+          {generalSubTab === 'listening' && (
+            <>
+              {/* Playback Settings */}
+              <section className="settings-section">
+                <h3>Cài đặt phát</h3>
+                <p className="settings-description">Tùy chỉnh tốc độ và chế độ phát âm thanh</p>
+
+                <div className="setting-item">
+                  <label>Tốc độ phát: {listeningSettings.defaultPlaybackSpeed}x</label>
+                  <div className="setting-control">
+                    <input
+                      type="range"
+                      min="0.5"
+                      max="2"
+                      step="0.25"
+                      value={listeningSettings.defaultPlaybackSpeed}
+                      onChange={(e) => updateListeningSettings({ defaultPlaybackSpeed: parseFloat(e.target.value) })}
+                    />
+                    <span className="setting-value">{listeningSettings.defaultPlaybackSpeed}x</span>
+                  </div>
+                </div>
+
+                <div className="setting-item">
+                  <label>Số lần lặp mỗi từ: {listeningSettings.defaultRepeatCount}</label>
+                  <div className="setting-control">
+                    <input
+                      type="range"
+                      min="1"
+                      max="10"
+                      step="1"
+                      value={listeningSettings.defaultRepeatCount}
+                      onChange={(e) => updateListeningSettings({ defaultRepeatCount: parseInt(e.target.value) })}
+                    />
+                    <span className="setting-value">{listeningSettings.defaultRepeatCount} lần</span>
+                  </div>
+                </div>
+
+                <div className="setting-item">
+                  <label>Khoảng cách giữa các từ: {listeningSettings.delayBetweenWords}s</label>
+                  <div className="setting-control">
+                    <input
+                      type="range"
+                      min="0.5"
+                      max="10"
+                      step="0.5"
+                      value={listeningSettings.delayBetweenWords}
+                      onChange={(e) => updateListeningSettings({ delayBetweenWords: parseFloat(e.target.value) })}
+                    />
+                    <span className="setting-value">{listeningSettings.delayBetweenWords}s</span>
+                  </div>
+                </div>
+
+                <div className="setting-item">
+                  <label className="setting-label-with-toggle">
+                    <span>Tự động phát từ tiếp theo</span>
+                    <input
+                      type="checkbox"
+                      checked={listeningSettings.autoPlayNext}
+                      onChange={(e) => updateListeningSettings({ autoPlayNext: e.target.checked })}
+                    />
+                  </label>
+                </div>
+              </section>
+
+              {/* Display Settings */}
+              <section className="settings-section">
+                <h3>Hiển thị</h3>
+                <p className="settings-description">Chọn nội dung hiển thị khi luyện nghe</p>
+
+                <div className="setting-item">
+                  <label className="setting-label-with-toggle">
+                    <span>Hiển thị từ vựng (Hiragana)</span>
+                    <input
+                      type="checkbox"
+                      checked={listeningSettings.showVocabulary}
+                      onChange={(e) => updateListeningSettings({ showVocabulary: e.target.checked })}
+                    />
+                  </label>
+                </div>
+
+                <div className="setting-item">
+                  <label className="setting-label-with-toggle">
+                    <span>Hiển thị Kanji</span>
+                    <input
+                      type="checkbox"
+                      checked={listeningSettings.showKanji}
+                      onChange={(e) => updateListeningSettings({ showKanji: e.target.checked })}
+                    />
+                  </label>
+                </div>
+
+                <div className="setting-item">
+                  <label className="setting-label-with-toggle">
+                    <span>Hiển thị nghĩa</span>
+                    <input
+                      type="checkbox"
+                      checked={listeningSettings.showMeaning}
+                      onChange={(e) => updateListeningSettings({ showMeaning: e.target.checked })}
+                    />
+                  </label>
+                </div>
+              </section>
+
+              {/* Voice Settings */}
+              <section className="settings-section">
+                <h3>Giọng đọc</h3>
+                <p className="settings-description">Tùy chỉnh tốc độ giọng đọc</p>
+
+                <div className="setting-item">
+                  <label>Tốc độ giọng đọc: {listeningSettings.voiceRate}x</label>
+                  <div className="setting-control">
+                    <input
+                      type="range"
+                      min="0.5"
+                      max="2"
+                      step="0.25"
+                      value={listeningSettings.voiceRate}
+                      onChange={(e) => updateListeningSettings({ voiceRate: parseFloat(e.target.value) })}
+                    />
+                    <span className="setting-value">{listeningSettings.voiceRate}x</span>
+                  </div>
+                </div>
+              </section>
+
+              {/* Source Settings */}
+              <section className="settings-section">
+                <h3>Nguồn từ vựng</h3>
+                <p className="settings-description">Chọn cấp độ từ vựng mặc định</p>
+
+                <div className="setting-item">
+                  <label>Cấp độ mặc định</label>
+                  <div className="setting-control">
+                    <select
+                      value={listeningSettings.defaultLevel}
+                      onChange={(e) => updateListeningSettings({ defaultLevel: e.target.value as JLPTLevel })}
+                      className="setting-select"
+                    >
+                      <option value="N5">N5 - Sơ cấp</option>
+                      <option value="N4">N4 - Sơ cấp +</option>
+                      <option value="N3">N3 - Trung cấp</option>
+                      <option value="N2">N2 - Trung cao</option>
+                      <option value="N1">N1 - Cao cấp</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="setting-item">
+                  <label>Nguồn từ vựng</label>
+                  <div className="setting-control">
+                    <select
+                      value={listeningSettings.vocabularySourceLevel}
+                      onChange={(e) => updateListeningSettings({ vocabularySourceLevel: e.target.value as JLPTLevel | 'match_selected' })}
+                      className="setting-select"
+                    >
+                      <option value="match_selected">Theo cấp độ đã chọn</option>
+                      <option value="N5">N5</option>
+                      <option value="N4">N4</option>
+                      <option value="N3">N3</option>
+                      <option value="N2">N2</option>
+                      <option value="N1">N1</option>
+                    </select>
+                  </div>
+                  <p className="setting-hint">Chọn nguồn từ vựng cố định hoặc theo cấp độ đang luyện tập</p>
+                </div>
               </section>
             </>
           )}

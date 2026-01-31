@@ -12,7 +12,7 @@ export type DeviceType = 'desktop' | 'tablet' | 'mobile';
 
 // Settings tab types
 export type SettingsTab = 'general' | 'profile' | 'friends';
-export type GeneralSubTab = 'flashcard' | 'study' | 'grammar' | 'game' | 'kaiwa' | 'system';
+export type GeneralSubTab = 'flashcard' | 'study' | 'grammar' | 'game' | 'kaiwa' | 'listening' | 'system';
 
 // Theme preset interface
 export interface ThemePreset {
