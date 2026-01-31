@@ -6516,16 +6516,22 @@ select, option {
 /* Filter select styling */
 
 .filter-select {
-  padding: 0.3rem 0.4rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
-  font-size: 0.7rem;
-  background: rgba(255, 255, 255, 0.1);
+  padding: 0.4rem 0.6rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 0.5rem center, linear-gradient(135deg, #6366f1, #8b5cf6);
   color: white;
+  font-weight: 600;
   cursor: pointer;
-  min-height: 26px;
-  max-width: 90px;
+  min-height: 28px;
+  max-width: 110px;
   transition: all 0.2s;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  padding-right: 1.5rem;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
 }
 
 .filter-select option {
@@ -6533,10 +6539,11 @@ select, option {
   color: white;
 }
 
-.filter-select:focus {
+.filter-select:focus,
+.filter-select:hover {
   outline: none;
-  border-color: rgba(99, 102, 241, 0.6);
-  background: rgba(255, 255, 255, 0.15);
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 0.5rem center, linear-gradient(135deg, #7c3aed, #9333ea);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
 }
 
 .filter-actions-mobile {
@@ -6697,20 +6704,19 @@ select, option {
 
 .empty-filter-select {
   padding: 0.5rem 0.75rem;
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  border-radius: 8px;
+  border: none;
+  border-radius: 10px;
   font-size: 0.9rem;
-  background-color: #1e293b !important;
-  color: #f1f5f9 !important;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 0.75rem center, linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+  color: white !important;
+  font-weight: 600;
   cursor: pointer;
   min-width: 120px;
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23f1f5f9' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
   padding-right: 2rem;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
 }
 
 .empty-filter-select option {
@@ -6722,9 +6728,29 @@ select, option {
 .empty-filter-select:active,
 .empty-filter-select:hover {
   outline: none;
-  border-color: #6366f1;
-  background-color: #1e293b !important;
-  color: #f1f5f9 !important;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 0.75rem center, linear-gradient(135deg, #7c3aed, #9333ea) !important;
+  color: white !important;
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+}
+
+/* Override browser autofill styles */
+.empty-filter-select:-webkit-autofill,
+.empty-filter-select:-webkit-autofill:hover,
+.empty-filter-select:-webkit-autofill:focus,
+.empty-filter-select:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #6366f1 inset !important;
+  -webkit-text-fill-color: white !important;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 0.75rem center, linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+}
+
+/* Force background on all states */
+.empty-filter-select,
+.empty-filter-select:valid,
+.empty-filter-select:invalid,
+.empty-filter-select:required,
+.empty-filter-select:optional {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 0.75rem center, linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+  color: white !important;
 }
 
 /* Header action buttons group */
