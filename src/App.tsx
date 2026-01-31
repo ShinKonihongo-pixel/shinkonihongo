@@ -500,6 +500,7 @@ function App() {
             getLessonsByLevel={getLessonsByLevel}
             getChildLessons={getChildLessons}
             onGoHome={() => setCurrentPage('home')}
+            onUpdateCard={updateCard}
           />
         )}
 

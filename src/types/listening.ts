@@ -2,10 +2,13 @@
 
 import type { JLPTLevel } from './flashcard';
 
+export type ListeningLessonType = 'vocabulary' | 'grammar' | 'conversation' | 'general';
+
 export interface ListeningFolder {
   id: string;
   name: string;
   jlptLevel: JLPTLevel;
+  lessonType?: ListeningLessonType; // Type of lesson: vocabulary, grammar, conversation, or general
   createdAt: Date;
   createdBy: string;
 }

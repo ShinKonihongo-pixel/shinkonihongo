@@ -1,14 +1,16 @@
 // Listening Practice Page - Premium UI with glassmorphism design
+// Flow: Level Selection → Lesson List → Vocabulary Practice
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import {
   Play, Pause, RotateCcw, Volume2, Headphones,
   Repeat, Shuffle, Upload, ChevronLeft, Sparkles,
-  Eye, EyeOff, Settings, SkipBack, SkipForward, Check
+  Eye, EyeOff, SkipBack, SkipForward, Check, X,
+  ChevronRight, BookOpen, CheckCircle2, Circle, Filter
 } from 'lucide-react';
-import type { DifficultyLevel, JLPTLevel, Lesson } from '../../types/flashcard';
+import type { Flashcard, DifficultyLevel, JLPTLevel, Lesson } from '../../types/flashcard';
 import type { ListeningPracticePageProps, ViewMode } from './listening-practice/listening-practice-types';
-import { JLPT_LEVELS, DIFFICULTY_OPTIONS } from './listening-practice/listening-practice-constants';
+import { JLPT_LEVELS } from './listening-practice/listening-practice-constants';
 import { useListeningSettings } from '../../contexts/listening-settings-context';
 import { ListeningSettingsModal, ListeningSettingsButton } from '../ui/listening-settings-modal';
 
@@ -21,25 +23,33 @@ const LEVEL_THEMES: Record<JLPTLevel, { gradient: string; glow: string; icon: st
   N1: { gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', glow: 'rgba(239, 68, 68, 0.4)', icon: '👑' },
 };
 
+// Extended view modes
+type ExtendedViewMode = ViewMode | 'lesson-list';
+
+// Memorization filter
+type MemorizationFilter = 'all' | 'learned' | 'not-learned';
+
+interface ListeningPracticePagePropsExtended extends ListeningPracticePageProps {
+  onUpdateCard?: (id: string, data: Partial<Flashcard>) => void;
+}
+
 export function ListeningPracticePage({
   cards,
   lessons,
   getLessonsByLevel,
   getChildLessons,
-}: ListeningPracticePageProps) {
+  onUpdateCard,
+}: ListeningPracticePagePropsExtended) {
   // Listening settings context
   const { settings: listeningSettings } = useListeningSettings();
 
   // View & Level state
-  const [viewMode, setViewMode] = useState<ViewMode>('level-select');
+  const [viewMode, setViewMode] = useState<ExtendedViewMode>('level-select');
   const [selectedLevel, setSelectedLevel] = useState<JLPTLevel | null>(null);
+  const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
 
-  // Lesson selection state
-  const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>([]);
-  const [showLessonPicker, setShowLessonPicker] = useState(false);
-
-  // Difficulty filter
-  const [selectedDifficulties, setSelectedDifficulties] = useState<(DifficultyLevel | 'all')[]>(['all']);
+  // Memorization filter
+  const [memorizationFilter, setMemorizationFilter] = useState<MemorizationFilter>('all');
 
   // Playback state - initialize from context settings
   const [isPlaying, setIsPlaying] = useState(false);
@@ -70,37 +80,46 @@ export function ListeningPracticePage({
   // Refs
   const audioRef = useRef<HTMLAudioElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isPlayingRef = useRef(false); // Track playing state for async callbacks
 
-  // Get lessons for selected level with their children
-  const levelLessons = useMemo(() => {
+  // Keep isPlayingRef in sync
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
+  // Get lessons for selected level (parent lessons only)
+  const levelParentLessons = useMemo(() => {
     if (!selectedLevel) return [];
-    const parentLessons = getLessonsByLevel(selectedLevel);
-    const allLessons: Lesson[] = [];
+    return getLessonsByLevel(selectedLevel);
+  }, [selectedLevel, getLessonsByLevel]);
 
-    parentLessons.forEach(parent => {
-      allLessons.push(parent);
-      const children = getChildLessons(parent.id);
-      allLessons.push(...children);
-    });
+  // Get selected lesson with its children
+  const selectedLessonWithChildren = useMemo(() => {
+    if (!selectedLessonId) return [];
+    const parent = lessons.find(l => l.id === selectedLessonId);
+    if (!parent) return [];
+    const children = getChildLessons(selectedLessonId);
+    return [parent, ...children];
+  }, [selectedLessonId, lessons, getChildLessons]);
 
-    return allLessons;
-  }, [selectedLevel, getLessonsByLevel, getChildLessons]);
+  // Get all lesson IDs for the selected lesson (parent + children)
+  const selectedLessonIds = useMemo(() => selectedLessonWithChildren.map(l => l.id), [selectedLessonWithChildren]);
 
-  // Get all lesson IDs for the level
-  const allLevelLessonIds = useMemo(() => levelLessons.map(l => l.id), [levelLessons]);
-
-  // Get filtered cards
+  // Get filtered cards for the selected lesson
   const filteredCards = useMemo(() => {
-    if (!selectedLevel) return [];
+    if (!selectedLevel || selectedLessonIds.length === 0) return [];
 
     return cards.filter(card => {
       if (card.jlptLevel !== selectedLevel) return false;
-      if (selectedLessonIds.length > 0 && !selectedLessonIds.includes(card.lessonId)) return false;
-      if (!selectedDifficulties.includes('all') && !selectedDifficulties.includes(card.difficultyLevel)) return false;
+      if (!selectedLessonIds.includes(card.lessonId)) return false;
+
+      // Apply memorization filter
+      if (memorizationFilter === 'learned' && card.memorizationStatus !== 'memorized') return false;
+      if (memorizationFilter === 'not-learned' && card.memorizationStatus === 'memorized') return false;
+
       return true;
     });
-  }, [cards, selectedLevel, selectedLessonIds, selectedDifficulties]);
+  }, [cards, selectedLevel, selectedLessonIds, memorizationFilter]);
 
   // Shuffled indices
   const [shuffledIndices, setShuffledIndices] = useState<number[]>([]);
@@ -123,8 +142,24 @@ export function ListeningPracticePage({
   // Get card count by level
   const getCardCountByLevel = (level: JLPTLevel) => cards.filter(c => c.jlptLevel === level).length;
 
-  // Text-to-Speech
-  const speakWord = useCallback((text: string) => {
+  // Get card count for a lesson (including children)
+  const getCardCountForLesson = (lessonId: string) => {
+    const childIds = getChildLessons(lessonId).map(c => c.id);
+    const allIds = [lessonId, ...childIds];
+    return cards.filter(c => allIds.includes(c.lessonId)).length;
+  };
+
+  // Get learned count for a lesson
+  const getLearnedCountForLesson = (lessonId: string) => {
+    const childIds = getChildLessons(lessonId).map(c => c.id);
+    const allIds = [lessonId, ...childIds];
+    return cards.filter(c => allIds.includes(c.lessonId) && c.memorizationStatus === 'memorized').length;
+  };
+
+  // Text-to-Speech with proper repeat handling
+  const speakWord = useCallback((text: string, repeatIndex: number = 0) => {
+    if (!isPlayingRef.current) return; // Stop if not playing
+
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
@@ -132,50 +167,60 @@ export function ListeningPracticePage({
       utterance.rate = playbackSpeed;
 
       utterance.onend = () => {
-        setCurrentRepeat(prev => {
-          const next = prev + 1;
-          if (next < repeatCount) {
-            setTimeout(() => speakWord(text), delayBetweenWords * 1000);
-            return next;
-          } else if (autoPlayNext && currentIndex < shuffledIndices.length - 1) {
-            timeoutRef.current = setTimeout(() => {
-              setCurrentRepeat(0);
-              setCurrentIndex(i => i + 1);
-            }, delayBetweenWords * 1000);
-            return 0;
-          } else if (autoPlayNext && isLooping && currentIndex === shuffledIndices.length - 1) {
-            timeoutRef.current = setTimeout(() => {
-              setCurrentRepeat(0);
-              setCurrentIndex(0);
-            }, delayBetweenWords * 1000);
-            return 0;
+        if (!isPlayingRef.current) return; // Stop if paused during speech
+
+        const nextRepeat = repeatIndex + 1;
+
+        if (nextRepeat < repeatCount) {
+          // More repeats needed for current word
+          setCurrentRepeat(nextRepeat);
+          setTimeout(() => {
+            if (isPlayingRef.current) {
+              speakWord(text, nextRepeat);
+            }
+          }, delayBetweenWords * 1000);
+        } else {
+          // Done with repeats, move to next word
+          setCurrentRepeat(0);
+          if (autoPlayNext) {
+            setCurrentIndex(prevIndex => {
+              const nextIndex = prevIndex + 1;
+              if (nextIndex < shuffledIndices.length) {
+                return nextIndex;
+              } else if (isLooping) {
+                return 0;
+              } else {
+                setIsPlaying(false);
+                return prevIndex;
+              }
+            });
           } else {
             setIsPlaying(false);
-            return 0;
           }
-        });
+        }
       };
 
       window.speechSynthesis.speak(utterance);
     }
-  }, [playbackSpeed, repeatCount, autoPlayNext, currentIndex, shuffledIndices.length, isLooping, delayBetweenWords]);
+  }, [playbackSpeed, repeatCount, autoPlayNext, shuffledIndices.length, isLooping, delayBetweenWords]);
 
-  // Play current word
+  // Play current word when index changes or play starts
   useEffect(() => {
     if (viewMode === 'vocabulary' && isPlaying && currentCard) {
-      speakWord(currentCard.vocabulary);
+      setCurrentRepeat(0);
+      speakWord(currentCard.vocabulary, 0);
     }
-  }, [viewMode, isPlaying, currentCard, currentIndex, speakWord]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode, isPlaying, currentIndex]);
 
   // Cleanup
   useEffect(() => {
     return () => {
       window.speechSynthesis?.cancel();
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
 
-  // Sync local state when settings modal is closed (settings may have changed)
+  // Sync local state when settings modal is closed
   useEffect(() => {
     if (!showSettingsModal) {
       setPlaybackSpeed(listeningSettings.defaultPlaybackSpeed);
@@ -188,58 +233,34 @@ export function ListeningPracticePage({
     }
   }, [showSettingsModal, listeningSettings]);
 
-  // Select a level
+  // Select a level - go to lesson list
   const selectLevel = (level: JLPTLevel) => {
     setSelectedLevel(level);
-    setSelectedLessonIds([]);
+    setViewMode('lesson-list');
+  };
+
+  // Select a lesson - go to vocabulary practice
+  const selectLesson = (lessonId: string) => {
+    setSelectedLessonId(lessonId);
     setCurrentIndex(0);
+    setMemorizationFilter('all');
     setViewMode('vocabulary');
     setIsPlaying(false);
   };
 
-  // Go back to level selection
-  const goBackToLevelSelect = () => {
-    setViewMode('level-select');
-    setSelectedLevel(null);
-    setIsPlaying(false);
-    window.speechSynthesis?.cancel();
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-  };
-
-  // Toggle lesson selection
-  const toggleLessonSelection = (lessonId: string) => {
-    setSelectedLessonIds(prev => {
-      if (prev.includes(lessonId)) return prev.filter(id => id !== lessonId);
-      return [...prev, lessonId];
-    });
-    setCurrentIndex(0);
-  };
-
-  // Select/deselect all lessons
-  const toggleSelectAllLessons = () => {
-    if (selectedLessonIds.length === allLevelLessonIds.length) {
-      setSelectedLessonIds([]);
-    } else {
-      setSelectedLessonIds([...allLevelLessonIds]);
+  // Go back
+  const goBack = () => {
+    if (viewMode === 'vocabulary') {
+      setViewMode('lesson-list');
+      setSelectedLessonId(null);
+      setIsPlaying(false);
+      window.speechSynthesis?.cancel();
+    } else if (viewMode === 'lesson-list') {
+      setViewMode('level-select');
+      setSelectedLevel(null);
+    } else if (viewMode === 'custom-audio') {
+      setViewMode('level-select');
     }
-    setCurrentIndex(0);
-  };
-
-  // Difficulty toggle
-  const toggleDifficulty = (diff: DifficultyLevel | 'all') => {
-    if (diff === 'all') {
-      setSelectedDifficulties(['all']);
-    } else {
-      setSelectedDifficulties(prev => {
-        const filtered = prev.filter(d => d !== 'all');
-        if (filtered.includes(diff)) {
-          const next = filtered.filter(d => d !== diff);
-          return next.length === 0 ? ['all'] : next;
-        }
-        return [...filtered, diff];
-      });
-    }
-    setCurrentIndex(0);
   };
 
   // Playback controls
@@ -247,9 +268,10 @@ export function ListeningPracticePage({
     if (viewMode === 'vocabulary') {
       if (isPlaying) {
         window.speechSynthesis?.cancel();
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        setIsPlaying(false);
+      } else {
+        setIsPlaying(true);
       }
-      setIsPlaying(!isPlaying);
     } else if (viewMode === 'custom-audio' && audioRef.current) {
       if (isPlaying) {
         audioRef.current.pause();
@@ -261,6 +283,7 @@ export function ListeningPracticePage({
   };
 
   const goToNext = () => {
+    window.speechSynthesis?.cancel();
     if (currentIndex < shuffledIndices.length - 1) {
       setCurrentIndex(i => i + 1);
       setCurrentRepeat(0);
@@ -271,6 +294,7 @@ export function ListeningPracticePage({
   };
 
   const goToPrevious = () => {
+    window.speechSynthesis?.cancel();
     if (currentIndex > 0) {
       setCurrentIndex(i => i - 1);
       setCurrentRepeat(0);
@@ -283,6 +307,13 @@ export function ListeningPracticePage({
   const shuffleCards = () => {
     setIsShuffled(s => !s);
     setCurrentIndex(0);
+  };
+
+  // Mark word as learned/not learned
+  const toggleMemorization = (card: Flashcard) => {
+    if (!onUpdateCard) return;
+    const newStatus = card.memorizationStatus === 'memorized' ? 'learning' : 'memorized';
+    onUpdateCard(card.id, { memorizationStatus: newStatus });
   };
 
   // Custom audio handlers
@@ -336,6 +367,11 @@ export function ListeningPracticePage({
     return lesson?.name || '';
   };
 
+  // Count learned/not-learned for current lesson
+  const learnedCount = filteredCards.filter(c => c.memorizationStatus === 'memorized').length;
+  const allCardsForLesson = cards.filter(c => selectedLessonIds.includes(c.lessonId));
+  const totalLearnedForLesson = allCardsForLesson.filter(c => c.memorizationStatus === 'memorized').length;
+
   return (
     <div className="listening-practice-page">
       {/* Level Selection View */}
@@ -376,7 +412,7 @@ export function ListeningPracticePage({
                   onClick={() => selectLevel(level)}
                   style={{ '--card-delay': `${idx * 0.1}s`, '--level-gradient': theme.gradient, '--level-glow': theme.glow } as React.CSSProperties}
                 >
-                                    <span className="level-name">{level}</span>
+                  <span className="level-name">{level}</span>
                   <span className="level-count">{count} từ</span>
                   <div className="card-shine" />
                 </button>
@@ -394,24 +430,19 @@ export function ListeningPracticePage({
         </>
       )}
 
-      {/* Vocabulary Mode */}
-      {viewMode === 'vocabulary' && selectedLevel && (
-        <div className="vocabulary-mode">
+      {/* Lesson List View */}
+      {viewMode === 'lesson-list' && selectedLevel && (
+        <div className="lesson-list-mode">
           {/* Header */}
           <div className="vocab-header">
-            <button className="btn-back" onClick={goBackToLevelSelect}>
+            <button className="btn-back" onClick={goBack}>
               <ChevronLeft size={20} />
             </button>
             <span className="current-level" style={{ background: LEVEL_THEMES[selectedLevel].gradient }}>
               {selectedLevel}
             </span>
+            <h2 className="page-title">Chọn bài học</h2>
             <ListeningSettingsButton onClick={() => setShowSettingsModal(true)} />
-            <button
-              className={`btn-settings ${showLessonPicker ? 'active' : ''}`}
-              onClick={() => setShowLessonPicker(s => !s)}
-            >
-              <Settings size={20} />
-            </button>
           </div>
 
           {/* Settings Modal */}
@@ -420,68 +451,96 @@ export function ListeningPracticePage({
             onClose={() => setShowSettingsModal(false)}
           />
 
-          {/* Lesson Picker */}
-          {showLessonPicker && (
-            <div className="lesson-picker">
-              <div className="picker-header">
-                <h4>Chọn bài học</h4>
-                <button className="btn btn-sm" onClick={toggleSelectAllLessons}>
-                  {selectedLessonIds.length === allLevelLessonIds.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
-                </button>
+          {/* Lesson List */}
+          <div className="lesson-grid">
+            {levelParentLessons.length === 0 ? (
+              <div className="empty-state">
+                <BookOpen size={48} />
+                <p>Chưa có bài học nào cho cấp độ này</p>
               </div>
+            ) : (
+              levelParentLessons.map((lesson, idx) => {
+                const totalCount = getCardCountForLesson(lesson.id);
+                const learnedCount = getLearnedCountForLesson(lesson.id);
+                const progress = totalCount > 0 ? (learnedCount / totalCount) * 100 : 0;
 
-              <div className="lesson-list">
-                {getLessonsByLevel(selectedLevel).map(parentLesson => (
-                  <div key={parentLesson.id} className="lesson-group">
-                    <label className="lesson-item parent">
-                      <input
-                        type="checkbox"
-                        checked={selectedLessonIds.length === 0 || selectedLessonIds.includes(parentLesson.id)}
-                        onChange={() => toggleLessonSelection(parentLesson.id)}
-                      />
-                      <span>{parentLesson.name}</span>
-                      <span className="count">({cards.filter(c => c.lessonId === parentLesson.id).length})</span>
-                    </label>
+                return (
+                  <button
+                    key={lesson.id}
+                    className="lesson-card"
+                    onClick={() => selectLesson(lesson.id)}
+                    style={{ '--card-delay': `${idx * 0.05}s` } as React.CSSProperties}
+                  >
+                    <div className="lesson-icon">
+                      <BookOpen size={24} />
+                    </div>
+                    <div className="lesson-info">
+                      <span className="lesson-name">{lesson.name}</span>
+                      <span className="lesson-count">{totalCount} từ</span>
+                    </div>
+                    <div className="lesson-progress">
+                      <div className="progress-bar">
+                        <div className="progress-fill" style={{ width: `${progress}%` }} />
+                      </div>
+                      <span className="progress-text">{learnedCount}/{totalCount}</span>
+                    </div>
+                    <ChevronRight size={20} className="lesson-arrow" />
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
 
-                    {getChildLessons(parentLesson.id).map(child => (
-                      <label key={child.id} className="lesson-item child">
-                        <input
-                          type="checkbox"
-                          checked={selectedLessonIds.length === 0 || selectedLessonIds.includes(child.id)}
-                          onChange={() => toggleLessonSelection(child.id)}
-                        />
-                        <span>{child.name}</span>
-                        <span className="count">({cards.filter(c => c.lessonId === child.id).length})</span>
-                      </label>
-                    ))}
-                  </div>
-                ))}
-              </div>
+      {/* Vocabulary Mode */}
+      {viewMode === 'vocabulary' && selectedLevel && selectedLessonId && (
+        <div className="vocabulary-mode">
+          {/* Header */}
+          <div className="vocab-header">
+            <button className="btn-back" onClick={goBack}>
+              <ChevronLeft size={20} />
+            </button>
+            <span className="current-level" style={{ background: LEVEL_THEMES[selectedLevel].gradient }}>
+              {selectedLevel}
+            </span>
+            <h2 className="lesson-title">{getLessonName(selectedLessonId)}</h2>
+            <ListeningSettingsButton onClick={() => setShowSettingsModal(true)} />
+          </div>
 
-              {/* Difficulty Filter */}
-              <div className="difficulty-filter">
-                <label>Độ khó:</label>
-                <div className="filter-buttons">
-                  {DIFFICULTY_OPTIONS.map(opt => (
-                    <button
-                      key={opt.value}
-                      className={`filter-btn ${selectedDifficulties.includes(opt.value) ? 'active' : ''}`}
-                      onClick={() => toggleDifficulty(opt.value)}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+          {/* Settings Modal */}
+          <ListeningSettingsModal
+            isOpen={showSettingsModal}
+            onClose={() => setShowSettingsModal(false)}
+          />
 
-              <button className="btn btn-primary close-picker" onClick={() => setShowLessonPicker(false)}>
-                <Check size={16} /> Xong ({filteredCards.length} từ)
+          {/* Filter Bar */}
+          <div className="filter-bar">
+            <div className="filter-group">
+              <Filter size={16} />
+              <button
+                className={`filter-btn ${memorizationFilter === 'all' ? 'active' : ''}`}
+                onClick={() => setMemorizationFilter('all')}
+              >
+                Tất cả ({allCardsForLesson.length})
+              </button>
+              <button
+                className={`filter-btn ${memorizationFilter === 'learned' ? 'active' : ''}`}
+                onClick={() => setMemorizationFilter('learned')}
+              >
+                <CheckCircle2 size={14} /> Đã thuộc ({totalLearnedForLesson})
+              </button>
+              <button
+                className={`filter-btn ${memorizationFilter === 'not-learned' ? 'active' : ''}`}
+                onClick={() => setMemorizationFilter('not-learned')}
+              >
+                <Circle size={14} /> Chưa thuộc ({allCardsForLesson.length - totalLearnedForLesson})
               </button>
             </div>
-          )}
+          </div>
 
           {/* Stats */}
-          <div className="vocab-stats">{filteredCards.length} từ vựng {selectedLessonIds.length > 0 && `(${selectedLessonIds.length} bài)`}</div>
+          <div className="vocab-stats">{filteredCards.length} từ vựng</div>
 
           {/* Current Word Display */}
           {currentCard && (
@@ -507,6 +566,26 @@ export function ListeningPracticePage({
                 <div className="lesson-info">{getLessonName(currentCard.lessonId)}</div>
               </div>
 
+              {/* Memorization Toggle */}
+              {onUpdateCard && (
+                <div className="memorization-toggle">
+                  <button
+                    className={`mem-btn ${currentCard.memorizationStatus === 'memorized' ? 'learned' : 'not-learned'}`}
+                    onClick={() => toggleMemorization(currentCard)}
+                  >
+                    {currentCard.memorizationStatus === 'memorized' ? (
+                      <>
+                        <CheckCircle2 size={20} /> Đã thuộc
+                      </>
+                    ) : (
+                      <>
+                        <Circle size={20} /> Chưa thuộc
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
               <div className="visibility-toggles">
                 <button className={`toggle-btn ${showVocabulary ? 'active' : ''}`} onClick={() => setShowVocabulary(v => !v)}>
                   {showVocabulary ? <Eye size={18} /> : <EyeOff size={18} />} Từ
@@ -525,7 +604,7 @@ export function ListeningPracticePage({
             <div className="empty-state">
               <Volume2 size={48} />
               <p>Không có từ vựng nào.</p>
-              <p className="hint">Hãy chọn bài học trong cài đặt.</p>
+              <p className="hint">Thử thay đổi bộ lọc để xem thêm từ.</p>
             </div>
           )}
 
@@ -538,44 +617,41 @@ export function ListeningPracticePage({
             <button className="control-btn" onClick={goToNext}><SkipForward size={24} /></button>
             <button className={`control-btn ${isLooping ? 'active' : ''}`} onClick={() => setIsLooping(l => !l)}><Repeat size={20} /></button>
             <button className={`control-btn ${isShuffled ? 'active' : ''}`} onClick={shuffleCards}><Shuffle size={20} /></button>
-            <button className={`control-btn ${showSettings ? 'active' : ''}`} onClick={() => setShowSettings(s => !s)}><Settings size={20} /></button>
           </div>
 
-          {/* Settings Panel */}
-          {showSettings && (
-            <div className="settings-panel">
-              <div className="setting-item">
-                <label>Tốc độ:</label>
-                <div className="speed-control">
-                  <button onClick={() => setPlaybackSpeed(s => Math.max(0.5, s - 0.25))}>-</button>
-                  <span>{playbackSpeed}x</span>
-                  <button onClick={() => setPlaybackSpeed(s => Math.min(2, s + 0.25))}>+</button>
-                </div>
-              </div>
-              <div className="setting-item">
-                <label>Lặp mỗi từ:</label>
-                <div className="repeat-control">
-                  <button onClick={() => setRepeatCount(r => Math.max(1, r - 1))}>-</button>
-                  <span>{repeatCount} lần</span>
-                  <button onClick={() => setRepeatCount(r => Math.min(10, r + 1))}>+</button>
-                </div>
-              </div>
-              <div className="setting-item">
-                <label>Khoảng cách:</label>
-                <div className="delay-control">
-                  <button onClick={() => setDelayBetweenWords(d => Math.max(0.5, d - 0.5))}>-</button>
-                  <span>{delayBetweenWords}s</span>
-                  <button onClick={() => setDelayBetweenWords(d => Math.min(10, d + 0.5))}>+</button>
-                </div>
-              </div>
-              <div className="setting-item checkbox">
-                <label>
-                  <input type="checkbox" checked={autoPlayNext} onChange={(e) => setAutoPlayNext(e.target.checked)} />
-                  Tự động chuyển
-                </label>
+          {/* Inline Settings */}
+          <div className="inline-settings">
+            <div className="setting-group">
+              <label>Tốc độ</label>
+              <div className="setting-control">
+                <button onClick={() => setPlaybackSpeed(s => Math.max(0.5, s - 0.25))}>-</button>
+                <span>{playbackSpeed}x</span>
+                <button onClick={() => setPlaybackSpeed(s => Math.min(2, s + 0.25))}>+</button>
               </div>
             </div>
-          )}
+            <div className="setting-group">
+              <label>Lặp lại</label>
+              <div className="setting-control">
+                <button onClick={() => setRepeatCount(r => Math.max(1, r - 1))}>-</button>
+                <span>{repeatCount} lần</span>
+                <button onClick={() => setRepeatCount(r => Math.min(10, r + 1))}>+</button>
+              </div>
+            </div>
+            <div className="setting-group">
+              <label>Khoảng cách</label>
+              <div className="setting-control">
+                <button onClick={() => setDelayBetweenWords(d => Math.max(0.5, d - 0.5))}>-</button>
+                <span>{delayBetweenWords}s</span>
+                <button onClick={() => setDelayBetweenWords(d => Math.min(10, d + 0.5))}>+</button>
+              </div>
+            </div>
+            <div className="setting-group checkbox">
+              <label>
+                <input type="checkbox" checked={autoPlayNext} onChange={(e) => setAutoPlayNext(e.target.checked)} />
+                Tự động chuyển
+              </label>
+            </div>
+          </div>
         </div>
       )}
 
@@ -583,7 +659,7 @@ export function ListeningPracticePage({
       {viewMode === 'custom-audio' && (
         <div className="custom-audio-mode">
           <div className="vocab-header">
-            <button className="btn-back" onClick={goBackToLevelSelect}>
+            <button className="btn-back" onClick={goBack}>
               <ChevronLeft size={20} />
             </button>
             <span className="current-level audio-mode">
@@ -780,7 +856,6 @@ export function ListeningPracticePage({
           pointer-events: none;
         }
 
-        .level-icon { font-size: 2rem; }
         .level-name { font-size: 1.5rem; font-weight: bold; color: white; }
         .level-count { font-size: 0.875rem; color: rgba(255, 255, 255, 0.5); }
 
@@ -799,7 +874,15 @@ export function ListeningPracticePage({
           margin-bottom: 1.5rem;
         }
 
-        .btn-back, .btn-settings {
+        .page-title, .lesson-title {
+          flex: 1;
+          margin: 0;
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: white;
+        }
+
+        .btn-back {
           width: 44px;
           height: 44px;
           border-radius: 12px;
@@ -813,13 +896,12 @@ export function ListeningPracticePage({
           transition: all 0.3s ease;
         }
 
-        .btn-back:hover, .btn-settings:hover, .btn-settings.active {
+        .btn-back:hover {
           background: rgba(255, 255, 255, 0.1);
           color: white;
         }
 
         .current-level {
-          flex: 1;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -828,99 +910,150 @@ export function ListeningPracticePage({
           border-radius: 10px;
           font-weight: 600;
           color: white;
-          font-size: 1.1rem;
+          font-size: 1rem;
         }
 
         .current-level.audio-mode {
           background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
         }
 
-        /* Lesson Picker */
-        .lesson-picker {
+        /* Lesson Grid */
+        .lesson-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+
+        .lesson-card {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          padding: 1rem 1.25rem;
           background: rgba(255, 255, 255, 0.03);
           backdrop-filter: blur(20px);
           border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 16px;
-          padding: 1.25rem;
-          margin-bottom: 1.5rem;
-          max-height: 400px;
-          overflow-y: auto;
-          animation: slideDown 0.3s ease;
-        }
-
-        @keyframes slideDown {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        .picker-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 1rem;
-        }
-
-        .picker-header h4 { margin: 0; color: white; }
-
-        .btn-sm {
-          padding: 0.35rem 0.75rem;
-          font-size: 0.75rem;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 8px;
-          color: white;
+          border-radius: 14px;
           cursor: pointer;
+          transition: all 0.3s ease;
+          animation: cardAppear 0.3s ease backwards;
+          animation-delay: var(--card-delay);
         }
 
-        .lesson-list { margin-bottom: 1rem; }
-        .lesson-group { margin-bottom: 0.5rem; }
+        .lesson-card:hover {
+          background: rgba(255, 255, 255, 0.06);
+          border-color: rgba(255, 255, 255, 0.15);
+          transform: translateX(4px);
+        }
 
-        .lesson-item {
+        .lesson-icon {
+          width: 48px;
+          height: 48px;
+          background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+        }
+
+        .lesson-info {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+
+        .lesson-name {
+          font-weight: 500;
+          color: white;
+        }
+
+        .lesson-count {
+          font-size: 0.8rem;
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        .lesson-progress {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 0.25rem;
+          min-width: 80px;
+        }
+
+        .progress-bar {
+          width: 100%;
+          height: 4px;
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 2px;
+          overflow: hidden;
+        }
+
+        .progress-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #22c55e, #16a34a);
+          border-radius: 2px;
+          transition: width 0.3s ease;
+        }
+
+        .progress-text {
+          font-size: 0.7rem;
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        .lesson-arrow {
+          color: rgba(255, 255, 255, 0.3);
+          transition: all 0.3s ease;
+        }
+
+        .lesson-card:hover .lesson-arrow {
+          color: rgba(255, 255, 255, 0.7);
+          transform: translateX(4px);
+        }
+
+        /* Filter Bar */
+        .filter-bar {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          margin-bottom: 1rem;
+          padding: 0.75rem 1rem;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 12px;
+          overflow-x: auto;
+        }
+
+        .filter-group {
           display: flex;
           align-items: center;
           gap: 0.5rem;
-          padding: 0.5rem;
-          cursor: pointer;
-          border-radius: 8px;
-          color: rgba(255, 255, 255, 0.9);
+          color: rgba(255, 255, 255, 0.5);
         }
-
-        .lesson-item:hover { background: rgba(255, 255, 255, 0.05); }
-        .lesson-item.parent { font-weight: 500; }
-        .lesson-item.child { padding-left: 1.5rem; font-size: 0.875rem; }
-        .lesson-item .count { margin-left: auto; font-size: 0.75rem; color: rgba(255, 255, 255, 0.5); }
-
-        .lesson-item input[type="checkbox"] {
-          accent-color: #8b5cf6;
-        }
-
-        .difficulty-filter { margin-bottom: 1rem; }
-        .difficulty-filter > label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: rgba(255, 255, 255, 0.7); }
-        .filter-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 
         .filter-btn {
-          padding: 0.35rem 0.75rem;
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+          padding: 0.4rem 0.75rem;
           border: 1px solid rgba(255, 255, 255, 0.1);
           background: rgba(255, 255, 255, 0.05);
-          border-radius: 16px;
+          border-radius: 20px;
           cursor: pointer;
-          font-size: 0.75rem;
+          font-size: 0.8rem;
           color: rgba(255, 255, 255, 0.7);
           transition: all 0.2s;
+          white-space: nowrap;
+        }
+
+        .filter-btn:hover {
+          background: rgba(255, 255, 255, 0.1);
         }
 
         .filter-btn.active {
           background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
           border-color: transparent;
           color: white;
-        }
-
-        .close-picker {
-          width: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
         }
 
         .vocab-stats {
@@ -968,6 +1101,40 @@ export function ListeningPracticePage({
         .meaning-text { font-size: 1.25rem; color: rgba(255, 255, 255, 0.9); margin-top: 0.5rem; }
         .sino-text { font-size: 1rem; color: rgba(255, 255, 255, 0.5); }
         .lesson-info { font-size: 0.75rem; color: rgba(255, 255, 255, 0.4); margin-top: 0.5rem; }
+
+        /* Memorization Toggle */
+        .memorization-toggle {
+          margin-top: 1rem;
+        }
+
+        .mem-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.75rem 1.5rem;
+          border-radius: 12px;
+          font-size: 1rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .mem-btn.learned {
+          background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+          border: none;
+          color: white;
+          box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3);
+        }
+
+        .mem-btn.not-learned {
+          background: rgba(255, 255, 255, 0.05);
+          border: 2px solid rgba(255, 255, 255, 0.2);
+          color: rgba(255, 255, 255, 0.8);
+        }
+
+        .mem-btn:hover {
+          transform: scale(1.02);
+        }
 
         .visibility-toggles {
           display: flex;
@@ -1049,44 +1216,57 @@ export function ListeningPracticePage({
           cursor: not-allowed;
         }
 
-        /* Settings Panel */
-        .settings-panel {
+        /* Inline Settings */
+        .inline-settings {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 1rem;
+          justify-content: center;
+          padding: 1rem;
           background: rgba(255, 255, 255, 0.03);
-          backdrop-filter: blur(20px);
           border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 16px;
-          padding: 1.25rem;
-          animation: slideDown 0.3s ease;
+          border-radius: 14px;
         }
 
-        .setting-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 0.75rem 0;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-          color: rgba(255, 255, 255, 0.8);
-        }
-
-        .setting-item:last-child { border-bottom: none; }
-        .setting-item.checkbox { justify-content: flex-start; }
-        .setting-item.checkbox label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
-
-        .speed-control, .repeat-control, .delay-control {
+        .setting-group {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
+          gap: 0.5rem;
+          color: rgba(255, 255, 255, 0.7);
+          font-size: 0.875rem;
         }
 
-        .speed-control button, .repeat-control button, .delay-control button {
-          width: 32px;
-          height: 32px;
-          border-radius: 8px;
+        .setting-group.checkbox label {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+          cursor: pointer;
+        }
+
+        .setting-control {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .setting-control button {
+          width: 28px;
+          height: 28px;
+          border-radius: 6px;
           border: 1px solid rgba(255, 255, 255, 0.1);
           background: rgba(255, 255, 255, 0.05);
           cursor: pointer;
           color: white;
-          font-size: 1.1rem;
+          font-size: 1rem;
+        }
+
+        .setting-control button:hover {
+          background: rgba(255, 255, 255, 0.1);
+        }
+
+        .setting-control span {
+          min-width: 50px;
+          text-align: center;
         }
 
         /* Upload Section */
@@ -1229,6 +1409,10 @@ export function ListeningPracticePage({
           .level-grid { grid-template-columns: repeat(2, 1fr); }
           .playback-controls { flex-wrap: wrap; }
           .vocabulary-text { font-size: 2rem; }
+          .filter-bar { padding: 0.5rem; }
+          .filter-btn { padding: 0.35rem 0.6rem; font-size: 0.75rem; }
+          .inline-settings { flex-direction: column; align-items: stretch; }
+          .setting-group { justify-content: space-between; }
         }
       `}</style>
     </div>

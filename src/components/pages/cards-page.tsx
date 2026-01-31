@@ -25,7 +25,7 @@ import {
   VocabularyTab,
   GrammarTab,
   ReadingTab,
-  // ListeningTab, // TODO: Enable when hook is ready
+  ListeningTab,
   LecturesTab,
   JLPTTab,
   KaiwaTab,
@@ -36,6 +36,7 @@ import {
 } from '../cards-management';
 import { useExercises } from '../../hooks/use-exercises';
 import { useReading } from '../../hooks/use-reading';
+import { useListening } from '../../hooks/use-listening';
 
 interface CardsPageProps {
   cards: Flashcard[];
@@ -186,6 +187,22 @@ export function CardsPage({
     togglePublish,
   } = useExercises();
 
+  // Listening hook
+  const {
+    audios: listeningAudios,
+    folders: listeningFolders,
+    addAudio: addListeningAudio,
+    updateAudio: updateListeningAudio,
+    deleteAudio: deleteListeningAudio,
+    addFolder: addListeningFolder,
+    updateFolder: updateListeningFolder,
+    deleteFolder: deleteListeningFolder,
+    getFoldersByLevel: getListeningFoldersByLevel,
+    getFoldersByLevelAndType: getListeningFoldersByLevelAndType,
+    getAudiosByFolder: getListeningAudiosByFolder,
+    getAudioUrl: getListeningAudioUrl,
+  } = useListening();
+
   return (
     <div className="cards-page">
       <div className="page-header">
@@ -280,34 +297,22 @@ export function CardsPage({
 
       {/* Listening Tab */}
       {activeTab === 'listening' && (
-        <div className="listening-tab-placeholder">
-          <div className="placeholder-content">
-            <h3>Quản lí Nghe Hiểu</h3>
-            <p>Tính năng đang được phát triển...</p>
-            <p className="placeholder-note">Bạn có thể tải và quản lí các file nghe, câu hỏi luyện nghe tại đây.</p>
-          </div>
-          <style>{`
-            .listening-tab-placeholder {
-              padding: 3rem;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-            }
-            .placeholder-content {
-              text-align: center;
-              color: var(--gray);
-            }
-            .placeholder-content h3 {
-              font-size: 1.5rem;
-              margin-bottom: 0.5rem;
-              color: var(--dark);
-            }
-            .placeholder-note {
-              font-size: 0.9rem;
-              margin-top: 1rem;
-            }
-          `}</style>
-        </div>
+        <ListeningTab
+          audios={listeningAudios}
+          folders={listeningFolders}
+          onAddAudio={async (data, file) => { await addListeningAudio(data, file, currentUser.id); }}
+          onUpdateAudio={updateListeningAudio}
+          onDeleteAudio={deleteListeningAudio}
+          onAddFolder={async (name, level, lessonType) => { await addListeningFolder(name, level, lessonType, currentUser.id); }}
+          onUpdateFolder={updateListeningFolder}
+          onDeleteFolder={deleteListeningFolder}
+          getFoldersByLevel={getListeningFoldersByLevel}
+          getFoldersByLevelAndType={getListeningFoldersByLevelAndType}
+          getAudiosByFolder={getListeningAudiosByFolder}
+          getAudioUrl={getListeningAudioUrl}
+          currentUser={currentUser}
+          isSuperAdmin={isSuperAdmin}
+        />
       )}
 
       {/* Lectures Tab */}

@@ -10,10 +10,13 @@ export interface ReadingPracticePageProps {
   folders: ReadingFolder[];
   getFoldersByLevel: (level: JLPTLevel) => ReadingFolder[];
   getPassagesByFolder: (folderId: string) => ReadingPassage[];
-  onGoHome: () => void;
+  onGoHome?: () => void;
 }
 
-// View state for navigation
+// View modes for navigation flow
+export type ViewMode = 'level-select' | 'folder-list' | 'passage-list' | 'practice' | 'completed';
+
+// Legacy view state (kept for compatibility)
 export type ViewState =
   | { type: 'select' }
   | { type: 'practice'; passage: ReadingPassage };

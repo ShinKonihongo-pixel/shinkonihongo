@@ -1,16 +1,25 @@
-// Listening Tab - Manage listening practice content and audio files
+// Listening Tab - Manage listening practice content by JLPT level and lesson type
 // Premium dark glassmorphism design
 
 import { useState, useRef } from 'react';
 import {
   Trash2, Edit2, Save, X, ChevronRight, ChevronLeft,
-  Upload, Music, FolderPlus, Folder, Play, Pause, Headphones, Sparkles
+  Upload, Music, FolderPlus, Folder, Play, Pause, Headphones, Sparkles,
+  BookOpen, MessageCircle, Layers
 } from 'lucide-react';
 import type { JLPTLevel } from '../../types/flashcard';
 import type { CurrentUser } from '../../types/user';
-import type { ListeningAudio, ListeningFolder } from '../../types/listening';
+import type { ListeningAudio, ListeningFolder, ListeningLessonType } from '../../types/listening';
 
 const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
+
+// Lesson type configurations
+const LESSON_TYPES: { value: ListeningLessonType; label: string; icon: typeof BookOpen }[] = [
+  { value: 'vocabulary', label: 'Từ Vựng', icon: BookOpen },
+  { value: 'grammar', label: 'Ngữ Pháp', icon: Layers },
+  { value: 'conversation', label: 'Hội Thoại', icon: MessageCircle },
+  { value: 'general', label: 'Tổng Hợp', icon: Music },
+];
 
 // Level theme configurations
 const LEVEL_THEMES: Record<JLPTLevel, { gradient: string; glow: string; border: string }> = {
@@ -21,10 +30,19 @@ const LEVEL_THEMES: Record<JLPTLevel, { gradient: string; glow: string; border: 
   N1: { gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', glow: 'rgba(239, 68, 68, 0.4)', border: 'rgba(239, 68, 68, 0.3)' },
 };
 
+// Lesson type theme configurations
+const LESSON_TYPE_THEMES: Record<ListeningLessonType, { gradient: string; glow: string }> = {
+  vocabulary: { gradient: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)', glow: 'rgba(34, 197, 94, 0.4)' },
+  grammar: { gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', glow: 'rgba(245, 158, 11, 0.4)' },
+  conversation: { gradient: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)', glow: 'rgba(236, 72, 153, 0.4)' },
+  general: { gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', glow: 'rgba(139, 92, 246, 0.4)' },
+};
+
 type NavState =
   | { type: 'root' }
   | { type: 'level'; level: JLPTLevel }
-  | { type: 'folder'; level: JLPTLevel; folderId: string; folderName: string };
+  | { type: 'lessonType'; level: JLPTLevel; lessonType: ListeningLessonType }
+  | { type: 'folder'; level: JLPTLevel; lessonType: ListeningLessonType; folderId: string; folderName: string };
 
 interface ListeningTabProps {
   audios: ListeningAudio[];
@@ -32,11 +50,13 @@ interface ListeningTabProps {
   onAddAudio: (data: Omit<ListeningAudio, 'id' | 'createdAt' | 'createdBy'>, file: File) => Promise<void>;
   onUpdateAudio: (id: string, data: Partial<ListeningAudio>) => Promise<void>;
   onDeleteAudio: (id: string) => Promise<void>;
-  onAddFolder: (name: string, level: JLPTLevel) => Promise<void>;
+  onAddFolder: (name: string, level: JLPTLevel, lessonType: ListeningLessonType) => Promise<void>;
   onUpdateFolder: (id: string, data: Partial<ListeningFolder>) => Promise<void>;
   onDeleteFolder: (id: string) => Promise<void>;
   getFoldersByLevel: (level: JLPTLevel) => ListeningFolder[];
+  getFoldersByLevelAndType: (level: JLPTLevel, lessonType: ListeningLessonType) => ListeningFolder[];
   getAudiosByFolder: (folderId: string) => ListeningAudio[];
+  getAudioUrl: (audio: ListeningAudio) => Promise<string | null>;
   currentUser: CurrentUser;
   isSuperAdmin: boolean;
 }
@@ -51,7 +71,9 @@ export function ListeningTab({
   onUpdateFolder,
   onDeleteFolder,
   getFoldersByLevel,
+  getFoldersByLevelAndType,
   getAudiosByFolder,
+  getAudioUrl,
   currentUser: _currentUser,
 }: ListeningTabProps) {
   const [navState, setNavState] = useState<NavState>({ type: 'root' });
@@ -73,18 +95,31 @@ export function ListeningTab({
     return audios.filter(a => a.jlptLevel === level).length;
   };
 
+  // Get count by lesson type
+  const getCountByLessonType = (level: JLPTLevel, lessonType: ListeningLessonType) => {
+    const typeFolders = getFoldersByLevelAndType(level, lessonType);
+    return typeFolders.reduce((sum, f) => sum + getAudiosByFolder(f.id).length, 0);
+  };
+
   // Navigation handlers
   const goToLevel = (level: JLPTLevel) => {
     setNavState({ type: 'level', level });
   };
 
-  const goToFolder = (folderId: string, folderName: string) => {
+  const goToLessonType = (lessonType: ListeningLessonType) => {
     if (navState.type !== 'level') return;
-    setNavState({ type: 'folder', level: navState.level, folderId, folderName });
+    setNavState({ type: 'lessonType', level: navState.level, lessonType });
+  };
+
+  const goToFolder = (folderId: string, folderName: string) => {
+    if (navState.type !== 'lessonType') return;
+    setNavState({ type: 'folder', level: navState.level, lessonType: navState.lessonType, folderId, folderName });
   };
 
   const goBack = () => {
     if (navState.type === 'folder') {
+      setNavState({ type: 'lessonType', level: navState.level, lessonType: navState.lessonType });
+    } else if (navState.type === 'lessonType') {
       setNavState({ type: 'level', level: navState.level });
     } else if (navState.type === 'level') {
       setNavState({ type: 'root' });
@@ -93,8 +128,8 @@ export function ListeningTab({
 
   // Folder handlers
   const handleAddFolder = async () => {
-    if (!newFolderName.trim() || navState.type !== 'level') return;
-    await onAddFolder(newFolderName.trim(), navState.level);
+    if (!newFolderName.trim() || navState.type !== 'lessonType') return;
+    await onAddFolder(newFolderName.trim(), navState.level, navState.lessonType);
     setNewFolderName('');
     setShowAddFolder(false);
   };
@@ -146,16 +181,18 @@ export function ListeningTab({
     await onDeleteAudio(id);
   };
 
-  const togglePlayAudio = (audioId: string, audioUrl: string) => {
-    if (playingAudioId === audioId) {
+  const togglePlayAudio = async (audio: ListeningAudio) => {
+    if (playingAudioId === audio.id) {
       audioRef.current?.pause();
       setPlayingAudioId(null);
     } else {
-      if (audioRef.current) {
-        audioRef.current.src = audioUrl;
+      // Get playable URL from IndexedDB
+      const url = await getAudioUrl(audio);
+      if (url && audioRef.current) {
+        audioRef.current.src = url;
         audioRef.current.play();
+        setPlayingAudioId(audio.id);
       }
-      setPlayingAudioId(audioId);
     }
   };
 
@@ -357,9 +394,8 @@ export function ListeningTab({
     );
   }
 
-  // Level view - Folder list
+  // Level view - Lesson type selection
   if (navState.type === 'level') {
-    const levelFolders = getFoldersByLevel(navState.level);
     const theme = LEVEL_THEMES[navState.level];
 
     return (
@@ -370,6 +406,197 @@ export function ListeningTab({
           </button>
           <span className="current-level" style={{ background: theme.gradient }}>
             {navState.level}
+          </span>
+          <h3>Chọn loại bài học</h3>
+        </div>
+
+        <div className="lesson-type-grid">
+          {LESSON_TYPES.map((type, idx) => {
+            const typeTheme = LESSON_TYPE_THEMES[type.value];
+            const count = getCountByLessonType(navState.level, type.value);
+            const Icon = type.icon;
+            return (
+              <button
+                key={type.value}
+                className="lesson-type-card"
+                onClick={() => goToLessonType(type.value)}
+                style={{
+                  '--card-delay': `${idx * 0.1}s`,
+                  '--type-gradient': typeTheme.gradient,
+                  '--type-glow': typeTheme.glow,
+                } as React.CSSProperties}
+              >
+                <div className="type-icon">
+                  <Icon size={24} />
+                </div>
+                <span className="type-name">{type.label}</span>
+                <span className="type-count">{count} file</span>
+                <ChevronRight size={18} className="type-arrow" />
+                <div className="card-shine" />
+              </button>
+            );
+          })}
+        </div>
+
+        <audio ref={audioRef} onEnded={() => setPlayingAudioId(null)} />
+
+        <style>{`
+          .listening-tab {
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100%;
+            padding: 1.5rem;
+          }
+
+          .nav-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+          }
+
+          .nav-header h3 {
+            flex: 1;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+            color: white;
+          }
+
+          .current-level {
+            padding: 0.35rem 0.75rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: white;
+          }
+
+          .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: rgba(255, 255, 255, 0.8);
+          }
+
+          .back-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: white;
+          }
+
+          /* Lesson Type Grid */
+          .lesson-type-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+          }
+
+          .lesson-type-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: cardAppear 0.5s ease backwards;
+            animation-delay: var(--card-delay);
+            overflow: hidden;
+          }
+
+          @keyframes cardAppear {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+
+          .lesson-type-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 40px var(--type-glow);
+          }
+
+          .lesson-type-card:hover .card-shine {
+            transform: translateX(100%);
+          }
+
+          .lesson-type-card:hover .type-arrow {
+            color: white;
+            transform: translateY(-50%) translateX(3px);
+          }
+
+          .type-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--type-gradient);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 8px 24px var(--type-glow);
+          }
+
+          .type-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: white;
+          }
+
+          .type-count {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
+          }
+
+          .type-arrow {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+          }
+
+          .card-shine {
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: transform 0.6s ease;
+            pointer-events: none;
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  // Lesson type view - Folder list
+  if (navState.type === 'lessonType') {
+    const levelFolders = getFoldersByLevelAndType(navState.level, navState.lessonType);
+    const theme = LEVEL_THEMES[navState.level];
+    const typeTheme = LESSON_TYPE_THEMES[navState.lessonType];
+    const typeLabel = LESSON_TYPES.find(t => t.value === navState.lessonType)?.label || '';
+
+    return (
+      <div className="listening-tab">
+        <div className="nav-header">
+          <button className="back-btn" onClick={goBack}>
+            <ChevronLeft size={18} /> {navState.level}
+          </button>
+          <span className="current-type" style={{ background: typeTheme.gradient }}>
+            {typeLabel}
           </span>
           <h3>Thư mục</h3>
           <button className="add-btn" onClick={() => setShowAddFolder(true)}>
@@ -461,10 +688,10 @@ export function ListeningTab({
             color: white;
           }
 
-          .current-level {
+          .current-type {
             padding: 0.35rem 0.75rem;
             border-radius: 8px;
-            font-weight: 700;
+            font-weight: 600;
             font-size: 0.85rem;
             color: white;
           }
@@ -716,13 +943,17 @@ export function ListeningTab({
   // Folder view - Audio list
   const folderAudios = getAudiosByFolder(navState.folderId);
   const theme = LEVEL_THEMES[navState.level];
+  const typeTheme = LESSON_TYPE_THEMES[navState.lessonType];
 
   return (
     <div className="listening-tab">
       <div className="nav-header">
         <button className="back-btn" onClick={goBack}>
-          <ChevronLeft size={18} /> {navState.level}
+          <ChevronLeft size={18} /> Quay lại
         </button>
+        <span className="current-level" style={{ background: theme.gradient }}>
+          {navState.level}
+        </span>
         <h3>{navState.folderName}</h3>
         <button className="add-btn" onClick={() => setShowAddAudio(true)}>
           <Upload size={18} /> Tải file
@@ -797,7 +1028,7 @@ export function ListeningTab({
             >
               <button
                 className={`play-btn ${playingAudioId === audio.id ? 'playing' : ''}`}
-                onClick={() => togglePlayAudio(audio.id, audio.audioUrl)}
+                onClick={() => togglePlayAudio(audio)}
                 style={{ '--level-gradient': theme.gradient } as React.CSSProperties}
               >
                 {playingAudioId === audio.id ? <Pause size={20} /> : <Play size={20} />}
@@ -835,6 +1066,14 @@ export function ListeningTab({
           font-size: 1.1rem;
           font-weight: 600;
           margin: 0;
+          color: white;
+        }
+
+        .current-level {
+          padding: 0.35rem 0.75rem;
+          border-radius: 8px;
+          font-weight: 700;
+          font-size: 0.85rem;
           color: white;
         }
 

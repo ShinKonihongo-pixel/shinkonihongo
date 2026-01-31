@@ -1,10 +1,15 @@
 // Reading Practice Page - Premium UI with glassmorphism design
+// Flow: Level Selection → Folder List → Passage List → Practice
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { ChevronRight, CheckCircle, XCircle, RotateCcw, Filter, Volume2, VolumeX, BookOpen, ArrowLeft, Sparkles, Pin, PinOff, ChevronDown, ChevronUp, Trophy, Target, Clock, Zap, Pause, Play, Square } from 'lucide-react';
+import {
+  ChevronRight, CheckCircle, XCircle, RotateCcw, Volume2,
+  BookOpen, ArrowLeft, Sparkles, ChevronDown, ChevronUp,
+  Trophy, Target, Clock, Pause, Play, Square, FolderOpen,
+  FileText, Award, Zap, Pin, PinOff
+} from 'lucide-react';
 import type { JLPTLevel } from '../../types/flashcard';
-import type { ReadingPassage } from '../../types/reading';
-import type { ReadingPracticePageProps, ViewState } from './reading-practice/reading-practice-types';
+import type { ReadingPassage, ReadingFolder } from '../../types/reading';
 import { JLPT_LEVELS } from './reading-practice/reading-practice-constants';
 import { ReadingSettingsModal, ReadingSettingsButton } from '../ui/reading-settings-modal';
 import { FuriganaText } from '../ui/furigana-text';
@@ -19,37 +24,51 @@ const LEVEL_THEMES: Record<JLPTLevel, { gradient: string; glow: string; icon: st
   N1: { gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', glow: 'rgba(239, 68, 68, 0.4)', icon: '👑' },
 };
 
+// View modes
+type ViewMode = 'level-select' | 'folder-list' | 'passage-list' | 'practice' | 'completed';
+
+interface ReadingPracticePageProps {
+  passages: ReadingPassage[];
+  folders: ReadingFolder[];
+  getFoldersByLevel: (level: JLPTLevel) => ReadingFolder[];
+  getPassagesByFolder: (folderId: string) => ReadingPassage[];
+  onGoHome?: () => void;
+}
+
 export function ReadingPracticePage({
   passages,
   folders,
   getFoldersByLevel,
-  getPassagesByFolder: _getPassagesByFolder,
+  getPassagesByFolder,
 }: ReadingPracticePageProps) {
-  const [viewState, setViewState] = useState<ViewState>({ type: 'select' });
-  const [filterLevel, setFilterLevel] = useState<JLPTLevel | 'all'>('all');
-  const [filterFolderId, setFilterFolderId] = useState<string | 'all'>('all');
-  const [showFilter, setShowFilter] = useState(false);
+  // IMPORTANT: All hooks must be called at the top level (Rules of Hooks)
+  const { settings } = useReadingSettings();
+
+  // View state
+  const [viewMode, setViewMode] = useState<ViewMode>('level-select');
+  const [selectedLevel, setSelectedLevel] = useState<JLPTLevel | null>(null);
+  const [selectedFolder, setSelectedFolder] = useState<ReadingFolder | null>(null);
+  const [selectedPassage, setSelectedPassage] = useState<ReadingPassage | null>(null);
 
   // Practice state
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [showResults, setShowResults] = useState(false);
-  const [isCompleted, setIsCompleted] = useState(false);
 
-  // Mobile pin state - must be declared at top level (Rules of Hooks)
+  // Mobile pin state
   const [isPinned, setIsPinned] = useState(false);
   const [isQuestionCollapsed, setIsQuestionCollapsed] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  // Settings modal state
+  // Settings modal
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
-  // Audio playback state
+  // Audio state
   const [audioState, setAudioState] = useState<'idle' | 'playing' | 'paused'>('idle');
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  // Detect mobile screen
+  // Detect mobile
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 900);
     checkMobile();
@@ -57,79 +76,110 @@ export function ReadingPracticePage({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Filter passages
-  const filteredPassages = useMemo(() => {
-    let result = [...passages];
-    if (filterLevel !== 'all') {
-      result = result.filter(p => p.jlptLevel === filterLevel);
-    }
-    if (filterFolderId !== 'all') {
-      result = result.filter(p => p.folderId === filterFolderId);
-    }
-    return result;
-  }, [passages, filterLevel, filterFolderId]);
+  // Cleanup speech on unmount
+  useEffect(() => {
+    return () => {
+      speechSynthesis.cancel();
+    };
+  }, []);
 
-  // Get folders for filter
-  const foldersForFilter = useMemo(() => {
-    if (filterLevel === 'all') return folders;
-    return getFoldersByLevel(filterLevel);
-  }, [filterLevel, folders, getFoldersByLevel]);
+  // Get data based on selections
+  const levelFolders = useMemo(() => {
+    if (!selectedLevel) return [];
+    return getFoldersByLevel(selectedLevel);
+  }, [selectedLevel, getFoldersByLevel]);
+
+  const folderPassages = useMemo(() => {
+    if (!selectedFolder) return [];
+    return getPassagesByFolder(selectedFolder.id);
+  }, [selectedFolder, getPassagesByFolder]);
 
   // Count by level
   const countByLevel = useMemo(() => {
-    const counts: Record<string, number> = { all: passages.length };
-    JLPT_LEVELS.forEach(level => {
-      counts[level] = passages.filter(p => p.jlptLevel === level).length;
-    });
+    const counts: Record<JLPTLevel, number> = { N5: 0, N4: 0, N3: 0, N2: 0, N1: 0 };
+    passages.forEach(p => { counts[p.jlptLevel]++; });
     return counts;
   }, [passages]);
 
+  // Get folder count for level
+  const getFolderCount = (level: JLPTLevel) => getFoldersByLevel(level).length;
+
+  // Get passage count for folder
+  const getPassageCount = (folderId: string) => getPassagesByFolder(folderId).length;
+
+  // Navigation handlers
+  const selectLevel = (level: JLPTLevel) => {
+    setSelectedLevel(level);
+    setViewMode('folder-list');
+  };
+
+  const selectFolder = (folder: ReadingFolder) => {
+    setSelectedFolder(folder);
+    setViewMode('passage-list');
+  };
+
   const startPractice = (passage: ReadingPassage) => {
-    setViewState({ type: 'practice', passage });
+    setSelectedPassage(passage);
     setCurrentQuestionIndex(0);
     setSelectedAnswers({});
     setShowResults(false);
-    setIsCompleted(false);
+    setViewMode('practice');
   };
 
+  const goBack = () => {
+    speechSynthesis.cancel();
+    setAudioState('idle');
+
+    if (viewMode === 'practice') {
+      setViewMode('passage-list');
+      setSelectedPassage(null);
+    } else if (viewMode === 'completed') {
+      setViewMode('passage-list');
+      setSelectedPassage(null);
+    } else if (viewMode === 'passage-list') {
+      setViewMode('folder-list');
+      setSelectedFolder(null);
+    } else if (viewMode === 'folder-list') {
+      setViewMode('level-select');
+      setSelectedLevel(null);
+    }
+  };
+
+  // Practice handlers
   const handleSelectAnswer = (answerIndex: number) => {
     if (showResults) return;
     setSelectedAnswers(prev => ({ ...prev, [currentQuestionIndex]: answerIndex }));
-  };
-
-  const handleNextQuestion = () => {
-    if (viewState.type !== 'practice') return;
-    if (currentQuestionIndex < viewState.passage.questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setShowResults(false);
-    } else {
-      setIsCompleted(true);
-    }
   };
 
   const handleShowResult = () => {
     setShowResults(true);
   };
 
+  const handleNextQuestion = () => {
+    if (!selectedPassage) return;
+    if (currentQuestionIndex < selectedPassage.questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setShowResults(false);
+    } else {
+      setViewMode('completed');
+    }
+  };
+
   const handleRestart = () => {
     setCurrentQuestionIndex(0);
     setSelectedAnswers({});
     setShowResults(false);
-    setIsCompleted(false);
+    setViewMode('practice');
   };
 
-  // Audio control functions
+  // Audio controls
   const startSpeaking = useCallback((text: string) => {
-    // Cancel any existing speech
     speechSynthesis.cancel();
-
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'ja-JP';
     utterance.rate = 0.85;
-
     utterance.onend = () => setAudioState('idle');
     utterance.onerror = () => setAudioState('idle');
-
     utteranceRef.current = utterance;
     speechSynthesis.speak(utterance);
     setAudioState('playing');
@@ -157,26 +207,16 @@ export function ReadingPracticePage({
   const handleAudioToggle = useCallback((text: string) => {
     if (audioState === 'idle') {
       startSpeaking(text);
-    } else if (audioState === 'playing') {
+    } else {
       stopSpeaking();
-    } else if (audioState === 'paused') {
-      startSpeaking(text); // Start from beginning
     }
   }, [audioState, startSpeaking, stopSpeaking]);
 
-  // Cleanup speech on unmount
-  useEffect(() => {
-    return () => {
-      speechSynthesis.cancel();
-    };
-  }, []);
-
   // Calculate score
   const calculateScore = () => {
-    if (viewState.type !== 'practice') return { correct: 0, total: 0, percent: 0 };
-    const passage = viewState.passage;
+    if (!selectedPassage) return { correct: 0, total: 0, percent: 0 };
     let correct = 0;
-    passage.questions.forEach((q, idx) => {
+    selectedPassage.questions.forEach((q, idx) => {
       const selectedIdx = selectedAnswers[idx];
       if (selectedIdx !== undefined && q.answers[selectedIdx]?.isCorrect) {
         correct++;
@@ -184,386 +224,172 @@ export function ReadingPracticePage({
     });
     return {
       correct,
-      total: passage.questions.length,
-      percent: Math.round((correct / passage.questions.length) * 100),
+      total: selectedPassage.questions.length,
+      percent: Math.round((correct / selectedPassage.questions.length) * 100),
     };
   };
 
-  // Selection view
-  if (viewState.type === 'select') {
-    return (
-      <div className="reading-practice-page">
-        {/* Premium Header */}
-        <div className="premium-header">
-          <div className="header-content">
-            <div className="header-icon">
-              <BookOpen size={28} />
-              <Sparkles className="sparkle sparkle-1" size={12} />
-              <Sparkles className="sparkle sparkle-2" size={10} />
-            </div>
-            <div className="header-text">
-              <h1>Luyện Đọc Hiểu</h1>
-              <p>Nâng cao kỹ năng đọc tiếng Nhật</p>
-            </div>
-          </div>
-          <button className={`filter-toggle ${showFilter ? 'active' : ''}`} onClick={() => setShowFilter(!showFilter)}>
-            <Filter size={20} />
-          </button>
-        </div>
+  const score = calculateScore();
+  const currentQuestion = selectedPassage?.questions[currentQuestionIndex];
+  const selectedAnswer = selectedAnswers[currentQuestionIndex];
+  const theme = selectedLevel ? LEVEL_THEMES[selectedLevel] : LEVEL_THEMES.N5;
 
-        {/* Filter Section */}
-        {showFilter && (
-          <div className="filter-section">
-            <div className="filter-row">
-              <label>Cấp độ:</label>
-              <select value={filterLevel} onChange={e => { setFilterLevel(e.target.value as JLPTLevel | 'all'); setFilterFolderId('all'); }}>
-                <option value="all">Tất cả ({countByLevel.all})</option>
-                {JLPT_LEVELS.map(level => (
-                  <option key={level} value={level}>{level} ({countByLevel[level]})</option>
-                ))}
-              </select>
-            </div>
-            <div className="filter-row">
-              <label>Thư mục:</label>
-              <select value={filterFolderId} onChange={e => setFilterFolderId(e.target.value)}>
-                <option value="all">Tất cả</option>
-                {foldersForFilter.map(folder => (
-                  <option key={folder.id} value={folder.id}>{folder.name}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        )}
+  return (
+    <div className="reading-practice-page">
+      {/* Settings Modal */}
+      <ReadingSettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+      />
 
-        {/* Passage Grid */}
-        {filteredPassages.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">📖</div>
-            <h3>Chưa có bài đọc nào</h3>
-            <p>Vui lòng thêm bài đọc ở tab Quản Lí</p>
+      {/* Level Selection */}
+      {viewMode === 'level-select' && (
+        <>
+          <div className="premium-header">
+            <div className="header-content">
+              <div className="header-icon">
+                <BookOpen size={28} />
+                <Sparkles className="sparkle sparkle-1" size={12} />
+                <Sparkles className="sparkle sparkle-2" size={10} />
+              </div>
+              <div className="header-text">
+                <h1>Luyện Đọc Hiểu</h1>
+                <p>Nâng cao kỹ năng đọc tiếng Nhật</p>
+              </div>
+            </div>
+            <ReadingSettingsButton onClick={() => setShowSettingsModal(true)} />
           </div>
-        ) : (
-          <div className="passage-grid">
-            {filteredPassages.map((passage, idx) => {
-              const theme = LEVEL_THEMES[passage.jlptLevel];
+
+          <p className="selection-hint">Chọn cấp độ để bắt đầu luyện đọc</p>
+
+          <div className="level-grid">
+            {JLPT_LEVELS.map((level, idx) => {
+              const levelTheme = LEVEL_THEMES[level];
+              const passageCount = countByLevel[level];
+              const folderCount = getFolderCount(level);
               return (
+                <button
+                  key={level}
+                  className="level-card"
+                  onClick={() => selectLevel(level)}
+                  style={{ '--card-delay': `${idx * 0.1}s`, '--level-gradient': levelTheme.gradient, '--level-glow': levelTheme.glow } as React.CSSProperties}
+                >
+                  <span className="level-icon">{levelTheme.icon}</span>
+                  <span className="level-name">{level}</span>
+                  <div className="level-stats">
+                    <span>{folderCount} thư mục</span>
+                    <span>•</span>
+                    <span>{passageCount} bài</span>
+                  </div>
+                  <div className="card-shine" />
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {/* Folder List */}
+      {viewMode === 'folder-list' && selectedLevel && (
+        <div className="list-view">
+          <div className="nav-header">
+            <button className="btn-back" onClick={goBack}>
+              <ArrowLeft size={20} />
+            </button>
+            <span className="current-level" style={{ background: theme.gradient }}>
+              {selectedLevel}
+            </span>
+            <h2 className="nav-title">Chọn thư mục</h2>
+            <ReadingSettingsButton onClick={() => setShowSettingsModal(true)} />
+          </div>
+
+          {levelFolders.length === 0 ? (
+            <div className="empty-state">
+              <FolderOpen size={48} />
+              <h3>Chưa có thư mục nào</h3>
+              <p>Vui lòng thêm thư mục ở tab Quản Lí</p>
+            </div>
+          ) : (
+            <div className="folder-grid">
+              {levelFolders.map((folder, idx) => {
+                const pCount = getPassageCount(folder.id);
+                return (
+                  <button
+                    key={folder.id}
+                    className="folder-card"
+                    onClick={() => selectFolder(folder)}
+                    style={{ '--card-delay': `${idx * 0.05}s` } as React.CSSProperties}
+                  >
+                    <div className="folder-icon">
+                      <FolderOpen size={24} />
+                    </div>
+                    <div className="folder-info">
+                      <span className="folder-name">{folder.name}</span>
+                      <span className="folder-count">{pCount} bài đọc</span>
+                    </div>
+                    <ChevronRight size={20} className="folder-arrow" />
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Passage List */}
+      {viewMode === 'passage-list' && selectedLevel && selectedFolder && (
+        <div className="list-view">
+          <div className="nav-header">
+            <button className="btn-back" onClick={goBack}>
+              <ArrowLeft size={20} />
+            </button>
+            <span className="current-level" style={{ background: theme.gradient }}>
+              {selectedLevel}
+            </span>
+            <h2 className="nav-title">{selectedFolder.name}</h2>
+            <ReadingSettingsButton onClick={() => setShowSettingsModal(true)} />
+          </div>
+
+          {folderPassages.length === 0 ? (
+            <div className="empty-state">
+              <FileText size={48} />
+              <h3>Chưa có bài đọc nào</h3>
+              <p>Vui lòng thêm bài đọc ở tab Quản Lí</p>
+            </div>
+          ) : (
+            <div className="passage-grid">
+              {folderPassages.map((passage, idx) => (
                 <div
                   key={passage.id}
                   className="passage-card"
                   onClick={() => startPractice(passage)}
-                  style={{ '--card-delay': `${idx * 0.05}s`, '--level-gradient': theme.gradient, '--level-glow': theme.glow } as React.CSSProperties}
+                  style={{ '--card-delay': `${idx * 0.05}s`, '--level-glow': theme.glow } as React.CSSProperties}
                 >
-                  <div className="card-header">
-                    <span className="level-badge" style={{ background: theme.gradient }}>
-                      {passage.jlptLevel}
-                    </span>
-                    <span className="question-count">{passage.questions.length} câu hỏi</span>
+                  <div className="passage-header">
+                    <div className="passage-meta">
+                      <FileText size={16} />
+                      <span>{passage.questions.length} câu hỏi</span>
+                    </div>
+                    <Clock size={14} />
+                    <span className="read-time">~{Math.ceil(passage.content.length / 400)} phút</span>
                   </div>
                   <h3 className="passage-title">{passage.title}</h3>
-                  <p className="passage-preview">{passage.content.substring(0, 120)}...</p>
-                  <div className="card-action">
+                  <p className="passage-preview">{passage.content.substring(0, 100)}...</p>
+                  <div className="passage-action">
                     <span>Bắt đầu</span>
                     <ChevronRight size={18} />
                   </div>
-                  <div className="card-shine" />
                 </div>
-              );
-            })}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
-        <style>{`
-          .reading-practice-page {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
-            padding: 1.5rem;
-            overflow-x: hidden;
-          }
-
-          /* Premium Header */
-          .premium-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding: 1rem 1.5rem;
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px;
-          }
-
-          .header-content {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-          }
-
-          .header-icon {
-            position: relative;
-            width: 56px;
-            height: 56px;
-            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
-          }
-
-          .sparkle {
-            position: absolute;
-            color: #fbbf24;
-            animation: sparkle 2s ease-in-out infinite;
-          }
-
-          .sparkle-1 { top: -4px; right: -4px; animation-delay: 0s; }
-          .sparkle-2 { bottom: -2px; left: -2px; animation-delay: 0.5s; }
-
-          @keyframes sparkle {
-            0%, 100% { opacity: 0; transform: scale(0.5) rotate(0deg); }
-            50% { opacity: 1; transform: scale(1) rotate(180deg); }
-          }
-
-          .header-text h1 {
-            margin: 0;
-            font-size: 1.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-          }
-
-          .header-text p {
-            margin: 0.25rem 0 0;
-            font-size: 0.875rem;
-            color: rgba(255, 255, 255, 0.5);
-          }
-
-          .filter-toggle {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(255, 255, 255, 0.05);
-            color: rgba(255, 255, 255, 0.7);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-          }
-
-          .filter-toggle:hover,
-          .filter-toggle.active {
-            background: rgba(59, 130, 246, 0.2);
-            border-color: rgba(59, 130, 246, 0.5);
-            color: #3b82f6;
-          }
-
-          /* Filter Section */
-          .filter-section {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px;
-            padding: 1.25rem;
-            margin-bottom: 1.5rem;
-            animation: slideDown 0.3s ease;
-          }
-
-          @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-
-          .filter-row {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
-          }
-
-          .filter-row:last-child { margin-bottom: 0; }
-
-          .filter-row label {
-            min-width: 70px;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.7);
-          }
-
-          .filter-row select {
-            flex: 1;
-            padding: 0.75rem 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            color: white;
-            font-size: 0.9rem;
-          }
-
-          .filter-row select option {
-            background: #1a1a2e;
-            color: white;
-          }
-
-          /* Passage Grid */
-          .passage-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 1.25rem;
-          }
-
-          .passage-card {
-            position: relative;
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 20px;
-            padding: 1.5rem;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            animation: cardAppear 0.5s ease backwards;
-            animation-delay: var(--card-delay);
-            overflow: hidden;
-          }
-
-          @keyframes cardAppear {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-
-          .passage-card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(255, 255, 255, 0.15);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 40px var(--level-glow);
-          }
-
-          .passage-card:hover .card-shine {
-            transform: translateX(100%);
-          }
-
-          .card-shine {
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transition: transform 0.6s ease;
-            pointer-events: none;
-          }
-
-          .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-          }
-
-          .level-badge {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            padding: 0.4rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: white;
-          }
-
-          .level-icon { font-size: 0.9rem; }
-
-          .question-count {
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.5);
-          }
-
-          .passage-title {
-            margin: 0 0 0.75rem;
-            font-size: 1.15rem;
-            font-weight: 600;
-            color: white;
-            line-height: 1.4;
-          }
-
-          .passage-preview {
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 0.9rem;
-            line-height: 1.6;
-            margin: 0 0 1.25rem;
-          }
-
-          .card-action {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 0.75rem;
-            background: var(--level-gradient);
-            border-radius: 12px;
-            color: white;
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-          }
-
-          .passage-card:hover .card-action {
-            box-shadow: 0 4px 20px var(--level-glow);
-          }
-
-          /* Empty State */
-          .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 20px;
-          }
-
-          .empty-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-          }
-
-          .empty-state h3 {
-            margin: 0 0 0.5rem;
-            color: white;
-            font-size: 1.25rem;
-          }
-
-          .empty-state p {
-            margin: 0;
-            color: rgba(255, 255, 255, 0.5);
-          }
-
-          @media (max-width: 640px) {
-            .reading-practice-page { padding: 1rem; }
-            .premium-header { padding: 1rem; flex-wrap: wrap; gap: 1rem; }
-            .header-text h1 { font-size: 1.25rem; }
-            .passage-grid { grid-template-columns: 1fr; }
-          }
-        `}</style>
-      </div>
-    );
-  }
-
-  // Practice view
-  const passage = viewState.passage;
-  const currentQuestion = passage.questions[currentQuestionIndex];
-  const selectedAnswer = selectedAnswers[currentQuestionIndex];
-  const score = calculateScore();
-  const theme = LEVEL_THEMES[passage.jlptLevel];
-
-  // Completed view
-  if (isCompleted) {
-    return (
-      <div className="reading-practice-page">
+      {/* Completed View */}
+      {viewMode === 'completed' && selectedPassage && (
         <div className="completion-screen">
-          <div className="completion-glow" />
+          <div className="completion-glow" style={{ '--color': theme.gradient } as React.CSSProperties} />
           <div className="completion-content">
             <div className="completion-icon">
               {score.percent >= 80 ? '🎉' : score.percent >= 50 ? '👍' : '💪'}
@@ -587,436 +413,794 @@ export function ReadingPracticePage({
               <button className="btn btn-glass" onClick={handleRestart}>
                 <RotateCcw size={18} /> Làm lại
               </button>
-              <button className="btn btn-primary" onClick={() => setViewState({ type: 'select' })}>
+              <button className="btn btn-primary" onClick={goBack}>
                 Chọn bài khác
               </button>
             </div>
           </div>
         </div>
-
-        <style>{`
-          .reading-practice-page {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1.5rem;
-          }
-
-          .completion-screen {
-            position: relative;
-            width: 100%;
-            max-width: 480px;
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
-            padding: 3rem 2rem;
-            text-align: center;
-            overflow: hidden;
-          }
-
-          .completion-glow {
-            position: absolute;
-            top: -50%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 300px;
-            height: 300px;
-            background: var(--color, linear-gradient(135deg, #3b82f6, #8b5cf6));
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.3;
-            animation: pulse 3s ease-in-out infinite;
-          }
-
-          @keyframes pulse {
-            0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.3; }
-            50% { transform: translateX(-50%) scale(1.1); opacity: 0.4; }
-          }
-
-          .completion-content {
-            position: relative;
-            z-index: 1;
-          }
-
-          .completion-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            animation: bounce 1s ease infinite;
-          }
-
-          @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-          }
-
-          .completion-screen h2 {
-            margin: 0 0 1.5rem;
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: white;
-          }
-
-          .score-display {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-          }
-
-          .score-circle {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: conic-gradient(var(--color) var(--progress), rgba(255, 255, 255, 0.1) 0);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-          }
-
-          .score-circle::before {
-            content: '';
-            position: absolute;
-            inset: 8px;
-            background: #1a1a2e;
-            border-radius: 50%;
-          }
-
-          .score-number {
-            position: relative;
-            z-index: 1;
-            font-size: 2rem;
-            font-weight: 700;
-            color: white;
-          }
-
-          .score-detail {
-            display: flex;
-            gap: 0.5rem;
-            font-size: 1.1rem;
-          }
-
-          .score-detail .correct { color: #22c55e; font-weight: 600; }
-          .score-detail .total { color: rgba(255, 255, 255, 0.5); }
-
-          .score-message {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 1rem;
-            margin-bottom: 2rem;
-            line-height: 1.5;
-          }
-
-          .completion-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-          }
-
-          .btn {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.875rem 1.5rem;
-            border-radius: 12px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: none;
-          }
-
-          .btn-glass {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-          }
-
-          .btn-glass:hover {
-            background: rgba(255, 255, 255, 0.15);
-          }
-
-          .btn-primary {
-            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-            color: white;
-          }
-
-          .btn-primary:hover {
-            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
-            transform: translateY(-2px);
-          }
-        `}</style>
-      </div>
-    );
-  }
-
-  // Practice view with split layout
-  const { settings } = useReadingSettings();
-
-  return (
-    <div className="reading-practice-page practice-mode">
-      {/* Settings Modal */}
-      <ReadingSettingsModal
-        isOpen={showSettingsModal}
-        onClose={() => setShowSettingsModal(false)}
-      />
-
-      {/* Compact Practice Header */}
-      <header className="practice-header-compact">
-        <button className="btn-back-compact" onClick={() => { stopSpeaking(); setViewState({ type: 'select' }); }}>
-          <ArrowLeft size={18} />
-        </button>
-        <div className="header-center">
-          <span className="level-pill" style={{ background: theme.gradient }}>
-            {passage.jlptLevel}
-          </span>
-          <h1 className="header-title-compact">{passage.title}</h1>
-          <span className="progress-indicator">
-            {Object.keys(selectedAnswers).length}/{passage.questions.length}
-          </span>
-        </div>
-        <ReadingSettingsButton onClick={() => setShowSettingsModal(true)} />
-      </header>
-
-      {/* Progress Section */}
-      <div className="progress-section-pro">
-        <div className="progress-bar-pro">
-          <div
-            className="progress-fill-pro"
-            style={{
-              width: `${((currentQuestionIndex + 1) / passage.questions.length) * 100}%`,
-              background: theme.gradient
-            }}
-          />
-        </div>
-        <div className="progress-steps">
-          {passage.questions.map((_, idx) => (
-            <button
-              key={idx}
-              className={`progress-step ${idx === currentQuestionIndex ? 'active' : ''} ${selectedAnswers[idx] !== undefined ? 'answered' : ''}`}
-              onClick={() => { setCurrentQuestionIndex(idx); setShowResults(false); }}
-              style={{ '--step-color': theme.gradient } as React.CSSProperties}
-            >
-              {idx + 1}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Mobile Pinned Question Header */}
-      {isMobile && isPinned && (
-        <div className={`pinned-question-header ${isQuestionCollapsed ? 'collapsed' : ''}`}>
-          <div className="pinned-header-row" onClick={() => setIsQuestionCollapsed(!isQuestionCollapsed)}>
-            <span className="pinned-label">
-              <Pin size={14} /> Câu {currentQuestionIndex + 1}
-            </span>
-            <div className="pinned-actions">
-              <button className="btn-icon-sm" onClick={(e) => { e.stopPropagation(); setIsPinned(false); }}>
-                <PinOff size={14} />
-              </button>
-              {isQuestionCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
-            </div>
-          </div>
-          {!isQuestionCollapsed && (
-            <div className="pinned-content">
-              <p className="pinned-question-text">{currentQuestion.question}</p>
-              <div className="pinned-answers">
-                {currentQuestion.answers.map((answer, idx) => {
-                  const isSelected = selectedAnswer === idx;
-                  const isCorrect = answer.isCorrect;
-                  let className = 'pinned-answer';
-                  if (showResults) {
-                    if (isCorrect) className += ' correct';
-                    else if (isSelected && !isCorrect) className += ' incorrect';
-                  } else if (isSelected) {
-                    className += ' selected';
-                  }
-                  return (
-                    <button
-                      key={idx}
-                      className={className}
-                      onClick={() => handleSelectAnswer(idx)}
-                      disabled={showResults}
-                    >
-                      <span className="answer-letter-mini">{String.fromCharCode(65 + idx)}</span>
-                      <span className="answer-text-mini">{answer.text}</span>
-                      {showResults && isCorrect && <CheckCircle size={14} className="result-icon correct" />}
-                      {showResults && isSelected && !isCorrect && <XCircle size={14} className="result-icon incorrect" />}
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="pinned-action-buttons">
-                {!showResults ? (
-                  <button className="btn-check-pinned" onClick={handleShowResult} disabled={selectedAnswer === undefined}>
-                    Kiểm tra
-                  </button>
-                ) : (
-                  <button className="btn-next-pinned" onClick={handleNextQuestion}>
-                    {currentQuestionIndex < passage.questions.length - 1 ? 'Tiếp' : 'Kết quả'}
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
       )}
 
-      {/* Split Layout Container */}
-      <div className={`split-layout ${isMobile && isPinned ? 'with-pinned' : ''}`}>
-        {/* Left Panel - Reading Content (Wider) */}
-        <div className="content-panel" ref={contentRef}>
-          <div className="content-card">
-            <div className="content-header">
-              <div className="content-icon">
-                <BookOpen size={20} />
-              </div>
-              <h2>Nội dung bài đọc</h2>
-              <div className="audio-controls">
-                {/* Main Play/Stop button */}
+      {/* Practice View */}
+      {viewMode === 'practice' && selectedPassage && currentQuestion && (
+        <div className="practice-mode">
+          {/* Compact Header */}
+          <header className="practice-header">
+            <button className="btn-back-sm" onClick={goBack}>
+              <ArrowLeft size={18} />
+            </button>
+            <div className="header-center">
+              <span className="level-pill" style={{ background: theme.gradient }}>
+                {selectedLevel}
+              </span>
+              <h1 className="header-title">{selectedPassage.title}</h1>
+              <span className="progress-badge">
+                {Object.keys(selectedAnswers).length}/{selectedPassage.questions.length}
+              </span>
+            </div>
+            <ReadingSettingsButton onClick={() => setShowSettingsModal(true)} />
+          </header>
+
+          {/* Progress Bar */}
+          <div className="progress-section">
+            <div className="progress-bar">
+              <div
+                className="progress-fill"
+                style={{
+                  width: `${((currentQuestionIndex + 1) / selectedPassage.questions.length) * 100}%`,
+                  background: theme.gradient
+                }}
+              />
+            </div>
+            <div className="progress-steps">
+              {selectedPassage.questions.map((_, idx) => (
                 <button
-                  className={`btn-audio ${audioState !== 'idle' ? 'active' : ''}`}
-                  onClick={() => handleAudioToggle(passage.content)}
-                  title={audioState === 'idle' ? 'Nghe' : 'Dừng'}
+                  key={idx}
+                  className={`step ${idx === currentQuestionIndex ? 'active' : ''} ${selectedAnswers[idx] !== undefined ? 'answered' : ''}`}
+                  onClick={() => { setCurrentQuestionIndex(idx); setShowResults(false); }}
+                  style={{ '--step-color': theme.gradient } as React.CSSProperties}
                 >
-                  {audioState === 'idle' ? <Volume2 size={18} /> : <Square size={16} />}
+                  {idx + 1}
                 </button>
-                {/* Pause/Resume button - only show when playing or paused */}
-                {audioState !== 'idle' && (
-                  <button
-                    className={`btn-audio ${audioState === 'paused' ? 'paused' : ''}`}
-                    onClick={() => audioState === 'playing' ? pauseSpeaking() : resumeSpeaking()}
-                    title={audioState === 'playing' ? 'Tạm dừng' : 'Tiếp tục'}
-                  >
-                    {audioState === 'playing' ? <Pause size={16} /> : <Play size={16} />}
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className="content-body">
-              <div className="passage-text-pro" style={{ fontSize: `${settings.fontSize}rem` }}>
-                <FuriganaText text={passage.content} />
-              </div>
-            </div>
-            <div className="content-footer">
-              <div className="word-count">
-                <Clock size={14} />
-                <span>~{Math.ceil(passage.content.length / 400)} phút đọc</span>
-              </div>
+              ))}
             </div>
           </div>
-        </div>
 
-        {/* Right Panel - Questions (Narrower, Scrollable) */}
-        <div className="question-panel">
-          <div className="question-card">
-            {/* Question Panel Header with Pin Button (Mobile) */}
-            <div className="question-panel-header">
-              <div className="question-number-badge" style={{ background: theme.gradient }}>
-                Câu {currentQuestionIndex + 1}/{passage.questions.length}
+          {/* Mobile Pinned Question */}
+          {isMobile && isPinned && (
+            <div className={`pinned-question ${isQuestionCollapsed ? 'collapsed' : ''}`}>
+              <div className="pinned-header" onClick={() => setIsQuestionCollapsed(!isQuestionCollapsed)}>
+                <span className="pinned-label">
+                  <Pin size={14} /> Câu {currentQuestionIndex + 1}
+                </span>
+                <div className="pinned-actions">
+                  <button className="btn-unpin" onClick={(e) => { e.stopPropagation(); setIsPinned(false); }}>
+                    <PinOff size={14} />
+                  </button>
+                  {isQuestionCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                </div>
               </div>
-              {isMobile && !isPinned && (
-                <button className="btn-pin" onClick={() => setIsPinned(true)} title="Ghim câu hỏi">
-                  <Pin size={16} />
-                  <span>Ghim</span>
-                </button>
-              )}
-            </div>
-
-            {/* Question Content */}
-            <div className="question-content-scroll">
-              <h3 className="question-text-pro" style={{ fontSize: `${settings.fontSize * 1.05}rem` }}>
-                <FuriganaText text={currentQuestion.question} />
-              </h3>
-
-              <div className="answers-grid">
-                {currentQuestion.answers.map((answer, idx) => {
-                  const isSelected = selectedAnswer === idx;
-                  const isCorrect = answer.isCorrect;
-                  let className = 'answer-card';
-                  if (showResults) {
-                    if (isCorrect) className += ' correct';
-                    else if (isSelected && !isCorrect) className += ' incorrect';
-                  } else if (isSelected) {
-                    className += ' selected';
-                  }
-
-                  return (
-                    <button
-                      key={idx}
-                      className={className}
-                      onClick={() => handleSelectAnswer(idx)}
-                      disabled={showResults}
-                      style={{ fontSize: `${settings.fontSize * 0.95}rem` }}
-                    >
-                      <div className="answer-indicator">
-                        <span className="answer-letter-pro">{String.fromCharCode(65 + idx)}</span>
-                        {showResults && isCorrect && <CheckCircle size={18} className="check-icon" />}
-                        {showResults && isSelected && !isCorrect && <XCircle size={18} className="x-icon" />}
-                      </div>
-                      <span className="answer-content"><FuriganaText text={answer.text} /></span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Explanation */}
-              {showResults && currentQuestion.explanation && (
-                <div className="explanation-card">
-                  <div className="explanation-header">
-                    <Sparkles size={16} />
-                    <span>Giải thích</span>
+              {!isQuestionCollapsed && (
+                <div className="pinned-content">
+                  <p className="pinned-text">{currentQuestion.question}</p>
+                  <div className="pinned-answers">
+                    {currentQuestion.answers.map((answer, idx) => {
+                      const isSelected = selectedAnswer === idx;
+                      const isCorrect = answer.isCorrect;
+                      let cls = 'pinned-answer';
+                      if (showResults) {
+                        if (isCorrect) cls += ' correct';
+                        else if (isSelected && !isCorrect) cls += ' incorrect';
+                      } else if (isSelected) {
+                        cls += ' selected';
+                      }
+                      return (
+                        <button key={idx} className={cls} onClick={() => handleSelectAnswer(idx)} disabled={showResults}>
+                          <span className="ans-letter">{String.fromCharCode(65 + idx)}</span>
+                          <span className="ans-text">{answer.text}</span>
+                          {showResults && isCorrect && <CheckCircle size={14} className="icon-correct" />}
+                          {showResults && isSelected && !isCorrect && <XCircle size={14} className="icon-incorrect" />}
+                        </button>
+                      );
+                    })}
                   </div>
-                  <p>{currentQuestion.explanation}</p>
+                  <div className="pinned-btns">
+                    {!showResults ? (
+                      <button className="btn-check-pin" onClick={handleShowResult} disabled={selectedAnswer === undefined}>
+                        Kiểm tra
+                      </button>
+                    ) : (
+                      <button className="btn-next-pin" onClick={handleNextQuestion}>
+                        {currentQuestionIndex < selectedPassage.questions.length - 1 ? 'Tiếp' : 'Kết quả'}
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
+          )}
 
-            {/* Question Actions */}
-            <div className="question-actions-pro">
-              {!showResults ? (
-                <button
-                  className="btn-action-pro btn-check"
-                  onClick={handleShowResult}
-                  disabled={selectedAnswer === undefined}
-                  style={{ '--btn-gradient': theme.gradient } as React.CSSProperties}
-                >
-                  <Target size={18} />
-                  Kiểm tra đáp án
-                </button>
-              ) : (
-                <button
-                  className="btn-action-pro btn-next"
-                  onClick={handleNextQuestion}
-                  style={{ '--btn-gradient': theme.gradient } as React.CSSProperties}
-                >
-                  {currentQuestionIndex < passage.questions.length - 1 ? (
-                    <>Câu tiếp theo <ChevronRight size={18} /></>
-                  ) : (
-                    <><Trophy size={18} /> Xem kết quả</>
+          {/* Split Layout */}
+          <div className={`split-layout ${isMobile && isPinned ? 'with-pinned' : ''}`}>
+            {/* Content Panel */}
+            <div className="content-panel" ref={contentRef}>
+              <div className="content-card">
+                <div className="content-header">
+                  <div className="content-icon">
+                    <BookOpen size={20} />
+                  </div>
+                  <h2>Nội dung bài đọc</h2>
+                  <div className="audio-controls">
+                    <button
+                      className={`btn-audio ${audioState !== 'idle' ? 'active' : ''}`}
+                      onClick={() => handleAudioToggle(selectedPassage.content)}
+                      title={audioState === 'idle' ? 'Nghe' : 'Dừng'}
+                    >
+                      {audioState === 'idle' ? <Volume2 size={18} /> : <Square size={16} />}
+                    </button>
+                    {audioState !== 'idle' && (
+                      <button
+                        className={`btn-audio ${audioState === 'paused' ? 'paused' : ''}`}
+                        onClick={() => audioState === 'playing' ? pauseSpeaking() : resumeSpeaking()}
+                        title={audioState === 'playing' ? 'Tạm dừng' : 'Tiếp tục'}
+                      >
+                        {audioState === 'playing' ? <Pause size={16} /> : <Play size={16} />}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="content-body">
+                  <div className="passage-text" style={{ fontSize: `${settings.fontSize}rem` }}>
+                    <FuriganaText text={selectedPassage.content} />
+                  </div>
+                </div>
+                <div className="content-footer">
+                  <div className="word-count">
+                    <Clock size={14} />
+                    <span>~{Math.ceil(selectedPassage.content.length / 400)} phút đọc</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Question Panel */}
+            <div className="question-panel">
+              <div className="question-card">
+                <div className="question-header">
+                  <div className="question-badge" style={{ background: theme.gradient }}>
+                    Câu {currentQuestionIndex + 1}/{selectedPassage.questions.length}
+                  </div>
+                  {isMobile && !isPinned && (
+                    <button className="btn-pin" onClick={() => setIsPinned(true)}>
+                      <Pin size={16} />
+                      <span>Ghim</span>
+                    </button>
                   )}
-                </button>
-              )}
+                </div>
+
+                <div className="question-body">
+                  <h3 className="question-text" style={{ fontSize: `${settings.fontSize * 1.05}rem` }}>
+                    <FuriganaText text={currentQuestion.question} />
+                  </h3>
+
+                  <div className="answers-list">
+                    {currentQuestion.answers.map((answer, idx) => {
+                      const isSelected = selectedAnswer === idx;
+                      const isCorrect = answer.isCorrect;
+                      let cls = 'answer-card';
+                      if (showResults) {
+                        if (isCorrect) cls += ' correct';
+                        else if (isSelected && !isCorrect) cls += ' incorrect';
+                      } else if (isSelected) {
+                        cls += ' selected';
+                      }
+
+                      return (
+                        <button
+                          key={idx}
+                          className={cls}
+                          onClick={() => handleSelectAnswer(idx)}
+                          disabled={showResults}
+                          style={{ fontSize: `${settings.fontSize * 0.95}rem` }}
+                        >
+                          <div className="answer-indicator">
+                            <span className="answer-letter">{String.fromCharCode(65 + idx)}</span>
+                            {showResults && isCorrect && <CheckCircle size={18} className="check-icon" />}
+                            {showResults && isSelected && !isCorrect && <XCircle size={18} className="x-icon" />}
+                          </div>
+                          <span className="answer-content"><FuriganaText text={answer.text} /></span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {showResults && currentQuestion.explanation && (
+                    <div className="explanation-card">
+                      <div className="explanation-header">
+                        <Sparkles size={16} />
+                        <span>Giải thích</span>
+                      </div>
+                      <p>{currentQuestion.explanation}</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="question-actions">
+                  {!showResults ? (
+                    <button
+                      className="btn-action btn-check"
+                      onClick={handleShowResult}
+                      disabled={selectedAnswer === undefined}
+                      style={{ '--btn-gradient': theme.gradient } as React.CSSProperties}
+                    >
+                      <Target size={18} />
+                      Kiểm tra đáp án
+                    </button>
+                  ) : (
+                    <button
+                      className="btn-action btn-next"
+                      onClick={handleNextQuestion}
+                      style={{ '--btn-gradient': theme.gradient } as React.CSSProperties}
+                    >
+                      {currentQuestionIndex < selectedPassage.questions.length - 1 ? (
+                        <>Câu tiếp theo <ChevronRight size={18} /></>
+                      ) : (
+                        <><Trophy size={18} /> Xem kết quả</>
+                      )}
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       <style>{`
-        .reading-practice-page.practice-mode {
-          height: 100vh;
-          max-height: 100vh;
+        .reading-practice-page {
+          min-height: 100vh;
           background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+          padding: 1.5rem;
+        }
+
+        /* Premium Header */
+        .premium-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 2rem;
+          padding: 1rem 1.5rem;
+          background: rgba(255, 255, 255, 0.03);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 16px;
+        }
+
+        .header-content {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+
+        .header-icon {
+          position: relative;
+          width: 56px;
+          height: 56px;
+          background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+          border-radius: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+        }
+
+        .sparkle {
+          position: absolute;
+          color: #fbbf24;
+          animation: sparkle 2s ease-in-out infinite;
+        }
+
+        .sparkle-1 { top: -4px; right: -4px; }
+        .sparkle-2 { bottom: -2px; left: -2px; animation-delay: 0.5s; }
+
+        @keyframes sparkle {
+          0%, 100% { opacity: 0; transform: scale(0.5) rotate(0deg); }
+          50% { opacity: 1; transform: scale(1) rotate(180deg); }
+        }
+
+        .header-text h1 {
+          margin: 0;
+          font-size: 1.5rem;
+          font-weight: 700;
+          background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .header-text p {
+          margin: 0.25rem 0 0;
+          font-size: 0.875rem;
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        .selection-hint {
+          text-align: center;
+          color: rgba(255, 255, 255, 0.5);
+          margin-bottom: 1.5rem;
+          font-size: 0.95rem;
+        }
+
+        /* Level Grid */
+        .level-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+          gap: 1rem;
+          max-width: 1000px;
+          margin: 0 auto;
+        }
+
+        .level-card {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 2rem 1.5rem;
+          background: rgba(255, 255, 255, 0.03);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 20px;
+          cursor: pointer;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          animation: cardAppear 0.5s ease backwards;
+          animation-delay: var(--card-delay);
+          overflow: hidden;
+        }
+
+        @keyframes cardAppear {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .level-card:hover {
+          transform: translateY(-4px);
+          border-color: rgba(255, 255, 255, 0.15);
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 40px var(--level-glow);
+        }
+
+        .level-card:hover .card-shine {
+          transform: translateX(100%);
+        }
+
+        .card-shine {
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+          transition: transform 0.6s ease;
+          pointer-events: none;
+        }
+
+        .level-icon {
+          font-size: 2.5rem;
+        }
+
+        .level-name {
+          font-size: 1.5rem;
+          font-weight: 700;
+          background: var(--level-gradient);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .level-stats {
+          display: flex;
+          gap: 0.5rem;
+          font-size: 0.8rem;
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* List View (Folders & Passages) */
+        .list-view {
+          animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        .nav-header {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.875rem 1rem;
+          background: rgba(255, 255, 255, 0.03);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 14px;
+          margin-bottom: 1.5rem;
+        }
+
+        .btn-back {
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
+          color: rgba(255, 255, 255, 0.7);
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .btn-back:hover {
+          background: rgba(255, 255, 255, 0.1);
+          color: white;
+        }
+
+        .current-level {
+          padding: 0.35rem 0.75rem;
+          border-radius: 8px;
+          font-size: 0.8rem;
+          font-weight: 600;
+          color: white;
+        }
+
+        .nav-title {
+          flex: 1;
+          margin: 0;
+          font-size: 1rem;
+          font-weight: 500;
+          color: white;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        /* Folder Grid */
+        .folder-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+
+        .folder-card {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          padding: 1rem 1.25rem;
+          background: rgba(255, 255, 255, 0.03);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 14px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          animation: slideIn 0.3s ease backwards;
+          animation-delay: var(--card-delay);
+        }
+
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateX(-10px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+
+        .folder-card:hover {
+          background: rgba(255, 255, 255, 0.06);
+          border-color: rgba(255, 255, 255, 0.12);
+          transform: translateX(4px);
+        }
+
+        .folder-icon {
+          width: 44px;
+          height: 44px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+          border-radius: 12px;
+          color: white;
+        }
+
+        .folder-info {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+
+        .folder-name {
+          font-size: 1rem;
+          font-weight: 500;
+          color: white;
+        }
+
+        .folder-count {
+          font-size: 0.8rem;
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        .folder-arrow {
+          color: rgba(255, 255, 255, 0.4);
+          transition: transform 0.2s ease;
+        }
+
+        .folder-card:hover .folder-arrow {
+          transform: translateX(4px);
+          color: white;
+        }
+
+        /* Passage Grid */
+        .passage-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+          gap: 1rem;
+        }
+
+        .passage-card {
+          position: relative;
           padding: 1.25rem;
+          background: rgba(255, 255, 255, 0.03);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 16px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          animation: cardAppear 0.4s ease backwards;
+          animation-delay: var(--card-delay);
+        }
+
+        .passage-card:hover {
+          background: rgba(255, 255, 255, 0.06);
+          border-color: rgba(255, 255, 255, 0.12);
+          transform: translateY(-2px);
+          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3), 0 0 24px var(--level-glow);
+        }
+
+        .passage-header {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 0.75rem;
+          font-size: 0.8rem;
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        .passage-meta {
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+          flex: 1;
+        }
+
+        .read-time {
+          font-size: 0.75rem;
+        }
+
+        .passage-title {
+          margin: 0 0 0.5rem;
+          font-size: 1.05rem;
+          font-weight: 600;
+          color: white;
+          line-height: 1.4;
+        }
+
+        .passage-preview {
+          margin: 0 0 1rem;
+          font-size: 0.85rem;
+          color: rgba(255, 255, 255, 0.5);
+          line-height: 1.5;
+        }
+
+        .passage-action {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          padding: 0.75rem;
+          background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+          border-radius: 10px;
+          color: white;
+          font-weight: 500;
+          font-size: 0.9rem;
+          transition: all 0.3s ease;
+        }
+
+        .passage-card:hover .passage-action {
+          box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Empty State */
+        .empty-state {
+          text-align: center;
+          padding: 4rem 2rem;
+          background: rgba(255, 255, 255, 0.03);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 20px;
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        .empty-state svg {
+          margin-bottom: 1rem;
+          opacity: 0.5;
+        }
+
+        .empty-state h3 {
+          margin: 0 0 0.5rem;
+          color: white;
+          font-size: 1.1rem;
+        }
+
+        .empty-state p {
+          margin: 0;
+          font-size: 0.9rem;
+        }
+
+        /* Completion Screen */
+        .completion-screen {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: calc(100vh - 3rem);
+        }
+
+        .completion-glow {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 300px;
+          height: 300px;
+          background: var(--color);
+          border-radius: 50%;
+          filter: blur(80px);
+          opacity: 0.3;
+          animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+          0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+          50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.4; }
+        }
+
+        .completion-content {
+          position: relative;
+          z-index: 1;
+          width: 100%;
+          max-width: 420px;
+          background: rgba(255, 255, 255, 0.03);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 24px;
+          padding: 2.5rem 2rem;
+          text-align: center;
+        }
+
+        .completion-icon {
+          font-size: 4rem;
+          margin-bottom: 1rem;
+          animation: bounce 1s ease infinite;
+        }
+
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
+        }
+
+        .completion-content h2 {
+          margin: 0 0 1.5rem;
+          font-size: 1.75rem;
+          font-weight: 700;
+          color: white;
+        }
+
+        .score-display {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+        }
+
+        .score-circle {
+          width: 120px;
+          height: 120px;
+          border-radius: 50%;
+          background: conic-gradient(var(--color) var(--progress), rgba(255, 255, 255, 0.1) 0);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+        }
+
+        .score-circle::before {
+          content: '';
+          position: absolute;
+          inset: 8px;
+          background: #1a1a2e;
+          border-radius: 50%;
+        }
+
+        .score-number {
+          position: relative;
+          z-index: 1;
+          font-size: 2rem;
+          font-weight: 700;
+          color: white;
+        }
+
+        .score-detail {
+          display: flex;
+          gap: 0.5rem;
+          font-size: 1.1rem;
+        }
+
+        .score-detail .correct { color: #22c55e; font-weight: 600; }
+        .score-detail .total { color: rgba(255, 255, 255, 0.5); }
+
+        .score-message {
+          color: rgba(255, 255, 255, 0.7);
+          font-size: 1rem;
+          margin-bottom: 2rem;
+          line-height: 1.5;
+        }
+
+        .completion-actions {
+          display: flex;
+          gap: 1rem;
+          justify-content: center;
+        }
+
+        .btn {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.875rem 1.5rem;
+          border-radius: 12px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          border: none;
+        }
+
+        .btn-glass {
+          background: rgba(255, 255, 255, 0.1);
+          color: white;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-glass:hover {
+          background: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-primary {
+          background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+          color: white;
+        }
+
+        .btn-primary:hover {
+          box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+          transform: translateY(-2px);
+        }
+
+        /* Practice Mode */
+        .practice-mode {
+          height: calc(100vh - 3rem);
           display: flex;
           flex-direction: column;
           overflow: hidden;
         }
 
-        /* Compact Practice Header */
-        .practice-header-compact {
+        .practice-header {
           display: flex;
           align-items: center;
           gap: 0.75rem;
@@ -1028,7 +1212,7 @@ export function ReadingPracticePage({
           margin-bottom: 0.75rem;
         }
 
-        .btn-back-compact {
+        .btn-back-sm {
           width: 34px;
           height: 34px;
           border-radius: 8px;
@@ -1040,10 +1224,9 @@ export function ReadingPracticePage({
           align-items: center;
           justify-content: center;
           transition: all 0.2s ease;
-          flex-shrink: 0;
         }
 
-        .btn-back-compact:hover {
+        .btn-back-sm:hover {
           background: rgba(255, 255, 255, 0.08);
           color: white;
         }
@@ -1065,7 +1248,7 @@ export function ReadingPracticePage({
           flex-shrink: 0;
         }
 
-        .header-title-compact {
+        .header-title {
           margin: 0;
           font-size: 0.9rem;
           font-weight: 500;
@@ -1077,7 +1260,7 @@ export function ReadingPracticePage({
           min-width: 0;
         }
 
-        .progress-indicator {
+        .progress-badge {
           padding: 0.2rem 0.5rem;
           background: rgba(255, 255, 255, 0.06);
           border-radius: 6px;
@@ -1088,11 +1271,11 @@ export function ReadingPracticePage({
         }
 
         /* Progress Section */
-        .progress-section-pro {
+        .progress-section {
           margin-bottom: 1rem;
         }
 
-        .progress-bar-pro {
+        .progress-bar {
           height: 4px;
           background: rgba(255, 255, 255, 0.08);
           border-radius: 2px;
@@ -1100,7 +1283,7 @@ export function ReadingPracticePage({
           margin-bottom: 0.75rem;
         }
 
-        .progress-fill-pro {
+        .progress-fill {
           height: 100%;
           border-radius: 2px;
           transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1112,7 +1295,7 @@ export function ReadingPracticePage({
           flex-wrap: wrap;
         }
 
-        .progress-step {
+        .step {
           width: 32px;
           height: 32px;
           border-radius: 10px;
@@ -1125,25 +1308,25 @@ export function ReadingPracticePage({
           transition: all 0.3s ease;
         }
 
-        .progress-step:hover {
+        .step:hover {
           background: rgba(255, 255, 255, 0.08);
           color: white;
         }
 
-        .progress-step.active {
+        .step.active {
           background: var(--step-color);
           border-color: transparent;
           color: white;
           box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
 
-        .progress-step.answered {
+        .step.answered {
           background: rgba(34, 197, 94, 0.2);
           border-color: rgba(34, 197, 94, 0.4);
           color: #22c55e;
         }
 
-        .progress-step.active.answered {
+        .step.active.answered {
           background: var(--step-color);
           color: white;
         }
@@ -1162,12 +1345,11 @@ export function ReadingPracticePage({
           margin-top: 0;
         }
 
-        /* Content Panel (Left - Wider) */
+        /* Content Panel */
         .content-panel {
           display: flex;
           flex-direction: column;
           min-height: 0;
-          overflow: hidden;
         }
 
         .content-card {
@@ -1240,18 +1422,10 @@ export function ReadingPracticePage({
           color: #ef4444;
         }
 
-        .btn-audio.active:hover {
-          background: rgba(239, 68, 68, 0.25);
-        }
-
         .btn-audio.paused {
           background: rgba(34, 197, 94, 0.15);
           border-color: rgba(34, 197, 94, 0.4);
           color: #22c55e;
-        }
-
-        .btn-audio.paused:hover {
-          background: rgba(34, 197, 94, 0.25);
         }
 
         .content-body {
@@ -1260,7 +1434,7 @@ export function ReadingPracticePage({
           overflow-y: auto;
         }
 
-        .passage-text-pro {
+        .passage-text {
           font-size: 1.1rem;
           line-height: 2.1;
           white-space: pre-wrap;
@@ -1280,12 +1454,11 @@ export function ReadingPracticePage({
           color: rgba(255, 255, 255, 0.4);
         }
 
-        /* Question Panel (Right - Narrower) */
+        /* Question Panel */
         .question-panel {
           display: flex;
           flex-direction: column;
           min-height: 0;
-          overflow: hidden;
         }
 
         .question-card {
@@ -1300,7 +1473,7 @@ export function ReadingPracticePage({
           min-height: 0;
         }
 
-        .question-panel-header {
+        .question-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
@@ -1308,7 +1481,7 @@ export function ReadingPracticePage({
           border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         }
 
-        .question-number-badge {
+        .question-badge {
           padding: 0.4rem 1rem;
           border-radius: 20px;
           font-size: 0.85rem;
@@ -1320,13 +1493,13 @@ export function ReadingPracticePage({
           display: none;
         }
 
-        .question-content-scroll {
+        .question-body {
           flex: 1;
           padding: 1.25rem;
           overflow-y: auto;
         }
 
-        .question-text-pro {
+        .question-text {
           margin: 0 0 1.25rem;
           font-size: 1.05rem;
           font-weight: 500;
@@ -1334,7 +1507,7 @@ export function ReadingPracticePage({
           line-height: 1.7;
         }
 
-        .answers-grid {
+        .answers-list {
           display: flex;
           flex-direction: column;
           gap: 0.75rem;
@@ -1380,7 +1553,7 @@ export function ReadingPracticePage({
           flex-shrink: 0;
         }
 
-        .answer-letter-pro {
+        .answer-letter {
           width: 32px;
           height: 32px;
           display: flex;
@@ -1393,17 +1566,17 @@ export function ReadingPracticePage({
           transition: all 0.3s ease;
         }
 
-        .answer-card.selected .answer-letter-pro {
+        .answer-card.selected .answer-letter {
           background: #3b82f6;
           color: white;
         }
 
-        .answer-card.correct .answer-letter-pro {
+        .answer-card.correct .answer-letter {
           background: #22c55e;
           color: white;
         }
 
-        .answer-card.incorrect .answer-letter-pro {
+        .answer-card.incorrect .answer-letter {
           background: #ef4444;
           color: white;
         }
@@ -1425,7 +1598,7 @@ export function ReadingPracticePage({
           padding-top: 0.25rem;
         }
 
-        /* Explanation Card */
+        /* Explanation */
         .explanation-card {
           margin-top: 1.25rem;
           padding: 1rem;
@@ -1458,12 +1631,12 @@ export function ReadingPracticePage({
         }
 
         /* Question Actions */
-        .question-actions-pro {
+        .question-actions {
           padding: 1rem 1.25rem;
           border-top: 1px solid rgba(255, 255, 255, 0.06);
         }
 
-        .btn-action-pro {
+        .btn-action {
           width: 100%;
           display: flex;
           align-items: center;
@@ -1503,8 +1676,8 @@ export function ReadingPracticePage({
           box-shadow: 0 8px 24px rgba(34, 197, 94, 0.4);
         }
 
-        /* Pinned Question Header (Mobile) */
-        .pinned-question-header {
+        /* Pinned Question (Mobile) */
+        .pinned-question {
           position: sticky;
           top: 0;
           z-index: 100;
@@ -1517,13 +1690,22 @@ export function ReadingPracticePage({
           animation: slideDown 0.3s ease;
         }
 
-        .pinned-header-row {
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .pinned-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
           padding: 0.75rem 1rem;
           cursor: pointer;
           border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .pinned-question.collapsed .pinned-header {
+          border-bottom: none;
         }
 
         .pinned-label {
@@ -1542,7 +1724,7 @@ export function ReadingPracticePage({
           color: rgba(255, 255, 255, 0.5);
         }
 
-        .btn-icon-sm {
+        .btn-unpin {
           width: 28px;
           height: 28px;
           display: flex;
@@ -1556,7 +1738,7 @@ export function ReadingPracticePage({
           transition: all 0.2s ease;
         }
 
-        .btn-icon-sm:hover {
+        .btn-unpin:hover {
           background: rgba(239, 68, 68, 0.2);
           color: #ef4444;
         }
@@ -1565,7 +1747,7 @@ export function ReadingPracticePage({
           padding: 1rem;
         }
 
-        .pinned-question-text {
+        .pinned-text {
           margin: 0 0 0.75rem;
           font-size: 0.95rem;
           font-weight: 500;
@@ -1614,7 +1796,7 @@ export function ReadingPracticePage({
           background: rgba(239, 68, 68, 0.1);
         }
 
-        .answer-letter-mini {
+        .ans-letter {
           width: 24px;
           height: 24px;
           display: flex;
@@ -1627,32 +1809,35 @@ export function ReadingPracticePage({
           flex-shrink: 0;
         }
 
-        .pinned-answer.selected .answer-letter-mini {
+        .pinned-answer.selected .ans-letter {
           background: #3b82f6;
           color: white;
         }
 
-        .pinned-answer.correct .answer-letter-mini {
+        .pinned-answer.correct .ans-letter {
           background: #22c55e;
           color: white;
         }
 
-        .pinned-answer.incorrect .answer-letter-mini {
+        .pinned-answer.incorrect .ans-letter {
           background: #ef4444;
           color: white;
         }
 
-        .answer-text-mini {
+        .ans-text {
           flex: 1;
           line-height: 1.4;
         }
 
-        .pinned-action-buttons {
+        .icon-correct { color: #22c55e; }
+        .icon-incorrect { color: #ef4444; }
+
+        .pinned-btns {
           display: flex;
           gap: 0.5rem;
         }
 
-        .btn-check-pinned, .btn-next-pinned {
+        .btn-check-pin, .btn-next-pin {
           flex: 1;
           padding: 0.6rem;
           border: none;
@@ -1663,22 +1848,18 @@ export function ReadingPracticePage({
           transition: all 0.2s ease;
         }
 
-        .btn-check-pinned {
+        .btn-check-pin {
           background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
           color: white;
         }
 
-        .btn-check-pinned:disabled {
+        .btn-check-pin:disabled {
           opacity: 0.5;
         }
 
-        .btn-next-pinned {
+        .btn-next-pin {
           background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
           color: white;
-        }
-
-        .pinned-question-header.collapsed .pinned-header-row {
-          border-bottom: none;
         }
 
         /* Mobile Responsive */
@@ -1700,26 +1881,17 @@ export function ReadingPracticePage({
             font-size: 0.8rem;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s ease;
           }
 
           .btn-pin:hover {
             background: rgba(59, 130, 246, 0.2);
           }
 
-          .header-title-section h1 {
-            font-size: 1rem;
-          }
-
-          .header-stats {
-            display: none;
-          }
-
           .progress-steps {
             gap: 0.4rem;
           }
 
-          .progress-step {
+          .step {
             width: 28px;
             height: 28px;
             font-size: 0.75rem;
@@ -1729,16 +1901,16 @@ export function ReadingPracticePage({
             padding: 1rem;
           }
 
-          .passage-text-pro {
+          .passage-text {
             font-size: 1rem;
             line-height: 1.9;
           }
 
-          .question-content-scroll {
+          .question-body {
             padding: 1rem;
           }
 
-          .question-text-pro {
+          .question-text {
             font-size: 1rem;
           }
 
@@ -1747,25 +1919,55 @@ export function ReadingPracticePage({
           }
         }
 
-        @media (max-width: 480px) {
-          .reading-practice-page.practice-mode {
-            padding: 0.75rem;
+        @media (max-width: 640px) {
+          .reading-practice-page {
+            padding: 1rem;
           }
 
-          .practice-header-pro {
-            padding: 0.75rem;
+          .premium-header {
+            padding: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
           }
 
-          .btn-back-pro {
-            width: 36px;
-            height: 36px;
+          .header-text h1 {
+            font-size: 1.25rem;
           }
 
-          .header-title-section h1 {
-            font-size: 0.9rem;
+          .level-grid {
+            grid-template-columns: repeat(2, 1fr);
           }
 
-          .content-header h2 {
+          .level-card {
+            padding: 1.5rem 1rem;
+          }
+
+          .level-icon {
+            font-size: 2rem;
+          }
+
+          .level-name {
+            font-size: 1.25rem;
+          }
+
+          .passage-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .practice-mode {
+            height: calc(100vh - 2rem);
+          }
+
+          .practice-header {
+            padding: 0.5rem 0.75rem;
+          }
+
+          .btn-back-sm {
+            width: 32px;
+            height: 32px;
+          }
+
+          .header-title {
             font-size: 0.85rem;
           }
 
@@ -1774,7 +1976,7 @@ export function ReadingPracticePage({
             height: 32px;
           }
 
-          .progress-step {
+          .step {
             width: 26px;
             height: 26px;
           }
