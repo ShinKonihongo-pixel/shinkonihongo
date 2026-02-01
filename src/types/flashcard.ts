@@ -82,6 +82,7 @@ export interface GrammarCard {
   lessonId: string;        // ID bài học
   createdAt: string;       // ISO date string
   createdBy?: string;      // User ID
+  memorizationStatus?: MemorizationStatus; // Trạng thái học thuộc
 }
 
 export interface GrammarExample {

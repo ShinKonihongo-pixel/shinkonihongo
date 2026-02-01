@@ -114,6 +114,9 @@ const defaultSettings: AppSettings = {
   grammarBackShowMeaning: true,
   grammarBackShowExplanation: true,
   grammarBackShowExamples: true,
+  // Card size defaults
+  cardScale: 100,
+  grammarCardScale: 100,
 };
 
 // Get card frame styles based on settings

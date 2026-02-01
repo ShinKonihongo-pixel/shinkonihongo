@@ -3,8 +3,8 @@
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import {
-  Play, Pause, RotateCcw, Volume2, Headphones,
-  Repeat, Shuffle, Upload, ChevronLeft, Sparkles,
+  Play, Pause, RotateCcw, Volume2,
+  Repeat, Shuffle, Upload, ChevronLeft,
   Eye, EyeOff, SkipBack, SkipForward, Check, X,
   ChevronRight, BookOpen, CheckCircle2, Circle, Filter
 } from 'lucide-react';
@@ -380,14 +380,9 @@ export function ListeningPracticePage({
           {/* Premium Header */}
           <div className="premium-header">
             <div className="header-content">
-              <div className="header-icon">
-                <Headphones size={28} />
-                <Sparkles className="sparkle sparkle-1" size={12} />
-                <Sparkles className="sparkle sparkle-2" size={10} />
-              </div>
               <div className="header-text">
-                <h1>Luyện Nghe</h1>
-                <p>Rèn luyện kỹ năng nghe tiếng Nhật</p>
+                <h1>Luyện Nghe Hiểu</h1>
+                <p>Chọn cấp độ JLPT để bắt đầu</p>
               </div>
             </div>
             <ListeningSettingsButton onClick={() => setShowSettingsModal(true)} />
@@ -398,8 +393,6 @@ export function ListeningPracticePage({
             isOpen={showSettingsModal}
             onClose={() => setShowSettingsModal(false)}
           />
-
-          <p className="selection-hint">Chọn cấp độ để bắt đầu luyện nghe</p>
 
           <div className="level-grid">
             {JLPT_LEVELS.map((level, idx) => {
@@ -755,33 +748,6 @@ export function ListeningPracticePage({
           gap: 1rem;
         }
 
-        .header-icon {
-          position: relative;
-          width: 56px;
-          height: 56px;
-          background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-          border-radius: 16px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          box-shadow: 0 8px 32px rgba(139, 92, 246, 0.3);
-        }
-
-        .sparkle {
-          position: absolute;
-          color: #fbbf24;
-          animation: sparkle 2s ease-in-out infinite;
-        }
-
-        .sparkle-1 { top: -4px; right: -4px; animation-delay: 0s; }
-        .sparkle-2 { bottom: -2px; left: -2px; animation-delay: 0.5s; }
-
-        @keyframes sparkle {
-          0%, 100% { opacity: 0; transform: scale(0.5) rotate(0deg); }
-          50% { opacity: 1; transform: scale(1) rotate(180deg); }
-        }
-
         .header-text h1 {
           margin: 0;
           font-size: 1.5rem;
@@ -796,12 +762,6 @@ export function ListeningPracticePage({
           margin: 0.25rem 0 0;
           font-size: 0.875rem;
           color: rgba(255, 255, 255, 0.5);
-        }
-
-        .selection-hint {
-          text-align: center;
-          color: rgba(255, 255, 255, 0.5);
-          margin-bottom: 1.5rem;
         }
 
         /* Level Grid */

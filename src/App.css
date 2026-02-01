@@ -6110,18 +6110,18 @@ select, option {
   justify-content: center;
   position: relative;
   z-index: 5;
-  padding: 1rem;
+  padding: 0.25rem 0.5rem;
 }
 
 @media (min-width: 640px) {
   .study-card-area {
-    padding: 0.5rem 1.5rem;
+    padding: 0.25rem 1rem;
   }
 }
 
 @media (min-width: 769px) {
   .study-card-area {
-    padding: 0.25rem 2rem;
+    padding: 0.15rem 1.5rem;
   }
 }
 
@@ -6840,7 +6840,8 @@ select, option {
   width: 100%;
   max-width: 380px;
   max-height: 85vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   box-shadow:
     0 25px 80px rgba(0, 0, 0, 0.6),
     0 0 0 1px rgba(255, 255, 255, 0.08),
@@ -6854,6 +6855,7 @@ select, option {
   padding: 1.25rem 1.5rem;
   background: linear-gradient(180deg, rgba(99, 102, 241, 0.15) 0%, transparent 100%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
 }
 
 .study-settings-header h3 {
@@ -6886,6 +6888,9 @@ select, option {
 
 .study-settings-content {
   padding: 1.25rem 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 /* Scoped styles for study settings modal */
@@ -7054,6 +7059,33 @@ select, option {
   border: 1px dashed rgba(255, 255, 255, 0.1);
 }
 
+/* Card scale preview */
+.study-settings-modal .card-scale-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.study-settings-modal .card-scale-preview-inner {
+  width: 50px;
+  height: 60px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-family: var(--font-jp-kanji);
+  font-size: 1.5rem;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
 /* Toggle switch for study settings modal */
 .study-settings-modal .toggle-switch {
   position: relative;
@@ -7138,6 +7170,7 @@ select, option {
 .study-settings-footer {
   padding: 1rem 1.5rem 1.25rem;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
 }
 
 .btn-close-settings {

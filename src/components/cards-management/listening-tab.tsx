@@ -5,8 +5,9 @@ import { useState, useRef } from 'react';
 import {
   Trash2, Edit2, Save, X, ChevronRight, ChevronLeft,
   Upload, Music, FolderPlus, Folder, Play, Pause, Headphones, Sparkles,
-  BookOpen, MessageCircle, Layers
+  BookOpen, MessageCircle, Layers, Wand2, Loader2
 } from 'lucide-react';
+import { useGroq } from '../../hooks/use-groq';
 import type { JLPTLevel } from '../../types/flashcard';
 import type { CurrentUser } from '../../types/user';
 import type { ListeningAudio, ListeningFolder, ListeningLessonType } from '../../types/listening';
@@ -89,6 +90,38 @@ export function ListeningTab({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Furigana generation
+  const { generateFurigana } = useGroq();
+  const [generatingFurigana, setGeneratingFurigana] = useState<'title' | 'desc' | null>(null);
+
+  // Generate furigana for title
+  const handleGenerateFuriganaTitle = async () => {
+    if (!audioTitle.trim() || generatingFurigana) return;
+    setGeneratingFurigana('title');
+    try {
+      const result = await generateFurigana(audioTitle);
+      setAudioTitle(result);
+    } catch (err) {
+      console.error('Furigana generation failed:', err);
+    } finally {
+      setGeneratingFurigana(null);
+    }
+  };
+
+  // Generate furigana for description
+  const handleGenerateFuriganaDesc = async () => {
+    if (!audioDescription.trim() || generatingFurigana) return;
+    setGeneratingFurigana('desc');
+    try {
+      const result = await generateFurigana(audioDescription);
+      setAudioDescription(result);
+    } catch (err) {
+      console.error('Furigana generation failed:', err);
+    } finally {
+      setGeneratingFurigana(null);
+    }
+  };
 
   // Get count by level
   const getCountByLevel = (level: JLPTLevel) => {
@@ -977,7 +1010,19 @@ export function ListeningTab({
           {selectedFile && (
             <>
               <div className="form-row">
-                <label>Tiêu đề:</label>
+                <label className="label-with-furigana">
+                  <span>Tiêu đề:</span>
+                  <button
+                    type="button"
+                    className="furigana-btn"
+                    onClick={handleGenerateFuriganaTitle}
+                    disabled={!!generatingFurigana || !audioTitle.trim()}
+                    title="Tạo furigana"
+                  >
+                    {generatingFurigana === 'title' ? <Loader2 size={14} className="spin-icon" /> : <Wand2 size={14} />}
+                    <span>Furigana</span>
+                  </button>
+                </label>
                 <input
                   type="text"
                   placeholder="Nhập tiêu đề..."
@@ -986,7 +1031,19 @@ export function ListeningTab({
                 />
               </div>
               <div className="form-row">
-                <label>Mô tả:</label>
+                <label className="label-with-furigana">
+                  <span>Mô tả:</span>
+                  <button
+                    type="button"
+                    className="furigana-btn"
+                    onClick={handleGenerateFuriganaDesc}
+                    disabled={!!generatingFurigana || !audioDescription.trim()}
+                    title="Tạo furigana"
+                  >
+                    {generatingFurigana === 'desc' ? <Loader2 size={14} className="spin-icon" /> : <Wand2 size={14} />}
+                    <span>Furigana</span>
+                  </button>
+                </label>
                 <textarea
                   placeholder="Mô tả (tuỳ chọn)..."
                   value={audioDescription}
@@ -1133,6 +1190,46 @@ export function ListeningTab({
           font-size: 0.85rem;
           font-weight: 500;
           color: rgba(255, 255, 255, 0.7);
+        }
+
+        .label-with-furigana {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .furigana-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+          padding: 0.35rem 0.65rem;
+          background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 0.7rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .furigana-btn:hover:not(:disabled) {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+        }
+
+        .furigana-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .spin-icon {
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
 
         .file-input-wrapper {

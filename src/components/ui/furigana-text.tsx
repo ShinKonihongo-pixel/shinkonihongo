@@ -1,7 +1,7 @@
 // FuriganaText - Renders Japanese text with automatic furigana for kanji
-// Uses kuroshiro library for automatic reading generation
+// Supports both [kanji|reading] format and automatic kuroshiro conversion
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useReadingSettings } from '../../contexts/reading-settings-context';
 import { convertToFurigana, preloadFurigana, isFuriganaReady, getFuriganaError } from '../../services/furigana-service';
 
@@ -10,6 +10,17 @@ const furiganaCache = new Map<string, string>();
 
 // Preload kuroshiro on module load
 preloadFurigana();
+
+// Check if text contains [kanji|reading] format
+function hasManualFurigana(text: string): boolean {
+  return /\[[^\]]+\|[^\]]+\]/.test(text);
+}
+
+// Convert [kanji|reading] format to ruby HTML
+function convertManualFuriganaToHtml(text: string): string {
+  // Replace [kanji|reading] with <ruby>kanji<rt>reading</rt></ruby>
+  return text.replace(/\[([^\]|]+)\|([^\]]+)\]/g, '<ruby>$1<rt>$2</rt></ruby>');
+}
 
 interface FuriganaTextProps {
   text: string;
@@ -23,14 +34,31 @@ export function FuriganaText({ text, className = '' }: FuriganaTextProps) {
   const [error, setError] = useState<string | null>(null);
   const [initStatus, setInitStatus] = useState<string>('pending');
 
+  // Check if text has manual furigana format [kanji|reading]
+  const hasManualFormat = useMemo(() => hasManualFurigana(text), [text]);
+
   useEffect(() => {
     // Reset state when text changes
     setError(null);
     setInitStatus('checking');
 
     if (!settings.showFurigana) {
-      setFuriganaHtml('');
+      // If furigana disabled, strip the [kanji|reading] format and show only kanji
+      if (hasManualFormat) {
+        const strippedText = text.replace(/\[([^\]|]+)\|[^\]]+\]/g, '$1');
+        setFuriganaHtml(strippedText);
+      } else {
+        setFuriganaHtml('');
+      }
       setInitStatus('disabled');
+      return;
+    }
+
+    // If text has manual [kanji|reading] format, convert directly to HTML
+    if (hasManualFormat) {
+      const html = convertManualFuriganaToHtml(text);
+      setFuriganaHtml(html);
+      setInitStatus('manual');
       return;
     }
 
@@ -42,7 +70,7 @@ export function FuriganaText({ text, className = '' }: FuriganaTextProps) {
       return;
     }
 
-    // Convert text to furigana
+    // Convert text to furigana using kuroshiro
     let isMounted = true;
     setIsLoading(true);
     setInitStatus('loading');
@@ -53,7 +81,6 @@ export function FuriganaText({ text, className = '' }: FuriganaTextProps) {
           furiganaCache.set(text, result);
           setFuriganaHtml(result);
           setInitStatus('success');
-          console.log('[FuriganaText] Converted successfully, result length:', result.length);
         }
       })
       .catch((err) => {
@@ -73,7 +100,7 @@ export function FuriganaText({ text, className = '' }: FuriganaTextProps) {
     return () => {
       isMounted = false;
     };
-  }, [text, settings.showFurigana]);
+  }, [text, settings.showFurigana, hasManualFormat]);
 
   // Style for the text
   const textStyle: React.CSSProperties = {
@@ -81,11 +108,12 @@ export function FuriganaText({ text, className = '' }: FuriganaTextProps) {
     whiteSpace: 'pre-wrap',
   };
 
-  // If furigana is disabled, show plain text
+  // If furigana is disabled, show plain text (strip [kanji|reading] format if exists)
   if (!settings.showFurigana) {
+    const displayText = hasManualFormat ? text.replace(/\[([^\]|]+)\|[^\]]+\]/g, '$1') : text;
     return (
       <span className={className} style={textStyle}>
-        {text}
+        {displayText}
       </span>
     );
   }
@@ -129,11 +157,14 @@ export function FuriganaText({ text, className = '' }: FuriganaTextProps) {
       <style>{`
         .furigana-text ruby {
           ruby-align: center;
+          ruby-position: over;
         }
         .furigana-text rt {
           font-size: ${settings.furiganaSize}em;
           color: rgba(167, 139, 250, 0.95);
           font-weight: 400;
+          text-align: center;
+          ruby-align: center;
         }
         @keyframes pulse {
           0%, 100% { opacity: 0.5; }

@@ -1,7 +1,8 @@
 // Reading Comprehension Management Tab - Premium Professional UI
 
 import { useState } from 'react';
-import { Edit2, Trash2, ChevronRight, BookOpen, FolderOpen, Plus, FileText, HelpCircle, CheckCircle2, Sparkles, ArrowLeft } from 'lucide-react';
+import { Edit2, Trash2, ChevronRight, BookOpen, FolderOpen, Plus, FileText, HelpCircle, CheckCircle2, Sparkles, ArrowLeft, Wand2, Loader2 } from 'lucide-react';
+import { useGroq } from '../../hooks/use-groq';
 import { ConfirmModal } from '../ui/confirm-modal';
 import type { ReadingPassage, ReadingPassageFormData, ReadingFolder, ReadingAnswer } from '../../types/reading';
 import type { JLPTLevel } from '../../types/flashcard';
@@ -47,7 +48,6 @@ const defaultAnswers: ReadingAnswer[] = [
 
 export function ReadingTab({
   passages,
-  folders: _folders,
   onAddPassage,
   onUpdatePassage,
   onDeletePassage,
@@ -67,6 +67,10 @@ export function ReadingTab({
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
   const [editingFolderName, setEditingFolderName] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'passage' | 'folder'; id: string; name: string } | null>(null);
+
+  // Furigana generation
+  const { generateFurigana } = useGroq();
+  const [generatingFurigana, setGeneratingFurigana] = useState<string | null>(null); // 'content' | 'q-0' | 'a-0-1' etc.
 
   // Form state
   const [formData, setFormData] = useState<{
@@ -247,6 +251,83 @@ export function ReadingTab({
     }));
   };
 
+  // Generate furigana for content
+  const handleGenerateFuriganaContent = async () => {
+    if (!formData.content.trim() || generatingFurigana) return;
+    setGeneratingFurigana('content');
+    try {
+      const result = await generateFurigana(formData.content);
+      setFormData(prev => ({ ...prev, content: result }));
+    } catch (err) {
+      console.error('Furigana generation failed:', err);
+    } finally {
+      setGeneratingFurigana(null);
+    }
+  };
+
+  // Generate furigana for a question
+  const handleGenerateFuriganaQuestion = async (qIdx: number) => {
+    const question = formData.questions[qIdx];
+    if (!question.question.trim() || generatingFurigana) return;
+    setGeneratingFurigana(`q-${qIdx}`);
+    try {
+      const result = await generateFurigana(question.question);
+      updateQuestion(qIdx, 'question', result);
+    } catch (err) {
+      console.error('Furigana generation failed:', err);
+    } finally {
+      setGeneratingFurigana(null);
+    }
+  };
+
+  // Generate furigana for an answer
+  const handleGenerateFuriganaAnswer = async (qIdx: number, aIdx: number) => {
+    const answer = formData.questions[qIdx].answers[aIdx];
+    if (!answer.text.trim() || generatingFurigana) return;
+    setGeneratingFurigana(`a-${qIdx}-${aIdx}`);
+    try {
+      const result = await generateFurigana(answer.text);
+      updateAnswer(qIdx, aIdx, result);
+    } catch (err) {
+      console.error('Furigana generation failed:', err);
+    } finally {
+      setGeneratingFurigana(null);
+    }
+  };
+
+  // Generate furigana for all content in form
+  const handleGenerateAllFurigana = async () => {
+    if (generatingFurigana) return;
+    setGeneratingFurigana('all');
+    try {
+      // Generate for content
+      let newContent = formData.content;
+      if (formData.content.trim()) {
+        newContent = await generateFurigana(formData.content);
+      }
+
+      // Generate for all questions and answers
+      const newQuestions = await Promise.all(
+        formData.questions.map(async (q) => {
+          const newQuestion = q.question.trim() ? await generateFurigana(q.question) : q.question;
+          const newAnswers = await Promise.all(
+            q.answers.map(async (a) => ({
+              ...a,
+              text: a.text.trim() ? await generateFurigana(a.text) : a.text,
+            }))
+          );
+          return { ...q, question: newQuestion, answers: newAnswers };
+        })
+      );
+
+      setFormData(prev => ({ ...prev, content: newContent, questions: newQuestions }));
+    } catch (err) {
+      console.error('Furigana generation failed:', err);
+    } finally {
+      setGeneratingFurigana(null);
+    }
+  };
+
   const currentFolders = navState.type === 'level' ? getFoldersByLevel(navState.level) : [];
   const currentPassages = navState.type === 'folder' ? getPassagesByFolder(navState.folderId) : [];
   const currentTheme = navState.type !== 'root' ? LEVEL_THEMES[navState.level] : null;
@@ -342,9 +423,21 @@ export function ReadingTab({
             </div>
 
             <div className="rt-form-group">
-              <label>
-                <span className="rt-label-icon">📖</span>
-                Nội dung đoạn văn
+              <label className="rt-label-with-action">
+                <span>
+                  <span className="rt-label-icon">📖</span>
+                  Nội dung đoạn văn
+                </span>
+                <button
+                  type="button"
+                  className="rt-furigana-btn"
+                  onClick={handleGenerateFuriganaContent}
+                  disabled={!!generatingFurigana || !formData.content.trim()}
+                  title="Tạo furigana cho nội dung"
+                >
+                  {generatingFurigana === 'content' ? <Loader2 size={14} className="rt-spin" /> : <Wand2 size={14} />}
+                  <span>Furigana</span>
+                </button>
               </label>
               <textarea
                 value={formData.content}
@@ -358,11 +451,25 @@ export function ReadingTab({
 
             <div className="rt-form-group">
               <label className="rt-questions-label">
-                <span className="rt-label-icon">❓</span>
-                Câu hỏi ({formData.questions.length})
-                <button type="button" className="rt-btn rt-btn-add-q" onClick={addQuestion}>
-                  <Plus size={14} /> Thêm câu
-                </button>
+                <span>
+                  <span className="rt-label-icon">❓</span>
+                  Câu hỏi ({formData.questions.length})
+                </span>
+                <div className="rt-questions-actions">
+                  <button
+                    type="button"
+                    className="rt-furigana-btn rt-furigana-all"
+                    onClick={handleGenerateAllFurigana}
+                    disabled={!!generatingFurigana}
+                    title="Tạo furigana cho tất cả"
+                  >
+                    {generatingFurigana === 'all' ? <Loader2 size={14} className="rt-spin" /> : <Wand2 size={14} />}
+                    <span>Furigana tất cả</span>
+                  </button>
+                  <button type="button" className="rt-btn rt-btn-add-q" onClick={addQuestion}>
+                    <Plus size={14} /> Thêm câu
+                  </button>
+                </div>
               </label>
 
               <div className="rt-questions-list">
@@ -378,13 +485,24 @@ export function ReadingTab({
                       )}
                     </div>
 
-                    <input
-                      type="text"
-                      value={q.question}
-                      onChange={(e) => updateQuestion(qIdx, 'question', e.target.value)}
-                      placeholder="Nội dung câu hỏi..."
-                      className="rt-input rt-question-input"
-                    />
+                    <div className="rt-question-input-wrap">
+                      <input
+                        type="text"
+                        value={q.question}
+                        onChange={(e) => updateQuestion(qIdx, 'question', e.target.value)}
+                        placeholder="Nội dung câu hỏi..."
+                        className="rt-input rt-question-input"
+                      />
+                      <button
+                        type="button"
+                        className="rt-furigana-btn-inline"
+                        onClick={() => handleGenerateFuriganaQuestion(qIdx)}
+                        disabled={!!generatingFurigana || !q.question.trim()}
+                        title="Tạo furigana"
+                      >
+                        {generatingFurigana === `q-${qIdx}` ? <Loader2 size={12} className="rt-spin" /> : <Wand2 size={12} />}
+                      </button>
+                    </div>
 
                     <div className="rt-answers-grid">
                       {q.answers.map((a, aIdx) => (
@@ -409,6 +527,15 @@ export function ReadingTab({
                             placeholder={`Đáp án ${String.fromCharCode(65 + aIdx)}`}
                             className="rt-input rt-answer-input"
                           />
+                          <button
+                            type="button"
+                            className="rt-furigana-btn-inline"
+                            onClick={() => handleGenerateFuriganaAnswer(qIdx, aIdx)}
+                            disabled={!!generatingFurigana || !a.text.trim()}
+                            title="Tạo furigana"
+                          >
+                            {generatingFurigana === `a-${qIdx}-${aIdx}` ? <Loader2 size={12} className="rt-spin" /> : <Wand2 size={12} />}
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -827,6 +954,7 @@ export function ReadingTab({
           border-radius: 10px;
           font-size: 0.95rem;
           transition: all 0.2s;
+          color: #1f2937;
         }
 
         .rt-input:focus {
@@ -846,6 +974,7 @@ export function ReadingTab({
           min-height: 180px;
           line-height: 1.8;
           transition: all 0.2s;
+          color: #1f2937;
         }
 
         .rt-textarea:focus {
@@ -978,10 +1107,15 @@ export function ReadingTab({
           border: none;
           background: transparent;
           padding: 0.5rem;
+          color: #1f2937;
         }
 
         .rt-answer-input:focus {
           box-shadow: none;
+        }
+
+        .rt-answer-input::placeholder {
+          color: #9ca3af;
         }
 
         .rt-explanation-input {
@@ -998,6 +1132,98 @@ export function ReadingTab({
           padding-top: 1rem;
           border-top: 1px solid #f1f5f9;
           margin-top: 0.5rem;
+        }
+
+        /* Furigana buttons */
+        .rt-label-with-action {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .rt-furigana-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+          padding: 0.4rem 0.75rem;
+          background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-size: 0.75rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .rt-furigana-btn:hover:not(:disabled) {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+
+        .rt-furigana-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .rt-furigana-all {
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .rt-furigana-all:hover:not(:disabled) {
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .rt-questions-actions {
+          display: flex;
+          gap: 0.5rem;
+        }
+
+        .rt-question-input-wrap {
+          position: relative;
+          display: flex;
+          gap: 0.5rem;
+          align-items: center;
+          margin-bottom: 0.75rem;
+        }
+
+        .rt-question-input-wrap .rt-question-input {
+          flex: 1;
+          margin-bottom: 0;
+        }
+
+        .rt-furigana-btn-inline {
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(139, 92, 246, 0.1);
+          border: 1px solid rgba(139, 92, 246, 0.3);
+          border-radius: 8px;
+          color: #8b5cf6;
+          cursor: pointer;
+          transition: all 0.2s;
+          flex-shrink: 0;
+        }
+
+        .rt-furigana-btn-inline:hover:not(:disabled) {
+          background: rgba(139, 92, 246, 0.2);
+          border-color: #8b5cf6;
+        }
+
+        .rt-furigana-btn-inline:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+        }
+
+        .rt-spin {
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
 
         /* Levels Grid */

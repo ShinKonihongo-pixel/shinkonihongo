@@ -207,18 +207,36 @@ export function SettingsPage({
         <div className="settings-header-content">
           <div className="settings-header-top">
             <div className="settings-logo">
-              <span className="settings-logo-icon">設</span>
-              <span className="settings-logo-text">Settings</span>
+              <span className="settings-logo-icon">{initialTab === 'profile' ? '個' : '設'}</span>
+              <span className="settings-logo-text">{initialTab === 'profile' ? 'Profile' : 'Settings'}</span>
             </div>
           </div>
           <div className="settings-header-main">
             <h2>
-              <span className="settings-title-jp">設定</span>
-              <span className="settings-title-vn">Cài đặt</span>
+              {initialTab === 'profile' ? (
+                <>
+                  <span className="settings-title-jp">個人</span>
+                  <span className="settings-title-vn">Cá nhân</span>
+                </>
+              ) : (
+                <>
+                  <span className="settings-title-jp">設定</span>
+                  <span className="settings-title-vn">Cài đặt</span>
+                </>
+              )}
             </h2>
             <p className="settings-header-subtitle">
-              <span>Tùy chỉnh trải nghiệm học tập của bạn</span>
-              <span className="settings-subtitle-jp">あなたの学習体験をカスタマイズ</span>
+              {initialTab === 'profile' ? (
+                <>
+                  <span>Thông tin cá nhân, bạn bè và huy hiệu</span>
+                  <span className="settings-subtitle-jp">プロフィール、友達、バッジ</span>
+                </>
+              ) : (
+                <>
+                  <span>Tùy chỉnh trải nghiệm học tập của bạn</span>
+                  <span className="settings-subtitle-jp">あなたの学習体験をカスタマイズ</span>
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -226,32 +244,40 @@ export function SettingsPage({
 
       {/* Page Body */}
       <div className="settings-page-body">
-        {/* Main Tabs */}
+        {/* Main Tabs - Show different tabs based on page mode */}
+        {/* Settings page mode (initialTab is undefined): Only show general settings */}
+        {/* Profile page mode (initialTab is 'profile'): Show profile and friends tabs */}
         <div className="settings-main-tabs">
-          <button
-            className={`settings-main-tab ${activeTab === 'general' ? 'active' : ''}`}
-            onClick={() => setActiveTab('general')}
-          >
-            <span className="tab-icon">🎛️</span>
-            <span className="tab-label">Cài Đặt Chung</span>
-          </button>
-          <button
-            className={`settings-main-tab ${activeTab === 'profile' ? 'active' : ''}`}
-            onClick={() => setActiveTab('profile')}
-          >
-            <span className="tab-icon">👤</span>
-            <span className="tab-label">Thông Tin Cá Nhân</span>
-          </button>
-          <button
-            className={`settings-main-tab ${activeTab === 'friends' ? 'active' : ''}`}
-            onClick={() => setActiveTab('friends')}
-          >
-            <span className="tab-icon">👥</span>
-            <span className="tab-label">Bạn bè & Huy hiệu</span>
-            {pendingRequests.length > 0 && (
-              <span className="tab-badge">{pendingRequests.length}</span>
-            )}
-          </button>
+          {!initialTab && (
+            <button
+              className={`settings-main-tab ${activeTab === 'general' ? 'active' : ''}`}
+              onClick={() => setActiveTab('general')}
+            >
+              <span className="tab-icon">🎛️</span>
+              <span className="tab-label">Cài Đặt Chung</span>
+            </button>
+          )}
+          {initialTab === 'profile' && (
+            <>
+              <button
+                className={`settings-main-tab ${activeTab === 'profile' ? 'active' : ''}`}
+                onClick={() => setActiveTab('profile')}
+              >
+                <span className="tab-icon">👤</span>
+                <span className="tab-label">Thông Tin Cá Nhân</span>
+              </button>
+              <button
+                className={`settings-main-tab ${activeTab === 'friends' ? 'active' : ''}`}
+                onClick={() => setActiveTab('friends')}
+              >
+                <span className="tab-icon">👥</span>
+                <span className="tab-label">Bạn bè & Huy hiệu</span>
+                {pendingRequests.length > 0 && (
+                  <span className="tab-badge">{pendingRequests.length}</span>
+                )}
+              </button>
+            </>
+          )}
         </div>
 
       {/* General Settings Tab */}

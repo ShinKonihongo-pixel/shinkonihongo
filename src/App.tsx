@@ -1,6 +1,9 @@
 // Main App component with authentication and page routing
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+
+// Dev: Load seed functions to window for console access
+import './scripts/seed-folders';
 import type { JLPTLevel, Lesson } from './types/flashcard';
 import { useFlashcards } from './hooks/use-flashcards';
 import { useLessons } from './hooks/use-lessons';
@@ -77,7 +80,8 @@ function App() {
     const goldenBellCode = urlParams.get('golden-bell');
     const pictureGuessCode = urlParams.get('picture-guess');
 
-    // Route all game join codes to Game Hub
+    // Route all game join codes to Game Hub - intentional URL-based routing on mount
+    /* eslint-disable react-hooks/set-state-in-effect */
     if (joinCode) {
       setInitialGameType('quiz');
       setInitialGameJoinCode(joinCode.toUpperCase());
@@ -100,6 +104,7 @@ function App() {
       setCurrentPage('game-hub');
       window.history.replaceState({}, '', window.location.pathname);
     }
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   // Auth
@@ -125,7 +130,8 @@ function App() {
   const [showJlptLevelModal, setShowJlptLevelModal] = useState(false);
   const [jlptLevelSkipped, setJlptLevelSkipped] = useState(false);
 
-  // Show JLPT level modal on first login
+  // Show JLPT level modal on first login - derived state sync
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (isLoggedIn && currentUser && !currentUser.jlptLevel && !jlptLevelSkipped) {
       setShowJlptLevelModal(true);
@@ -133,8 +139,10 @@ function App() {
       setShowJlptLevelModal(false);
     }
   }, [isLoggedIn, currentUser, jlptLevelSkipped]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Reset to home page when user logs in (unless joining via QR code)
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (isLoggedIn && !initialGameJoinCode) {
       setCurrentPage('home');
@@ -142,6 +150,7 @@ function App() {
       setCurrentPage('game-hub');
     }
   }, [isLoggedIn, initialGameJoinCode]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // User history
   const {
@@ -176,7 +185,7 @@ function App() {
   } = useLessons();
 
   // Grammar cards
-  const { grammarCards } = useGrammarCards();
+  const { grammarCards, updateGrammarCard } = useGrammarCards();
 
   // Grammar lessons (separate from vocabulary lessons)
   const {
@@ -260,10 +269,10 @@ function App() {
   const canAccessLocked = isAdmin || isVip;
 
   // Check if user can see hidden lessons (creator or super_admin)
-  const canSeeHiddenLesson = (lesson: Lesson): boolean => {
+  const canSeeHiddenLesson = useCallback((lesson: Lesson): boolean => {
     if (isSuperAdmin) return true;
     return lesson.createdBy === currentUser?.id;
-  };
+  }, [isSuperAdmin, currentUser?.id]);
 
   // For admin/study pages, filter locked/hidden lessons for non-authorized users
   const filteredGetLessonsByLevel = useMemo(() => {
@@ -277,7 +286,7 @@ function App() {
         return true;
       });
     };
-  }, [getLessonsByLevel, canAccessLocked, isSuperAdmin, currentUser?.id]);
+  }, [getLessonsByLevel, canAccessLocked, canSeeHiddenLesson]);
 
   const filteredGetChildLessons = useMemo(() => {
     return (parentId: string): Lesson[] => {
@@ -290,7 +299,7 @@ function App() {
         return true;
       });
     };
-  }, [getChildLessons, canAccessLocked, isSuperAdmin, currentUser?.id]);
+  }, [getChildLessons, canAccessLocked, canSeeHiddenLesson]);
 
   const statsByLevel = getStatsByLevel();
 
@@ -512,6 +521,7 @@ function App() {
             getChildLessons={getGrammarChildLessons}
             onGoHome={() => setCurrentPage('home')}
             settings={settings}
+            onUpdateGrammarCard={updateGrammarCard}
           />
         )}
 

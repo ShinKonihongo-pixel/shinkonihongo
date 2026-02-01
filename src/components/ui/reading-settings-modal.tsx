@@ -1,7 +1,18 @@
 // Reading Settings Modal - Premium modal for text/furigana settings
 
-import { Settings, Type, Minus, Plus, Eye, EyeOff, X, Sparkles } from 'lucide-react';
+import { Settings, Type, Minus, Plus, Eye, EyeOff, X, Sparkles, Palette } from 'lucide-react';
 import { useReadingSettings } from '../../contexts/reading-settings-context';
+
+// Preset colors for text
+const TEXT_COLOR_PRESETS = [
+  '#ffffff', // White
+  '#f0f0f0', // Light gray
+  '#fef3c7', // Warm cream
+  '#d1fae5', // Mint
+  '#dbeafe', // Light blue
+  '#fce7f3', // Pink
+  '#e9d5ff', // Lavender
+];
 
 interface ReadingSettingsModalProps {
   isOpen: boolean;
@@ -11,6 +22,7 @@ interface ReadingSettingsModalProps {
 export function ReadingSettingsModal({ isOpen, onClose }: ReadingSettingsModalProps) {
   const {
     settings,
+    updateSettings,
     toggleFurigana,
     increaseFontSize,
     decreaseFontSize,
@@ -361,6 +373,61 @@ export function ReadingSettingsModal({ isOpen, onClose }: ReadingSettingsModalPr
             </div>
           </div>
 
+          {/* Text Color */}
+          <div
+            style={{
+              padding: '1rem 1.25rem',
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '16px',
+              marginBottom: '1rem',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
+              <div
+                style={{
+                  width: '44px',
+                  height: '44px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)',
+                  borderRadius: '12px',
+                }}
+              >
+                <Palette size={22} color="white" />
+              </div>
+              <div>
+                <div style={{ color: 'white', fontSize: '0.95rem', fontWeight: 500, marginBottom: '0.2rem' }}>
+                  Màu chữ
+                </div>
+                <div style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>
+                  Màu văn bản câu hỏi
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {TEXT_COLOR_PRESETS.map(color => (
+                <button
+                  key={color}
+                  onClick={() => updateSettings({ textColor: color })}
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    background: color,
+                    border: settings.textColor === color
+                      ? '3px solid #8b5cf6'
+                      : '2px solid rgba(255, 255, 255, 0.2)',
+                    cursor: 'pointer',
+                    boxShadow: settings.textColor === color ? '0 0 12px rgba(139, 92, 246, 0.5)' : 'none',
+                    transition: 'all 0.2s ease',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
           {/* Preview */}
           <div
             style={{
@@ -386,7 +453,7 @@ export function ReadingSettingsModal({ isOpen, onClose }: ReadingSettingsModalPr
             <div
               style={{
                 fontSize: `${settings.fontSize * 1.2}rem`,
-                color: 'white',
+                color: settings.textColor || 'white',
                 lineHeight: 2.5,
                 textAlign: 'center',
               }}

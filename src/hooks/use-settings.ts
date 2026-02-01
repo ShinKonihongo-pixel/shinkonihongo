@@ -184,6 +184,10 @@ export interface AppSettings {
   grammarBackShowMeaning: boolean;         // Show meaning on back
   grammarBackShowExplanation: boolean;     // Show explanation on back
   grammarBackShowExamples: boolean;        // Show examples on back
+
+  // Card size settings (scale percentage)
+  cardScale: number;                         // Vocabulary card scale (60-150%, default 100)
+  grammarCardScale: number;                  // Grammar card scale (60-150%, default 100)
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -325,6 +329,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   grammarBackShowMeaning: true,
   grammarBackShowExplanation: true,
   grammarBackShowExamples: true,
+  // Card size defaults (100% = normal size)
+  cardScale: 100,
+  grammarCardScale: 100,
 };
 
 const STORAGE_KEY = 'flashcard-settings';

@@ -321,7 +321,13 @@ export function StudySession({
               &lt;
             </button>
           )}
-          <div className="card-wrapper">
+          <div
+            className="card-wrapper"
+            style={{
+              transform: `scale(${(settings.cardScale || 100) / 100})`,
+              transformOrigin: 'center center',
+            }}
+          >
             <FlashcardItem
               card={currentCard}
               isFlipped={isFlipped}
@@ -571,6 +577,31 @@ function StudySettingsModal({
                 fontSize: `${Math.max(16 * ((settings.backFontSize || 100) / 100), 12)}px`
               }}>
                 読み方 · Nghĩa
+              </div>
+            </div>
+          </div>
+
+          {/* Card Size Section */}
+          <div className="modal-section">
+            <div className="modal-section-title">Kích thước thẻ</div>
+            <div className="font-slider-container">
+              <div className="font-slider-row">
+                <input
+                  type="range"
+                  className="font-slider"
+                  min="60"
+                  max="150"
+                  step="5"
+                  value={settings.cardScale || 100}
+                  onChange={(e) => onSettingsChange?.('cardScale', Number(e.target.value))}
+                />
+                <span className="font-size-value">{settings.cardScale || 100}%</span>
+              </div>
+              <div className="card-scale-preview" style={{
+                transform: `scale(${(settings.cardScale || 100) / 100})`,
+                transformOrigin: 'center center',
+              }}>
+                <div className="card-scale-preview-inner">漢</div>
               </div>
             </div>
           </div>

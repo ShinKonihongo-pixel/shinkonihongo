@@ -4,9 +4,9 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import {
   ChevronRight, CheckCircle, XCircle, RotateCcw, Volume2,
-  BookOpen, ArrowLeft, Sparkles, ChevronDown, ChevronUp,
-  Trophy, Target, Clock, Pause, Play, Square, FolderOpen,
-  FileText, Award, Zap, Pin, PinOff
+  ArrowLeft, Sparkles, ChevronDown, ChevronUp,
+  Clock, Pause, Play, Square, FolderOpen,
+  FileText, Pin, PinOff
 } from 'lucide-react';
 import type { JLPTLevel } from '../../types/flashcard';
 import type { ReadingPassage, ReadingFolder } from '../../types/reading';
@@ -37,7 +37,6 @@ interface ReadingPracticePageProps {
 
 export function ReadingPracticePage({
   passages,
-  folders,
   getFoldersByLevel,
   getPassagesByFolder,
 }: ReadingPracticePageProps) {
@@ -247,20 +246,13 @@ export function ReadingPracticePage({
         <>
           <div className="premium-header">
             <div className="header-content">
-              <div className="header-icon">
-                <BookOpen size={28} />
-                <Sparkles className="sparkle sparkle-1" size={12} />
-                <Sparkles className="sparkle sparkle-2" size={10} />
-              </div>
               <div className="header-text">
                 <h1>Luyện Đọc Hiểu</h1>
-                <p>Nâng cao kỹ năng đọc tiếng Nhật</p>
+                <p>Chọn cấp độ JLPT để bắt đầu</p>
               </div>
             </div>
             <ReadingSettingsButton onClick={() => setShowSettingsModal(true)} />
           </div>
-
-          <p className="selection-hint">Chọn cấp độ để bắt đầu luyện đọc</p>
 
           <div className="level-grid">
             {JLPT_LEVELS.map((level, idx) => {
@@ -291,15 +283,20 @@ export function ReadingPracticePage({
 
       {/* Folder List */}
       {viewMode === 'folder-list' && selectedLevel && (
-        <div className="list-view">
-          <div className="nav-header">
+        <div className="folder-view">
+          <div className="folder-view-header">
             <button className="btn-back" onClick={goBack}>
               <ArrowLeft size={20} />
             </button>
-            <span className="current-level" style={{ background: theme.gradient }}>
-              {selectedLevel}
-            </span>
-            <h2 className="nav-title">Chọn thư mục</h2>
+            <div className="folder-view-title">
+              <span className="level-badge" style={{ background: theme.gradient }}>
+                {selectedLevel}
+              </span>
+              <div className="title-text">
+                <h1>Chọn bài học</h1>
+                <p>{levelFolders.length} bài • Luyện đọc hiểu</p>
+              </div>
+            </div>
             <ReadingSettingsButton onClick={() => setShowSettingsModal(true)} />
           </div>
 
@@ -310,24 +307,35 @@ export function ReadingPracticePage({
               <p>Vui lòng thêm thư mục ở tab Quản Lí</p>
             </div>
           ) : (
-            <div className="folder-grid">
+            <div className="lesson-grid">
               {levelFolders.map((folder, idx) => {
                 const pCount = getPassageCount(folder.id);
+                const lessonNum = folder.name.replace(/\D/g, '') || String(idx + 1);
+                const hasContent = pCount > 0;
                 return (
                   <button
                     key={folder.id}
-                    className="folder-card"
+                    className={`lesson-card ${hasContent ? 'has-content' : ''}`}
                     onClick={() => selectFolder(folder)}
-                    style={{ '--card-delay': `${idx * 0.05}s` } as React.CSSProperties}
+                    style={{
+                      '--card-delay': `${idx * 0.03}s`,
+                      '--level-gradient': theme.gradient,
+                      '--level-glow': theme.glow,
+                    } as React.CSSProperties}
                   >
-                    <div className="folder-icon">
-                      <FolderOpen size={24} />
+                    <div className="lesson-number">{lessonNum}</div>
+                    <div className="lesson-content">
+                      <span className="lesson-label">Bài</span>
+                      <span className="lesson-name">{folder.name}</span>
                     </div>
-                    <div className="folder-info">
-                      <span className="folder-name">{folder.name}</span>
-                      <span className="folder-count">{pCount} bài đọc</span>
+                    <div className="lesson-meta">
+                      <span className={`lesson-count ${hasContent ? 'active' : ''}`}>
+                        {pCount > 0 ? `${pCount} bài đọc` : 'Trống'}
+                      </span>
+                      <ChevronRight size={18} className="lesson-arrow" />
                     </div>
-                    <ChevronRight size={20} className="folder-arrow" />
+                    {hasContent && <div className="lesson-indicator" />}
+                    <div className="lesson-shine" />
                   </button>
                 );
               })}
@@ -441,31 +449,6 @@ export function ReadingPracticePage({
             <ReadingSettingsButton onClick={() => setShowSettingsModal(true)} />
           </header>
 
-          {/* Progress Bar */}
-          <div className="progress-section">
-            <div className="progress-bar">
-              <div
-                className="progress-fill"
-                style={{
-                  width: `${((currentQuestionIndex + 1) / selectedPassage.questions.length) * 100}%`,
-                  background: theme.gradient
-                }}
-              />
-            </div>
-            <div className="progress-steps">
-              {selectedPassage.questions.map((_, idx) => (
-                <button
-                  key={idx}
-                  className={`step ${idx === currentQuestionIndex ? 'active' : ''} ${selectedAnswers[idx] !== undefined ? 'answered' : ''}`}
-                  onClick={() => { setCurrentQuestionIndex(idx); setShowResults(false); }}
-                  style={{ '--step-color': theme.gradient } as React.CSSProperties}
-                >
-                  {idx + 1}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Mobile Pinned Question */}
           {isMobile && isPinned && (
             <div className={`pinned-question ${isQuestionCollapsed ? 'collapsed' : ''}`}>
@@ -526,9 +509,6 @@ export function ReadingPracticePage({
             <div className="content-panel" ref={contentRef}>
               <div className="content-card">
                 <div className="content-header">
-                  <div className="content-icon">
-                    <BookOpen size={20} />
-                  </div>
                   <h2>Nội dung bài đọc</h2>
                   <div className="audio-controls">
                     <button
@@ -550,7 +530,7 @@ export function ReadingPracticePage({
                   </div>
                 </div>
                 <div className="content-body">
-                  <div className="passage-text" style={{ fontSize: `${settings.fontSize}rem` }}>
+                  <div className="passage-text" style={{ fontSize: `${settings.fontSize}rem`, color: settings.textColor || 'white' }}>
                     <FuriganaText text={selectedPassage.content} />
                   </div>
                 </div>
@@ -565,29 +545,53 @@ export function ReadingPracticePage({
 
             {/* Question Panel */}
             <div className="question-panel">
-              <div className="question-card">
-                <div className="question-header">
-                  <div className="question-badge" style={{ background: theme.gradient }}>
-                    Câu {currentQuestionIndex + 1}/{selectedPassage.questions.length}
+              <div className="question-card-simple">
+                {/* Simple Header with Question Steps */}
+                <div className="question-simple-header">
+                  <div className="question-info">
+                    <span className="question-current" style={{ background: theme.gradient }}>
+                      {currentQuestionIndex + 1}/{selectedPassage.questions.length}
+                    </span>
+                    <div className="question-dots">
+                      {selectedPassage.questions.map((_, idx) => {
+                        const answered = selectedAnswers[idx] !== undefined;
+                        const isCurrent = idx === currentQuestionIndex;
+                        const answerLetter = answered ? String.fromCharCode(65 + selectedAnswers[idx]) : '';
+                        return (
+                          <button
+                            key={idx}
+                            className={`q-dot ${isCurrent ? 'current' : ''} ${answered ? 'answered' : ''}`}
+                            onClick={() => { setCurrentQuestionIndex(idx); setShowResults(false); }}
+                            title={`Câu ${idx + 1}${answered ? ` - ${answerLetter}` : ''}`}
+                          >
+                            {answered ? answerLetter : ''}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                   {isMobile && !isPinned && (
-                    <button className="btn-pin" onClick={() => setIsPinned(true)}>
-                      <Pin size={16} />
-                      <span>Ghim</span>
+                    <button className="btn-pin-simple" onClick={() => setIsPinned(true)}>
+                      <Pin size={14} />
                     </button>
                   )}
                 </div>
 
-                <div className="question-body">
-                  <h3 className="question-text" style={{ fontSize: `${settings.fontSize * 1.05}rem` }}>
-                    <FuriganaText text={currentQuestion.question} />
-                  </h3>
+                {/* Scrollable Question Body */}
+                <div className="question-body-simple">
+                  {/* Question Content */}
+                  <div className="question-content-simple">
+                    <p className="question-text-simple" style={{ fontSize: `${settings.fontSize}rem`, color: settings.textColor || 'white' }}>
+                      <FuriganaText text={currentQuestion.question} />
+                    </p>
+                  </div>
 
-                  <div className="answers-list">
+                  {/* Simple Answer List */}
+                  <div className="answers-simple">
                     {currentQuestion.answers.map((answer, idx) => {
                       const isSelected = selectedAnswer === idx;
                       const isCorrect = answer.isCorrect;
-                      let cls = 'answer-card';
+                      let cls = 'answer-simple';
                       if (showResults) {
                         if (isCorrect) cls += ' correct';
                         else if (isSelected && !isCorrect) cls += ' incorrect';
@@ -601,53 +605,60 @@ export function ReadingPracticePage({
                           className={cls}
                           onClick={() => handleSelectAnswer(idx)}
                           disabled={showResults}
-                          style={{ fontSize: `${settings.fontSize * 0.95}rem` }}
                         >
-                          <div className="answer-indicator">
-                            <span className="answer-letter">{String.fromCharCode(65 + idx)}</span>
-                            {showResults && isCorrect && <CheckCircle size={18} className="check-icon" />}
-                            {showResults && isSelected && !isCorrect && <XCircle size={18} className="x-icon" />}
-                          </div>
-                          <span className="answer-content"><FuriganaText text={answer.text} /></span>
+                          <span className="answer-letter-simple">{String.fromCharCode(65 + idx)}</span>
+                          <span className="answer-text-simple" style={{ fontSize: `${settings.fontSize * 0.9}rem` }}>
+                            <FuriganaText text={answer.text} />
+                          </span>
+                          {showResults && isCorrect && <CheckCircle size={16} className="icon-ok" />}
+                          {showResults && isSelected && !isCorrect && <XCircle size={16} className="icon-no" />}
                         </button>
                       );
                     })}
                   </div>
 
+                  {/* Explanation */}
                   {showResults && currentQuestion.explanation && (
-                    <div className="explanation-card">
-                      <div className="explanation-header">
-                        <Sparkles size={16} />
-                        <span>Giải thích</span>
-                      </div>
-                      <p>{currentQuestion.explanation}</p>
+                    <div className="explanation-simple">
+                      <Sparkles size={14} />
+                      <span>{currentQuestion.explanation}</span>
                     </div>
                   )}
                 </div>
 
-                <div className="question-actions">
+                {/* Simple Actions */}
+                <div className="actions-simple">
                   {!showResults ? (
                     <button
-                      className="btn-action btn-check"
+                      className="btn-simple btn-check-simple"
                       onClick={handleShowResult}
                       disabled={selectedAnswer === undefined}
-                      style={{ '--btn-gradient': theme.gradient } as React.CSSProperties}
+                      style={{ background: theme.gradient }}
                     >
-                      <Target size={18} />
-                      Kiểm tra đáp án
+                      Kiểm tra
                     </button>
                   ) : (
-                    <button
-                      className="btn-action btn-next"
-                      onClick={handleNextQuestion}
-                      style={{ '--btn-gradient': theme.gradient } as React.CSSProperties}
-                    >
+                    <>
                       {currentQuestionIndex < selectedPassage.questions.length - 1 ? (
-                        <>Câu tiếp theo <ChevronRight size={18} /></>
+                        <button
+                          className="btn-simple btn-next-simple"
+                          onClick={handleNextQuestion}
+                          style={{ background: theme.gradient }}
+                        >
+                          Tiếp
+                        </button>
                       ) : (
-                        <><Trophy size={18} /> Xem kết quả</>
+                        Object.keys(selectedAnswers).length === selectedPassage.questions.length && (
+                          <button
+                            className="btn-simple btn-next-simple"
+                            onClick={handleNextQuestion}
+                            style={{ background: theme.gradient }}
+                          >
+                            Kết quả
+                          </button>
+                        )
                       )}
-                    </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -658,9 +669,11 @@ export function ReadingPracticePage({
 
       <style>{`
         .reading-practice-page {
-          min-height: 100vh;
+          height: 100vh;
           background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
           padding: 1.5rem;
+          overflow: hidden;
+          box-sizing: border-box;
         }
 
         /* Premium Header */
@@ -682,33 +695,6 @@ export function ReadingPracticePage({
           gap: 1rem;
         }
 
-        .header-icon {
-          position: relative;
-          width: 56px;
-          height: 56px;
-          background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-          border-radius: 16px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
-        }
-
-        .sparkle {
-          position: absolute;
-          color: #fbbf24;
-          animation: sparkle 2s ease-in-out infinite;
-        }
-
-        .sparkle-1 { top: -4px; right: -4px; }
-        .sparkle-2 { bottom: -2px; left: -2px; animation-delay: 0.5s; }
-
-        @keyframes sparkle {
-          0%, 100% { opacity: 0; transform: scale(0.5) rotate(0deg); }
-          50% { opacity: 1; transform: scale(1) rotate(180deg); }
-        }
-
         .header-text h1 {
           margin: 0;
           font-size: 1.5rem;
@@ -723,13 +709,6 @@ export function ReadingPracticePage({
           margin: 0.25rem 0 0;
           font-size: 0.875rem;
           color: rgba(255, 255, 255, 0.5);
-        }
-
-        .selection-hint {
-          text-align: center;
-          color: rgba(255, 255, 255, 0.5);
-          margin-bottom: 1.5rem;
-          font-size: 0.95rem;
         }
 
         /* Level Grid */
@@ -808,6 +787,10 @@ export function ReadingPracticePage({
         /* List View (Folders & Passages) */
         .list-view {
           animation: fadeIn 0.3s ease;
+          height: calc(100vh - 3rem);
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
         }
 
         @keyframes fadeIn {
@@ -825,6 +808,7 @@ export function ReadingPracticePage({
           border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 14px;
           margin-bottom: 1.5rem;
+          flex-shrink: 0;
         }
 
         .btn-back {
@@ -865,76 +849,211 @@ export function ReadingPracticePage({
           text-overflow: ellipsis;
         }
 
-        /* Folder Grid */
-        .folder-grid {
+        /* Folder View */
+        .folder-view {
+          animation: fadeIn 0.3s ease;
+          height: calc(100vh - 3rem);
           display: flex;
           flex-direction: column;
-          gap: 0.75rem;
+          overflow: hidden;
         }
 
-        .folder-card {
+        .folder-view-header {
           display: flex;
           align-items: center;
           gap: 1rem;
-          padding: 1rem 1.25rem;
+          padding: 1.25rem 1.5rem;
           background: rgba(255, 255, 255, 0.03);
           backdrop-filter: blur(20px);
           border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 14px;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          animation: slideIn 0.3s ease backwards;
-          animation-delay: var(--card-delay);
+          border-radius: 20px;
+          margin-bottom: 1.5rem;
+          flex-shrink: 0;
         }
 
-        @keyframes slideIn {
-          from { opacity: 0; transform: translateX(-10px); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-
-        .folder-card:hover {
-          background: rgba(255, 255, 255, 0.06);
-          border-color: rgba(255, 255, 255, 0.12);
-          transform: translateX(4px);
-        }
-
-        .folder-icon {
-          width: 44px;
-          height: 44px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-          border-radius: 12px;
-          color: white;
-        }
-
-        .folder-info {
+        .folder-view-title {
           flex: 1;
           display: flex;
-          flex-direction: column;
-          gap: 0.25rem;
+          align-items: center;
+          gap: 1rem;
         }
 
-        .folder-name {
+        .level-badge {
+          padding: 0.5rem 1rem;
+          border-radius: 12px;
           font-size: 1rem;
-          font-weight: 500;
+          font-weight: 700;
+          color: white;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .title-text h1 {
+          margin: 0;
+          font-size: 1.25rem;
+          font-weight: 600;
           color: white;
         }
 
-        .folder-count {
-          font-size: 0.8rem;
+        .title-text p {
+          margin: 0.25rem 0 0;
+          font-size: 0.85rem;
           color: rgba(255, 255, 255, 0.5);
         }
 
-        .folder-arrow {
-          color: rgba(255, 255, 255, 0.4);
-          transition: transform 0.2s ease;
+        /* Lesson Grid */
+        .lesson-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 1rem;
+          flex: 1;
+          overflow-y: auto;
+          padding-bottom: 1rem;
         }
 
-        .folder-card:hover .folder-arrow {
-          transform: translateX(4px);
+        .lesson-card {
+          position: relative;
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          padding: 1.25rem;
+          background: rgba(255, 255, 255, 0.02);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-radius: 16px;
+          cursor: pointer;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          animation: lessonAppear 0.4s ease backwards;
+          animation-delay: var(--card-delay);
+          overflow: hidden;
+          text-align: left;
+        }
+
+        @keyframes lessonAppear {
+          from { opacity: 0; transform: translateY(15px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .lesson-card:hover {
+          background: rgba(255, 255, 255, 0.05);
+          border-color: rgba(255, 255, 255, 0.12);
+          transform: translateY(-3px);
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 30px var(--level-glow);
+        }
+
+        .lesson-card:hover .lesson-shine {
+          transform: translateX(100%);
+        }
+
+        .lesson-card.has-content {
+          border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .lesson-card.has-content::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 3px;
+          background: var(--level-gradient);
+          opacity: 0.8;
+        }
+
+        .lesson-number {
+          width: 52px;
+          height: 52px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--level-gradient);
+          border-radius: 14px;
+          font-size: 1.5rem;
+          font-weight: 700;
           color: white;
+          flex-shrink: 0;
+          box-shadow: 0 4px 15px var(--level-glow);
+        }
+
+        .lesson-content {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 0.15rem;
+          min-width: 0;
+        }
+
+        .lesson-label {
+          font-size: 0.7rem;
+          font-weight: 500;
+          color: rgba(255, 255, 255, 0.4);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .lesson-name {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: white;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .lesson-meta {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .lesson-count {
+          font-size: 0.8rem;
+          color: rgba(255, 255, 255, 0.4);
+          padding: 0.3rem 0.6rem;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 6px;
+        }
+
+        .lesson-count.active {
+          color: #86efac;
+          background: rgba(34, 197, 94, 0.15);
+        }
+
+        .lesson-arrow {
+          color: rgba(255, 255, 255, 0.3);
+          transition: all 0.3s ease;
+        }
+
+        .lesson-card:hover .lesson-arrow {
+          color: white;
+          transform: translateX(4px);
+        }
+
+        .lesson-indicator {
+          position: absolute;
+          bottom: 12px;
+          right: 12px;
+          width: 8px;
+          height: 8px;
+          background: #22c55e;
+          border-radius: 50%;
+          box-shadow: 0 0 10px #22c55e;
+          animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.6; transform: scale(1.2); }
+        }
+
+        .lesson-shine {
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+          transition: transform 0.6s ease;
+          pointer-events: none;
         }
 
         /* Passage Grid */
@@ -942,6 +1061,9 @@ export function ReadingPracticePage({
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
           gap: 1rem;
+          flex: 1;
+          overflow-y: auto;
+          padding-bottom: 1rem;
         }
 
         .passage-card {
@@ -1368,27 +1490,17 @@ export function ReadingPracticePage({
           display: flex;
           align-items: center;
           gap: 0.75rem;
-          padding: 1rem 1.25rem;
+          padding: 0.875rem 1.25rem;
           border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
-        .content-icon {
-          width: 36px;
-          height: 36px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-          border-radius: 10px;
-          color: white;
+          background: rgba(255, 255, 255, 0.02);
         }
 
         .content-header h2 {
           margin: 0;
           flex: 1;
-          font-size: 0.95rem;
+          font-size: 0.9rem;
           font-weight: 600;
-          color: white;
+          color: rgba(255, 255, 255, 0.9);
         }
 
         .audio-controls {
@@ -1436,9 +1548,13 @@ export function ReadingPracticePage({
 
         .passage-text {
           font-size: 1.1rem;
-          line-height: 2.1;
-          white-space: pre-wrap;
+          line-height: 1.8;
+          white-space: pre-line;
           color: rgba(255, 255, 255, 0.9);
+        }
+
+        .passage-text p {
+          margin: 0 0 0.5em 0;
         }
 
         .content-footer {
@@ -1461,6 +1577,264 @@ export function ReadingPracticePage({
           min-height: 0;
         }
 
+        /* Premium Question Card */
+        .question-card-simple {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          background: linear-gradient(145deg, rgba(30, 30, 50, 0.9) 0%, rgba(20, 20, 35, 0.95) 100%);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 20px;
+          overflow: hidden;
+          min-height: 0;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .question-simple-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0.875rem 1.25rem;
+          background: rgba(255, 255, 255, 0.03);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .question-info {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        .question-current {
+          padding: 0.4rem 0.75rem;
+          border-radius: 8px;
+          font-size: 0.8rem;
+          font-weight: 700;
+          color: white;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .question-dots {
+          display: flex;
+          gap: 0.4rem;
+        }
+
+        .q-dot {
+          width: 26px;
+          height: 26px;
+          border-radius: 8px;
+          border: 2px solid rgba(255, 255, 255, 0.15);
+          background: rgba(255, 255, 255, 0.03);
+          color: rgba(255, 255, 255, 0.4);
+          font-size: 0.7rem;
+          font-weight: 700;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .q-dot:hover {
+          border-color: rgba(255, 255, 255, 0.3);
+          background: rgba(255, 255, 255, 0.08);
+          transform: translateY(-1px);
+        }
+
+        .q-dot.current {
+          background: rgba(139, 92, 246, 0.25);
+          border-color: rgba(139, 92, 246, 0.6);
+          color: white;
+          box-shadow: 0 0 12px rgba(139, 92, 246, 0.3);
+        }
+
+        .q-dot.answered {
+          background: rgba(34, 197, 94, 0.2);
+          border-color: rgba(34, 197, 94, 0.5);
+          color: #86efac;
+        }
+
+        .btn-pin-simple {
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.05);
+          color: rgba(255, 255, 255, 0.6);
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+        }
+
+        .btn-pin-simple:hover {
+          background: rgba(255, 255, 255, 0.1);
+          color: white;
+        }
+
+        .question-body-simple {
+          flex: 1;
+          overflow-y: auto;
+          min-height: 0;
+          padding: 0.5rem 0;
+        }
+
+        .question-content-simple {
+          padding: 0.75rem 1.25rem;
+        }
+
+        .question-text-simple {
+          margin: 0;
+          line-height: 1.7;
+          font-weight: 500;
+        }
+
+        .answers-simple {
+          display: flex;
+          flex-direction: column;
+          gap: 0.6rem;
+          padding: 0.5rem 1.25rem 1rem;
+        }
+
+        .answer-simple {
+          position: relative;
+          display: flex;
+          align-items: center;
+          gap: 0.875rem;
+          padding: 0.875rem 1rem;
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-radius: 12px;
+          cursor: pointer;
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          text-align: left;
+        }
+
+        .answer-simple:hover:not(:disabled) {
+          background: rgba(255, 255, 255, 0.05);
+          border-color: rgba(255, 255, 255, 0.12);
+          transform: translateX(4px);
+        }
+
+        .answer-simple.selected {
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(99, 102, 241, 0.1) 100%);
+          border-color: rgba(139, 92, 246, 0.5);
+          box-shadow: 0 0 20px rgba(139, 92, 246, 0.15);
+        }
+
+        .answer-simple.correct {
+          background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%);
+          border-color: rgba(34, 197, 94, 0.6);
+          box-shadow: 0 0 20px rgba(34, 197, 94, 0.15);
+        }
+
+        .answer-simple.incorrect {
+          background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.1) 100%);
+          border-color: rgba(239, 68, 68, 0.6);
+        }
+
+        .answer-letter-simple {
+          width: 28px;
+          height: 28px;
+          border-radius: 8px;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+          color: rgba(255, 255, 255, 0.8);
+          font-size: 0.8rem;
+          font-weight: 700;
+          display: flex;
+          flex-shrink: 0;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .answer-simple.selected .answer-letter-simple {
+          background: rgba(139, 92, 246, 0.3);
+          color: #c4b5fd;
+        }
+
+        .answer-simple.correct .answer-letter-simple {
+          background: rgba(34, 197, 94, 0.3);
+          color: #86efac;
+        }
+
+        .answer-simple.incorrect .answer-letter-simple {
+          background: rgba(239, 68, 68, 0.3);
+          color: #fca5a5;
+        }
+
+        .answer-text-simple {
+          flex: 1;
+          color: rgba(255, 255, 255, 0.9);
+          line-height: 1.5;
+        }
+
+        .answer-simple .icon-ok {
+          color: #22c55e;
+          flex-shrink: 0;
+        }
+
+        .answer-simple .icon-no {
+          color: #ef4444;
+          flex-shrink: 0;
+        }
+
+        .explanation-simple {
+          display: flex;
+          align-items: flex-start;
+          gap: 0.6rem;
+          margin: 0.75rem 1.25rem;
+          padding: 0.875rem 1rem;
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%);
+          border: 1px solid rgba(139, 92, 246, 0.25);
+          border-radius: 12px;
+          font-size: 0.85rem;
+          color: rgba(255, 255, 255, 0.85);
+          line-height: 1.6;
+        }
+
+        .explanation-simple svg {
+          color: #a78bfa;
+          flex-shrink: 0;
+          margin-top: 2px;
+        }
+
+        .actions-simple {
+          padding: 1rem 1.25rem;
+          flex-shrink: 0;
+          background: rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-simple {
+          width: 100%;
+          padding: 0.875rem;
+          border: none;
+          border-radius: 12px;
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: white;
+          cursor: pointer;
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-simple:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+          box-shadow: none;
+        }
+
+        .btn-simple:not(:disabled):hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+        }
+
+        .btn-simple:not(:disabled):active {
+          transform: translateY(0);
+        }
+
         .question-card {
           flex: 1;
           display: flex;
@@ -1471,6 +1845,68 @@ export function ReadingPracticePage({
           border-radius: 20px;
           overflow: hidden;
           min-height: 0;
+        }
+
+        /* Question Navigator Header */
+        .question-nav-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 1rem 1.25rem;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+          gap: 0.75rem;
+        }
+
+        .question-steps {
+          display: flex;
+          gap: 0.4rem;
+          flex-wrap: wrap;
+        }
+
+        .question-step {
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          border: 2px solid rgba(255, 255, 255, 0.15);
+          background: rgba(255, 255, 255, 0.03);
+          color: rgba(255, 255, 255, 0.5);
+          font-size: 0.8rem;
+          font-weight: 600;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+        }
+
+        .question-step:hover {
+          border-color: rgba(255, 255, 255, 0.3);
+          background: rgba(255, 255, 255, 0.08);
+        }
+
+        .question-step.current {
+          background: var(--step-color);
+          border-color: transparent;
+          color: white;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .question-step.answered {
+          background: rgba(34, 197, 94, 0.2);
+          border-color: rgba(34, 197, 94, 0.5);
+          color: #86efac;
+        }
+
+        .question-step.answered.current {
+          background: var(--step-color);
+          border-color: transparent;
+          color: white;
+        }
+
+        .question-header-right {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
         }
 
         .question-header {
@@ -1952,6 +2388,43 @@ export function ReadingPracticePage({
 
           .passage-grid {
             grid-template-columns: 1fr;
+          }
+
+          .folder-view-header {
+            padding: 1rem;
+            flex-wrap: wrap;
+          }
+
+          .title-text h1 {
+            font-size: 1.1rem;
+          }
+
+          .lesson-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+          }
+
+          .lesson-card {
+            padding: 1rem;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+          }
+
+          .lesson-number {
+            width: 44px;
+            height: 44px;
+            font-size: 1.25rem;
+            border-radius: 12px;
+          }
+
+          .lesson-meta {
+            width: 100%;
+            justify-content: space-between;
+          }
+
+          .lesson-name {
+            font-size: 1rem;
           }
 
           .practice-mode {
