@@ -1,17 +1,24 @@
 // Node.js script to seed reading and listening folders
 // Run with: node scripts/seed-folders-node.mjs
 
+import 'dotenv/config';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, query } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBktC2eWkNuDxKzWfd4xt2X53CBbYBeY4Q",
-  authDomain: "flashcard-a96f1.firebaseapp.com",
-  projectId: "flashcard-a96f1",
-  storageBucket: "flashcard-a96f1.firebasestorage.app",
-  messagingSenderId: "540083542926",
-  appId: "1:540083542926:web:bd9d6c1264bb9fc11022df",
+  apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VITE_FIREBASE_APP_ID,
 };
+
+// Validate required env vars
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  console.error('Error: Missing Firebase environment variables. Check your .env file.');
+  process.exit(1);
+}
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
