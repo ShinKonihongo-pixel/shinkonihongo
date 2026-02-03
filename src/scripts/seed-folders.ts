@@ -1,7 +1,7 @@
 // Seed script for reading and listening folders
 // Run this once to create default folders for N5 and N4
 
-import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 interface FolderData {

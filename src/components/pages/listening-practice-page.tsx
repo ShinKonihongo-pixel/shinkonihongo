@@ -5,10 +5,10 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import {
   Play, Pause, RotateCcw, Volume2,
   Repeat, Shuffle, Upload, ChevronLeft,
-  Eye, EyeOff, SkipBack, SkipForward, Check, X,
+  Eye, EyeOff, SkipBack, SkipForward,
   ChevronRight, BookOpen, CheckCircle2, Circle, Filter
 } from 'lucide-react';
-import type { Flashcard, DifficultyLevel, JLPTLevel, Lesson } from '../../types/flashcard';
+import type { Flashcard, JLPTLevel } from '../../types/flashcard';
 import type { ListeningPracticePageProps, ViewMode } from './listening-practice/listening-practice-types';
 import { JLPT_LEVELS } from './listening-practice/listening-practice-constants';
 import { useListeningSettings } from '../../contexts/listening-settings-context';
@@ -73,7 +73,7 @@ export function ListeningPracticePage({
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
 
   // Settings panel
-  const [showSettings, setShowSettings] = useState(false);
+  const [_showSettings, _setShowSettings] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showKanji, setShowKanji] = useState(listeningSettings.showKanji);
 
@@ -312,7 +312,7 @@ export function ListeningPracticePage({
   // Mark word as learned/not learned
   const toggleMemorization = (card: Flashcard) => {
     if (!onUpdateCard) return;
-    const newStatus = card.memorizationStatus === 'memorized' ? 'learning' : 'memorized';
+    const newStatus = card.memorizationStatus === 'memorized' ? 'not_memorized' : 'memorized';
     onUpdateCard(card.id, { memorizationStatus: newStatus });
   };
 
@@ -368,7 +368,6 @@ export function ListeningPracticePage({
   };
 
   // Count learned/not-learned for current lesson
-  const learnedCount = filteredCards.filter(c => c.memorizationStatus === 'memorized').length;
   const allCardsForLesson = cards.filter(c => selectedLessonIds.includes(c.lessonId));
   const totalLearnedForLesson = allCardsForLesson.filter(c => c.memorizationStatus === 'memorized').length;
 

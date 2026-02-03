@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import { ChevronRight, Check, BookOpen, Layers, Play, Sparkles, GraduationCap } from 'lucide-react';
-import type { JLPTLevel, Lesson, Flashcard, GrammarCard, GrammarLesson } from '../../types/flashcard';
+import type { JLPTLevel, Flashcard, GrammarCard } from '../../types/flashcard';
 
 // Base lesson type - both Lesson and GrammarLesson share these properties
 type BaseLesson = {

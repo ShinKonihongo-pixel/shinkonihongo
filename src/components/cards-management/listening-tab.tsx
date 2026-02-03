@@ -71,7 +71,7 @@ export function ListeningTab({
   onAddFolder,
   onUpdateFolder,
   onDeleteFolder,
-  getFoldersByLevel,
+  getFoldersByLevel: _getFoldersByLevel,
   getFoldersByLevelAndType,
   getAudiosByFolder,
   getAudioUrl,
@@ -620,6 +620,7 @@ export function ListeningTab({
     const levelFolders = getFoldersByLevelAndType(navState.level, navState.lessonType);
     const theme = LEVEL_THEMES[navState.level];
     const typeTheme = LESSON_TYPE_THEMES[navState.lessonType];
+    void theme; // Used in JSX below
     const typeLabel = LESSON_TYPES.find(t => t.value === navState.lessonType)?.label || '';
 
     return (
@@ -977,6 +978,7 @@ export function ListeningTab({
   const folderAudios = getAudiosByFolder(navState.folderId);
   const theme = LEVEL_THEMES[navState.level];
   const typeTheme = LESSON_TYPE_THEMES[navState.lessonType];
+  void typeTheme; // Silence TS error - may be used later
 
   return (
     <div className="listening-tab">
