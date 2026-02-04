@@ -1,23 +1,14 @@
 // Exercise Page - Premium UI with glassmorphism design
 // Features: Multi-type support, listening dictation, 3-column layout, premium cards
+// Flow: Level Selection → Exercise List → Session → Result
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { ArrowLeft, Play, Volume2, VolumeX, RefreshCw, CheckCircle2, XCircle, Trophy, Clock, BookOpen, RotateCcw, ChevronRight, Sparkles, Zap, Target, Home } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { ArrowLeft, Play, Volume2, VolumeX, RefreshCw, CheckCircle2, XCircle, Trophy, Clock, BookOpen, RotateCcw, ChevronRight, Zap, Target, PenTool } from 'lucide-react';
 import type { Exercise, ExerciseQuestion, ExerciseSession, ExerciseType } from '../../types/exercise';
 import type { Flashcard, JLPTLevel } from '../../types/flashcard';
 import { EXERCISE_TYPE_LABELS, EXERCISE_TYPE_ICONS, getTotalQuestionCount } from '../../types/exercise';
 import { ANSWER_OPTIONS } from '../../constants/answer-options';
-
-const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
-
-// Level theme configurations
-const LEVEL_THEMES: Record<JLPTLevel, { gradient: string; glow: string; icon: string }> = {
-  N5: { gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', glow: 'rgba(16, 185, 129, 0.4)', icon: '🌱' },
-  N4: { gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', glow: 'rgba(59, 130, 246, 0.4)', icon: '📘' },
-  N3: { gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', glow: 'rgba(139, 92, 246, 0.4)', icon: '📖' },
-  N2: { gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', glow: 'rgba(245, 158, 11, 0.4)', icon: '📚' },
-  N1: { gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', glow: 'rgba(239, 68, 68, 0.4)', icon: '👑' },
-};
+import { JLPTLevelSelector, LEVEL_THEMES, JLPT_LEVELS } from '../ui/jlpt-level-selector';
 
 interface ExercisePageProps {
   exercises: Exercise[];
@@ -25,7 +16,7 @@ interface ExercisePageProps {
   onGoHome: () => void;
 }
 
-type ViewState = 'list' | 'session' | 'result';
+type ViewState = 'level-select' | 'list' | 'session' | 'result';
 
 // Helper to get exercise types (handle legacy)
 const getExerciseTypes = (ex: Exercise): ExerciseType[] => {
@@ -46,8 +37,8 @@ const getExerciseQuestionCount = (ex: Exercise): number => {
 };
 
 export function ExercisePage({ exercises, flashcards, onGoHome }: ExercisePageProps) {
-  const [view, setView] = useState<ViewState>('list');
-  const [selectedLevel, setSelectedLevel] = useState<JLPTLevel | 'all'>('all');
+  const [view, setView] = useState<ViewState>('level-select');
+  const [selectedLevel, setSelectedLevel] = useState<JLPTLevel | null>(null);
   const [session, setSession] = useState<ExerciseSession | null>(null);
   const [currentExercise, setCurrentExercise] = useState<Exercise | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -63,21 +54,36 @@ export function ExercisePage({ exercises, flashcards, onGoHome }: ExercisePagePr
 
   // Filter published exercises
   const publishedExercises = exercises.filter(e => e.isPublished);
-  const filteredExercises = selectedLevel === 'all'
+  const filteredExercises = !selectedLevel
     ? publishedExercises
     : publishedExercises.filter(e => {
         const levels = getExerciseLevels(e);
         return levels.includes(selectedLevel);
       });
 
-  // Exercise counts by level
-  const countByLevel = JLPT_LEVELS.reduce((acc, level) => {
-    acc[level] = publishedExercises.filter(e => {
+  // Exercise counts by level (for JLPTLevelSelector)
+  const countByLevel = useMemo(() => {
+    const counts: Record<JLPTLevel, number> = { N5: 0, N4: 0, N3: 0, N2: 0, N1: 0 };
+    publishedExercises.forEach(e => {
       const levels = getExerciseLevels(e);
-      return levels.includes(level);
-    }).length;
-    return acc;
-  }, {} as Record<string, number>);
+      levels.forEach(level => {
+        counts[level]++;
+      });
+    });
+    return counts;
+  }, [publishedExercises]);
+
+  // Select level handler
+  const selectLevel = (level: JLPTLevel) => {
+    setSelectedLevel(level);
+    setView('list');
+  };
+
+  // Go back to level select
+  const goBackToLevelSelect = () => {
+    setSelectedLevel(null);
+    setView('level-select');
+  };
 
   // Clean up on unmount
   useEffect(() => {
@@ -367,37 +373,44 @@ export function ExercisePage({ exercises, flashcards, onGoHome }: ExercisePagePr
     return { grade: 'D', color: '#ef4444', label: 'Cần cố gắng!' };
   };
 
+  // Render level select view - Premium UI matching Grammar/Vocabulary design
+  if (view === 'level-select') {
+    return (
+      <JLPTLevelSelector
+        title="Bài Tập"
+        subtitle="Chọn cấp độ JLPT để bắt đầu"
+        icon={<PenTool size={32} />}
+        countByLevel={countByLevel}
+        countLabel="bài tập"
+        onSelectLevel={selectLevel}
+        showFrame
+      />
+    );
+  }
+
   // Render list view - Premium 3 column grid
-  if (view === 'list') {
+  if (view === 'list' && selectedLevel) {
+    const levelTheme = LEVEL_THEMES[selectedLevel];
     return (
       <div className="exercise-page-premium">
-        {/* Premium Header */}
-        <div className="premium-header">
+        {/* Premium Header with Back Button */}
+        <div className="premium-header with-back">
           <div className="header-content">
-            <div className="header-icon">
-              <Target size={28} />
-              <Sparkles className="sparkle sparkle-1" size={12} />
-              <Sparkles className="sparkle sparkle-2" size={10} />
-            </div>
+            <button className="btn-back" onClick={goBackToLevelSelect}>
+              <ArrowLeft size={20} />
+            </button>
+            <span className="level-badge" style={{ background: levelTheme.gradient }}>
+              {selectedLevel}
+            </span>
             <div className="header-text">
-              <h1>Bài Tập Từ Vựng</h1>
-              <p>Kiểm tra và củng cố kiến thức</p>
+              <h1>Bài Tập</h1>
+              <p>{filteredExercises.length} bài tập</p>
             </div>
           </div>
-          <button className="home-btn" onClick={onGoHome}>
-            <Home size={20} />
-          </button>
         </div>
 
-        {/* Level Filters */}
-        <div className="level-filters">
-          <button
-            className={`filter-chip ${selectedLevel === 'all' ? 'active' : ''}`}
-            onClick={() => setSelectedLevel('all')}
-          >
-            <span>Tất cả</span>
-            <span className="chip-count">{publishedExercises.length}</span>
-          </button>
+        {/* Removed level filters since we now select level first */}
+        <div className="level-filters" style={{ display: 'none' }}>
           {JLPT_LEVELS.map(level => {
             const theme = LEVEL_THEMES[level];
             return (
@@ -551,6 +564,45 @@ export function ExercisePage({ exercises, flashcards, onGoHome }: ExercisePagePr
             margin: 0.25rem 0 0;
             font-size: 0.875rem;
             color: rgba(255, 255, 255, 0.5);
+          }
+
+          /* Back button */
+          .btn-back {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+          }
+
+          .btn-back:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(-2px);
+          }
+
+          /* Level badge */
+          .level-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            color: white;
+            font-weight: 700;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+          }
+
+          .premium-header.with-back {
+            justify-content: flex-start;
+          }
+
+          .premium-header.with-back .header-content {
+            gap: 0.75rem;
           }
 
           .home-btn {

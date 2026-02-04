@@ -25,6 +25,8 @@ import { EvaluationPanel } from '../classroom/evaluation-panel';
 import { TeacherDashboard } from '../classroom/teacher-dashboard';
 import { StudentDetailModal } from '../classroom/student-detail-modal';
 import { SubmissionTracker } from '../classroom/submission-tracker';
+import { StudentReportModal } from '../classroom/student-report-modal';
+import { ReportSettingsModal } from '../classroom/report-settings-modal';
 import {
   ClassroomListView,
   MembersTab,
@@ -68,6 +70,10 @@ export function ClassroomPage({ users }: ClassroomPageProps) {
   // Confirm modal state
   const [publishTestConfirm, setPublishTestConfirm] = useState<string | null>(null);
   const [removeMemberConfirm, setRemoveMemberConfirm] = useState<string | null>(null);
+
+  // Report modal state
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showReportSettingsModal, setShowReportSettingsModal] = useState(false);
 
   // Hooks
   const { membersWithUsers, students, loading: membersLoading, inviteUser, removeMember } = useClassroomMembers(selectedClassroom?.id || null, users);
@@ -151,7 +157,10 @@ export function ClassroomPage({ users }: ClassroomPageProps) {
       <div className="classroom-header">
         <button className="btn btn-back" onClick={handleBack}>← Quay lại</button>
         <h1>{selectedClassroom.name}</h1>
-        {isAdmin && <button className="btn btn-secondary" onClick={() => handleEdit(selectedClassroom)}>Sửa</button>}
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          {isAdmin && <button className="btn btn-primary" onClick={() => setShowReportModal(true)}>📄 Xuất báo cáo</button>}
+          {isAdmin && <button className="btn btn-secondary" onClick={() => handleEdit(selectedClassroom)}>Sửa</button>}
+        </div>
       </div>
 
       {/* Tabs */}
@@ -236,6 +245,28 @@ export function ClassroomPage({ users }: ClassroomPageProps) {
       {selectedStudentId && (
         <StudentDetailModal isOpen={!!selectedStudentId} onClose={() => setSelectedStudentId(null)} userId={selectedStudentId} user={users.find(u => u.id === selectedStudentId)} classroom={selectedClassroom || undefined} studentGrade={studentGrades.find(g => g.userId === selectedStudentId)} attendanceSummary={studentSummaries.find(s => s.userId === selectedStudentId)} attendanceRecords={recordsWithUsers.filter(r => r.userId === selectedStudentId)} evaluations={evaluations.filter(e => e.userId === selectedStudentId)} submissions={allSubmissions.filter(s => s.userId === selectedStudentId)} tests={tests} />
       )}
+
+      {showReportModal && selectedClassroom && currentUser && (
+        <StudentReportModal
+          isOpen={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          classroom={selectedClassroom}
+          students={students.map(s => ({
+            user: s.user!,
+            grade: studentGrades.find(g => g.userId === s.userId),
+            attendance: studentSummaries.find(a => a.userId === s.userId),
+            evaluation: evaluations.find(e => e.userId === s.userId),
+          })).filter(s => s.user)}
+          currentUserId={currentUser.id}
+          currentUserName={currentUser.displayName || currentUser.username || 'Teacher'}
+          onOpenSettings={() => { setShowReportModal(false); setShowReportSettingsModal(true); }}
+        />
+      )}
+
+      <ReportSettingsModal
+        isOpen={showReportSettingsModal}
+        onClose={() => setShowReportSettingsModal(false)}
+      />
 
       <ConfirmModal isOpen={!!publishTestConfirm} title="Xuất bản bài kiểm tra" message="Bạn có chắc muốn xuất bản bài kiểm tra này? Học viên sẽ có thể làm bài ngay sau khi xuất bản." confirmText="Xuất bản" onConfirm={handlePublishTestConfirm} onCancel={() => setPublishTestConfirm(null)} />
       <ConfirmModal isOpen={!!removeMemberConfirm} title="Xóa học viên" message="Bạn có chắc muốn xóa học viên này khỏi lớp? Dữ liệu điểm số và bài nộp của học viên vẫn được giữ lại." confirmText="Xóa" onConfirm={handleRemoveMemberConfirm} onCancel={() => setRemoveMemberConfirm(null)} />

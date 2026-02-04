@@ -3,6 +3,7 @@
 export { KaiwaMessageItem } from './kaiwa-message-item';
 export { KaiwaSuggestionsBox } from './kaiwa-suggestions-box';
 export { KaiwaPracticeModal } from './kaiwa-practice-modal';
+export { KaiwaReadingPracticeModal } from './kaiwa-reading-practice-modal';
 export { KaiwaAnalysisModal } from './kaiwa-analysis-modal';
 export { KaiwaAnswerTemplate } from './kaiwa-answer-template';
 export { KaiwaKaraokeText } from './kaiwa-karaoke-text';

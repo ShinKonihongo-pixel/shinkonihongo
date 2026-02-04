@@ -10,7 +10,8 @@ import { useSpeech, comparePronunciation } from '../../hooks/use-speech';
 import { useGroq } from '../../hooks/use-groq';
 import { useGroqAdvanced } from '../../hooks/use-groq-advanced';
 import { JLPT_LEVELS, CONVERSATION_STYLES, CONVERSATION_TOPICS, getStyleDisplay, getScenarioByTopic } from '../../constants/kaiwa';
-import { KaiwaMessageItem, KaiwaPracticeModal, KaiwaAnalysisModal, KaiwaAnswerTemplate, KaiwaEvaluationModal, SpeakingPracticeMode } from '../kaiwa';
+import { KaiwaMessageItem, KaiwaPracticeModal, KaiwaReadingPracticeModal, KaiwaAnalysisModal, KaiwaAnswerTemplate, KaiwaEvaluationModal, SpeakingPracticeMode } from '../kaiwa';
+import type { MicMode } from '../kaiwa/kaiwa-input-area';
 import type { VocabularyHint } from '../../types/kaiwa';
 import { removeFurigana } from '../../lib/furigana-utils';
 import { FuriganaText } from '../common/furigana-text';
@@ -39,7 +40,58 @@ import {
   Star,
   BookOpen,
   MessageCircle,
+  ChevronDown,
 } from 'lucide-react';
+
+// Mic mode options for the dropdown
+const MIC_MODES: { id: MicMode; label: string; labelJa: string; icon: typeof Zap }[] = [
+  { id: 'immediate', label: 'Trả lời ngay', labelJa: '即答', icon: Zap },
+  { id: 'reading-practice', label: 'Luyện đọc', labelJa: '読み練習', icon: BookOpen },
+];
+
+// Mic mode selector dropdown component
+function MicModeSelector({
+  micMode,
+  onMicModeChange,
+}: {
+  micMode: MicMode;
+  onMicModeChange: (mode: MicMode) => void;
+}) {
+  const [showMenu, setShowMenu] = useState(false);
+  const currentMode = MIC_MODES.find(m => m.id === micMode) || MIC_MODES[0];
+
+  return (
+    <div className="mic-mode-selector">
+      <button
+        className="mic-mode-btn"
+        onClick={() => setShowMenu(!showMenu)}
+        title={currentMode.label}
+      >
+        <currentMode.icon size={14} />
+        <ChevronDown size={12} className={showMenu ? 'rotated' : ''} />
+      </button>
+
+      {showMenu && (
+        <div className="mic-mode-menu">
+          {MIC_MODES.map(mode => (
+            <button
+              key={mode.id}
+              className={`mic-mode-option ${micMode === mode.id ? 'active' : ''}`}
+              onClick={() => {
+                onMicModeChange(mode.id);
+                setShowMenu(false);
+              }}
+            >
+              <mode.icon size={16} />
+              <span className="mode-label">{mode.label}</span>
+              <span className="mode-label-ja">{mode.labelJa}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function KaiwaPage({
   settings,
@@ -114,6 +166,11 @@ export function KaiwaPage({
   const [evaluation, setEvaluation] = useState<KaiwaEvaluation | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [showEvaluationModal, setShowEvaluationModal] = useState(false);
+
+  // Mic mode state - immediate answer or reading practice
+  const [micMode, setMicMode] = useState<MicMode>('immediate');
+  const [showReadingPracticeModal, setShowReadingPracticeModal] = useState(false);
+  const [textToRead, setTextToRead] = useState<string>('');
 
   // Metrics tracking
   const [pronunciationAttempts, setPronunciationAttempts] = useState(0);
@@ -1457,6 +1514,19 @@ export function KaiwaPage({
         />
       )}
 
+      {/* Reading Practice Modal */}
+      <KaiwaReadingPracticeModal
+        isOpen={showReadingPracticeModal}
+        onClose={() => setShowReadingPracticeModal(false)}
+        textToRead={textToRead}
+        level={level}
+        onComplete={(result) => {
+          // Track pronunciation metrics
+          setPronunciationAttempts(prev => prev + 1);
+          setTotalAccuracy(prev => prev + result.accuracy);
+        }}
+      />
+
       {/* Saved Sentences Panel */}
       {showSavedPanel && savedSentences.length > 0 && (
         <div className="kaiwa-saved-panel">
@@ -1607,13 +1677,35 @@ export function KaiwaPage({
           </button>
 
           {speech.recognitionSupported && (
-            <button
-              className={`kaiwa-mic-btn ${speech.isListening ? 'listening' : ''}`}
-              onClick={handleMicClick}
-              disabled={isAiLoading}
-            >
-              <Mic size={18} />
-            </button>
+            <div className="kaiwa-mic-group">
+              {/* Mic mode dropdown */}
+              <MicModeSelector
+                micMode={micMode}
+                onMicModeChange={setMicMode}
+              />
+
+              {/* Main mic button */}
+              <button
+                className={`kaiwa-mic-btn ${speech.isListening ? 'listening' : ''} ${micMode === 'reading-practice' ? 'reading-mode' : ''}`}
+                onClick={() => {
+                  if (micMode === 'reading-practice') {
+                    // Get text to read from last AI message or first suggested answer
+                    const lastAiMessage = messages.filter(m => m.role === 'assistant').pop();
+                    const readingText = suggestedAnswers[0]?.text || lastAiMessage?.content || '';
+                    if (readingText) {
+                      setTextToRead(readingText);
+                      setShowReadingPracticeModal(true);
+                    }
+                  } else {
+                    handleMicClick();
+                  }
+                }}
+                disabled={isAiLoading || (micMode === 'reading-practice' && suggestedAnswers.length === 0 && messages.filter(m => m.role === 'assistant').length === 0)}
+                title={micMode === 'reading-practice' ? 'Mở luyện đọc' : 'Bắt đầu nói'}
+              >
+                {micMode === 'reading-practice' ? <BookOpen size={18} /> : <Mic size={18} />}
+              </button>
+            </div>
           )}
 
           <div className="kaiwa-input-wrapper">

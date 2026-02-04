@@ -1,7 +1,8 @@
 // Kaiwa Input Area - Bottom input controls with suggestions
 // Handles text input, mic button, send, and suggestion tabs
+// Supports 2 mic modes: immediate answer or reading practice with visual feedback
 
-import { forwardRef } from 'react';
+import { forwardRef, useState } from 'react';
 import {
   Sparkles,
   MessagesSquare,
@@ -10,6 +11,9 @@ import {
   Send,
   Volume2,
   X,
+  BookOpen,
+  Zap,
+  ChevronDown,
 } from 'lucide-react';
 import type { AnswerTemplate, SuggestedAnswer, VocabularyHint } from '../../types/kaiwa';
 import { KaiwaAnswerTemplate } from './kaiwa-answer-template';
@@ -17,6 +21,14 @@ import { FuriganaText } from '../common/furigana-text';
 import { removeFurigana } from '../../lib/furigana-utils';
 
 type SuggestionTab = 'template' | 'answers' | 'questions' | null;
+
+// Mic modes
+export type MicMode = 'immediate' | 'reading-practice';
+
+const MIC_MODES: { id: MicMode; label: string; labelJa: string; icon: typeof Zap }[] = [
+  { id: 'immediate', label: 'Trả lời ngay', labelJa: '即答', icon: Zap },
+  { id: 'reading-practice', label: 'Luyện đọc', labelJa: '読み練習', icon: BookOpen },
+];
 
 interface KaiwaInputAreaProps {
   inputText: string;
@@ -31,6 +43,11 @@ interface KaiwaInputAreaProps {
   recognitionSupported: boolean;
   isPracticeMode: boolean;
 
+  // Mic mode
+  micMode: MicMode;
+  onMicModeChange: (mode: MicMode) => void;
+  textToRead?: string; // For reading practice mode
+
   // Suggestions
   answerTemplate: AnswerTemplate | null;
   suggestedAnswers: SuggestedAnswer[];
@@ -44,6 +61,7 @@ interface KaiwaInputAreaProps {
 
   // Handlers
   onMicClick: () => void;
+  onReadingPracticeClick?: () => void; // Opens reading practice modal
   onToggleSuggestionTabs: () => void;
   onTabChange: (tab: SuggestionTab) => void;
   onSelectHint: (hint: VocabularyHint) => void;
@@ -62,6 +80,9 @@ export const KaiwaInputArea = forwardRef<HTMLInputElement, KaiwaInputAreaProps>(
   interimTranscript,
   recognitionSupported,
   isPracticeMode,
+  micMode,
+  onMicModeChange,
+  textToRead,
   answerTemplate,
   suggestedAnswers,
   suggestedQuestions,
@@ -70,6 +91,7 @@ export const KaiwaInputArea = forwardRef<HTMLInputElement, KaiwaInputAreaProps>(
   showFurigana,
   error,
   onMicClick,
+  onReadingPracticeClick,
   onToggleSuggestionTabs,
   onTabChange,
   onSelectHint,
@@ -77,7 +99,18 @@ export const KaiwaInputArea = forwardRef<HTMLInputElement, KaiwaInputAreaProps>(
   onSelectQuestion,
   onClearError,
 }, ref) {
+  const [showMicModeMenu, setShowMicModeMenu] = useState(false);
   const hasSuggestions = answerTemplate || suggestedAnswers.length > 0 || suggestedQuestions.length > 0;
+  const currentMicMode = MIC_MODES.find(m => m.id === micMode) || MIC_MODES[0];
+
+  // Handle mic button click based on mode
+  const handleMicClick = () => {
+    if (micMode === 'reading-practice' && onReadingPracticeClick && textToRead) {
+      onReadingPracticeClick();
+    } else {
+      onMicClick();
+    }
+  };
 
   return (
     <div className="kaiwa-bottom-section">
@@ -185,13 +218,48 @@ export const KaiwaInputArea = forwardRef<HTMLInputElement, KaiwaInputAreaProps>(
         </button>
 
         {recognitionSupported && (
-          <button
-            className={`kaiwa-mic-btn ${isListening ? 'listening' : ''}`}
-            onClick={onMicClick}
-            disabled={isLoading}
-          >
-            <Mic size={18} />
-          </button>
+          <div className="kaiwa-mic-group">
+            {/* Mic mode dropdown */}
+            <div className="mic-mode-selector">
+              <button
+                className="mic-mode-btn"
+                onClick={() => setShowMicModeMenu(!showMicModeMenu)}
+                title={currentMicMode.label}
+              >
+                <currentMicMode.icon size={14} />
+                <ChevronDown size={12} className={showMicModeMenu ? 'rotated' : ''} />
+              </button>
+
+              {showMicModeMenu && (
+                <div className="mic-mode-menu">
+                  {MIC_MODES.map(mode => (
+                    <button
+                      key={mode.id}
+                      className={`mic-mode-option ${micMode === mode.id ? 'active' : ''}`}
+                      onClick={() => {
+                        onMicModeChange(mode.id);
+                        setShowMicModeMenu(false);
+                      }}
+                    >
+                      <mode.icon size={16} />
+                      <span className="mode-label">{mode.label}</span>
+                      <span className="mode-label-ja">{mode.labelJa}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Main mic button */}
+            <button
+              className={`kaiwa-mic-btn ${isListening ? 'listening' : ''} ${micMode === 'reading-practice' ? 'reading-mode' : ''}`}
+              onClick={handleMicClick}
+              disabled={isLoading || (micMode === 'reading-practice' && !textToRead)}
+              title={micMode === 'reading-practice' ? 'Mở modal luyện đọc' : 'Bắt đầu nói'}
+            >
+              {micMode === 'reading-practice' ? <BookOpen size={18} /> : <Mic size={18} />}
+            </button>
+          </div>
         )}
 
         <div className="kaiwa-input-wrapper">

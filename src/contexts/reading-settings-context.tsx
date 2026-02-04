@@ -7,6 +7,7 @@ export interface ReadingSettings {
   fontSize: number; // 0.8 - 1.5 (multiplier)
   furiganaSize: number; // 0.4 - 0.8 (multiplier relative to text)
   textColor: string; // Text color for question content
+  furiganaColor: string; // Furigana text color
 }
 
 interface ReadingSettingsContextType {
@@ -24,6 +25,7 @@ const DEFAULT_SETTINGS: ReadingSettings = {
   fontSize: 1,
   furiganaSize: 0.5,
   textColor: '#ffffff',
+  furiganaColor: '#a78bfa', // Default purple furigana
 };
 
 const STORAGE_KEY = 'shinko-reading-settings';

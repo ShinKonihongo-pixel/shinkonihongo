@@ -14812,6 +14812,118 @@ button.kaiwa-stat.saved.active {
   50% { box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3), 0 0 0 14px rgba(239, 68, 68, 0); }
 }
 
+/* Mic Mode Selector - Reading Practice Mode */
+.kaiwa-mic-group {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  position: relative;
+}
+
+.mic-mode-selector {
+  position: relative;
+}
+
+.mic-mode-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid rgba(13, 148, 136, 0.15);
+  background: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: #0D9488;
+  transition: all 0.2s ease;
+}
+
+.mic-mode-btn:hover {
+  background: #F0FDFA;
+  border-color: #0D9488;
+}
+
+.mic-mode-btn .rotated {
+  transform: rotate(180deg);
+}
+
+.mic-mode-menu {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(13, 148, 136, 0.1);
+  overflow: hidden;
+  z-index: 100;
+  min-width: 160px;
+  animation: menu-appear 0.2s ease;
+}
+
+@keyframes menu-appear {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.mic-mode-option {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.mic-mode-option:hover {
+  background: #F0FDFA;
+}
+
+.mic-mode-option.active {
+  background: linear-gradient(145deg, #F0FDFA 0%, #E6FFFA 100%);
+  color: #0D9488;
+}
+
+.mic-mode-option svg {
+  color: #0D9488;
+  flex-shrink: 0;
+}
+
+.mic-mode-option .mode-label {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #1E293B;
+}
+
+.mic-mode-option .mode-label-ja {
+  font-size: 0.7rem;
+  color: #64748B;
+}
+
+.kaiwa-mic-btn.reading-mode {
+  background: linear-gradient(145deg, #8B5CF6 0%, #A78BFA 100%);
+  border-color: #8B5CF6;
+  color: white;
+}
+
+.kaiwa-mic-btn.reading-mode:hover {
+  background: linear-gradient(145deg, #7C3AED 0%, #8B5CF6 100%);
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
+}
+
+.kaiwa-mic-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .kaiwa-input-wrapper {
   flex: 1;
   position: relative;

@@ -157,26 +157,28 @@ export function LevelLessonSelector({
       {/* Level Selection Screen */}
       {!selectedLevel && (
         <div className="selector-container">
-          {/* Premium Header */}
-          <header className="premium-header">
-            <div className="header-badge">
-              <GraduationCap size={14} />
-              <span>JLPT Learning</span>
-            </div>
-            <div className="header-main">
-              <div className="header-icon-wrapper">
-                <div className="header-icon">
-                  {type === 'vocabulary' ? <Layers size={32} /> : <BookOpen size={32} />}
-                </div>
-                <Sparkles className="sparkle-effect sparkle-1" size={16} />
-                <Sparkles className="sparkle-effect sparkle-2" size={12} />
+          {/* Premium Header with Frame */}
+          <div className="header-frame">
+            <header className="premium-header">
+              <div className="header-badge">
+                <GraduationCap size={14} />
+                <span>JLPT Learning</span>
               </div>
-              <h1 className="header-title">
-                {type === 'vocabulary' ? 'Học Từ Vựng' : 'Học Ngữ Pháp'}
-              </h1>
-              <p className="header-subtitle">Chọn cấp độ JLPT để bắt đầu</p>
-            </div>
-          </header>
+              <div className="header-main">
+                <div className="header-icon-wrapper">
+                  <div className="header-icon">
+                    {type === 'vocabulary' ? <Layers size={32} /> : <BookOpen size={32} />}
+                  </div>
+                  <Sparkles className="sparkle-effect sparkle-1" size={16} />
+                  <Sparkles className="sparkle-effect sparkle-2" size={12} />
+                </div>
+                <h1 className="header-title">
+                  {type === 'vocabulary' ? 'Học Từ Vựng' : 'Học Ngữ Pháp'}
+                </h1>
+                <p className="header-subtitle">Chọn cấp độ JLPT để bắt đầu</p>
+              </div>
+            </header>
+          </div>
 
           {/* Level Cards Grid */}
           <div className="levels-grid">
@@ -388,14 +390,37 @@ export function LevelLessonSelector({
           gap: 1rem;
         }
 
+        /* ========== Header Frame ========== */
+        .header-frame {
+          position: relative;
+          padding: 2.5rem 3rem 3rem;
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid rgba(99, 102, 241, 0.2);
+          border-radius: 24px;
+          backdrop-filter: blur(8px);
+          animation: fadeInDown 0.6s ease-out;
+        }
+
+        .header-frame::before {
+          content: '';
+          position: absolute;
+          inset: -1px;
+          border-radius: 25px;
+          padding: 1px;
+          background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(236, 72, 153, 0.1) 50%, rgba(99, 102, 241, 0.2) 100%);
+          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+          pointer-events: none;
+        }
+
         /* ========== Premium Header ========== */
         .premium-header {
           text-align: center;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 3rem;
-          animation: fadeInDown 0.6s ease-out;
+          gap: 2rem;
         }
 
         @keyframes fadeInDown {

@@ -4,7 +4,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import {
   ChevronRight, CheckCircle, XCircle, RotateCcw, Volume2,
-  ArrowLeft, Sparkles, ChevronDown, ChevronUp,
+  ArrowLeft, ChevronDown, ChevronUp,
   Clock, Pause, Play, Square, FolderOpen,
   FileText, Pin, PinOff, BookOpen
 } from 'lucide-react';
@@ -14,15 +14,9 @@ import { JLPT_LEVELS } from './reading-practice/reading-practice-constants';
 import { ReadingSettingsModal, ReadingSettingsButton } from '../ui/reading-settings-modal';
 import { FuriganaText } from '../ui/furigana-text';
 import { useReadingSettings } from '../../contexts/reading-settings-context';
+import { JLPTLevelSelector, LEVEL_THEMES } from '../ui/jlpt-level-selector';
 
-// Level theme configurations (matching vocabulary/grammar design)
-const LEVEL_THEMES: Record<JLPTLevel, { gradient: string; glow: string; accent: string }> = {
-  N5: { gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', glow: 'rgba(16, 185, 129, 0.4)', accent: '#10b981' },
-  N4: { gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', glow: 'rgba(59, 130, 246, 0.4)', accent: '#3b82f6' },
-  N3: { gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', glow: 'rgba(245, 158, 11, 0.4)', accent: '#f59e0b' },
-  N2: { gradient: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)', glow: 'rgba(236, 72, 153, 0.4)', accent: '#ec4899' },
-  N1: { gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', glow: 'rgba(239, 68, 68, 0.4)', accent: '#ef4444' },
-};
+// LEVEL_THEMES is now imported from jlpt-level-selector
 
 // View modes
 type ViewMode = 'level-select' | 'folder-list' | 'passage-list' | 'practice' | 'completed';
@@ -245,43 +239,16 @@ export function ReadingPracticePage({
         onClose={() => setShowSettingsModal(false)}
       />
 
-      {/* Level Selection - Matching Vocabulary/Grammar Design */}
+      {/* Level Selection - Premium UI matching Grammar/Vocabulary design */}
       {viewMode === 'level-select' && (
-        <>
-          <div className="premium-header">
-            <div className="header-content">
-              <div className="header-text">
-                <h1>読解 <span className="header-subtitle-inline">Đọc Hiểu</span></h1>
-                <p>Chọn cấp độ JLPT để bắt đầu</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="level-grid">
-            {JLPT_LEVELS.map((level, idx) => {
-              const levelTheme = LEVEL_THEMES[level];
-              const passageCount = countByLevel[level];
-              const folderCount = getFolderCount(level);
-              const disabled = passageCount === 0;
-              return (
-                <button
-                  key={level}
-                  className={`level-card ${disabled ? 'disabled' : ''}`}
-                  onClick={() => !disabled && selectLevel(level)}
-                  style={{ '--card-delay': `${idx * 0.1}s`, '--level-gradient': levelTheme.gradient, '--level-glow': levelTheme.glow, '--level-accent': levelTheme.accent } as React.CSSProperties}
-                >
-                  <span className="level-name">{level}</span>
-                  <div className="level-stats">
-                    <span>{folderCount} bài</span>
-                    <span className="stat-dot">•</span>
-                    <span>{passageCount} đề</span>
-                  </div>
-                  <div className="card-shine" />
-                </button>
-              );
-            })}
-          </div>
-        </>
+        <JLPTLevelSelector
+          title="Đọc Hiểu"
+          subtitle="Chọn cấp độ JLPT để bắt đầu"
+          icon={<BookOpen size={32} />}
+          countByLevel={countByLevel}
+          countLabel="bài đọc"
+          onSelectLevel={selectLevel}
+        />
       )}
 
       {/* Folder List */}
@@ -720,9 +687,10 @@ export function ReadingPracticePage({
 
       <style>{`
         .reading-practice-page {
-          height: 100vh;
+          height: calc(100vh - 2rem);
+          max-height: calc(100vh - 2rem);
           background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
-          padding: 1.5rem;
+          padding: 1rem;
           overflow: hidden;
           box-sizing: border-box;
         }
@@ -1556,8 +1524,8 @@ export function ReadingPracticePage({
 
         /* Practice Mode */
         .practice-mode {
-          height: calc(100vh - 5rem);
-          max-height: calc(100vh - 5rem);
+          height: calc(100vh - 6rem);
+          max-height: calc(100vh - 6rem);
           display: flex;
           flex-direction: column;
           overflow: hidden;
