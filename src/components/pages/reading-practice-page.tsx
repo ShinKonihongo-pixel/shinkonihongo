@@ -6,7 +6,7 @@ import {
   ChevronRight, CheckCircle, XCircle, RotateCcw, Volume2,
   ArrowLeft, Sparkles, ChevronDown, ChevronUp,
   Clock, Pause, Play, Square, FolderOpen,
-  FileText, Pin, PinOff
+  FileText, Pin, PinOff, BookOpen
 } from 'lucide-react';
 import type { JLPTLevel } from '../../types/flashcard';
 import type { ReadingPassage, ReadingFolder } from '../../types/reading';
@@ -15,13 +15,13 @@ import { ReadingSettingsModal, ReadingSettingsButton } from '../ui/reading-setti
 import { FuriganaText } from '../ui/furigana-text';
 import { useReadingSettings } from '../../contexts/reading-settings-context';
 
-// Level theme configurations
-const LEVEL_THEMES: Record<JLPTLevel, { gradient: string; glow: string; icon: string }> = {
-  N5: { gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', glow: 'rgba(16, 185, 129, 0.4)', icon: '🌱' },
-  N4: { gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', glow: 'rgba(59, 130, 246, 0.4)', icon: '📘' },
-  N3: { gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', glow: 'rgba(139, 92, 246, 0.4)', icon: '📖' },
-  N2: { gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', glow: 'rgba(245, 158, 11, 0.4)', icon: '📚' },
-  N1: { gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', glow: 'rgba(239, 68, 68, 0.4)', icon: '👑' },
+// Level theme configurations (matching vocabulary/grammar design)
+const LEVEL_THEMES: Record<JLPTLevel, { gradient: string; glow: string; accent: string }> = {
+  N5: { gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', glow: 'rgba(16, 185, 129, 0.4)', accent: '#10b981' },
+  N4: { gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', glow: 'rgba(59, 130, 246, 0.4)', accent: '#3b82f6' },
+  N3: { gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', glow: 'rgba(245, 158, 11, 0.4)', accent: '#f59e0b' },
+  N2: { gradient: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)', glow: 'rgba(236, 72, 153, 0.4)', accent: '#ec4899' },
+  N1: { gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', glow: 'rgba(239, 68, 68, 0.4)', accent: '#ef4444' },
 };
 
 // View modes
@@ -62,6 +62,9 @@ export function ReadingPracticePage({
 
   // Settings modal
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+
+  // Content tab state
+  const [contentTab, setContentTab] = useState<'passage' | 'vocabulary'>('passage');
 
   // Audio state
   const [audioState, setAudioState] = useState<'idle' | 'playing' | 'paused'>('idle');
@@ -122,6 +125,7 @@ export function ReadingPracticePage({
     setCurrentQuestionIndex(0);
     setSelectedAnswers({});
     setShowResults(false);
+    setContentTab('passage'); // Reset to passage tab
     setViewMode('practice');
   };
 
@@ -241,17 +245,16 @@ export function ReadingPracticePage({
         onClose={() => setShowSettingsModal(false)}
       />
 
-      {/* Level Selection */}
+      {/* Level Selection - Matching Vocabulary/Grammar Design */}
       {viewMode === 'level-select' && (
         <>
           <div className="premium-header">
             <div className="header-content">
               <div className="header-text">
-                <h1>Luyện Đọc Hiểu</h1>
+                <h1>読解 <span className="header-subtitle-inline">Đọc Hiểu</span></h1>
                 <p>Chọn cấp độ JLPT để bắt đầu</p>
               </div>
             </div>
-            <ReadingSettingsButton onClick={() => setShowSettingsModal(true)} />
           </div>
 
           <div className="level-grid">
@@ -259,19 +262,19 @@ export function ReadingPracticePage({
               const levelTheme = LEVEL_THEMES[level];
               const passageCount = countByLevel[level];
               const folderCount = getFolderCount(level);
+              const disabled = passageCount === 0;
               return (
                 <button
                   key={level}
-                  className="level-card"
-                  onClick={() => selectLevel(level)}
-                  style={{ '--card-delay': `${idx * 0.1}s`, '--level-gradient': levelTheme.gradient, '--level-glow': levelTheme.glow } as React.CSSProperties}
+                  className={`level-card ${disabled ? 'disabled' : ''}`}
+                  onClick={() => !disabled && selectLevel(level)}
+                  style={{ '--card-delay': `${idx * 0.1}s`, '--level-gradient': levelTheme.gradient, '--level-glow': levelTheme.glow, '--level-accent': levelTheme.accent } as React.CSSProperties}
                 >
-                  <span className="level-icon">{levelTheme.icon}</span>
                   <span className="level-name">{level}</span>
                   <div className="level-stats">
-                    <span>{folderCount} thư mục</span>
-                    <span>•</span>
-                    <span>{passageCount} bài</span>
+                    <span>{folderCount} bài</span>
+                    <span className="stat-dot">•</span>
+                    <span>{passageCount} đề</span>
                   </div>
                   <div className="card-shine" />
                 </button>
@@ -297,7 +300,6 @@ export function ReadingPracticePage({
                 <p>{levelFolders.length} bài • Luyện đọc hiểu</p>
               </div>
             </div>
-            <ReadingSettingsButton onClick={() => setShowSettingsModal(true)} />
           </div>
 
           {levelFolders.length === 0 ? (
@@ -344,18 +346,20 @@ export function ReadingPracticePage({
         </div>
       )}
 
-      {/* Passage List */}
+      {/* Passage List - Premium 3-Column Grid */}
       {viewMode === 'passage-list' && selectedLevel && selectedFolder && (
-        <div className="list-view">
-          <div className="nav-header">
+        <div className="passage-list-view">
+          <div className="passage-list-header">
             <button className="btn-back" onClick={goBack}>
               <ArrowLeft size={20} />
             </button>
-            <span className="current-level" style={{ background: theme.gradient }}>
-              {selectedLevel}
-            </span>
-            <h2 className="nav-title">{selectedFolder.name}</h2>
-            <ReadingSettingsButton onClick={() => setShowSettingsModal(true)} />
+            <div className="passage-list-title">
+              <div className="title-row">
+                <h1>{selectedFolder.name}</h1>
+                <span className="passage-count-inline">{folderPassages.length} bài đọc</span>
+              </div>
+            </div>
+            <span className="level-tag-right" style={{ background: theme.gradient }}>{selectedLevel}</span>
           </div>
 
           {folderPassages.length === 0 ? (
@@ -365,29 +369,26 @@ export function ReadingPracticePage({
               <p>Vui lòng thêm bài đọc ở tab Quản Lí</p>
             </div>
           ) : (
-            <div className="passage-grid">
+            <div className="passage-grid-premium">
               {folderPassages.map((passage, idx) => (
-                <div
+                <button
                   key={passage.id}
-                  className="passage-card"
+                  className="passage-card-compact"
                   onClick={() => startPractice(passage)}
-                  style={{ '--card-delay': `${idx * 0.05}s`, '--level-glow': theme.glow } as React.CSSProperties}
+                  style={{ '--card-delay': `${idx * 0.05}s`, '--level-gradient': theme.gradient, '--level-glow': theme.glow } as React.CSSProperties}
                 >
-                  <div className="passage-header">
-                    <div className="passage-meta">
-                      <FileText size={16} />
-                      <span>{passage.questions.length} câu hỏi</span>
-                    </div>
-                    <Clock size={14} />
-                    <span className="read-time">~{Math.ceil(passage.content.length / 400)} phút</span>
+                  <div className="card-main">
+                    <span className="card-kanji-big">読解</span>
+                    <h3 className="card-title-upper">{passage.title.toUpperCase()}</h3>
                   </div>
-                  <h3 className="passage-title">{passage.title}</h3>
-                  <p className="passage-preview">{passage.content.substring(0, 100)}...</p>
-                  <div className="passage-action">
-                    <span>Bắt đầu</span>
-                    <ChevronRight size={18} />
+                  <div className="card-meta">
+                    <span className="meta-item">{passage.questions.length}問</span>
+                    <span className="meta-dot">•</span>
+                    <span className="meta-item">{Math.ceil(passage.content.length / 400)}分</span>
+                    <ChevronRight size={16} className="meta-arrow" />
                   </div>
-                </div>
+                  <div className="card-shine" />
+                </button>
               ))}
             </div>
           )}
@@ -441,7 +442,7 @@ export function ReadingPracticePage({
               <span className="level-pill" style={{ background: theme.gradient }}>
                 {selectedLevel}
               </span>
-              <h1 className="header-title">{selectedPassage.title}</h1>
+              <h1 className="header-title" style={{ textTransform: 'uppercase' }}>{selectedPassage.title}</h1>
               <span className="progress-badge">
                 {Object.keys(selectedAnswers).length}/{selectedPassage.questions.length}
               </span>
@@ -509,37 +510,87 @@ export function ReadingPracticePage({
             <div className="content-panel" ref={contentRef}>
               <div className="content-card">
                 <div className="content-header">
-                  <h2>Nội dung bài đọc</h2>
-                  <div className="audio-controls">
+                  <div className="content-tabs">
                     <button
-                      className={`btn-audio ${audioState !== 'idle' ? 'active' : ''}`}
-                      onClick={() => handleAudioToggle(selectedPassage.content)}
-                      title={audioState === 'idle' ? 'Nghe' : 'Dừng'}
+                      className={`content-tab ${contentTab === 'passage' ? 'active' : ''}`}
+                      onClick={() => setContentTab('passage')}
                     >
-                      {audioState === 'idle' ? <Volume2 size={18} /> : <Square size={16} />}
+                      <FileText size={16} />
+                      <span>Nội dung bài đọc</span>
                     </button>
-                    {audioState !== 'idle' && (
-                      <button
-                        className={`btn-audio ${audioState === 'paused' ? 'paused' : ''}`}
-                        onClick={() => audioState === 'playing' ? pauseSpeaking() : resumeSpeaking()}
-                        title={audioState === 'playing' ? 'Tạm dừng' : 'Tiếp tục'}
-                      >
-                        {audioState === 'playing' ? <Pause size={16} /> : <Play size={16} />}
-                      </button>
-                    )}
+                    <button
+                      className={`content-tab ${contentTab === 'vocabulary' ? 'active' : ''}`}
+                      onClick={() => setContentTab('vocabulary')}
+                    >
+                      <BookOpen size={16} />
+                      <span>Từ mới</span>
+                      {selectedPassage.vocabulary && selectedPassage.vocabulary.length > 0 && (
+                        <span className="vocab-count">{selectedPassage.vocabulary.length}</span>
+                      )}
+                    </button>
                   </div>
+                  {contentTab === 'passage' && (
+                    <div className="audio-controls">
+                      <button
+                        className={`btn-audio ${audioState !== 'idle' ? 'active' : ''}`}
+                        onClick={() => handleAudioToggle(selectedPassage.content)}
+                        title={audioState === 'idle' ? 'Nghe' : 'Dừng'}
+                      >
+                        {audioState === 'idle' ? <Volume2 size={18} /> : <Square size={16} />}
+                      </button>
+                      {audioState !== 'idle' && (
+                        <button
+                          className={`btn-audio ${audioState === 'paused' ? 'paused' : ''}`}
+                          onClick={() => audioState === 'playing' ? pauseSpeaking() : resumeSpeaking()}
+                          title={audioState === 'playing' ? 'Tạm dừng' : 'Tiếp tục'}
+                        >
+                          {audioState === 'playing' ? <Pause size={16} /> : <Play size={16} />}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="content-body">
-                  <div className="passage-text" style={{ fontSize: `${settings.fontSize}rem`, color: settings.textColor || 'white' }}>
-                    <FuriganaText text={selectedPassage.content} />
-                  </div>
+                  {contentTab === 'passage' ? (
+                    <div className="passage-text" style={{ fontSize: `${settings.fontSize}rem`, color: settings.textColor || 'white' }}>
+                      <FuriganaText text={selectedPassage.content} />
+                    </div>
+                  ) : (
+                    <div className="vocabulary-list">
+                      {selectedPassage.vocabulary && selectedPassage.vocabulary.length > 0 ? (
+                        <>
+                          <div className="vocab-header-row">
+                            <span className="vocab-col-num">#</span>
+                            <span className="vocab-col-word">Từ mới</span>
+                            <span className="vocab-col-reading">Cách đọc</span>
+                            <span className="vocab-col-meaning">Nghĩa</span>
+                          </div>
+                          {selectedPassage.vocabulary.map((vocab, idx) => (
+                            <div key={idx} className="vocab-item" style={{ fontSize: `${settings.fontSize * 0.95}rem` }}>
+                              <span className="vocab-num" style={{ color: 'white' }}>{idx + 1}</span>
+                              <span className="vocab-word" style={{ color: 'white' }}>{vocab.word}</span>
+                              <span className="vocab-reading" style={{ color: 'white' }}>{vocab.reading || '—'}</span>
+                              <span className="vocab-meaning" style={{ color: 'white' }}>{vocab.meaning}</span>
+                            </div>
+                          ))}
+                        </>
+                      ) : (
+                        <div className="vocab-empty">
+                          <BookOpen size={32} />
+                          <span>Chưa có từ mới</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div className="content-footer">
-                  <div className="word-count">
-                    <Clock size={14} />
-                    <span>~{Math.ceil(selectedPassage.content.length / 400)} phút đọc</span>
+                {contentTab === 'passage' && (
+                  <div className="content-footer">
+                    <div className="word-count">
+                      <Clock size={14} />
+                      <span>~{Math.ceil(selectedPassage.content.length / 400)} phút đọc</span>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
 
@@ -720,17 +771,25 @@ export function ReadingPracticePage({
           margin: 0 auto;
         }
 
+        .header-subtitle-inline {
+          font-size: 0.6em;
+          font-weight: 500;
+          opacity: 0.7;
+          margin-left: 0.5rem;
+        }
+
         .level-card {
           position: relative;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 0.75rem;
-          padding: 2rem 1.5rem;
+          justify-content: center;
+          gap: 0.5rem;
+          padding: 1.5rem 1rem;
           background: rgba(255, 255, 255, 0.03);
           backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 20px;
+          border: 2px solid rgba(255, 255, 255, 0.08);
+          border-radius: 16px;
           cursor: pointer;
           transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
           animation: cardAppear 0.5s ease backwards;
@@ -745,12 +804,23 @@ export function ReadingPracticePage({
 
         .level-card:hover {
           transform: translateY(-4px);
-          border-color: rgba(255, 255, 255, 0.15);
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 40px var(--level-glow);
+          border-color: var(--level-accent);
+          box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3), 0 0 30px var(--level-glow);
         }
 
         .level-card:hover .card-shine {
           transform: translateX(100%);
+        }
+
+        .level-card.disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+        }
+
+        .level-card.disabled:hover {
+          transform: none;
+          border-color: rgba(255, 255, 255, 0.08);
+          box-shadow: none;
         }
 
         .card-shine {
@@ -764,13 +834,9 @@ export function ReadingPracticePage({
           pointer-events: none;
         }
 
-        .level-icon {
-          font-size: 2.5rem;
-        }
-
         .level-name {
-          font-size: 1.5rem;
-          font-weight: 700;
+          font-size: 1.75rem;
+          font-weight: 800;
           background: var(--level-gradient);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
@@ -779,9 +845,14 @@ export function ReadingPracticePage({
 
         .level-stats {
           display: flex;
-          gap: 0.5rem;
-          font-size: 0.8rem;
+          align-items: center;
+          gap: 0.4rem;
+          font-size: 0.75rem;
           color: rgba(255, 255, 255, 0.5);
+        }
+
+        .stat-dot {
+          opacity: 0.5;
         }
 
         /* List View (Folders & Passages) */
@@ -1056,7 +1127,176 @@ export function ReadingPracticePage({
           pointer-events: none;
         }
 
-        /* Passage Grid */
+        /* Passage List - Premium 3-Column Grid */
+        .passage-list-view {
+          animation: fadeIn 0.3s ease;
+          height: calc(100vh - 4rem);
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+
+        .passage-list-header {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.75rem 1rem;
+          background: rgba(255, 255, 255, 0.03);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 12px;
+          margin-bottom: 0.75rem;
+          flex-shrink: 0;
+        }
+
+        .passage-list-title {
+          flex: 1;
+        }
+
+        .passage-list-title .title-row {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        .passage-list-title .title-row h1 {
+          margin: 0;
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: white;
+        }
+
+        .passage-count-inline {
+          font-size: 0.75rem;
+          color: rgba(255, 255, 255, 0.5);
+          padding: 0.2rem 0.5rem;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 6px;
+        }
+
+        .level-tag-right {
+          padding: 0.35rem 0.75rem;
+          border-radius: 8px;
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: white;
+          flex-shrink: 0;
+        }
+
+        /* Premium 3-Column Grid - Compact Design */
+        .passage-grid-premium {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 0.75rem;
+          flex: 1;
+          overflow-y: auto;
+          padding-bottom: 1rem;
+        }
+
+        .passage-card-compact {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          padding: 0.6rem 0.875rem;
+          background: rgba(255, 255, 255, 0.02);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-radius: 12px;
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          animation: cardSlide 0.4s ease backwards;
+          animation-delay: var(--card-delay);
+          overflow: hidden;
+          text-align: left;
+        }
+
+        @keyframes cardSlide {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .passage-card-compact:hover {
+          border-color: rgba(255, 255, 255, 0.12);
+          transform: translateY(-3px);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 25px var(--level-glow);
+        }
+
+        .passage-card-compact:hover .card-shine {
+          transform: translateX(100%);
+        }
+
+        .passage-card-compact:hover .meta-arrow {
+          transform: translateX(3px);
+          color: white;
+        }
+
+        .card-main {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          margin-bottom: 0.3rem;
+        }
+
+        .card-kanji-big {
+          font-size: 1.5rem;
+          font-weight: 800;
+          background: var(--level-gradient);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          flex-shrink: 0;
+        }
+
+        .card-title-upper {
+          margin: 0;
+          font-size: 0.8rem;
+          font-weight: 600;
+          color: white;
+          line-height: 1.4;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
+        }
+
+        .card-meta {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+          font-size: 0.7rem;
+          color: rgba(255, 255, 255, 0.45);
+        }
+
+        .meta-item {
+          display: flex;
+          align-items: center;
+          gap: 0.2rem;
+        }
+
+        .meta-dot {
+          opacity: 0.4;
+        }
+
+        .meta-arrow {
+          margin-left: auto;
+          color: rgba(255, 255, 255, 0.3);
+          transition: all 0.3s ease;
+        }
+
+        .card-shine {
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+          transition: transform 0.5s ease;
+          pointer-events: none;
+        }
+
+        /* Legacy Passage Grid (keep for compatibility) */
         .passage-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -1316,7 +1556,8 @@ export function ReadingPracticePage({
 
         /* Practice Mode */
         .practice-mode {
-          height: calc(100vh - 3rem);
+          height: calc(100vh - 5rem);
+          max-height: calc(100vh - 5rem);
           display: flex;
           flex-direction: column;
           overflow: hidden;
@@ -1486,23 +1727,6 @@ export function ReadingPracticePage({
           min-height: 0;
         }
 
-        .content-header {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          padding: 0.875rem 1.25rem;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-          background: rgba(255, 255, 255, 0.02);
-        }
-
-        .content-header h2 {
-          margin: 0;
-          flex: 1;
-          font-size: 0.9rem;
-          font-weight: 600;
-          color: rgba(255, 255, 255, 0.9);
-        }
-
         .audio-controls {
           display: flex;
           gap: 0.4rem;
@@ -1540,9 +1764,62 @@ export function ReadingPracticePage({
           color: #22c55e;
         }
 
+        .content-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.75rem;
+          padding: 0.625rem 1rem;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+          background: rgba(255, 255, 255, 0.02);
+        }
+
+        .content-tabs {
+          display: flex;
+          gap: 0.5rem;
+        }
+
+        .content-tab {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          padding: 0.625rem 1.75rem;
+          min-width: 160px;
+          background: transparent;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
+          color: rgba(255, 255, 255, 0.5);
+          font-size: 0.9rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .content-tab:hover {
+          color: rgba(255, 255, 255, 0.8);
+          background: rgba(255, 255, 255, 0.05);
+          border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .content-tab.active {
+          color: white;
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.25) 0%, rgba(99, 102, 241, 0.2) 100%);
+          border: 1px solid rgba(139, 92, 246, 0.4);
+          box-shadow: 0 2px 12px rgba(139, 92, 246, 0.2);
+        }
+
+        .vocab-count {
+          padding: 0.15rem 0.5rem;
+          background: rgba(139, 92, 246, 0.4);
+          border-radius: 10px;
+          font-size: 0.7rem;
+          font-weight: 600;
+        }
+
         .content-body {
           flex: 1;
-          padding: 1.5rem;
+          padding: 1rem 1.25rem;
           overflow-y: auto;
         }
 
@@ -1557,8 +1834,85 @@ export function ReadingPracticePage({
           margin: 0 0 0.5em 0;
         }
 
+        /* Vocabulary List - Professional Table Style */
+        .vocabulary-list {
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+          background: rgba(20, 20, 35, 0.5);
+          border: 1px solid rgba(139, 92, 246, 0.2);
+          border-radius: 12px;
+          overflow: hidden;
+        }
+
+        .vocab-header-row {
+          display: grid;
+          grid-template-columns: 40px 1.2fr 1fr 2fr;
+          gap: 1rem;
+          padding: 0.75rem 1rem;
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(99, 102, 241, 0.1) 100%);
+          border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+          font-size: 0.8rem;
+          font-weight: 600;
+          color: white;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .vocab-item {
+          display: grid;
+          grid-template-columns: 40px 1.2fr 1fr 2fr;
+          gap: 1rem;
+          align-items: center;
+          padding: 0.875rem 1rem;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+          transition: all 0.2s;
+        }
+
+        .vocab-item:last-child {
+          border-bottom: none;
+        }
+
+        .vocab-item:hover {
+          background: rgba(139, 92, 246, 0.08);
+        }
+
+        .vocab-num {
+          color: white !important;
+          font-weight: 600;
+          font-size: 0.85em;
+        }
+
+        .vocab-word {
+          font-weight: 600;
+          font-size: 1.05em;
+          color: white !important;
+        }
+
+        .vocab-reading {
+          font-weight: 400;
+          font-size: 0.95em;
+          color: white !important;
+        }
+
+        .vocab-meaning {
+          color: white !important;
+          font-size: 0.95em;
+        }
+
+        .vocab-empty {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 0.75rem;
+          padding: 2rem;
+          color: rgba(255, 255, 255, 0.4);
+          text-align: center;
+        }
+
         .content-footer {
-          padding: 0.75rem 1.25rem;
+          padding: 0.5rem 1rem;
           border-top: 1px solid rgba(255, 255, 255, 0.06);
         }
 
@@ -2390,6 +2744,40 @@ export function ReadingPracticePage({
             grid-template-columns: 1fr;
           }
 
+          /* Passage Grid Premium - Tablet: 2 columns */
+          .passage-grid-premium {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.875rem;
+          }
+
+          .passage-card-premium {
+            border-radius: 16px;
+          }
+
+          .card-top {
+            padding: 0.875rem 0.875rem 0.625rem;
+          }
+
+          .card-number {
+            width: 32px;
+            height: 32px;
+            font-size: 0.9rem;
+            border-radius: 8px;
+          }
+
+          .card-body {
+            padding: 0 0.875rem;
+            min-height: 50px;
+          }
+
+          .card-title {
+            font-size: 0.9rem;
+          }
+
+          .card-footer {
+            padding: 0.625rem 0.875rem 0.875rem;
+          }
+
           .folder-view-header {
             padding: 1rem;
             flex-wrap: wrap;
@@ -2425,6 +2813,77 @@ export function ReadingPracticePage({
 
           .lesson-name {
             font-size: 1rem;
+          }
+
+          /* Passage Grid Premium - Mobile: 1 column */
+          .passage-grid-premium {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+          }
+
+          .passage-list-header {
+            padding: 0.75rem;
+            border-radius: 14px;
+            gap: 0.5rem;
+          }
+
+          .passage-list-title .title-row {
+            flex-wrap: wrap;
+            gap: 0.4rem;
+          }
+
+          .passage-list-title .title-row h1 {
+            font-size: 1rem;
+          }
+
+          .passage-count-inline {
+            font-size: 0.7rem;
+          }
+
+          .level-tag-right {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+          }
+
+          .passage-card-premium {
+            border-radius: 14px;
+          }
+
+          .card-top {
+            padding: 0.75rem 0.875rem 0.5rem;
+          }
+
+          .card-number {
+            width: 30px;
+            height: 30px;
+            font-size: 0.85rem;
+          }
+
+          .card-kanji {
+            font-size: 0.7rem;
+          }
+
+          .card-body {
+            padding: 0 0.875rem;
+            min-height: 45px;
+          }
+
+          .card-title {
+            font-size: 0.85rem;
+            -webkit-line-clamp: 1;
+          }
+
+          .card-footer {
+            padding: 0.5rem 0.875rem 0.75rem;
+          }
+
+          .card-stats .stat {
+            font-size: 0.7rem;
+          }
+
+          .card-action {
+            padding: 0.35rem 0.6rem;
+            font-size: 0.7rem;
           }
 
           .practice-mode {

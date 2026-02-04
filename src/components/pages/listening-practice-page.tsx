@@ -124,6 +124,11 @@ export function ListeningPracticePage({
   // Shuffled indices
   const [shuffledIndices, setShuffledIndices] = useState<number[]>([]);
 
+  // Reset currentIndex when filter changes to avoid out of bounds
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [memorizationFilter]);
+
   useEffect(() => {
     if (isShuffled && filteredCards.length > 0) {
       const indices = Array.from({ length: filteredCards.length }, (_, i) => i);

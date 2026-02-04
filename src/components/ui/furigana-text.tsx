@@ -106,6 +106,7 @@ export function FuriganaText({ text, className = '' }: FuriganaTextProps) {
   const textStyle: React.CSSProperties = {
     lineHeight: settings.showFurigana ? 2.4 : 2,
     whiteSpace: 'pre-wrap',
+    color: settings.textColor || 'white',
   };
 
   // If furigana is disabled, show plain text (strip [kanji|reading] format if exists)
@@ -161,7 +162,7 @@ export function FuriganaText({ text, className = '' }: FuriganaTextProps) {
         }
         .furigana-text rt {
           font-size: ${settings.furiganaSize}em;
-          color: rgba(167, 139, 250, 0.95);
+          color: ${settings.furiganaColor || 'rgba(167, 139, 250, 0.95)'};
           font-weight: 400;
           text-align: center;
           ruby-align: center;

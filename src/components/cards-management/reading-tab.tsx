@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Edit2, Trash2, ChevronRight, BookOpen, FolderOpen, Plus, FileText, HelpCircle, CheckCircle2, Sparkles, ArrowLeft, Wand2, Loader2 } from 'lucide-react';
 import { useGroq } from '../../hooks/use-groq';
 import { ConfirmModal } from '../ui/confirm-modal';
-import type { ReadingPassage, ReadingPassageFormData, ReadingFolder, ReadingAnswer } from '../../types/reading';
+import type { ReadingPassage, ReadingPassageFormData, ReadingFolder, ReadingAnswer, ReadingVocabulary } from '../../types/reading';
 import type { JLPTLevel } from '../../types/flashcard';
 import type { CurrentUser } from '../../types/user';
 
@@ -77,12 +77,14 @@ export function ReadingTab({
     title: string;
     content: string;
     questions: { question: string; answers: ReadingAnswer[]; explanation?: string }[];
+    vocabulary: ReadingVocabulary[];
     jlptLevel: JLPTLevel;
     folderId?: string;
   }>({
     title: '',
     content: '',
     questions: [{ question: '', answers: [...defaultAnswers], explanation: '' }],
+    vocabulary: [],
     jlptLevel: 'N5',
     folderId: undefined,
   });
@@ -103,6 +105,7 @@ export function ReadingTab({
       title: '',
       content: '',
       questions: [{ question: '', answers: [...defaultAnswers], explanation: '' }],
+      vocabulary: [],
       jlptLevel: navState.type === 'level' || navState.type === 'folder' ? navState.level : 'N5',
       folderId: navState.type === 'folder' ? navState.folderId : undefined,
     });
@@ -119,6 +122,7 @@ export function ReadingTab({
         answers: [...q.answers],
         explanation: q.explanation,
       })),
+      vocabulary: passage.vocabulary || [],
       jlptLevel: passage.jlptLevel,
       folderId: passage.folderId,
     });
@@ -146,6 +150,9 @@ export function ReadingTab({
     }
 
     try {
+      // Filter out empty vocabulary entries
+      const validVocabulary = formData.vocabulary.filter(v => v.word.trim() && v.meaning.trim());
+
       if (editingPassage) {
         await onUpdatePassage(editingPassage.id, {
           title: formData.title,
@@ -154,11 +161,12 @@ export function ReadingTab({
             id: editingPassage.questions[idx]?.id || `q_${Date.now()}_${idx}`,
             ...q,
           })),
+          vocabulary: validVocabulary.length > 0 ? validVocabulary : undefined,
           jlptLevel: formData.jlptLevel,
           folderId: formData.folderId,
         });
       } else {
-        await onAddPassage(formData, currentUser.id);
+        await onAddPassage({ ...formData, vocabulary: validVocabulary.length > 0 ? validVocabulary : undefined }, currentUser.id);
       }
       setShowForm(false);
       resetForm();
@@ -248,6 +256,28 @@ export function ReadingTab({
         ...q,
         answers: q.answers.map((a, j) => ({ ...a, isCorrect: j === aIdx })),
       } : q),
+    }));
+  };
+
+  // Vocabulary management
+  const addVocabulary = () => {
+    setFormData(prev => ({
+      ...prev,
+      vocabulary: [...prev.vocabulary, { word: '', reading: '', meaning: '' }],
+    }));
+  };
+
+  const removeVocabulary = (idx: number) => {
+    setFormData(prev => ({
+      ...prev,
+      vocabulary: prev.vocabulary.filter((_, i) => i !== idx),
+    }));
+  };
+
+  const updateVocabulary = (idx: number, field: keyof ReadingVocabulary, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      vocabulary: prev.vocabulary.map((v, i) => i === idx ? { ...v, [field]: value } : v),
     }));
   };
 
@@ -550,6 +580,56 @@ export function ReadingTab({
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Vocabulary Section */}
+            <div className="rt-form-group">
+              <label className="rt-vocab-label">
+                <span>
+                  <span className="rt-label-icon">📚</span>
+                  Từ vựng mới ({formData.vocabulary.length})
+                </span>
+                <button type="button" className="rt-btn rt-btn-add-vocab" onClick={addVocabulary}>
+                  <Plus size={14} /> Thêm từ
+                </button>
+              </label>
+
+              {formData.vocabulary.length > 0 && (
+                <div className="rt-vocab-list">
+                  {formData.vocabulary.map((vocab, vIdx) => (
+                    <div key={vIdx} className="rt-vocab-row">
+                      <input
+                        type="text"
+                        value={vocab.word}
+                        onChange={(e) => updateVocabulary(vIdx, 'word', e.target.value)}
+                        placeholder="Từ vựng"
+                        className="rt-input rt-vocab-word"
+                      />
+                      <input
+                        type="text"
+                        value={vocab.reading || ''}
+                        onChange={(e) => updateVocabulary(vIdx, 'reading', e.target.value)}
+                        placeholder="Cách đọc"
+                        className="rt-input rt-vocab-reading"
+                      />
+                      <input
+                        type="text"
+                        value={vocab.meaning}
+                        onChange={(e) => updateVocabulary(vIdx, 'meaning', e.target.value)}
+                        placeholder="Nghĩa tiếng Việt"
+                        className="rt-input rt-vocab-meaning"
+                      />
+                      <button type="button" className="rt-btn-remove-vocab" onClick={() => removeVocabulary(vIdx)}>×</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {formData.vocabulary.length === 0 && (
+                <div className="rt-vocab-empty">
+                  <span>Chưa có từ vựng. Nhấn "Thêm từ" để bắt đầu.</span>
+                </div>
+              )}
             </div>
 
             <div className="rt-form-actions">
@@ -886,15 +966,21 @@ export function ReadingTab({
         .rt-folder-form input {
           flex: 1;
           padding: 0.625rem 0.875rem;
-          border: 1px solid #e2e8f0;
+          border: 1px solid rgba(139, 92, 246, 0.3);
           border-radius: 8px;
           font-size: 0.9rem;
+          background: rgba(30, 30, 50, 0.95);
+          color: white;
+        }
+
+        .rt-folder-form input::placeholder {
+          color: rgba(255, 255, 255, 0.5);
         }
 
         .rt-folder-form input:focus {
           outline: none;
-          border-color: #6366f1;
-          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+          border-color: #8b5cf6;
+          box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
         }
 
         /* Form */
@@ -950,23 +1036,28 @@ export function ReadingTab({
         .rt-input {
           width: 100%;
           padding: 0.75rem 1rem;
-          border: 1px solid #e2e8f0;
+          border: 1px solid rgba(139, 92, 246, 0.3);
           border-radius: 10px;
           font-size: 0.95rem;
           transition: all 0.2s;
-          color: #1f2937;
+          color: white;
+          background: rgba(30, 30, 50, 0.95);
+        }
+
+        .rt-input::placeholder {
+          color: rgba(255, 255, 255, 0.5);
         }
 
         .rt-input:focus {
           outline: none;
-          border-color: #6366f1;
-          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+          border-color: #8b5cf6;
+          box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
         }
 
         .rt-textarea {
           width: 100%;
           padding: 1rem;
-          border: 1px solid #e2e8f0;
+          border: 1px solid rgba(139, 92, 246, 0.3);
           border-radius: 10px;
           font-size: 0.95rem;
           font-family: inherit;
@@ -974,13 +1065,18 @@ export function ReadingTab({
           min-height: 180px;
           line-height: 1.8;
           transition: all 0.2s;
-          color: #1f2937;
+          color: white;
+          background: rgba(30, 30, 50, 0.95);
+        }
+
+        .rt-textarea::placeholder {
+          color: rgba(255, 255, 255, 0.5);
         }
 
         .rt-textarea:focus {
           outline: none;
-          border-color: #6366f1;
-          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+          border-color: #8b5cf6;
+          box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
         }
 
         /* Questions */
@@ -991,8 +1087,8 @@ export function ReadingTab({
         }
 
         .rt-question-card {
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
+          background: rgba(30, 30, 50, 0.5);
+          border: 1px solid rgba(139, 92, 246, 0.2);
           border-radius: 12px;
           padding: 1.25rem;
         }
@@ -1047,15 +1143,15 @@ export function ReadingTab({
           align-items: center;
           gap: 0.5rem;
           padding: 0.5rem;
-          background: white;
+          background: rgba(30, 30, 50, 0.95);
           border-radius: 8px;
-          border: 1px solid #e2e8f0;
+          border: 1px solid rgba(139, 92, 246, 0.3);
           transition: all 0.2s;
         }
 
         .rt-answer-row.rt-correct {
-          background: #f0fdf4;
-          border-color: #86efac;
+          background: rgba(34, 197, 94, 0.15);
+          border-color: rgba(134, 239, 172, 0.5);
         }
 
         .rt-radio-label {
@@ -1087,19 +1183,19 @@ export function ReadingTab({
         .rt-answer-letter {
           width: 24px;
           height: 24px;
-          background: #f1f5f9;
+          background: rgba(139, 92, 246, 0.2);
           border-radius: 6px;
           display: flex;
           align-items: center;
           justify-content: center;
           font-weight: 600;
           font-size: 0.8rem;
-          color: #64748b;
+          color: rgba(255, 255, 255, 0.8);
         }
 
         .rt-answer-row.rt-correct .rt-answer-letter {
-          background: #dcfce7;
-          color: #16a34a;
+          background: rgba(34, 197, 94, 0.3);
+          color: #86efac;
         }
 
         .rt-answer-input {
@@ -1107,7 +1203,7 @@ export function ReadingTab({
           border: none;
           background: transparent;
           padding: 0.5rem;
-          color: #1f2937;
+          color: white;
         }
 
         .rt-answer-input:focus {
@@ -1115,14 +1211,95 @@ export function ReadingTab({
         }
 
         .rt-answer-input::placeholder {
-          color: #9ca3af;
+          color: rgba(255, 255, 255, 0.5);
         }
 
         .rt-explanation-input {
           font-size: 0.875rem;
-          color: #64748b;
-          background: #fffbeb;
-          border-color: #fde68a;
+          color: #fcd34d;
+          background: rgba(251, 191, 36, 0.1);
+          border-color: rgba(251, 191, 36, 0.3);
+        }
+
+        .rt-explanation-input::placeholder {
+          color: rgba(251, 191, 36, 0.6);
+        }
+
+        /* Vocabulary Section */
+        .rt-vocab-label {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 0.75rem !important;
+        }
+
+        .rt-btn-add-vocab {
+          padding: 0.4rem 0.75rem;
+          font-size: 0.8rem;
+          background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+          color: white;
+          box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
+        }
+
+        .rt-vocab-list {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .rt-vocab-row {
+          display: flex;
+          gap: 0.5rem;
+          align-items: center;
+          padding: 0.5rem;
+          background: rgba(6, 182, 212, 0.08);
+          border: 1px solid rgba(6, 182, 212, 0.2);
+          border-radius: 10px;
+        }
+
+        .rt-vocab-word {
+          flex: 1;
+          min-width: 100px;
+        }
+
+        .rt-vocab-reading {
+          flex: 1;
+          min-width: 100px;
+        }
+
+        .rt-vocab-meaning {
+          flex: 2;
+          min-width: 150px;
+        }
+
+        .rt-btn-remove-vocab {
+          width: 28px;
+          height: 28px;
+          border: none;
+          background: rgba(239, 68, 68, 0.15);
+          color: #ef4444;
+          border-radius: 8px;
+          cursor: pointer;
+          font-size: 1.1rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+          flex-shrink: 0;
+        }
+
+        .rt-btn-remove-vocab:hover {
+          background: rgba(239, 68, 68, 0.25);
+        }
+
+        .rt-vocab-empty {
+          padding: 1rem;
+          text-align: center;
+          color: rgba(255, 255, 255, 0.5);
+          background: rgba(6, 182, 212, 0.05);
+          border: 1px dashed rgba(6, 182, 212, 0.2);
+          border-radius: 10px;
+          font-size: 0.875rem;
         }
 
         .rt-form-actions {

@@ -2,6 +2,12 @@
 
 import type { JLPTLevel } from './flashcard';
 
+export interface ReadingVocabulary {
+  word: string;           // Từ vựng (kanji/hiragana)
+  reading?: string;       // Cách đọc (hiragana)
+  meaning: string;        // Nghĩa tiếng Việt
+}
+
 export interface ReadingAnswer {
   text: string;
   isCorrect: boolean;
@@ -19,6 +25,7 @@ export interface ReadingPassage {
   title: string;              // Tiêu đề bài đọc
   content: string;            // Nội dung đoạn văn
   questions: ReadingQuestion[]; // Danh sách câu hỏi
+  vocabulary?: ReadingVocabulary[]; // Từ vựng mới
   jlptLevel: JLPTLevel;       // Level JLPT
   folderId?: string;          // Folder chứa bài đọc
   createdAt: string;
@@ -38,6 +45,7 @@ export interface ReadingPassageFormData {
   title: string;
   content: string;
   questions: Omit<ReadingQuestion, 'id'>[];
+  vocabulary?: ReadingVocabulary[];
   jlptLevel: JLPTLevel;
   folderId?: string;
 }
