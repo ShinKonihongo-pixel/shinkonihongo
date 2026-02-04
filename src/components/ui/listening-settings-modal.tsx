@@ -1,6 +1,8 @@
-// Listening Settings Modal - Premium modal for listening practice settings
+// Listening Settings Modal - Display settings modal for listening practice
 
-import { Settings, Minus, Plus, Eye, EyeOff, X, Sparkles, Headphones, Volume2, Repeat } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Settings, Eye, EyeOff, X, Headphones } from 'lucide-react';
 import { useListeningSettings } from '../../contexts/listening-settings-context';
 
 interface ListeningSettingsModalProps {
@@ -9,23 +11,25 @@ interface ListeningSettingsModalProps {
 }
 
 export function ListeningSettingsModal({ isOpen, onClose }: ListeningSettingsModalProps) {
+  const [mounted, setMounted] = useState(false);
+
   const {
     settings,
-    increasePlaybackSpeed,
-    decreasePlaybackSpeed,
-    increaseRepeatCount,
-    decreaseRepeatCount,
-    increaseDelay,
-    decreaseDelay,
     toggleAutoPlayNext,
     toggleShowVocabulary,
     toggleShowMeaning,
     toggleShowKanji,
   } = useListeningSettings();
 
-  if (!isOpen) return null;
+  // Ensure we're mounted for portal
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
-  return (
+  if (!isOpen || !mounted) return null;
+
+  const modalContent = (
     <div
       style={{
         position: 'fixed',
@@ -81,7 +85,7 @@ export function ListeningSettingsModal({ isOpen, onClose }: ListeningSettingsMod
               <Headphones size={20} color="white" />
             </div>
             <span style={{ color: 'white', fontSize: '1.1rem', fontWeight: 600 }}>
-              Cài đặt nghe
+              Cài đặt hiển thị
             </span>
           </div>
           <button
@@ -105,283 +109,6 @@ export function ListeningSettingsModal({ isOpen, onClose }: ListeningSettingsMod
 
         {/* Content */}
         <div style={{ padding: '1.25rem' }}>
-          {/* Playback Speed */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '1rem 1.25rem',
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '16px',
-              marginBottom: '0.75rem',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div
-                style={{
-                  width: '44px',
-                  height: '44px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                  borderRadius: '12px',
-                }}
-              >
-                <Volume2 size={22} color="white" />
-              </div>
-              <div>
-                <div style={{ color: 'white', fontSize: '0.95rem', fontWeight: 500, marginBottom: '0.2rem' }}>
-                  Tốc độ phát
-                </div>
-                <div style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>
-                  Điều chỉnh tốc độ âm thanh
-                </div>
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <button
-                onClick={decreasePlaybackSpeed}
-                disabled={settings.defaultPlaybackSpeed <= 0.5}
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'rgba(59, 130, 246, 0.15)',
-                  border: '1px solid rgba(59, 130, 246, 0.3)',
-                  borderRadius: '10px',
-                  color: settings.defaultPlaybackSpeed <= 0.5 ? 'rgba(255, 255, 255, 0.3)' : '#3b82f6',
-                  cursor: settings.defaultPlaybackSpeed <= 0.5 ? 'not-allowed' : 'pointer',
-                }}
-              >
-                <Minus size={16} />
-              </button>
-              <span
-                style={{
-                  minWidth: '55px',
-                  textAlign: 'center',
-                  fontSize: '0.95rem',
-                  fontWeight: 600,
-                  color: '#3b82f6',
-                }}
-              >
-                {settings.defaultPlaybackSpeed}x
-              </span>
-              <button
-                onClick={increasePlaybackSpeed}
-                disabled={settings.defaultPlaybackSpeed >= 2}
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'rgba(59, 130, 246, 0.15)',
-                  border: '1px solid rgba(59, 130, 246, 0.3)',
-                  borderRadius: '10px',
-                  color: settings.defaultPlaybackSpeed >= 2 ? 'rgba(255, 255, 255, 0.3)' : '#3b82f6',
-                  cursor: settings.defaultPlaybackSpeed >= 2 ? 'not-allowed' : 'pointer',
-                }}
-              >
-                <Plus size={16} />
-              </button>
-            </div>
-          </div>
-
-          {/* Repeat Count */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '1rem 1.25rem',
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '16px',
-              marginBottom: '0.75rem',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div
-                style={{
-                  width: '44px',
-                  height: '44px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)',
-                  borderRadius: '12px',
-                }}
-              >
-                <Repeat size={22} color="white" />
-              </div>
-              <div>
-                <div style={{ color: 'white', fontSize: '0.95rem', fontWeight: 500, marginBottom: '0.2rem' }}>
-                  Số lần lặp
-                </div>
-                <div style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>
-                  Lặp lại mỗi từ
-                </div>
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <button
-                onClick={decreaseRepeatCount}
-                disabled={settings.defaultRepeatCount <= 1}
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'rgba(139, 92, 246, 0.15)',
-                  border: '1px solid rgba(139, 92, 246, 0.3)',
-                  borderRadius: '10px',
-                  color: settings.defaultRepeatCount <= 1 ? 'rgba(255, 255, 255, 0.3)' : '#8b5cf6',
-                  cursor: settings.defaultRepeatCount <= 1 ? 'not-allowed' : 'pointer',
-                }}
-              >
-                <Minus size={16} />
-              </button>
-              <span
-                style={{
-                  minWidth: '55px',
-                  textAlign: 'center',
-                  fontSize: '0.95rem',
-                  fontWeight: 600,
-                  color: '#8b5cf6',
-                }}
-              >
-                {settings.defaultRepeatCount} lần
-              </span>
-              <button
-                onClick={increaseRepeatCount}
-                disabled={settings.defaultRepeatCount >= 10}
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'rgba(139, 92, 246, 0.15)',
-                  border: '1px solid rgba(139, 92, 246, 0.3)',
-                  borderRadius: '10px',
-                  color: settings.defaultRepeatCount >= 10 ? 'rgba(255, 255, 255, 0.3)' : '#8b5cf6',
-                  cursor: settings.defaultRepeatCount >= 10 ? 'not-allowed' : 'pointer',
-                }}
-              >
-                <Plus size={16} />
-              </button>
-            </div>
-          </div>
-
-          {/* Delay Between Words */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '1rem 1.25rem',
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '16px',
-              marginBottom: '0.75rem',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div
-                style={{
-                  width: '44px',
-                  height: '44px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                  borderRadius: '12px',
-                  fontSize: '1rem',
-                }}
-              >
-                ⏱️
-              </div>
-              <div>
-                <div style={{ color: 'white', fontSize: '0.95rem', fontWeight: 500, marginBottom: '0.2rem' }}>
-                  Khoảng cách
-                </div>
-                <div style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>
-                  Giữa các từ
-                </div>
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <button
-                onClick={decreaseDelay}
-                disabled={settings.delayBetweenWords <= 0.5}
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'rgba(245, 158, 11, 0.15)',
-                  border: '1px solid rgba(245, 158, 11, 0.3)',
-                  borderRadius: '10px',
-                  color: settings.delayBetweenWords <= 0.5 ? 'rgba(255, 255, 255, 0.3)' : '#f59e0b',
-                  cursor: settings.delayBetweenWords <= 0.5 ? 'not-allowed' : 'pointer',
-                }}
-              >
-                <Minus size={16} />
-              </button>
-              <span
-                style={{
-                  minWidth: '55px',
-                  textAlign: 'center',
-                  fontSize: '0.95rem',
-                  fontWeight: 600,
-                  color: '#f59e0b',
-                }}
-              >
-                {settings.delayBetweenWords}s
-              </span>
-              <button
-                onClick={increaseDelay}
-                disabled={settings.delayBetweenWords >= 10}
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'rgba(245, 158, 11, 0.15)',
-                  border: '1px solid rgba(245, 158, 11, 0.3)',
-                  borderRadius: '10px',
-                  color: settings.delayBetweenWords >= 10 ? 'rgba(255, 255, 255, 0.3)' : '#f59e0b',
-                  cursor: settings.delayBetweenWords >= 10 ? 'not-allowed' : 'pointer',
-                }}
-              >
-                <Plus size={16} />
-              </button>
-            </div>
-          </div>
-
-          {/* Display Toggles */}
-          <div style={{ marginTop: '1rem' }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                marginBottom: '0.75rem',
-              }}
-            >
-              <Sparkles size={14} color="#8b5cf6" />
-              <span style={{ fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.5)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                Hiển thị
-              </span>
-            </div>
 
             {/* Show Vocabulary Toggle */}
             <div
@@ -585,7 +312,6 @@ export function ListeningSettingsModal({ isOpen, onClose }: ListeningSettingsMod
                 </div>
               </button>
             </div>
-          </div>
         </div>
 
         {/* Footer */}
@@ -611,6 +337,9 @@ export function ListeningSettingsModal({ isOpen, onClose }: ListeningSettingsMod
       </div>
     </div>
   );
+
+  // Use portal to render modal at document.body level
+  return createPortal(modalContent, document.body);
 }
 
 // Trigger button component
@@ -618,7 +347,7 @@ export function ListeningSettingsButton({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      title="Cài đặt nghe"
+      title="Cài đặt hiển thị"
       style={{
         width: '36px',
         height: '36px',

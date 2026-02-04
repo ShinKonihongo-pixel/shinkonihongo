@@ -47,7 +47,7 @@ const DEFAULT_SETTINGS: ListeningSettings = {
   // Playback
   defaultPlaybackSpeed: 1,
   defaultRepeatCount: 1,
-  delayBetweenWords: 2,
+  delayBetweenWords: 1.5,
   autoPlayNext: true,
   // Display
   showVocabulary: true,

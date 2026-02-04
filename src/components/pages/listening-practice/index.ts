@@ -6,3 +6,6 @@ export * from './listening-practice-types';
 
 // Constants
 export * from './listening-practice-constants';
+
+// Hooks
+export * from './use-listening-playback';

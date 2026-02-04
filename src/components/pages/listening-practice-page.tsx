@@ -6,32 +6,14 @@ import {
   Play, Pause, RotateCcw, Volume2,
   Repeat, Shuffle, Upload, ChevronLeft,
   Eye, EyeOff, SkipBack, SkipForward,
-  ChevronRight, BookOpen, CheckCircle2, Circle, Filter
+  ChevronRight, BookOpen, CheckCircle2, Circle, Headphones,
+  ChevronDown, ChevronUp, Settings
 } from 'lucide-react';
-import type { Flashcard, JLPTLevel } from '../../types/flashcard';
-import type { ListeningPracticePageProps, ViewMode } from './listening-practice/listening-practice-types';
-import { JLPT_LEVELS } from './listening-practice/listening-practice-constants';
+import type { JLPTLevel } from '../../types/flashcard';
+import type { ListeningPracticePagePropsExtended, ExtendedViewMode, MemorizationFilter } from './listening-practice/listening-practice-types';
 import { useListeningSettings } from '../../contexts/listening-settings-context';
 import { ListeningSettingsModal, ListeningSettingsButton } from '../ui/listening-settings-modal';
-
-// Level theme configurations
-const LEVEL_THEMES: Record<JLPTLevel, { gradient: string; glow: string; icon: string }> = {
-  N5: { gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', glow: 'rgba(16, 185, 129, 0.4)', icon: '🌱' },
-  N4: { gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', glow: 'rgba(59, 130, 246, 0.4)', icon: '🎧' },
-  N3: { gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', glow: 'rgba(139, 92, 246, 0.4)', icon: '🎵' },
-  N2: { gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', glow: 'rgba(245, 158, 11, 0.4)', icon: '🎼' },
-  N1: { gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', glow: 'rgba(239, 68, 68, 0.4)', icon: '👑' },
-};
-
-// Extended view modes
-type ExtendedViewMode = ViewMode | 'lesson-list';
-
-// Memorization filter
-type MemorizationFilter = 'all' | 'learned' | 'not-learned';
-
-interface ListeningPracticePagePropsExtended extends ListeningPracticePageProps {
-  onUpdateCard?: (id: string, data: Partial<Flashcard>) => void;
-}
+import { JLPTLevelSelector, LEVEL_THEMES } from '../ui/jlpt-level-selector';
 
 export function ListeningPracticePage({
   cards,
@@ -73,9 +55,10 @@ export function ListeningPracticePage({
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
 
   // Settings panel
-  const [_showSettings, _setShowSettings] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showKanji, setShowKanji] = useState(listeningSettings.showKanji);
+  const [readMeaning, setReadMeaning] = useState(false);
+  const [showInlineSettings, setShowInlineSettings] = useState(false);
 
   // Refs
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -147,6 +130,13 @@ export function ListeningPracticePage({
   // Get card count by level
   const getCardCountByLevel = (level: JLPTLevel) => cards.filter(c => c.jlptLevel === level).length;
 
+  // Count by level for JLPTLevelSelector
+  const countByLevel = useMemo(() => {
+    const counts: Record<JLPTLevel, number> = { N5: 0, N4: 0, N3: 0, N2: 0, N1: 0 };
+    cards.forEach(c => { counts[c.jlptLevel]++; });
+    return counts;
+  }, [cards]);
+
   // Get card count for a lesson (including children)
   const getCardCountForLesson = (lessonId: string) => {
     const childIds = getChildLessons(lessonId).map(c => c.id);
@@ -161,59 +151,100 @@ export function ListeningPracticePage({
     return cards.filter(c => allIds.includes(c.lessonId) && c.memorizationStatus === 'memorized').length;
   };
 
-  // Text-to-Speech with proper repeat handling
-  const speakWord = useCallback((text: string, repeatIndex: number = 0) => {
-    if (!isPlayingRef.current) return; // Stop if not playing
+  // Store settings in refs to avoid circular dependencies
+  const repeatCountRef = useRef(repeatCount);
+  const delayBetweenWordsRef = useRef(delayBetweenWords);
+  const autoPlayNextRef = useRef(autoPlayNext);
+  const isLoopingRef = useRef(isLooping);
+  const readMeaningRef = useRef(readMeaning);
+  const shuffledIndicesRef = useRef(shuffledIndices);
 
-    if ('speechSynthesis' in window) {
+  // Keep refs in sync
+  useEffect(() => { repeatCountRef.current = repeatCount; }, [repeatCount]);
+  useEffect(() => { delayBetweenWordsRef.current = delayBetweenWords; }, [delayBetweenWords]);
+  useEffect(() => { autoPlayNextRef.current = autoPlayNext; }, [autoPlayNext]);
+  useEffect(() => { isLoopingRef.current = isLooping; }, [isLooping]);
+  useEffect(() => { readMeaningRef.current = readMeaning; }, [readMeaning]);
+  useEffect(() => { shuffledIndicesRef.current = shuffledIndices; }, [shuffledIndices]);
+
+  // Text-to-Speech helper
+  const speakText = useCallback((text: string, lang: 'ja-JP' | 'vi-VN'): Promise<void> => {
+    return new Promise((resolve) => {
+      if (!isPlayingRef.current) {
+        resolve();
+        return;
+      }
+
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'ja-JP';
+      utterance.lang = lang;
       utterance.rate = playbackSpeed;
+      utterance.onend = () => resolve();
+      utterance.onerror = () => resolve();
+      window.speechSynthesis.speak(utterance);
+    });
+  }, [playbackSpeed]);
 
-      utterance.onend = () => {
-        if (!isPlayingRef.current) return; // Stop if paused during speech
+  // Main speak function - handles vocabulary + optional meaning + repeats + next word
+  const speakCurrentWord = useCallback(async (card: Flashcard, repeatIndex: number = 0) => {
+    if (!isPlayingRef.current || !card) return;
 
-        const nextRepeat = repeatIndex + 1;
+    // Speak vocabulary
+    await speakText(card.vocabulary, 'ja-JP');
+    if (!isPlayingRef.current) return;
 
-        if (nextRepeat < repeatCount) {
-          // More repeats needed for current word
-          setCurrentRepeat(nextRepeat);
-          setTimeout(() => {
-            if (isPlayingRef.current) {
-              speakWord(text, nextRepeat);
-            }
-          }, delayBetweenWords * 1000);
-        } else {
-          // Done with repeats, move to next word
-          setCurrentRepeat(0);
-          if (autoPlayNext) {
-            setCurrentIndex(prevIndex => {
-              const nextIndex = prevIndex + 1;
-              if (nextIndex < shuffledIndices.length) {
-                return nextIndex;
-              } else if (isLooping) {
-                return 0;
-              } else {
-                setIsPlaying(false);
-                return prevIndex;
-              }
-            });
+    // Optionally read meaning
+    if (readMeaningRef.current && card.meaning) {
+      await new Promise(r => setTimeout(r, 500)); // Small delay before meaning
+      if (!isPlayingRef.current) return;
+      await speakText(card.meaning, 'vi-VN');
+      if (!isPlayingRef.current) return;
+    }
+
+    // Check for more repeats
+    const nextRepeat = repeatIndex + 1;
+    if (nextRepeat < repeatCountRef.current) {
+      setCurrentRepeat(nextRepeat);
+      await new Promise(r => setTimeout(r, delayBetweenWordsRef.current * 1000));
+      if (isPlayingRef.current) {
+        speakCurrentWord(card, nextRepeat);
+      }
+    } else {
+      // Done with repeats, handle next word
+      setCurrentRepeat(0);
+      if (autoPlayNextRef.current) {
+        // Delay before next word
+        await new Promise(r => setTimeout(r, delayBetweenWordsRef.current * 1000));
+        if (!isPlayingRef.current) return;
+
+        setCurrentIndex(prevIndex => {
+          const nextIndex = prevIndex + 1;
+          if (nextIndex < shuffledIndicesRef.current.length) {
+            return nextIndex;
+          } else if (isLoopingRef.current) {
+            return 0;
           } else {
             setIsPlaying(false);
+            return prevIndex;
           }
-        }
-      };
-
-      window.speechSynthesis.speak(utterance);
+        });
+      } else {
+        setIsPlaying(false);
+      }
     }
-  }, [playbackSpeed, repeatCount, autoPlayNext, shuffledIndices.length, isLooping, delayBetweenWords]);
+  }, [speakText]);
 
   // Play current word when index changes or play starts
   useEffect(() => {
     if (viewMode === 'vocabulary' && isPlaying && currentCard) {
       setCurrentRepeat(0);
-      speakWord(currentCard.vocabulary, 0);
+      // Small delay to ensure state is settled
+      const timer = setTimeout(() => {
+        if (isPlayingRef.current && currentCard) {
+          speakCurrentWord(currentCard, 0);
+        }
+      }, 100);
+      return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode, isPlaying, currentIndex]);
@@ -378,78 +409,55 @@ export function ListeningPracticePage({
 
   return (
     <div className="listening-practice-page">
-      {/* Level Selection View */}
+      {/* Level Selection View - Premium UI matching Grammar/Vocabulary design */}
       {viewMode === 'level-select' && (
-        <>
-          {/* Premium Header */}
-          <div className="premium-header">
-            <div className="header-content">
-              <div className="header-text">
-                <h1>Luyện Nghe Hiểu</h1>
-                <p>Chọn cấp độ JLPT để bắt đầu</p>
-              </div>
-            </div>
-            <ListeningSettingsButton onClick={() => setShowSettingsModal(true)} />
-          </div>
-
-          {/* Settings Modal */}
-          <ListeningSettingsModal
-            isOpen={showSettingsModal}
-            onClose={() => setShowSettingsModal(false)}
+        <div className="listening-level-select-wrapper">
+          <JLPTLevelSelector
+            title="Nghe Hiểu"
+            subtitle="Chọn cấp độ JLPT để bắt đầu"
+            icon={<Headphones size={32} />}
+            countByLevel={countByLevel}
+            countLabel="từ"
+            onSelectLevel={selectLevel}
           />
-
-          <div className="level-grid">
-            {JLPT_LEVELS.map((level, idx) => {
-              const theme = LEVEL_THEMES[level];
-              const count = getCardCountByLevel(level);
-              return (
-                <button
-                  key={level}
-                  className="level-card"
-                  onClick={() => selectLevel(level)}
-                  style={{ '--card-delay': `${idx * 0.1}s`, '--level-gradient': theme.gradient, '--level-glow': theme.glow } as React.CSSProperties}
-                >
-                  <span className="level-name">{level}</span>
-                  <span className="level-count">{count} từ</span>
-                  <div className="card-shine" />
-                </button>
-              );
-            })}
-          </div>
-
           {/* Custom Audio Option */}
-          <div className="custom-audio-section">
+          <div className="level-select-custom-audio">
             <button className="btn btn-glass" onClick={() => setViewMode('custom-audio')}>
               <Upload size={18} />
               Luyện nghe file audio
             </button>
           </div>
-        </>
+        </div>
       )}
 
-      {/* Lesson List View */}
+      {/* Lesson List View - Premium Grid Layout */}
       {viewMode === 'lesson-list' && selectedLevel && (
         <div className="lesson-list-mode">
-          {/* Header */}
-          <div className="vocab-header">
-            <button className="btn-back" onClick={goBack}>
-              <ChevronLeft size={20} />
-            </button>
-            <span className="current-level" style={{ background: LEVEL_THEMES[selectedLevel].gradient }}>
-              {selectedLevel}
-            </span>
-            <h2 className="page-title">Chọn bài học</h2>
-            <ListeningSettingsButton onClick={() => setShowSettingsModal(true)} />
-          </div>
+          {/* Premium Header */}
+          <header className="lesson-list-header" style={{
+            '--header-gradient': LEVEL_THEMES[selectedLevel].gradient,
+            '--header-glow': LEVEL_THEMES[selectedLevel].glow,
+          } as React.CSSProperties}>
+            <div className="header-left">
+              <button className="btn-back" onClick={goBack}>
+                <ChevronLeft size={20} />
+              </button>
+              <div className="level-badge desktop-level">
+                <span>{selectedLevel}</span>
+              </div>
+              <span className="mobile-lesson-info">
+                <Headphones size={18} />
+                <span className="mobile-lesson-name">Luyện nghe {selectedLevel}</span>
+              </span>
+              <div className="header-info">
+                <h2>Chọn bài học</h2>
+                <p>{levelParentLessons.length} bài học • {getCardCountByLevel(selectedLevel)} từ vựng</p>
+              </div>
+            </div>
+          </header>
 
-          {/* Settings Modal */}
-          <ListeningSettingsModal
-            isOpen={showSettingsModal}
-            onClose={() => setShowSettingsModal(false)}
-          />
-
-          {/* Lesson List */}
-          <div className="lesson-grid">
+          {/* Lessons Grid - Premium 5 Column */}
+          <div className="lessons-premium-grid">
             {levelParentLessons.length === 0 ? (
               <div className="empty-state">
                 <BookOpen size={48} />
@@ -460,28 +468,40 @@ export function ListeningPracticePage({
                 const totalCount = getCardCountForLesson(lesson.id);
                 const learnedCount = getLearnedCountForLesson(lesson.id);
                 const progress = totalCount > 0 ? (learnedCount / totalCount) * 100 : 0;
+                const isComplete = learnedCount === totalCount && totalCount > 0;
 
                 return (
                   <button
                     key={lesson.id}
-                    className="lesson-card"
+                    className={`lesson-premium-card ${isComplete ? 'complete' : ''}`}
                     onClick={() => selectLesson(lesson.id)}
-                    style={{ '--card-delay': `${idx * 0.05}s` } as React.CSSProperties}
+                    style={{
+                      '--card-delay': `${idx * 0.05}s`,
+                      '--accent': LEVEL_THEMES[selectedLevel].accent,
+                      '--glow': LEVEL_THEMES[selectedLevel].glow,
+                    } as React.CSSProperties}
+                    disabled={totalCount === 0}
                   >
-                    <div className="lesson-icon">
-                      <BookOpen size={24} />
-                    </div>
-                    <div className="lesson-info">
-                      <span className="lesson-name">{lesson.name}</span>
-                      <span className="lesson-count">{totalCount} từ</span>
-                    </div>
-                    <div className="lesson-progress">
-                      <div className="progress-bar">
-                        <div className="progress-fill" style={{ width: `${progress}%` }} />
+                    <div className="card-header">
+                      <div className="lesson-icon-wrapper">
+                        <Headphones size={20} />
                       </div>
-                      <span className="progress-text">{learnedCount}/{totalCount}</span>
+                      {isComplete && (
+                        <div className="complete-badge">
+                          <CheckCircle2 size={14} />
+                        </div>
+                      )}
                     </div>
-                    <ChevronRight size={20} className="lesson-arrow" />
+                    <div className="card-body">
+                      <span className="lesson-name">{lesson.name}</span>
+                      <span className="lesson-count">{totalCount} từ vựng</span>
+                    </div>
+                    <div className="card-footer">
+                      <div className="progress-bar-mini">
+                        <div className="progress-fill-mini" style={{ width: `${progress}%` }} />
+                      </div>
+                      <span className="progress-label">{learnedCount}/{totalCount}</span>
+                    </div>
                   </button>
                 );
               })
@@ -498,42 +518,37 @@ export function ListeningPracticePage({
             <button className="btn-back" onClick={goBack}>
               <ChevronLeft size={20} />
             </button>
-            <span className="current-level" style={{ background: LEVEL_THEMES[selectedLevel].gradient }}>
+            <span className="current-level desktop-level" style={{ background: LEVEL_THEMES[selectedLevel].gradient }}>
               {selectedLevel}
+            </span>
+            <span className="mobile-lesson-info">
+              <Headphones size={18} />
+              <span className="mobile-lesson-name">{getLessonName(selectedLessonId)}</span>
             </span>
             <h2 className="lesson-title">{getLessonName(selectedLessonId)}</h2>
             <ListeningSettingsButton onClick={() => setShowSettingsModal(true)} />
           </div>
 
-          {/* Settings Modal */}
-          <ListeningSettingsModal
-            isOpen={showSettingsModal}
-            onClose={() => setShowSettingsModal(false)}
-          />
-
-          {/* Filter Bar */}
-          <div className="filter-bar">
-            <div className="filter-group">
-              <Filter size={16} />
-              <button
-                className={`filter-btn ${memorizationFilter === 'all' ? 'active' : ''}`}
-                onClick={() => setMemorizationFilter('all')}
-              >
-                Tất cả ({allCardsForLesson.length})
-              </button>
-              <button
-                className={`filter-btn ${memorizationFilter === 'learned' ? 'active' : ''}`}
-                onClick={() => setMemorizationFilter('learned')}
-              >
-                <CheckCircle2 size={14} /> Đã thuộc ({totalLearnedForLesson})
-              </button>
-              <button
-                className={`filter-btn ${memorizationFilter === 'not-learned' ? 'active' : ''}`}
-                onClick={() => setMemorizationFilter('not-learned')}
-              >
-                <Circle size={14} /> Chưa thuộc ({allCardsForLesson.length - totalLearnedForLesson})
-              </button>
-            </div>
+          {/* Filter Buttons */}
+          <div className="filter-buttons">
+            <button
+              className={`filter-btn ${memorizationFilter === 'all' ? 'active' : ''}`}
+              onClick={() => setMemorizationFilter('all')}
+            >
+              Tất cả
+            </button>
+            <button
+              className={`filter-btn ${memorizationFilter === 'learned' ? 'active' : ''}`}
+              onClick={() => setMemorizationFilter('learned')}
+            >
+              Đã thuộc
+            </button>
+            <button
+              className={`filter-btn ${memorizationFilter === 'not-learned' ? 'active' : ''}`}
+              onClick={() => setMemorizationFilter('not-learned')}
+            >
+              Chưa thuộc
+            </button>
           </div>
 
           {/* Stats */}
@@ -563,37 +578,24 @@ export function ListeningPracticePage({
                 <div className="lesson-info">{getLessonName(currentCard.lessonId)}</div>
               </div>
 
-              {/* Memorization Toggle */}
+              {/* Memorization Toggle - 2 buttons side by side */}
               {onUpdateCard && (
                 <div className="memorization-toggle">
                   <button
-                    className={`mem-btn ${currentCard.memorizationStatus === 'memorized' ? 'learned' : 'not-learned'}`}
-                    onClick={() => toggleMemorization(currentCard)}
+                    className={`mem-btn learned ${currentCard.memorizationStatus === 'memorized' ? 'active' : ''}`}
+                    onClick={() => onUpdateCard(currentCard.id, { memorizationStatus: 'memorized' })}
                   >
-                    {currentCard.memorizationStatus === 'memorized' ? (
-                      <>
-                        <CheckCircle2 size={20} /> Đã thuộc
-                      </>
-                    ) : (
-                      <>
-                        <Circle size={20} /> Chưa thuộc
-                      </>
-                    )}
+                    <CheckCircle2 size={18} /> Đã thuộc
+                  </button>
+                  <button
+                    className={`mem-btn not-learned ${currentCard.memorizationStatus !== 'memorized' ? 'active' : ''}`}
+                    onClick={() => onUpdateCard(currentCard.id, { memorizationStatus: 'not_memorized' })}
+                  >
+                    <Circle size={18} /> Chưa thuộc
                   </button>
                 </div>
               )}
 
-              <div className="visibility-toggles">
-                <button className={`toggle-btn ${showVocabulary ? 'active' : ''}`} onClick={() => setShowVocabulary(v => !v)}>
-                  {showVocabulary ? <Eye size={18} /> : <EyeOff size={18} />} Từ
-                </button>
-                <button className={`toggle-btn ${showKanji ? 'active' : ''}`} onClick={() => setShowKanji(v => !v)}>
-                  {showKanji ? <Eye size={18} /> : <EyeOff size={18} />} Kanji
-                </button>
-                <button className={`toggle-btn ${showMeaning ? 'active' : ''}`} onClick={() => setShowMeaning(v => !v)}>
-                  {showMeaning ? <Eye size={18} /> : <EyeOff size={18} />} Nghĩa
-                </button>
-              </div>
             </div>
           )}
 
@@ -616,38 +618,57 @@ export function ListeningPracticePage({
             <button className={`control-btn ${isShuffled ? 'active' : ''}`} onClick={shuffleCards}><Shuffle size={20} /></button>
           </div>
 
-          {/* Inline Settings */}
-          <div className="inline-settings">
-            <div className="setting-group">
-              <label>Tốc độ</label>
-              <div className="setting-control">
-                <button onClick={() => setPlaybackSpeed(s => Math.max(0.5, s - 0.25))}>-</button>
-                <span>{playbackSpeed}x</span>
-                <button onClick={() => setPlaybackSpeed(s => Math.min(2, s + 0.25))}>+</button>
+          {/* Inline Settings - Collapsible */}
+          <div className="inline-settings-wrapper">
+            <button
+              className="settings-toggle-btn"
+              onClick={() => setShowInlineSettings(s => !s)}
+            >
+              <Settings size={16} />
+              <span>Thiết lập</span>
+              {showInlineSettings ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
+
+            {showInlineSettings && (
+              <div className="inline-settings">
+                <div className="settings-row numeric-settings">
+                  <div className="setting-group">
+                    <label>Tốc độ</label>
+                    <div className="setting-control">
+                      <button onClick={() => setPlaybackSpeed(s => Math.max(0.5, s - 0.25))}>-</button>
+                      <span>{playbackSpeed}x</span>
+                      <button onClick={() => setPlaybackSpeed(s => Math.min(2, s + 0.25))}>+</button>
+                    </div>
+                  </div>
+                  <div className="setting-group">
+                    <label>Lặp lại</label>
+                    <div className="setting-control">
+                      <button onClick={() => setRepeatCount(r => Math.max(1, r - 1))}>-</button>
+                      <span>{repeatCount} lần</span>
+                      <button onClick={() => setRepeatCount(r => Math.min(10, r + 1))}>+</button>
+                    </div>
+                  </div>
+                  <div className="setting-group">
+                    <label>Khoảng cách</label>
+                    <div className="setting-control">
+                      <button onClick={() => setDelayBetweenWords(d => Math.max(0.5, d - 0.5))}>-</button>
+                      <span>{delayBetweenWords}s</span>
+                      <button onClick={() => setDelayBetweenWords(d => Math.min(10, d + 0.5))}>+</button>
+                    </div>
+                  </div>
+                </div>
+                <div className="settings-row checkbox-settings">
+                  <label className="checkbox-label">
+                    <input type="checkbox" checked={autoPlayNext} onChange={(e) => setAutoPlayNext(e.target.checked)} />
+                    <span>Tự động chuyển</span>
+                  </label>
+                  <label className="checkbox-label">
+                    <input type="checkbox" checked={readMeaning} onChange={(e) => setReadMeaning(e.target.checked)} />
+                    <span>Đọc nghĩa</span>
+                  </label>
+                </div>
               </div>
-            </div>
-            <div className="setting-group">
-              <label>Lặp lại</label>
-              <div className="setting-control">
-                <button onClick={() => setRepeatCount(r => Math.max(1, r - 1))}>-</button>
-                <span>{repeatCount} lần</span>
-                <button onClick={() => setRepeatCount(r => Math.min(10, r + 1))}>+</button>
-              </div>
-            </div>
-            <div className="setting-group">
-              <label>Khoảng cách</label>
-              <div className="setting-control">
-                <button onClick={() => setDelayBetweenWords(d => Math.max(0.5, d - 0.5))}>-</button>
-                <span>{delayBetweenWords}s</span>
-                <button onClick={() => setDelayBetweenWords(d => Math.min(10, d + 0.5))}>+</button>
-              </div>
-            </div>
-            <div className="setting-group checkbox">
-              <label>
-                <input type="checkbox" checked={autoPlayNext} onChange={(e) => setAutoPlayNext(e.target.checked)} />
-                Tự động chuyển
-              </label>
-            </div>
+            )}
           </div>
         </div>
       )}
@@ -725,12 +746,337 @@ export function ListeningPracticePage({
         </div>
       )}
 
+      {/* Settings Modal - Rendered at root level to avoid layout issues */}
+      <ListeningSettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+      />
+
       <style>{`
         .listening-practice-page {
-          min-height: 100vh;
+          min-height: calc(100vh - 60px);
+          max-height: calc(100vh - 60px);
           background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
-          padding: 1.5rem;
-          overflow-x: hidden;
+          padding: 0;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+        }
+
+        /* Level Select Wrapper */
+        .listening-level-select-wrapper {
+          position: relative;
+          width: 100%;
+          height: 100%;
+        }
+
+        .listening-level-select-wrapper .jlpt-level-selector {
+          min-height: calc(100vh - 60px);
+          max-height: calc(100vh - 60px);
+        }
+
+        .level-select-custom-audio {
+          position: absolute;
+          bottom: 2rem;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 20;
+        }
+
+        .level-select-custom-audio .btn-glass {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.75rem 1.5rem;
+          background: rgba(255, 255, 255, 0.08);
+          backdrop-filter: blur(12px);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          border-radius: 12px;
+          color: rgba(255, 255, 255, 0.8);
+          font-size: 0.9rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .level-select-custom-audio .btn-glass:hover {
+          background: rgba(255, 255, 255, 0.12);
+          border-color: rgba(255, 255, 255, 0.25);
+          color: white;
+          transform: translateY(-2px);
+        }
+
+        /* ========== Lesson List Mode - Premium ========== */
+        .lesson-list-mode {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          min-height: 0;
+          overflow: hidden;
+        }
+
+        .lesson-list-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0.75rem 1rem;
+          background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          backdrop-filter: blur(20px);
+          flex-shrink: 0;
+        }
+
+        .lesson-list-header::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          width: 4px;
+          background: var(--header-gradient);
+          box-shadow: 0 0 20px var(--header-glow);
+        }
+
+        .lesson-list-header .header-left {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        .lesson-list-header .level-badge {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 44px;
+          height: 44px;
+          padding: 0 0.75rem;
+          background: var(--header-gradient);
+          border-radius: 12px;
+          font-weight: 900;
+          font-size: 1rem;
+          color: white;
+          box-shadow: 0 4px 15px -3px var(--header-glow);
+        }
+
+        .lesson-list-header .header-info h2 {
+          margin: 0;
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: white;
+        }
+
+        .lesson-list-header .header-info p {
+          margin: 0.15rem 0 0;
+          font-size: 0.75rem;
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Premium Lessons Grid */
+        .lessons-premium-grid {
+          flex: 1;
+          min-height: 0;
+          overflow-y: auto;
+          padding: 1.25rem;
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 0.75rem;
+          align-content: start;
+        }
+
+        .lessons-premium-grid::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        .lessons-premium-grid::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.02);
+        }
+
+        .lessons-premium-grid::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 3px;
+        }
+
+        .lesson-premium-card {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          padding: 1rem;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-radius: 16px;
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          text-align: center;
+          animation: lessonAppear 0.3s ease-out var(--card-delay) both;
+          overflow: hidden;
+        }
+
+        .lesson-premium-card::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 50%);
+          opacity: 0;
+          transition: opacity 0.3s;
+        }
+
+        @keyframes lessonAppear {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+
+        .lesson-premium-card:hover:not(:disabled) {
+          background: rgba(255, 255, 255, 0.06);
+          border-color: var(--accent);
+          transform: translateY(-4px);
+          box-shadow: 0 8px 25px -10px var(--glow);
+        }
+
+        .lesson-premium-card:hover:not(:disabled)::before {
+          opacity: 1;
+        }
+
+        .lesson-premium-card:disabled {
+          opacity: 0.35;
+          cursor: not-allowed;
+        }
+
+        .lesson-premium-card.complete {
+          border-color: rgba(34, 197, 94, 0.3);
+          background: rgba(34, 197, 94, 0.05);
+        }
+
+        .lesson-premium-card .card-header {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          margin-bottom: 0.75rem;
+          position: relative;
+        }
+
+        .lesson-premium-card .lesson-icon-wrapper {
+          width: 40px;
+          height: 40px;
+          border-radius: 12px;
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.2));
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+        }
+
+        .lesson-premium-card .complete-badge {
+          position: absolute;
+          top: -4px;
+          right: calc(50% - 32px);
+          width: 20px;
+          height: 20px;
+          background: linear-gradient(135deg, #22c55e, #16a34a);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          box-shadow: 0 2px 8px rgba(34, 197, 94, 0.4);
+        }
+
+        .lesson-premium-card .card-body {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+          margin-bottom: 0.75rem;
+        }
+
+        .lesson-premium-card .lesson-name {
+          font-weight: 700;
+          color: white;
+          font-size: 0.9rem;
+        }
+
+        .lesson-premium-card .lesson-count {
+          font-size: 0.7rem;
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        .lesson-premium-card .card-footer {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+
+        .lesson-premium-card .progress-bar-mini {
+          width: 100%;
+          height: 4px;
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 2px;
+          overflow: hidden;
+        }
+
+        .lesson-premium-card .progress-fill-mini {
+          height: 100%;
+          background: linear-gradient(90deg, var(--accent), #22c55e);
+          border-radius: 2px;
+          transition: width 0.3s ease;
+        }
+
+        .lesson-premium-card .progress-label {
+          font-size: 0.65rem;
+          color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* ========== Vocabulary Mode ========== */
+        .vocabulary-mode {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          min-height: 0;
+          overflow: hidden;
+          padding: 0.75rem;
+        }
+
+        .vocabulary-mode .vocab-header {
+          flex-shrink: 0;
+        }
+
+        .vocabulary-mode .filter-buttons {
+          flex-shrink: 0;
+        }
+
+        .vocabulary-mode .vocab-stats {
+          flex-shrink: 0;
+        }
+
+        .vocabulary-mode .current-word-display {
+          flex: 1;
+          min-height: 0;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          overflow: hidden;
+        }
+
+        .vocabulary-mode .word-card {
+          max-height: 100%;
+          overflow-y: auto;
+        }
+
+        .vocabulary-mode .playback-controls {
+          flex-shrink: 0;
+        }
+
+        .vocabulary-mode .inline-settings {
+          flex-shrink: 0;
+        }
+
+        /* ========== Custom Audio Mode ========== */
+        .custom-audio-mode {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          min-height: 0;
+          overflow-y: auto;
+          padding: 0.75rem;
         }
 
         /* Premium Header */
@@ -844,6 +1190,31 @@ export function ListeningPracticePage({
           font-size: 1.1rem;
           font-weight: 600;
           color: white;
+        }
+
+        /* Desktop: show level badge and lesson-title, hide mobile-lesson-info */
+        .desktop-level { display: flex; }
+        .mobile-lesson-info { display: none; }
+
+        .mobile-lesson-info {
+          align-items: center;
+          gap: 0.5rem;
+          color: white;
+          font-size: 0.95rem;
+          font-weight: 500;
+          flex: 1;
+          min-width: 0;
+        }
+
+        .mobile-lesson-info svg {
+          flex-shrink: 0;
+          color: rgba(255, 255, 255, 0.7);
+        }
+
+        .mobile-lesson-name {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .btn-back {
@@ -975,49 +1346,42 @@ export function ListeningPracticePage({
           transform: translateX(4px);
         }
 
-        /* Filter Bar */
-        .filter-bar {
+        /* Filter Buttons - No frame, transparent background */
+        .vocabulary-mode .filter-buttons {
           display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          margin-bottom: 1rem;
-          padding: 0.75rem 1rem;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 12px;
-          overflow-x: auto;
-        }
-
-        .filter-group {
-          display: flex;
-          align-items: center;
+          justify-content: center;
           gap: 0.5rem;
-          color: rgba(255, 255, 255, 0.5);
+          margin-bottom: 1rem;
+          max-width: 400px;
+          margin-left: auto;
+          margin-right: auto;
         }
 
-        .filter-btn {
-          display: flex;
-          align-items: center;
-          gap: 0.35rem;
-          padding: 0.4rem 0.75rem;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 20px;
+        .vocabulary-mode .filter-btn {
+          flex: 1;
+          padding: 0.6rem 0.5rem;
+          border: 1px solid rgba(255, 255, 255, 0.2) !important;
+          background: transparent !important;
+          border-radius: 10px;
           cursor: pointer;
           font-size: 0.8rem;
-          color: rgba(255, 255, 255, 0.7);
+          color: rgba(255, 255, 255, 0.6);
           transition: all 0.2s;
+          text-align: center;
           white-space: nowrap;
         }
 
-        .filter-btn:hover {
-          background: rgba(255, 255, 255, 0.1);
+        .vocabulary-mode .filter-btn:hover {
+          border-color: rgba(255, 255, 255, 0.35) !important;
+          color: rgba(255, 255, 255, 0.8);
         }
 
-        .filter-btn.active {
-          background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-          border-color: transparent;
+        .vocabulary-mode .filter-btn.active {
+          background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%) !important;
+          border-color: transparent !important;
           color: white;
+          font-weight: 500;
+          box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
         }
 
         .vocab-stats {
@@ -1066,34 +1430,50 @@ export function ListeningPracticePage({
         .sino-text { font-size: 1rem; color: rgba(255, 255, 255, 0.5); }
         .lesson-info { font-size: 0.75rem; color: rgba(255, 255, 255, 0.4); margin-top: 0.5rem; }
 
-        /* Memorization Toggle */
+        /* Memorization Toggle - 2 buttons */
         .memorization-toggle {
+          display: flex;
+          justify-content: center;
+          gap: 0.75rem;
           margin-top: 1rem;
         }
 
         .mem-btn {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          padding: 0.75rem 1.5rem;
-          border-radius: 12px;
-          font-size: 1rem;
+          gap: 0.4rem;
+          padding: 0.6rem 1rem;
+          border-radius: 10px;
+          font-size: 0.85rem;
           font-weight: 500;
           cursor: pointer;
           transition: all 0.3s ease;
+          border: 2px solid transparent;
         }
 
         .mem-btn.learned {
+          background: rgba(34, 197, 94, 0.1);
+          border-color: rgba(34, 197, 94, 0.3);
+          color: rgba(34, 197, 94, 0.7);
+        }
+
+        .mem-btn.learned.active {
           background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-          border: none;
+          border-color: transparent;
           color: white;
           box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3);
         }
 
         .mem-btn.not-learned {
           background: rgba(255, 255, 255, 0.05);
-          border: 2px solid rgba(255, 255, 255, 0.2);
-          color: rgba(255, 255, 255, 0.8);
+          border-color: rgba(255, 255, 255, 0.15);
+          color: rgba(255, 255, 255, 0.6);
+        }
+
+        .mem-btn.not-learned.active {
+          background: rgba(239, 68, 68, 0.15);
+          border-color: rgba(239, 68, 68, 0.4);
+          color: #f87171;
         }
 
         .mem-btn:hover {
@@ -1180,16 +1560,67 @@ export function ListeningPracticePage({
           cursor: not-allowed;
         }
 
+        /* Inline Settings Wrapper */
+        .inline-settings-wrapper {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .settings-toggle-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
+          color: rgba(255, 255, 255, 0.7);
+          font-size: 0.8rem;
+          cursor: pointer;
+          transition: all 0.2s;
+          align-self: center;
+        }
+
+        .settings-toggle-btn:hover {
+          background: rgba(255, 255, 255, 0.08);
+          color: white;
+        }
+
         /* Inline Settings */
         .inline-settings {
           display: flex;
-          flex-wrap: wrap;
-          gap: 1rem;
-          justify-content: center;
-          padding: 1rem;
+          flex-direction: column;
+          gap: 0.75rem;
+          padding: 0.875rem;
           background: rgba(255, 255, 255, 0.03);
           border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 14px;
+          animation: slideDown 0.2s ease-out;
+        }
+
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .settings-row {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        .settings-row.numeric-settings {
+          gap: 1rem;
+        }
+
+        .settings-row.checkbox-settings {
+          gap: 1.5rem;
+          padding-top: 0.25rem;
+          border-top: 1px solid rgba(255, 255, 255, 0.06);
         }
 
         .setting-group {
@@ -1197,40 +1628,73 @@ export function ListeningPracticePage({
           align-items: center;
           gap: 0.5rem;
           color: rgba(255, 255, 255, 0.7);
-          font-size: 0.875rem;
+          font-size: 0.8rem;
+          padding: 0.5rem 0.75rem;
+          background: rgba(255, 255, 255, 0.02);
+          border-radius: 10px;
         }
 
-        .setting-group.checkbox label {
+        .setting-group label {
+          min-width: 55px;
+          font-size: 0.75rem;
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        .checkbox-label {
           display: flex;
           align-items: center;
           gap: 0.4rem;
+          cursor: pointer;
+          color: rgba(255, 255, 255, 0.7);
+          font-size: 0.8rem;
+          user-select: none;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+          width: 16px;
+          height: 16px;
+          accent-color: #8b5cf6;
           cursor: pointer;
         }
 
         .setting-control {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
+          justify-content: center;
+          gap: 0.35rem;
         }
 
         .setting-control button {
           width: 28px;
           height: 28px;
-          border-radius: 6px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          background: rgba(255, 255, 255, 0.05);
+          border-radius: 8px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          background: rgba(255, 255, 255, 0.08);
           cursor: pointer;
           color: white;
           font-size: 1rem;
+          font-weight: 500;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
         }
 
         .setting-control button:hover {
-          background: rgba(255, 255, 255, 0.1);
+          background: rgba(139, 92, 246, 0.3);
+          border-color: rgba(139, 92, 246, 0.5);
+        }
+
+        .setting-control button:active {
+          transform: scale(0.95);
         }
 
         .setting-control span {
           min-width: 50px;
           text-align: center;
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: #c4b5fd;
         }
 
         /* Upload Section */
@@ -1366,17 +1830,137 @@ export function ListeningPracticePage({
           transform: translateY(-2px);
         }
 
+        /* Responsive - Tablet */
+        @media (max-width: 768px) {
+          .lessons-premium-grid {
+            grid-template-columns: repeat(3, 1fr);
+            padding: 0.75rem;
+            gap: 0.5rem;
+          }
+
+          .lesson-premium-card {
+            padding: 0.75rem;
+          }
+
+          .lesson-premium-card .lesson-icon-wrapper {
+            width: 32px;
+            height: 32px;
+          }
+
+          .lesson-premium-card .lesson-name {
+            font-size: 0.8rem;
+          }
+
+          .lesson-list-header .header-info {
+            display: none;
+          }
+        }
+
+        /* Responsive - Mobile */
         @media (max-width: 640px) {
-          .listening-practice-page { padding: 1rem; }
+          .vocabulary-mode,
+          .custom-audio-mode {
+            padding: 0.5rem;
+          }
+
           .premium-header { padding: 1rem; flex-wrap: wrap; gap: 1rem; }
           .header-text h1 { font-size: 1.25rem; }
           .level-grid { grid-template-columns: repeat(2, 1fr); }
-          .playback-controls { flex-wrap: wrap; }
+          .playback-controls { flex-wrap: wrap; gap: 0.5rem; }
           .vocabulary-text { font-size: 2rem; }
-          .filter-bar { padding: 0.5rem; }
-          .filter-btn { padding: 0.35rem 0.6rem; font-size: 0.75rem; }
-          .inline-settings { flex-direction: column; align-items: stretch; }
-          .setting-group { justify-content: space-between; }
+
+          /* Mobile header: show headphones + lesson name, hide level badge and full title */
+          .desktop-level { display: none; }
+          .lesson-title { display: none; }
+          .mobile-lesson-info { display: flex; }
+          .vocab-header { gap: 0.5rem; margin-bottom: 1rem; }
+
+          /* Filter buttons on mobile */
+          .vocabulary-mode .filter-buttons {
+            max-width: 100%;
+          }
+
+          .vocabulary-mode .filter-btn {
+            padding: 0.45rem 0.4rem;
+            font-size: 0.7rem;
+          }
+
+          /* Memorization buttons on mobile */
+          .memorization-toggle {
+            gap: 0.5rem;
+          }
+
+          .mem-btn {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+            flex: 1;
+            justify-content: center;
+          }
+
+          .mem-btn svg {
+            width: 16px;
+            height: 16px;
+          }
+
+          /* Inline settings - stacked on mobile */
+          .inline-settings {
+            padding: 0.75rem;
+            gap: 0.5rem;
+          }
+
+          .settings-row.numeric-settings {
+            flex-direction: column;
+            gap: 0.5rem;
+          }
+
+          .setting-group {
+            width: 100%;
+            justify-content: space-between;
+          }
+
+          .settings-row.checkbox-settings {
+            justify-content: space-around;
+            gap: 1rem;
+          }
+
+          .settings-toggle-btn {
+            padding: 0.4rem 0.75rem;
+            font-size: 0.75rem;
+          }
+
+          .lessons-premium-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.35rem;
+          }
+
+          .lesson-premium-card .lesson-name {
+            font-size: 0.7rem;
+          }
+
+          .lesson-premium-card .lesson-count {
+            font-size: 0.6rem;
+          }
+
+          .lesson-list-header {
+            padding: 0.5rem 0.75rem;
+          }
+
+          .lesson-list-header .level-badge {
+            min-width: 36px;
+            height: 36px;
+            font-size: 0.85rem;
+          }
+
+          /* Show headphones + lesson name on mobile for lesson list */
+          .lesson-list-header .level-badge.desktop-level { display: none; }
+          .lesson-list-header .mobile-lesson-info { display: flex; }
+          .lesson-list-header .header-info { display: none; }
+        }
+
+        @media (max-width: 480px) {
+          .lessons-premium-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
         }
       `}</style>
     </div>

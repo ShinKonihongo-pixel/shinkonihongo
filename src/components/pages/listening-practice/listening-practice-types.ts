@@ -12,8 +12,19 @@ export interface ListeningPracticePageProps {
   onGoHome?: () => void;
 }
 
+// Extended props with card update callback
+export interface ListeningPracticePagePropsExtended extends ListeningPracticePageProps {
+  onUpdateCard?: (id: string, data: Partial<Flashcard>) => void;
+}
+
 // View mode for navigation
 export type ViewMode = 'level-select' | 'vocabulary' | 'custom-audio';
+
+// Extended view modes (includes lesson-list)
+export type ExtendedViewMode = ViewMode | 'lesson-list';
+
+// Memorization filter
+export type MemorizationFilter = 'all' | 'learned' | 'not-learned';
 
 // Difficulty option for filter dropdown
 export interface DifficultyOption {
