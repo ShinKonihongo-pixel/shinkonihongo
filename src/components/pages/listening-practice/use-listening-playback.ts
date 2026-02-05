@@ -11,18 +11,6 @@ interface UseListeningPlaybackOptions {
   initialDelay?: number;
 }
 
-interface PlaybackState {
-  isPlaying: boolean;
-  currentIndex: number;
-  currentRepeat: number;
-  playbackSpeed: number;
-  repeatCount: number;
-  delayBetweenWords: number;
-  isLooping: boolean;
-  isShuffled: boolean;
-  autoPlayNext: boolean;
-  readMeaning: boolean;
-}
 
 export function useListeningPlayback({
   cards,

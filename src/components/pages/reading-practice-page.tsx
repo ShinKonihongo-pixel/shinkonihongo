@@ -4,14 +4,13 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import {
   ChevronRight, CheckCircle, XCircle, RotateCcw, Volume2,
-  ArrowLeft, ChevronDown, ChevronUp,
+  ArrowLeft, ChevronDown, ChevronUp, Sparkles,
   Clock, Pause, Play, Square, FolderOpen,
   FileText, Pin, PinOff, BookOpen
 } from 'lucide-react';
 import type { JLPTLevel } from '../../types/flashcard';
 import type { ReadingPassage, ReadingFolder } from '../../types/reading';
-import { JLPT_LEVELS } from './reading-practice/reading-practice-constants';
-import { ReadingSettingsModal, ReadingSettingsButton } from '../ui/reading-settings-modal';
+import { ReadingSettingsModal, ReadingSettingsButton } from '../ui/reading-settings';
 import { FuriganaText } from '../ui/furigana-text';
 import { useReadingSettings } from '../../contexts/reading-settings-context';
 import { JLPTLevelSelector, LEVEL_THEMES } from '../ui/jlpt-level-selector';
@@ -96,9 +95,6 @@ export function ReadingPracticePage({
     passages.forEach(p => { counts[p.jlptLevel]++; });
     return counts;
   }, [passages]);
-
-  // Get folder count for level
-  const getFolderCount = (level: JLPTLevel) => getFoldersByLevel(level).length;
 
   // Get passage count for folder
   const getPassageCount = (folderId: string) => getPassagesByFolder(folderId).length;

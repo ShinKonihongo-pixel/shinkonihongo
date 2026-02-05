@@ -1,0 +1,43 @@
+// Color palette definitions for reading settings
+
+export const TEXT_COLORS = [
+  { color: '#ffffff', name: 'Trắng' },
+  { color: '#f8fafc', name: 'Trắng sữa' },
+  { color: '#e2e8f0', name: 'Xám bạc' },
+  { color: '#fef3c7', name: 'Kem vàng' },
+  { color: '#fde68a', name: 'Vàng nhạt' },
+  { color: '#fbbf24', name: 'Vàng amber' },
+  { color: '#fdba74', name: 'Cam nhạt' },
+  { color: '#fb923c', name: 'Cam' },
+  { color: '#f97316', name: 'Cam đậm' },
+  { color: '#fca5a5', name: 'Đỏ nhạt' },
+  { color: '#f87171', name: 'Đỏ san hô' },
+  { color: '#ef4444', name: 'Đỏ' },
+  { color: '#dbeafe', name: 'Xanh dương nhạt' },
+  { color: '#93c5fd', name: 'Xanh biển' },
+  { color: '#60a5fa', name: 'Xanh đại dương' },
+  { color: '#d1fae5', name: 'Bạc hà' },
+  { color: '#6ee7b7', name: 'Xanh lá non' },
+  { color: '#34d399', name: 'Xanh ngọc' },
+  { color: '#e9d5ff', name: 'Lavender' },
+  { color: '#c4b5fd', name: 'Tím violet' },
+  { color: '#a78bfa', name: 'Tím đậm' },
+  { color: '#fce7f3', name: 'Hồng nhạt' },
+  { color: '#f9a8d4', name: 'Hồng đào' },
+  { color: '#f472b6', name: 'Hồng sen' },
+];
+
+export const FURIGANA_COLORS = [
+  { color: '#a78bfa', name: 'Tím mặc định' },
+  { color: '#c4b5fd', name: 'Tím nhạt' },
+  { color: '#f472b6', name: 'Hồng' },
+  { color: '#fb7185', name: 'Đỏ hồng' },
+  { color: '#fbbf24', name: 'Vàng amber' },
+  { color: '#fcd34d', name: 'Vàng chanh' },
+  { color: '#34d399', name: 'Xanh ngọc' },
+  { color: '#22d3ee', name: 'Xanh cyan' },
+  { color: '#60a5fa', name: 'Xanh biển' },
+  { color: '#818cf8', name: 'Indigo' },
+  { color: '#94a3b8', name: 'Xám' },
+  { color: '#ffffff', name: 'Trắng' },
+];

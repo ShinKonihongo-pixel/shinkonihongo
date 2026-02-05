@@ -2,7 +2,7 @@
 // Premium UI with glassmorphism and aurora background
 // Used by: Reading Practice, Listening Practice, Exercise pages
 
-import { useState, useMemo, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ChevronRight, Sparkles, GraduationCap } from 'lucide-react';
 import type { JLPTLevel } from '../../types/flashcard';
 

@@ -1,0 +1,67 @@
+// Game state management hook
+
+import { useState, useMemo, useRef, useEffect } from 'react';
+import type { SpeedQuizGame, SpeedQuizResults } from '../../types/speed-quiz';
+
+interface UseGameStateProps {
+  currentUserId: string;
+}
+
+export function useGameState({ currentUserId }: UseGameStateProps) {
+  const [game, setGame] = useState<SpeedQuizGame | null>(null);
+  const [gameResults, setGameResults] = useState<SpeedQuizResults | null>(null);
+  const [availableRooms] = useState<SpeedQuizGame[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const botTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const roundTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const botAnswerTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const isHost = useMemo(() => game?.hostId === currentUserId, [game, currentUserId]);
+  const currentPlayer = useMemo(() => game?.players[currentUserId], [game, currentUserId]);
+
+  const sortedPlayers = useMemo(() => {
+    if (!game) return [];
+    return Object.values(game.players).sort((a, b) => b.score - a.score);
+  }, [game]);
+
+  const isSkillPhase = useMemo(() => {
+    if (!game || !game.settings.skillsEnabled) return false;
+    return game.currentRound > 0 && game.currentRound % game.settings.skillInterval === 0;
+  }, [game]);
+
+  useEffect(() => {
+    return () => {
+      if (botTimerRef.current) clearTimeout(botTimerRef.current);
+      if (roundTimerRef.current) clearTimeout(roundTimerRef.current);
+      if (botAnswerTimerRef.current) clearTimeout(botAnswerTimerRef.current);
+    };
+  }, []);
+
+  const clearTimers = () => {
+    if (botTimerRef.current) clearTimeout(botTimerRef.current);
+    if (roundTimerRef.current) clearTimeout(roundTimerRef.current);
+    if (botAnswerTimerRef.current) clearTimeout(botAnswerTimerRef.current);
+  };
+
+  return {
+    game,
+    setGame,
+    gameResults,
+    setGameResults,
+    availableRooms,
+    loading,
+    setLoading,
+    error,
+    setError,
+    isHost,
+    currentPlayer,
+    sortedPlayers,
+    isSkillPhase,
+    botTimerRef,
+    roundTimerRef,
+    botAnswerTimerRef,
+    clearTimers,
+  };
+}

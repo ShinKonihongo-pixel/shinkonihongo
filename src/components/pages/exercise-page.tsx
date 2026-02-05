@@ -3,7 +3,7 @@
 // Flow: Level Selection → Exercise List → Session → Result
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { ArrowLeft, Play, Volume2, VolumeX, RefreshCw, CheckCircle2, XCircle, Trophy, Clock, BookOpen, RotateCcw, ChevronRight, Zap, Target, PenTool } from 'lucide-react';
+import { ArrowLeft, Play, Volume2, VolumeX, RefreshCw, CheckCircle2, XCircle, Trophy, Clock, BookOpen, RotateCcw, ChevronRight, Zap, PenTool } from 'lucide-react';
 import type { Exercise, ExerciseQuestion, ExerciseSession, ExerciseType } from '../../types/exercise';
 import type { Flashcard, JLPTLevel } from '../../types/flashcard';
 import { EXERCISE_TYPE_LABELS, EXERCISE_TYPE_ICONS, getTotalQuestionCount } from '../../types/exercise';
@@ -36,7 +36,7 @@ const getExerciseQuestionCount = (ex: Exercise): number => {
   return ex.questionCount || 10;
 };
 
-export function ExercisePage({ exercises, flashcards, onGoHome }: ExercisePageProps) {
+export function ExercisePage({ exercises, flashcards }: ExercisePageProps) {
   const [view, setView] = useState<ViewState>('level-select');
   const [selectedLevel, setSelectedLevel] = useState<JLPTLevel | null>(null);
   const [session, setSession] = useState<ExerciseSession | null>(null);
