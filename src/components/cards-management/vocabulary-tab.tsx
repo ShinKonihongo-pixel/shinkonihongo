@@ -9,7 +9,6 @@ import { KanjiAnalysisEditor } from '../flashcard/kanji-analysis-editor';
 import { ConfirmModal } from '../ui/confirm-modal';
 import { LevelGrid } from './level-grid';
 import type { VocabularyTabProps, FlashcardNavState, Flashcard, Lesson, JLPTLevel } from './cards-management-types';
-import { JLPT_LEVELS } from './cards-management-types';
 import { seedN5Lessons, seedN4Lessons, fixLessonOrder } from '../../scripts/seed-n5-lessons';
 // Simple export/import utilities
 function downloadAsJSON(data: unknown, filename: string) {

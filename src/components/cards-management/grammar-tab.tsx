@@ -8,18 +8,6 @@ import { GrammarCardList } from '../flashcard/grammar-card-list';
 import { LevelGrid } from './level-grid';
 import type { GrammarTabProps, GrammarCard, GrammarLesson, JLPTLevel } from './cards-management-types';
 
-// JLPT Levels
-const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
-
-// Level metadata
-const LEVEL_META: Record<JLPTLevel, { desc: string; color: string }> = {
-  N5: { desc: 'Sơ cấp', color: 'n5' },
-  N4: { desc: 'Sơ trung cấp', color: 'n4' },
-  N3: { desc: 'Trung cấp', color: 'n3' },
-  N2: { desc: 'Trung cao cấp', color: 'n2' },
-  N1: { desc: 'Cao cấp', color: 'n1' },
-};
-
 // Seed config for each level
 const SEED_CONFIG: Record<JLPTLevel, { start: number; end: number; folders: string[] }> = {
   N5: { start: 1, end: 25, folders: ['Ngữ pháp', 'Mở rộng'] },
@@ -65,7 +53,6 @@ export function GrammarTab({
   getParentLessonsByLevel,
   getChildLessons,
   hasChildren,
-  getLessonCountByLevel,
   onAddLesson,
   onUpdateLesson,
   onDeleteLesson,
@@ -330,30 +317,6 @@ export function GrammarTab({
       )}
     </div>
   );
-
-  // Render level card
-  const renderLevelCard = (level: JLPTLevel) => {
-    const meta = LEVEL_META[level];
-    const lessonCount = getLessonCountByLevel(level);
-    const cardCount = getCardCountByLevel(level);
-
-    return (
-      <div
-        key={level}
-        className={`grammar-level-card level-${meta.color}`}
-        onClick={() => setNavState({ type: 'level', level })}
-      >
-        <div className="level-header">
-          <span className="level-badge">{level}</span>
-          <span className="level-desc">{meta.desc}</span>
-        </div>
-        <div className="level-stats">
-          <span className="count">{lessonCount} bài • {cardCount} thẻ</span>
-        </div>
-        <ChevronRight size={20} className="level-arrow" />
-      </div>
-    );
-  };
 
   // Render lesson card
   const renderLessonCard = (lesson: GrammarLesson, isChild: boolean = false, lessonList: GrammarLesson[] = []) => {

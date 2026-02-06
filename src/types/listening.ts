@@ -2,13 +2,14 @@
 
 import type { JLPTLevel } from './flashcard';
 
-export type ListeningLessonType = 'vocabulary' | 'grammar' | 'conversation' | 'general';
+export type ListeningLessonType = 'practice' | 'conversation' | 'reading' | 'other';
 
 export interface ListeningFolder {
   id: string;
   name: string;
   jlptLevel: JLPTLevel;
-  lessonType?: ListeningLessonType; // Type of lesson: vocabulary, grammar, conversation, or general
+  lessonType?: ListeningLessonType; // Type of lesson: practice, conversation, reading, or other
+  lessonNumber?: number; // Bài number (e.g., 1-25 for N5, 26-50 for N4)
   createdAt: Date;
   createdBy: string;
 }

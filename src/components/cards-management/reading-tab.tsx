@@ -9,8 +9,6 @@ import type { ReadingPassage, ReadingPassageFormData, ReadingFolder, ReadingAnsw
 import type { JLPTLevel } from '../../types/flashcard';
 import type { CurrentUser } from '../../types/user';
 
-const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
-
 // Level theme configurations
 const LEVEL_THEMES: Record<JLPTLevel, { gradient: string; glow: string; icon: string; light: string }> = {
   N5: { gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', glow: 'rgba(16, 185, 129, 0.15)', icon: '🌱', light: '#ecfdf5' },

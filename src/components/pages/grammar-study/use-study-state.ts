@@ -1,6 +1,7 @@
 // Hook for managing study state
 import { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from 'react';
 import type { GrammarCard, JLPTLevel, GrammarLesson } from '../../../types/flashcard';
+import type { StudyMode } from '../../study/level-lesson-selector/types';
 import type { GrammarStudySettings, ViewMode, MemorizationFilter } from './types';
 import { DEFAULT_SETTINGS } from './types';
 
@@ -111,7 +112,7 @@ export function useStudyState({ grammarCards, getChildLessons }: UseStudyStatePr
     }
   }, [currentIndex]);
 
-  const handleStart = (lessonIds: string[], level: JLPTLevel) => {
+  const handleStart = (lessonIds: string[], level: JLPTLevel, _mode: StudyMode) => {
     setSelectedLessonIds(lessonIds);
     setSelectedLevel(level);
     setCurrentIndex(0);

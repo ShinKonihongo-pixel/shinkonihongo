@@ -1,7 +1,6 @@
 // Word Card Component - Displays the current vocabulary word
 import { CheckCircle2, Circle } from 'lucide-react';
 import type { Flashcard } from '../../../types/flashcard';
-import { DetailNotesButtons } from '../../flashcard/detail-notes-buttons';
 
 interface WordCardProps {
   card: Flashcard;
@@ -72,8 +71,6 @@ export function WordCard({
           </button>
         </div>
       )}
-
-      <DetailNotesButtons flashcard={card} readOnly />
     </div>
   );
 }

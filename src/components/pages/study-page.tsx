@@ -4,10 +4,12 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import type { Flashcard, JLPTLevel, MemorizationStatus, DifficultyLevel, Lesson } from '../../types/flashcard';
 import type { AppSettings } from '../../hooks/use-settings';
 import type { StudySession as StudySessionType } from '../../types/user';
+import type { StudyMode } from '../study/level-lesson-selector/types';
 import { useStudySession } from '../../hooks/use-study-session';
 import { StudySession } from '../study/study-session';
 import { StudyResult } from '../study/study-result';
 import { LevelLessonSelector } from '../study/level-lesson-selector';
+import { ListeningStudyView } from '../study/listening-study-view';
 
 interface StudyPageProps {
   cards: Flashcard[];
@@ -20,7 +22,7 @@ interface StudyPageProps {
   onSaveStudySession?: (data: Omit<StudySessionType, 'id' | 'userId'>) => void;
 }
 
-type ViewMode = 'select' | 'study' | 'result';
+type ViewMode = 'select' | 'study' | 'result' | 'listening';
 
 export function StudyPage({
   cards,
@@ -123,10 +125,10 @@ export function StudyPage({
   }), [settings, frontFontSize]);
 
   // Handle start from level selector
-  const handleStart = (lessonIds: string[], level: JLPTLevel) => {
+  const handleStart = (lessonIds: string[], level: JLPTLevel, mode: StudyMode) => {
     setSelectedLessonIds(lessonIds);
     setSelectedLevel(level);
-    setViewMode('study');
+    setViewMode(mode === 'listening' ? 'listening' : 'study');
   };
 
   // Handle restart
@@ -153,6 +155,18 @@ export function StudyPage({
         getChildLessons={getChildLessons}
         onStart={handleStart}
         onGoHome={onGoHome}
+      />
+    );
+  }
+
+  // Listening mode
+  if (viewMode === 'listening') {
+    return (
+      <ListeningStudyView
+        flashcards={filteredCards}
+        selectedLevel={selectedLevel}
+        onBack={handleBackToSelect}
+        updateCard={updateCard}
       />
     );
   }
