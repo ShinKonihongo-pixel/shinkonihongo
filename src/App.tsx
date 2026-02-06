@@ -51,6 +51,9 @@ import { useClassroomNotifications } from './hooks/use-classrooms';
 import { useDailyWords } from './hooks/use-daily-words';
 import { useGrammarCards } from './hooks/use-grammar-cards';
 import { useGrammarLessons } from './hooks/use-grammar-lessons';
+import { useKanjiCards } from './hooks/use-kanji-cards';
+import { useKanjiLessons } from './hooks/use-kanji-lessons';
+import { KanjiStudyPage } from './components/pages/kanji-study-page';
 import { OfflineIndicator } from './components/common/offline-indicator';
 import { FloatingChatButton } from './components/common/floating-chat-button';
 import { FloatingChatPanel } from './components/common/floating-chat-panel';
@@ -193,6 +196,16 @@ function App() {
     getParentLessonsByLevel: getGrammarLessonsByLevel,
     getChildLessons: getGrammarChildLessons,
   } = useGrammarLessons();
+
+  // Kanji cards
+  const { kanjiCards, updateKanjiCard } = useKanjiCards();
+
+  // Kanji lessons (separate from vocabulary/grammar lessons)
+  const {
+    lessons: kanjiLessons,
+    getParentLessonsByLevel: getKanjiLessonsByLevel,
+    getChildLessons: getKanjiChildLessons,
+  } = useKanjiLessons();
 
   // Exercises
   const { getPublishedExercises } = useExercises();
@@ -503,14 +516,7 @@ function App() {
         )}
 
         {currentPage === 'listening' && (
-          <ListeningPracticePage
-            cards={cards}
-            lessons={lessons}
-            getLessonsByLevel={getLessonsByLevel}
-            getChildLessons={getChildLessons}
-            onGoHome={() => setCurrentPage('home')}
-            onUpdateCard={updateCard}
-          />
+          <ListeningPracticePage />
         )}
 
         {currentPage === 'grammar-study' && (
@@ -522,6 +528,17 @@ function App() {
             onGoHome={() => setCurrentPage('home')}
             settings={settings}
             onUpdateGrammarCard={updateGrammarCard}
+          />
+        )}
+
+        {currentPage === 'kanji-study' && (
+          <KanjiStudyPage
+            kanjiCards={kanjiCards}
+            lessons={kanjiLessons}
+            getLessonsByLevel={getKanjiLessonsByLevel}
+            getChildLessons={getKanjiChildLessons}
+            onGoHome={() => setCurrentPage('home')}
+            onUpdateKanjiCard={updateKanjiCard}
           />
         )}
 

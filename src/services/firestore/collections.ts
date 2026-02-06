@@ -38,6 +38,8 @@ export const COLLECTIONS = {
   CUSTOM_TOPIC_QUESTIONS: 'customTopicQuestions',
   KANJI_ANALYSIS: 'kanjiAnalysis',
   VOCABULARY_NOTES: 'vocabularyNotes',
+  KANJI_CARDS: 'kanjiCards',
+  KANJI_LESSONS: 'kanjiLessons',
 } as const;
 
 // Shared utilities

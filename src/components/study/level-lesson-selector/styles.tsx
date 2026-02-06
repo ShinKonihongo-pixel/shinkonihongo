@@ -629,6 +629,16 @@ export const styles = `
   font-weight: 700;
 }
 
+/* ========== Footer Buttons (2-button layout) ========== */
+.footer-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.footer-buttons .start-btn {
+  flex: 1;
+}
+
 /* ========== Responsive ========== */
 @media (max-width: 768px) {
   .selector-container {
@@ -799,6 +809,10 @@ export const styles = `
     padding: 0.65rem 1rem;
     font-size: 0.85rem;
     border-radius: 10px;
+  }
+
+  .footer-buttons {
+    gap: 0.5rem;
   }
 }
 `;

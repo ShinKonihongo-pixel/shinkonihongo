@@ -2,7 +2,7 @@
 // Premium UI with Japanese-inspired design and glassmorphism effects
 
 import { useState } from 'react';
-import type { LevelLessonSelectorProps, JLPTLevel } from './types';
+import type { LevelLessonSelectorProps, JLPTLevel, StudyMode } from './types';
 import {
   useCardCountByLevel,
   useLevelLessons,
@@ -46,9 +46,9 @@ export function LevelLessonSelector({
     setSelectedLessons([]);
   };
 
-  const handleStart = () => {
+  const handleStart = (mode: StudyMode) => {
     if (selectedLevel && selectedLessons.length > 0) {
-      onStart(selectedLessons, selectedLevel);
+      onStart(selectedLessons, selectedLevel, mode);
     }
   };
 

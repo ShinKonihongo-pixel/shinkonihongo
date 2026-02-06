@@ -13,17 +13,21 @@ import { useTestTemplates } from '../../hooks/use-classrooms';
 import { useCustomTopics } from '../../hooks/use-custom-topics';
 import { useGrammarCards } from '../../hooks/use-grammar-cards';
 import { useGrammarLessons } from '../../hooks/use-grammar-lessons';
+import { useKanjiCards } from '../../hooks/use-kanji-cards';
+import { useKanjiLessons } from '../../hooks/use-kanji-lessons';
 import { TestBankPanel } from '../classroom/test-bank-panel';
 import {
   importLesson,
   importFlashcard,
   importGrammarCard,
+  importKanjiCard,
   importJLPTFolder,
   importJLPTQuestion,
 } from '../../services/firestore';
 import {
   VocabularyTab,
   GrammarTab,
+  KanjiTab,
   ReadingTab,
   ListeningTab,
   LecturesTab,
@@ -164,6 +168,29 @@ export function CardsPage({
     reorderLessons: reorderGrammarLessons,
   } = useGrammarLessons();
 
+  // Kanji cards hook
+  const {
+    kanjiCards,
+    addKanjiCard,
+    updateKanjiCard,
+    deleteKanjiCard,
+    seedKanjiCards,
+    getKanjiSeedCount,
+  } = useKanjiCards();
+
+  // Kanji lessons hook
+  const {
+    lessons: kanjiLessons,
+    getParentLessonsByLevel: getKanjiParentLessonsByLevel,
+    getChildLessons: getKanjiChildLessons,
+    hasChildren: kanjiHasChildren,
+    addLesson: addKanjiLesson,
+    updateLesson: updateKanjiLesson,
+    deleteLesson: deleteKanjiLesson,
+    seedLessons: seedKanjiLessons,
+    reorderLessons: reorderKanjiLessons,
+  } = useKanjiLessons();
+
   // Reading passages hook
   const {
     passages: readingPassages,
@@ -199,6 +226,7 @@ export function CardsPage({
     deleteFolder: deleteListeningFolder,
     getFoldersByLevel: getListeningFoldersByLevel,
     getFoldersByLevelAndType: getListeningFoldersByLevelAndType,
+    getFoldersByLevelLessonAndType: getListeningFoldersByLevelLessonAndType,
     getAudiosByFolder: getListeningAudiosByFolder,
     getAudioUrl: getListeningAudioUrl,
   } = useListening();
@@ -210,6 +238,7 @@ export function CardsPage({
         <div className="tab-buttons">
           <button className={`tab-btn ${activeTab === 'vocabulary' ? 'active' : ''}`} onClick={() => setActiveTab('vocabulary')}>Từ Vựng</button>
           <button className={`tab-btn ${activeTab === 'grammar' ? 'active' : ''}`} onClick={() => setActiveTab('grammar')}>Ngữ Pháp</button>
+          <button className={`tab-btn ${activeTab === 'kanji' ? 'active' : ''}`} onClick={() => setActiveTab('kanji')}>Hán Tự</button>
           <button className={`tab-btn ${activeTab === 'reading' ? 'active' : ''}`} onClick={() => setActiveTab('reading')}>Đọc Hiểu</button>
           <button className={`tab-btn ${activeTab === 'listening' ? 'active' : ''}`} onClick={() => setActiveTab('listening')}>Nghe Hiểu</button>
           <button className={`tab-btn ${activeTab === 'lectures' ? 'active' : ''}`} onClick={() => setActiveTab('lectures')}>Bài giảng</button>
@@ -277,6 +306,30 @@ export function CardsPage({
         />
       )}
 
+      {/* Kanji Tab */}
+      {activeTab === 'kanji' && (
+        <KanjiTab
+          kanjiCards={kanjiCards}
+          onAddKanjiCard={addKanjiCard}
+          onUpdateKanjiCard={updateKanjiCard}
+          onDeleteKanjiCard={deleteKanjiCard}
+          kanjiLessons={kanjiLessons}
+          getParentLessonsByLevel={getKanjiParentLessonsByLevel}
+          getChildLessons={getKanjiChildLessons}
+          hasChildren={kanjiHasChildren}
+          onAddLesson={addKanjiLesson}
+          onUpdateLesson={updateKanjiLesson}
+          onDeleteLesson={deleteKanjiLesson}
+          onSeedLessons={seedKanjiLessons}
+          onReorderLessons={reorderKanjiLessons}
+          onImportKanjiCard={importKanjiCard}
+          onSeedKanjiCards={seedKanjiCards}
+          getKanjiSeedCount={getKanjiSeedCount}
+          currentUser={currentUser}
+          isSuperAdmin={isSuperAdmin}
+        />
+      )}
+
       {/* Reading Tab */}
       {activeTab === 'reading' && (
         <ReadingTab
@@ -303,11 +356,12 @@ export function CardsPage({
           onAddAudio={async (data, file) => { await addListeningAudio(data, file, currentUser.id); }}
           onUpdateAudio={updateListeningAudio}
           onDeleteAudio={deleteListeningAudio}
-          onAddFolder={async (name, level, lessonType) => { await addListeningFolder(name, level, lessonType, currentUser.id); }}
+          onAddFolder={async (name, level, lessonType, lessonNumber) => { await addListeningFolder(name, level, lessonType, lessonNumber, currentUser.id); }}
           onUpdateFolder={updateListeningFolder}
           onDeleteFolder={deleteListeningFolder}
           getFoldersByLevel={getListeningFoldersByLevel}
           getFoldersByLevelAndType={getListeningFoldersByLevelAndType}
+          getFoldersByLevelLessonAndType={getListeningFoldersByLevelLessonAndType}
           getAudiosByFolder={getListeningAudiosByFolder}
           getAudioUrl={getListeningAudioUrl}
           currentUser={currentUser}

@@ -1,10 +1,10 @@
-import { ChevronRight, Check, BookOpen, Play } from 'lucide-react';
-import type { JLPTLevel, BaseLesson } from './types';
+import { ChevronRight, Check, BookOpen, Play, Headphones } from 'lucide-react';
+import type { JLPTLevel, BaseLesson, StudyMode } from './types';
 import { LEVEL_THEMES } from './constants';
 import { LessonCard } from './lesson-card';
 
 interface LessonSelectorProps {
-  type: 'vocabulary' | 'grammar';
+  type: 'vocabulary' | 'grammar' | 'kanji';
   selectedLevel: JLPTLevel;
   levelLessons: BaseLesson[];
   selectedLessons: string[];
@@ -14,7 +14,7 @@ interface LessonSelectorProps {
   onToggleLesson: (lessonId: string) => void;
   onSelectAll: () => void;
   onDeselectAll: () => void;
-  onStart: () => void;
+  onStart: (mode: StudyMode) => void;
 }
 
 export function LessonSelector({
@@ -52,11 +52,11 @@ export function LessonSelector({
             </div>
             <div className="header-info">
               <h2 className="header-title">
-                {type === 'vocabulary' ? 'Từ Vựng' : 'Ngữ Pháp'}
+                {type === 'vocabulary' ? 'Từ Vựng' : type === 'grammar' ? 'Ngữ Pháp' : 'Hán Tự'}
               </h2>
               <p className="header-subtitle">
                 {selectedLessons.length > 0
-                  ? `${selectedLessons.length} bài đã chọn • ${totalSelectedCards} ${type === 'vocabulary' ? 'từ' : 'mẫu'}`
+                  ? `${selectedLessons.length} bài đã chọn • ${totalSelectedCards} ${type === 'vocabulary' ? 'từ' : type === 'grammar' ? 'mẫu' : 'chữ'}`
                   : `${levelLessons.length} bài học`}
               </p>
             </div>
@@ -105,23 +105,58 @@ export function LessonSelector({
         )}
       </div>
 
-      {/* Footer - Only Start Button */}
+      {/* Footer */}
       <footer className="lesson-footer">
-        <button
-          className="start-btn"
-          onClick={onStart}
-          disabled={selectedLessons.length === 0}
-          style={{
-            '--btn-gradient': LEVEL_THEMES[selectedLevel].gradient,
-            '--btn-glow': LEVEL_THEMES[selectedLevel].glow,
-          } as React.CSSProperties}
-        >
-          <Play size={18} />
-          <span>Bắt đầu học</span>
-          {totalSelectedCards > 0 && (
-            <span className="btn-count">{totalSelectedCards}</span>
-          )}
-        </button>
+        {type === 'vocabulary' ? (
+          <div className="footer-buttons">
+            <button
+              className="start-btn"
+              onClick={() => onStart('flashcard')}
+              disabled={selectedLessons.length === 0}
+              style={{
+                '--btn-gradient': LEVEL_THEMES[selectedLevel].gradient,
+                '--btn-glow': LEVEL_THEMES[selectedLevel].glow,
+              } as React.CSSProperties}
+            >
+              <Play size={18} />
+              <span>Flash Card</span>
+              {totalSelectedCards > 0 && (
+                <span className="btn-count">{totalSelectedCards}</span>
+              )}
+            </button>
+            <button
+              className="start-btn listening-btn"
+              onClick={() => onStart('listening')}
+              disabled={selectedLessons.length === 0}
+              style={{
+                '--btn-gradient': 'linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)',
+                '--btn-glow': 'rgba(139, 92, 246, 0.4)',
+              } as React.CSSProperties}
+            >
+              <Headphones size={18} />
+              <span>Luyện nghe</span>
+              {totalSelectedCards > 0 && (
+                <span className="btn-count">{totalSelectedCards}</span>
+              )}
+            </button>
+          </div>
+        ) : (
+          <button
+            className="start-btn"
+            onClick={() => onStart('flashcard')}
+            disabled={selectedLessons.length === 0}
+            style={{
+              '--btn-gradient': LEVEL_THEMES[selectedLevel].gradient,
+              '--btn-glow': LEVEL_THEMES[selectedLevel].glow,
+            } as React.CSSProperties}
+          >
+            <Play size={18} />
+            <span>{type === 'kanji' ? 'Học Kanji' : 'Bắt đầu học'}</span>
+            {totalSelectedCards > 0 && (
+              <span className="btn-count">{totalSelectedCards}</span>
+            )}
+          </button>
+        )}
       </footer>
     </div>
   );

@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
-import type { JLPTLevel, Flashcard, GrammarCard, BaseLesson } from './types';
+import type { JLPTLevel, Flashcard, GrammarCard, KanjiCard, BaseLesson } from './types';
 import { JLPT_LEVELS } from './constants';
 
 export function useCardCountByLevel(
-  cards: Flashcard[] | GrammarCard[],
-  type: 'vocabulary' | 'grammar'
+  cards: Flashcard[] | GrammarCard[] | KanjiCard[],
+  type: 'vocabulary' | 'grammar' | 'kanji'
 ) {
   return useMemo(() => {
     const counts: Record<string, number> = {};
@@ -32,9 +32,9 @@ export function useLevelLessons(
 
 export function useCardsPerLesson(
   levelLessons: BaseLesson[],
-  cards: Flashcard[] | GrammarCard[],
+  cards: Flashcard[] | GrammarCard[] | KanjiCard[],
   getChildLessons: (parentId: string) => BaseLesson[],
-  type: 'vocabulary' | 'grammar'
+  type: 'vocabulary' | 'grammar' | 'kanji'
 ) {
   return useMemo(() => {
     const counts: Record<string, number> = {};

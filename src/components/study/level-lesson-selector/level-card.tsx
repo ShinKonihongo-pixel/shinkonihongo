@@ -5,7 +5,7 @@ import { LEVEL_THEMES } from './constants';
 interface LevelCardProps {
   level: JLPTLevel;
   count: number;
-  type: 'vocabulary' | 'grammar';
+  type: 'vocabulary' | 'grammar' | 'kanji';
   index: number;
   isHovered: boolean;
   onHover: (level: JLPTLevel | null) => void;
@@ -43,7 +43,7 @@ export function LevelCard({
       <div className="card-content">
         <span className="card-level">{level}</span>
         <span className="card-count">
-          {count} {type === 'vocabulary' ? 'từ' : 'mẫu'}
+          {count} {type === 'vocabulary' ? 'từ' : type === 'grammar' ? 'mẫu' : 'chữ'}
         </span>
         {!disabled && (
           <div className="card-arrow">

@@ -4,7 +4,7 @@ import { JLPT_LEVELS } from './constants';
 import { LevelCard } from './level-card';
 
 interface LevelSelectorProps {
-  type: 'vocabulary' | 'grammar';
+  type: 'vocabulary' | 'grammar' | 'kanji';
   countByLevel: Record<string, number>;
   hoveredLevel: JLPTLevel | null;
   onHover: (level: JLPTLevel | null) => void;
@@ -31,7 +31,7 @@ export function LevelSelector({
             <Sparkles className="sparkle-effect sparkle-2" size={12} />
           </div>
           <h1 className="header-title">
-            {type === 'vocabulary' ? 'Học Từ Vựng' : 'Học Ngữ Pháp'}
+            {type === 'vocabulary' ? 'Học Từ Vựng' : type === 'grammar' ? 'Học Ngữ Pháp' : 'Học Hán Tự'}
           </h1>
           <p className="header-subtitle">Chọn cấp độ JLPT để bắt đầu</p>
         </div>

@@ -67,6 +67,7 @@ const learningItems: NavItem[] = [
   { page: 'cards', label: 'Quản lí', icon: <LayoutGrid {...iconProps} />, roles: ['admin', 'super_admin'] },
   { page: 'study', label: 'Từ Vựng', icon: <Layers {...iconProps} /> },
   { page: 'grammar-study', label: 'Ngữ Pháp', icon: <FileText {...iconProps} /> },
+  { page: 'kanji-study', label: 'Hán Tự', icon: <BookOpen {...iconProps} /> },
   { page: 'reading', label: 'Đọc Hiểu', icon: <BookOpenCheck {...iconProps} /> },
   { page: 'listening', label: 'Nghe Hiểu', icon: <Headphones {...iconProps} /> },
   { page: 'exercises', label: 'Bài Tập', icon: <ClipboardList {...iconProps} /> },

@@ -1,4 +1,7 @@
 import type { JLPTLevel, Flashcard, GrammarCard } from '../../../types/flashcard';
+import type { KanjiCard } from '../../../types/kanji';
+
+export type StudyMode = 'flashcard' | 'listening';
 
 export type BaseLesson = {
   id: string;
@@ -9,12 +12,12 @@ export type BaseLesson = {
 };
 
 export interface LevelLessonSelectorProps {
-  type: 'vocabulary' | 'grammar';
-  cards: Flashcard[] | GrammarCard[];
+  type: 'vocabulary' | 'grammar' | 'kanji';
+  cards: Flashcard[] | GrammarCard[] | KanjiCard[];
   getLessonsByLevel: (level: JLPTLevel) => BaseLesson[];
   getChildLessons: (parentId: string) => BaseLesson[];
-  onStart: (selectedLessons: string[], level: JLPTLevel) => void;
+  onStart: (selectedLessons: string[], level: JLPTLevel, mode: StudyMode) => void;
   onGoHome: () => void;
 }
 
-export type { JLPTLevel, Flashcard, GrammarCard };
+export type { JLPTLevel, Flashcard, GrammarCard, KanjiCard };

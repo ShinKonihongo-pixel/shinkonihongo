@@ -4,7 +4,7 @@ import { LEVEL_THEMES } from './constants';
 
 interface LessonCardProps {
   lesson: BaseLesson;
-  type: 'vocabulary' | 'grammar';
+  type: 'vocabulary' | 'grammar' | 'kanji';
   selectedLevel: JLPTLevel;
   isSelected: boolean;
   cardCount: number;
@@ -40,7 +40,7 @@ export function LessonCard({
       <div className="lesson-info">
         <span className="lesson-name">{lesson.name}</span>
         <span className="lesson-count">
-          {cardCount} {type === 'vocabulary' ? 'từ vựng' : 'mẫu câu'}
+          {cardCount} {type === 'vocabulary' ? 'từ vựng' : type === 'grammar' ? 'mẫu câu' : 'chữ kanji'}
         </span>
       </div>
     </button>

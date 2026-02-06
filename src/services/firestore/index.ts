@@ -134,3 +134,23 @@ export {
   saveVocabularyNote,
   deleteVocabularyNote,
 } from './vocabulary-notes-service';
+
+// Kanji card operations
+export {
+  subscribeToKanjiCards,
+  addKanjiCard,
+  updateKanjiCard,
+  deleteKanjiCard,
+  deleteKanjiCardsByLesson,
+  importKanjiCard,
+} from './kanji-card-service';
+
+// Kanji lesson operations
+export {
+  getAllKanjiLessons,
+  subscribeToKanjiLessons,
+  addKanjiLesson,
+  updateKanjiLesson,
+  deleteKanjiLesson,
+  getKanjiLessonChildren,
+} from './kanji-lesson-service';

@@ -2,6 +2,7 @@
 
 export { VocabularyTab } from './vocabulary-tab';
 export { GrammarTab } from './grammar-tab';
+export { KanjiTab } from './kanji-tab';
 export { FlashcardsTab } from './flashcards-tab';
 export { LecturesTab } from './lectures-tab';
 export { JLPTTab } from './jlpt-tab';
