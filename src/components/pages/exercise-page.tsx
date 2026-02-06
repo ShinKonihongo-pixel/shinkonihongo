@@ -383,7 +383,6 @@ export function ExercisePage({ exercises, flashcards }: ExercisePageProps) {
         countByLevel={countByLevel}
         countLabel="bài tập"
         onSelectLevel={selectLevel}
-        showFrame
       />
     );
   }

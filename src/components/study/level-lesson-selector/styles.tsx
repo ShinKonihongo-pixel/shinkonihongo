@@ -49,32 +49,8 @@ export const styles = `
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 2rem 2rem 1rem;
+  padding: 100px 2rem 1rem;
   gap: 1rem;
-}
-
-/* ========== Header Frame ========== */
-.header-frame {
-  position: relative;
-  padding: 2.5rem 3rem 3rem;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  border-radius: 24px;
-  backdrop-filter: blur(8px);
-  animation: fadeInDown 0.6s ease-out;
-}
-
-.header-frame::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: 25px;
-  padding: 1px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(236, 72, 153, 0.1) 50%, rgba(99, 102, 241, 0.2) 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
 }
 
 /* ========== Premium Header ========== */
@@ -83,27 +59,13 @@ export const styles = `
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2rem;
+  gap: 1rem;
+  animation: fadeInDown 0.6s ease-out;
 }
 
 @keyframes fadeInDown {
   from { opacity: 0; transform: translateY(-20px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-.header-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 1rem;
-  background: rgba(99, 102, 241, 0.15);
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  border-radius: 50px;
-  color: #a5b4fc;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .header-main {
@@ -171,15 +133,31 @@ export const styles = `
   margin: 0;
 }
 
-/* ========== Level Cards Grid ========== */
+/* ========== Level Cards Grid (3+2 layout) ========== */
 .levels-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 1.25rem;
   max-width: 1000px;
   width: 100%;
-  margin-top: 6rem;
+  margin-top: 3rem;
   animation: fadeInUp 0.6s ease-out 0.2s both;
+}
+
+/* Row 1: N5, N4, N3 = 2 cols each */
+.levels-grid .level-card:nth-child(1),
+.levels-grid .level-card:nth-child(2),
+.levels-grid .level-card:nth-child(3) {
+  grid-column: span 2;
+}
+
+/* Row 2: N2, N1 = 3 cols each (centered) */
+.levels-grid .level-card:nth-child(4) {
+  grid-column: 1 / span 3;
+}
+
+.levels-grid .level-card:nth-child(5) {
+  grid-column: 4 / span 3;
 }
 
 @keyframes fadeInUp {
@@ -654,7 +632,7 @@ export const styles = `
 /* ========== Responsive ========== */
 @media (max-width: 768px) {
   .selector-container {
-    padding: 1.5rem 1rem 1rem;
+    padding: 100px 1rem 1rem;
     gap: 0.75rem;
   }
 
@@ -668,9 +646,23 @@ export const styles = `
   }
 
   .levels-grid {
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 0.75rem;
     margin-top: 1.5rem;
+  }
+
+  .levels-grid .level-card:nth-child(1),
+  .levels-grid .level-card:nth-child(2),
+  .levels-grid .level-card:nth-child(3) {
+    grid-column: span 2;
+  }
+
+  .levels-grid .level-card:nth-child(4) {
+    grid-column: 1 / span 3;
+  }
+
+  .levels-grid .level-card:nth-child(5) {
+    grid-column: 4 / span 3;
   }
 
   .level-card {
@@ -703,13 +695,8 @@ export const styles = `
 
 @media (max-width: 480px) {
   .selector-container {
-    padding: 1rem 0.75rem 0.5rem;
+    padding: 100px 0.75rem 0.5rem;
     gap: 0.5rem;
-  }
-
-  .header-badge {
-    font-size: 0.65rem;
-    padding: 0.3rem 0.75rem;
   }
 
   .header-title {

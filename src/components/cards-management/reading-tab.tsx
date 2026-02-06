@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Edit2, Trash2, ChevronRight, BookOpen, FolderOpen, Plus, FileText, HelpCircle, CheckCircle2, Sparkles, ArrowLeft, Wand2, Loader2 } from 'lucide-react';
 import { useGroq } from '../../hooks/use-groq';
 import { ConfirmModal } from '../ui/confirm-modal';
+import { LevelGrid } from './level-grid';
 import type { ReadingPassage, ReadingPassageFormData, ReadingFolder, ReadingAnswer, ReadingVocabulary } from '../../types/reading';
 import type { JLPTLevel } from '../../types/flashcard';
 import type { CurrentUser } from '../../types/user';
@@ -647,28 +648,11 @@ export function ReadingTab({
         <div className="rt-content">
           {/* Root - show levels */}
           {navState.type === 'root' && (
-            <div className="rt-levels-grid">
-              {JLPT_LEVELS.map((level, idx) => {
-                const theme = LEVEL_THEMES[level];
-                const count = getPassageCountByLevel(level);
-                return (
-                  <div
-                    key={level}
-                    className="rt-level-card"
-                    onClick={() => setNavState({ type: 'level', level })}
-                    style={{ '--card-delay': `${idx * 0.08}s`, '--level-gradient': theme.gradient, '--level-glow': theme.glow, '--level-light': theme.light } as React.CSSProperties}
-                  >
-                    <div className="rt-level-icon">{theme.icon}</div>
-                    <div className="rt-level-info">
-                      <h3>{level}</h3>
-                      <span>{count} bài đọc</span>
-                    </div>
-                    <ChevronRight size={20} className="rt-level-arrow" />
-                    <div className="rt-level-shine" />
-                  </div>
-                );
-              })}
-            </div>
+            <LevelGrid
+              onSelectLevel={(level) => setNavState({ type: 'level', level })}
+              getCount={getPassageCountByLevel}
+              countLabel="bài đọc"
+            />
           )}
 
           {/* Level - show folders */}

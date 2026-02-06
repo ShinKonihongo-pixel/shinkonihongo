@@ -119,3 +119,18 @@ export {
   updateCustomTopicQuestion,
   deleteCustomTopicQuestion,
 } from './custom-topic-service';
+
+// Kanji analysis operations
+export {
+  getKanjiAnalysis,
+  getMultipleKanjiAnalysis,
+  saveKanjiAnalysis,
+  saveMultipleKanjiAnalysis,
+} from './kanji-analysis-service';
+
+// Vocabulary notes operations
+export {
+  getVocabularyNote,
+  saveVocabularyNote,
+  deleteVocabularyNote,
+} from './vocabulary-notes-service';

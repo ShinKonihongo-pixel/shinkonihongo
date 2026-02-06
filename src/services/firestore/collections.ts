@@ -36,6 +36,8 @@ export const COLLECTIONS = {
   CUSTOM_TOPICS: 'customTopics',
   CUSTOM_TOPIC_FOLDERS: 'customTopicFolders',
   CUSTOM_TOPIC_QUESTIONS: 'customTopicQuestions',
+  KANJI_ANALYSIS: 'kanjiAnalysis',
+  VOCABULARY_NOTES: 'vocabularyNotes',
 } as const;
 
 // Shared utilities

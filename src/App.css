@@ -6038,7 +6038,7 @@ select, option {
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .study-session::before {
@@ -6062,6 +6062,7 @@ select, option {
   gap: var(--space-md);
   position: relative;
   z-index: 10;
+  flex-shrink: 0;
 }
 
 .progress-info {
@@ -6111,6 +6112,8 @@ select, option {
   position: relative;
   z-index: 5;
   padding: 0.25rem 0.5rem;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 @media (min-width: 640px) {
@@ -6522,9 +6525,9 @@ select, option {
   border-radius: 4px;
 }
 
-/* Filter select styling */
+/* Filter select styling - scoped to study header */
 
-.filter-select {
+.study-header .filter-select {
   padding: 0.4rem 0.6rem;
   border: none;
   border-radius: 8px;
@@ -6543,13 +6546,13 @@ select, option {
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
 }
 
-.filter-select option {
+.study-header .filter-select option {
   background: #1e293b;
   color: white;
 }
 
-.filter-select:focus,
-.filter-select:hover {
+.study-header .filter-select:focus,
+.study-header .filter-select:hover {
   outline: none;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 0.5rem center, linear-gradient(135deg, #7c3aed, #9333ea);
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
@@ -6573,6 +6576,7 @@ select, option {
   backdrop-filter: blur(10px);
   position: relative;
   z-index: 5;
+  flex-shrink: 0;
 }
 
 @media (min-width: 640px) {
@@ -6792,6 +6796,14 @@ select, option {
 .header-action-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.header-action-btn.has-label {
+  width: auto;
+  padding: 0 0.6rem;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 /* Card wrapper for positioning counter */

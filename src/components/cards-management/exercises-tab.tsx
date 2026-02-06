@@ -8,6 +8,7 @@ import type { JLPTLevel, Lesson, Flashcard } from '../../types/flashcard';
 import type { CurrentUser } from '../../types/user';
 import { EXERCISE_TYPE_LABELS, EXERCISE_TYPE_ICONS, QUESTION_COUNT_OPTIONS, TIME_PER_QUESTION_OPTIONS, getTotalQuestionCount, initQuestionCountByType } from '../../types/exercise';
 import { ConfirmModal } from '../ui/confirm-modal';
+import { LevelGrid } from './level-grid';
 
 const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 const EXERCISE_TYPES: ExerciseType[] = ['vocabulary', 'meaning', 'kanji_to_vocab', 'vocab_to_kanji', 'listening_write', 'sentence_translation'];
@@ -216,36 +217,11 @@ export function ExercisesTab({
     <div className="exercises-tab">
       {/* Level Navigation - Root view */}
       {!selectedLevel && !showForm && (
-        <div className="exercises-level-nav">
-          <h3 className="level-nav-title">Chọn cấp độ</h3>
-          <div className="level-folders">
-            {JLPT_LEVELS.map(level => {
-              const count = getExerciseCountByLevel(level);
-              const publishedInLevel = getExercisesByLevel(level).filter(e => e.isPublished).length;
-              const colors = LEVEL_COLORS[level];
-              return (
-                <div
-                  key={level}
-                  className="level-folder"
-                  style={{
-                    backgroundColor: colors.bg,
-                    borderColor: colors.border,
-                  }}
-                  onClick={() => setSelectedLevel(level)}
-                >
-                  <span className="level-folder-icon">📂</span>
-                  <div className="level-folder-info">
-                    <span className="level-folder-name" style={{ color: colors.text }}>{level}</span>
-                    <span className="level-folder-count">
-                      {count} bài tập {publishedInLevel > 0 && <span className="published-mini">({publishedInLevel} đã xuất bản)</span>}
-                    </span>
-                  </div>
-                  <span className="level-folder-arrow" style={{ color: colors.text }}>→</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <LevelGrid
+          onSelectLevel={setSelectedLevel}
+          getCount={getExerciseCountByLevel}
+          countLabel="bài tập"
+        />
       )}
 
       {/* Back button and header when level is selected */}

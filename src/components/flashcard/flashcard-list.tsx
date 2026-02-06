@@ -180,6 +180,7 @@ export function FlashcardList({ cards, onEdit, onDelete, onReset, canEdit, canDe
         onConfirm={handleResetConfirm}
         onCancel={() => setResetTarget(null)}
       />
+
     </div>
   );
 }

@@ -691,19 +691,6 @@ export function ReadingPracticePage({
           box-sizing: border-box;
         }
 
-        /* Premium Header */
-        .premium-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 2rem;
-          padding: 1rem 1.5rem;
-          background: rgba(255, 255, 255, 0.03);
-          backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 16px;
-        }
-
         .header-content {
           display: flex;
           align-items: center;
@@ -2676,12 +2663,6 @@ export function ReadingPracticePage({
         @media (max-width: 640px) {
           .reading-practice-page {
             padding: 1rem;
-          }
-
-          .premium-header {
-            padding: 1rem;
-            flex-wrap: wrap;
-            gap: 1rem;
           }
 
           .header-text h1 {

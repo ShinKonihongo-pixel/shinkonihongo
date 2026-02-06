@@ -297,6 +297,15 @@ export function ListeningPracticePage({
     setCurrentIndex(0);
   };
 
+  // Handle filter change - reset index to avoid out of bounds
+  const handleFilterChange = (filter: typeof memorizationFilter) => {
+    setMemorizationFilter(filter);
+    setCurrentIndex(0);
+    setCurrentRepeat(0);
+    window.speechSynthesis?.cancel();
+    setIsPlaying(false);
+  };
+
   return (
     <div className="listening-practice-page">
       {viewMode === 'level-select' && (
@@ -342,7 +351,7 @@ export function ListeningPracticePage({
           showInlineSettings={showInlineSettings}
           onBack={goBack}
           onOpenSettings={() => setShowSettingsModal(true)}
-          onFilterChange={setMemorizationFilter}
+          onFilterChange={handleFilterChange}
           onTogglePlay={togglePlay}
           onPrevious={goToPrevious}
           onNext={goToNext}

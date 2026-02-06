@@ -100,6 +100,33 @@ export interface GrammarCardFormData {
   lessonId: string;
 }
 
+// Kanji character analysis - stored per individual character (reusable across words)
+export interface KanjiCharacterAnalysis {
+  id: string;              // The Kanji character itself
+  character: string;
+  onYomi: string[];        // e.g. ["ショク", "ジキ"]
+  kunYomi: string[];       // e.g. ["た.べる", "く.う"]
+  sinoVietnamese: string;  // e.g. "THỰC"
+  mnemonic: string;        // Memory tip (Vietnamese)
+  sampleWords: KanjiSampleWord[];
+  createdAt: string;
+}
+
+export interface KanjiSampleWord {
+  word: string;            // e.g. "食事"
+  reading: string;         // e.g. "しょくじ"
+  meaning: string;         // e.g. "Bữa ăn"
+}
+
+// User personal notes per vocabulary flashcard
+export interface VocabularyNote {
+  id: string;              // ${userId}_${flashcardId}
+  userId: string;
+  flashcardId: string;
+  content: string;
+  updatedAt: string;
+}
+
 // Bài học ngữ pháp - riêng biệt với bài học từ vựng
 export interface GrammarLesson {
   id: string;

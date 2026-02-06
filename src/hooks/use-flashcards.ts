@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { Flashcard, FlashcardFormData, JLPTLevel } from '../types/flashcard';
 import * as firestoreService from '../services/firestore';
+import { extractKanjiCharacters, generateKanjiCharacterAnalysis } from '../services/kanji-analysis-ai-service';
 
 export function useFlashcards() {
   const [cards, setCards] = useState<Flashcard[]>([]);
@@ -24,6 +25,26 @@ export function useFlashcards() {
   const addCard = useCallback(async (data: FlashcardFormData, createdBy?: string) => {
     try {
       const newCard = await firestoreService.addFlashcard(data, createdBy);
+
+      // Background: generate Kanji analysis for new characters (fire-and-forget)
+      const kanjiText = data.kanji || data.vocabulary;
+      const chars = extractKanjiCharacters(kanjiText);
+      if (chars.length > 0) {
+        (async () => {
+          try {
+            const existing = await firestoreService.getMultipleKanjiAnalysis(chars);
+            const existingChars = new Set(existing.map((a) => a.character));
+            const missing = chars.filter((c) => !existingChars.has(c));
+            if (missing.length > 0) {
+              const generated = await generateKanjiCharacterAnalysis(missing);
+              await firestoreService.saveMultipleKanjiAnalysis(generated);
+            }
+          } catch (err) {
+            console.error('Background kanji analysis error:', err);
+          }
+        })();
+      }
+
       return newCard;
     } catch (err) {
       setError('Failed to add flashcard');

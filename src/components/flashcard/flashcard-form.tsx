@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { Sparkles, RefreshCw, BookOpen } from 'lucide-react';
 import type { FlashcardFormData, JLPTLevel, Flashcard, Lesson, DifficultyLevel, GrammarCard } from '../../types/flashcard';
 import { generateKanjiInfo, generateExample, generateMeaningFromVocabulary, generateExampleWithGrammar, type GrammarPattern } from '../../services/kanji-ai-service';
-
 interface FlashcardFormProps {
   onSubmit: (data: FlashcardFormData) => void;
   onCancel: () => void;
@@ -15,6 +14,8 @@ interface FlashcardFormProps {
   fixedLessonId?: string | null;
   // Grammar cards for generating examples with grammar patterns
   grammarCards?: GrammarCard[];
+  // Callback to notify parent of kanji text changes (for external kanji analysis)
+  onKanjiTextChange?: (text: string) => void;
 }
 
 const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
@@ -34,6 +35,7 @@ export function FlashcardForm({
   fixedLevel,
   fixedLessonId,
   grammarCards = [],
+  onKanjiTextChange,
 }: FlashcardFormProps) {
   const [formData, setFormData] = useState<FlashcardFormData>({
     vocabulary: '',
@@ -77,6 +79,11 @@ export function FlashcardForm({
       });
     }
   }, [initialData]);
+
+  // Notify parent of kanji text changes
+  useEffect(() => {
+    onKanjiTextChange?.(formData.kanji || formData.vocabulary);
+  }, [formData.kanji, formData.vocabulary]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>

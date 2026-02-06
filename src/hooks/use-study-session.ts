@@ -171,11 +171,16 @@ export function useStudySession({
     }));
   }, [currentCard, updateCard]);
 
-  // Set difficulty level for current card
+  // Set difficulty level for current card (preserves original difficulty from creation)
   const setDifficultyLevel = useCallback((level: DifficultyLevel) => {
     if (!currentCard) return;
 
-    updateCard(currentCard.id, { difficultyLevel: level });
+    const update: Partial<Flashcard> = { difficultyLevel: level };
+    // Save original difficulty on first study change (so management tab can show it)
+    if (!currentCard.originalDifficultyLevel) {
+      update.originalDifficultyLevel = currentCard.difficultyLevel;
+    }
+    updateCard(currentCard.id, update);
   }, [currentCard, updateCard]);
 
   return {

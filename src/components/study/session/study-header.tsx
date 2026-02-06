@@ -1,7 +1,12 @@
 // Study session header with filters and controls
-import { ArrowLeft, Settings } from 'lucide-react';
-import type { MemorizationStatus, DifficultyLevel, JLPTLevel } from '../../../types/flashcard';
+import { useState } from 'react';
+import { ArrowLeft, Settings, BookOpen, PenLine } from 'lucide-react';
+import type { MemorizationStatus, DifficultyLevel, JLPTLevel, Flashcard } from '../../../types/flashcard';
 import { MEMORIZATION_OPTIONS, DIFFICULTY_OPTIONS, LEVEL_COLORS } from './constants';
+import { useAuth } from '../../../hooks/use-auth';
+import { KanjiDetailModal } from '../../flashcard/kanji-detail-modal';
+import { VocabularyNotesModal } from '../../flashcard/vocabulary-notes-modal';
+import { ConfirmModal } from '../../ui/confirm-modal';
 
 interface StudyHeaderProps {
   selectedLevel?: JLPTLevel;
@@ -17,6 +22,7 @@ interface StudyHeaderProps {
   onSettingsClick: () => void;
   onBack?: () => void;
   isMobile: boolean;
+  currentCard?: Flashcard;
 }
 
 export function StudyHeader({
@@ -33,8 +39,13 @@ export function StudyHeader({
   onSettingsClick,
   onBack,
   isMobile,
+  currentCard,
 }: StudyHeaderProps) {
+  const { currentUser } = useAuth();
   const levelColors = selectedLevel ? LEVEL_COLORS[selectedLevel] : null;
+  const [showDetail, setShowDetail] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   return (
     <div className="study-header">
@@ -45,7 +56,8 @@ export function StudyHeader({
             {!isMobile && <span>Chọn bài khác</span>}
           </button>
         )}
-        {selectedLevel && levelColors && (
+        {/* Hide level badge on mobile */}
+        {!isMobile && selectedLevel && levelColors && (
           <span
             className="level-badge-study"
             style={{ background: levelColors.bg, color: levelColors.text }}
@@ -90,12 +102,25 @@ export function StudyHeader({
           </div>
         )}
         <div className="header-actions">
+          {/* Detail & Notes buttons - same style as action buttons */}
+          {currentCard && (
+            <button className="header-action-btn has-label" onClick={() => setShowDetail(true)} title="Chi tiết Kanji">
+              <BookOpen size={16} />
+              {!isMobile && <span className="btn-label">Chi tiết</span>}
+            </button>
+          )}
+          {currentCard && currentUser && (
+            <button className="header-action-btn has-label" onClick={() => setShowNotes(true)} title="Ghi chú">
+              <PenLine size={16} />
+              {!isMobile && <span className="btn-label">Ghi chú</span>}
+            </button>
+          )}
           <button className="header-action-btn" onClick={onShuffle} title="Xáo trộn thẻ">
             🔀
           </button>
           <button
             className="header-action-btn"
-            onClick={onResetOrder}
+            onClick={() => setShowResetConfirm(true)}
             title="Về thứ tự gốc"
             disabled={!isShuffled}
           >
@@ -106,6 +131,30 @@ export function StudyHeader({
           </button>
         </div>
       </div>
+
+      {/* Modals */}
+      {showDetail && currentCard && (
+        <KanjiDetailModal
+          flashcard={currentCard}
+          onClose={() => setShowDetail(false)}
+          readOnly
+        />
+      )}
+      {showNotes && currentCard && currentUser && (
+        <VocabularyNotesModal
+          flashcard={currentCard}
+          userId={currentUser.id}
+          onClose={() => setShowNotes(false)}
+        />
+      )}
+      <ConfirmModal
+        isOpen={showResetConfirm}
+        title="Xác nhận đặt lại"
+        message="Bạn có chắc muốn đặt lại thứ tự thẻ về ban đầu?"
+        confirmText="OK"
+        onConfirm={() => { onResetOrder(); setShowResetConfirm(false); }}
+        onCancel={() => setShowResetConfirm(false)}
+      />
     </div>
   );
 }

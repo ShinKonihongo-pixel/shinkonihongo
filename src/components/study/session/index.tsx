@@ -83,6 +83,7 @@ export function StudySession({
         onSettingsClick={() => setShowSettingsModal(true)}
         onBack={onBack}
         isMobile={isMobile}
+        currentCard={currentCard}
       />
 
       <CardArea

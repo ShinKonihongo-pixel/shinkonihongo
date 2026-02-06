@@ -8,6 +8,7 @@ import {
   BookOpen, MessageCircle, Layers, Wand2, Loader2
 } from 'lucide-react';
 import { useGroq } from '../../hooks/use-groq';
+import { LevelGrid } from './level-grid';
 import type { JLPTLevel } from '../../types/flashcard';
 import type { CurrentUser } from '../../types/user';
 import type { ListeningAudio, ListeningFolder, ListeningLessonType } from '../../types/listening';
@@ -248,30 +249,11 @@ export function ListeningTab({
           </div>
         </div>
 
-        <div className="level-grid">
-          {JLPT_LEVELS.map((level, idx) => {
-            const theme = LEVEL_THEMES[level];
-            const count = getCountByLevel(level);
-            return (
-              <button
-                key={level}
-                className="level-card"
-                onClick={() => goToLevel(level)}
-                style={{
-                  '--card-delay': `${idx * 0.1}s`,
-                  '--level-gradient': theme.gradient,
-                  '--level-glow': theme.glow,
-                  '--level-border': theme.border,
-                } as React.CSSProperties}
-              >
-                <span className="level-name">{level}</span>
-                <span className="level-count">{count} file</span>
-                <ChevronRight size={18} className="level-arrow" />
-                <div className="card-shine" />
-              </button>
-            );
-          })}
-        </div>
+        <LevelGrid
+          onSelectLevel={goToLevel}
+          getCount={getCountByLevel}
+          countLabel="file"
+        />
 
         <audio ref={audioRef} onEnded={() => setPlayingAudioId(null)} />
 

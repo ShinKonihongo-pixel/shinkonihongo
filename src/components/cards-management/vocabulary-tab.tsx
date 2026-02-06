@@ -2,10 +2,12 @@
 // Features: Drag-and-drop reordering, lock/hide, import/export
 
 import { useState, useRef } from 'react';
-import { Download, Upload, GripVertical } from 'lucide-react';
+import { Download, Upload, GripVertical, PenLine, Languages } from 'lucide-react';
 import { FlashcardForm } from '../flashcard/flashcard-form';
 import { FlashcardList } from '../flashcard/flashcard-list';
+import { KanjiAnalysisEditor } from '../flashcard/kanji-analysis-editor';
 import { ConfirmModal } from '../ui/confirm-modal';
+import { LevelGrid } from './level-grid';
 import type { VocabularyTabProps, FlashcardNavState, Flashcard, Lesson, JLPTLevel } from './cards-management-types';
 import { JLPT_LEVELS } from './cards-management-types';
 import { seedN5Lessons, seedN4Lessons, fixLessonOrder } from '../../scripts/seed-n5-lessons';
@@ -84,6 +86,11 @@ export function VocabularyTab({
   const [isImporting, setIsImporting] = useState(false);
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sub-tab state for form view: 'vocabulary' or 'kanji'
+  const [formSubTab, setFormSubTab] = useState<'vocabulary' | 'kanji'>('vocabulary');
+  // Track kanji text from the form for the kanji analysis tab
+  const [formKanjiText, setFormKanjiText] = useState('');
 
   // Drag-and-drop state
   const [draggedLesson, setDraggedLesson] = useState<Lesson | null>(null);
@@ -348,6 +355,8 @@ export function VocabularyTab({
     else if (navState.type === 'childLesson') setNavState({ type: 'parentLesson', level: navState.level, lessonId: navState.parentId, lessonName: navState.parentName });
     setShowForm(false);
     setAddingLesson(false);
+    setFormSubTab('vocabulary');
+    setFormKanjiText('');
   };
 
   const handleSubmit = (data: any) => {
@@ -355,6 +364,8 @@ export function VocabularyTab({
     else onAddCard(data, currentUser.id);
     setShowForm(false);
     setEditingCard(null);
+    setFormSubTab('vocabulary');
+    setFormKanjiText('');
   };
 
   const handleAddLesson = () => {
@@ -515,21 +526,138 @@ export function VocabularyTab({
       )}
 
       {showForm && (
-        <FlashcardForm onSubmit={handleSubmit} onCancel={() => { setShowForm(false); setEditingCard(null); }} initialData={editingCard || undefined} lessons={getLessonsForForm()} fixedLevel={getCurrentLevel()} fixedLessonId={getCurrentLessonId()} grammarCards={grammarCards} />
+        <>
+          {/* Sub-tabs: Vocabulary form vs Kanji analysis */}
+          <div className="form-sub-tabs">
+            <button
+              className={`form-sub-tab ${formSubTab === 'vocabulary' ? 'active' : ''}`}
+              onClick={() => setFormSubTab('vocabulary')}
+            >
+              <PenLine size={15} />
+              <span>Tạo từ vựng</span>
+            </button>
+            <button
+              className={`form-sub-tab ${formSubTab === 'kanji' ? 'active' : ''}`}
+              onClick={() => setFormSubTab('kanji')}
+            >
+              <Languages size={15} />
+              <span>Phân tích Kanji</span>
+            </button>
+          </div>
+
+          {formSubTab === 'vocabulary' ? (
+            <FlashcardForm
+              onSubmit={handleSubmit}
+              onCancel={() => { setShowForm(false); setEditingCard(null); setFormSubTab('vocabulary'); setFormKanjiText(''); }}
+              initialData={editingCard || undefined}
+              lessons={getLessonsForForm()}
+              fixedLevel={getCurrentLevel()}
+              fixedLessonId={getCurrentLessonId()}
+              grammarCards={grammarCards}
+              onKanjiTextChange={setFormKanjiText}
+            />
+          ) : (
+            <div className="kanji-analysis-standalone">
+              {formKanjiText ? (
+                <KanjiAnalysisEditor kanjiText={formKanjiText} />
+              ) : (
+                <div className="kanji-analysis-empty">
+                  <Languages size={32} style={{ color: '#6366f1', opacity: 0.4 }} />
+                  <p>Nhập Kanji hoặc từ vựng ở tab <strong>Tạo từ vựng</strong> trước</p>
+                  <button className="btn btn-secondary" onClick={() => setFormSubTab('vocabulary')}>
+                    Quay lại tạo từ vựng
+                  </button>
+                </div>
+              )}
+              <div className="kanji-tab-actions">
+                <button className="btn btn-secondary" onClick={() => { setShowForm(false); setEditingCard(null); setFormSubTab('vocabulary'); setFormKanjiText(''); }}>
+                  Hủy
+                </button>
+                <button className="btn btn-primary" onClick={() => setFormSubTab('vocabulary')}>
+                  ← Quay lại form
+                </button>
+              </div>
+            </div>
+          )}
+
+          <style>{`
+            .form-sub-tabs {
+              display: flex;
+              gap: 0;
+              margin-bottom: 0.75rem;
+              border-radius: 10px;
+              overflow: hidden;
+              border: 1px solid var(--border-color, #e2e8f0);
+              background: var(--bg-secondary, #f8fafc);
+            }
+            .form-sub-tab {
+              flex: 1;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 0.375rem;
+              padding: 0.625rem 0.75rem;
+              border: none;
+              background: transparent;
+              color: #64748b;
+              font-size: 0.85rem;
+              font-weight: 500;
+              cursor: pointer;
+              transition: all 0.2s;
+              position: relative;
+            }
+            .form-sub-tab:first-child {
+              border-right: 1px solid var(--border-color, #e2e8f0);
+            }
+            .form-sub-tab.active {
+              background: white;
+              color: #4338ca;
+              font-weight: 600;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            }
+            .form-sub-tab:hover:not(.active) {
+              background: rgba(99, 102, 241, 0.04);
+              color: #475569;
+            }
+            .kanji-analysis-standalone {
+              display: flex;
+              flex-direction: column;
+              gap: 0.75rem;
+            }
+            .kanji-analysis-empty {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 0.75rem;
+              padding: 2rem 1rem;
+              text-align: center;
+              color: #64748b;
+              font-size: 0.9rem;
+              border: 2px dashed var(--border-color, #e2e8f0);
+              border-radius: 12px;
+              background: rgba(99, 102, 241, 0.02);
+            }
+            .kanji-analysis-empty p {
+              margin: 0;
+            }
+            .kanji-tab-actions {
+              display: flex;
+              gap: 0.5rem;
+              justify-content: flex-end;
+              padding-top: 0.5rem;
+            }
+          `}</style>
+        </>
       )}
 
       {!showForm && !addingLesson && (
         <div className="folder-content">
           {navState.type === 'root' && (
-            <div className="folder-list">
-              {JLPT_LEVELS.map(level => (
-                <div key={level} className="folder-item" onClick={() => setNavState({ type: 'level', level })}>
-                  <span className="folder-icon">📁</span>
-                  <span className="folder-name">{level}</span>
-                  <span className="folder-count">({getCardCountByLevel(level)} từ)</span>
-                </div>
-              ))}
-            </div>
+            <LevelGrid
+              onSelectLevel={(level) => setNavState({ type: 'level', level })}
+              getCount={getCardCountByLevel}
+              countLabel="từ"
+            />
           )}
 
           {navState.type === 'level' && (

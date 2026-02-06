@@ -5,6 +5,7 @@ import { useState, useRef } from 'react';
 import { Download, Upload, BookOpen, FolderOpen, FileText, ChevronRight, Plus, Trash2, Edit2, GripVertical } from 'lucide-react';
 import { GrammarCardForm } from '../flashcard/grammar-card-form';
 import { GrammarCardList } from '../flashcard/grammar-card-list';
+import { LevelGrid } from './level-grid';
 import type { GrammarTabProps, GrammarCard, GrammarLesson, JLPTLevel } from './cards-management-types';
 
 // JLPT Levels
@@ -559,9 +560,11 @@ export function GrammarTab({
         <>
           {/* Root: Level Grid */}
           {navState.type === 'root' && (
-            <div className="grammar-level-grid">
-              {JLPT_LEVELS.map(level => renderLevelCard(level))}
-            </div>
+            <LevelGrid
+              onSelectLevel={(level) => setNavState({ type: 'level', level })}
+              getCount={getCardCountByLevel}
+              countLabel="mẫu"
+            />
           )}
 
           {/* Level: Lesson List */}
