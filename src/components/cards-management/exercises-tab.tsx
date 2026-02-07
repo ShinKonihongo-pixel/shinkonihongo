@@ -15,6 +15,7 @@ const EXERCISE_TYPES: ExerciseType[] = ['vocabulary', 'meaning', 'kanji_to_vocab
 
 // Level colors for visual distinction
 const LEVEL_COLORS: Record<JLPTLevel, { bg: string; text: string; border: string }> = {
+  BT: { bg: '#ede9fe', text: '#6d28d9', border: '#a78bfa' },
   N5: { bg: '#e8f5e9', text: '#2e7d32', border: '#81c784' },
   N4: { bg: '#e3f2fd', text: '#1565c0', border: '#64b5f6' },
   N3: { bg: '#fff3e0', text: '#ef6c00', border: '#ffb74d' },

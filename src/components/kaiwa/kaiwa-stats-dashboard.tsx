@@ -35,6 +35,7 @@ interface KaiwaStatsDashboardProps {
 type DashboardTab = 'overview' | 'achievements' | 'history' | 'levels';
 
 const JLPT_COLORS: Record<JLPTLevel, string> = {
+  BT: '#8b5cf6',
   N5: '#22c55e',
   N4: '#3b82f6',
   N3: '#a855f7',

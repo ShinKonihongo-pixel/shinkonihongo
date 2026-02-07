@@ -88,7 +88,7 @@ export function useFlashcards() {
 
   // Get stats by level
   const getStatsByLevel = useCallback(() => {
-    const stats: Record<JLPTLevel, number> = { N5: 0, N4: 0, N3: 0, N2: 0, N1: 0 };
+    const stats: Record<JLPTLevel, number> = { BT: 0, N5: 0, N4: 0, N3: 0, N2: 0, N1: 0 };
     cards.forEach(card => {
       stats[card.jlptLevel]++;
     });

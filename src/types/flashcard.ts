@@ -1,6 +1,6 @@
 // Flashcard data types for Japanese learning app
 
-export type JLPTLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1';
+export type JLPTLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | 'BT';
 
 // Bài học - thuộc về 1 Level hoặc 1 bài học cha
 export interface Lesson {

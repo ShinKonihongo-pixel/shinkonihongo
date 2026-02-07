@@ -44,7 +44,7 @@ export function ReadingPracticePage({
   }, [practiceState.selectedFolder, getPassagesByFolder]);
 
   const countByLevel = useMemo(() => {
-    const counts: Record<JLPTLevel, number> = { N5: 0, N4: 0, N3: 0, N2: 0, N1: 0 };
+    const counts: Record<JLPTLevel, number> = { BT: 0, N5: 0, N4: 0, N3: 0, N2: 0, N1: 0 };
     passages.forEach(p => { counts[p.jlptLevel]++; });
     return counts;
   }, [passages]);

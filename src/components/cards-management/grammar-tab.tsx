@@ -10,6 +10,7 @@ import type { GrammarTabProps, GrammarCard, GrammarLesson, JLPTLevel } from './c
 
 // Seed config for each level
 const SEED_CONFIG: Record<JLPTLevel, { start: number; end: number; folders: string[] }> = {
+  BT: { start: 0, end: 0, folders: [] },
   N5: { start: 1, end: 25, folders: ['Ngữ pháp', 'Mở rộng'] },
   N4: { start: 26, end: 50, folders: ['Ngữ pháp', 'Mở rộng'] },
   N3: { start: 1, end: 20, folders: ['Ngữ pháp', 'Mở rộng'] },

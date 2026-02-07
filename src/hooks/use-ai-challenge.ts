@@ -50,7 +50,7 @@ function saveProgress(level: JLPTLevel, totalWins: number, totalGames: number): 
 
 // Load progress for all levels
 function loadAllProgress(): Record<JLPTLevel, { totalWins: number; totalGames: number }> {
-  const levels: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
+  const levels: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1', 'BT'];
   const result: Record<string, { totalWins: number; totalGames: number }> = {};
   for (const level of levels) {
     result[level] = loadProgress(level);

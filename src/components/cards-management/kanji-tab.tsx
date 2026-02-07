@@ -10,8 +10,12 @@ import type { JLPTLevel } from './cards-management-types';
 import type { KanjiCard, KanjiCardFormData, KanjiLesson } from '../../types/kanji';
 import type { CurrentUser } from '../../types/user';
 
+// BT levels array (includes Bộ thủ)
+const KANJI_LEVELS: JLPTLevel[] = ['BT', 'N5', 'N4', 'N3', 'N2', 'N1'];
+
 // Seed config for each level
 const SEED_CONFIG: Record<JLPTLevel, { start: number; end: number; folders: string[] }> = {
+  BT: { start: 1, end: 17, folders: [] },
   N5: { start: 1, end: 10, folders: ['Kanji', 'Luyện tập'] },
   N4: { start: 1, end: 15, folders: ['Kanji', 'Luyện tập'] },
   N3: { start: 1, end: 20, folders: ['Kanji', 'Luyện tập'] },
@@ -110,9 +114,22 @@ export function KanjiTab({
     if (navState.type !== 'level') return;
     setIsSeeding(true);
     try {
-      const config = SEED_CONFIG[navState.level];
-      const count = await onSeedLessons(navState.level, config.start, config.end, config.folders, currentUser.id);
-      alert(`Đã tạo ${count} bài mới!`);
+      if (navState.level === 'BT') {
+        // BT: create stroke-count lessons "1 nét" through "17 nét"
+        let created = 0;
+        for (let i = 1; i <= 17; i++) {
+          const existing = getParentLessonsByLevel('BT').find(l => l.name === `${i} nét`);
+          if (!existing) {
+            await onAddLesson(`${i} nét`, 'BT', null, currentUser.id);
+            created++;
+          }
+        }
+        alert(`Đã tạo ${created} bài mới!`);
+      } else {
+        const config = SEED_CONFIG[navState.level];
+        const count = await onSeedLessons(navState.level, config.start, config.end, config.folders, currentUser.id);
+        alert(`Đã tạo ${count} bài mới!`);
+      }
     } catch { alert('Lỗi khi tạo bài!'); }
     setIsSeeding(false);
   };
@@ -137,7 +154,8 @@ export function KanjiTab({
       return;
     }
     const seedCount = getKanjiSeedCount?.(navState.level) ?? 0;
-    if (!confirm(`Tạo ${seedCount} chữ Kanji ${navState.level} vào ${kanjiLessonIds.length} bài?`)) return;
+    const levelLabel = navState.level === 'BT' ? 'Bộ thủ' : navState.level;
+    if (!confirm(`Tạo ${seedCount} chữ ${levelLabel} vào ${kanjiLessonIds.length} bài?`)) return;
     setIsSeedingCards(true);
     try {
       const count = await onSeedKanjiCards(navState.level, kanjiLessonIds, currentUser.id);
@@ -214,7 +232,8 @@ export function KanjiTab({
       { label: 'Hán Tự', onClick: () => setNavState({ type: 'root' }) },
     ];
     if (navState.type !== 'root') {
-      crumbs.push({ label: navState.level, onClick: () => setNavState({ type: 'level', level: navState.level }) });
+      const levelLabel = navState.level === 'BT' ? 'Bộ thủ' : navState.level;
+      crumbs.push({ label: levelLabel, onClick: () => setNavState({ type: 'level', level: navState.level }) });
     }
     if (navState.type === 'parent' || navState.type === 'child') {
       const name = navState.type === 'parent' ? navState.lessonName : navState.parentName;
@@ -304,14 +323,14 @@ export function KanjiTab({
 
       {/* Root: Level Grid */}
       {navState.type === 'root' && (
-        <LevelGrid onSelectLevel={(level) => setNavState({ type: 'level', level })} getCount={getCardCountByLevel} countLabel="chữ" />
+        <LevelGrid levels={KANJI_LEVELS} onSelectLevel={(level) => setNavState({ type: 'level', level })} getCount={getCardCountByLevel} countLabel="chữ" />
       )}
 
       {/* Level: Lesson List */}
       {navState.type === 'level' && (
         <>
           <div className="section-header-row">
-            <h3><BookOpen size={18} /> {navState.level} - Bài học</h3>
+            <h3><BookOpen size={18} /> {navState.level === 'BT' ? 'Bộ thủ' : navState.level} - Bài học</h3>
             {isSuperAdmin && (
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button className="btn btn-primary btn-sm" onClick={() => setShowAddLesson(true)}><Plus size={14} /> Thêm bài</button>

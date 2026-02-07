@@ -63,7 +63,7 @@ export function ExercisePage({ exercises, flashcards }: ExercisePageProps) {
 
   // Exercise counts by level (for JLPTLevelSelector)
   const countByLevel = useMemo(() => {
-    const counts: Record<JLPTLevel, number> = { N5: 0, N4: 0, N3: 0, N2: 0, N1: 0 };
+    const counts: Record<JLPTLevel, number> = { BT: 0, N5: 0, N4: 0, N3: 0, N2: 0, N1: 0 };
     publishedExercises.forEach(e => {
       const levels = getExerciseLevels(e);
       levels.forEach(level => {

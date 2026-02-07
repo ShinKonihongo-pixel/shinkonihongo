@@ -21,6 +21,7 @@ const emptyExample: GrammarExample = { japanese: '', vietnamese: '' };
 
 // JLPT Level colors - consistent with system
 const LEVEL_COLORS: Record<JLPTLevel, string> = {
+  BT: '#8b5cf6',
   N5: '#4CAF50',
   N4: '#2196F3',
   N3: '#FF9800',

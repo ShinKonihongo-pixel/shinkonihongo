@@ -81,6 +81,7 @@ export function ListeningPracticePage() {
 
   // Count by level for level selector
   const countByLevel: Record<JLPTLevel, number> = {
+    BT: 0,
     N5: getCountByLevel('N5'),
     N4: getCountByLevel('N4'),
     N3: getCountByLevel('N3'),

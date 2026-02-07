@@ -18,6 +18,7 @@ export const DIFFICULTY_OPTIONS: { value: DifficultyLevel | 'all'; label: string
 ];
 
 export const LEVEL_COLORS: Record<JLPTLevel, { bg: string; text: string }> = {
+  BT: { bg: '#ede9fe', text: '#6d28d9' },
   N5: { bg: '#ecfdf5', text: '#059669' },
   N4: { bg: '#eff6ff', text: '#2563eb' },
   N3: { bg: '#fef3c7', text: '#d97706' },

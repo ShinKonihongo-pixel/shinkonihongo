@@ -17,6 +17,7 @@ export const AUTO_FILL_PENALTIES = [0.2, 0.4, 0.6];
 
 // Level colors for visual distinction
 export const LEVEL_COLORS: Record<JLPTLevel, { bg: string; border: string; text: string }> = {
+  BT: { bg: '#ede9fe', border: '#8b5cf6', text: '#6d28d9' },
   N5: { bg: '#ecfdf5', border: '#10b981', text: '#059669' },
   N4: { bg: '#eff6ff', border: '#3b82f6', text: '#2563eb' },
   N3: { bg: '#fef3c7', border: '#f59e0b', text: '#d97706' },

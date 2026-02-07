@@ -43,6 +43,7 @@ export function KanjiStudyPage({
         getChildLessons={getChildLessons}
         onStart={(lessonIds, level) => state.handleStartStudy(level, lessonIds)}
         onGoHome={onGoHome}
+        levels={['BT', 'N5', 'N4', 'N3', 'N2', 'N1']}
       />
     );
   }

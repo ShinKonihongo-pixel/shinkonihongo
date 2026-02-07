@@ -5,9 +5,10 @@
 import { ChevronRight } from 'lucide-react';
 import type { JLPTLevel } from '../../types/flashcard';
 
-const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
+const DEFAULT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 
 const LEVEL_THEMES: Record<JLPTLevel, { gradient: string; glow: string; icon: string; light: string }> = {
+  BT: { gradient: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)', glow: 'rgba(139, 92, 246, 0.15)', icon: '部', light: '#f5f3ff' },
   N5: { gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', glow: 'rgba(16, 185, 129, 0.15)', icon: '🌱', light: '#ecfdf5' },
   N4: { gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', glow: 'rgba(59, 130, 246, 0.15)', icon: '📘', light: '#eff6ff' },
   N3: { gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', glow: 'rgba(139, 92, 246, 0.15)', icon: '📖', light: '#f5f3ff' },
@@ -19,15 +20,19 @@ interface LevelGridProps {
   onSelectLevel: (level: JLPTLevel) => void;
   getCount: (level: JLPTLevel) => number;
   countLabel?: string; // e.g. "từ", "mẫu", "bài đọc", "file", "bài"
+  levels?: JLPTLevel[];
 }
 
-export function LevelGrid({ onSelectLevel, getCount, countLabel = 'mục' }: LevelGridProps) {
+export function LevelGrid({ onSelectLevel, getCount, countLabel = 'mục', levels }: LevelGridProps) {
+  const displayLevels = levels ?? DEFAULT_LEVELS;
+  const is6Items = displayLevels.length === 6;
   return (
     <>
-      <div className="lg-grid">
-        {JLPT_LEVELS.map((level, idx) => {
+      <div className={`lg-grid ${is6Items ? 'lg-grid-6' : ''}`}>
+        {displayLevels.map((level, idx) => {
           const theme = LEVEL_THEMES[level];
           const count = getCount(level);
+          const label = level === 'BT' ? 'Bộ thủ' : level;
           return (
             <div
               key={level}
@@ -37,8 +42,8 @@ export function LevelGrid({ onSelectLevel, getCount, countLabel = 'mục' }: Lev
             >
               <div className="lg-icon">{theme.icon}</div>
               <div className="lg-info">
-                <h3>{level}</h3>
-                <span>{count} {countLabel}</span>
+                <h3>{label}</h3>
+                <span>{count} {level === 'BT' ? 'bộ' : countLabel}</span>
               </div>
               <ChevronRight size={20} className="lg-arrow" />
               <div className="lg-shine" />
@@ -59,49 +64,51 @@ const levelGridStyles = `
     gap: 0.75rem;
   }
 
-  /* N2, N1 row: center 2 items */
-  .lg-card:nth-child(4),
-  .lg-card:nth-child(5) {
+  /* Default 5-item layout: N2, N1 row centered */
+  .lg-grid:not(.lg-grid-6) .lg-card:nth-child(4),
+  .lg-grid:not(.lg-grid-6) .lg-card:nth-child(5) {
     grid-column: span 1;
   }
-  /* Push N2 to start from column 1 of a 3-col grid, but center the pair */
-  .lg-card:nth-child(4) {
+  .lg-grid:not(.lg-grid-6) .lg-card:nth-child(4) {
     grid-column-start: 1;
   }
 
-  /* Use a 2-col subgrid feel: make row 2 items wider */
   @supports (grid-template-columns: subgrid) {
-    .lg-grid {
+    .lg-grid:not(.lg-grid-6) {
       grid-template-columns: repeat(6, 1fr);
     }
-    .lg-card:nth-child(1),
-    .lg-card:nth-child(2),
-    .lg-card:nth-child(3) {
+    .lg-grid:not(.lg-grid-6) .lg-card:nth-child(1),
+    .lg-grid:not(.lg-grid-6) .lg-card:nth-child(2),
+    .lg-grid:not(.lg-grid-6) .lg-card:nth-child(3) {
       grid-column: span 2;
     }
-    .lg-card:nth-child(4) {
+    .lg-grid:not(.lg-grid-6) .lg-card:nth-child(4) {
       grid-column: 1 / span 3;
     }
-    .lg-card:nth-child(5) {
+    .lg-grid:not(.lg-grid-6) .lg-card:nth-child(5) {
       grid-column: 4 / span 3;
     }
   }
 
   @supports not (grid-template-columns: subgrid) {
-    /* Fallback: wrap to 2 on second row */
-    .lg-grid {
+    .lg-grid:not(.lg-grid-6) {
       display: flex;
       flex-wrap: wrap;
       gap: 0.75rem;
     }
-    .lg-card {
+    .lg-grid:not(.lg-grid-6) .lg-card {
       flex: 1 1 calc(33.333% - 0.5rem);
       min-width: 0;
     }
-    .lg-card:nth-child(4),
-    .lg-card:nth-child(5) {
+    .lg-grid:not(.lg-grid-6) .lg-card:nth-child(4),
+    .lg-grid:not(.lg-grid-6) .lg-card:nth-child(5) {
       flex: 1 1 calc(50% - 0.375rem);
     }
+  }
+
+  /* 6-item layout: simple 3x2 grid */
+  .lg-grid-6 {
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .lg-card {

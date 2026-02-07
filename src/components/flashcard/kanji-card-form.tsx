@@ -12,8 +12,8 @@ interface KanjiCardFormProps {
   fixedLessonId?: string | null;
 }
 
-const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
-const LEVEL_COLORS: Record<JLPTLevel, string> = { N5: '#4CAF50', N4: '#2196F3', N3: '#FF9800', N2: '#9C27B0', N1: '#E34234' };
+const JLPT_LEVELS: JLPTLevel[] = ['BT', 'N5', 'N4', 'N3', 'N2', 'N1'];
+const LEVEL_COLORS: Record<JLPTLevel, string> = { BT: '#8b5cf6', N5: '#4CAF50', N4: '#2196F3', N3: '#FF9800', N2: '#9C27B0', N1: '#E34234' };
 const emptySampleWord: KanjiSampleWord = { word: '', reading: '', meaning: '' };
 
 export function KanjiCardForm({ onSubmit, onCancel, initialData, fixedLevel, fixedLessonId }: KanjiCardFormProps) {

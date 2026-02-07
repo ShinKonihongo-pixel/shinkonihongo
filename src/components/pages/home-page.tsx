@@ -61,6 +61,7 @@ interface HomePageProps {
 const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 
 const LEVEL_COLORS: Record<JLPTLevel, string> = {
+  BT: '#8b5cf6',
   N5: '#22c55e',
   N4: '#06b6d4',
   N3: '#3b82f6',

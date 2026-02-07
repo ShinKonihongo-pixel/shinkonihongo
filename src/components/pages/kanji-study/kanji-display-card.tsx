@@ -19,7 +19,7 @@ interface KanjiDisplayCardProps {
 }
 
 const LEVEL_COLORS: Record<JLPTLevel, string> = {
-  N5: '#22c55e', N4: '#3b82f6', N3: '#f59e0b', N2: '#a855f7', N1: '#ef4444',
+  BT: '#8b5cf6', N5: '#22c55e', N4: '#3b82f6', N3: '#f59e0b', N2: '#a855f7', N1: '#ef4444',
 };
 
 export function KanjiDisplayCard({
@@ -104,7 +104,7 @@ export function KanjiDisplayCard({
         {/* FRONT */}
         <div className="kanji-card-front">
           {settings.frontShow.level && (
-            <span className="card-level-badge" style={{ background: levelColor }}>{selectedLevel}</span>
+            <span className="card-level-badge" style={{ background: levelColor }}>{selectedLevel === 'BT' ? 'Bộ thủ' : selectedLevel}</span>
           )}
           {settings.frontShow.lesson && lessonName && (
             <span className="card-lesson-badge">{lessonName}</span>
