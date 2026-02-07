@@ -19,12 +19,13 @@ export function LevelLessonSelector({
   getLessonsByLevel,
   getChildLessons,
   onStart,
+  levels,
 }: LevelLessonSelectorProps) {
   const [selectedLevel, setSelectedLevel] = useState<JLPTLevel | null>(null);
   const [selectedLessons, setSelectedLessons] = useState<string[]>([]);
   const [hoveredLevel, setHoveredLevel] = useState<JLPTLevel | null>(null);
 
-  const countByLevel = useCardCountByLevel(cards, type);
+  const countByLevel = useCardCountByLevel(cards, type, levels);
   const levelLessons = useLevelLessons(selectedLevel, getLessonsByLevel);
   const cardsPerLesson = useCardsPerLesson(levelLessons, cards, getChildLessons, type);
   const totalSelectedCards = useTotalSelectedCards(selectedLessons, cardsPerLesson);
@@ -71,6 +72,7 @@ export function LevelLessonSelector({
           hoveredLevel={hoveredLevel}
           onHover={setHoveredLevel}
           onSelect={setSelectedLevel}
+          levels={levels}
         />
       )}
 

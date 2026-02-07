@@ -18,6 +18,7 @@ export interface LevelLessonSelectorProps {
   getChildLessons: (parentId: string) => BaseLesson[];
   onStart: (selectedLessons: string[], level: JLPTLevel, mode: StudyMode) => void;
   onGoHome: () => void;
+  levels?: JLPTLevel[];
 }
 
 export type { JLPTLevel, Flashcard, GrammarCard, KanjiCard };

@@ -144,20 +144,28 @@ export const styles = `
   animation: fadeInUp 0.6s ease-out 0.2s both;
 }
 
-/* Row 1: N5, N4, N3 = 2 cols each */
-.levels-grid .level-card:nth-child(1),
-.levels-grid .level-card:nth-child(2),
-.levels-grid .level-card:nth-child(3) {
+/* Default 5-item layout: Row 1 = 3 items, Row 2 = 2 items centered */
+.levels-grid:not(.levels-grid-6) .level-card:nth-child(1),
+.levels-grid:not(.levels-grid-6) .level-card:nth-child(2),
+.levels-grid:not(.levels-grid-6) .level-card:nth-child(3) {
   grid-column: span 2;
 }
 
-/* Row 2: N2, N1 = 3 cols each (centered) */
-.levels-grid .level-card:nth-child(4) {
+.levels-grid:not(.levels-grid-6) .level-card:nth-child(4) {
   grid-column: 1 / span 3;
 }
 
-.levels-grid .level-card:nth-child(5) {
+.levels-grid:not(.levels-grid-6) .level-card:nth-child(5) {
   grid-column: 4 / span 3;
+}
+
+/* 6-item layout: simple 3x2 grid, all items span 2 cols */
+.levels-grid-6 .level-card {
+  grid-column: span 2;
+}
+
+.levels-grid-6 .level-card .card-level {
+  font-size: 1.8rem;
 }
 
 @keyframes fadeInUp {
@@ -661,18 +669,22 @@ export const styles = `
     margin-top: 1.5rem;
   }
 
-  .levels-grid .level-card:nth-child(1),
-  .levels-grid .level-card:nth-child(2),
-  .levels-grid .level-card:nth-child(3) {
+  .levels-grid:not(.levels-grid-6) .level-card:nth-child(1),
+  .levels-grid:not(.levels-grid-6) .level-card:nth-child(2),
+  .levels-grid:not(.levels-grid-6) .level-card:nth-child(3) {
     grid-column: span 2;
   }
 
-  .levels-grid .level-card:nth-child(4) {
+  .levels-grid:not(.levels-grid-6) .level-card:nth-child(4) {
     grid-column: 1 / span 3;
   }
 
-  .levels-grid .level-card:nth-child(5) {
+  .levels-grid:not(.levels-grid-6) .level-card:nth-child(5) {
     grid-column: 4 / span 3;
+  }
+
+  .levels-grid-6 .level-card {
+    grid-column: span 2;
   }
 
   .level-card {

@@ -4,11 +4,13 @@ import { JLPT_LEVELS } from './constants';
 
 export function useCardCountByLevel(
   cards: Flashcard[] | GrammarCard[] | KanjiCard[],
-  type: 'vocabulary' | 'grammar' | 'kanji'
+  type: 'vocabulary' | 'grammar' | 'kanji',
+  levels?: JLPTLevel[]
 ) {
   return useMemo(() => {
     const counts: Record<string, number> = {};
-    JLPT_LEVELS.forEach(level => {
+    const displayLevels = levels ?? JLPT_LEVELS;
+    displayLevels.forEach(level => {
       if (type === 'vocabulary') {
         counts[level] = (cards as Flashcard[]).filter(c => c.jlptLevel === level).length;
       } else {
@@ -16,7 +18,7 @@ export function useCardCountByLevel(
       }
     });
     return counts;
-  }, [cards, type]);
+  }, [cards, type, levels]);
 }
 
 export function useLevelLessons(

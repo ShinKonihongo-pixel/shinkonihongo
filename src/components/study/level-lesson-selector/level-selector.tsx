@@ -9,6 +9,7 @@ interface LevelSelectorProps {
   hoveredLevel: JLPTLevel | null;
   onHover: (level: JLPTLevel | null) => void;
   onSelect: (level: JLPTLevel) => void;
+  levels?: JLPTLevel[];
 }
 
 export function LevelSelector({
@@ -17,7 +18,10 @@ export function LevelSelector({
   hoveredLevel,
   onHover,
   onSelect,
+  levels,
 }: LevelSelectorProps) {
+  const displayLevels = levels ?? JLPT_LEVELS;
+  const is6Items = displayLevels.length === 6;
   return (
     <div className="selector-container">
       {/* Premium Header */}
@@ -33,13 +37,13 @@ export function LevelSelector({
           <h1 className="header-title">
             {type === 'vocabulary' ? 'Học Từ Vựng' : type === 'grammar' ? 'Học Ngữ Pháp' : 'Học Hán Tự'}
           </h1>
-          <p className="header-subtitle">Chọn cấp độ JLPT để bắt đầu</p>
+          <p className="header-subtitle">Chọn cấp độ để bắt đầu</p>
         </div>
       </header>
 
       {/* Level Cards Grid */}
-      <div className="levels-grid">
-        {JLPT_LEVELS.map((level, index) => (
+      <div className={`levels-grid ${is6Items ? 'levels-grid-6' : ''}`}>
+        {displayLevels.map((level, index) => (
           <LevelCard
             key={level}
             level={level}

@@ -48,7 +48,7 @@ export function LessonSelector({
               <ChevronRight size={18} style={{ transform: 'rotate(180deg)' }} />
             </button>
             <div className="level-badge">
-              <span className="level-text">{selectedLevel}</span>
+              <span className="level-text">{selectedLevel === 'BT' ? 'Bộ thủ' : selectedLevel}</span>
             </div>
             <div className="header-info">
               <h2 className="header-title">

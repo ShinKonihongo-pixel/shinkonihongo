@@ -41,9 +41,9 @@ export function LevelCard({
     >
       <div className="card-glow" />
       <div className="card-content">
-        <span className="card-level">{level}</span>
+        <span className="card-level">{level === 'BT' ? 'Bộ thủ' : level}</span>
         <span className="card-count">
-          {count} {type === 'vocabulary' ? 'từ' : type === 'grammar' ? 'mẫu' : 'chữ'}
+          {count} {level === 'BT' ? 'bộ' : type === 'vocabulary' ? 'từ' : type === 'grammar' ? 'mẫu' : 'chữ'}
         </span>
         {!disabled && (
           <div className="card-arrow">

@@ -8,6 +8,12 @@ export const LEVEL_THEMES: Record<JLPTLevel, {
   accent: string;
   light: string;
 }> = {
+  BT: {
+    gradient: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 50%, #5b21b6 100%)',
+    glow: 'rgba(139, 92, 246, 0.5)',
+    accent: '#8b5cf6',
+    light: '#ede9fe',
+  },
   N5: {
     gradient: 'linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%)',
     glow: 'rgba(16, 185, 129, 0.5)',
