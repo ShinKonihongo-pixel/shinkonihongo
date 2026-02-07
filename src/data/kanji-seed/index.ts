@@ -9,6 +9,7 @@ import { N4_KANJI } from './n4';
 import { N3_KANJI } from './n3';
 import { N2_KANJI } from './n2';
 import { N1_KANJI } from './n1';
+import { BT_KANJI } from './bt';
 
 // Map level to seed data
 const SEED_BY_LEVEL: Record<JLPTLevel, KanjiSeed[]> = {
@@ -17,6 +18,7 @@ const SEED_BY_LEVEL: Record<JLPTLevel, KanjiSeed[]> = {
   N3: N3_KANJI,
   N2: N2_KANJI,
   N1: N1_KANJI,
+  BT: BT_KANJI,
 };
 
 // Convert compact seed to full KanjiCardFormData
@@ -27,12 +29,17 @@ function seedToFormData(seed: KanjiSeed, level: JLPTLevel, lessonId: string): Ka
     kunYomi: seed.kun ? seed.kun.split(',').map(s => s.trim()) : [],
     sinoVietnamese: seed.hv,
     meaning: seed.m,
-    mnemonic: '',
+    mnemonic: seed.mn || '',
     strokeCount: seed.s,
     radicals: seed.r ? seed.r.split(',').map(s => s.trim()) : [],
     jlptLevel: level,
     lessonId,
-    sampleWords: [],
+    sampleWords: seed.w
+      ? seed.w.split(';').map(entry => {
+          const [word, reading, meaning] = entry.split('|');
+          return { word: word || '', reading: reading || '', meaning: meaning || '' };
+        })
+      : [],
   };
 }
 
@@ -45,8 +52,11 @@ export function getKanjiSeedForLevel(
   if (!seeds || lessonIds.length === 0) return [];
 
   return seeds.map((seed, index) => {
-    // Distribute kanji evenly across lessons
-    const lessonIndex = index % lessonIds.length;
+    // BT: distribute by stroke count (lesson index = strokeCount - 1)
+    // Other levels: distribute evenly across lessons
+    const lessonIndex = level === 'BT'
+      ? Math.min(seed.s - 1, lessonIds.length - 1)
+      : index % lessonIds.length;
     return seedToFormData(seed, level, lessonIds[lessonIndex]);
   });
 }
