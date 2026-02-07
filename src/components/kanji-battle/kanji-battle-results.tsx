@@ -1,33 +1,30 @@
-// Speed Quiz Results - Final game results
+// Kanji Battle Results - Final game results
 import React from 'react';
-import type { SpeedQuizResults as Results, SpeedQuizPlayerResult } from '../../types/speed-quiz';
+import type { KanjiBattleResults as Results, KanjiBattlePlayerResult } from '../../types/kanji-battle';
 
-interface SpeedQuizResultsProps {
+interface KanjiBattleResultsProps {
   results: Results;
   currentPlayerId: string;
   onPlayAgain: () => void;
   onExit: () => void;
 }
 
-export const SpeedQuizResults: React.FC<SpeedQuizResultsProps> = ({
+export const KanjiBattleResults: React.FC<KanjiBattleResultsProps> = ({
   results,
   currentPlayerId,
   onPlayAgain,
   onExit,
 }) => {
-  const currentPlayerResult = results.rankings.find((r) => r.odinhId === currentPlayerId);
+  const currentPlayerResult = results.rankings.find(r => r.odinhId === currentPlayerId);
   const top3 = results.rankings.slice(0, 3);
 
   return (
     <div className="speed-quiz-results">
       <div className="results-header">
-        <h1>🏆 Kết Quả Cuối Cùng</h1>
-        <p>
-          {results.totalRounds} câu hỏi • {results.totalPlayers} người chơi
-        </p>
+        <h1>🏆 Kết Quả Đại Chiến Kanji</h1>
+        <p>{results.totalRounds} câu hỏi &bull; {results.totalPlayers} người chơi</p>
       </div>
 
-      {/* Winner announcement */}
       {results.winner && (
         <div className="winner-section">
           <div className="confetti">🎊</div>
@@ -41,9 +38,7 @@ export const SpeedQuizResults: React.FC<SpeedQuizResultsProps> = ({
         </div>
       )}
 
-      {/* Podium */}
       <div className="podium">
-        {/* 2nd place */}
         {top3[1] && (
           <div className="podium-place second">
             <div className="podium-player">
@@ -55,8 +50,6 @@ export const SpeedQuizResults: React.FC<SpeedQuizResultsProps> = ({
             <div className="podium-stand">2</div>
           </div>
         )}
-
-        {/* 1st place */}
         {top3[0] && (
           <div className="podium-place first">
             <div className="podium-player">
@@ -68,8 +61,6 @@ export const SpeedQuizResults: React.FC<SpeedQuizResultsProps> = ({
             <div className="podium-stand">1</div>
           </div>
         )}
-
-        {/* 3rd place */}
         {top3[2] && (
           <div className="podium-place third">
             <div className="podium-player">
@@ -83,7 +74,6 @@ export const SpeedQuizResults: React.FC<SpeedQuizResultsProps> = ({
         )}
       </div>
 
-      {/* Your result */}
       {currentPlayerResult && (
         <div className="your-final-result">
           <h3>📊 Kết Quả Của Bạn</h3>
@@ -104,15 +94,16 @@ export const SpeedQuizResults: React.FC<SpeedQuizResultsProps> = ({
               <span className="stat-value">{currentPlayerResult.accuracy.toFixed(0)}%</span>
               <span className="stat-label">Độ chính xác</span>
             </div>
-            <div className="stat">
-              <span className="stat-value">{currentPlayerResult.avgResponseTime.toFixed(1)}s</span>
-              <span className="stat-label">TB thời gian</span>
-            </div>
+            {currentPlayerResult.avgStrokeScore !== undefined && (
+              <div className="stat">
+                <span className="stat-value">{currentPlayerResult.avgStrokeScore?.toFixed(0)}%</span>
+                <span className="stat-label">TB nét vẽ</span>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* Full rankings */}
       <div className="full-rankings">
         <h3>📋 Bảng Xếp Hạng Đầy Đủ</h3>
         <div className="rankings-table">
@@ -122,23 +113,12 @@ export const SpeedQuizResults: React.FC<SpeedQuizResultsProps> = ({
             <span className="col-score">Điểm</span>
             <span className="col-correct">Đúng</span>
             <span className="col-accuracy">Chính xác</span>
-            <span className="col-time">TB thời gian</span>
           </div>
-          {results.rankings.map((player: SpeedQuizPlayerResult) => (
-            <div
-              key={player.odinhId}
-              className={`rankings-row ${player.odinhId === currentPlayerId ? 'current' : ''} ${
-                player.isWinner ? 'winner' : ''
-              }`}
-            >
+          {results.rankings.map((player: KanjiBattlePlayerResult) => (
+            <div key={player.odinhId}
+              className={`rankings-row ${player.odinhId === currentPlayerId ? 'current' : ''} ${player.isWinner ? 'winner' : ''}`}>
               <span className="col-rank">
-                {player.rank === 1
-                  ? '🥇'
-                  : player.rank === 2
-                  ? '🥈'
-                  : player.rank === 3
-                  ? '🥉'
-                  : `#${player.rank}`}
+                {player.rank === 1 ? '🥇' : player.rank === 2 ? '🥈' : player.rank === 3 ? '🥉' : `#${player.rank}`}
               </span>
               <span className="col-player">
                 <span className="avatar">{player.avatar}</span>
@@ -147,20 +127,14 @@ export const SpeedQuizResults: React.FC<SpeedQuizResultsProps> = ({
               <span className="col-score">{player.score}</span>
               <span className="col-correct">{player.correctAnswers}</span>
               <span className="col-accuracy">{player.accuracy.toFixed(0)}%</span>
-              <span className="col-time">{player.avgResponseTime.toFixed(1)}s</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Actions */}
       <div className="results-actions">
-        <button className="speed-quiz-btn primary large" onClick={onPlayAgain}>
-          🔄 Chơi Lại
-        </button>
-        <button className="speed-quiz-btn secondary large" onClick={onExit}>
-          🚪 Thoát
-        </button>
+        <button className="speed-quiz-btn primary large" onClick={onPlayAgain}>🔄 Chơi Lại</button>
+        <button className="speed-quiz-btn secondary large" onClick={onExit}>🚪 Thoát</button>
       </div>
     </div>
   );

@@ -2,17 +2,17 @@
 
 import { useCallback, useEffect } from 'react';
 import type {
-  SpeedQuizGame,
-  SpeedQuizPlayer,
-  SpeedQuizPlayerResult,
-  SpeedQuizResults,
-} from '../../types/speed-quiz';
+  KanjiBattleGame,
+  KanjiBattlePlayer,
+  KanjiBattlePlayerResult,
+  KanjiBattleResults,
+} from '../../types/kanji-battle';
 
 interface UseGameFlowProps {
-  game: SpeedQuizGame | null;
+  game: KanjiBattleGame | null;
   isHost: boolean;
-  sortedPlayers: SpeedQuizPlayer[];
-  setGameResults: (results: SpeedQuizResults | null) => void;
+  sortedPlayers: KanjiBattlePlayer[];
+  setGameResults: (results: KanjiBattleResults | null) => void;
   startNextRound: () => void;
   endRound: () => void;
 }
@@ -29,7 +29,7 @@ export function useGameFlow({
     if (!game || !isHost) return;
 
     if (game.status === 'finished') {
-      const rankings: SpeedQuizPlayerResult[] = sortedPlayers.map((p, idx) => ({
+      const rankings: KanjiBattlePlayerResult[] = sortedPlayers.map((p, idx) => ({
         odinhId: p.odinhId,
         displayName: p.displayName,
         avatar: p.avatar,
@@ -40,6 +40,7 @@ export function useGameFlow({
           ? Math.round((p.correctAnswers / (p.correctAnswers + p.wrongAnswers)) * 100)
           : 0,
         avgResponseTime: 0,
+        avgStrokeScore: p.strokeScore,
         isWinner: idx === 0,
       }));
 
@@ -57,14 +58,11 @@ export function useGameFlow({
 
   useEffect(() => {
     if (!game || game.status !== 'playing') return;
-
     const allAnswered = Object.values(game.players).every(p => p.hasAnswered);
     if (allAnswered) {
       setTimeout(() => endRound(), 500);
     }
   }, [game, endRound]);
 
-  return {
-    continueGame,
-  };
+  return { continueGame };
 }

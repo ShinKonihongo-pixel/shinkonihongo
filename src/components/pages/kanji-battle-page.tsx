@@ -1,21 +1,20 @@
-// Speed Quiz Page - Main game page
+// Kanji Battle Page - Main game page
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
-  SpeedQuizMenu,
-  SpeedQuizSetup,
-  SpeedQuizLobby,
-  SpeedQuizPlay,
-  SpeedQuizResults,
-  SpeedQuizGuide,
-} from '../speed-quiz';
-import { useSpeedQuiz } from '../../hooks/use-speed-quiz';
-import type { CreateSpeedQuizData, SpeedQuizSkillType } from '../../types/speed-quiz';
-import type { Flashcard } from '../../types/flashcard';
+  KanjiBattleMenu,
+  KanjiBattleSetup,
+  KanjiBattleLobby,
+  KanjiBattlePlay,
+  KanjiBattleResults,
+  KanjiBattleGuide,
+} from '../kanji-battle';
+import { useKanjiBattle } from '../../hooks/use-kanji-battle';
+import type { CreateKanjiBattleData, KanjiBattleSkillType, StrokeMatchResult } from '../../types/kanji-battle';
 import type { GameSession } from '../../types/user';
 
 type PageView = 'menu' | 'setup' | 'lobby' | 'play' | 'results' | 'guide';
 
-interface SpeedQuizPageProps {
+interface KanjiBattlePageProps {
   onClose: () => void;
   currentUser?: {
     id: string;
@@ -23,16 +22,14 @@ interface SpeedQuizPageProps {
     avatar: string;
     role?: string;
   };
-  flashcards?: Flashcard[];
   initialView?: PageView;
   // XP tracking
   onSaveGameSession?: (data: Omit<GameSession, 'id' | 'userId'>) => void;
 }
 
-export const SpeedQuizPage: React.FC<SpeedQuizPageProps> = ({
+export const KanjiBattlePage: React.FC<KanjiBattlePageProps> = ({
   onClose,
   currentUser = { id: 'user-1', displayName: 'Player', avatar: '👤' },
-  flashcards = [],
   initialView = 'menu',
   onSaveGameSession,
 }) => {
@@ -40,13 +37,13 @@ export const SpeedQuizPage: React.FC<SpeedQuizPageProps> = ({
   const [notification, setNotification] = useState<{ message: string; type: 'info' | 'warning' } | null>(null);
   const gameSessionSaved = useRef(false);
 
-  // Auto-hide notification after 3 seconds
   useEffect(() => {
     if (notification) {
       const timer = setTimeout(() => setNotification(null), 3000);
       return () => clearTimeout(timer);
     }
   }, [notification]);
+
   const {
     game,
     gameResults,
@@ -56,22 +53,21 @@ export const SpeedQuizPage: React.FC<SpeedQuizPageProps> = ({
     kickPlayer,
     startGame,
     submitAnswer,
+    submitDrawing,
     useHint,
     continueGame,
     useSkill,
     resetGame,
-  } = useSpeedQuiz({ currentUser, flashcards });
+  } = useKanjiBattle({ currentUser });
 
-  // Handle create game
   const handleCreateGame = useCallback(
-    (data: CreateSpeedQuizData) => {
+    (data: CreateKanjiBattleData) => {
       createGame(data);
       setView('lobby');
     },
     [createGame]
   );
 
-  // Handle join game
   const handleJoinGame = useCallback(
     (code: string) => {
       joinGame(code);
@@ -80,59 +76,48 @@ export const SpeedQuizPage: React.FC<SpeedQuizPageProps> = ({
     [joinGame]
   );
 
-  // Handle start game
   const handleStartGame = useCallback(() => {
     startGame();
     setView('play');
   }, [startGame]);
 
-  // Handle leave game
   const handleLeaveGame = useCallback(() => {
     leaveGame();
     setView('menu');
   }, [leaveGame]);
 
-  // Handle submit answer
   const handleSubmitAnswer = useCallback(
-    (answer: string) => {
-      submitAnswer(answer);
-    },
+    (answer: string) => { submitAnswer(answer); },
     [submitAnswer]
   );
 
-  // Handle use hint
-  const handleUseHint = useCallback(() => {
-    useHint();
-  }, [useHint]);
-
-  // Handle select skill
-  const handleSelectSkill = useCallback(
-    (skillType: SpeedQuizSkillType, targetId?: string) => {
-      useSkill(skillType, targetId);
+  const handleSubmitDrawing = useCallback(
+    (strokeResults: StrokeMatchResult[], drawingTimeMs: number) => {
+      submitDrawing(strokeResults, drawingTimeMs);
     },
+    [submitDrawing]
+  );
+
+  const handleUseHint = useCallback(() => { useHint(); }, [useHint]);
+
+  const handleSelectSkill = useCallback(
+    (skillType: KanjiBattleSkillType, targetId?: string) => { useSkill(skillType, targetId); },
     [useSkill]
   );
 
-  // Handle next round
-  const handleNextRound = useCallback(() => {
-    continueGame();
-  }, [continueGame]);
+  const handleNextRound = useCallback(() => { continueGame(); }, [continueGame]);
 
-  // Handle play again
   const handlePlayAgain = useCallback(() => {
     resetGame();
     setView('menu');
   }, [resetGame]);
 
-  // Handle exit
   const handleExit = useCallback(() => {
     resetGame();
     onClose();
   }, [resetGame, onClose]);
 
-  // Handle add bot - simplified version
   const handleAddBot = useCallback(() => {
-    // Bot auto-adding is handled in the hook
     setNotification({ message: 'Bot sẽ tự động được thêm sau vài giây!', type: 'info' });
   }, []);
 
@@ -148,22 +133,19 @@ export const SpeedQuizPage: React.FC<SpeedQuizPageProps> = ({
       game.status === 'skill_phase'
     ) {
       setView('play');
-    } else if (game.status === 'waiting' || game.status === 'starting') {
-      // Stay in lobby
     }
   }, [game?.status, gameResults]);
 
-  // Save game session when game finishes (for XP tracking)
+  // Save game session when game finishes
   useEffect(() => {
     if (game?.status === 'finished' && !gameSessionSaved.current && onSaveGameSession && gameResults) {
       gameSessionSaved.current = true;
 
-      // Find current player's result from rankings
       const myResult = gameResults.rankings.find(p => p.odinhId === currentUser.id);
       if (myResult) {
         onSaveGameSession({
           date: new Date().toISOString().split('T')[0],
-          gameTitle: 'Speed Quiz',
+          gameTitle: 'Đại Chiến Kanji',
           rank: myResult.rank,
           totalPlayers: gameResults.totalPlayers,
           score: myResult.score,
@@ -173,33 +155,28 @@ export const SpeedQuizPage: React.FC<SpeedQuizPageProps> = ({
       }
     }
 
-    // Reset flag when game changes (new game)
     if (!game || game.status !== 'finished') {
       gameSessionSaved.current = false;
     }
   }, [game, gameResults, currentUser.id, onSaveGameSession]);
 
-  // Render based on view
   const renderContent = () => {
     switch (view) {
       case 'guide':
-        return <SpeedQuizGuide onClose={() => setView('menu')} />;
+        return <KanjiBattleGuide onClose={() => setView('menu')} />;
 
       case 'setup':
         return (
-          <SpeedQuizSetup
+          <KanjiBattleSetup
             onCreateGame={handleCreateGame}
             onBack={() => setView('menu')}
           />
         );
 
       case 'lobby':
-        if (!game) {
-          setView('menu');
-          return null;
-        }
+        if (!game) { setView('menu'); return null; }
         return (
-          <SpeedQuizLobby
+          <KanjiBattleLobby
             game={game}
             currentPlayerId={currentUser.id}
             onStartGame={handleStartGame}
@@ -210,15 +187,13 @@ export const SpeedQuizPage: React.FC<SpeedQuizPageProps> = ({
         );
 
       case 'play':
-        if (!game) {
-          setView('menu');
-          return null;
-        }
+        if (!game) { setView('menu'); return null; }
         return (
-          <SpeedQuizPlay
+          <KanjiBattlePlay
             game={game}
             currentPlayerId={currentUser.id}
             onSubmitAnswer={handleSubmitAnswer}
+            onSubmitDrawing={handleSubmitDrawing}
             onUseHint={handleUseHint}
             onSelectSkill={handleSelectSkill}
             onNextRound={handleNextRound}
@@ -226,12 +201,9 @@ export const SpeedQuizPage: React.FC<SpeedQuizPageProps> = ({
         );
 
       case 'results':
-        if (!gameResults) {
-          setView('menu');
-          return null;
-        }
+        if (!gameResults) { setView('menu'); return null; }
         return (
-          <SpeedQuizResults
+          <KanjiBattleResults
             results={gameResults}
             currentPlayerId={currentUser.id}
             onPlayAgain={handlePlayAgain}
@@ -241,7 +213,7 @@ export const SpeedQuizPage: React.FC<SpeedQuizPageProps> = ({
 
       default:
         return (
-          <SpeedQuizMenu
+          <KanjiBattleMenu
             onCreateGame={() => setView('setup')}
             onJoinGame={handleJoinGame}
             onShowGuide={() => setView('guide')}
@@ -254,19 +226,13 @@ export const SpeedQuizPage: React.FC<SpeedQuizPageProps> = ({
   return (
     <div className="speed-quiz-page">
       {renderContent()}
-      {/* Inline notification toast */}
       {notification && (
         <div className={`game-notification ${notification.type}`}>
           <span className="notification-icon">
             {notification.type === 'warning' ? '⚠️' : 'ℹ️'}
           </span>
           <span className="notification-text">{notification.message}</span>
-          <button
-            className="notification-close"
-            onClick={() => setNotification(null)}
-          >
-            ✕
-          </button>
+          <button className="notification-close" onClick={() => setNotification(null)}>✕</button>
         </div>
       )}
     </div>

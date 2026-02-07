@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { PictureGuessPuzzleEditor } from '../picture-guess/picture-guess-puzzle-editor';
 import { BingoGameManager } from '../bingo-game/bingo-game-manager';
-import { SpeedQuizManager } from '../speed-quiz/speed-quiz-manager';
+import { KanjiBattleManager } from '../kanji-battle/kanji-battle-manager';
 import { WordMatchManager } from '../word-match/word-match-manager';
 import { ImageWordManagementPage } from '../pages/image-word-management-page';
 import {
@@ -23,7 +23,7 @@ import { AI_OPPONENTS } from '../../types/ai-challenge';
 import { useLessons } from '../../hooks/use-lessons';
 import type { Lesson } from '../../types/flashcard';
 
-type GameSection = 'dashboard' | 'picture-guess' | 'bingo' | 'speed-quiz' | 'word-match' | 'image-word' | 'ai-challenge' | 'global-settings';
+type GameSection = 'dashboard' | 'picture-guess' | 'bingo' | 'kanji-battle' | 'word-match' | 'image-word' | 'ai-challenge' | 'global-settings';
 
 // Game configuration with management capabilities
 interface GameConfig {
@@ -69,16 +69,16 @@ const ALL_GAMES: GameConfig[] = [
     stats: { questions: null, played: 89, avgScore: null },
   },
   {
-    id: 'speed-quiz',
-    title: 'Ai Nhanh Hơn Ai',
-    shortTitle: 'Speed Quiz',
-    description: 'Gõ đáp án nhanh nhất để giành chiến thắng',
-    emoji: '⚡',
+    id: 'kanji-battle',
+    title: 'Đại Chiến Kanji',
+    shortTitle: 'Kanji Battle',
+    description: 'Đọc hoặc viết kanji nhanh nhất để chiến thắng',
+    emoji: '⚔️',
     gradient: 'linear-gradient(135deg, #FF5722 0%, #FF9800 100%)',
     color: '#FF5722',
     category: 'quiz',
     hasManager: true,
-    isNew: false,
+    isNew: true,
     stats: { questions: 150, played: 234, avgScore: 82 },
   },
   {
@@ -166,7 +166,7 @@ export function GameTab() {
     activeRooms: 3,
     playersOnline: 12,
     avgSessionTime: '8 phút',
-    popularGame: 'Speed Quiz',
+    popularGame: 'Kanji Battle',
     todayGames: 24,
   });
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -423,8 +423,8 @@ export function GameTab() {
               status="active"
             />
             <ActivityItem
-              icon="⚡"
-              title="Speed Quiz kết thúc"
+              icon="⚔️"
+              title="Đại Chiến Kanji kết thúc"
               description="Người thắng: Sakura với 850 điểm"
               time="15 phút trước"
               status="completed"
@@ -473,9 +473,9 @@ export function GameTab() {
     return <BingoGameManager onClose={() => setActiveSection('dashboard')} />;
   }
 
-  // Speed Quiz Manager
-  if (activeSection === 'speed-quiz') {
-    return <SpeedQuizManager onClose={() => setActiveSection('dashboard')} />;
+  // Kanji Battle Manager
+  if (activeSection === 'kanji-battle') {
+    return <KanjiBattleManager onClose={() => setActiveSection('dashboard')} />;
   }
 
   // Word Match Manager

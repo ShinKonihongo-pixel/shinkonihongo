@@ -22,9 +22,9 @@ export const BINGO_SETUP_CONFIG: GameSetupConfig = {
   ],
 };
 
-export const SPEED_QUIZ_SETUP_CONFIG: GameSetupConfig = {
+export const KANJI_BATTLE_SETUP_CONFIG: GameSetupConfig = {
   showTitle: true,
-  titlePlaceholder: 'Speed Quiz',
+  titlePlaceholder: 'Đại Chiến Kanji',
   showMaxPlayers: true,
   maxPlayersSlider: {
     min: 2,
@@ -44,10 +44,10 @@ export const SPEED_QUIZ_SETUP_CONFIG: GameSetupConfig = {
   showTimePerQuestion: true,
   timeSlider: {
     min: 5,
-    max: 20,
+    max: 30,
     step: 5,
-    defaultValue: 10,
-    labels: ['5s', '10s', '20s'],
+    defaultValue: 15,
+    labels: ['5s', '15s', '30s'],
   },
   toggles: [
     {
@@ -59,7 +59,7 @@ export const SPEED_QUIZ_SETUP_CONFIG: GameSetupConfig = {
     },
   ],
   rules: [
-    '⚡ Gõ đáp án nhanh nhất để ghi điểm',
+    '⚔️ Đọc hoặc viết kanji nhanh nhất để ghi điểm',
     '💡 Có 3 lượt gợi ý miễn phí',
     '🏆 Người có điểm cao nhất thắng',
   ],

@@ -1,14 +1,14 @@
-// Speed Quiz Menu - Main entry point
+// Kanji Battle Menu - Main entry point
 import React, { useState } from 'react';
 
-interface SpeedQuizMenuProps {
+interface KanjiBattleMenuProps {
   onCreateGame: () => void;
   onJoinGame: (code: string) => void;
   onShowGuide: () => void;
   onClose: () => void;
 }
 
-export const SpeedQuizMenu: React.FC<SpeedQuizMenuProps> = ({
+export const KanjiBattleMenu: React.FC<KanjiBattleMenuProps> = ({
   onCreateGame,
   onJoinGame,
   onShowGuide,
@@ -30,9 +30,9 @@ export const SpeedQuizMenu: React.FC<SpeedQuizMenuProps> = ({
       </button>
 
       <div className="speed-quiz-menu-header">
-        <div className="speed-quiz-menu-icon">⚡</div>
-        <h1>Ai Nhanh Hơn Ai</h1>
-        <p>Gõ đáp án nhanh nhất để chiến thắng!</p>
+        <div className="speed-quiz-menu-icon">⚔️</div>
+        <h1>Đại Chiến Kanji</h1>
+        <p>Đọc hoặc viết kanji nhanh nhất để chiến thắng!</p>
       </div>
 
       <div className="speed-quiz-menu-actions">
@@ -86,12 +86,12 @@ export const SpeedQuizMenu: React.FC<SpeedQuizMenuProps> = ({
 
       <div className="speed-quiz-menu-features">
         <div className="feature">
-          <span className="feature-icon">⌨️</span>
-          <span>Gõ nhanh</span>
+          <span className="feature-icon">📖</span>
+          <span>Đọc Kanji</span>
         </div>
         <div className="feature">
-          <span className="feature-icon">💡</span>
-          <span>3 gợi ý</span>
+          <span className="feature-icon">✍️</span>
+          <span>Viết Kanji</span>
         </div>
         <div className="feature">
           <span className="feature-icon">✨</span>

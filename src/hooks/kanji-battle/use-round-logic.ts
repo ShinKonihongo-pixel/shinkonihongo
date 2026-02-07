@@ -2,14 +2,14 @@
 
 import { useCallback } from 'react';
 import type {
-  SpeedQuizGame,
-  SpeedQuizPlayer,
-  SpeedQuizRoundResult,
-} from '../../types/speed-quiz';
+  KanjiBattleGame,
+  KanjiBattlePlayer,
+  KanjiBattleRoundResult,
+} from '../../types/kanji-battle';
 
 interface UseRoundLogicProps {
-  game: SpeedQuizGame | null;
-  setGame: (game: SpeedQuizGame | null | ((prev: SpeedQuizGame | null) => SpeedQuizGame | null)) => void;
+  game: KanjiBattleGame | null;
+  setGame: (game: KanjiBattleGame | null | ((prev: KanjiBattleGame | null) => KanjiBattleGame | null)) => void;
   roundTimerRef: React.MutableRefObject<NodeJS.Timeout | null>;
   scheduleBotAnswers: () => void;
 }
@@ -23,37 +23,22 @@ export function useRoundLogic({
   const startNextRound = useCallback(() => {
     setGame(prev => {
       if (!prev) return null;
-
       const nextRound = prev.currentRound + 1;
       if (nextRound > prev.questions.length) {
         return { ...prev, status: 'finished', finishedAt: new Date().toISOString() };
       }
-
       const question = prev.questions[nextRound - 1];
-
-      const newPlayers: Record<string, SpeedQuizPlayer> = {};
+      const newPlayers: Record<string, KanjiBattlePlayer> = {};
       Object.entries(prev.players).forEach(([id, p]) => {
         let shield = p.hasShield;
         let shieldTurns = p.shieldTurns;
-        if (shieldTurns > 0) {
-          shieldTurns--;
-          if (shieldTurns === 0) shield = false;
-        }
-
+        if (shieldTurns > 0) { shieldTurns--; if (shieldTurns === 0) shield = false; }
         let double = p.hasDoublePoints;
         let doubleTurns = p.doublePointsTurns;
-        if (doubleTurns > 0) {
-          doubleTurns--;
-          if (doubleTurns === 0) double = false;
-        }
-
+        if (doubleTurns > 0) { doubleTurns--; if (doubleTurns === 0) double = false; }
         let slowed = p.isSlowed;
         let slowedTurns = p.slowedTurns;
-        if (slowedTurns > 0) {
-          slowedTurns--;
-          if (slowedTurns === 0) slowed = false;
-        }
-
+        if (slowedTurns > 0) { slowedTurns--; if (slowedTurns === 0) slowed = false; }
         newPlayers[id] = {
           ...p,
           hasAnswered: false,
@@ -66,9 +51,11 @@ export function useRoundLogic({
           doublePointsTurns: doubleTurns,
           isSlowed: slowed,
           slowedTurns,
+          drawnStrokes: undefined,
+          strokeScore: undefined,
+          drawingTimeMs: undefined,
         };
       });
-
       return {
         ...prev,
         status: 'playing',
@@ -82,7 +69,7 @@ export function useRoundLogic({
     if (roundTimerRef.current) clearTimeout(roundTimerRef.current);
     roundTimerRef.current = setTimeout(() => {
       endRound();
-    }, (game?.settings.timePerQuestion || 10) * 1000 + 500);
+    }, (game?.settings.timePerQuestion || 15) * 1000 + 500);
 
     scheduleBotAnswers();
   }, [game, setGame, roundTimerRef, scheduleBotAnswers]);
@@ -93,10 +80,10 @@ export function useRoundLogic({
     setGame(prev => {
       if (!prev || prev.status === 'result' || prev.status === 'finished') return prev;
 
-      const newPlayers: Record<string, SpeedQuizPlayer> = {};
-      const roundResult: SpeedQuizRoundResult = {
+      const newPlayers: Record<string, KanjiBattlePlayer> = {};
+      const roundResult: KanjiBattleRoundResult = {
         questionId: prev.currentQuestion?.id || '',
-        correctAnswer: prev.currentQuestion?.answer || '',
+        correctAnswer: prev.currentQuestion?.meaning || '',
         playerResults: [],
       };
 
@@ -108,6 +95,12 @@ export function useRoundLogic({
 
         if (player.isCorrect) {
           pointsEarned = prev.settings.pointsCorrect;
+
+          // In write mode, scale points by stroke score
+          if (prev.settings.gameMode === 'write' && player.strokeScore !== undefined) {
+            pointsEarned = Math.round(pointsEarned * (player.strokeScore / 100));
+          }
+
           if (player.hasDoublePoints) pointsEarned *= 2;
 
           if (player.answerTime && player.answerTime < fastestTime) {
@@ -137,6 +130,7 @@ export function useRoundLogic({
           isCorrect: !!player.isCorrect,
           timeMs: player.answerTime || 0,
           pointsEarned,
+          strokeScore: player.strokeScore,
         });
       });
 
@@ -163,8 +157,5 @@ export function useRoundLogic({
     });
   }, [setGame, roundTimerRef]);
 
-  return {
-    startNextRound,
-    endRound,
-  };
+  return { startNextRound, endRound };
 }

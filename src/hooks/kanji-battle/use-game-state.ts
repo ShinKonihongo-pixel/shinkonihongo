@@ -1,16 +1,16 @@
 // Game state management hook
 
 import { useState, useMemo, useRef, useEffect } from 'react';
-import type { SpeedQuizGame, SpeedQuizResults } from '../../types/speed-quiz';
+import type { KanjiBattleGame, KanjiBattleResults } from '../../types/kanji-battle';
 
 interface UseGameStateProps {
   currentUserId: string;
 }
 
 export function useGameState({ currentUserId }: UseGameStateProps) {
-  const [game, setGame] = useState<SpeedQuizGame | null>(null);
-  const [gameResults, setGameResults] = useState<SpeedQuizResults | null>(null);
-  const [availableRooms] = useState<SpeedQuizGame[]>([]);
+  const [game, setGame] = useState<KanjiBattleGame | null>(null);
+  const [gameResults, setGameResults] = useState<KanjiBattleResults | null>(null);
+  const [availableRooms] = useState<KanjiBattleGame[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,22 +46,14 @@ export function useGameState({ currentUserId }: UseGameStateProps) {
   };
 
   return {
-    game,
-    setGame,
-    gameResults,
-    setGameResults,
+    game, setGame,
+    gameResults, setGameResults,
     availableRooms,
-    loading,
-    setLoading,
-    error,
-    setError,
-    isHost,
-    currentPlayer,
-    sortedPlayers,
-    isSkillPhase,
-    botTimerRef,
-    roundTimerRef,
-    botAnswerTimerRef,
+    loading, setLoading,
+    error, setError,
+    isHost, currentPlayer,
+    sortedPlayers, isSkillPhase,
+    botTimerRef, roundTimerRef, botAnswerTimerRef,
     clearTimers,
   };
 }

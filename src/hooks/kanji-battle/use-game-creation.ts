@@ -1,16 +1,15 @@
 // Game creation logic
 
 import { useCallback } from 'react';
-import type { Flashcard } from '../../types/flashcard';
 import type {
-  SpeedQuizGame,
-  SpeedQuizPlayer,
-  SpeedQuizSettings,
-  CreateSpeedQuizData,
-} from '../../types/speed-quiz';
-import { DEFAULT_SPEED_QUIZ_SETTINGS } from '../../types/speed-quiz';
+  KanjiBattleGame,
+  KanjiBattlePlayer,
+  KanjiBattleSettings,
+  CreateKanjiBattleData,
+} from '../../types/kanji-battle';
+import { DEFAULT_KANJI_BATTLE_SETTINGS } from '../../types/kanji-battle';
 import { generateBots } from '../../types/game-hub';
-import { generateId, generateGameCode, convertFlashcardsToQuestions } from './utils';
+import { generateId, generateGameCode, convertKanjiSeedToQuestions } from './utils';
 
 interface UseGameCreationProps {
   currentUser: {
@@ -19,8 +18,7 @@ interface UseGameCreationProps {
     avatar: string;
     role?: string;
   };
-  flashcards: Flashcard[];
-  setGame: (game: SpeedQuizGame | null | ((prev: SpeedQuizGame | null) => SpeedQuizGame | null)) => void;
+  setGame: (game: KanjiBattleGame | null | ((prev: KanjiBattleGame | null) => KanjiBattleGame | null)) => void;
   setGameResults: (results: any) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -29,37 +27,39 @@ interface UseGameCreationProps {
 
 export function useGameCreation({
   currentUser,
-  flashcards,
   setGame,
   setGameResults,
   setLoading,
   setError,
   botTimerRef,
 }: UseGameCreationProps) {
-  const createGame = useCallback(async (data: CreateSpeedQuizData) => {
+  const createGame = useCallback(async (data: CreateKanjiBattleData) => {
     setLoading(true);
     setError(null);
 
     try {
-      const questions = convertFlashcardsToQuestions(
-        flashcards,
+      const questions = convertKanjiSeedToQuestions(
+        data.selectedLevels,
         data.totalRounds,
-        data.timePerQuestion
+        data.timePerQuestion,
+        data.gameMode
       );
 
       if (questions.length < 5) {
-        throw new Error('Cần ít nhất 5 flashcard để chơi');
+        throw new Error('Cần ít nhất 5 kanji để chơi. Hãy chọn thêm cấp độ JLPT.');
       }
 
-      const settings: SpeedQuizSettings = {
-        ...DEFAULT_SPEED_QUIZ_SETTINGS,
-        totalRounds: data.totalRounds,
+      const settings: KanjiBattleSettings = {
+        ...DEFAULT_KANJI_BATTLE_SETTINGS,
+        totalRounds: Math.min(data.totalRounds, questions.length),
         timePerQuestion: data.timePerQuestion,
         maxPlayers: data.maxPlayers,
         skillsEnabled: data.skillsEnabled,
+        gameMode: data.gameMode,
+        selectedLevels: data.selectedLevels,
       };
 
-      const player: SpeedQuizPlayer = {
+      const player: KanjiBattlePlayer = {
         odinhId: currentUser.id,
         displayName: currentUser.displayName,
         avatar: currentUser.avatar,
@@ -79,7 +79,7 @@ export function useGameCreation({
         streak: 0,
       };
 
-      const newGame: SpeedQuizGame = {
+      const newGame: KanjiBattleGame = {
         id: generateId(),
         code: generateGameCode(),
         hostId: currentUser.id,
@@ -142,9 +142,7 @@ export function useGameCreation({
     } finally {
       setLoading(false);
     }
-  }, [currentUser, flashcards, setGame, setGameResults, setLoading, setError, botTimerRef]);
+  }, [currentUser, setGame, setGameResults, setLoading, setError, botTimerRef]);
 
-  return {
-    createGame,
-  };
+  return { createGame };
 }

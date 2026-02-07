@@ -1,24 +1,25 @@
-// Speed Quiz Play - Main gameplay screen
+// Kanji Battle Play - Read Mode (type reading/meaning)
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type {
-  SpeedQuizGame,
-  SpeedQuizSkill,
-  SpeedQuizSkillType,
-} from '../../types/speed-quiz';
-import { SPEED_QUIZ_SKILLS } from '../../types/speed-quiz';
+  KanjiBattleGame,
+  KanjiBattleSkill,
+  KanjiBattleSkillType,
+} from '../../types/kanji-battle';
+import { KANJI_BATTLE_SKILLS } from '../../types/kanji-battle';
 import { PlayerLeaderboard, type LeaderboardPlayer } from '../game-hub/player-leaderboard';
 import { useGameSounds } from '../../hooks/use-game-sounds';
 
-interface SpeedQuizPlayProps {
-  game: SpeedQuizGame;
+interface KanjiBattlePlayReadProps {
+  game: KanjiBattleGame;
   currentPlayerId: string;
   onSubmitAnswer: (answer: string) => void;
   onUseHint: () => void;
-  onSelectSkill: (skillType: SpeedQuizSkillType, targetId?: string) => void;
+  onSelectSkill: (skillType: KanjiBattleSkillType, targetId?: string) => void;
   onNextRound: () => void;
+  onSubmitDrawing?: any; // unused in read mode
 }
 
-export const SpeedQuizPlay: React.FC<SpeedQuizPlayProps> = ({
+export const KanjiBattlePlayRead: React.FC<KanjiBattlePlayReadProps> = ({
   game,
   currentPlayerId,
   onSubmitAnswer,
@@ -29,190 +30,127 @@ export const SpeedQuizPlay: React.FC<SpeedQuizPlayProps> = ({
   const [answer, setAnswer] = useState('');
   const [timeLeft, setTimeLeft] = useState(game.settings.timePerQuestion);
   const [revealedHints, setRevealedHints] = useState<string[]>([]);
-  const [selectedSkill, setSelectedSkill] = useState<SpeedQuizSkillType | null>(null);
+  const [selectedSkill, setSelectedSkill] = useState<KanjiBattleSkillType | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const currentPlayer = game.players[currentPlayerId];
   const isPlaying = game.status === 'playing';
   const isSkillPhase = game.status === 'skill_phase';
   const isResult = game.status === 'result';
 
-  // Game sounds
   const { playCorrect, playWrong, playVictory, playDefeat, startMusic, stopMusic, settings: soundSettings } = useGameSounds();
   const soundPlayedRef = useRef<string>('');
 
-  // Play sounds when result is shown
   useEffect(() => {
     if (isResult && currentPlayer) {
       const soundKey = `result-${game.currentRound}`;
       if (soundPlayedRef.current !== soundKey) {
         soundPlayedRef.current = soundKey;
-        if (currentPlayer.isCorrect) {
-          playCorrect();
-        } else {
-          playWrong();
-        }
+        if (currentPlayer.isCorrect) playCorrect(); else playWrong();
       }
     }
   }, [isResult, game.currentRound, currentPlayer, playCorrect, playWrong]);
 
-  // Play victory/defeat sound when game ends
   useEffect(() => {
     if (game.status === 'finished') {
       const players = Object.values(game.players).sort((a, b) => b.score - a.score);
-      const isWinner = players[0]?.odinhId === currentPlayerId;
-      if (isWinner) {
-        playVictory();
-      } else {
-        playDefeat();
-      }
+      if (players[0]?.odinhId === currentPlayerId) playVictory(); else playDefeat();
       stopMusic();
     }
   }, [game.status, game.players, currentPlayerId, playVictory, playDefeat, stopMusic]);
 
-  // Start background music
   useEffect(() => {
-    if (isPlaying && soundSettings.musicEnabled) {
-      startMusic();
-    }
+    if (isPlaying && soundSettings.musicEnabled) startMusic();
   }, [isPlaying, soundSettings.musicEnabled, startMusic]);
 
-  // Focus input when playing
   useEffect(() => {
-    if (isPlaying && inputRef.current && !currentPlayer?.isSlowed) {
-      inputRef.current.focus();
-    }
+    if (isPlaying && inputRef.current && !currentPlayer?.isSlowed) inputRef.current.focus();
   }, [isPlaying, currentPlayer?.isSlowed]);
 
-  // Timer countdown
   useEffect(() => {
     if (!isPlaying || !game.roundStartTime) return;
-
     const interval = setInterval(() => {
       const elapsed = (Date.now() - game.roundStartTime!) / 1000;
       const remaining = Math.max(0, game.settings.timePerQuestion - elapsed);
       setTimeLeft(remaining);
-
-      if (remaining <= 0) {
-        clearInterval(interval);
-      }
+      if (remaining <= 0) clearInterval(interval);
     }, 100);
-
     return () => clearInterval(interval);
   }, [isPlaying, game.roundStartTime, game.settings.timePerQuestion]);
 
-  // Reset state when new round starts
   useEffect(() => {
     setAnswer('');
     setRevealedHints([]);
     setTimeLeft(game.settings.timePerQuestion);
   }, [game.currentRound, game.settings.timePerQuestion]);
 
-  // Handle slow effect
   const [isDelayed, setIsDelayed] = useState(false);
   useEffect(() => {
     if (isPlaying && currentPlayer?.isSlowed) {
       setIsDelayed(true);
-      const timer = setTimeout(() => {
-        setIsDelayed(false);
-        inputRef.current?.focus();
-      }, 2000);
+      const timer = setTimeout(() => { setIsDelayed(false); inputRef.current?.focus(); }, 2000);
       return () => clearTimeout(timer);
     }
   }, [isPlaying, currentPlayer?.isSlowed, game.currentRound]);
 
-  const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!answer.trim() || currentPlayer?.hasAnswered) return;
-      onSubmitAnswer(answer.trim());
-    },
-    [answer, currentPlayer?.hasAnswered, onSubmitAnswer]
-  );
+  const handleSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    if (!answer.trim() || currentPlayer?.hasAnswered) return;
+    onSubmitAnswer(answer.trim());
+  }, [answer, currentPlayer?.hasAnswered, onSubmitAnswer]);
 
   const handleUseHint = useCallback(() => {
     if (!game.currentQuestion || currentPlayer?.hintsRemaining <= 0) return;
     const hintIndex = revealedHints.length;
     if (hintIndex < game.currentQuestion.hints.length) {
-      setRevealedHints((prev) => [...prev, game.currentQuestion!.hints[hintIndex]]);
+      setRevealedHints(prev => [...prev, game.currentQuestion!.hints[hintIndex]]);
       onUseHint();
     }
   }, [game.currentQuestion, currentPlayer?.hintsRemaining, revealedHints.length, onUseHint]);
 
-  const handleSelectSkill = useCallback(
-    (skillType: SpeedQuizSkillType) => {
-      const skill = SPEED_QUIZ_SKILLS[skillType];
-      if (skill.targetOther) {
-        setSelectedSkill(skillType);
-      } else {
-        onSelectSkill(skillType);
-      }
-    },
-    [onSelectSkill]
-  );
+  const handleSelectSkill = useCallback((skillType: KanjiBattleSkillType) => {
+    const skill = KANJI_BATTLE_SKILLS[skillType];
+    if (skill.targetOther) setSelectedSkill(skillType);
+    else onSelectSkill(skillType);
+  }, [onSelectSkill]);
 
-  const handleTargetPlayer = useCallback(
-    (targetId: string) => {
-      if (selectedSkill) {
-        onSelectSkill(selectedSkill, targetId);
-        setSelectedSkill(null);
-      }
-    },
-    [selectedSkill, onSelectSkill]
-  );
+  const handleTargetPlayer = useCallback((targetId: string) => {
+    if (selectedSkill) { onSelectSkill(selectedSkill, targetId); setSelectedSkill(null); }
+  }, [selectedSkill, onSelectSkill]);
 
   const sortedPlayers = Object.values(game.players).sort((a, b) => b.score - a.score);
   const lastResult = game.roundResults[game.roundResults.length - 1];
 
-  // Convert players to leaderboard format
   const leaderboardPlayers: LeaderboardPlayer[] = useMemo(() => {
     return sortedPlayers.map(player => {
-      // Determine answer status
       let answerStatus: LeaderboardPlayer['answerStatus'] = 'none';
       if (isResult && lastResult) {
         const playerResult = lastResult.playerResults.find(r => r.odinhId === player.odinhId);
-        if (playerResult) {
-          answerStatus = playerResult.isCorrect ? 'correct' : 'wrong';
-        }
+        if (playerResult) answerStatus = playerResult.isCorrect ? 'correct' : 'wrong';
       } else if (isPlaying) {
         answerStatus = player.hasAnswered ? 'pending' : 'none';
       }
-
       return {
-        id: player.odinhId,
-        displayName: player.displayName,
-        avatar: player.avatar,
-        score: player.score,
-        isCurrentUser: player.odinhId === currentPlayerId,
-        answerStatus,
-        streak: player.streak,
-        isBot: player.isBot,
-        role: player.role,
+        id: player.odinhId, displayName: player.displayName, avatar: player.avatar,
+        score: player.score, isCurrentUser: player.odinhId === currentPlayerId,
+        answerStatus, streak: player.streak, isBot: player.isBot, role: player.role,
       };
     });
   }, [sortedPlayers, isPlaying, isResult, lastResult, currentPlayerId]);
 
-  // Render skill phase
+  // Skill phase
   if (isSkillPhase) {
-    const skills = Object.values(SPEED_QUIZ_SKILLS);
-    const otherPlayers = Object.values(game.players).filter(
-      (p) => p.odinhId !== currentPlayerId
-    );
-
+    const skills = Object.values(KANJI_BATTLE_SKILLS);
+    const otherPlayers = Object.values(game.players).filter(p => p.odinhId !== currentPlayerId);
     return (
       <div className="speed-quiz-play skill-phase">
         <div className="skill-phase-header">
           <h2>✨ Chọn Kỹ Năng Đặc Biệt</h2>
           <p>Câu {game.currentRound}/{game.settings.totalRounds}</p>
         </div>
-
         {!selectedSkill ? (
           <div className="skills-grid">
-            {skills.map((skill: SpeedQuizSkill) => (
-              <button
-                key={skill.type}
-                className="skill-card"
-                onClick={() => handleSelectSkill(skill.type)}
-              >
+            {skills.map((skill: KanjiBattleSkill) => (
+              <button key={skill.type} className="skill-card" onClick={() => handleSelectSkill(skill.type)}>
                 <span className="skill-emoji">{skill.emoji}</span>
                 <span className="skill-name">{skill.name}</span>
                 <span className="skill-desc">{skill.description}</span>
@@ -221,35 +159,22 @@ export const SpeedQuizPlay: React.FC<SpeedQuizPlayProps> = ({
           </div>
         ) : (
           <div className="target-selection">
-            <h3>🎯 Chọn mục tiêu cho {SPEED_QUIZ_SKILLS[selectedSkill].name}</h3>
+            <h3>🎯 Chọn mục tiêu cho {KANJI_BATTLE_SKILLS[selectedSkill].name}</h3>
             <div className="targets-grid">
-              {otherPlayers.map((player) => (
-                <button
-                  key={player.odinhId}
-                  className="target-card"
-                  onClick={() => handleTargetPlayer(player.odinhId)}
-                >
+              {otherPlayers.map(player => (
+                <button key={player.odinhId} className="target-card" onClick={() => handleTargetPlayer(player.odinhId)}>
                   <span className="target-avatar">{player.avatar}</span>
                   <span className="target-name">{player.displayName}</span>
                   <span className="target-score">{player.score} điểm</span>
                 </button>
               ))}
             </div>
-            <button
-              className="speed-quiz-btn secondary"
-              onClick={() => setSelectedSkill(null)}
-            >
-              ← Chọn lại
-            </button>
+            <button className="speed-quiz-btn secondary" onClick={() => setSelectedSkill(null)}>← Chọn lại</button>
           </div>
         )}
-
         <div className="scoreboard-mini">
           {sortedPlayers.slice(0, 5).map((player, index) => (
-            <div
-              key={player.odinhId}
-              className={`score-item ${player.odinhId === currentPlayerId ? 'current' : ''}`}
-            >
+            <div key={player.odinhId} className={`score-item ${player.odinhId === currentPlayerId ? 'current' : ''}`}>
               <span className="rank">#{index + 1}</span>
               <span className="avatar">{player.avatar}</span>
               <span className="name">{player.displayName}</span>
@@ -261,23 +186,21 @@ export const SpeedQuizPlay: React.FC<SpeedQuizPlayProps> = ({
     );
   }
 
-  // Render result phase
+  // Result phase
   if (isResult && lastResult) {
-    const playerResult = lastResult.playerResults.find(
-      (r) => r.odinhId === currentPlayerId
-    );
-
+    const playerResult = lastResult.playerResults.find(r => r.odinhId === currentPlayerId);
     return (
       <div className="speed-quiz-play result-phase">
-        <div className="result-header">
-          <h2>📊 Kết Quả Câu {game.currentRound}</h2>
-        </div>
-
+        <div className="result-header"><h2>📊 Kết Quả Câu {game.currentRound}</h2></div>
         <div className="correct-answer">
-          <span className="label">Đáp án đúng:</span>
-          <span className="answer">{lastResult.correctAnswer}</span>
+          <span className="label">Đáp án:</span>
+          <span className="answer">{game.currentQuestion?.meaning} ({game.currentQuestion?.sinoVietnamese})</span>
         </div>
-
+        {game.currentQuestion && (
+          <div style={{ textAlign: 'center', fontSize: '0.85rem', color: '#6b7280', marginBottom: 12 }}>
+            On: {game.currentQuestion.onYomi.join(', ')} | Kun: {game.currentQuestion.kunYomi.join(', ')}
+          </div>
+        )}
         {playerResult && (
           <div className={`your-result ${playerResult.isCorrect ? 'correct' : 'wrong'}`}>
             <span className="icon">{playerResult.isCorrect ? '✅' : '❌'}</span>
@@ -291,63 +214,42 @@ export const SpeedQuizPlay: React.FC<SpeedQuizPlayProps> = ({
             )}
           </div>
         )}
-
         {lastResult.fastestPlayer && (
           <div className="fastest-player">
             <span className="icon">🏆</span>
-            <span>
-              Nhanh nhất:{' '}
-              {game.players[lastResult.fastestPlayer]?.displayName || 'Unknown'}
-            </span>
+            <span>Nhanh nhất: {game.players[lastResult.fastestPlayer]?.displayName || 'Unknown'}</span>
           </div>
         )}
-
         <div className="all-results">
           <h3>Kết quả tất cả:</h3>
           <div className="results-list">
             {lastResult.playerResults
-              .sort((a, b) => {
-                if (a.isCorrect !== b.isCorrect) return a.isCorrect ? -1 : 1;
-                return a.timeMs - b.timeMs;
-              })
+              .sort((a, b) => { if (a.isCorrect !== b.isCorrect) return a.isCorrect ? -1 : 1; return a.timeMs - b.timeMs; })
               .map((result, index) => {
                 const player = game.players[result.odinhId];
                 return (
-                  <div
-                    key={result.odinhId}
-                    className={`result-item ${result.isCorrect ? 'correct' : 'wrong'} ${
-                      result.odinhId === currentPlayerId ? 'current' : ''
-                    }`}
-                  >
+                  <div key={result.odinhId} className={`result-item ${result.isCorrect ? 'correct' : 'wrong'} ${result.odinhId === currentPlayerId ? 'current' : ''}`}>
                     <span className="rank">#{index + 1}</span>
                     <span className="avatar">{player?.avatar}</span>
                     <span className="name">{player?.displayName}</span>
                     <span className="answer-text">{result.answer || '(không trả lời)'}</span>
-                    <span className="time">
-                      {result.isCorrect ? `${(result.timeMs / 1000).toFixed(2)}s` : '-'}
-                    </span>
-                    <span className="points">
-                      {result.pointsEarned > 0 ? '+' : ''}
-                      {result.pointsEarned}
-                    </span>
+                    <span className="time">{result.isCorrect ? `${(result.timeMs / 1000).toFixed(2)}s` : '-'}</span>
+                    <span className="points">{result.pointsEarned > 0 ? '+' : ''}{result.pointsEarned}</span>
                   </div>
                 );
               })}
           </div>
         </div>
-
         {game.hostId === currentPlayerId && (
           <button className="speed-quiz-btn primary large" onClick={onNextRound}>
-            {game.currentRound < game.settings.totalRounds
-              ? '➡️ Câu Tiếp Theo'
-              : '🏁 Xem Kết Quả'}
+            {game.currentRound < game.settings.totalRounds ? '➡️ Câu Tiếp Theo' : '🏁 Xem Kết Quả'}
           </button>
         )}
       </div>
     );
   }
 
-  // Render playing phase
+  // Playing phase
   return (
     <div className="speed-quiz-play playing-phase with-leaderboard">
       <div className="speed-quiz-main">
@@ -361,53 +263,33 @@ export const SpeedQuizPlay: React.FC<SpeedQuizPlayProps> = ({
           </div>
         </div>
 
-        {/* Effects display */}
         {currentPlayer && (
           <div className="active-effects">
-            {currentPlayer.hasDoublePoints && (
-              <span className="effect double">✨ x2 ({currentPlayer.doublePointsTurns} lượt)</span>
-            )}
-            {currentPlayer.hasShield && (
-              <span className="effect shield">🛡️ Khiên ({currentPlayer.shieldTurns} lượt)</span>
-            )}
-            {currentPlayer.isSlowed && (
-              <span className="effect slowed">🐌 Bị làm chậm</span>
-            )}
+            {currentPlayer.hasDoublePoints && <span className="effect double">✨ x2 ({currentPlayer.doublePointsTurns} lượt)</span>}
+            {currentPlayer.hasShield && <span className="effect shield">🛡️ Khiên ({currentPlayer.shieldTurns} lượt)</span>}
+            {currentPlayer.isSlowed && <span className="effect slowed">🐌 Bị làm chậm</span>}
           </div>
         )}
 
-        {/* Question display */}
         {game.currentQuestion && (
           <div className="question-area">
-            <div className="question-display">
-              <span className="question-text">{game.currentQuestion.display}</span>
+            <div className="question-display" style={{ fontSize: '4rem', fontWeight: 700 }}>
+              <span className="question-text">{game.currentQuestion.kanjiCharacter}</span>
             </div>
-
             <div className="question-meta">
-              <span className="category">
-                {game.currentQuestion.category === 'vocabulary'
-                  ? '📝 Từ vựng'
-                  : game.currentQuestion.category === 'kanji'
-                  ? '🈳 Kanji'
-                  : '📖 Ngữ pháp'}
-              </span>
+              <span className="category">📝 {game.currentQuestion.strokeCount} nét</span>
               <span className="points">+{game.currentQuestion.points} điểm</span>
             </div>
-
-            {/* Hints */}
             {revealedHints.length > 0 && (
               <div className="hints-revealed">
                 {revealedHints.map((hint, i) => (
-                  <div key={i} className="hint-item">
-                    💡 {hint}
-                  </div>
+                  <div key={i} className="hint-item">💡 {hint}</div>
                 ))}
               </div>
             )}
           </div>
         )}
 
-        {/* Answer input */}
         {isDelayed ? (
           <div className="delay-overlay">
             <span className="delay-icon">🐌</span>
@@ -416,48 +298,30 @@ export const SpeedQuizPlay: React.FC<SpeedQuizPlayProps> = ({
         ) : (
           <form className="answer-form" onSubmit={handleSubmit}>
             <input
-              ref={inputRef}
-              type="text"
-              value={answer}
+              ref={inputRef} type="text" value={answer}
               onChange={(e) => setAnswer(e.target.value)}
-              placeholder="Nhập đáp án..."
+              placeholder="Nhập nghĩa / cách đọc..."
               disabled={currentPlayer?.hasAnswered}
               className={currentPlayer?.hasAnswered ? 'answered' : ''}
             />
-            <button
-              type="submit"
-              className="speed-quiz-btn primary"
-              disabled={!answer.trim() || currentPlayer?.hasAnswered}
-            >
+            <button type="submit" className="speed-quiz-btn primary"
+              disabled={!answer.trim() || currentPlayer?.hasAnswered}>
               {currentPlayer?.hasAnswered ? '✓ Đã trả lời' : '📤 Gửi'}
             </button>
           </form>
         )}
 
-        {/* Hint button */}
         <div className="hint-section">
-          <button
-            className="speed-quiz-btn secondary hint-btn"
-            onClick={handleUseHint}
-            disabled={
-              currentPlayer?.hintsRemaining <= 0 ||
-              revealedHints.length >= (game.currentQuestion?.hints.length || 0)
-            }
-          >
+          <button className="speed-quiz-btn secondary hint-btn" onClick={handleUseHint}
+            disabled={currentPlayer?.hintsRemaining <= 0 || revealedHints.length >= (game.currentQuestion?.hints.length || 0)}>
             💡 Gợi ý ({currentPlayer?.hintsRemaining || 0} còn lại)
           </button>
         </div>
       </div>
 
-      {/* Player Leaderboard Sidebar */}
       <div className="speed-quiz-sidebar">
-        <PlayerLeaderboard
-          players={leaderboardPlayers}
-          currentUserId={currentPlayerId}
-          title="Bảng Xếp Hạng"
-          showAnswerStatus={true}
-          maxVisible={10}
-        />
+        <PlayerLeaderboard players={leaderboardPlayers} currentUserId={currentPlayerId}
+          title="Bảng Xếp Hạng" showAnswerStatus={true} maxVisible={10} />
       </div>
     </div>
   );

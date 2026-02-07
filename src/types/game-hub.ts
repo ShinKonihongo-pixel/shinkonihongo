@@ -1,7 +1,7 @@
 // Game Hub Types - Unified game center for all mini-games
 
 // Available games in the hub
-export type GameType = 'quiz' | 'golden-bell' | 'picture-guess' | 'bingo' | 'speed-quiz' | 'word-match' | 'ai-challenge' | 'image-word' | 'word-scramble';
+export type GameType = 'quiz' | 'golden-bell' | 'picture-guess' | 'bingo' | 'kanji-battle' | 'word-match' | 'ai-challenge' | 'image-word' | 'word-scramble';
 
 // Game info for display
 export interface GameInfo {
@@ -127,15 +127,15 @@ export const GAMES: Record<GameType, GameInfo> = {
     isNew: true,
     category: 'puzzle',
   },
-  'speed-quiz': {
-    id: 'speed-quiz',
-    name: 'Ai Nhanh Hơn Ai',
-    description: 'Gõ đáp án nhanh nhất - tích điểm cao nhất thắng!',
-    icon: '⚡',
+  'kanji-battle': {
+    id: 'kanji-battle',
+    name: 'Đại Chiến Kanji',
+    description: 'Đọc hoặc viết kanji nhanh nhất - tích điểm cao nhất thắng!',
+    icon: '⚔️',
     color: '#FF5722',
     gradient: 'linear-gradient(135deg, #FF5722 0%, #FF9800 100%)',
     playerRange: '2-20',
-    features: ['Gõ nhanh', '3 gợi ý', 'Kỹ năng đặc biệt'],
+    features: ['Đọc Kanji', 'Viết Kanji', 'Kỹ năng đặc biệt'],
     difficulty: 'medium',
     isNew: true,
     category: 'quiz',

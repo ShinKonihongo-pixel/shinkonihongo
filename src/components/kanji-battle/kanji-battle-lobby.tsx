@@ -1,12 +1,12 @@
-// Speed Quiz Lobby - Waiting room for players
+// Kanji Battle Lobby - Waiting room for players
 import React from 'react';
 import { X } from 'lucide-react';
-import type { SpeedQuizGame, SpeedQuizPlayer } from '../../types/speed-quiz';
+import type { KanjiBattleGame, KanjiBattlePlayer } from '../../types/kanji-battle';
 import { isImageAvatar } from '../../utils/avatar-icons';
 import { getVipAvatarClasses, getVipNameClasses, isVipRole, getVipBadge } from '../../utils/vip-styling';
 
-interface SpeedQuizLobbyProps {
-  game: SpeedQuizGame;
+interface KanjiBattleLobbyProps {
+  game: KanjiBattleGame;
   currentPlayerId: string;
   onStartGame: () => void;
   onAddBot: () => void;
@@ -14,7 +14,7 @@ interface SpeedQuizLobbyProps {
   onKickPlayer?: (playerId: string) => void;
 }
 
-export const SpeedQuizLobby: React.FC<SpeedQuizLobbyProps> = ({
+export const KanjiBattleLobby: React.FC<KanjiBattleLobbyProps> = ({
   game,
   currentPlayerId,
   onStartGame,
@@ -33,7 +33,7 @@ export const SpeedQuizLobby: React.FC<SpeedQuizLobbyProps> = ({
           ← Rời phòng
         </button>
         <div className="room-info">
-          <h2>⚡ {game.title}</h2>
+          <h2>⚔️ {game.title}</h2>
           <div className="room-code">
             <span className="label">Mã phòng:</span>
             <span className="code">{game.code}</span>
@@ -50,16 +50,20 @@ export const SpeedQuizLobby: React.FC<SpeedQuizLobbyProps> = ({
 
       <div className="speed-quiz-lobby-settings">
         <div className="setting-item">
+          <span className="icon">{game.settings.gameMode === 'read' ? '📖' : '✍️'}</span>
+          <span>{game.settings.gameMode === 'read' ? 'Đọc Kanji' : 'Viết Kanji'}</span>
+        </div>
+        <div className="setting-item">
+          <span className="icon">🏷️</span>
+          <span>{game.settings.selectedLevels.join(', ')}</span>
+        </div>
+        <div className="setting-item">
           <span className="icon">📝</span>
           <span>{game.settings.totalRounds} câu hỏi</span>
         </div>
         <div className="setting-item">
           <span className="icon">⏱️</span>
           <span>{game.settings.timePerQuestion}s/câu</span>
-        </div>
-        <div className="setting-item">
-          <span className="icon">💡</span>
-          <span>{game.settings.hintsPerPlayer} gợi ý</span>
         </div>
         <div className="setting-item">
           <span className="icon">✨</span>
@@ -78,7 +82,7 @@ export const SpeedQuizLobby: React.FC<SpeedQuizLobbyProps> = ({
         </div>
 
         <div className="players-grid">
-          {players.map((player: SpeedQuizPlayer) => {
+          {players.map((player: KanjiBattlePlayer) => {
             const playerIsVip = isVipRole(player.role);
             const vipBadge = getVipBadge(player.role);
 
@@ -107,7 +111,6 @@ export const SpeedQuizLobby: React.FC<SpeedQuizLobbyProps> = ({
                   )}
                   {player.isBot && <span className="bot-badge">🤖</span>}
                 </div>
-                {/* Kick button for host */}
                 {isHost && player.odinhId !== game.hostId && player.odinhId !== currentPlayerId && onKickPlayer && (
                   <button
                     className="kick-btn"
@@ -121,31 +124,26 @@ export const SpeedQuizLobby: React.FC<SpeedQuizLobbyProps> = ({
             );
           })}
 
-          {/* Empty slots */}
-          {Array.from({ length: game.settings.maxPlayers - players.length }).map(
-            (_, i) => (
-              <div key={`empty-${i}`} className="player-card empty">
-                <div className="player-avatar">?</div>
-                <div className="player-info">
-                  <span className="player-name">Chờ người chơi...</span>
-                </div>
+          {Array.from({ length: game.settings.maxPlayers - players.length }).map((_, i) => (
+            <div key={`empty-${i}`} className="player-card empty">
+              <div className="player-avatar">?</div>
+              <div className="player-info">
+                <span className="player-name">Chờ người chơi...</span>
               </div>
-            )
-          )}
+            </div>
+          ))}
         </div>
       </div>
 
       <div className="speed-quiz-lobby-actions">
         {isHost ? (
-          <>
-            <button
-              className="speed-quiz-btn primary large"
-              onClick={onStartGame}
-              disabled={!canStart}
-            >
-              {canStart ? '🚀 Bắt Đầu' : `Cần ít nhất ${game.settings.minPlayers} người`}
-            </button>
-          </>
+          <button
+            className="speed-quiz-btn primary large"
+            onClick={onStartGame}
+            disabled={!canStart}
+          >
+            {canStart ? '🚀 Bắt Đầu' : `Cần ít nhất ${game.settings.minPlayers} người`}
+          </button>
         ) : (
           <div className="waiting-message">
             <span className="spinner">⏳</span>

@@ -17,7 +17,7 @@ const QuizGamePage = lazy(() => import('./quiz-game-page').then(m => ({ default:
 const GoldenBellPage = lazy(() => import('./golden-bell-page').then(m => ({ default: m.GoldenBellPage })));
 const PictureGuessPage = lazy(() => import('./picture-guess-page').then(m => ({ default: m.PictureGuessPage })));
 const BingoPage = lazy(() => import('./bingo-page').then(m => ({ default: m.BingoPage })));
-const SpeedQuizPage = lazy(() => import('./speed-quiz-page').then(m => ({ default: m.SpeedQuizPage })));
+const KanjiBattlePage = lazy(() => import('./kanji-battle-page').then(m => ({ default: m.KanjiBattlePage })));
 const WordMatchPage = lazy(() => import('./word-match-page').then(m => ({ default: m.WordMatchPage })));
 const AIChallengePage = lazy(() => import('./ai-challenge-page').then(m => ({ default: m.AIChallengePage })));
 const ImageWordPage = lazy(() => import('./image-word-page').then(m => ({ default: m.ImageWordPage })));
@@ -173,16 +173,15 @@ export function GameHubPage({
         />
       )}
 
-      {selectedGame === 'speed-quiz' && (
-        <SpeedQuizPage
+      {selectedGame === 'kanji-battle' && (
+        <KanjiBattlePage
           onClose={handleBackToHub}
           currentUser={{
             id: currentUser.id,
             displayName: currentUser.displayName || currentUser.username,
-            avatar: currentUser.avatar || '⚡',
+            avatar: currentUser.avatar || '⚔️',
             role: currentUser.role,
           }}
-          flashcards={flashcards}
           initialView={joinCode ? 'menu' : 'setup'}
           onSaveGameSession={onSaveGameSession}
         />
