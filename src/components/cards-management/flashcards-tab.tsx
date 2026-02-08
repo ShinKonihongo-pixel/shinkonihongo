@@ -292,8 +292,15 @@ export function FlashcardsTab({
   };
 
   const handleSubmit = (data: any) => {
-    if (editingCard) onUpdateCard(editingCard.id, data);
-    else onAddCard(data, currentUser.id);
+    if (editingCard) {
+      const updateData = { ...data };
+      if (data.difficultyLevel) {
+        updateData.originalDifficultyLevel = data.difficultyLevel;
+      }
+      onUpdateCard(editingCard.id, updateData);
+    } else {
+      onAddCard(data, currentUser.id);
+    }
     setFormMode('none');
     setEditingCard(null);
   };

@@ -1,6 +1,6 @@
 // Study session header with filters and controls
 import { useState } from 'react';
-import { ArrowLeft, Settings, BookOpen, PenLine } from 'lucide-react';
+import { ArrowLeft, Settings, BookOpen, PenLine, RotateCcw } from 'lucide-react';
 import type { MemorizationStatus, DifficultyLevel, JLPTLevel, Flashcard } from '../../../types/flashcard';
 import { MEMORIZATION_OPTIONS, DIFFICULTY_OPTIONS, LEVEL_COLORS } from './constants';
 import { useAuth } from '../../../hooks/use-auth';
@@ -23,6 +23,7 @@ interface StudyHeaderProps {
   onBack?: () => void;
   isMobile: boolean;
   currentCard?: Flashcard;
+  onResetAll?: () => void;
 }
 
 export function StudyHeader({
@@ -40,12 +41,20 @@ export function StudyHeader({
   onBack,
   isMobile,
   currentCard,
+  onResetAll,
 }: StudyHeaderProps) {
   const { currentUser } = useAuth();
   const levelColors = selectedLevel ? LEVEL_COLORS[selectedLevel] : null;
   const [showDetail, setShowDetail] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  // Check if anything can be reset (shuffle or card changes)
+  const cardHasChanges = currentCard && (
+    currentCard.memorizationStatus !== 'unset' ||
+    (currentCard.originalDifficultyLevel && currentCard.difficultyLevel !== currentCard.originalDifficultyLevel)
+  );
+  const hasAnythingToReset = isShuffled || cardHasChanges;
 
   return (
     <div className="study-header">
@@ -119,12 +128,12 @@ export function StudyHeader({
             🔀
           </button>
           <button
-            className="header-action-btn"
+            className={`header-action-btn reset-card-btn ${hasAnythingToReset ? 'active' : ''}`}
             onClick={() => setShowResetConfirm(true)}
-            title="Về thứ tự gốc"
-            disabled={!isShuffled}
+            title="Reset về mặc định"
+            disabled={!hasAnythingToReset}
           >
-            ↺
+            <RotateCcw size={15} />
           </button>
           <button className="header-action-btn" onClick={onSettingsClick} title="Cài đặt">
             <Settings size={16} />
@@ -149,10 +158,13 @@ export function StudyHeader({
       )}
       <ConfirmModal
         isOpen={showResetConfirm}
-        title="Xác nhận đặt lại"
-        message="Bạn có chắc muốn đặt lại thứ tự thẻ về ban đầu?"
+        title="Reset về mặc định"
+        message="Reset thứ tự thẻ và trạng thái/độ khó về mặc định?"
         confirmText="OK"
-        onConfirm={() => { onResetOrder(); setShowResetConfirm(false); }}
+        onConfirm={() => {
+          onResetAll?.();
+          setShowResetConfirm(false);
+        }}
         onCancel={() => setShowResetConfirm(false)}
       />
     </div>

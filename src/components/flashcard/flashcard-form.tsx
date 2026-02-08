@@ -75,7 +75,7 @@ export function FlashcardForm({
         examples: initialData.examples.length > 0 ? initialData.examples : [''],
         jlptLevel: initialData.jlptLevel,
         lessonId: initialData.lessonId,
-        difficultyLevel: initialData.difficultyLevel === 'unset' ? 'medium' : initialData.difficultyLevel,
+        difficultyLevel: (initialData.originalDifficultyLevel || initialData.difficultyLevel) === 'unset' ? 'medium' : (initialData.originalDifficultyLevel || initialData.difficultyLevel),
       });
     }
   }, [initialData]);

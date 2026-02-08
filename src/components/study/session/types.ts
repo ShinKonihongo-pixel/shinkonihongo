@@ -10,6 +10,7 @@ export interface StudySessionProps {
   onFlip: () => void;
   onSetMemorization: (status: MemorizationStatus) => void;
   onSetDifficulty: (level: DifficultyLevel) => void;
+  onResetAll: () => void;
   filterMemorization: MemorizationStatus | 'all';
   onFilterMemorizationChange: (status: MemorizationStatus | 'all') => void;
   filterDifficulty: DifficultyLevel | 'all';

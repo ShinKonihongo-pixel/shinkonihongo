@@ -171,17 +171,37 @@ export function useStudySession({
     }));
   }, [currentCard, updateCard]);
 
-  // Set difficulty level for current card (preserves original difficulty from creation)
+  // Set difficulty level for current card (persisted to DB, preserves original)
   const setDifficultyLevel = useCallback((level: DifficultyLevel) => {
     if (!currentCard) return;
-
     const update: Partial<Flashcard> = { difficultyLevel: level };
-    // Save original difficulty on first study change (so management tab can show it)
+    // Save original difficulty on first change (so reset can restore it)
     if (!currentCard.originalDifficultyLevel) {
       update.originalDifficultyLevel = currentCard.difficultyLevel;
     }
     updateCard(currentCard.id, update);
   }, [currentCard, updateCard]);
+
+  // Reset everything: unshuffle + reset ALL cards' difficulty & memorization
+  const resetAll = useCallback(() => {
+    // Reset shuffle order
+    setIsShuffled(false);
+    setShuffledOrder([]);
+    setCurrentIndex(0);
+    setIsFlipped(false);
+    setClickCount(0);
+    // Reset all cards back to admin defaults
+    for (const card of dueCards) {
+      const needsReset = card.memorizationStatus !== 'unset' ||
+        (card.originalDifficultyLevel && card.difficultyLevel !== card.originalDifficultyLevel);
+      if (needsReset) {
+        updateCard(card.id, {
+          difficultyLevel: card.originalDifficultyLevel || 'unset',
+          memorizationStatus: 'unset',
+        });
+      }
+    }
+  }, [dueCards, updateCard]);
 
   return {
     currentCard,
@@ -194,6 +214,7 @@ export function useStudySession({
     flipCard,
     setMemorizationStatus,
     setDifficultyLevel,
+    resetAll,
     shuffleCards,
     resetOrder,
     isShuffled,

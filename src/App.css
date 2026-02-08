@@ -6009,13 +6009,14 @@ select, option {
   gap: 0.5rem;
   padding: 0 1rem;
   flex-shrink: 0;
+  margin-bottom: 0;
 }
 
 /* Example section - full width, grows toward footer */
 .card-example-section {
   width: 100%;
   text-align: left;
-  padding: 0.4rem 0 0 0;
+  padding: 0 0 0 0;
   margin: 0;
   flex: 1;
   min-height: 0;
@@ -6031,7 +6032,7 @@ select, option {
   padding: 0 10px;
   font-weight: 600;
   color: var(--jp-shu);
-  font-size: calc(0.8rem * var(--back-scale, 1));
+  font-size: calc(0.85rem * var(--back-scale, 1));
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -6039,7 +6040,7 @@ select, option {
 .card-example-section p {
   margin: 0;
   padding: 0.4rem 10px;
-  font-size: calc(18px * var(--back-scale, 1));
+  font-size: calc(22px * var(--back-scale, 1));
   line-height: 1.8;
   border-left: 3px solid var(--jp-shu);
   background: rgba(0, 0, 0, 0.02);
@@ -6055,7 +6056,7 @@ select, option {
 }
 
 .card-example-section rt {
-  font-size: calc(11px * var(--back-scale, 1));
+  font-size: calc(14px * var(--back-scale, 1));
   color: var(--jp-shu);
   font-weight: 500;
 }
@@ -6068,7 +6069,7 @@ select, option {
 /* Vietnamese translation on new line */
 .card-example-section .example-translation {
   display: block;
-  font-size: calc(15px * var(--back-scale, 1));
+  font-size: calc(18px * var(--back-scale, 1));
   color: var(--gray);
   font-style: italic;
   word-wrap: break-word;
@@ -6107,12 +6108,12 @@ select, option {
 
   .card-example-section p {
     padding: 0.3rem 8px;
-    font-size: calc(14px * var(--back-scale, 1));
+    font-size: calc(16px * var(--back-scale, 1));
     line-height: 1.7;
   }
 
   .card-example-section .example-translation {
-    font-size: calc(12px * var(--back-scale, 1));
+    font-size: calc(14px * var(--back-scale, 1));
   }
 
   .meaning-with-speaker .speak-btn {
@@ -6992,6 +6993,15 @@ select, option {
   font-weight: 600;
 }
 
+.reset-card-btn.active {
+  background: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+}
+.reset-card-btn.active:hover {
+  background: rgba(239, 68, 68, 0.4);
+  color: #fef2f2;
+}
+
 /* Card wrapper for positioning counter */
 .card-wrapper {
   position: relative;
@@ -7098,6 +7108,17 @@ select, option {
   border-radius: 14px;
   padding: 1rem;
   margin-bottom: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+.study-settings-modal .modal-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #7c3aed, #a855f7, #ec4899);
 }
 
 .study-settings-modal .modal-section:last-child {

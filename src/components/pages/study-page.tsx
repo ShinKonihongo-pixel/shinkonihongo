@@ -69,6 +69,7 @@ export function StudyPage({
     flipCard,
     setMemorizationStatus,
     setDifficultyLevel,
+    resetAll,
     shuffleCards,
     resetOrder,
     isShuffled,
@@ -192,6 +193,7 @@ export function StudyPage({
       onFlip={flipCard}
       onSetMemorization={setMemorizationStatus}
       onSetDifficulty={setDifficultyLevel}
+      onResetAll={resetAll}
       filterMemorization={filterMemorization}
       onFilterMemorizationChange={setFilterMemorization}
       filterDifficulty={filterDifficulty}

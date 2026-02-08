@@ -16,6 +16,7 @@ export function StudySession({
   onFlip,
   onSetMemorization,
   onSetDifficulty,
+  onResetAll,
   filterMemorization,
   onFilterMemorizationChange,
   filterDifficulty,
@@ -84,6 +85,7 @@ export function StudySession({
         onBack={onBack}
         isMobile={isMobile}
         currentCard={currentCard}
+        onResetAll={onResetAll}
       />
 
       <CardArea
