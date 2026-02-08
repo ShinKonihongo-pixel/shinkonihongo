@@ -99,6 +99,9 @@ export interface AppSettings {
   showMeaning: boolean;
   showExample: boolean;
 
+  // Card flip animation style
+  cardFlipStyle: 'horizontal' | 'vertical' | 'fade' | 'slide' | 'zoom' | 'swing' | 'flip-up' | 'airplane' | 'crumple' | 'flyaway' | 'none';
+
   // Study behavior
   autoAdvanceOnThirdClick: boolean;
   clicksToAdvance: number;
@@ -207,6 +210,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   showSinoVietnamese: true,
   showMeaning: true,
   showExample: true,
+  cardFlipStyle: 'horizontal',
   autoAdvanceOnThirdClick: true,
   clicksToAdvance: 3,
   // Card background defaults

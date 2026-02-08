@@ -4931,6 +4931,20 @@ select, option {
   margin-top: 1rem;
 }
 
+.kanji-batch-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(236,72,153,0.1));
+  border: 1px solid rgba(139,92,246,0.3);
+  border-radius: var(--radius-md);
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: #c4b5fd;
+  font-weight: 500;
+}
+
 .grammar-card-list .card-count {
   color: var(--gray);
   font-size: 0.9rem;
@@ -5615,7 +5629,7 @@ select, option {
   max-height: calc(100vh - 220px);
   cursor: pointer;
   transform-style: preserve-3d;
-  transition: transform 0.6s;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Desktop: Taller flashcard closer to header/footer */
@@ -5627,9 +5641,181 @@ select, option {
   }
 }
 
-.flashcard.flipped {
+/* Shared easing curves for professional feel */
+/* Flip style: horizontal (classic 3D card flip) */
+.flip-horizontal .flashcard {
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.flip-horizontal .flashcard.flipped {
   transform: rotateY(180deg);
 }
+.flip-horizontal .flashcard-back {
+  transform: rotateY(180deg);
+}
+
+/* Flip style: vertical (3D top-bottom flip) */
+.flip-vertical .flashcard {
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.flip-vertical .flashcard.flipped {
+  transform: rotateX(180deg);
+}
+.flip-vertical .flashcard-back {
+  transform: rotateX(180deg);
+}
+
+/* Flip style: fade (smooth crossfade) */
+.flip-fade .flashcard {
+  transform-style: flat;
+  transition: none;
+}
+.flip-fade .flashcard.flipped { transform: none; }
+.flip-fade .flashcard-face {
+  backface-visibility: visible;
+  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.flip-fade .flashcard-front { opacity: 1; }
+.flip-fade .flashcard-back { transform: none; opacity: 0; }
+.flip-fade .flashcard.flipped .flashcard-front { opacity: 0; }
+.flip-fade .flashcard.flipped .flashcard-back { opacity: 1; }
+
+/* Flip style: slide (smooth horizontal slide) */
+.flip-slide .flashcard {
+  transform-style: flat;
+  transition: none;
+}
+.flip-slide .flashcard.flipped { transform: none; }
+.flip-slide .flashcard-face {
+  backface-visibility: visible;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.flip-slide .flashcard-front { opacity: 1; transform: translateX(0); }
+.flip-slide .flashcard-back { transform: translateX(40px); opacity: 0; }
+.flip-slide .flashcard.flipped .flashcard-front { transform: translateX(-40px); opacity: 0; }
+.flip-slide .flashcard.flipped .flashcard-back { transform: translateX(0); opacity: 1; }
+
+/* Flip style: zoom (legacy fallback - scale in/out) */
+.flip-zoom .flashcard {
+  transform-style: flat;
+  transition: none;
+}
+.flip-zoom .flashcard.flipped { transform: none; }
+.flip-zoom .flashcard-face {
+  backface-visibility: visible;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.flip-zoom .flashcard-front { opacity: 1; transform: scale(1); }
+.flip-zoom .flashcard-back { transform: scale(0.92); opacity: 0; }
+.flip-zoom .flashcard.flipped .flashcard-front { transform: scale(0.92); opacity: 0; }
+.flip-zoom .flashcard.flipped .flashcard-back { transform: scale(1); opacity: 1; }
+
+/* Flip style: swing (3D door opening from left) */
+.flip-swing .flashcard {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  transition: none;
+}
+.flip-swing .flashcard-face {
+  transform-origin: left center;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.flip-swing .flashcard-back { transform: rotateY(90deg); }
+.flip-swing .flashcard.flipped .flashcard-front { transform: rotateY(-90deg); }
+.flip-swing .flashcard.flipped .flashcard-back { transform: rotateY(0deg); }
+
+/* Flip style: flip-up (3D flip from bottom) */
+.flip-flip-up .flashcard {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  transition: none;
+}
+.flip-flip-up .flashcard-face {
+  transform-origin: bottom center;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.flip-flip-up .flashcard-back { transform: rotateX(-90deg); }
+.flip-flip-up .flashcard.flipped .flashcard-front { transform: rotateX(90deg); }
+.flip-flip-up .flashcard.flipped .flashcard-back { transform: rotateX(0deg); }
+
+/* Flip style: airplane → Chuyển trang (page turn from right edge) */
+.flip-airplane .flashcard {
+  transform-style: preserve-3d;
+  perspective: 1200px;
+  transition: none;
+}
+.flip-airplane .flashcard-face {
+  transform-origin: left center;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.flip-airplane .flashcard-front { opacity: 1; transform: rotateY(0deg); }
+.flip-airplane .flashcard-back { transform: rotateY(180deg); }
+.flip-airplane .flashcard.flipped .flashcard-front { transform: rotateY(-180deg); }
+.flip-airplane .flashcard.flipped .flashcard-back { transform: rotateY(0deg); }
+
+/* Flip style: crumple → Thu phóng (zoom out front, zoom in back) */
+@keyframes zoom-out {
+  0%   { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.75); opacity: 0; }
+}
+@keyframes zoom-in {
+  0%   { transform: scale(1.25); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.flip-crumple .flashcard {
+  transform-style: flat;
+  transition: none;
+}
+.flip-crumple .flashcard.flipped { transform: none; }
+.flip-crumple .flashcard-face { backface-visibility: visible; }
+.flip-crumple .flashcard-front { opacity: 1; }
+.flip-crumple .flashcard-back { transform: none; opacity: 0; }
+.flip-crumple .flashcard.flipped .flashcard-front {
+  animation: zoom-out 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.flip-crumple .flashcard.flipped .flashcard-back {
+  animation: zoom-in 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.1s forwards;
+  opacity: 0;
+}
+
+/* Flip style: flyaway → Đảo bài (deal card from deck) */
+@keyframes deal-out {
+  0%   { transform: translateX(0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translateX(-60px) rotate(-6deg) scale(0.95); opacity: 0; }
+}
+@keyframes deal-in {
+  0%   { transform: translateX(60px) rotate(6deg) scale(0.95); opacity: 0; }
+  100% { transform: translateX(0) rotate(0deg) scale(1); opacity: 1; }
+}
+.flip-flyaway .flashcard {
+  transform-style: flat;
+  transition: none;
+}
+.flip-flyaway .flashcard.flipped { transform: none; }
+.flip-flyaway .flashcard-face { backface-visibility: visible; }
+.flip-flyaway .flashcard-front { opacity: 1; }
+.flip-flyaway .flashcard-back { transform: none; opacity: 0; }
+.flip-flyaway .flashcard.flipped .flashcard-front {
+  animation: deal-out 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.flip-flyaway .flashcard.flipped .flashcard-back {
+  animation: deal-in 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.1s forwards;
+  opacity: 0;
+}
+
+/* Flip style: none (instant switch) */
+.flip-none .flashcard {
+  transition: none;
+  transform-style: flat;
+}
+.flip-none .flashcard.flipped { transform: none; }
+.flip-none .flashcard-face {
+  backface-visibility: visible;
+  transition: none;
+}
+.flip-none .flashcard-front { opacity: 1; }
+.flip-none .flashcard-back { transform: none; opacity: 0; }
+.flip-none .flashcard.flipped .flashcard-front { opacity: 0; }
+.flip-none .flashcard.flipped .flashcard-back { opacity: 1; }
 
 .flashcard-face {
   position: absolute;
@@ -5666,7 +5852,7 @@ select, option {
 .flashcard-back {
   background: var(--jp-washi-warm);
   color: var(--jp-sumi);
-  transform: rotateY(180deg);
+  transform: rotateY(180deg); /* Default for horizontal flip, overridden by flip-* variants */
   border: 1px solid var(--border);
 }
 
@@ -5845,7 +6031,7 @@ select, option {
   padding: 0 10px;
   font-weight: 600;
   color: var(--jp-shu);
-  font-size: 0.8rem;
+  font-size: calc(0.8rem * var(--back-scale, 1));
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -5853,7 +6039,7 @@ select, option {
 .card-example-section p {
   margin: 0;
   padding: 0.4rem 10px;
-  font-size: 18px;
+  font-size: calc(18px * var(--back-scale, 1));
   line-height: 1.8;
   border-left: 3px solid var(--jp-shu);
   background: rgba(0, 0, 0, 0.02);
@@ -5869,7 +6055,7 @@ select, option {
 }
 
 .card-example-section rt {
-  font-size: 11px;
+  font-size: calc(11px * var(--back-scale, 1));
   color: var(--jp-shu);
   font-weight: 500;
 }
@@ -5882,7 +6068,7 @@ select, option {
 /* Vietnamese translation on new line */
 .card-example-section .example-translation {
   display: block;
-  font-size: 15px;
+  font-size: calc(15px * var(--back-scale, 1));
   color: var(--gray);
   font-style: italic;
   word-wrap: break-word;
@@ -5916,17 +6102,17 @@ select, option {
 
   .card-example-section .example-label {
     padding: 0 8px;
-    font-size: 0.7rem;
+    font-size: calc(0.7rem * var(--back-scale, 1));
   }
 
   .card-example-section p {
     padding: 0.3rem 8px;
-    font-size: 14px;
+    font-size: calc(14px * var(--back-scale, 1));
     line-height: 1.7;
   }
 
   .card-example-section .example-translation {
-    font-size: 12px;
+    font-size: calc(12px * var(--back-scale, 1));
   }
 
   .meaning-with-speaker .speak-btn {
@@ -6112,7 +6298,7 @@ select, option {
   position: relative;
   z-index: 5;
   padding: 0.25rem 0.5rem;
-  overflow-y: auto;
+  overflow: hidden;
   min-height: 0;
 }
 
@@ -7145,7 +7331,6 @@ select, option {
   transform: translateX(22px);
 }
 
-/* Modal toggle group for checkboxes */
 .study-settings-modal .modal-toggle-group {
   display: flex;
   flex-direction: column;

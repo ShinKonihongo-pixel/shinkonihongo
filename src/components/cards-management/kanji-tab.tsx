@@ -1,10 +1,11 @@
 // Kanji Tab - Level-based lesson structure
 // Navigation: Level → Parent Lesson → Child Lesson → Cards
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Download, Upload, BookOpen, FolderOpen, FileText, ChevronRight, Plus, Trash2, Edit2, GripVertical } from 'lucide-react';
 import { KanjiCardForm } from '../flashcard/kanji-card-form';
 import { KanjiCardList } from '../flashcard/kanji-card-list';
+import { KanjiMoveModal } from './kanji-move-modal';
 import { LevelGrid } from './level-grid';
 import type { JLPTLevel } from './cards-management-types';
 import type { KanjiCard, KanjiCardFormData, KanjiLesson } from '../../types/kanji';
@@ -86,6 +87,14 @@ export function KanjiTab({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [draggedLesson, setDraggedLesson] = useState<KanjiLesson | null>(null);
   const [dragOverLesson, setDragOverLesson] = useState<string | null>(null);
+  const [movingCards, setMovingCards] = useState<KanjiCard[] | null>(null);
+
+  // Move kanji cards to a different lesson/level
+  const handleMoveCards = useCallback(async (cardIds: string[], targetLevel: JLPTLevel, targetLessonId: string) => {
+    for (const id of cardIds) {
+      await onUpdateKanjiCard(id, { jlptLevel: targetLevel, lessonId: targetLessonId });
+    }
+  }, [onUpdateKanjiCard]);
 
   const getCurrentLessonId = (): string | null => {
     if (navState.type === 'child') return navState.lessonId;
@@ -386,7 +395,7 @@ export function KanjiTab({
               </div>
               {showForm && <KanjiCardForm onSubmit={handleAddCard} onCancel={() => setShowForm(false)} fixedLevel={navState.level} fixedLessonId={getCurrentLessonId()} />}
               {editingCard && <KanjiCardForm onSubmit={handleUpdateCard} onCancel={() => setEditingCard(null)} initialData={editingCard} fixedLevel={navState.level} fixedLessonId={getCurrentLessonId()} />}
-              <KanjiCardList cards={getCardsForCurrentView()} onEdit={card => { setEditingCard(card); setShowForm(false); }} onDelete={onDeleteKanjiCard} canEdit={isSuperAdmin} />
+              <KanjiCardList cards={getCardsForCurrentView()} onEdit={card => { setEditingCard(card); setShowForm(false); }} onDelete={onDeleteKanjiCard} onMove={cards => setMovingCards(cards)} canEdit={isSuperAdmin} />
             </>
           )}
         </>
@@ -405,6 +414,18 @@ export function KanjiTab({
           {editingCard && <KanjiCardForm onSubmit={handleUpdateCard} onCancel={() => setEditingCard(null)} initialData={editingCard} fixedLevel={navState.level} fixedLessonId={getCurrentLessonId()} />}
           <KanjiCardList cards={getCardsForCurrentView()} onEdit={card => { setEditingCard(card); setShowForm(false); }} onDelete={onDeleteKanjiCard} canEdit={isSuperAdmin} />
         </>
+      )}
+      {/* Move modal */}
+      {movingCards && (
+        <KanjiMoveModal
+          cards={movingCards}
+          lessons={kanjiLessons}
+          getParentLessonsByLevel={getParentLessonsByLevel}
+          getChildLessons={getChildLessons}
+          hasChildren={hasChildren}
+          onMove={handleMoveCards}
+          onClose={() => setMovingCards(null)}
+        />
       )}
     </div>
   );

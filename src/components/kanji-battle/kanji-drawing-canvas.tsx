@@ -1,6 +1,103 @@
-// Kanji Drawing Canvas - HTML5 canvas for stroke drawing
+// Kanji Drawing Canvas - HTML5 canvas for stroke drawing with morph animation
+// After user releases a stroke, it morphs into the actual kanji SVG stroke
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import type { StrokeData, StrokeMatchResult } from '../../types/kanji-battle';
+
+// --- Morph animation helpers ---
+
+function cubicBezier(t: number, p0: number, p1: number, p2: number, p3: number): number {
+  const mt = 1 - t;
+  return mt * mt * mt * p0 + 3 * mt * mt * t * p1 + 3 * mt * t * t * p2 + t * t * t * p3;
+}
+
+/** Sample dense points along SVG path (normalized 0-1 space) */
+function sampleSVGPathDense(pathData: string, samplesPerCurve = 10): { x: number; y: number }[] {
+  const points: { x: number; y: number }[] = [];
+  const S = 109; // KanjiVG coordinate space
+  const commands = pathData.match(/[MLCQZmlcqz][^MLCQZmlcqz]*/g) || [];
+  let cx = 0, cy = 0;
+
+  for (const cmd of commands) {
+    const type = cmd[0];
+    const nums = cmd.slice(1).trim().split(/[\s,]+/).map(Number).filter(n => !isNaN(n));
+    switch (type) {
+      case 'M':
+        cx = nums[0]; cy = nums[1];
+        points.push({ x: cx / S, y: cy / S });
+        break;
+      case 'L':
+        cx = nums[0]; cy = nums[1];
+        points.push({ x: cx / S, y: cy / S });
+        break;
+      case 'C':
+        for (let i = 0; i < nums.length; i += 6) {
+          if (i + 5 >= nums.length) break;
+          for (let j = 1; j <= samplesPerCurve; j++) {
+            const t = j / samplesPerCurve;
+            points.push({
+              x: cubicBezier(t, cx, nums[i], nums[i + 2], nums[i + 4]) / S,
+              y: cubicBezier(t, cy, nums[i + 1], nums[i + 3], nums[i + 5]) / S,
+            });
+          }
+          cx = nums[i + 4]; cy = nums[i + 5];
+        }
+        break;
+      case 'c':
+        for (let i = 0; i < nums.length; i += 6) {
+          if (i + 5 >= nums.length) break;
+          const ax = cx, ay = cy;
+          for (let j = 1; j <= samplesPerCurve; j++) {
+            const t = j / samplesPerCurve;
+            points.push({
+              x: cubicBezier(t, ax, ax + nums[i], ax + nums[i + 2], ax + nums[i + 4]) / S,
+              y: cubicBezier(t, ay, ay + nums[i + 1], ay + nums[i + 3], ay + nums[i + 5]) / S,
+            });
+          }
+          cx += nums[i + 4]; cy += nums[i + 5];
+        }
+        break;
+    }
+  }
+  return points;
+}
+
+/** Resample point array to fixed count with even arc-length spacing */
+function resampleToCount(pts: { x: number; y: number }[], n: number): { x: number; y: number }[] {
+  if (pts.length === 0) return Array(n).fill({ x: 0, y: 0 });
+  if (pts.length === 1 || n < 2) return Array(n).fill(pts[0]);
+
+  const dists = [0];
+  for (let i = 1; i < pts.length; i++) {
+    const dx = pts[i].x - pts[i - 1].x;
+    const dy = pts[i].y - pts[i - 1].y;
+    dists.push(dists[i - 1] + Math.sqrt(dx * dx + dy * dy));
+  }
+  const total = dists[dists.length - 1];
+  if (total === 0) return Array(n).fill(pts[0]);
+
+  const result: { x: number; y: number }[] = [];
+  for (let i = 0; i < n; i++) {
+    const target = (i / (n - 1)) * total;
+    let seg = 0;
+    while (seg < dists.length - 2 && dists[seg + 1] < target) seg++;
+    const segLen = dists[seg + 1] - dists[seg];
+    const t = segLen > 0 ? (target - dists[seg]) / segLen : 0;
+    result.push({
+      x: pts[seg].x + t * (pts[seg + 1].x - pts[seg].x),
+      y: pts[seg].y + t * (pts[seg + 1].y - pts[seg].y),
+    });
+  }
+  return result;
+}
+
+function easeOutCubic(t: number): number {
+  return 1 - Math.pow(1 - t, 3);
+}
+
+const MORPH_SAMPLES = 30;
+const MORPH_DURATION_MS = 280;
+
+// --- Component ---
 
 interface KanjiDrawingCanvasProps {
   kanjiCharacter: string;
@@ -26,12 +123,34 @@ export const KanjiDrawingCanvas: React.FC<KanjiDrawingCanvasProps> = ({
   const [currentPoints, setCurrentPoints] = useState<{ x: number; y: number }[]>([]);
   const completedStrokesRef = useRef<{ x: number; y: number }[][]>([]);
 
-  // Reset completed strokes when stroke index resets (new round)
+  // Brush width matching kanji stroke thickness (like tracing over the kanji)
+  const brushWidth = size / 109 * 5;
+
+  // Morph animation refs
+  const morphAnimRef = useRef<{
+    fromPoints: { x: number; y: number }[];
+    toPoints: { x: number; y: number }[];
+    startTime: number;
+  } | null>(null);
+  const animFrameRef = useRef<number>(0);
+
+  // Reset on new round
   useEffect(() => {
     if (currentStrokeIndex === 0) {
       completedStrokesRef.current = [];
+      if (animFrameRef.current) {
+        cancelAnimationFrame(animFrameRef.current);
+        morphAnimRef.current = null;
+      }
     }
   }, [currentStrokeIndex]);
+
+  // Cleanup animation on unmount
+  useEffect(() => {
+    return () => {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    };
+  }, []);
 
   // Draw background: kanji reference, grid, SVG guides, completed user strokes
   const drawBackground = useCallback(() => {
@@ -68,10 +187,10 @@ export const KanjiDrawingCanvas: React.FC<KanjiDrawingCanvasProps> = ({
       const scale = size / 109;
       strokePaths.forEach((path, idx) => {
         if (idx < currentStrokeIndex) {
-          // Already drawn - show result color
+          // Already drawn - render as solid kanji stroke with result color
           const result = strokeResults[idx];
-          ctx.strokeStyle = result?.isCorrect ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.35)';
-          ctx.lineWidth = 4 * scale;
+          ctx.strokeStyle = result?.isCorrect ? '#22c55e' : '#ef4444';
+          ctx.lineWidth = brushWidth;
         } else if (idx === currentStrokeIndex) {
           // Current stroke - highlight guide
           ctx.strokeStyle = 'rgba(99, 102, 241, 0.35)';
@@ -136,7 +255,7 @@ export const KanjiDrawingCanvas: React.FC<KanjiDrawingCanvasProps> = ({
       if (points.length < 2) return;
       const result = strokeResults[idx];
       ctx.strokeStyle = result ? (result.isCorrect ? '#22c55e' : '#ef4444') : '#6366f1';
-      ctx.lineWidth = 3.5;
+      ctx.lineWidth = brushWidth;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.beginPath();
@@ -146,15 +265,20 @@ export const KanjiDrawingCanvas: React.FC<KanjiDrawingCanvasProps> = ({
       }
       ctx.stroke();
     });
-  }, [kanjiCharacter, strokePaths, currentStrokeIndex, strokeResults, size]);
+  }, [kanjiCharacter, strokePaths, currentStrokeIndex, strokeResults, size, brushWidth]);
 
+  // Keep latest drawBackground accessible for animation loop
+  const drawBgRef = useRef(drawBackground);
+  drawBgRef.current = drawBackground;
+
+  // Redraw when background dependencies change (skip during morph - animation handles it)
   useEffect(() => {
-    drawBackground();
+    if (!morphAnimRef.current) drawBackground();
   }, [drawBackground]);
 
   // Redraw current in-progress stroke on top of background
   useEffect(() => {
-    if (currentPoints.length < 2) return;
+    if (currentPoints.length < 2 || morphAnimRef.current) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -163,7 +287,7 @@ export const KanjiDrawingCanvas: React.FC<KanjiDrawingCanvasProps> = ({
     drawBackground();
 
     ctx.strokeStyle = '#1f2937';
-    ctx.lineWidth = 3.5;
+    ctx.lineWidth = brushWidth;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.beginPath();
@@ -173,6 +297,51 @@ export const KanjiDrawingCanvas: React.FC<KanjiDrawingCanvasProps> = ({
     }
     ctx.stroke();
   }, [currentPoints, drawBackground, size]);
+
+  // Start morph animation: user stroke → kanji SVG stroke
+  const runMorphAnimation = useCallback(() => {
+    const animate = (now: number) => {
+      const anim = morphAnimRef.current;
+      if (!anim) return;
+
+      const elapsed = now - anim.startTime;
+      const t = Math.min(1, elapsed / MORPH_DURATION_MS);
+      const eased = easeOutCubic(t);
+
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // Redraw background layers
+      drawBgRef.current();
+
+      // Draw interpolated morphing stroke
+      ctx.strokeStyle = '#374151';
+      ctx.lineWidth = brushWidth;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+
+      const { fromPoints, toPoints } = anim;
+      for (let i = 0; i < fromPoints.length; i++) {
+        const x = (fromPoints[i].x + (toPoints[i].x - fromPoints[i].x) * eased) * size;
+        const y = (fromPoints[i].y + (toPoints[i].y - fromPoints[i].y) * eased) * size;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      if (t < 1) {
+        animFrameRef.current = requestAnimationFrame(animate);
+      } else {
+        // Morph complete - SVG guide layer (layer 3) renders the perfect bezier stroke
+        morphAnimRef.current = null;
+        drawBgRef.current();
+      }
+    };
+    animFrameRef.current = requestAnimationFrame(animate);
+  }, [size, brushWidth]);
 
   const getPos = (e: React.MouseEvent | React.TouchEvent): { x: number; y: number } => {
     const canvas = canvasRef.current!;
@@ -215,7 +384,7 @@ export const KanjiDrawingCanvas: React.FC<KanjiDrawingCanvasProps> = ({
     if (currentPoints.length >= 1) {
       const last = currentPoints[currentPoints.length - 1];
       ctx.strokeStyle = '#1f2937';
-      ctx.lineWidth = 3.5;
+      ctx.lineWidth = brushWidth;
       ctx.lineCap = 'round';
       ctx.beginPath();
       ctx.moveTo(last.x * size, last.y * size);
@@ -228,8 +397,24 @@ export const KanjiDrawingCanvas: React.FC<KanjiDrawingCanvasProps> = ({
     if (!isDrawing || disabled) return;
     setIsDrawing(false);
     if (currentPoints.length >= 2) {
-      // Save completed stroke for persistent display
-      completedStrokesRef.current = [...completedStrokesRef.current, [...currentPoints]];
+      const svgPath = strokePaths[currentStrokeIndex];
+      if (svgPath) {
+        // Morph user stroke into the actual kanji SVG stroke
+        const svgPts = sampleSVGPathDense(svgPath);
+        const resampledUser = resampleToCount(currentPoints, MORPH_SAMPLES);
+        const resampledSvg = resampleToCount(svgPts, MORPH_SAMPLES);
+
+        morphAnimRef.current = {
+          fromPoints: resampledUser,
+          toPoints: resampledSvg,
+          startTime: performance.now(),
+        };
+        runMorphAnimation();
+      } else {
+        // No SVG data - store raw user stroke as-is
+        completedStrokesRef.current = [...completedStrokesRef.current, [...currentPoints]];
+      }
+
       onStrokeComplete({
         points: currentPoints,
         timestamp: Date.now(),

@@ -50,6 +50,11 @@ export const styles = `
     font-size: 0.75rem;
     color: white;
     flex-shrink: 0;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
   }
 
   .header-left-group {
@@ -76,6 +81,13 @@ export const styles = `
     cursor: pointer;
     transition: all 0.2s ease;
     white-space: nowrap;
+    min-width: 4.5rem;
+    text-align: center;
+    box-sizing: border-box;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .filter-chip:hover {

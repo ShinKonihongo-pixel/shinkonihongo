@@ -35,6 +35,7 @@ const defaultSettings: AppSettings = {
   showSinoVietnamese: true,
   showMeaning: true,
   showExample: true,
+  cardFlipStyle: 'horizontal',
   autoAdvanceOnThirdClick: true,
   clicksToAdvance: 3,
   cardBackgroundType: 'gradient',
@@ -271,7 +272,7 @@ export function FlashcardItem({
   }
 
   return (
-    <div className="flashcard-container">
+    <div className={`flashcard-container flip-${settings.cardFlipStyle || 'horizontal'}`}>
       <div
         className={`flashcard ${isFlipped ? 'flipped' : ''}`}
         onClick={onFlip}
@@ -288,7 +289,7 @@ export function FlashcardItem({
         </div>
 
         {/* Back side - Answer */}
-        <div className={`flashcard-face flashcard-back ${getFrameAnimationClass(settings)}`} style={getCardFrameStyle(settings)}>
+        <div className={`flashcard-face flashcard-back ${getFrameAnimationClass(settings)}`} style={{ ...getCardFrameStyle(settings), '--back-scale': backScale } as React.CSSProperties}>
           <div className="card-back-header">
             <span className="jlpt-badge jlpt-badge-left">{levelBadge}</span>
             <button

@@ -1,6 +1,19 @@
 // Display settings section for modal
 import type { AppSettings } from '../../../hooks/use-settings';
 
+const FLIP_STYLES: { value: AppSettings['cardFlipStyle']; label: string }[] = [
+  { value: 'horizontal', label: 'Lật ngang' },
+  { value: 'vertical', label: 'Lật dọc' },
+  { value: 'fade', label: 'Chuyển mờ' },
+  { value: 'slide', label: 'Trượt ngang' },
+  { value: 'swing', label: 'Mở cửa' },
+  { value: 'flip-up', label: 'Lật lên' },
+  { value: 'airplane', label: 'Chuyển trang' },
+  { value: 'crumple', label: 'Thu phóng' },
+  { value: 'flyaway', label: 'Đảo bài' },
+  { value: 'none', label: 'Tức thì' },
+];
+
 interface ModalDisplaySectionProps {
   settings: AppSettings;
   onSettingsChange?: (key: keyof AppSettings, value: any) => void;
@@ -12,6 +25,20 @@ export function ModalDisplaySection({
 }: ModalDisplaySectionProps) {
   return (
     <>
+      <div className="modal-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="modal-section-title" style={{ margin: 0 }}>Hiệu ứng lật thẻ</div>
+        <select
+          className="modal-select"
+          style={{ width: 'auto', minWidth: '8rem' }}
+          value={settings.cardFlipStyle || 'horizontal'}
+          onChange={(e) => onSettingsChange?.('cardFlipStyle', e.target.value as AppSettings['cardFlipStyle'])}
+        >
+          {FLIP_STYLES.map(style => (
+            <option key={style.value} value={style.value}>{style.label}</option>
+          ))}
+        </select>
+      </div>
+
       <div className="modal-section">
         <div className="modal-section-title">Kích thước thẻ</div>
         <div className="font-slider-container">

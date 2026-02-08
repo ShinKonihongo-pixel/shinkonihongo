@@ -58,17 +58,17 @@ export function InlineSettings({
               <div className="setting-control">
                 <button onClick={() => onRepeatChange(Math.max(1, repeatCount - 1))}>-</button>
                 <span>{repeatCount} lần</span>
-                <button onClick={() => onRepeatChange(Math.min(10, repeatCount + 1))}>+</button>
+                <button onClick={() => onRepeatChange(Math.min(3, repeatCount + 1))}>+</button>
               </div>
             </div>
             <div className="setting-group">
-              <label>Khoảng cách</label>
+              <label>Giãn cách</label>
               <div className="setting-control">
-                <button onClick={() => onDelayChange(Math.max(0.5, delayBetweenWords - 0.5))}>
+                <button onClick={() => onDelayChange(Math.max(0.25, delayBetweenWords - 0.25))}>
                   -
                 </button>
                 <span>{delayBetweenWords}s</span>
-                <button onClick={() => onDelayChange(Math.min(10, delayBetweenWords + 0.5))}>
+                <button onClick={() => onDelayChange(Math.min(2, delayBetweenWords + 0.25))}>
                   +
                 </button>
               </div>

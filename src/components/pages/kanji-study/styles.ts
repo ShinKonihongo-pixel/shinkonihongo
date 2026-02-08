@@ -17,7 +17,7 @@ export const styles = `
     align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;
   }
   .btn-back:hover { background: rgba(255,255,255,0.1); color: white; }
-  .level-badge { padding: 0.25rem 0.5rem; border-radius: 6px; font-weight: 600; font-size: 0.75rem; color: white; flex-shrink: 0; }
+  .level-badge { padding: 0.25rem 0.5rem; border-radius: 6px; font-weight: 600; font-size: 0.75rem; color: white; flex-shrink: 0; height: 26px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; }
   .header-left-group { display: flex; align-items: center; gap: 0.4rem; flex: 1; min-width: 0; }
   .filter-chips { display: flex; gap: 0.2rem; }
   .filter-chip {
@@ -25,6 +25,8 @@ export const styles = `
     border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03);
     color: rgba(255,255,255,0.5); font-size: 0.65rem; font-weight: 500;
     cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    min-width: 4.5rem; text-align: center; box-sizing: border-box;
+    height: 26px; display: inline-flex; align-items: center; justify-content: center;
   }
   .filter-chip:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
   .filter-chip.active { background: rgba(139,92,246,0.2); border-color: rgba(139,92,246,0.4); color: #c4b5fd; font-weight: 600; }

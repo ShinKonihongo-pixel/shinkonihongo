@@ -1,11 +1,13 @@
-// Grammar study header component
+// Shared compact study header used by Grammar and Kanji study screens
 import { ArrowLeft, Shuffle, RotateCcw, Settings } from 'lucide-react';
-import type { JLPTLevel } from '../../../types/flashcard';
-import type { MemorizationFilter } from './types';
-import { LEVEL_THEMES } from './constants';
+import type { JLPTLevel } from '../../types/flashcard';
+import { LEVEL_THEMES } from '../pages/grammar-study/constants';
 
-interface StudyHeaderProps {
+export type MemorizationFilter = 'all' | 'memorized' | 'learning';
+
+export interface StudyHeaderCompactProps {
   selectedLevel: JLPTLevel;
+  levelLabel?: string;
   memorizationFilter: MemorizationFilter;
   isShuffled: boolean;
   onFilterChange: (filter: MemorizationFilter) => void;
@@ -15,8 +17,9 @@ interface StudyHeaderProps {
   onOpenSettings: () => void;
 }
 
-export function StudyHeader({
+export function StudyHeaderCompact({
   selectedLevel,
+  levelLabel,
   memorizationFilter,
   isShuffled,
   onFilterChange,
@@ -24,13 +27,13 @@ export function StudyHeader({
   onRestart,
   onBack,
   onOpenSettings,
-}: StudyHeaderProps) {
+}: StudyHeaderCompactProps) {
   return (
     <div className="study-header-compact">
       <div className="header-left-group">
         <button className="btn-back" onClick={onBack}><ArrowLeft size={18} /></button>
         <span className="level-badge" style={{ background: LEVEL_THEMES[selectedLevel].gradient }}>
-          {selectedLevel}
+          {levelLabel ?? selectedLevel}
         </span>
         <div className="filter-chips">
           <button className={`filter-chip ${memorizationFilter === 'all' ? 'active' : ''}`} onClick={() => onFilterChange('all')}>Tất cả</button>

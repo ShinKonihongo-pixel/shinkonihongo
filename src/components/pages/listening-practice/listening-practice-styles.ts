@@ -337,7 +337,8 @@ export const listeningPracticeStyles = `
   }
 
   .filter-btn {
-    flex: 1;
+    flex: 0 0 auto;
+    min-width: 5.5rem;
     padding: 0.6rem 0.5rem;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
     background: transparent !important;

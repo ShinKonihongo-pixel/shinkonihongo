@@ -4,6 +4,7 @@ import type { KanjiCard, KanjiLesson } from '../../../types/kanji';
 import type { JLPTLevel } from '../../../types/flashcard';
 import type { MemorizationFilter, KanjiStudySettings } from './types';
 import { KanjiDisplayCard } from './kanji-display-card';
+import { StudyHeaderCompact } from '../../ui/study-header-compact';
 
 interface StudyViewProps {
   displayCards: KanjiCard[];
@@ -27,9 +28,6 @@ interface StudyViewProps {
   onToggleMemorization: (status: 'memorized' | 'not_memorized') => void;
 }
 
-const LEVEL_COLORS: Record<JLPTLevel, string> = {
-  BT: '#8b5cf6', N5: '#22c55e', N4: '#3b82f6', N3: '#f59e0b', N2: '#a855f7', N1: '#ef4444',
-};
 
 export function StudyView({
   displayCards, currentIndex, isFlipped, isShuffled, selectedLevel,
@@ -41,22 +39,17 @@ export function StudyView({
 
   return (
     <>
-      <div className="study-header-compact">
-        <div className="header-left-group">
-          <button className="btn-back" onClick={onBack}><ChevronLeft size={18} /></button>
-          <span className="level-badge" style={{ background: LEVEL_COLORS[selectedLevel] }}>{selectedLevel === 'BT' ? 'Bộ thủ' : selectedLevel}</span>
-          <div className="filter-chips">
-            <button className={`filter-chip ${memorizationFilter === 'all' ? 'active' : ''}`} onClick={() => onFilterChange('all')}>Tất cả</button>
-            <button className={`filter-chip learned ${memorizationFilter === 'memorized' ? 'active' : ''}`} onClick={() => onFilterChange('memorized')}>Đã thuộc</button>
-            <button className={`filter-chip learning ${memorizationFilter === 'learning' ? 'active' : ''}`} onClick={() => onFilterChange('learning')}>Đang học</button>
-          </div>
-        </div>
-        <div className="header-actions">
-          <button className={`action-btn shuffle-btn ${isShuffled ? 'active' : ''}`} onClick={onShuffle}>🔀 <span className="btn-text">Trộn</span></button>
-          <button className="action-btn" onClick={onRestart}>↺ <span className="btn-text">Lại</span></button>
-          <button className="header-btn" onClick={onOpenSettings}>⚙</button>
-        </div>
-      </div>
+      <StudyHeaderCompact
+        selectedLevel={selectedLevel}
+        levelLabel={selectedLevel === 'BT' ? 'Bộ thủ' : undefined}
+        memorizationFilter={memorizationFilter}
+        isShuffled={isShuffled}
+        onFilterChange={onFilterChange}
+        onShuffle={onShuffle}
+        onRestart={onRestart}
+        onBack={onBack}
+        onOpenSettings={onOpenSettings}
+      />
       <div className="study-content">
         <button className="side-nav-btn side-nav-prev" onClick={onPrev} disabled={currentIndex === 0}><ChevronLeft size={28} /></button>
         {currentCard && (
