@@ -23,6 +23,7 @@ export interface GrammarStudySettings {
   frontFontSize: number;
   backFontSize: number;
   cardScale: number;
+  cardFlipStyle: 'horizontal' | 'vertical' | 'fade' | 'slide' | 'swing' | 'flip-up' | 'airplane' | 'crumple' | 'flyaway' | 'none';
 }
 
 export const DEFAULT_SETTINGS: GrammarStudySettings = {
@@ -45,4 +46,5 @@ export const DEFAULT_SETTINGS: GrammarStudySettings = {
   frontFontSize: 16,
   backFontSize: 22,
   cardScale: 100,
+  cardFlipStyle: 'horizontal',
 };

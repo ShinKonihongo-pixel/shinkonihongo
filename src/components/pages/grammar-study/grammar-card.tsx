@@ -72,7 +72,7 @@ export function GrammarCardComponent({
   return (
     <div
       ref={cardRef}
-      className={`grammar-card-container ${isFlipped ? 'flipped' : ''}`}
+      className={`grammar-card-container gflip-${settings.cardFlipStyle || 'horizontal'} ${isFlipped ? 'flipped' : ''}`}
       onClick={onFlip}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}

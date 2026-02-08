@@ -1,6 +1,19 @@
 // Settings modal component
-import { Settings, X, Eye, EyeOff, Type } from 'lucide-react';
+import { Settings, X, Eye, EyeOff, Type, Sparkles } from 'lucide-react';
 import type { GrammarStudySettings } from './types';
+
+const FLIP_STYLES: { value: GrammarStudySettings['cardFlipStyle']; label: string }[] = [
+  { value: 'horizontal', label: 'Lật ngang' },
+  { value: 'vertical', label: 'Lật dọc' },
+  { value: 'fade', label: 'Chuyển mờ' },
+  { value: 'slide', label: 'Trượt ngang' },
+  { value: 'swing', label: 'Mở cửa' },
+  { value: 'flip-up', label: 'Lật lên' },
+  { value: 'airplane', label: 'Chuyển trang' },
+  { value: 'crumple', label: 'Thu phóng' },
+  { value: 'flyaway', label: 'Đảo bài' },
+  { value: 'none', label: 'Tức thì' },
+];
 
 interface SettingsModalProps {
   settings: GrammarStudySettings;
@@ -119,6 +132,22 @@ export function SettingsModal({ settings, onClose, onUpdateSettings }: SettingsM
                 >+</button>
               </div>
             </div>
+          </div>
+
+          <div className="settings-section">
+            <div className="section-header">
+              <Sparkles size={18} />
+              <h4>Hiệu ứng lật thẻ</h4>
+            </div>
+            <select
+              className="flip-style-select"
+              value={settings.cardFlipStyle || 'horizontal'}
+              onChange={(e) => onUpdateSettings({ ...settings, cardFlipStyle: e.target.value as GrammarStudySettings['cardFlipStyle'] })}
+            >
+              {FLIP_STYLES.map(style => (
+                <option key={style.value} value={style.value}>{style.label}</option>
+              ))}
+            </select>
           </div>
 
           <div className="settings-section">

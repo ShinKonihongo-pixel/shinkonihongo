@@ -230,10 +230,6 @@ export const styles = `
     transition: transform 0.5s ease;
   }
 
-  .grammar-card-container.flipped .grammar-card {
-    transform: rotateY(180deg);
-  }
-
   .grammar-card-front,
   .grammar-card-back {
     position: absolute;
@@ -258,6 +254,174 @@ export const styles = `
   .grammar-card-back {
     transform: rotateY(180deg);
   }
+
+  /* Flip style: horizontal (default 3D left-right flip) */
+  .gflip-horizontal .grammar-card {
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .gflip-horizontal.flipped .grammar-card {
+    transform: rotateY(180deg);
+  }
+  .gflip-horizontal .grammar-card-back {
+    transform: rotateY(180deg);
+  }
+
+  /* Flip style: vertical (3D top-bottom flip) */
+  .gflip-vertical .grammar-card {
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .gflip-vertical.flipped .grammar-card {
+    transform: rotateX(180deg);
+  }
+  .gflip-vertical .grammar-card-back {
+    transform: rotateX(180deg);
+  }
+
+  /* Flip style: fade (smooth crossfade) */
+  .gflip-fade .grammar-card {
+    transform-style: flat;
+    transition: none;
+  }
+  .gflip-fade.flipped .grammar-card { transform: none; }
+  .gflip-fade .grammar-card-front,
+  .gflip-fade .grammar-card-back {
+    backface-visibility: visible;
+    transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .gflip-fade .grammar-card-front { opacity: 1; }
+  .gflip-fade .grammar-card-back { transform: none; opacity: 0; }
+  .gflip-fade.flipped .grammar-card-front { opacity: 0; }
+  .gflip-fade.flipped .grammar-card-back { opacity: 1; }
+
+  /* Flip style: slide (smooth horizontal slide) */
+  .gflip-slide .grammar-card {
+    transform-style: flat;
+    transition: none;
+  }
+  .gflip-slide.flipped .grammar-card { transform: none; }
+  .gflip-slide .grammar-card-front,
+  .gflip-slide .grammar-card-back {
+    backface-visibility: visible;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .gflip-slide .grammar-card-front { opacity: 1; transform: translateX(0); }
+  .gflip-slide .grammar-card-back { transform: translateX(40px); opacity: 0; }
+  .gflip-slide.flipped .grammar-card-front { transform: translateX(-40px); opacity: 0; }
+  .gflip-slide.flipped .grammar-card-back { transform: translateX(0); opacity: 1; }
+
+  /* Flip style: swing (door open from left) */
+  .gflip-swing .grammar-card {
+    transform-style: preserve-3d;
+    perspective: 1000px;
+    transition: none;
+  }
+  .gflip-swing .grammar-card-front,
+  .gflip-swing .grammar-card-back {
+    transform-origin: left center;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .gflip-swing .grammar-card-back { transform: rotateY(90deg); }
+  .gflip-swing.flipped .grammar-card-front { transform: rotateY(-90deg); }
+  .gflip-swing.flipped .grammar-card-back { transform: rotateY(0deg); }
+
+  /* Flip style: flip-up (3D flip from bottom) */
+  .gflip-flip-up .grammar-card {
+    transform-style: preserve-3d;
+    perspective: 1000px;
+    transition: none;
+  }
+  .gflip-flip-up .grammar-card-front,
+  .gflip-flip-up .grammar-card-back {
+    transform-origin: bottom center;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .gflip-flip-up .grammar-card-back { transform: rotateX(-90deg); }
+  .gflip-flip-up.flipped .grammar-card-front { transform: rotateX(90deg); }
+  .gflip-flip-up.flipped .grammar-card-back { transform: rotateX(0deg); }
+
+  /* Flip style: airplane (page turn from left edge) */
+  .gflip-airplane .grammar-card {
+    transform-style: preserve-3d;
+    perspective: 1200px;
+    transition: none;
+  }
+  .gflip-airplane .grammar-card-front,
+  .gflip-airplane .grammar-card-back {
+    transform-origin: left center;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .gflip-airplane .grammar-card-front { opacity: 1; transform: rotateY(0deg); }
+  .gflip-airplane .grammar-card-back { transform: rotateY(180deg); }
+  .gflip-airplane.flipped .grammar-card-front { transform: rotateY(-180deg); }
+  .gflip-airplane.flipped .grammar-card-back { transform: rotateY(0deg); }
+
+  /* Flip style: crumple (zoom out/in) */
+  @keyframes g-zoom-out {
+    0%   { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0.75); opacity: 0; }
+  }
+  @keyframes g-zoom-in {
+    0%   { transform: scale(1.25); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .gflip-crumple .grammar-card {
+    transform-style: flat;
+    transition: none;
+  }
+  .gflip-crumple.flipped .grammar-card { transform: none; }
+  .gflip-crumple .grammar-card-front,
+  .gflip-crumple .grammar-card-back { backface-visibility: visible; }
+  .gflip-crumple .grammar-card-front { opacity: 1; }
+  .gflip-crumple .grammar-card-back { transform: none; opacity: 0; }
+  .gflip-crumple.flipped .grammar-card-front {
+    animation: g-zoom-out 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  .gflip-crumple.flipped .grammar-card-back {
+    animation: g-zoom-in 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.1s forwards;
+    opacity: 0;
+  }
+
+  /* Flip style: flyaway (deal card) */
+  @keyframes g-deal-out {
+    0%   { transform: translateX(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateX(60px) rotate(8deg); opacity: 0; }
+  }
+  @keyframes g-deal-in {
+    0%   { transform: translateX(-60px) rotate(-8deg); opacity: 0; }
+    100% { transform: translateX(0) rotate(0deg); opacity: 1; }
+  }
+  .gflip-flyaway .grammar-card {
+    transform-style: flat;
+    transition: none;
+  }
+  .gflip-flyaway.flipped .grammar-card { transform: none; }
+  .gflip-flyaway .grammar-card-front,
+  .gflip-flyaway .grammar-card-back { backface-visibility: visible; }
+  .gflip-flyaway .grammar-card-front { opacity: 1; }
+  .gflip-flyaway .grammar-card-back { transform: none; opacity: 0; }
+  .gflip-flyaway.flipped .grammar-card-front {
+    animation: g-deal-out 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  .gflip-flyaway.flipped .grammar-card-back {
+    animation: g-deal-in 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.1s forwards;
+    opacity: 0;
+  }
+
+  /* Flip style: none (instant) */
+  .gflip-none .grammar-card {
+    transition: none;
+    transform-style: flat;
+  }
+  .gflip-none.flipped .grammar-card { transform: none; }
+  .gflip-none .grammar-card-front,
+  .gflip-none .grammar-card-back {
+    backface-visibility: visible;
+    transition: none;
+  }
+  .gflip-none .grammar-card-front { opacity: 1; }
+  .gflip-none .grammar-card-back { transform: none; opacity: 0; }
+  .gflip-none.flipped .grammar-card-front { opacity: 0; }
+  .gflip-none.flipped .grammar-card-back { opacity: 1; }
 
   .card-level-badge {
     position: absolute;
@@ -797,6 +961,25 @@ export const styles = `
     background: rgba(139, 92, 246, 0.3);
     border-color: rgba(139, 92, 246, 0.5);
     transform: scale(1.05);
+  }
+
+  .flip-style-select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.85rem;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+  }
+
+  .flip-style-select:hover,
+  .flip-style-select:focus {
+    border-color: rgba(139, 92, 246, 0.5);
+    background: rgba(255, 255, 255, 0.08);
   }
 
   .font-value {
