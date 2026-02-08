@@ -25,18 +25,21 @@ export function ModalDisplaySection({
 }: ModalDisplaySectionProps) {
   return (
     <>
-      <div className="modal-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div className="modal-section-title" style={{ margin: 0 }}>Hiệu ứng lật thẻ</div>
-        <select
-          className="modal-select"
-          style={{ width: 'auto', minWidth: '8rem' }}
-          value={settings.cardFlipStyle || 'horizontal'}
-          onChange={(e) => onSettingsChange?.('cardFlipStyle', e.target.value as AppSettings['cardFlipStyle'])}
-        >
-          {FLIP_STYLES.map(style => (
-            <option key={style.value} value={style.value}>{style.label}</option>
-          ))}
-        </select>
+      <div className="modal-section">
+        <div className="modal-section-title" style={{ display: 'flex', alignItems: 'center', marginBottom: 0 }}>
+          <span>Hiệu ứng lật thẻ</span>
+          <div style={{ flex: 1 }} />
+          <select
+            className="modal-select"
+            style={{ width: 'auto', minWidth: '8rem' }}
+            value={settings.cardFlipStyle || 'horizontal'}
+            onChange={(e) => onSettingsChange?.('cardFlipStyle', e.target.value as AppSettings['cardFlipStyle'])}
+          >
+            {FLIP_STYLES.map(style => (
+              <option key={style.value} value={style.value}>{style.label}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="modal-section">
