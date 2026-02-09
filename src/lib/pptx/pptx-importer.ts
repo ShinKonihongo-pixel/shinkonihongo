@@ -487,7 +487,7 @@ export async function previewPPTXFile(file: File): Promise<{
       }
     });
     preview.estimatedMediaSize = mediaCount * 500 * 1024;
-  } catch (error) {
+  } catch (_error) {
     preview.errors.push('Không thể đọc file PPTX');
   }
 

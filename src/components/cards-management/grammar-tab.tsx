@@ -176,11 +176,11 @@ export function GrammarTab({
         version: '1.0',
         exportedAt: new Date().toISOString(),
         type: 'grammar',
-        grammarCards: grammarCards.map(({ id, ...rest }) => rest),
-        grammarLessons: grammarLessons.map(({ id, ...rest }) => rest),
+        grammarCards: grammarCards.map(({ id: _, ...rest }) => rest),
+        grammarLessons: grammarLessons.map(({ id: _, ...rest }) => rest),
       };
       downloadAsJSON(exportData, `grammar-export-${new Date().toISOString().split('T')[0]}.json`);
-    } catch (err) {
+    } catch (_err) {
       alert('Có lỗi khi xuất dữ liệu');
     }
     setIsExporting(false);
@@ -201,8 +201,8 @@ export function GrammarTab({
         count++;
       }
       alert(`Import thành công ${count} thẻ`);
-    } catch (err) {
-      alert(`Lỗi: ${err instanceof Error ? err.message : 'Unknown'}`);
+    } catch (_err) {
+      alert(`Lỗi: ${_err instanceof Error ? _err.message : 'Unknown'}`);
     }
     setIsImporting(false);
     if (fileInputRef.current) fileInputRef.current.value = '';

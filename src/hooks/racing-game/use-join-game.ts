@@ -51,7 +51,7 @@ export function useJoinGame({
 
       // Find team with fewest members for auto-assignment
       let assignedTeamId: string | undefined;
-      let updatedTeams = foundGame.teams ? { ...foundGame.teams } : undefined;
+      const updatedTeams = foundGame.teams ? { ...foundGame.teams } : undefined;
 
       if (updatedTeams) {
         const teamIds = Object.keys(updatedTeams);

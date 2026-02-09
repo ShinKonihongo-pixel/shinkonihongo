@@ -81,7 +81,7 @@ function parseTextStyle(rPr: any): ParsedTextStyle {
 function parseTextParagraph(p: any): { text: string; style: ParsedTextStyle } {
   const runs = ensureArray(p.r);
   let fullText = '';
-  let mergedStyle: ParsedTextStyle = {};
+  const mergedStyle: ParsedTextStyle = {};
 
   // Get paragraph properties for alignment
   const pPr = p.pPr;
@@ -352,7 +352,7 @@ export function parseNotesXml(notesXml: string): string {
     }
 
     return notesText.trim();
-  } catch (error) {
+  } catch (_error) {
     return '';
   }
 }

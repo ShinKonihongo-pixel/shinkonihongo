@@ -32,7 +32,7 @@ export function FuriganaText({ text, className = '' }: FuriganaTextProps) {
   const [furiganaHtml, setFuriganaHtml] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [_initStatus, setInitStatus] = useState<string>('pending');
+  const [, setInitStatus] = useState<string>('pending');
 
   // Check if text has manual furigana format [kanji|reading]
   const hasManualFormat = useMemo(() => hasManualFurigana(text), [text]);

@@ -36,7 +36,6 @@ export function StudyHeader({
   totalCards,
   isShuffled,
   onShuffle,
-  onResetOrder,
   onSettingsClick,
   onBack,
   isMobile,

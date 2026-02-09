@@ -25,7 +25,7 @@ export function convertKanjiSeedToQuestions(
   selectedLevels: JLPTLevel[],
   count: number,
   timeLimit: number,
-  _mode: KanjiBattleMode
+  _mode: KanjiBattleMode // Reserved for future mode-specific logic
 ): KanjiBattleQuestion[] {
   // Gather kanji from all selected levels
   const allKanji = selectedLevels.flatMap(level => {

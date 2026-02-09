@@ -130,8 +130,6 @@ export function CustomTopicsTab({
   onAddTopic,
   onUpdateTopic,
   onDeleteTopic,
-  onAddFolder: _onAddFolder,
-  onUpdateFolder: _onUpdateFolder,
   onDeleteFolder: _onDeleteFolder,
   onAddQuestion,
   onUpdateQuestion,

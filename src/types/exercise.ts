@@ -146,7 +146,7 @@ export const normalizeJapaneseText = (text: string): string => {
   return text
     .trim()
     .replace(/\s+/g, '') // Remove all spaces
-    .replace(/　/g, '') // Remove full-width spaces
+    .replace(/\u3000/g, '') // Remove full-width spaces
     .replace(/[。、！？]/g, '') // Remove punctuation
     .toLowerCase();
 };

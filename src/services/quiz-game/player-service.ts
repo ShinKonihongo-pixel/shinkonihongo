@@ -56,7 +56,7 @@ export async function leaveGame(gameId: string, playerId: string): Promise<void>
   const game = await getGame(gameId);
   if (!game) return;
 
-  const { [playerId]: _, ...remainingPlayers } = game.players;
+  const { [playerId]: _removed, ...remainingPlayers } = game.players;
 
   // If host leaves and game is waiting, delete game
   if (playerId === game.hostId && game.status === 'waiting') {
@@ -72,7 +72,7 @@ export async function kickPlayer(gameId: string, hostId: string, playerId: strin
   if (!game || game.hostId !== hostId) return false;
   if (playerId === hostId) return false; // Can't kick yourself
 
-  const { [playerId]: _, ...remainingPlayers } = game.players;
+  const { [playerId]: _removed, ...remainingPlayers } = game.players;
   await updateGame(gameId, { players: remainingPlayers });
   return true;
 }

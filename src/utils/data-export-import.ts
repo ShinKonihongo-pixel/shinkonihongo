@@ -49,9 +49,9 @@ export function exportFlashcardsData(
   });
 
   // Remove IDs from data (will be regenerated on import)
-  const lessonsWithoutId = lessons.map(({ id, ...rest }) => rest);
-  const cardsWithoutId = cards.map(({ id, ...rest }) => rest);
-  const grammarWithoutId = grammarCards.map(({ id, ...rest }) => rest);
+  const lessonsWithoutId = lessons.map(({ id: _id, ...rest }) => rest);
+  const cardsWithoutId = cards.map(({ id: _id, ...rest }) => rest);
+  const grammarWithoutId = grammarCards.map(({ id: _id, ...rest }) => rest);
 
   return {
     version: EXPORT_VERSION,
@@ -78,8 +78,8 @@ export function exportJLPTData(
     };
   });
 
-  const foldersWithoutId = folders.map(({ id, ...rest }) => rest);
-  const questionsWithoutId = questions.map(({ id, ...rest }) => rest);
+  const foldersWithoutId = folders.map(({ id: _id, ...rest }) => rest);
+  const questionsWithoutId = questions.map(({ id: _id, ...rest }) => rest);
 
   return {
     version: EXPORT_VERSION,

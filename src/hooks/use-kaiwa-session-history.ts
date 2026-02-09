@@ -78,7 +78,7 @@ function calculateStreak(dailyRecords: KaiwaDailyRecord[]): { current: number; l
 function checkAchievements(
   stats: KaiwaStats,
   sessions: KaiwaSession[],
-  _dailyRecords: KaiwaDailyRecord[]
+  _dailyRecords: KaiwaDailyRecord[] // Reserved for future daily-specific achievements
 ): KaiwaAchievement[] {
   const newAchievements: KaiwaAchievement[] = [];
   const existingIds = new Set(stats.achievements.map(a => a.id));

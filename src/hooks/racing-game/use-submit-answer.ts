@@ -32,8 +32,8 @@ export function useSubmitAnswer({
 
       let newSpeed = player.currentSpeed;
       let newDistance = player.distance;
-      let newStreak = isCorrect ? player.streak + 1 : 0;
-      let newCorrect = player.correctAnswers + (isCorrect ? 1 : 0);
+      const newStreak = isCorrect ? player.streak + 1 : 0;
+      const newCorrect = player.correctAnswers + (isCorrect ? 1 : 0);
       let points = 0;
 
       if (isCorrect && !player.isFrozen) {

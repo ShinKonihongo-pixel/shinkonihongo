@@ -36,7 +36,6 @@ const DEFAULT_SETTINGS: KaiwaPracticeSettings = {
 
 export function KaiwaTab({
   questions,
-  folders: _folders,
   onAddQuestion,
   onUpdateQuestion,
   onDeleteQuestion,
@@ -45,15 +44,6 @@ export function KaiwaTab({
   onDeleteFolder,
   getFoldersByLevelAndTopic,
   getQuestionsByFolder,
-  // Advanced Topics props (unused but kept for API compatibility)
-  advancedTopics: _advancedTopics = [],
-  advancedQuestions: _advancedQuestions = [],
-  onAddAdvancedTopic: _onAddAdvancedTopic,
-  onUpdateAdvancedTopic: _onUpdateAdvancedTopic,
-  onDeleteAdvancedTopic: _onDeleteAdvancedTopic,
-  onAddAdvancedQuestion: _onAddAdvancedQuestion,
-  onUpdateAdvancedQuestion: _onUpdateAdvancedQuestion,
-  onDeleteAdvancedQuestion: _onDeleteAdvancedQuestion,
   // Custom Topics props
   customTopics = [],
   customTopicFolders = [],

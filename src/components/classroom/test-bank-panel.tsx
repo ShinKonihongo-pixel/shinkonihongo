@@ -202,14 +202,12 @@ export function TestBankPanel({
   onCreateFolder,
   onUpdateFolder,
   onDeleteFolder,
-  getFoldersByLevelAndType: _getFoldersByLevelAndType,
   getTemplatesByFolder,
   flashcards = [],
   jlptQuestions = [],
-  currentUserId: _currentUserId,
 }: TestBankPanelProps) {
   // Active tab: tests or assignments
-  const [activeTab, _setActiveTab] = useState<TestType>('test');
+  const [activeTab] = useState<TestType>('test');
 
   // Navigation state
   const [navState, setNavState] = useState<NavState>({ type: 'root' });

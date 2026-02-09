@@ -29,7 +29,7 @@ export async function getMultipleKanjiAnalysis(characters: string[]): Promise<Ka
 
 export async function saveKanjiAnalysis(data: KanjiCharacterAnalysis): Promise<void> {
   const docRef = doc(db, COLLECTIONS.KANJI_ANALYSIS, data.character);
-  const { id, ...docData } = data;
+  const { id: _id, ...docData } = data;
   await setDoc(docRef, docData);
 }
 

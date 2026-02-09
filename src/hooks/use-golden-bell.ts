@@ -319,7 +319,7 @@ export function useGoldenBell({ currentUser, flashcards = [] }: UseGoldenBellPro
 
     setGame(prev => {
       if (!prev) return null;
-      const { [playerId]: _, ...remainingPlayers } = prev.players;
+      const { [playerId]: _removed, ...remainingPlayers } = prev.players;
       return { ...prev, players: remainingPlayers };
     });
   }, [game, currentUser, isHost]);

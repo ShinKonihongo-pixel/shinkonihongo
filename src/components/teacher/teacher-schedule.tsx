@@ -30,7 +30,6 @@ export function TeacherScheduleView({
   onAdd,
   onEdit,
   onDelete,
-  viewMode: _viewMode = 'week',
   loading,
 }: TeacherScheduleViewProps) {
   const [selectedDay, setSelectedDay] = useState<number | null>(null);

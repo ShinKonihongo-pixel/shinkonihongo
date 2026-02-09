@@ -29,6 +29,7 @@ export function useGameActions({
   startNextRound,
 }: UseGameActionsProps) {
   const joinGame = useCallback(async (_code: string) => {
+    void _code; // Placeholder for future implementation
     setLoading(true);
     setError(null);
     try {
@@ -50,7 +51,7 @@ export function useGameActions({
     if (!game || !isHost || playerId === currentUser.id) return;
     setGame(prev => {
       if (!prev) return null;
-      const { [playerId]: _, ...remainingPlayers } = prev.players;
+      const { [playerId]: _removed, ...remainingPlayers } = prev.players;
       return { ...prev, players: remainingPlayers };
     });
   }, [game, currentUser, isHost, setGame]);

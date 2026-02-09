@@ -51,7 +51,6 @@ interface AlertItem {
 }
 
 export function TeacherDashboard({
-  classroom: _classroom,
   classProgress,
   studentGrades,
   tests,
@@ -60,7 +59,6 @@ export function TeacherDashboard({
   evaluations,
   students,
   onViewStudent,
-  onViewTest: _onViewTest,
   onNavigateToTab,
 }: TeacherDashboardProps) {
   // Calculate key metrics

@@ -105,8 +105,8 @@ export function VocabularyTab({
         version: '1.0',
         exportedAt: new Date().toISOString(),
         type: 'vocabulary',
-        flashcards: cards.map(({ id, ...rest }) => rest),
-        lessons: lessons.map(({ id, ...rest }) => rest),
+        flashcards: cards.map(({ id: _, ...rest }) => rest),
+        lessons: lessons.map(({ id: _, ...rest }) => rest),
         lessonIdMap,
       };
       const filename = generateExportFilename('vocabulary');

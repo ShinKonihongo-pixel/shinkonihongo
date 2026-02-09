@@ -26,7 +26,7 @@ const READING_INTERVAL = 2000;
 // Extra time after all readings (in ms)
 const EXTRA_TIME = 3000;
 
-export function DictationGame({ cards, onComplete: _onComplete, onExit }: DictationGameProps) {
+export function DictationGame({ cards, onExit }: DictationGameProps) {
   const [gameState, setGameState] = useState<GameState>('setup');
   const [questionCount, setQuestionCount] = useState(10);
   const [currentIndex, setCurrentIndex] = useState(0);

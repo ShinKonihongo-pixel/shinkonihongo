@@ -130,7 +130,7 @@ export function useKanjiAnalysis(kanjiText: string, options: UseKanjiAnalysisOpt
     } finally {
       setLoading(false);
     }
-  }, [characters]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [characters]);  
 
   return { analyses, loading, error, regenerate };
 }

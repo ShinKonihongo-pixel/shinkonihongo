@@ -32,7 +32,7 @@ export function useHostActions({
   const kickPlayer = useCallback((playerId: string) => {
     if (!game || !isHost || playerId === currentUserId) return;
 
-    const { [playerId]: _, ...remainingPlayers } = game.players;
+    const { [playerId]: _removed, ...remainingPlayers } = game.players;
     const updatedGame = { ...game, players: remainingPlayers };
 
     setGame(updatedGame);

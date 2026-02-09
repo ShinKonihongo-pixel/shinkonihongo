@@ -87,7 +87,7 @@ export function ExportImportModal({
       setImportFile(null);
       setImportPreview(null);
       setImportData(null);
-    } catch (error) {
+    } catch (_error) {
       setImportError('Có lỗi xảy ra khi import dữ liệu.');
     } finally {
       setIsImporting(false);

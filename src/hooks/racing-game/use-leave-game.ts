@@ -36,7 +36,7 @@ export function useLeaveGame({
       botTimer2Ref.current = null;
     }
 
-    const { [currentUserId]: _, ...remainingPlayers } = game.players;
+    const { [currentUserId]: _removed, ...remainingPlayers } = game.players;
 
     if (Object.keys(remainingPlayers).length === 0) {
       // Remove game if empty

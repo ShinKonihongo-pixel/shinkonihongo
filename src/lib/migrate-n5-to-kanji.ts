@@ -24,7 +24,7 @@ export function migrateN5ToKanji(): void {
   const categoriesJson = localStorage.getItem(CATEGORIES_KEY);
   const flashcardsJson = localStorage.getItem(FLASHCARDS_KEY);
 
-  let categories: Category[] = categoriesJson ? JSON.parse(categoriesJson) : [];
+  const categories: Category[] = categoriesJson ? JSON.parse(categoriesJson) : [];
   const flashcards: LegacyFlashcard[] = flashcardsJson ? JSON.parse(flashcardsJson) : [];
 
   // Check if there are any N5 cards to migrate (legacy cards without subCategoryId)

@@ -70,19 +70,14 @@ interface ListeningTabProps {
 
 export function ListeningTab({
   audios,
-  folders: _folders,
   onAddAudio,
-  onUpdateAudio: _onUpdateAudio,
   onDeleteAudio,
   onAddFolder,
   onUpdateFolder,
   onDeleteFolder,
-  getFoldersByLevel: _getFoldersByLevel,
-  getFoldersByLevelAndType: _getFoldersByLevelAndType,
   getFoldersByLevelLessonAndType,
   getAudiosByFolder,
   getAudioUrl,
-  currentUser: _currentUser,
 }: ListeningTabProps) {
   const [navState, setNavState] = useState<NavState>({ type: 'root' });
   const [showAddFolder, setShowAddFolder] = useState(false);

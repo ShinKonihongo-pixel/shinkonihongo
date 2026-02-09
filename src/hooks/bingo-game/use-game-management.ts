@@ -43,7 +43,7 @@ export function useGameManagement(
 
     setState(prev => {
       if (!prev.game) return prev;
-      const { [playerId]: _, ...remainingPlayers } = prev.game.players;
+      const { [playerId]: _removed, ...remainingPlayers } = prev.game.players;
       return { ...prev, game: { ...prev.game, players: remainingPlayers } };
     });
   }, [state.game, currentUser, isHost, setState]);

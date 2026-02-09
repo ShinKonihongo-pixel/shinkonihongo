@@ -127,7 +127,6 @@ export function KaiwaReadingPracticeModal({
   onClose,
   textToRead,
   onComplete,
-  level: _level = 'N5',
 }: KaiwaReadingPracticeModalProps) {
   const [wordResults, setWordResults] = useState<WordResult[]>([]);
   const [isRecording, setIsRecording] = useState(false);

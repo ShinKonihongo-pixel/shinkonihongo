@@ -13,7 +13,6 @@ interface GameResultsProps {
 
 export function GameResults({
   game,
-  gameResults: _gameResults, // Reserved for future detailed results
   currentPlayerId,
   onPlayAgain,
   onGoHome,

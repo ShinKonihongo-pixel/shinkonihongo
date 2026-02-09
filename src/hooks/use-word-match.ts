@@ -225,12 +225,13 @@ export function useWordMatch({ currentUser, flashcards = [] }: UseWordMatchProps
 
   // Join game
   const joinGame = useCallback(async (_code: string) => {
+    void _code; // Placeholder for future implementation
     setLoading(true);
     setError(null);
     try {
       throw new Error('Chức năng tham gia phòng đang phát triển');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không thể tham gia');
+    } catch (_err) {
+      setError(_err instanceof Error ? _err.message : 'Không thể tham gia');
     } finally {
       setLoading(false);
     }
@@ -250,7 +251,7 @@ export function useWordMatch({ currentUser, flashcards = [] }: UseWordMatchProps
 
     setGame(prev => {
       if (!prev) return null;
-      const { [playerId]: _, ...remainingPlayers } = prev.players;
+      const { [playerId]: _removed, ...remainingPlayers } = prev.players;
       return { ...prev, players: remainingPlayers };
     });
   }, [game, currentUser, isHost]);

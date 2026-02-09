@@ -87,7 +87,7 @@ export function useQuizGame({ playerId, playerName, playerAvatar }: UseQuizGameO
 
       setGame(joinedGame);
       return true;
-    } catch (err) {
+    } catch (_err) {
       setError('Không thể tham gia game');
       return false;
     } finally {
@@ -124,7 +124,7 @@ export function useQuizGame({ playerId, playerName, playerAvatar }: UseQuizGameO
         setError('Không đủ người chơi để bắt đầu');
       }
       return success;
-    } catch (err) {
+    } catch (_err) {
       setError('Không thể bắt đầu game');
       return false;
     }
@@ -249,7 +249,7 @@ export function useQuizGame({ playerId, playerName, playerAvatar }: UseQuizGameO
 
       setGame(joinedGame);
       return true;
-    } catch (err) {
+    } catch (_err) {
       setError('Không thể tham gia game');
       return false;
     } finally {

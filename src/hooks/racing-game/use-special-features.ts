@@ -39,7 +39,7 @@ export function useSpecialFeatures({
       const player = prev.players[currentUserId];
       if (!player) return prev;
 
-      let updatedPlayers = { ...prev.players };
+      const updatedPlayers = { ...prev.players };
 
       // Apply feature effects
       switch (featureType) {

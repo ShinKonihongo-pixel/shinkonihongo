@@ -490,7 +490,7 @@ export function JLPTPage({
     });
 
     return Object.entries(perfMap)
-      .filter(([_, data]) => data.total > 0)
+      .filter(([, data]) => data.total > 0)
       .map(([cat, data]) => ({
         category: cat as QuestionCategory,
         correct: data.correct,

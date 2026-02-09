@@ -46,7 +46,7 @@ export function useBotLogic({ game, setGame, botAnswerTimersRef }: UseBotLogicPr
 
           let newSpeed = botPlayer.currentSpeed;
           let newDistance = botPlayer.distance;
-          let newStreak = correct ? botPlayer.streak + 1 : 0;
+          const newStreak = correct ? botPlayer.streak + 1 : 0;
           let points = 0;
 
           if (correct && !botPlayer.isFrozen) {

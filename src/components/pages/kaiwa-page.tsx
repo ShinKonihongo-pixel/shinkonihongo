@@ -96,7 +96,6 @@ function MicModeSelector({
 export function KaiwaPage({
   settings,
   defaultQuestions = [],
-  kaiwaFolders: _kaiwaFolders = [],
   getFoldersByLevelAndTopic,
   getQuestionsByFolder,
   getQuestionsByLevelAndTopic,

@@ -43,7 +43,6 @@ export function AttendancePanel({
   students,
   loading,
   onCreateSession,
-  onMarkAttendance: _onMarkAttendance,
   onBulkMark,
   hasSessionForDate,
   studentSummaries,

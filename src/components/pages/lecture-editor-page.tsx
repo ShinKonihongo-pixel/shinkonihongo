@@ -298,7 +298,7 @@ export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, on
       return;
     }
 
-    let startOrder = mode === 'replace' ? 0 : slides.length;
+    const startOrder = mode === 'replace' ? 0 : slides.length;
     if (mode === 'replace' && slides.length > 0) {
       await deleteAllSlides?.();
     }

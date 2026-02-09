@@ -254,7 +254,7 @@ export function EvaluationPanel({
   };
 
   // Generate auto comment based on data
-  const generateAutoComment = (userId: string, _ratings: Record<string, number>): { comment: string; strengths: string; improvements: string } => {
+  const generateAutoComment = (userId: string): { comment: string; strengths: string; improvements: string } => {
     const grade = getStudentGrade(userId);
     const attendance = getStudentAttendance(userId);
     const overallLevel = getLevelFromPercent((grade?.averagePercent || 0 + (attendance?.attendanceRate || 0)) / 2);
@@ -287,7 +287,7 @@ export function EvaluationPanel({
 
     const ratings = autoCalculateRatings(userId);
     const overallRating = calculateOverallRating(ratings);
-    const { comment, strengths, improvements } = generateAutoComment(userId, ratings);
+    const { comment, strengths, improvements } = generateAutoComment(userId);
 
     setFormData(prev => ({
       ...prev,

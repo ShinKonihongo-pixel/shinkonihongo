@@ -24,7 +24,7 @@ export function addBotsToGame(
 
   // Get team IDs for assigning bots
   const teamIds = prevGame.teams ? Object.keys(prevGame.teams) : [];
-  let updatedTeams = prevGame.teams ? { ...prevGame.teams } : undefined;
+  const updatedTeams = prevGame.teams ? { ...prevGame.teams } : undefined;
 
   bots.forEach((bot, index) => {
     const botId = `bot-${generateId()}`;
