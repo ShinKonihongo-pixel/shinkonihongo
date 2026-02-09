@@ -23,6 +23,7 @@ export function GameSelector({ onSelectGame, onQuickJoin }: GameSelectorProps) {
 
   // Load hidden games on mount
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHiddenGames(getHiddenGames());
   }, []);
 

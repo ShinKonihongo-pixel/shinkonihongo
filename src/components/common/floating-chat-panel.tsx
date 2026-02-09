@@ -43,6 +43,7 @@ export function FloatingChatPanel({ currentUser, isOpen, onClose }: FloatingChat
     if (!isOpen) return;
     try {
       const stored = localStorage.getItem(CHAT_STORAGE_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (stored) setMessages(JSON.parse(stored));
     } catch { /* ignore */ }
   }, [isOpen]);

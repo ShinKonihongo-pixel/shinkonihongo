@@ -110,6 +110,7 @@ export const WordMatchPlay: React.FC<WordMatchPlayProps> = ({
 
   // Reset state when new round starts
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedLeft(null);
     setMatches([]);
     setSelectedEffect(null);

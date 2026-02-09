@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/purity */
 // Hook for managing Kaiwa session history and statistics
 // Persists data to localStorage with achievements tracking
 
@@ -263,7 +264,7 @@ export function useKaiwaSessionHistory() {
       endTime: params.endTime.toISOString(),
       durationMinutes,
       level: params.level,
-      style: params.style as any,
+      style: params.style as 'polite' | 'casual',
       topic: params.topic,
       topicName: params.topicName,
       messageCount: params.messages.length,

@@ -15,8 +15,7 @@ interface GrammarCardComponentProps {
   onFlip: () => void;
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
-  touchStartX: React.MutableRefObject<number | null>;
-  touchStartY: React.MutableRefObject<number | null>;
+  // Remove ref props - manage touch state locally
 }
 
 export function GrammarCardComponent({
@@ -28,10 +27,11 @@ export function GrammarCardComponent({
   onFlip,
   onSwipeLeft,
   onSwipeRight,
-  touchStartX,
-  touchStartY,
 }: GrammarCardComponentProps) {
   const cardRef = useRef<HTMLDivElement>(null);
+  // Manage touch state locally to avoid ref mutation issues
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
   const levelTheme = LEVEL_THEMES[selectedLevel];
 
   const getLessonName = (lessonId: string): string => {

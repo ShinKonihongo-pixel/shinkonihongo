@@ -7,7 +7,7 @@ interface UseGameActionsProps {
   currentUser: { id: string };
   game: KanjiBattleGame | null;
   setGame: (game: KanjiBattleGame | null | ((prev: KanjiBattleGame | null) => KanjiBattleGame | null)) => void;
-  setGameResults: (results: any) => void;
+  setGameResults: (results: unknown) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   isHost: boolean;

@@ -52,6 +52,7 @@ export function TeacherAddModal({
     if (isOpen) {
       if (member) {
         // Edit mode
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMode('existing');
         setSelectedUserId(member.userId);
         setRole(member.role);

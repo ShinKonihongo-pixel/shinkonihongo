@@ -11,6 +11,7 @@ export function useTestTemplates() {
 
   // Subscribe to templates and folders
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     const unsubTemplates = classroomService.subscribeToTestTemplates((data) => {
       setTemplates(data);

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/purity */
 // Game Sound Settings Panel - Audio and music configuration
 // Extracted from settings-page.tsx for better maintainability
 

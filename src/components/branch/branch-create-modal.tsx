@@ -29,6 +29,7 @@ export function BranchCreateModal({
   // Populate form when editing
   useEffect(() => {
     if (branch) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         name: branch.name,
         address: branch.address || '',

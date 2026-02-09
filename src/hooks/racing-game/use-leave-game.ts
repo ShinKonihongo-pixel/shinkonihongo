@@ -5,7 +5,7 @@ import type { RacingGame } from '../../types/racing-game';
 interface UseLeaveGameProps {
   game: RacingGame | null;
   setGame: React.Dispatch<React.SetStateAction<RacingGame | null>>;
-  setGameResults: React.Dispatch<React.SetStateAction<any>>;
+  setGameResults: React.Dispatch<React.SetStateAction<unknown>>;
   setAvailableRooms: React.Dispatch<React.SetStateAction<RacingGame[]>>;
   currentUserId: string;
   isHost: boolean;

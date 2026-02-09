@@ -10,6 +10,7 @@ export function useClassrooms(userId: string | null, isAdmin: boolean) {
 
   useEffect(() => {
     if (!userId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setClassrooms([]);
       setLoading(false);
       return;

@@ -28,7 +28,7 @@ export interface StudySessionProps {
   selectedLevel?: JLPTLevel;
   frontFontSize?: number;
   onFrontFontSizeChange?: (size: number) => void;
-  onSettingsChange?: (key: keyof AppSettings, value: any) => void;
+  onSettingsChange?: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
 }
 
 export interface StudySettingsModalProps {
@@ -39,7 +39,7 @@ export interface StudySettingsModalProps {
   frontFontSize?: number;
   onFrontFontSizeChange?: (size: number) => void;
   settings: AppSettings;
-  onSettingsChange?: (key: keyof AppSettings, value: any) => void;
+  onSettingsChange?: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
   onClose: () => void;
   isMobile: boolean;
 }

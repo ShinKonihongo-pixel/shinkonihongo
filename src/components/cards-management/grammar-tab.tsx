@@ -158,7 +158,7 @@ export function GrammarTab({
   };
 
   // Submit grammar card
-  const handleSubmit = (data: any) => {
+  const handleSubmit = (data: Partial<GrammarCard>) => {
     if (editingCard) {
       onUpdateGrammarCard(editingCard.id, data);
     } else {
@@ -193,16 +193,16 @@ export function GrammarTab({
 
     setIsImporting(true);
     try {
-      const data = await readJSONFile(file) as any;
+      const data = await readJSONFile(file) as { type: string; grammarCards: unknown[] };
       if (data.type !== 'grammar') throw new Error('File không hợp lệ');
       let count = 0;
       for (const card of data.grammarCards) {
-        await onImportGrammarCard(card);
+        await onImportGrammarCard(card as Partial<GrammarCard>);
         count++;
       }
       alert(`Import thành công ${count} thẻ`);
-    } catch (_err) {
-      alert(`Lỗi: ${_err instanceof Error ? _err.message : 'Unknown'}`);
+    } catch (err) {
+      alert(`Lỗi: ${err instanceof Error ? err.message : 'Unknown'}`);
     }
     setIsImporting(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -338,12 +338,12 @@ export function GrammarTab({
         onDragEnd={handleDragEnd}
         onDrop={(e) => handleDrop(e, lesson, lessonList)}
         onClick={() => {
-          if (isChild) {
+          if (isChild && (navState.type === 'parent' || navState.type === 'child')) {
             setNavState({
               type: 'child',
-              level: navState.type === 'parent' ? navState.level : (navState as any).level,
-              parentId: (navState as any).lessonId,
-              parentName: (navState as any).lessonName,
+              level: navState.level,
+              parentId: navState.type === 'parent' ? navState.lessonId : navState.parentId,
+              parentName: navState.type === 'parent' ? navState.lessonName : navState.parentName,
               lessonId: lesson.id,
               lessonName: lesson.name
             });

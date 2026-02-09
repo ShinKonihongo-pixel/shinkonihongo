@@ -24,6 +24,7 @@ export function useFriendships(userId: string | null, users: User[]) {
   // Subscribe to friendships
   useEffect(() => {
     if (!userId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFriendships([]);
       setLoading(false);
       return;
@@ -41,6 +42,7 @@ export function useFriendships(userId: string | null, users: User[]) {
   // Subscribe to pending requests
   useEffect(() => {
     if (!userId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPendingRequests([]);
       return;
     }
@@ -152,6 +154,7 @@ export function useGameInvitations(userId: string | null) {
 
   useEffect(() => {
     if (!userId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInvitations([]);
       setLoading(false);
       return;
@@ -210,6 +213,7 @@ export function useBadges(userId: string | null, users: User[]) {
   // Subscribe to received badges
   useEffect(() => {
     if (!userId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setReceivedBadges([]);
       setLoading(false);
       return;
@@ -227,6 +231,7 @@ export function useBadges(userId: string | null, users: User[]) {
   // Subscribe to badge stats
   useEffect(() => {
     if (!userId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setBadgeStats(null);
       return;
     }
@@ -286,6 +291,7 @@ export function useFriendNotifications(userId: string | null) {
 
   useEffect(() => {
     if (!userId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setNotifications([]);
       setLoading(false);
       return;

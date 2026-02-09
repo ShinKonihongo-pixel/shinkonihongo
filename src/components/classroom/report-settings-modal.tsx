@@ -49,6 +49,7 @@ export function ReportSettingsModal({
         const saved = localStorage.getItem(REPORT_SETTINGS_STORAGE_KEY);
         if (saved) {
           const config: StudentReportConfig = JSON.parse(saved);
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setSchoolName(config.schoolName || DEFAULT_REPORT_CONFIG.schoolName);
           setSchoolAddress(config.schoolAddress || '');
           setSchoolPhone(config.schoolPhone || '');

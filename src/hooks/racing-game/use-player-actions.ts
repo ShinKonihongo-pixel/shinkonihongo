@@ -19,7 +19,7 @@ interface UsePlayerActionsProps {
   selectedVehicle: RacingVehicle;
   game: RacingGame | null;
   setGame: React.Dispatch<React.SetStateAction<RacingGame | null>>;
-  setGameResults: React.Dispatch<React.SetStateAction<any>>;
+  setGameResults: React.Dispatch<React.SetStateAction<unknown>>;
   availableRooms: RacingGame[];
   setAvailableRooms: React.Dispatch<React.SetStateAction<RacingGame[]>>;
   setLoading: (loading: boolean) => void;

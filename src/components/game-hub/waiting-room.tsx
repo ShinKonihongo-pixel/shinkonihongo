@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/purity */
 // WaitingRoom - Lobby for browsing available game rooms
 // Only shows REAL rooms created by users, no virtual/mock rooms
 

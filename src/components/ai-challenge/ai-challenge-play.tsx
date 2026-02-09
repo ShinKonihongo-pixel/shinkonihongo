@@ -62,6 +62,7 @@ export function AIChallengePlay({
   // Countdown effect
   useEffect(() => {
     if (!isCountdown) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCountdownValue(3);
     const interval = setInterval(() => {
       setCountdownValue(prev => {
@@ -78,6 +79,7 @@ export function AIChallengePlay({
   // Timer effect - reset time when not playing
   useEffect(() => {
     if (!isPlaying) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTimeLeft(questionTimeLimit);
       return;
     }
@@ -85,6 +87,7 @@ export function AIChallengePlay({
 
   // Reset selectedAnswer only when question changes (new question starts)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedAnswer(null);
   }, [game.currentQuestionIndex]);
 
@@ -114,6 +117,7 @@ export function AIChallengePlay({
   // Impact effect when revealing
   useEffect(() => {
     if (isRevealing && lastResult) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowImpact(lastResult.winner === 'tie' ? null : lastResult.winner);
       const timer = setTimeout(() => setShowImpact(null), 500);
       return () => clearTimeout(timer);
@@ -135,6 +139,7 @@ export function AIChallengePlay({
 
   // Reset submitted state when question changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsSubmitted(false);
   }, [game.currentQuestionIndex]);
 

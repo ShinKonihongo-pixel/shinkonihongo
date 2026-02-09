@@ -71,8 +71,6 @@ export function KanjiStudyPage({
           memorizationFilter={state.memorizationFilter}
           lessons={lessons}
           studySettings={state.studySettings}
-          touchStartX={state.touchStartX}
-          touchStartY={state.touchStartY}
           onNext={state.handleNext}
           onPrev={state.handlePrev}
           onFlip={() => state.setIsFlipped(!state.isFlipped)}

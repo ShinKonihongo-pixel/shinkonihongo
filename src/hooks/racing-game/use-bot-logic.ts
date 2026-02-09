@@ -94,5 +94,6 @@ export function useBotLogic({ game, setGame, botAnswerTimersRef }: UseBotLogicPr
     return () => {
       botAnswerTimersRef.current.forEach(t => clearTimeout(t));
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- game object changes frequently, only re-run on status/question change
   }, [game?.status, game?.currentQuestionIndex]);
 }

@@ -22,19 +22,19 @@ function ensureArray<T>(value: T | T[] | undefined): T[] {
 }
 
 // Parse color from PPTX XML
-function parseColor(colorNode: any): string {
-  if (!colorNode) return '#000000';
+function parseColor(colorNode: unknown): string {
+  if (!colorNode || typeof colorNode !== 'object') return '#000000';
 
   // Solid fill with RGB
-  const srgbClr = colorNode.srgbClr;
-  if (srgbClr) {
-    return '#' + (srgbClr['@_val'] || '000000');
+  const srgbClr = (colorNode as Record<string, unknown>).srgbClr;
+  if (srgbClr && typeof srgbClr === 'object') {
+    return '#' + ((srgbClr as Record<string, unknown>)['@_val'] || '000000');
   }
 
   // Scheme color reference
-  const schemeClr = colorNode.schemeClr;
-  if (schemeClr) {
-    const schemeName = schemeClr['@_val'];
+  const schemeClr = (colorNode as Record<string, unknown>).schemeClr;
+  if (schemeClr && typeof schemeClr === 'object') {
+    const schemeName = (schemeClr as Record<string, unknown>)['@_val'] as string;
     return SCHEME_COLORS[schemeName] || '#000000';
   }
 
@@ -42,76 +42,84 @@ function parseColor(colorNode: any): string {
 }
 
 // Parse text run properties
-function parseTextStyle(rPr: any): ParsedTextStyle {
+function parseTextStyle(rPr: unknown): ParsedTextStyle {
   const style: ParsedTextStyle = {};
 
-  if (!rPr) return style;
+  if (!rPr || typeof rPr !== 'object') return style;
+
+  const rPrObj = rPr as Record<string, unknown>;
 
   // Font size (in hundredths of a point)
-  if (rPr['@_sz']) {
-    style.fontSize = rPr['@_sz'] / 100;
+  if (typeof rPrObj['@_sz'] === 'number') {
+    style.fontSize = rPrObj['@_sz'] / 100;
   }
 
   // Bold
-  if (rPr['@_b'] === 1 || rPr['@_b'] === true) {
+  if (rPrObj['@_b'] === 1 || rPrObj['@_b'] === true) {
     style.bold = true;
   }
 
   // Italic
-  if (rPr['@_i'] === 1 || rPr['@_i'] === true) {
+  if (rPrObj['@_i'] === 1 || rPrObj['@_i'] === true) {
     style.italic = true;
   }
 
   // Color
-  const solidFill = rPr.solidFill;
+  const solidFill = rPrObj.solidFill;
   if (solidFill) {
     style.color = parseColor(solidFill);
   }
 
   // Font family
-  const latin = rPr.latin;
-  if (latin?.['@_typeface']) {
-    style.fontFamily = latin['@_typeface'];
+  const latin = rPrObj.latin;
+  if (latin && typeof latin === 'object' && '@_typeface' in latin) {
+    style.fontFamily = (latin as Record<string, unknown>)['@_typeface'] as string;
   }
 
   return style;
 }
 
 // Parse a text paragraph
-function parseTextParagraph(p: any): { text: string; style: ParsedTextStyle } {
-  const runs = ensureArray(p.r);
+function parseTextParagraph(p: unknown): { text: string; style: ParsedTextStyle } {
+  if (!p || typeof p !== 'object') return { text: '', style: {} };
+  const pObj = p as Record<string, unknown>;
+  const runs = ensureArray(pObj.r);
   let fullText = '';
   const mergedStyle: ParsedTextStyle = {};
 
   // Get paragraph properties for alignment
-  const pPr = p.pPr;
-  if (pPr?.['@_algn']) {
+  const pPr = pObj.pPr;
+  if (pPr && typeof pPr === 'object' && '@_algn' in pPr) {
     const alignMap: Record<string, 'left' | 'center' | 'right' | 'justify'> = {
       'l': 'left',
       'ctr': 'center',
       'r': 'right',
       'just': 'justify',
     };
-    mergedStyle.align = alignMap[pPr['@_algn']] || 'left';
+    const alignValue = (pPr as Record<string, unknown>)['@_algn'] as string;
+    mergedStyle.align = alignMap[alignValue] || 'left';
   }
 
   for (const run of runs) {
+    if (!run || typeof run !== 'object') continue;
+    const runObj = run as Record<string, unknown>;
+
     // Get text content
-    const textNode = run.t;
+    const textNode = runObj.t;
     if (textNode !== undefined) {
-      const text = typeof textNode === 'object' ? textNode['#text'] : textNode;
-      if (text) fullText += text;
+      const text = typeof textNode === 'object' ? (textNode as Record<string, unknown>)['#text'] : textNode;
+      if (text) fullText += String(text);
     }
 
     // Get run properties (use first non-empty style)
-    const rPr = run.rPr;
+    const rPr = runObj.rPr;
     if (rPr && Object.keys(mergedStyle).length <= 1) {
       Object.assign(mergedStyle, parseTextStyle(rPr));
     }
   }
 
   // Handle line breaks
-  if (p.br) {
+  if (pObj.br) {
     fullText += '\n';
   }
 
@@ -119,26 +127,28 @@ function parseTextParagraph(p: any): { text: string; style: ParsedTextStyle } {
 }
 
 // Parse a shape element (text box)
-function parseShape(sp: any): ParsedElement | null {
-  const spPr = sp.spPr;
-  const txBody = sp.txBody;
+function parseShape(sp: unknown): ParsedElement | null {
+  if (!sp || typeof sp !== 'object') return null;
+  const spObj = sp as Record<string, unknown>;
+  const spPr = spObj.spPr;
+  const txBody = spObj.txBody;
 
   // Get position from spPr.xfrm (use defaults if not present)
-  const xfrm = spPr?.xfrm;
-  const off = xfrm?.off || {};
-  const ext = xfrm?.ext || {};
+  const xfrm = spPr && typeof spPr === 'object' ? (spPr as Record<string, unknown>).xfrm : undefined;
+  const off = (xfrm && typeof xfrm === 'object' ? (xfrm as Record<string, unknown>).off : undefined) as Record<string, unknown> | undefined || {};
+  const ext = (xfrm && typeof xfrm === 'object' ? (xfrm as Record<string, unknown>).ext : undefined) as Record<string, unknown> | undefined || {};
 
   // Default position if not specified (centered, reasonable size)
   const position = {
-    x: parseInt(off['@_x'] || '0', 10),
-    y: parseInt(off['@_y'] || '0', 10),
-    width: parseInt(ext['@_cx'] || '4572000', 10), // Default ~50% width
-    height: parseInt(ext['@_cy'] || '914400', 10), // Default ~13% height
+    x: parseInt(String(off['@_x'] || '0'), 10),
+    y: parseInt(String(off['@_y'] || '0'), 10),
+    width: parseInt(String(ext['@_cx'] || '4572000'), 10), // Default ~50% width
+    height: parseInt(String(ext['@_cy'] || '914400'), 10), // Default ~13% height
   };
 
   // Parse text content
-  if (txBody) {
-    const paragraphs = ensureArray(txBody.p);
+  if (txBody && typeof txBody === 'object') {
+    const paragraphs = ensureArray((txBody as Record<string, unknown>).p);
     let fullText = '';
     let textStyle: ParsedTextStyle = {};
 
@@ -169,47 +179,52 @@ function parseShape(sp: any): ParsedElement | null {
 }
 
 // Parse a picture element
-function parsePicture(pic: any): ParsedElement | null {
-  const blipFill = pic.blipFill;
-  const spPr = pic.spPr;
+function parsePicture(pic: unknown): ParsedElement | null {
+  if (!pic || typeof pic !== 'object') return null;
+  const picObj = pic as Record<string, unknown>;
+  const blipFill = picObj.blipFill;
+  const spPr = picObj.spPr;
 
   // Get image relationship ID - can be in blip[@_embed] or blip[@_r:embed]
-  const blip = blipFill?.blip;
-  const relId = blip?.['@_embed'] || blip?.['@_r:embed'];
+  const blip = blipFill && typeof blipFill === 'object' ? (blipFill as Record<string, unknown>).blip : undefined;
+  const blipObj = blip && typeof blip === 'object' ? blip as Record<string, unknown> : undefined;
+  const relId = blipObj?.['@_embed'] || blipObj?.['@_r:embed'];
   if (!relId) {
-    console.log('Picture without relId:', Object.keys(blip || {}));
+    console.log('Picture without relId:', Object.keys(blipObj || {}));
     return null;
   }
 
   console.log('Found picture with relId:', relId);
 
   // Get position (use defaults if not present)
-  const xfrm = spPr?.xfrm;
-  const off = xfrm?.off || {};
-  const ext = xfrm?.ext || {};
+  const xfrm = spPr && typeof spPr === 'object' ? (spPr as Record<string, unknown>).xfrm : undefined;
+  const off = (xfrm && typeof xfrm === 'object' ? (xfrm as Record<string, unknown>).off : undefined) as Record<string, unknown> | undefined || {};
+  const ext = (xfrm && typeof xfrm === 'object' ? (xfrm as Record<string, unknown>).ext : undefined) as Record<string, unknown> | undefined || {};
 
   return {
     type: 'image',
     content: '', // Will be filled in with actual URL after media extraction
     position: {
-      x: parseInt(off['@_x'] || '0', 10),
-      y: parseInt(off['@_y'] || '0', 10),
-      width: parseInt(ext['@_cx'] || '4572000', 10), // Default ~50% width
-      height: parseInt(ext['@_cy'] || '3429000', 10), // Default ~50% height
+      x: parseInt(String(off['@_x'] || '0'), 10),
+      y: parseInt(String(off['@_y'] || '0'), 10),
+      width: parseInt(String(ext['@_cx'] || '4572000'), 10), // Default ~50% width
+      height: parseInt(String(ext['@_cy'] || '3429000'), 10), // Default ~50% height
     },
-    relationshipId: relId,
+    relationshipId: String(relId),
   };
 }
 
 // Parse background
-function parseBackground(bgNode: any): ParsedBackground | undefined {
-  if (!bgNode) return undefined;
+function parseBackground(bgNode: unknown): ParsedBackground | undefined {
+  if (!bgNode || typeof bgNode !== 'object') return undefined;
 
-  const bgPr = bgNode.bgPr;
-  if (!bgPr) return undefined;
+  const bgPr = (bgNode as Record<string, unknown>).bgPr;
+  if (!bgPr || typeof bgPr !== 'object') return undefined;
+
+  const bgPrObj = bgPr as Record<string, unknown>;
 
   // Solid fill
-  const solidFill = bgPr.solidFill;
+  const solidFill = bgPrObj.solidFill;
   if (solidFill) {
     return {
       type: 'solid',
@@ -218,23 +233,27 @@ function parseBackground(bgNode: any): ParsedBackground | undefined {
   }
 
   // Image fill
-  const blipFill = bgPr.blipFill;
-  if (blipFill?.blip) {
-    return {
-      type: 'image',
-      imageRelId: blipFill.blip['@_embed'],
-    };
+  const blipFill = bgPrObj.blipFill;
+  if (blipFill && typeof blipFill === 'object') {
+    const blip = (blipFill as Record<string, unknown>).blip;
+    if (blip && typeof blip === 'object') {
+      return {
+        type: 'image',
+        imageRelId: (blip as Record<string, unknown>)['@_embed'] as string,
+      };
+    }
   }
 
   return undefined;
 }
 
 // Parse all shapes from a container (handles nested groups)
-function parseAllShapes(container: any, elements: ParsedElement[]): void {
-  if (!container) return;
+function parseAllShapes(container: unknown, elements: ParsedElement[]): void {
+  if (!container || typeof container !== 'object') return;
+  const containerObj = container as Record<string, unknown>;
 
   // Parse direct shapes (sp)
-  const shapes = ensureArray(container.sp);
+  const shapes = ensureArray(containerObj.sp);
   for (const sp of shapes) {
     const element = parseShape(sp);
     if (element) {
@@ -243,7 +262,7 @@ function parseAllShapes(container: any, elements: ParsedElement[]): void {
   }
 
   // Parse pictures (pic)
-  const pictures = ensureArray(container.pic);
+  const pictures = ensureArray(containerObj.pic);
   for (const pic of pictures) {
     const element = parsePicture(pic);
     if (element) {
@@ -252,7 +271,7 @@ function parseAllShapes(container: any, elements: ParsedElement[]): void {
   }
 
   // Parse group shapes (grpSp) - recursive
-  const groups = ensureArray(container.grpSp);
+  const groups = ensureArray(containerObj.grpSp);
   for (const grp of groups) {
     parseAllShapes(grp, elements);
   }

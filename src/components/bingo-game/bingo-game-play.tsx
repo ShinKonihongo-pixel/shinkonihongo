@@ -101,6 +101,7 @@ export function BingoGamePlay({
   // Animate drawn number
   useEffect(() => {
     if (game.lastDrawnNumber !== null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAnimatedNumber(game.lastDrawnNumber);
       setShowDrawAnimation(true);
       const timer = setTimeout(() => {

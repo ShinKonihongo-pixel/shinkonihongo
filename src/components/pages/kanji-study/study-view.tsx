@@ -15,8 +15,7 @@ interface StudyViewProps {
   memorizationFilter: MemorizationFilter;
   lessons: KanjiLesson[];
   studySettings: KanjiStudySettings;
-  touchStartX: React.MutableRefObject<number | null>;
-  touchStartY: React.MutableRefObject<number | null>;
+  // Removed touchStartX and touchStartY - managed locally in card
   onNext: () => void;
   onPrev: () => void;
   onFlip: () => void;
@@ -31,7 +30,7 @@ interface StudyViewProps {
 
 export function StudyView({
   displayCards, currentIndex, isFlipped, isShuffled, selectedLevel,
-  memorizationFilter, lessons, studySettings, touchStartX, touchStartY,
+  memorizationFilter, lessons, studySettings,
   onNext, onPrev, onFlip, onShuffle, onRestart, onBack, onOpenSettings,
   onFilterChange, onToggleMemorization,
 }: StudyViewProps) {
@@ -62,8 +61,6 @@ export function StudyView({
             onFlip={onFlip}
             onSwipeLeft={onPrev}
             onSwipeRight={onNext}
-            touchStartX={touchStartX}
-            touchStartY={touchStartY}
           />
         )}
         <button className="side-nav-btn side-nav-next" onClick={onNext} disabled={currentIndex >= displayCards.length - 1}><ChevronRight size={28} /></button>

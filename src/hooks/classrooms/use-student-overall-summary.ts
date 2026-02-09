@@ -52,5 +52,5 @@ export function useStudentOverallSummary(
         averageRating: avgRating,
       };
     });
-  }, [classroomId, members, users, studentGrades, attendanceSummaries, evaluations]);
+  }, [members, users, studentGrades, attendanceSummaries, evaluations]);
 }

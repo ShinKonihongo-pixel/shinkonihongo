@@ -32,10 +32,13 @@ export function useGameState({ currentUserId }: UseGameStateProps) {
   }, [game]);
 
   useEffect(() => {
+    const botTimer = botTimerRef.current;
+    const roundTimer = roundTimerRef.current;
+    const botAnswerTimer = botAnswerTimerRef.current;
     return () => {
-      if (botTimerRef.current) clearTimeout(botTimerRef.current);
-      if (roundTimerRef.current) clearTimeout(roundTimerRef.current);
-      if (botAnswerTimerRef.current) clearTimeout(botAnswerTimerRef.current);
+      if (botTimer) clearTimeout(botTimer);
+      if (roundTimer) clearTimeout(roundTimer);
+      if (botAnswerTimer) clearTimeout(botAnswerTimer);
     };
   }, []);
 

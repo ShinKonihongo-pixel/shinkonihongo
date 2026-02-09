@@ -99,13 +99,13 @@ export function FloatingMusicPlayer({ onClose }: FloatingMusicPlayerProps) {
     return () => {
       if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
     };
-  }, [isExpanded, isHovering, isMusicPlaying]);
+  }, [isExpanded, isHovering, isMusicPlaying, autoHideTimerRef]);
 
   const handleToggleRepeat = useCallback(() => {
     setRepeatMode(prev =>
       prev === 'none' ? 'all' : prev === 'all' ? 'one' : 'none'
     );
-  }, []);
+  }, [setRepeatMode]);
 
   // Keyboard shortcuts
   usePlayerKeyboard({

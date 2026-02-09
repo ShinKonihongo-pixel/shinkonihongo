@@ -42,6 +42,7 @@ export function PictureGuessPlay({
   // Timer countdown
   useEffect(() => {
     if (game.status !== 'guessing' || !currentPuzzle) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTimeLeft(currentPuzzle?.timeLimit || 30);
       return;
     }
@@ -65,6 +66,7 @@ export function PictureGuessPlay({
 
   // Reset state when puzzle changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setGuess('');
     setLastResult(null);
     setRevealedHints({} as Record<HintType, string>);

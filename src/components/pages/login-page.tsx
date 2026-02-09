@@ -18,6 +18,7 @@ export function LoginPage({ onLogin, onRegister }: LoginPageProps) {
 
   // Auto-clear error when inputs change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (error) setError('');
   }, [username, password, confirmPassword, isRegisterMode]); // eslint-disable-line react-hooks/exhaustive-deps
 

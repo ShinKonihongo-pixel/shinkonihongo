@@ -28,6 +28,7 @@ export const ImageWordManagementPage: React.FC<ImageWordManagementPageProps> = (
 
   // Load lessons
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLessons(getImageWordLessons());
   }, []);
 

@@ -19,7 +19,7 @@ interface UseGameCreationProps {
     role?: string;
   };
   setGame: (game: KanjiBattleGame | null | ((prev: KanjiBattleGame | null) => KanjiBattleGame | null)) => void;
-  setGameResults: (results: any) => void;
+  setGameResults: (results: unknown) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   botTimerRef: React.MutableRefObject<NodeJS.Timeout | null>;

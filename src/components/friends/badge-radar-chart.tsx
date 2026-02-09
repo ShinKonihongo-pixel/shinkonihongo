@@ -78,7 +78,7 @@ export function BadgeRadarChart({ stats, size = 420 }: BadgeRadarChartProps) {
         return `${point.x},${point.y}`;
       }).join(' ');
     });
-  }, [badgeData.length, maxRadius, center, angleStep]);
+  }, [badgeData, maxRadius, center, angleStep]);
 
   // Generate axis lines
   const axisLines = useMemo(() => {
@@ -86,7 +86,7 @@ export function BadgeRadarChart({ stats, size = 420 }: BadgeRadarChartProps) {
       const endPoint = polarToCartesian(center, center, maxRadius, index * angleStep);
       return { x2: endPoint.x, y2: endPoint.y };
     });
-  }, [badgeData.length, maxRadius, center, angleStep]);
+  }, [badgeData, maxRadius, center, angleStep]);
 
   // Generate label positions (larger offset for bigger shields)
   const labelPositions = useMemo(() => {

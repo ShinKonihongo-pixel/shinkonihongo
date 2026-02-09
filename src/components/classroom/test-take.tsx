@@ -39,7 +39,7 @@ export function TestTake({ test, submission, onSubmit, onCancel }: TestTakeProps
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [test.timeLimit, test.type]);
+  }, [test.timeLimit, test.type, handleSubmit]);
 
   // Format time for display
   const formatTime = (seconds: number): string => {

@@ -11,6 +11,7 @@ export function useClassroomSubmissions(testId: string | null, userId?: string) 
 
   useEffect(() => {
     if (!testId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSubmissions([]);
       setMySubmission(null);
       setLoading(false);

@@ -10,6 +10,7 @@ export function useClassroomTests(classroomId: string | null) {
 
   useEffect(() => {
     if (!classroomId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTests([]);
       setLoading(false);
       return;

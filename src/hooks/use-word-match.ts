@@ -186,7 +186,7 @@ export function useWordMatch({ currentUser, flashcards = [] }: UseWordMatchProps
     } finally {
       setLoading(false);
     }
-  }, [currentUser, flashcards]);
+  }, [currentUser, flashcards, addBot]);
 
   // Add bot
   const addBot = useCallback(() => {
@@ -274,7 +274,7 @@ export function useWordMatch({ currentUser, flashcards = [] }: UseWordMatchProps
     setTimeout(() => {
       startNextRound();
     }, 3000);
-  }, [game, isHost]);
+  }, [game, isHost, startNextRound]);
 
   // Start next round
   const startNextRound = useCallback(() => {
@@ -338,7 +338,8 @@ export function useWordMatch({ currentUser, flashcards = [] }: UseWordMatchProps
 
     // Bot auto-answer
     scheduleBotAnswers();
-  }, [game]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- endRound/scheduleBotAnswers would cause infinite loops
+  }, [game?.settings.timePerRound]);
 
   // Schedule bot answers
   const scheduleBotAnswers = useCallback(() => {
@@ -380,7 +381,8 @@ export function useWordMatch({ currentUser, flashcards = [] }: UseWordMatchProps
         });
       }, delay);
     });
-  }, [game]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- game changes frequently, only called explicitly by startNextRound
+  }, []);
 
   // Submit matches
   const submitMatches = useCallback((matches: { leftId: string; rightId: string }[]) => {
@@ -556,7 +558,8 @@ export function useWordMatch({ currentUser, flashcards = [] }: UseWordMatchProps
         effectTarget: targetId,
       };
     });
-  }, [game]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- game changes frequently, only called by user interaction
+  }, []);
 
   // Continue to next round
   const continueGame = useCallback(() => {

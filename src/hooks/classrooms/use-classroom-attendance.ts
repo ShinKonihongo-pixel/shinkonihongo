@@ -19,6 +19,7 @@ export function useClassroomAttendance(classroomId: string | null, users: User[]
   // Subscribe to attendance sessions
   useEffect(() => {
     if (!classroomId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSessions([]);
       setLoading(false);
       return;
@@ -38,6 +39,7 @@ export function useClassroomAttendance(classroomId: string | null, users: User[]
   // Subscribe to records for selected date
   useEffect(() => {
     if (!classroomId || !selectedDate) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCurrentRecords([]);
       return;
     }

@@ -10,12 +10,17 @@ export function useTimers() {
 
   // Clear timers on unmount
   useEffect(() => {
+    const timer = timerRef.current;
+    const questionTimer = questionTimerRef.current;
+    const botTimer = botTimerRef.current;
+    const botTimer2 = botTimer2Ref.current;
+    const botAnswerTimers = botAnswerTimersRef.current;
     return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      if (questionTimerRef.current) clearTimeout(questionTimerRef.current);
-      if (botTimerRef.current) clearTimeout(botTimerRef.current);
-      if (botTimer2Ref.current) clearTimeout(botTimer2Ref.current);
-      botAnswerTimersRef.current.forEach(t => clearTimeout(t));
+      if (timer) clearTimeout(timer);
+      if (questionTimer) clearTimeout(questionTimer);
+      if (botTimer) clearTimeout(botTimer);
+      if (botTimer2) clearTimeout(botTimer2);
+      botAnswerTimers.forEach(t => clearTimeout(t));
     };
   }, []);
 

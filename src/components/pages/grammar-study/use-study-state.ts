@@ -34,8 +34,7 @@ export function useStudyState({ grammarCards, getChildLessons }: UseStudyStatePr
   const [isShuffled, setIsShuffled] = useState(false);
   const [shuffledIndices, setShuffledIndices] = useState<number[]>([]);
 
-  const touchStartX = useRef<number | null>(null);
-  const touchStartY = useRef<number | null>(null);
+  // Removed touchStartX and touchStartY - now managed locally in card components
 
   useEffect(() => {
     localStorage.setItem('grammarStudySettings', JSON.stringify(studySettings));
@@ -143,8 +142,7 @@ export function useStudyState({ grammarCards, getChildLessons }: UseStudyStatePr
     setIsFlipped,
     isShuffled,
     displayCards,
-    touchStartX,
-    touchStartY,
+    // Removed touchStartX and touchStartY
     handleShuffle,
     handleNext,
     handlePrev,

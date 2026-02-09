@@ -12,6 +12,7 @@ export function useKanjiCards() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     const unsubscribe = firestoreService.subscribeToKanjiCards((cards) => {
       setKanjiCards(cards);

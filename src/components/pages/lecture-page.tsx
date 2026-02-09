@@ -224,9 +224,10 @@ export function LecturePage({ onNavigateToEditor }: LecturePageProps) {
 
   useEffect(() => {
     if (selectedLecture) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUserNotes(loadNotes(selectedLecture.id));
     }
-  }, [selectedLecture?.id]);
+  }, [selectedLecture]);
 
   useKeyboardNavigation({
     viewMode,
@@ -279,6 +280,7 @@ export function LecturePage({ onNavigateToEditor }: LecturePageProps) {
   useEffect(() => {
     if (!autoAdvance || viewMode === 'levels' || viewMode === 'folders' || viewMode === 'lectures') return;
     if (currentSlideIndex >= currentSlides.length - 1) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAutoAdvance(false);
       return;
     }

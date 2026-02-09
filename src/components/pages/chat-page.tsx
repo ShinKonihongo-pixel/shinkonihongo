@@ -59,6 +59,7 @@ export function ChatPage({ currentUser }: ChatPageProps) {
     try {
       const stored = localStorage.getItem(CHAT_STORAGE_KEY);
       if (stored) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMessages(JSON.parse(stored));
       }
     } catch {

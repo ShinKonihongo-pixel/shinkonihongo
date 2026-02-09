@@ -1,5 +1,5 @@
 // Study state management hook for kanji study
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { KanjiCard, KanjiLesson } from '../../../types/kanji';
 import type { JLPTLevel } from '../../../types/flashcard';
 import type { KanjiStudySettings, MemorizationFilter } from './types';
@@ -11,7 +11,7 @@ function loadSettings(): KanjiStudySettings {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) return { ...DEFAULT_KANJI_SETTINGS, ...JSON.parse(saved) };
-  } catch {}
+  } catch { /* ignore parse errors */ }
   return DEFAULT_KANJI_SETTINGS;
 }
 
@@ -31,8 +31,7 @@ export function useStudyState(
   const [memorizationFilter, setMemorizationFilter] = useState<MemorizationFilter>('all');
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [studySettings, setStudySettings] = useState<KanjiStudySettings>(loadSettings);
-  const touchStartX = useRef<number | null>(null);
-  const touchStartY = useRef<number | null>(null);
+  // Removed touchStartX and touchStartY - now managed locally in card components
 
   // Save settings
   useEffect(() => {
@@ -118,8 +117,7 @@ export function useStudyState(
     studySettings,
     displayCards,
     filteredCards,
-    touchStartX,
-    touchStartY,
+    // Removed touchStartX and touchStartY
     setIsFlipped,
     setMemorizationFilter,
     setShowSettingsModal,

@@ -43,6 +43,7 @@ export function GoldenBellPlay({
   // Timer countdown
   useEffect(() => {
     if (game.status !== 'answering' || !currentQuestion) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTimeLeft(currentQuestion?.timeLimit || 15);
       return;
     }
@@ -62,6 +63,7 @@ export function GoldenBellPlay({
 
   // Reset selected answer when question changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedAnswer(null);
     setShowEliminated(false);
   }, [game.currentQuestionIndex]);

@@ -39,6 +39,7 @@ export function RaceCountdown({ raceType, onComplete, duration = 3 }: RaceCountd
       const timer = setTimeout(() => setCount(count - 1), 1000);
       return () => clearTimeout(timer);
     } else if (count === 0 && phase === 'counting') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPhase('go');
       setTimeout(onComplete, 800);
     }

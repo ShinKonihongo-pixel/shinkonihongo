@@ -114,6 +114,7 @@ export function DictationGame({ cards, onExit }: DictationGameProps) {
 
     // Focus input
     setTimeout(() => inputRef.current?.focus(), 100);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount, deps are stable callbacks
   }, []);
 
   // Reading sequence: read the word 3 times
@@ -143,7 +144,7 @@ export function DictationGame({ cards, onExit }: DictationGameProps) {
     if (gameState === 'playing' && gameCards.length > 0 && currentIndex < gameCards.length) {
       startQuestion();
     }
-  }, [gameState, gameCards, currentIndex, startQuestion]);
+  }, [gameState, gameCards, currentIndex, startQuestion, handleTimeUp, startReadingSequence]);
 
   // Handle time up
   const handleTimeUp = useCallback(() => {

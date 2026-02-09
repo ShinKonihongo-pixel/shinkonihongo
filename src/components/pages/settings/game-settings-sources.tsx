@@ -1,11 +1,11 @@
 import type { AppSettings, JLPTLevelOption, MemorizationFilter } from '../../../hooks/use-settings';
-import type { Lesson } from '../../../types/flashcard';
+import type { Lesson, Flashcard } from '../../../types/flashcard';
 
 interface GameSettingsSourcesProps {
   settings: AppSettings;
   onUpdateSetting: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
   lessons: Lesson[];
-  flashcards: any[];
+  flashcards: Flashcard[];
 }
 
 export function GameSettingsSources({ settings, onUpdateSetting, lessons, flashcards }: GameSettingsSourcesProps) {

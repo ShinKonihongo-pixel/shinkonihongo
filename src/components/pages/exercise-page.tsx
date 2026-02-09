@@ -119,7 +119,7 @@ export function ExercisePage({ exercises, flashcards }: ExercisePageProps) {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [session?.currentIndex, currentExercise, view, showResult]);
+  }, [session?.currentIndex, currentExercise, view, showResult, handleAnswer, session]);
 
   // Generate questions from flashcards
   const generateQuestions = useCallback((exercise: Exercise): ExerciseQuestion[] => {
@@ -232,7 +232,7 @@ export function ExercisePage({ exercises, flashcards }: ExercisePageProps) {
     if (questions[0].type === 'listening_write') {
       setTimeout(() => speakQuestion(questions[0].vocabulary), 500);
     }
-  }, [generateQuestions]);
+  }, [generateQuestions, speakQuestion]);
 
   // Speak text
   const speakQuestion = useCallback((text: string) => {

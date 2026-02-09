@@ -84,9 +84,10 @@ export function GamePlay({
       Object.values(game.players).forEach(player => {
         scores[player.id] = player.score;
       });
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPrevScores(scores);
     }
-  }, [game.status, game.currentRound]);
+  }, [game.status, game.currentRound, game.players]);
 
   // Starting countdown
   if (game.status === 'starting') {

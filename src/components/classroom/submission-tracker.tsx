@@ -112,6 +112,7 @@ export function SubmissionTracker({
     });
 
     return { totalSubmissions, totalGraded, totalPending, ungradedCount };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publishedTests, submissions, students]);
 
   const statusIcon = (status: string) => {

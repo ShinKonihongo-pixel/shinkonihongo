@@ -3,10 +3,17 @@
 import { useCallback } from 'react';
 import type { MusicTrack } from '../../../hooks/use-game-sounds';
 
+interface GameSoundSettings {
+  musicEnabled: boolean;
+  musicVolume: number;
+  musicTrack: string;
+  [key: string]: unknown;
+}
+
 interface UsePlaybackControlProps {
   isMusicPlaying: boolean;
-  settings: any;
-  updateSettings: (settings: any) => void;
+  settings: GameSoundSettings;
+  updateSettings: (settings: Partial<GameSoundSettings>) => void;
   startMusic: () => void;
   stopMusic: () => void;
   filteredTracks: MusicTrack[];

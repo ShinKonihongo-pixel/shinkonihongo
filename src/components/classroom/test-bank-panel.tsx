@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/preserve-manual-memoization */
 // Test bank panel - manage test templates with folder navigation
 // Structure: Level → Folder → Tests/Assignments
 // Supports import from Flashcard and JLPT questions

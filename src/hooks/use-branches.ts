@@ -20,6 +20,7 @@ export function useBranches(userId: string | null, isDirector: boolean) {
 
   useEffect(() => {
     if (!userId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setBranches([]);
       setLoading(false);
       return;
@@ -97,6 +98,7 @@ export function useBranchMembers(branchId: string | null, users: User[]) {
 
   useEffect(() => {
     if (!branchId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setMembers([]);
       setLoading(false);
       return;
@@ -232,6 +234,7 @@ export function useBranchStats(branchId: string | null) {
 
   useEffect(() => {
     if (!branchId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStats(null);
       setLoading(false);
       return;
@@ -281,6 +284,7 @@ export function useCurrentBranch() {
     if (savedBranchId && savedBranchData) {
       try {
         const branch = JSON.parse(savedBranchData) as Branch;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCurrentBranchState(branch);
       } catch {
         localStorage.removeItem('currentBranchId');
@@ -326,6 +330,7 @@ export function useBranchWithRole(userId: string | null) {
   // Load role when branch changes
   useEffect(() => {
     if (!userId || !currentBranch) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUserRole(null);
       setLoading(false);
       return;
@@ -384,6 +389,7 @@ export function useBranchAccess(userId: string | null, branchId: string | null) 
 
   useEffect(() => {
     if (!userId || !branchId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setHasAccess(false);
       setRole(null);
       setLoading(false);

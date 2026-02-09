@@ -1,11 +1,12 @@
 // Track management logic hook
 
 import { useState, useCallback } from 'react';
+import type { MusicTrack, MusicCategory } from '../../../hooks/use-game-sounds';
 
 interface UseTrackManagementProps {
-  addCustomTrack: (track: any) => void;
+  addCustomTrack: (track: Omit<MusicTrack, 'category'> & { category?: MusicCategory }) => void;
   removeCustomTrack: (trackId: string) => void;
-  setSelectedCategory: (category: any) => void;
+  setSelectedCategory: (category: MusicCategory | 'all') => void;
 }
 
 export function useTrackManagement({

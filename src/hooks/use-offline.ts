@@ -60,19 +60,6 @@ export function useOffline(cards: Flashcard[], lessons: Lesson[]) {
     });
   }, [state.isSupported]);
 
-  // Auto-sync when data changes (if online)
-  useEffect(() => {
-    if (!state.isSupported || !state.isOnline) return;
-    if (cards.length === 0 && lessons.length === 0) return;
-
-    // Debounce sync
-    const timeout = setTimeout(() => {
-      syncToOffline();
-    }, 5000); // 5 second delay
-
-    return () => clearTimeout(timeout);
-  }, [cards, lessons, state.isSupported, state.isOnline]);
-
   // Sync data to offline storage
   const syncToOffline = useCallback(async () => {
     if (!state.isSupported) return;
@@ -98,6 +85,19 @@ export function useOffline(cards: Flashcard[], lessons: Lesson[]) {
       setState(prev => ({ ...prev, isSyncing: false }));
     }
   }, [cards, lessons, state.isSupported]);
+
+  // Auto-sync when data changes (if online)
+  useEffect(() => {
+    if (!state.isSupported || !state.isOnline) return;
+    if (cards.length === 0 && lessons.length === 0) return;
+
+    // Debounce sync
+    const timeout = setTimeout(() => {
+      syncToOffline();
+    }, 5000); // 5 second delay
+
+    return () => clearTimeout(timeout);
+  }, [cards, lessons, state.isSupported, state.isOnline, syncToOffline]);
 
   // Load data from offline storage (when offline)
   const loadFromOffline = useCallback(async (): Promise<{

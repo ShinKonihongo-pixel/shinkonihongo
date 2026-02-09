@@ -36,6 +36,7 @@ export function PictureGuessPuzzleEditor({
     const stored = localStorage.getItem(CUSTOM_PUZZLES_STORAGE_KEY);
     if (stored) {
       try {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setPuzzles(JSON.parse(stored));
       } catch {
         console.error('Failed to load custom puzzles');

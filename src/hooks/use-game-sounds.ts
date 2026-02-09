@@ -370,8 +370,11 @@ export function useGameSounds(): UseGameSoundsReturn {
   const playPowerUp = useCallback(() => playSound('powerup'), [playSound]);
   const playClick = useCallback(() => playSound('click'), [playSound]);
 
-  // Get all available tracks (built-in + custom)
-  const allTracks = [...MUSIC_TRACKS, ...settings.customMusicTracks];
+  // Get all available tracks (built-in + custom) - memoized to prevent recreation
+  const allTracks = useMemo(
+    () => [...MUSIC_TRACKS, ...settings.customMusicTracks],
+    [settings.customMusicTracks]
+  );
 
   // Find track by ID
   const findTrack = useCallback((trackId: string): MusicTrack | null => {
@@ -483,6 +486,7 @@ export function useGameSounds(): UseGameSoundsReturn {
   // Stop music when disabled
   useEffect(() => {
     if (!settings.musicEnabled && isMusicPlaying) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       stopMusic();
     }
   }, [settings.musicEnabled, isMusicPlaying, stopMusic]);

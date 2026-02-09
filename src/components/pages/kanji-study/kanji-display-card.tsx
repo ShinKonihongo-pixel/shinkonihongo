@@ -14,8 +14,7 @@ interface KanjiDisplayCardProps {
   onFlip: () => void;
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
-  touchStartX: React.MutableRefObject<number | null>;
-  touchStartY: React.MutableRefObject<number | null>;
+  // Remove ref props - manage touch state locally
 }
 
 const LEVEL_COLORS: Record<JLPTLevel, string> = {
@@ -24,10 +23,13 @@ const LEVEL_COLORS: Record<JLPTLevel, string> = {
 
 export function KanjiDisplayCard({
   card, isFlipped, settings, selectedLevel, lessons,
-  onFlip, onSwipeLeft, onSwipeRight, touchStartX, touchStartY,
+  onFlip, onSwipeLeft, onSwipeRight,
 }: KanjiDisplayCardProps) {
   const writerRef = useRef<HTMLDivElement>(null);
   const writerInstance = useRef<HanziWriter | null>(null);
+  // Manage touch state locally to avoid ref mutation issues
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
 
   useEffect(() => {
     if (!settings.frontShow.strokeOrder || !writerRef.current) return;

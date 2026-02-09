@@ -34,6 +34,7 @@ export function BadgeShape({
     if (isHovered && badgeRef.current) {
       const rect = badgeRef.current.getBoundingClientRect();
       const spaceAbove = rect.top;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTooltipPosition(spaceAbove < 100 ? 'bottom' : 'top');
     }
   }, [isHovered]);

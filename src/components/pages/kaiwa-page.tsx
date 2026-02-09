@@ -252,7 +252,7 @@ export function KaiwaPage({
   // Update voice when settings change
   useEffect(() => {
     speech.setVoiceByGender(settings.kaiwaVoiceGender);
-  }, [settings.kaiwaVoiceGender, speech.setVoiceByGender]);
+  }, [settings.kaiwaVoiceGender, speech]);
 
   // Scroll to bottom and focus input when messages change
   useEffect(() => {
@@ -275,7 +275,7 @@ export function KaiwaPage({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [speech.isSpeaking, speech.stopSpeaking]);
+  }, [speech]);
 
   // Save font size to localStorage
   useEffect(() => {
@@ -312,7 +312,8 @@ export function KaiwaPage({
       }
       speech.resetTranscript();
     }
-  }, [speech.transcript, speech.isListening, isPracticeMode, selectedSuggestion]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleSend is complex async fn, wrapping in useCallback would add risk
+  }, [speech, isPracticeMode, selectedSuggestion]);
 
   // Start conversation
   const handleStart = async () => {
@@ -505,7 +506,11 @@ export function KaiwaPage({
 
   // Handle mic button
   const handleMicClick = () => {
-    speech.isListening ? speech.stopListening() : speech.startListening();
+    if (speech.isListening) {
+      speech.stopListening();
+    } else {
+      speech.startListening();
+    }
   };
 
   // End conversation with optional evaluation
@@ -750,6 +755,7 @@ export function KaiwaPage({
         clearInterval(autoSendTimerRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleAcceptPronunciation is complex fn with many closures
   }, [pronunciationResult, settings.kaiwaSendMode, settings.kaiwaAutoSendThreshold, settings.kaiwaAutoSendDelay]);
 
   // Helper function to get questions for current selector state

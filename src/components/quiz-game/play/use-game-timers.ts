@@ -32,6 +32,7 @@ export function useGameTimers({
   // Countdown for starting state
   useEffect(() => {
     if (game.status === 'starting') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCountdown(3);
       const timer = setInterval(() => {
         setCountdown(prev => {
@@ -81,12 +82,14 @@ export function useGameTimers({
 
   // Reset timer when question changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTimeLeft(currentQuestion.timeLimit);
   }, [game.currentRound, currentQuestion.timeLimit]);
 
   // Auto-advance timer for answer reveal (5s)
   useEffect(() => {
     if (game.status === 'answer_reveal') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRevealTimer(5);
       const timer = setInterval(() => {
         setRevealTimer(prev => {
@@ -107,6 +110,7 @@ export function useGameTimers({
   // Auto-advance timer for power-up selection (10s)
   useEffect(() => {
     if (game.status === 'power_up') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPowerUpTimer(10);
       const timer = setInterval(() => {
         setPowerUpTimer(prev => {
@@ -127,6 +131,7 @@ export function useGameTimers({
   // Auto-advance timer for leaderboard (5s)
   useEffect(() => {
     if (game.status === 'leaderboard') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRevealTimer(5);
       const timer = setInterval(() => {
         setRevealTimer(prev => {

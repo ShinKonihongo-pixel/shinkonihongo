@@ -10,6 +10,7 @@ export function useLessons() {
 
   // Subscribe to real-time updates
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     const unsubscribe = firestoreService.subscribeToLessons((lessonsData) => {
       setLessons(lessonsData);

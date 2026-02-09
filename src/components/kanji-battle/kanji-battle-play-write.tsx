@@ -95,6 +95,7 @@ export const KanjiBattlePlayWrite: React.FC<KanjiBattlePlayWriteProps> = ({
   }, [isPlaying, game.roundStartTime, game.settings.timePerQuestion]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTimeLeft(game.settings.timePerQuestion);
     setRevealedHints([]);
     resetDrawing();

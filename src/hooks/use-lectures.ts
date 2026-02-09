@@ -12,6 +12,7 @@ export function useLectures(isAdmin: boolean = false) {
 
   // Subscribe to lectures (all for admin, published only for users)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     const unsubscribeLectures = isAdmin
       ? lectureService.subscribeToLectures((data) => {
@@ -172,6 +173,7 @@ export function useSlides(lectureId: string | null) {
 
   useEffect(() => {
     if (!lectureId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSlides([]);
       setLoading(false);
       return;

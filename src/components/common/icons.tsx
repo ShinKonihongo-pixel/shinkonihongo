@@ -100,6 +100,7 @@ export {
 };
 
 // Icon size presets for consistency
+// eslint-disable-next-line react-refresh/only-export-components
 export const iconSizes = {
   xs: 14,
   sm: 16,
@@ -109,6 +110,7 @@ export const iconSizes = {
 } as const;
 
 // Default props for consistent styling
+// eslint-disable-next-line react-refresh/only-export-components
 export const defaultIconProps: Partial<LucideProps> = {
   strokeWidth: 2,
   size: iconSizes.md,

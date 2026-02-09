@@ -10,6 +10,7 @@ export function useClassroomNotifications(userId: string | null) {
 
   useEffect(() => {
     if (!userId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setNotifications([]);
       setLoading(false);
       return;

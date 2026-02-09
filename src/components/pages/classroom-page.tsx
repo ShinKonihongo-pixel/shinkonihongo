@@ -59,7 +59,7 @@ export function ClassroomPage({ users }: ClassroomPageProps) {
   // Test taking state
   const [activeTest, setActiveTest] = useState<ClassroomTest | null>(null);
   const [reviewingTest, setReviewingTest] = useState<ClassroomTest | null>(null);
-  const [reviewingSubmission, setReviewingSubmission] = useState<{ submission: any; test: ClassroomTest } | null>(null);
+  const [reviewingSubmission, setReviewingSubmission] = useState<{ submission: ClassroomSubmission; test: ClassroomTest } | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
 
   // Join by code state

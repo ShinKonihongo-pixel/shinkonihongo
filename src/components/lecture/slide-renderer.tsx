@@ -157,6 +157,7 @@ export function SlideRenderer({ slide, isPresenting = false, slideKey, showFurig
   // Trigger animation when slide changes
   useEffect(() => {
     if (slideKey !== prevKeyRef.current) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsAnimating(true);
       prevKeyRef.current = slideKey;
 

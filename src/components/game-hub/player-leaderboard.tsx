@@ -158,6 +158,7 @@ export function PlayerLeaderboard({
 }
 
 // Helper function to convert game-specific player to LeaderboardPlayer
+// eslint-disable-next-line react-refresh/only-export-components
 export function toLeaderboardPlayer<T extends {
   odinhId?: string;
   id?: string;

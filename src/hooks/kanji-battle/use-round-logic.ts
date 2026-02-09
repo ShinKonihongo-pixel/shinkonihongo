@@ -72,7 +72,8 @@ export function useRoundLogic({
     }, (game?.settings.timePerQuestion || 15) * 1000 + 500);
 
     scheduleBotAnswers();
-  }, [game, setGame, roundTimerRef, scheduleBotAnswers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- endRound is defined after, circular dependency
+  }, [game?.settings.timePerQuestion, setGame, roundTimerRef, scheduleBotAnswers]);
 
   const endRound = useCallback(() => {
     if (roundTimerRef.current) clearTimeout(roundTimerRef.current);

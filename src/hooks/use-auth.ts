@@ -32,6 +32,7 @@ export function useAuth() {
 
   // Subscribe to real-time updates and ensure default super admin exists
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     const unsubscribe = firestoreService.subscribeToUsers(async (usersData) => {
       // Check if default super admin exists
@@ -233,7 +234,7 @@ export function useAuth() {
       await firestoreService.updateUser(userId, { jlptLevel: jlptLevel as 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | undefined });
       // Update current user state
       if (currentUser?.id === userId) {
-        setCurrentUser(prev => prev ? { ...prev, jlptLevel: jlptLevel as any } : null);
+        setCurrentUser(prev => prev ? { ...prev, jlptLevel: jlptLevel as 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | undefined } : null);
       }
       return { success: true };
     } catch (err) {

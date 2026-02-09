@@ -101,12 +101,14 @@ export function QuizGamePage({
 
   // Auto-clear join error when code changes or view changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (joinError) setJoinError('');
   }, [joinCode, view]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-join game when initialJoinCode is provided (from QR code scan)
   useEffect(() => {
     if (initialJoinCode && !autoJoinAttempted && !game) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAutoJoinAttempted(true);
       joinGame(initialJoinCode).then((success) => {
         if (success) {

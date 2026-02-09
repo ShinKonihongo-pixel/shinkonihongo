@@ -579,10 +579,13 @@ export function usePictureGuess({ currentUser, flashcards = [] }: UsePictureGues
 
   // Cleanup timers on unmount
   useEffect(() => {
+    const timer = timerRef.current;
+    const botTimer = botTimerRef.current;
+    const botTimer2 = botTimer2Ref.current;
     return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      if (botTimerRef.current) clearTimeout(botTimerRef.current);
-      if (botTimer2Ref.current) clearTimeout(botTimer2Ref.current);
+      if (timer) clearTimeout(timer);
+      if (botTimer) clearTimeout(botTimer);
+      if (botTimer2) clearTimeout(botTimer2);
     };
   }, []);
 

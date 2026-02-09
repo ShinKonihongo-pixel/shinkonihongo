@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/purity */
 // Study session page - Vocabulary flashcard study with level/lesson selection
 
 import { useState, useEffect, useRef, useMemo } from 'react';

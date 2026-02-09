@@ -156,6 +156,7 @@ export function useSpeech(options: UseSpeechOptions = {}) {
   // Initialize TTS
   useEffect(() => {
     if ('speechSynthesis' in window) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTtsSupported(true);
       synthRef.current = window.speechSynthesis;
 
@@ -206,6 +207,7 @@ export function useSpeech(options: UseSpeechOptions = {}) {
     console.log('[Speech] Browser check:', { userAgent, isChrome, isEdge, isSupported, hasAPI: !!SpeechRecognitionAPI });
 
     if (SpeechRecognitionAPI && isSupported) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRecognitionSupported(true);
       const recognition = new SpeechRecognitionAPI();
       recognition.lang = 'ja-JP';

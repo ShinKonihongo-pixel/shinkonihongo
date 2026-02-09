@@ -12,6 +12,7 @@ export function useFlashcards() {
 
   // Subscribe to real-time updates
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     const unsubscribe = firestoreService.subscribeToFlashcards((flashcards) => {
       setCards(flashcards);

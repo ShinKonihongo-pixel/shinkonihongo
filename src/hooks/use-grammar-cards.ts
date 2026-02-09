@@ -11,6 +11,7 @@ export function useGrammarCards() {
 
   // Subscribe to real-time updates
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     const unsubscribe = firestoreService.subscribeToGrammarCards((cards) => {
       setGrammarCards(cards);

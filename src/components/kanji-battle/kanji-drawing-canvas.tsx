@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/refs */
 // Kanji Drawing Canvas - HTML5 canvas for stroke drawing with morph animation
 // After user releases a stroke, it morphs into the actual kanji SVG stroke
 import React, { useRef, useEffect, useState, useCallback } from 'react';
@@ -296,7 +297,7 @@ export const KanjiDrawingCanvas: React.FC<KanjiDrawingCanvasProps> = ({
       ctx.lineTo(currentPoints[i].x * size, currentPoints[i].y * size);
     }
     ctx.stroke();
-  }, [currentPoints, drawBackground, size]);
+  }, [currentPoints, drawBackground, size, brushWidth]);
 
   // Start morph animation: user stroke → kanji SVG stroke
   const runMorphAnimation = useCallback(() => {

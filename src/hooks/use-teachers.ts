@@ -124,6 +124,7 @@ export function useTeachingSessions(
 
   useEffect(() => {
     if (!branchId && !teacherId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSessions([]);
       setLoading(false);
       return;
@@ -271,6 +272,7 @@ export function useSalaries(branchId: string | null, month: string, users?: User
 
   useEffect(() => {
     if (!branchId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSalaries([]);
       setSummary(null);
       setLoading(false);
@@ -434,6 +436,7 @@ export function useTeacherSalary(teacherId: string | null) {
 
   useEffect(() => {
     if (!teacherId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSalaries([]);
       setLoading(false);
       return;
@@ -487,6 +490,7 @@ export function useTeacherMonthlySummaries(
 
   useEffect(() => {
     if (!branchId || teachers.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSummaries([]);
       setLoading(false);
       return;

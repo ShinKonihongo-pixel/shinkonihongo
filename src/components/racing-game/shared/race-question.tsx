@@ -34,6 +34,7 @@ export function RaceQuestion({
   // Timer countdown
   useEffect(() => {
     if (status !== 'answering') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTimeLeft(question.timeLimit);
       return;
     }
@@ -53,6 +54,7 @@ export function RaceQuestion({
 
   // Reset on question change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedAnswer(null);
     setShowResult(false);
     setTimeLeft(question.timeLimit);
@@ -61,6 +63,7 @@ export function RaceQuestion({
   // Show result animation
   useEffect(() => {
     if (status === 'revealing') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowResult(true);
     }
   }, [status]);

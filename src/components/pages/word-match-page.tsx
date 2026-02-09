@@ -138,7 +138,7 @@ export const WordMatchPage: React.FC<WordMatchPageProps> = ({
     ) {
       setView('play');
     }
-  }, [game?.status, gameResults]);
+  }, [game, gameResults]);
 
   // Save game session when game finishes (for XP tracking)
   useEffect(() => {

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/purity */
 // JLPT Practice Page - Multi-select test builder with level assessment & smart question selection
 // Features: Detailed assessment, category breakdown, personalized advice, anti-repetition
 // Extended: Custom topic support for practicing beyond standard JLPT content

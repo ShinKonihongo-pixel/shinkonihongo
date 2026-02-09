@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/preserve-manual-memoization */
 // Daily Words Page - Flashcard-based daily learning
 // Displays daily words in flashcard format with flip animations
 

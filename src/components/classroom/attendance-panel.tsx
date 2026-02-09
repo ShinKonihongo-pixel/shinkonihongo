@@ -132,6 +132,7 @@ export function AttendancePanel({
       excused: statuses.filter(s => s === 'excused').length,
       unmarked: statuses.filter(s => s === null).length,
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [students, currentRecords, pendingChanges]);
 
   const hasPendingChanges = Object.keys(pendingChanges).length > 0;

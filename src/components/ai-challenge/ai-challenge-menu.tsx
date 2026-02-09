@@ -1,7 +1,8 @@
+/* eslint-disable react-hooks/purity */
 // AI Challenge Menu - PREMIUM DESIGN with 3 Sessions
 // 27 AI opponents, 9 per session, premium card styling
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Lock, Swords, ChevronLeft, Crown, Sparkles, Trophy } from 'lucide-react';
 import type { AIDifficulty, AIOpponent } from '../../types/ai-challenge';
 import { getAllAIsSorted } from '../../types/ai-challenge';
@@ -89,6 +90,14 @@ export function AIChallengeMenu({
 
   const selectedOpponent = selectedAI ? aiOpponents.find(ai => ai.id === selectedAI) : null;
 
+  // Pre-compute particle animation values once
+  const particles = useMemo(() =>
+    Array.from({ length: 20 }, () => ({
+      delay: Math.random() * 5,
+      x: Math.random() * 100,
+      duration: 3 + Math.random() * 4,
+    })), []);
+
   // Handle JLPT level change
   const handleLevelChange = (level: JLPTLevel) => {
     updateSetting('aiChallengeLevel', level);
@@ -118,11 +127,11 @@ export function AIChallengeMenu({
       <div className="asp-background">
         <div className="asp-gradient" />
         <div className="asp-particles">
-          {Array.from({ length: 20 }).map((_, i) => (
+          {particles.map((p, i) => (
             <div key={i} className="asp-particle" style={{
-              '--delay': `${Math.random() * 5}s`,
-              '--x': `${Math.random() * 100}%`,
-              '--duration': `${3 + Math.random() * 4}s`,
+              '--delay': `${p.delay}s`,
+              '--x': `${p.x}%`,
+              '--duration': `${p.duration}s`,
             } as React.CSSProperties} />
           ))}
         </div>

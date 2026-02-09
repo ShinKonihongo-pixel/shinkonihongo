@@ -11,6 +11,7 @@ export function useClassroomMembers(classroomId: string | null, users: User[]) {
 
   useEffect(() => {
     if (!classroomId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setMembers([]);
       setLoading(false);
       return;

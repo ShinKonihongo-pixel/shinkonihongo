@@ -51,11 +51,15 @@ export function useBingoGame({ currentUser }: UseBingoGameProps) {
 
   // Cleanup timers on unmount
   useEffect(() => {
+    const botTimer = refs.botTimerRef;
+    const botTimer2 = refs.botTimer2Ref;
+    const botDrawTimer = refs.botDrawTimerRef;
     return () => {
-      if (refs.botTimerRef.current) clearTimeout(refs.botTimerRef.current);
-      if (refs.botTimer2Ref.current) clearTimeout(refs.botTimer2Ref.current);
-      if (refs.botDrawTimerRef.current) clearTimeout(refs.botDrawTimerRef.current);
+      if (botTimer.current) clearTimeout(botTimer.current);
+      if (botTimer2.current) clearTimeout(botTimer2.current);
+      if (botDrawTimer.current) clearTimeout(botDrawTimer.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Reset game
@@ -64,7 +68,7 @@ export function useBingoGame({ currentUser }: UseBingoGameProps) {
     if (refs.botTimer2Ref.current) clearTimeout(refs.botTimer2Ref.current);
     if (refs.botDrawTimerRef.current) clearTimeout(refs.botDrawTimerRef.current);
     setState(prev => ({ ...prev, game: null, gameResults: null }));
-  }, []);
+  }, [refs.botTimerRef, refs.botTimer2Ref, refs.botDrawTimerRef]);
 
   // Set error
   const setError = useCallback((error: string | null) => {

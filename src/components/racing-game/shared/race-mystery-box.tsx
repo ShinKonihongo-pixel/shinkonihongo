@@ -1,7 +1,8 @@
+/* eslint-disable react-hooks/purity */
 // Race Mystery Box - Animated mystery box reward reveal
 // Professional animations and themed styling
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Gift, Sparkles } from 'lucide-react';
 import type { RacingQuestion, VehicleType, SpecialFeatureType } from '../../../types/racing-game';
 import { SPECIAL_FEATURES } from '../../../types/racing-game';
@@ -51,15 +52,23 @@ export function RaceMysteryBox({
     hard: { text: 'Khó', color: '#ff6b6b', stars: 3 },
   }[difficulty || 'easy'];
 
+  // Pre-compute particles once
+  const particles = useMemo(() =>
+    Array.from({ length: 20 }, () => ({
+      delay: Math.random() * 0.1,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+    })), []);
+
   return (
     <div className={`pro-mystery-box ${raceType} ${isOpening ? 'opening' : ''} ${isRevealed ? 'revealed' : ''}`}>
       {/* Background particles */}
       <div className="mystery-particles">
-        {Array.from({ length: 20 }).map((_, i) => (
+        {particles.map((p, i) => (
           <span key={i} className="particle" style={{
-            '--delay': `${i * 0.1}s`,
-            '--x': `${Math.random() * 100}%`,
-            '--y': `${Math.random() * 100}%`,
+            '--delay': `${p.delay}s`,
+            '--x': `${p.x}%`,
+            '--y': `${p.y}%`,
           } as React.CSSProperties} />
         ))}
       </div>

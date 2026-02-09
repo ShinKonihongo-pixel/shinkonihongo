@@ -174,6 +174,7 @@ export function GameTab() {
 
   // Load visibility settings on mount
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setVisibilitySettings(getGameVisibilitySettings());
   }, []);
 

@@ -6,7 +6,7 @@ interface ModalFontSectionProps {
   settings: AppSettings;
   frontFontSize?: number;
   onFrontFontSizeChange?: (size: number) => void;
-  onSettingsChange?: (key: keyof AppSettings, value: any) => void;
+  onSettingsChange?: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
 }
 
 export function ModalFontSection({

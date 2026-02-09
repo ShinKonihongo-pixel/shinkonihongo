@@ -81,6 +81,7 @@ export function ClassroomCreateModal({
   useEffect(() => {
     if (isOpen) {
       if (classroom) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setName(classroom.name);
         setLevel(classroom.level);
         setDescription(classroom.description || '');

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 // Racing Game Play V2 - Complete redesign with new game flow
 // Flow: Track View -> Question View -> Track View (repeat)
 // Features: Vertical race track, special questions every 3, effect targeting
@@ -79,6 +80,9 @@ export function RacingGamePlayV2({
   const [escapeProgress, setEscapeProgress] = useState(0);
   const [escapeRequired] = useState(20); // taps needed
 
+  // Submitted state (after clicking submit button)
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+
   // Check if current question is special (every 3 questions)
   const isSpecialQuestion = useMemo(() => {
     return (game.currentQuestionIndex + 1) % 3 === 0;
@@ -114,11 +118,12 @@ export function RacingGamePlayV2({
       setView('track');
     } else if (game.status === 'question' || game.status === 'answering') {
       // Transition to question view after showing track
-      setTimeout(() => setView('question'), 500);
+      const t = setTimeout(() => setView('question'), 500);
       setTimeLeft(currentQuestion?.timeLimit || 15);
       setSelectedAnswer(null);
       setShowResult(false);
       setHasSubmitted(false);
+      return () => clearTimeout(t);
     } else if (game.status === 'revealing') {
       // Show result - handled by submit flow now
     } else if (game.status === 'racing') {
@@ -126,9 +131,6 @@ export function RacingGamePlayV2({
       setView('track');
     }
   }, [game.status, currentQuestion]);
-
-  // Submitted state (after clicking submit button)
-  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   // Handle answer selection (just select, not submit)
   const handleSelectAnswer = useCallback((index: number) => {

@@ -109,7 +109,7 @@ export function SpeakingPracticeMode({
         speech.stopListening();
       }
     };
-  }, []);
+  }, [speech]);
 
   // Render error state
   if (speakingPractice.error) {

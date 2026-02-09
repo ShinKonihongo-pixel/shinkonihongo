@@ -16,8 +16,7 @@ interface StudyViewProps {
   memorizationFilter: MemorizationFilter;
   lessons: GrammarLesson[];
   studySettings: ReturnType<typeof useStudyState>['studySettings'];
-  touchStartX: React.MutableRefObject<number | null>;
-  touchStartY: React.MutableRefObject<number | null>;
+  // Removed touchStartX and touchStartY - managed locally in card
   onNext: () => void;
   onPrev: () => void;
   onFlip: () => void;
@@ -38,8 +37,6 @@ export function StudyView({
   memorizationFilter,
   lessons,
   studySettings,
-  touchStartX,
-  touchStartY,
   onNext,
   onPrev,
   onFlip,
@@ -84,8 +81,6 @@ export function StudyView({
             onFlip={onFlip}
             onSwipeLeft={onPrev}
             onSwipeRight={onNext}
-            touchStartX={touchStartX}
-            touchStartY={touchStartY}
           />
         )}
 

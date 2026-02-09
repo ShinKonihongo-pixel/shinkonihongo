@@ -12,6 +12,7 @@ export function useStudentEvaluations(classroomId: string | null, users: User[])
   // Subscribe to evaluations
   useEffect(() => {
     if (!classroomId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEvaluations([]);
       setLoading(false);
       return;

@@ -16,7 +16,7 @@ interface KanjiBattlePlayReadProps {
   onUseHint: () => void;
   onSelectSkill: (skillType: KanjiBattleSkillType, targetId?: string) => void;
   onNextRound: () => void;
-  onSubmitDrawing?: any; // unused in read mode
+  onSubmitDrawing?: (strokes: unknown) => void; // unused in read mode
 }
 
 export const KanjiBattlePlayRead: React.FC<KanjiBattlePlayReadProps> = ({
@@ -78,6 +78,7 @@ export const KanjiBattlePlayRead: React.FC<KanjiBattlePlayReadProps> = ({
   }, [isPlaying, game.roundStartTime, game.settings.timePerQuestion]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAnswer('');
     setRevealedHints([]);
     setTimeLeft(game.settings.timePerQuestion);
@@ -86,6 +87,7 @@ export const KanjiBattlePlayRead: React.FC<KanjiBattlePlayReadProps> = ({
   const [isDelayed, setIsDelayed] = useState(false);
   useEffect(() => {
     if (isPlaying && currentPlayer?.isSlowed) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsDelayed(true);
       const timer = setTimeout(() => { setIsDelayed(false); inputRef.current?.focus(); }, 2000);
       return () => clearTimeout(timer);

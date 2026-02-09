@@ -72,7 +72,7 @@ export function useSpecialFeatures({
           };
           break;
 
-        case 'freeze':
+        case 'freeze': {
           // Freeze random opponent
           const opponents = Object.keys(updatedPlayers).filter(id => id !== currentUserId);
           if (opponents.length > 0) {
@@ -83,6 +83,7 @@ export function useSpecialFeatures({
             }
           }
           break;
+        }
 
         default:
           // Add to active features

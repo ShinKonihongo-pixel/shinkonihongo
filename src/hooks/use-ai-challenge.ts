@@ -131,7 +131,10 @@ export function useAIChallenge({ currentUser, flashcards, aiSettings, currentLev
 
   // Load saved progress for current level
   const [progressByLevel, setProgressByLevel] = useState(loadAllProgress);
-  const progress = progressByLevel[currentLevel] || { totalWins: 0, totalGames: 0 };
+  const progress = useMemo(
+    () => progressByLevel[currentLevel] || { totalWins: 0, totalGames: 0 },
+    [progressByLevel, currentLevel]
+  );
 
   // Refs for timers
   const aiTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -149,12 +152,14 @@ export function useAIChallenge({ currentUser, flashcards, aiSettings, currentLev
   const currentQuestion = useMemo(() => {
     if (!game) return null;
     return game.questions[game.currentQuestionIndex] || null;
-  }, [game?.questions, game?.currentQuestionIndex]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- game changes frequently, only recalculate on index change
+  }, [game?.currentQuestionIndex]);
 
   // Get AI opponent info
   const aiOpponent = useMemo(() => {
     if (!game) return null;
     return AI_OPPONENTS[game.aiDifficulty];
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- game changes frequently, only recalculate on difficulty change
   }, [game?.aiDifficulty]);
 
   // Check if AI is unlocked

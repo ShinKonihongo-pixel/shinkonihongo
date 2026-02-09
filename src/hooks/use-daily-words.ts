@@ -166,6 +166,7 @@ export function useDailyWords({ allCards, targetCount, enabled, userJlptLevel }:
   // Initialize daily words
   useEffect(() => {
     if (!enabled || allCards.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsInitialized(true);
       return;
     }
@@ -333,6 +334,7 @@ export function useDailyWords({ allCards, targetCount, enabled, userJlptLevel }:
   useEffect(() => {
     const isNowCompleted = state.currentSession?.isCompleted || false;
     if (isNowCompleted && !prevCompletedRef.current) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setJustCompleted(true);
     }
     prevCompletedRef.current = isNowCompleted;

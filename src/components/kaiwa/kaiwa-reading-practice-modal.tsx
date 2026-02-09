@@ -220,6 +220,7 @@ export function KaiwaReadingPracticeModal({
   // Listen for recording state changes
   useEffect(() => {
     if (!speech.isListening && isRecording) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsRecording(false);
     }
   }, [speech.isListening, isRecording]);

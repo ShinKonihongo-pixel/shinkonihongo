@@ -32,6 +32,7 @@ export function useKaiwaTopics({ currentUserId }: UseKaiwaTopicsOptions) {
       const savedQuestions = localStorage.getItem(STORAGE_KEY_QUESTIONS);
 
       if (savedTopics) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setTopics(JSON.parse(savedTopics));
       }
       if (savedQuestions) {

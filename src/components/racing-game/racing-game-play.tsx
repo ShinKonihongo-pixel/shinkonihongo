@@ -107,6 +107,7 @@ export function RacingGamePlay({
 
   useEffect(() => {
     // Reset timeLeft when question changes
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTimeLeft(questionTimeLimit);
   }, [game.currentQuestionIndex, questionTimeLimit]);
 
@@ -130,6 +131,7 @@ export function RacingGamePlay({
 
   // Reset selected answer when question changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedAnswer(null);
     setShowMysteryReward(false);
   }, [game.currentQuestionIndex]);

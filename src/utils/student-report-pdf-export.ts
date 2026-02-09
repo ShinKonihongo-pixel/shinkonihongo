@@ -161,7 +161,7 @@ export function exportStudentReportPDF(data: StudentReportData): void {
     margin: { left: 20, right: 20 },
   });
 
-  yPos = (doc as any).lastAutoTable.finalY + 15;
+  yPos = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 15;
 
   // ============ GRADES SECTION ============
   doc.setFontSize(14);
@@ -208,7 +208,7 @@ export function exportStudentReportPDF(data: StudentReportData): void {
       margin: { left: 20, right: 20 },
     });
 
-    yPos = (doc as any).lastAutoTable.finalY + 15;
+    yPos = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 15;
   } else {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'italic');
@@ -249,7 +249,7 @@ export function exportStudentReportPDF(data: StudentReportData): void {
     margin: { left: 20, right: 20 },
   });
 
-  yPos = (doc as any).lastAutoTable.finalY + 10;
+  yPos = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
 
   // Recent attendance records (last 10)
   const userAttendance = attendanceRecords
@@ -284,7 +284,7 @@ export function exportStudentReportPDF(data: StudentReportData): void {
       margin: { left: 20, right: 20 },
     });
 
-    yPos = (doc as any).lastAutoTable.finalY + 15;
+    yPos = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 15;
   }
 
   // Check if need new page
@@ -342,7 +342,7 @@ export function exportStudentReportPDF(data: StudentReportData): void {
         margin: { left: 20, right: 20 },
       });
 
-      yPos = (doc as any).lastAutoTable.finalY + 5;
+      yPos = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 5;
 
       // Comment
       if (evaluation.comment) {

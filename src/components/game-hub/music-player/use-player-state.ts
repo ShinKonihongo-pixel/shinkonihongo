@@ -5,10 +5,17 @@ import {
   MUSIC_TRACKS,
   MUSIC_CATEGORY_LABELS,
   type MusicCategory,
+  type MusicTrack,
 } from '../../../hooks/use-game-sounds';
 import type { RepeatMode } from './types';
 
-export function usePlayerState(allTracks: any[], settings: any) {
+interface PlayerSettings {
+  musicTrack: string;
+  customMusicTracks: MusicTrack[];
+  [key: string]: unknown;
+}
+
+export function usePlayerState(allTracks: MusicTrack[], settings: PlayerSettings) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showTrackList, setShowTrackList] = useState(false);
   const [isShuffling, setIsShuffling] = useState(false);

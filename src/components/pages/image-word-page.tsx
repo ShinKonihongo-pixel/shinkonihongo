@@ -71,6 +71,7 @@ export const ImageWordPage: React.FC<ImageWordPageProps> = ({ onClose, initialVi
   // Watch for game completion
   useEffect(() => {
     if (gameState?.isComplete && gameResult) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setView('results');
     }
   }, [gameState?.isComplete, gameResult]);

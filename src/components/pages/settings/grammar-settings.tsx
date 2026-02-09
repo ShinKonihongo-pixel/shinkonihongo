@@ -25,7 +25,7 @@ export function GrammarSettings({ settings, onUpdateSetting }: GrammarSettingsPr
                   <input
                     type="checkbox"
                     checked={settings[key as keyof typeof settings] as boolean}
-                    onChange={(e) => onUpdateSetting(key as keyof typeof settings, e.target.checked as any)}
+                    onChange={(e) => onUpdateSetting(key as keyof typeof settings, e.target.checked as unknown)}
                   />
                   <span className="toggle-slider"></span>
                 </label>
@@ -50,7 +50,7 @@ export function GrammarSettings({ settings, onUpdateSetting }: GrammarSettingsPr
                   <input
                     type="checkbox"
                     checked={settings[key as keyof typeof settings] as boolean}
-                    onChange={(e) => onUpdateSetting(key as keyof typeof settings, e.target.checked as any)}
+                    onChange={(e) => onUpdateSetting(key as keyof typeof settings, e.target.checked as unknown)}
                   />
                   <span className="toggle-slider"></span>
                 </label>

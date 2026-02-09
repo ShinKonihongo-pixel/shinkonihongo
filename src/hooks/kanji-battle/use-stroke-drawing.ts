@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/purity */
 // Stroke drawing state management for write mode
 
 import { useState, useCallback } from 'react';

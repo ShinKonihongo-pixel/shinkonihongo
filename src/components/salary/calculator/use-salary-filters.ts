@@ -23,9 +23,10 @@ export function useSalaryFilters(
           return (a.teacher?.displayName || '').localeCompare(b.teacher?.displayName || '');
         case 'amount':
           return b.totalAmount - a.totalAmount;
-        case 'status':
+        case 'status': {
           const statusOrder = { draft: 0, approved: 1, paid: 2 };
           return statusOrder[a.status] - statusOrder[b.status];
+        }
         default:
           return 0;
       }

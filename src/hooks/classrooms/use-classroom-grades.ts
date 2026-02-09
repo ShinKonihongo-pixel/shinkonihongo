@@ -22,6 +22,7 @@ export function useClassroomGrades(
 
   useEffect(() => {
     if (!classroomId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAllSubmissions([]);
       setLoading(false);
       return;

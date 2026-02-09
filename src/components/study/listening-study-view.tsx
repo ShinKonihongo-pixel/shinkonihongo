@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/refs */
 // Listening Study View - Vocabulary listening practice within the study page
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { ChevronLeft, Headphones, Volume2 } from 'lucide-react';
@@ -185,7 +186,7 @@ export function ListeningStudyView({
     };
     // Only re-trigger on: play state, which card, which index
     // Settings are read via ref inside the loop
-  }, [isPlaying, currentIndex, currentCardId]);
+  }, [isPlaying, currentIndex, currentCardId, currentCard, shuffledIndices.length]);
 
   // Controls
   const togglePlay = useCallback(() => {

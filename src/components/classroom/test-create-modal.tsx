@@ -32,6 +32,7 @@ export function TestCreateModal({
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTitle('');
       setTimeLimit(30);
       setDeadline('');

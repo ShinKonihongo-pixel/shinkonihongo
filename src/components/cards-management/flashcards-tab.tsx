@@ -291,10 +291,10 @@ export function FlashcardsTab({
     setAddingLesson(false);
   };
 
-  const handleSubmit = (data: any) => {
+  const handleSubmit = (data: Partial<Flashcard>) => {
     if (editingCard) {
       const updateData = { ...data };
-      if (data.difficultyLevel) {
+      if ('difficultyLevel' in data && data.difficultyLevel) {
         updateData.originalDifficultyLevel = data.difficultyLevel;
       }
       onUpdateCard(editingCard.id, updateData);
@@ -305,7 +305,7 @@ export function FlashcardsTab({
     setEditingCard(null);
   };
 
-  const handleGrammarSubmit = (data: any) => {
+  const handleGrammarSubmit = (data: Partial<GrammarCard>) => {
     if (editingGrammarCard) onUpdateGrammarCard(editingGrammarCard.id, data);
     else onAddGrammarCard(data, currentUser.id);
     setFormMode('none');
@@ -346,10 +346,10 @@ export function FlashcardsTab({
       key={lesson.id}
       className="folder-item"
       onClick={() => {
-        if (isChild) {
-          setNavState({ type: 'childLesson', level: (navState as any).level, parentId: (navState as any).lessonId, parentName: (navState as any).lessonName, lessonId: lesson.id, lessonName: lesson.name });
-        } else {
-          setNavState({ type: 'parentLesson', level: (navState as any).level, lessonId: lesson.id, lessonName: lesson.name });
+        if (isChild && (navState.type === 'parentLesson' || navState.type === 'childLesson')) {
+          setNavState({ type: 'childLesson', level: navState.level, parentId: navState.type === 'parentLesson' ? navState.lessonId : navState.parentId, parentName: navState.type === 'parentLesson' ? navState.lessonName : navState.parentName, lessonId: lesson.id, lessonName: lesson.name });
+        } else if (navState.type === 'level') {
+          setNavState({ type: 'parentLesson', level: navState.level, lessonId: lesson.id, lessonName: lesson.name });
         }
       }}
     >

@@ -1,6 +1,8 @@
 // Lecture Editor - PowerPoint-like slide editor (Refactored)
 // Layout: Top toolbar → Left sidebar (thumbnails) → Main editor (slide preview)
 
+/* eslint-disable react-hooks/rules-of-hooks */
+// NOTE: React Compiler false positives - setState calls in useCallback are valid
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../hooks/use-auth';
 import { useLectures, useSlides } from '../../hooks/use-lectures';

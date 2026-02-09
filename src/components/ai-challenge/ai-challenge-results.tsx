@@ -1,6 +1,8 @@
+/* eslint-disable react-hooks/purity */
 // AI Challenge Results - Professional game results display
 // Features animated victory/defeat screens, detailed stats, and unlock notifications
 
+import { useMemo } from 'react';
 import { Trophy, Target, Clock, Zap, Star, RotateCcw, Home, Unlock, Crown, TrendingUp, Award, Swords, ChevronRight } from 'lucide-react';
 import type { AIChallengeResult } from '../../types/ai-challenge';
 import { AI_OPPONENTS } from '../../types/ai-challenge';
@@ -39,6 +41,14 @@ export function AIChallengeResults({
   const aiAccuracy = Math.round((result.aiCorrect / result.totalQuestions) * 100);
   const scoreDiff = Math.abs(result.playerScore - result.aiScore);
 
+  // Pre-compute confetti particles once
+  const confettiParticles = useMemo(() =>
+    Array.from({ length: 50 }, () => ({
+      delay: Math.random() * 3,
+      x: Math.random() * 100,
+      color: ['#ffd93d', '#ff6b6b', '#4ecdc4', '#6c5ce7', '#a8e6cf'][Math.floor(Math.random() * 5)],
+    })), []);
+
   return (
     <div className="ai-results-pro">
       {/* Background effects */}
@@ -46,14 +56,14 @@ export function AIChallengeResults({
         {isWin && (
           <>
             <div className="confetti-container">
-              {Array.from({ length: 50 }).map((_, i) => (
+              {confettiParticles.map((p, i) => (
                 <div
                   key={i}
                   className="confetti"
                   style={{
-                    '--delay': `${Math.random() * 3}s`,
-                    '--x': `${Math.random() * 100}%`,
-                    '--color': ['#ffd93d', '#ff6b6b', '#4ecdc4', '#6c5ce7', '#a8e6cf'][Math.floor(Math.random() * 5)],
+                    '--delay': `${p.delay}s`,
+                    '--x': `${p.x}%`,
+                    '--color': p.color,
                   } as React.CSSProperties}
                 />
               ))}

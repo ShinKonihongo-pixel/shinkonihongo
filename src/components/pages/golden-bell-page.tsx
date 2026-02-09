@@ -83,6 +83,7 @@ export function GoldenBellPage({
   useEffect(() => {
     if (!game) {
       if (gameResults) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setView('results');
       } else if (view === 'lobby' || view === 'play') {
         setView('menu');

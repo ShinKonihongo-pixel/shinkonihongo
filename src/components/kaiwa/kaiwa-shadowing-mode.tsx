@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/preserve-manual-memoization */
 // Kaiwa Shadowing Mode - Listen and repeat practice with timing
 // User listens to AI speech, then records themselves repeating
 
@@ -105,10 +106,30 @@ export function KaiwaShadowingMode({
     };
   }, [state.phase, isSpeaking, currentText]);
 
+  // Go to next
+  const handleNext = useCallback(() => {
+    if (autoAdvanceTimerRef.current) {
+      clearTimeout(autoAdvanceTimerRef.current);
+    }
+    if (state.currentIndex < aiMessages.length - 1) {
+      setState(prev => ({
+        ...prev,
+        currentIndex: prev.currentIndex + 1,
+        phase: 'listen',
+        result: null,
+      }));
+      const nextText = removeFurigana(aiMessages[state.currentIndex + 1].content);
+      setTimeout(() => {
+        onSpeak(nextText, getSpeechRate());
+      }, 300);
+    }
+  }, [state.currentIndex, aiMessages, getSpeechRate, onSpeak]);
+
   // Handle recording complete
   useEffect(() => {
     if (state.phase === 'record' && !isListening && interimTranscript) {
       const result = onCompare(currentText, interimTranscript);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setState(prev => ({
         ...prev,
         phase: 'result',
@@ -129,7 +150,7 @@ export function KaiwaShadowingMode({
         clearTimeout(autoAdvanceTimerRef.current);
       }
     };
-  }, [state.phase, isListening, interimTranscript, currentText, state.autoAdvance, onCompare]);
+  }, [state.phase, isListening, interimTranscript, currentText, state.autoAdvance, onCompare, handleNext]);
 
   // Start recording
   const handleStartRecording = () => {
@@ -162,24 +183,6 @@ export function KaiwaShadowingMode({
     setState(prev => ({ ...prev, phase: 'prepare', result: null }));
   };
 
-  // Go to next
-  const handleNext = () => {
-    if (autoAdvanceTimerRef.current) {
-      clearTimeout(autoAdvanceTimerRef.current);
-    }
-    if (state.currentIndex < aiMessages.length - 1) {
-      setState(prev => ({
-        ...prev,
-        currentIndex: prev.currentIndex + 1,
-        phase: 'listen',
-        result: null,
-      }));
-      const nextText = removeFurigana(aiMessages[state.currentIndex + 1].content);
-      setTimeout(() => {
-        onSpeak(nextText, getSpeechRate());
-      }, 300);
-    }
-  };
 
   // Go to previous
   const handlePrev = () => {

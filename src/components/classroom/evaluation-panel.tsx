@@ -420,7 +420,7 @@ export function EvaluationPanel({
         classroom,
         studentGrade: getStudentGrade(userId),
         attendanceSummary: getStudentAttendance(userId),
-        attendanceRecords: attendanceRecords.filter(r => r.userId === userId) as any,
+        attendanceRecords: attendanceRecords.filter(r => r.userId === userId),
         evaluations: evaluations.filter(e => e.userId === userId),
         submissions: submissions.filter(s => s.userId === userId),
         tests,

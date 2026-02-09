@@ -5,9 +5,16 @@ import { DEFAULT_TIME, DEFAULT_QUESTIONS, MIN_WORD_LENGTH, AUTO_FILL_PENALTIES }
 import { scrambleWord, calculateScore, generateBots } from './word-scramble-utils';
 import { useGameSounds } from '../../../hooks/use-game-sounds';
 
+interface CurrentUser {
+  id: string;
+  displayName?: string;
+  avatar?: string;
+  role?: string;
+}
+
 interface UseWordScrambleGameProps {
   flashcards: Flashcard[];
-  currentUser?: any;
+  currentUser?: CurrentUser;
 }
 
 export const useWordScrambleGame = ({ flashcards, currentUser }: UseWordScrambleGameProps) => {
@@ -18,8 +25,8 @@ export const useWordScrambleGame = ({ flashcards, currentUser }: UseWordScramble
     totalQuestions: DEFAULT_QUESTIONS,
   });
 
-  // Initial game state
-  const initialGameState: GameState = {
+  // Initial game state - memoized to prevent recreation on every render
+  const initialGameState = useMemo<GameState>(() => ({
     phase: 'setup',
     currentQuestionIndex: 0,
     questions: [],
@@ -39,7 +46,7 @@ export const useWordScrambleGame = ({ flashcards, currentUser }: UseWordScramble
     autoFillUsed: 0,
     autoFilledPositions: [],
     isSoloMode: false,
-  };
+  }), []);
 
   const [gameState, setGameState] = useState<GameState>(initialGameState);
   const { playCorrect, playWrong, playVictory } = useGameSounds();

@@ -88,8 +88,8 @@ const defaultSettings: AppSettings = {
   aiChallengeSpeedMultiplier: 1.0,
   aiChallengeAutoAddDifficulty: 'random',
   aiChallengeLevel: 'all',
-  aiChallengePerAISettings: {} as any,
-  aiChallengePerLevelConfig: {} as any,
+  aiChallengePerAISettings: {},
+  aiChallengePerLevelConfig: {},
   // JLPT defaults
   jlptDefaultQuestionCount: 20,
   jlptShowExplanation: true,

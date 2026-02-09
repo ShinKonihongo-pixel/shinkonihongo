@@ -16,7 +16,7 @@ const FLIP_STYLES: { value: AppSettings['cardFlipStyle']; label: string }[] = [
 
 interface ModalDisplaySectionProps {
   settings: AppSettings;
-  onSettingsChange?: (key: keyof AppSettings, value: any) => void;
+  onSettingsChange?: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
 }
 
 export function ModalDisplaySection({

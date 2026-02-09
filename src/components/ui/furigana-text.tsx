@@ -39,6 +39,7 @@ export function FuriganaText({ text, className = '' }: FuriganaTextProps) {
 
   useEffect(() => {
     // Reset state when text changes
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setError(null);
     setInitStatus('checking');
 
