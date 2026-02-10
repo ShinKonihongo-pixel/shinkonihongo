@@ -92,6 +92,8 @@ export interface CurrentUser {
   avatar?: string;
   profileBackground?: string;
   jlptLevel?: UserJLPTLevel;
+  branchId?: string;        // Current center (for teacher, branch_admin)
+  branchIds?: string[];     // Managed centers (for director)
 }
 
 // User statistics and history

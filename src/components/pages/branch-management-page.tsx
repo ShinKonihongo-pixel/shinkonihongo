@@ -22,6 +22,8 @@ import type { Branch, BranchFormData, BranchMemberRole } from '../../types/branc
 import { BRANCH_STATUS_LABELS } from '../../types/branch';
 import type { TeacherSchedule, TeacherScheduleFormData, Salary } from '../../types/teacher';
 import type { User } from '../../types/user';
+import { CenterBrandingEditor } from '../center/center-branding-editor';
+import { CenterInviteManager } from '../center/center-invite-manager';
 
 interface BranchManagementPageProps {
   users: User[];
@@ -143,7 +145,13 @@ export function BranchManagementPage({ users }: BranchManagementPageProps) {
             {tab === 'overview' ? 'Tổng quan' : tab === 'teachers' ? `Giáo viên (${teachers.length})` : tab === 'salaries' ? 'Lương' : `Nhân sự (${membersWithUsers.length})`}
           </button>
         ))}
-        {isDirector && <button className={`tab-btn ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}><span className="tab-icon">⚙️</span> Cài đặt</button>}
+        {isDirector && (
+          <>
+            <button className={`tab-btn ${activeTab === 'branding' ? 'active' : ''}`} onClick={() => setActiveTab('branding')}><span className="tab-icon">🎨</span> Giao diện</button>
+            <button className={`tab-btn ${activeTab === 'invites' ? 'active' : ''}`} onClick={() => setActiveTab('invites')}><span className="tab-icon">🎫</span> Mã mời</button>
+            <button className={`tab-btn ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}><span className="tab-icon">⚙️</span> Cài đặt</button>
+          </>
+        )}
       </div>
 
       {/* Tab Content */}
@@ -170,6 +178,8 @@ export function BranchManagementPage({ users }: BranchManagementPageProps) {
           />
         )}
         {activeTab === 'staff' && <BranchStaffTab members={membersWithUsers} availableUsers={availableAdmins} isDirector={isDirector} loading={membersLoading} onAddAdmin={(id) => addMember(id, 'branch_admin')} onRemoveMember={removeMember} />}
+        {activeTab === 'branding' && isDirector && <CenterBrandingEditor center={selectedBranch} />}
+        {activeTab === 'invites' && isDirector && currentUser && <CenterInviteManager branchId={selectedBranch.id} centerSlug={selectedBranch.slug} currentUserId={currentUser.id} />}
         {activeTab === 'settings' && isDirector && <BranchSettingsTab branch={selectedBranch} onToggleStatus={() => updateBranch(selectedBranch.id, { name: selectedBranch.name, code: selectedBranch.code, status: selectedBranch.status === 'active' ? 'inactive' : 'active' })} onDelete={() => setDeleteConfirm(selectedBranch)} />}
       </div>
 

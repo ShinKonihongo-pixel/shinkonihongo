@@ -172,6 +172,21 @@ export async function getClassroomsByUser(userId: string): Promise<Classroom[]> 
   return classrooms;
 }
 
+export function subscribeToBranchClassrooms(
+  branchId: string,
+  callback: (classrooms: Classroom[]) => void
+): Unsubscribe {
+  const q = query(
+    collection(db, COLLECTIONS.CLASSROOMS),
+    where('branchId', '==', branchId),
+    where('isActive', '==', true)
+  );
+  return onSnapshot(q, (snapshot) => {
+    const classrooms = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Classroom));
+    callback(classrooms);
+  });
+}
+
 export function subscribeToUserClassrooms(
   userId: string,
   callback: (classrooms: Classroom[]) => void

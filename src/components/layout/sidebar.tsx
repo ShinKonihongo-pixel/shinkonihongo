@@ -1,6 +1,6 @@
 // Left sidebar navigation component
 
-import { useState, type ReactNode } from 'react';
+import { useState, useMemo, type ReactNode } from 'react';
 import type { CurrentUser } from '../../types/user';
 import type { Page } from './header';
 import { isImageAvatar } from '../../utils/avatar-icons';
@@ -25,9 +25,13 @@ import {
   LayoutGrid,
   User,
   ClipboardList,
+  Users,
+  BarChart3,
 } from 'lucide-react';
 import { useClassroomNotifications } from '../../hooks/use-classrooms';
 import { useFriendNotifications } from '../../hooks/use-friendships';
+import { useCenterOptional } from '../../contexts/center-context';
+import { BRANCH_MEMBER_ROLE_LABELS, BRANCH_MEMBER_ROLE_COLORS } from '../../types/branch';
 
 interface DailyWordsNotification {
   enabled: boolean;
@@ -82,6 +86,31 @@ const managementItems: NavItem[] = [
   { page: 'game-hub', label: 'Game', icon: <Gamepad2 {...iconProps} /> },
 ];
 
+// Center-specific learning items
+const centerLearningItems: NavItem[] = [
+  { page: 'home', label: 'Trang chủ', icon: <Home {...iconProps} /> },
+  { page: 'study', label: 'Từ Vựng', icon: <Layers {...iconProps} /> },
+  { page: 'grammar-study', label: 'Ngữ Pháp', icon: <FileText {...iconProps} /> },
+  { page: 'kanji-study', label: 'Hán Tự', icon: <BookOpen {...iconProps} /> },
+  { page: 'reading', label: 'Đọc Hiểu', icon: <BookOpenCheck {...iconProps} /> },
+  { page: 'listening', label: 'Nghe Hiểu', icon: <Headphones {...iconProps} /> },
+  { page: 'exercises', label: 'Bài Tập', icon: <ClipboardList {...iconProps} /> },
+];
+
+// Center-specific activity items
+const centerActivityItems: NavItem[] = [
+  { page: 'classroom', label: 'Lớp Học', icon: <School {...iconProps} /> },
+  { page: 'jlpt', label: 'JLPT', icon: <Award {...iconProps} /> },
+  { page: 'game-hub', label: 'Game', icon: <Gamepad2 {...iconProps} /> },
+  { page: 'center-members', label: 'Thành viên', icon: <Users {...iconProps} /> },
+];
+
+// Center admin-only items
+const centerAdminItems: NavItem[] = [
+  { page: 'center-dashboard', label: 'Dashboard TT', icon: <BarChart3 {...iconProps} /> },
+  { page: 'cards', label: 'Quản lí nội dung', icon: <LayoutGrid {...iconProps} /> },
+];
+
 // No more role-specific items needed (moved to managementItems)
 const roleSpecificItems: NavItem[] = [];
 
@@ -97,6 +126,7 @@ export function Sidebar({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
+  const centerCtx = useCenterOptional();
 
   // Classroom notifications
   const { notifications: classroomNotifications, unreadCount: classroomUnread, markAsRead: markClassroomRead, markAllAsRead: markAllClassroomRead } = useClassroomNotifications(currentUser?.id || null);
@@ -121,12 +151,30 @@ export function Sidebar({
     return item.roles.includes(currentUser.role);
   };
 
+  // Determine which nav items to show based on center context
+  const { section1Items, section2Items, section3Items } = useMemo(() => {
+    if (centerCtx) {
+      const isCenterAdmin = centerCtx.isAdmin;
+      return {
+        section1Items: centerLearningItems,
+        section2Items: centerActivityItems,
+        section3Items: isCenterAdmin ? centerAdminItems : [],
+      };
+    }
+    return {
+      section1Items: learningItems,
+      section2Items: managementItems,
+      section3Items: roleSpecificItems,
+    };
+  }, [centerCtx]);
+
   // Get avatar value for display
   const avatarValue = currentUser?.avatar;
   const isAvatarImage = avatarValue ? isImageAvatar(avatarValue) : false;
 
   const renderNavItem = (item: NavItem) => {
-    if (!canAccess(item)) return null;
+    // In center mode, skip role checks on user's app role (center role determines access)
+    if (!centerCtx && !canAccess(item)) return null;
     return (
       <button
         key={item.page}
@@ -164,9 +212,13 @@ export function Sidebar({
       <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
         {/* Logo/Title */}
         <div className="sidebar-header">
-          <h1 className="sidebar-title">
-            {isCollapsed ? 'S' : 'Shinko 日本語'}
-          </h1>
+          {centerCtx && centerCtx.branding.logo && !isCollapsed ? (
+            <img src={centerCtx.branding.logo} alt={centerCtx.center.name} className="sidebar-center-logo" />
+          ) : (
+            <h1 className="sidebar-title">
+              {centerCtx ? (isCollapsed ? centerCtx.center.name.charAt(0) : centerCtx.center.name) : (isCollapsed ? 'S' : 'Shinko 日本語')}
+            </h1>
+          )}
           <button
             className="sidebar-collapse-btn"
             onClick={onToggleCollapse}
@@ -229,10 +281,24 @@ export function Sidebar({
               )}
             </div>
 
-            {/* Username - below avatar */}
+            {/* Username + center role badge - below avatar */}
             {!isCollapsed && (
               <span className={`sidebar-username role-name-${currentUser.role}`}>
                 {currentUser.displayName || currentUser.username}
+                {centerCtx && centerCtx.userRole && (
+                  <span
+                    className="sidebar-center-role-badge"
+                    style={{
+                      backgroundColor: centerCtx.userRole === 'director'
+                        ? '#e74c3c'
+                        : BRANCH_MEMBER_ROLE_COLORS[centerCtx.userRole as keyof typeof BRANCH_MEMBER_ROLE_COLORS] || '#888',
+                    }}
+                  >
+                    {centerCtx.userRole === 'director'
+                      ? 'Giám đốc'
+                      : BRANCH_MEMBER_ROLE_LABELS[centerCtx.userRole as keyof typeof BRANCH_MEMBER_ROLE_LABELS] || centerCtx.userRole}
+                  </span>
+                )}
               </span>
             )}
 
@@ -382,19 +448,19 @@ export function Sidebar({
 
         {/* Navigation - Section 1: Learning */}
         <nav className="sidebar-nav">
-          {learningItems.map(renderNavItem)}
+          {section1Items.map(renderNavItem)}
 
           {/* Separator between sections */}
           <div className="sidebar-nav-separator" />
 
-          {/* Section 2: Management */}
-          {managementItems.map(renderNavItem)}
+          {/* Section 2: Activity/Management */}
+          {section2Items.map(renderNavItem)}
 
-          {/* Role-specific items (if any) */}
-          {roleSpecificItems.length > 0 && roleSpecificItems.some(item => canAccess(item)) && (
+          {/* Section 3: Admin/Role-specific items (if any) */}
+          {section3Items.length > 0 && section3Items.some(item => centerCtx ? true : canAccess(item)) && (
             <>
               <div className="sidebar-nav-separator" />
-              {roleSpecificItems.map(renderNavItem)}
+              {section3Items.map(renderNavItem)}
             </>
           )}
         </nav>

@@ -22,6 +22,7 @@ import type {
   BranchMemberRole,
   BranchStats,
 } from '../types/branch';
+import { generateSlug, generateInviteCode } from '../utils/slug';
 
 // Collection names
 const COLLECTIONS = {
@@ -58,15 +59,38 @@ export async function createBranch(
     }
   }
 
+  // Generate unique slug from name
+  let slug = generateSlug(data.name);
+  if (slug.length < 3) slug = slug + '-center';
+  let slugExists = true;
+  let slugSuffix = 0;
+  const baseSlug = slug;
+  while (slugExists) {
+    const existingSlug = await getBranchBySlug(slug);
+    if (!existingSlug) {
+      slugExists = false;
+    } else {
+      slugSuffix++;
+      slug = `${baseSlug}-${slugSuffix}`;
+    }
+  }
+
+  // Generate invite code
+  const inviteCode = generateInviteCode();
+
   const now = getNowISO();
   const newBranch: Omit<Branch, 'id'> = {
     name: data.name,
     code,
+    slug,
     address: data.address || '',
     phone: data.phone || '',
     email: data.email || '',
     directorId,
     status: 'active',
+    inviteCode,
+    inviteEnabled: true,
+    isPublic: true,
     createdAt: now,
     updatedAt: now,
   };
@@ -86,6 +110,17 @@ export async function getBranchByCode(code: string): Promise<Branch | null> {
   const q = query(
     collection(db, COLLECTIONS.BRANCHES),
     where('code', '==', code.toUpperCase())
+  );
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+  const docSnap = snapshot.docs[0];
+  return { id: docSnap.id, ...docSnap.data() } as Branch;
+}
+
+export async function getBranchBySlug(slug: string): Promise<Branch | null> {
+  const q = query(
+    collection(db, COLLECTIONS.BRANCHES),
+    where('slug', '==', slug.toLowerCase())
   );
   const snapshot = await getDocs(q);
   if (snapshot.empty) return null;
@@ -153,7 +188,8 @@ export async function getAllBranches(): Promise<Branch[]> {
 export async function addBranchMember(
   branchId: string,
   data: BranchMemberFormData,
-  userId: string
+  userId: string,
+  joinedViaCode?: string
 ): Promise<BranchMember> {
   // Check if already a member
   const existing = await getBranchMemberByUser(branchId, userId);
@@ -173,6 +209,7 @@ export async function addBranchMember(
     salary: data.salary,
     joinedAt: getNowISO(),
     status: 'active',
+    ...(joinedViaCode ? { joinedViaCode } : {}),
   };
 
   const docRef = await addDoc(collection(db, COLLECTIONS.BRANCH_MEMBERS), newMember);

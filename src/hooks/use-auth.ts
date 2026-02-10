@@ -79,6 +79,8 @@ export function useAuth() {
       avatar: user.avatar,
       profileBackground: user.profileBackground,
       jlptLevel: user.jlptLevel,
+      branchId: user.branchId,
+      branchIds: user.branchIds,
     });
     return { success: true };
   }, [users]);

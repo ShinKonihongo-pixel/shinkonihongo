@@ -15,6 +15,7 @@ import {
   useTestTemplates,
 } from '../../hooks/use-classrooms';
 import { useAuth } from '../../hooks/use-auth';
+import { useCenterOptional } from '../../contexts/center-context';
 import { ClassroomCreateModal } from '../classroom/classroom-create-modal';
 import { ClassroomInviteModal } from '../classroom/classroom-invite-modal';
 import { AssignTestModal } from '../classroom/assign-test-modal';
@@ -43,8 +44,11 @@ interface ClassroomPageProps {
 }
 
 export function ClassroomPage({ users }: ClassroomPageProps) {
-  const { currentUser, isAdmin } = useAuth();
-  const { classrooms, loading, createClassroom, updateClassroom, deleteClassroom, joinByCode } = useClassrooms(currentUser?.id || null, isAdmin);
+  const { currentUser, isAdmin: isAppAdmin } = useAuth();
+  const centerCtx = useCenterOptional();
+  const isAdmin = centerCtx ? (centerCtx.isAdmin || centerCtx.isTeacher) : isAppAdmin;
+  const branchId = centerCtx?.centerId ?? null;
+  const { classrooms, loading, createClassroom, updateClassroom, deleteClassroom, joinByCode } = useClassrooms(currentUser?.id || null, isAdmin, branchId);
   const { templates: testTemplates, assignToClassroom } = useTestTemplates();
 
   // View state

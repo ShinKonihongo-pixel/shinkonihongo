@@ -61,9 +61,18 @@ import { JLPTLevelModal } from './components/common/jlpt-level-modal';
 import { ReadingSettingsProvider } from './contexts/reading-settings-context';
 import { ListeningSettingsProvider } from './contexts/listening-settings-context';
 import type { UserJLPTLevel } from './types/user';
+import { useUrlRouter } from './hooks/use-url-router';
+import { CenterRouter } from './components/center/center-router';
+import { CenterProvider } from './contexts/center-context';
+import { useCenterData } from './hooks/use-center-data';
+import { CenterMembersPage } from './components/pages/center-members-page';
+import { CenterDashboardPage } from './components/pages/center-dashboard-page';
 import './App.css';
 
 function App() {
+  // Center URL router - check if we're on a /center/:slug path
+  const urlRouter = useUrlRouter();
+
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [, setInitialFilterLevel] = useState<JLPTLevel | 'all'>('all');
   // Game Hub state - unified game join handling
@@ -128,6 +137,10 @@ function App() {
     updateJlptLevel,
     updateVipExpiration,
   } = useAuth();
+
+  // Center data - called unconditionally (React hook rules), returns empty when no slug
+  const centerSlug = urlRouter.isCenterApp ? urlRouter.centerSlug : null;
+  const centerData = useCenterData(centerSlug, currentUser?.id ?? null);
 
   // JLPT level modal state - show if logged in but no level set
   const [showJlptLevelModal, setShowJlptLevelModal] = useState(false);
@@ -367,6 +380,20 @@ function App() {
     markAllAsRead: markAllFriendRead,
   } = useFriendNotifications(currentUser?.id ?? null);
 
+  // Center router - non-app center routes (landing, join) → CenterRouter
+  if (urlRouter.centerSlug && !urlRouter.isCenterApp) {
+    return (
+      <CenterRouter
+        slug={urlRouter.centerSlug}
+        isPublicLanding={urlRouter.isPublicLanding}
+        isJoinPage={urlRouter.isJoinPage}
+        inviteCode={urlRouter.inviteCode}
+        currentUser={currentUser}
+        navigate={urlRouter.navigate}
+      />
+    );
+  }
+
   // Show login page if not logged in
   if (!isLoggedIn) {
     return (
@@ -376,7 +403,54 @@ function App() {
     );
   }
 
-  return (
+  // Center app mode - loading/error/not-member states
+  const isCenterApp = urlRouter.isCenterApp && !!urlRouter.centerSlug;
+
+  if (isCenterApp && centerData.loading) {
+    return (
+      <div className="center-loading">
+        <div className="loading-spinner" />
+        <span>Đang tải trung tâm...</span>
+      </div>
+    );
+  }
+
+  if (isCenterApp && (centerData.error || !centerData.center)) {
+    return (
+      <div className="center-error">
+        <h2>404</h2>
+        <p>{centerData.error || 'Không tìm thấy trung tâm'}</p>
+        <button className="btn btn-primary" onClick={() => urlRouter.navigate('/')}>
+          Về trang chủ
+        </button>
+      </div>
+    );
+  }
+
+  if (isCenterApp && !centerData.userRole) {
+    return (
+      <div className="center-error">
+        <h2>Chưa là thành viên</h2>
+        <p>Bạn chưa tham gia trung tâm {centerData.center?.name}.</p>
+        <button
+          className="btn btn-primary"
+          onClick={() => urlRouter.navigate(`/center/${urlRouter.centerSlug}/join`)}
+        >
+          Tham gia ngay
+        </button>
+        <button
+          className="btn btn-secondary"
+          style={{ marginLeft: '0.5rem' }}
+          onClick={() => urlRouter.navigate('/')}
+        >
+          Về trang chủ
+        </button>
+      </div>
+    );
+  }
+
+  // Build main app content - optionally wrapped in CenterProvider
+  const mainAppContent = (
     <ReadingSettingsProvider>
     <ListeningSettingsProvider>
     <div className={`app app-with-sidebar ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
@@ -763,6 +837,15 @@ function App() {
             lessons={lessons}
           />
         )}
+
+        {/* Center pages - only when inside center app */}
+        {currentPage === 'center-members' && currentUser && (
+          <CenterMembersPage users={users} />
+        )}
+
+        {currentPage === 'center-dashboard' && currentUser && (
+          <CenterDashboardPage currentUser={currentUser} />
+        )}
         </main>
       </div>
 
@@ -798,6 +881,17 @@ function App() {
     </ListeningSettingsProvider>
     </ReadingSettingsProvider>
   );
+
+  // Wrap in CenterProvider when in center app mode
+  if (isCenterApp && centerData.center && centerData.userRole) {
+    return (
+      <CenterProvider center={centerData.center} userRole={centerData.userRole}>
+        {mainAppContent}
+      </CenterProvider>
+    );
+  }
+
+  return mainAppContent;
 }
 
 export default App;

@@ -13,6 +13,7 @@ export {
   deleteClassroom,
   getClassroomsByAdmin,
   subscribeToAdminClassrooms,
+  subscribeToBranchClassrooms,
   getClassroomsByUser,
   subscribeToUserClassrooms,
 } from './classroom-service';

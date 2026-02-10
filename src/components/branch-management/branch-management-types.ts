@@ -7,7 +7,7 @@ import type { User } from '../../types/user';
 
 // View types
 export type MainView = 'list' | 'detail';
-export type DetailTab = 'overview' | 'teachers' | 'salaries' | 'staff' | 'settings';
+export type DetailTab = 'overview' | 'teachers' | 'salaries' | 'staff' | 'branding' | 'invites' | 'settings';
 export type TeacherSubTab = 'list' | 'schedule' | 'log';
 export type SalarySubTab = 'calculator' | 'report' | 'slips';
 
