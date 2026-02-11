@@ -1,6 +1,49 @@
-// Font settings section for modal
+// Font and color settings section for study modal
 import type { AppSettings } from '../../../hooks/use-settings';
 import { FONT_OPTIONS } from './constants';
+
+const COLOR_OPTIONS = [
+  { value: '#FFFFFF', label: 'Trắng' },
+  { value: '#000000', label: 'Đen' },
+  { value: '#ef4444', label: 'Đỏ' },
+  { value: '#fca5a5', label: 'Đỏ nhạt' },
+  { value: '#fb923c', label: 'Cam' },
+  { value: '#fdba74', label: 'Cam nhạt' },
+  { value: '#fbbf24', label: 'Vàng' },
+  { value: '#fde047', label: 'Vàng nhạt' },
+  { value: '#34d399', label: 'Xanh lá' },
+  { value: '#86efac', label: 'Xanh lá nhạt' },
+  { value: '#22d3ee', label: 'Cyan' },
+  { value: '#60a5fa', label: 'Xanh dương' },
+  { value: '#a78bfa', label: 'Tím' },
+  { value: '#f472b6', label: 'Hồng' },
+  { value: '#94a3b8', label: 'Xám' },
+  { value: '#e2e8f0', label: 'Xám nhạt' },
+];
+
+// Reusable color swatch picker
+function ColorPicker({ value, onChange, label }: {
+  value: string;
+  onChange: (color: string) => void;
+  label: string;
+}) {
+  return (
+    <div className="modal-setting-row color-picker-row">
+      <span className="modal-setting-label">{label}</span>
+      <div className="color-swatch-list">
+        {COLOR_OPTIONS.map(opt => (
+          <button
+            key={opt.value}
+            className={`color-swatch ${value === opt.value ? 'active' : ''}`}
+            style={{ background: opt.value }}
+            onClick={() => onChange(opt.value)}
+            title={opt.label}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 interface ModalFontSectionProps {
   settings: AppSettings;
@@ -50,7 +93,7 @@ export function ModalFontSection({
 
       {onFrontFontSizeChange && (
         <div className="modal-section">
-          <div className="modal-section-title">Cỡ chữ mặt trước</div>
+          <div className="modal-section-title">Chữ mặt trước</div>
           <div className="font-slider-container">
             <div className="font-slider-row">
               <input
@@ -67,16 +110,23 @@ export function ModalFontSection({
             <div className="font-preview" style={{
               fontSize: `${Math.min(frontFontSize / 3, 50)}px`,
               fontFamily: `"${settings.kanjiFont}", serif`,
-              fontWeight: settings.kanjiBold ? 900 : 400
+              fontWeight: settings.kanjiBold ? 900 : 400,
+              color: settings.frontTextColor || '#FFFFFF',
             }}>
               漢字
             </div>
           </div>
+
+          <ColorPicker
+            label="Màu chữ"
+            value={settings.frontTextColor || '#FFFFFF'}
+            onChange={(c) => onSettingsChange?.('frontTextColor', c)}
+          />
         </div>
       )}
 
       <div className="modal-section">
-        <div className="modal-section-title">Cỡ chữ mặt sau</div>
+        <div className="modal-section-title">Chữ mặt sau</div>
         <div className="font-slider-container">
           <div className="font-slider-row">
             <input
@@ -96,7 +146,55 @@ export function ModalFontSection({
             読み方 · Nghĩa
           </div>
         </div>
+
+        <ColorPicker
+          label="Màu furigana"
+          value={settings.furiganaTextColor || '#fdba74'}
+          onChange={(c) => onSettingsChange?.('furiganaTextColor', c)}
+        />
+
+        <ColorPicker
+          label="Màu ví dụ"
+          value={settings.exampleTextColor || '#94a3b8'}
+          onChange={(c) => onSettingsChange?.('exampleTextColor', c)}
+        />
       </div>
+
+      <style>{colorPickerStyles}</style>
     </>
   );
 }
+
+const colorPickerStyles = `
+  .color-picker-row {
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .color-swatch-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .color-swatch {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    cursor: pointer;
+    transition: all 0.15s;
+    padding: 0;
+  }
+
+  .color-swatch:hover {
+    transform: scale(1.15);
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+
+  .color-swatch.active {
+    border-color: white;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+    transform: scale(1.15);
+  }
+`;

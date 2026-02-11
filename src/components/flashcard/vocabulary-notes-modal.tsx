@@ -9,14 +9,15 @@ interface VocabularyNotesModalProps {
   flashcard: Flashcard;
   userId: string;
   onClose: () => void;
+  onSaved?: () => void;
+  onToast?: (msg: string) => void;
 }
 
-export function VocabularyNotesModal({ flashcard, userId, onClose }: VocabularyNotesModalProps) {
+export function VocabularyNotesModal({ flashcard, userId, onClose, onSaved, onToast }: VocabularyNotesModalProps) {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasExisting, setHasExisting] = useState(false);
-  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,8 +50,9 @@ export function VocabularyNotesModal({ flashcard, userId, onClose }: VocabularyN
     try {
       await saveVocabularyNote(userId, flashcard.id, content.trim());
       setHasExisting(true);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      onSaved?.();
+      onToast?.('Đã lưu ghi chú thành công!');
+      onClose();
     } catch (err) {
       console.error('Error saving note:', err);
     } finally {
@@ -64,6 +66,9 @@ export function VocabularyNotesModal({ flashcard, userId, onClose }: VocabularyN
       await deleteVocabularyNote(userId, flashcard.id);
       setContent('');
       setHasExisting(false);
+      onSaved?.();
+      onToast?.('Đã xóa ghi chú');
+      onClose();
     } catch (err) {
       console.error('Error deleting note:', err);
     } finally {
@@ -118,20 +123,19 @@ export function VocabularyNotesModal({ flashcard, userId, onClose }: VocabularyN
             </button>
           )}
           <button
-            className={`vn-btn vn-btn-save ${saved ? 'vn-btn-saved' : ''}`}
+            className="vn-btn vn-btn-save"
             onClick={handleSave}
             disabled={saving || !content.trim()}
           >
             {saving ? (
               <RefreshCw size={15} className="vn-spin" />
-            ) : saved ? (
-              <span className="vn-check">✓</span>
             ) : (
               <Save size={15} />
             )}
-            <span>{saved ? 'Đã lưu' : 'Lưu'}</span>
+            <span>Lưu</span>
           </button>
         </div>
+
       </div>
 
       <style>{vocabNotesStyles}</style>
@@ -168,6 +172,7 @@ const vocabNotesStyles = `
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    position: relative;
     box-shadow:
       0 25px 80px rgba(0, 0, 0, 0.6),
       0 0 0 1px rgba(255, 255, 255, 0.08),
@@ -312,16 +317,6 @@ const vocabNotesStyles = `
   .vn-btn-save:disabled {
     opacity: 0.35;
     cursor: not-allowed;
-  }
-
-  .vn-btn-saved {
-    background: rgba(16, 185, 129, 0.2) !important;
-    border-color: rgba(16, 185, 129, 0.5) !important;
-  }
-
-  .vn-check {
-    font-weight: 700;
-    font-size: 0.9rem;
   }
 
   .vn-btn-delete {

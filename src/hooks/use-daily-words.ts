@@ -100,8 +100,11 @@ interface DailyWordsReturn {
   enabled: boolean;
   justCompleted: boolean;
   completedWordIds: Set<string>;
-  showNotification: boolean; // Whether to show notification badge
-  dismissNotification: () => void; // Dismiss notification for today
+  showNotification: boolean;
+  dismissNotification: () => void;
+  isModalOpen: boolean;
+  openModal: () => void;
+  closeModal: () => void;
 }
 
 export function useDailyWords({ allCards, targetCount, enabled, userJlptLevel }: UseDailyWordsOptions): DailyWordsReturn {
@@ -133,6 +136,7 @@ export function useDailyWords({ allCards, targetCount, enabled, userJlptLevel }:
 
   const [isInitialized, setIsInitialized] = useState(false);
   const [justCompleted, setJustCompleted] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const prevCompletedRef = useRef(false);
 
   // Derived completedWordIds from session (persisted)
@@ -369,6 +373,9 @@ export function useDailyWords({ allCards, targetCount, enabled, userJlptLevel }:
     }));
   }, []);
 
+  const openModal = useCallback(() => setIsModalOpen(true), []);
+  const closeModal = useCallback(() => setIsModalOpen(false), []);
+
   return {
     todayWords: state.todayWords,
     progress,
@@ -384,5 +391,8 @@ export function useDailyWords({ allCards, targetCount, enabled, userJlptLevel }:
     completedWordIds,
     showNotification,
     dismissNotification,
+    isModalOpen,
+    openModal,
+    closeModal,
   };
 }

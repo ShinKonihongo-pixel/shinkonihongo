@@ -155,7 +155,7 @@ function getFrameAnimationClass(settings: AppSettings): string {
 }
 
 // Parse furigana and separate Vietnamese translation
-function parseFurigana(text: string): React.ReactNode {
+function parseFurigana(text: string, furiganaColor?: string): React.ReactNode {
   // Split by newline to separate Japanese and Vietnamese
   const lines = text.split('\n');
   const japaneseLine = lines[0] || '';
@@ -174,7 +174,7 @@ function parseFurigana(text: string): React.ReactNode {
     parts.push(
       <ruby key={match.index}>
         {match[1]}
-        <rt>{match[2]}</rt>
+        <rt style={furiganaColor ? { color: furiganaColor } : undefined}>{match[2]}</rt>
       </ruby>
     );
     lastIndex = match.index + match[0].length;
@@ -281,7 +281,7 @@ export function FlashcardItem({
         <div className={`flashcard-face flashcard-front ${getFrameAnimationClass(settings)}`} style={{ ...getCardBackgroundStyle(settings), ...getCardFrameStyle(settings) }}>
           <span className="jlpt-badge">{levelBadge}</span>
           <div className="card-content">
-            <div className="kanji" style={{ fontSize: `${kanjiFontSize}px`, fontFamily: `"${settings.kanjiFont}", serif`, fontWeight: settings.kanjiBold ? 900 : 400 }}>
+            <div className="kanji" style={{ fontSize: `${kanjiFontSize}px`, fontFamily: `"${settings.kanjiFont}", serif`, fontWeight: settings.kanjiBold ? 900 : 400, color: settings.frontTextColor || '#FFFFFF' }}>
               {kanjiText}
             </div>
           </div>
@@ -322,10 +322,10 @@ export function FlashcardItem({
 
             {/* Example section */}
             {settings.showExample && card.examples && card.examples.length > 0 && (
-              <div className="card-example-section">
+              <div className="card-example-section" style={{ color: settings.exampleTextColor || '#94a3b8' }}>
                 <span className="example-label">Ví dụ:</span>
                 {card.examples.map((ex, idx) => (
-                  <p key={idx}>{parseFurigana(ex)}</p>
+                  <p key={idx}>{parseFurigana(ex, settings.furiganaTextColor)}</p>
                 ))}
               </div>
             )}

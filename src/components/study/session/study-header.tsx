@@ -1,9 +1,10 @@
 // Study session header with filters and controls
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, Settings, BookOpen, PenLine, RotateCcw } from 'lucide-react';
 import type { MemorizationStatus, DifficultyLevel, JLPTLevel, Flashcard } from '../../../types/flashcard';
 import { MEMORIZATION_OPTIONS, DIFFICULTY_OPTIONS, LEVEL_COLORS } from './constants';
 import { useAuth } from '../../../hooks/use-auth';
+import { getVocabularyNote } from '../../../services/firestore';
 import { KanjiDetailModal } from '../../flashcard/kanji-detail-modal';
 import { VocabularyNotesModal } from '../../flashcard/vocabulary-notes-modal';
 import { ConfirmModal } from '../../ui/confirm-modal';
@@ -47,6 +48,18 @@ export function StudyHeader({
   const [showDetail, setShowDetail] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [hasNote, setHasNote] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
+
+  // Check if current card has a note
+  useEffect(() => {
+    if (!currentUser || !currentCard) { setHasNote(false); return; }
+    let cancelled = false;
+    getVocabularyNote(currentUser.id, currentCard.id).then(note => {
+      if (!cancelled) setHasNote(!!note);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [currentUser, currentCard?.id]);
 
   // Check if anything can be reset (shuffle or card changes)
   const cardHasChanges = currentCard && (
@@ -118,7 +131,11 @@ export function StudyHeader({
             </button>
           )}
           {currentCard && currentUser && (
-            <button className="header-action-btn has-label" onClick={() => setShowNotes(true)} title="Ghi chú">
+            <button
+              className={`header-action-btn has-label ${hasNote ? 'has-note-active' : ''}`}
+              onClick={() => setShowNotes(true)}
+              title="Ghi chú"
+            >
               <PenLine size={16} />
               {!isMobile && <span className="btn-label">Ghi chú</span>}
             </button>
@@ -152,9 +169,29 @@ export function StudyHeader({
         <VocabularyNotesModal
           flashcard={currentCard}
           userId={currentUser.id}
-          onClose={() => setShowNotes(false)}
+          onClose={() => {
+            setShowNotes(false);
+            getVocabularyNote(currentUser.id, currentCard.id)
+              .then(note => setHasNote(!!note))
+              .catch(() => {});
+          }}
+          onSaved={() => {
+            getVocabularyNote(currentUser.id, currentCard.id)
+              .then(note => setHasNote(!!note))
+              .catch(() => {});
+          }}
+          onToast={(msg) => {
+            setToastMsg(msg);
+            setTimeout(() => setToastMsg(''), 3000);
+          }}
         />
       )}
+
+      {/* Global toast - right side of screen */}
+      {toastMsg && (
+        <div className="study-toast">{toastMsg}</div>
+      )}
+
       <ConfirmModal
         isOpen={showResetConfirm}
         title="Reset về mặc định"

@@ -72,20 +72,24 @@ export function SettingsPage(props: SettingsPageProps) {
       <SettingsHeader initialTab={initialTab} />
 
       <div className="settings-page-body">
-        <SettingsTabs
-          initialTab={initialTab}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          pendingRequestsCount={pendingRequests.length}
-        />
+        <div className="settings-tabs-bar">
+          <SettingsTabs
+            initialTab={initialTab}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            pendingRequestsCount={pendingRequests.length}
+          />
 
-        {activeTab === 'general' && (
-          <div className="settings-tab-content">
+          {activeTab === 'general' && (
             <SettingsSubTabs
               activeSubTab={generalSubTab}
               onSubTabChange={setGeneralSubTab}
             />
+          )}
+        </div>
 
+        {activeTab === 'general' && (
+          <div className="settings-tab-content">
             {generalSubTab === 'flashcard' && (
               <FlashcardSettings
                 settings={settings}

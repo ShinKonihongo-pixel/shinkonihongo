@@ -6,6 +6,15 @@ import { getDeviceType } from '../settings-utils';
 export function useSettingsState(initialTab?: SettingsTab) {
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab || 'general');
   const [generalSubTab, setGeneralSubTab] = useState<GeneralSubTab>('flashcard');
+
+  // Sync activeTab when initialTab prop changes (e.g. navigating settings → profile)
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    } else {
+      setActiveTab('general');
+    }
+  }, [initialTab]);
   const [showExportModal, setShowExportModal] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<DeviceType>(getDeviceType);
   const [frameCategory, setFrameCategory] = useState<string>('all');

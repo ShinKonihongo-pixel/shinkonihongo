@@ -87,6 +87,10 @@ export interface AppSettings {
   sinoVietnameseFontSize: number;
   meaningFontSize: number;
   backFontSize: number; // Scale factor for back side (100 = 100%)
+  // Color settings
+  frontTextColor: string;   // Front side text color
+  exampleTextColor: string; // Example sentence color
+  furiganaTextColor: string; // Furigana (reading) color
   // Mobile font sizes
   mobileKanjiFontSize: number;
   mobileVocabularyFontSize: number;
@@ -201,6 +205,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   sinoVietnameseFontSize: 32,
   meaningFontSize: 24,
   backFontSize: 100, // 100% default scale
+  frontTextColor: '#FFFFFF',
+  exampleTextColor: '#94a3b8',
+  furiganaTextColor: '#fdba74',
   // Mobile font sizes (smaller defaults for mobile screens)
   mobileKanjiFontSize: 120,
   mobileVocabularyFontSize: 20,

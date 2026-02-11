@@ -44,6 +44,7 @@ interface DailyWordsNotification {
   streak: number;
   showNotification: boolean;
   onDismiss: () => void;
+  onOpenModal: () => void;
 }
 
 interface SidebarProps {
@@ -329,8 +330,8 @@ export function Sidebar({
                     <div
                       className="sidebar-notification-item unread daily-words-notification"
                       onClick={() => {
-                        dailyWordsNotification.onDismiss(); // Dismiss notification
-                        onNavigate('daily-words');
+                        dailyWordsNotification.onDismiss();
+                        dailyWordsNotification.onOpenModal();
                         setShowNotifications(false);
                       }}
                     >

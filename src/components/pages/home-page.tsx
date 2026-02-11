@@ -40,6 +40,9 @@ interface DailyWordsProps {
   enabled: boolean;
   justCompleted: boolean;
   completedWordIds: Set<string>;
+  isModalOpen: boolean;
+  openModal: () => void;
+  closeModal: () => void;
 }
 
 interface HomePageProps {
@@ -283,23 +286,24 @@ export function HomePage({
 
       {/* ===== CONTENT ZONE ===== */}
       <div className="hp-content">
-        {/* Daily Words Task */}
+        {/* Daily Vocabulary Button */}
         {dailyWords && dailyWords.enabled && dailyWords.todayWords.length > 0 && (
-          <section className="hp-section">
-            <DailyWordsTask
-              todayWords={dailyWords.todayWords}
-              progress={dailyWords.progress}
-              isCompleted={dailyWords.isCompleted}
-              streak={dailyWords.streak}
-              longestStreak={dailyWords.longestStreak}
-              onMarkLearned={dailyWords.markWordLearned}
-              onMarkAllLearned={dailyWords.markAllLearned}
-              onRefresh={dailyWords.refreshWords}
-              onSpeak={onSpeak}
-              justCompleted={dailyWords.justCompleted}
-              completedWordIds={dailyWords.completedWordIds}
-            />
-          </section>
+          <DailyWordsTask
+            todayWords={dailyWords.todayWords}
+            progress={dailyWords.progress}
+            isCompleted={dailyWords.isCompleted}
+            streak={dailyWords.streak}
+            longestStreak={dailyWords.longestStreak}
+            onMarkLearned={dailyWords.markWordLearned}
+            onMarkAllLearned={dailyWords.markAllLearned}
+            onRefresh={dailyWords.refreshWords}
+            onSpeak={onSpeak}
+            justCompleted={dailyWords.justCompleted}
+            completedWordIds={dailyWords.completedWordIds}
+            isModalOpen={dailyWords.isModalOpen}
+            onOpenModal={dailyWords.openModal}
+            onCloseModal={dailyWords.closeModal}
+          />
         )}
 
         {/* ===== ACTIVITIES GRID ===== */}

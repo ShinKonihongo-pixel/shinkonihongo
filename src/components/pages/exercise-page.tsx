@@ -85,6 +85,26 @@ export function ExercisePage({ exercises, flashcards }: ExercisePageProps) {
     setView('level-select');
   };
 
+  // Handle answer - must be defined before timer effect that references it
+  const handleAnswer = useCallback((answer: number | string) => {
+    if (!session || showResult) return;
+
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    if (typeof answer === 'number') {
+      setSelectedAnswer(answer);
+    }
+
+    setShowResult(true);
+    setIsAnimating(true);
+
+    const newAnswers = [...session.answers];
+    newAnswers[session.currentIndex] = answer;
+    setSession({ ...session, answers: newAnswers });
+
+    setTimeout(() => setIsAnimating(false), 600);
+  }, [session, showResult]);
+
   // Clean up on unmount
   useEffect(() => {
     return () => {
@@ -207,34 +227,7 @@ export function ExercisePage({ exercises, flashcards }: ExercisePageProps) {
     return questions;
   }, [flashcards]);
 
-  // Start exercise
-  const startExercise = useCallback((exercise: Exercise) => {
-    const questions = generateQuestions(exercise);
-    if (questions.length === 0) {
-      alert('Không đủ từ vựng để tạo bài tập. Cần ít nhất 4 từ vựng.');
-      return;
-    }
-
-    setCurrentExercise(exercise);
-    setSession({
-      exerciseId: exercise.id,
-      questions,
-      currentIndex: 0,
-      answers: new Array(questions.length).fill(null),
-      startedAt: new Date().toISOString(),
-    });
-    setView('session');
-    setSelectedAnswer(null);
-    setTextAnswer('');
-    setShowResult(false);
-    setIsAnimating(false);
-
-    if (questions[0].type === 'listening_write') {
-      setTimeout(() => speakQuestion(questions[0].vocabulary), 500);
-    }
-  }, [generateQuestions, speakQuestion]);
-
-  // Speak text
+  // Speak text - must be defined before startExercise/nextQuestion that reference it
   const speakQuestion = useCallback((text: string) => {
     speakTimeoutRef.current.forEach(t => clearTimeout(t));
     speakTimeoutRef.current = [];
@@ -269,25 +262,32 @@ export function ExercisePage({ exercises, flashcards }: ExercisePageProps) {
     speak(0);
   }, []);
 
-  // Handle answer
-  const handleAnswer = useCallback((answer: number | string) => {
-    if (!session || showResult) return;
-
-    if (timerRef.current) clearInterval(timerRef.current);
-
-    if (typeof answer === 'number') {
-      setSelectedAnswer(answer);
+  // Start exercise
+  const startExercise = useCallback((exercise: Exercise) => {
+    const questions = generateQuestions(exercise);
+    if (questions.length === 0) {
+      alert('Không đủ từ vựng để tạo bài tập. Cần ít nhất 4 từ vựng.');
+      return;
     }
 
-    setShowResult(true);
-    setIsAnimating(true);
+    setCurrentExercise(exercise);
+    setSession({
+      exerciseId: exercise.id,
+      questions,
+      currentIndex: 0,
+      answers: new Array(questions.length).fill(null),
+      startedAt: new Date().toISOString(),
+    });
+    setView('session');
+    setSelectedAnswer(null);
+    setTextAnswer('');
+    setShowResult(false);
+    setIsAnimating(false);
 
-    const newAnswers = [...session.answers];
-    newAnswers[session.currentIndex] = answer;
-    setSession({ ...session, answers: newAnswers });
-
-    setTimeout(() => setIsAnimating(false), 600);
-  }, [session, showResult]);
+    if (questions[0].type === 'listening_write') {
+      setTimeout(() => speakQuestion(questions[0].vocabulary), 500);
+    }
+  }, [generateQuestions, speakQuestion]);
 
   // Submit text answer for listening
   const handleTextSubmit = useCallback(() => {

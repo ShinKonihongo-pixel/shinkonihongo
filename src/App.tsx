@@ -30,7 +30,7 @@ import { SalaryPage } from './components/pages/salary-page';
 import { MyTeachingPage } from './components/pages/my-teaching-page';
 import { NotificationsPage } from './components/pages/notifications-page';
 import { GameHubPage } from './components/pages/game-hub-page';
-import { DailyWordsPage } from './components/pages/daily-words-page';
+// DailyWordsPage removed - now uses modal from homepage/notification
 import { ListeningPracticePage } from './components/pages/listening-practice-page';
 import { GrammarStudyPage } from './components/pages/grammar-study-page';
 import { ReadingPracticePage } from './components/pages/reading-practice-page';
@@ -468,6 +468,7 @@ function App() {
           streak: dailyWords.streak,
           showNotification: dailyWords.showNotification,
           onDismiss: dailyWords.dismissNotification,
+          onOpenModal: dailyWords.openModal,
         }}
       />
 
@@ -821,22 +822,7 @@ function App() {
           />
         )}
 
-        {currentPage === 'daily-words' && currentUser && (
-          <DailyWordsPage
-            todayWords={dailyWords.todayWords}
-            progress={dailyWords.progress}
-            isCompleted={dailyWords.isCompleted}
-            streak={dailyWords.streak}
-            longestStreak={dailyWords.longestStreak}
-            completedWordIds={dailyWords.completedWordIds}
-            onMarkLearned={dailyWords.markWordLearned}
-            onMarkAllLearned={dailyWords.markAllLearned}
-            onRefresh={dailyWords.refreshWords}
-            onGoHome={() => setCurrentPage('home')}
-            settings={settings}
-            lessons={lessons}
-          />
-        )}
+        {/* daily-words page removed - now uses modal from homepage/notification */}
 
         {/* Center pages - only when inside center app */}
         {currentPage === 'center-members' && currentUser && (

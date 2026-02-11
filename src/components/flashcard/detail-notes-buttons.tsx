@@ -1,9 +1,10 @@
 // Shared button row for "Chi tiết" (Kanji detail) + "Ghi chú" (Notes)
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BookOpen, PenLine } from 'lucide-react';
 import type { Flashcard } from '../../types/flashcard';
 import { useAuth } from '../../hooks/use-auth';
+import { getVocabularyNote } from '../../services/firestore';
 import { KanjiDetailModal } from './kanji-detail-modal';
 import { VocabularyNotesModal } from './vocabulary-notes-modal';
 
@@ -17,6 +18,17 @@ export function DetailNotesButtons({ flashcard, readOnly = false, compact = fals
   const { currentUser } = useAuth();
   const [showDetail, setShowDetail] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
+  const [hasNote, setHasNote] = useState(false);
+
+  // Check if this flashcard has a note
+  useEffect(() => {
+    if (!currentUser) return;
+    let cancelled = false;
+    getVocabularyNote(currentUser.id, flashcard.id).then(note => {
+      if (!cancelled) setHasNote(!!note);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [currentUser, flashcard.id]);
 
   return (
     <>
@@ -26,7 +38,7 @@ export function DetailNotesButtons({ flashcard, readOnly = false, compact = fals
           {!compact && <span>Chi tiết</span>}
         </button>
         {currentUser && (
-          <button className="dn-btn dn-notes" onClick={() => setShowNotes(true)}>
+          <button className={`dn-btn dn-notes ${hasNote ? 'dn-has-note' : ''}`} onClick={() => setShowNotes(true)}>
             <PenLine size={compact ? 13 : 15} />
             {!compact && <span>Ghi chú</span>}
           </button>
@@ -45,7 +57,19 @@ export function DetailNotesButtons({ flashcard, readOnly = false, compact = fals
         <VocabularyNotesModal
           flashcard={flashcard}
           userId={currentUser.id}
-          onClose={() => setShowNotes(false)}
+          onClose={() => {
+            setShowNotes(false);
+            // Refresh note status after modal closes
+            getVocabularyNote(currentUser.id, flashcard.id)
+              .then(note => setHasNote(!!note))
+              .catch(() => {});
+          }}
+          onSaved={() => {
+            // Immediately refresh note status when saved/deleted
+            getVocabularyNote(currentUser.id, flashcard.id)
+              .then(note => setHasNote(!!note))
+              .catch(() => {});
+          }}
         />
       )}
 
@@ -102,6 +126,15 @@ const detailNotesStyles = `
     background: rgba(16, 185, 129, 0.22);
     border-color: rgba(16, 185, 129, 0.4);
     transform: translateY(-1px);
+  }
+
+  /* Highlight when flashcard has a note */
+  .dn-btn.dn-notes.dn-has-note {
+    background: rgba(16, 185, 129, 0.35);
+    border-color: rgba(16, 185, 129, 0.7);
+    color: #34d399;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+    font-weight: 600;
   }
 
   /* Compact variant for header placement */

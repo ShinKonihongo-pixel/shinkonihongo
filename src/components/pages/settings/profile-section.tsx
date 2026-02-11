@@ -1,7 +1,8 @@
 // Profile section component - extracted from settings-page.tsx
 // Handles user profile display and editing
 
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
+import { X } from 'lucide-react';
 import type { ProfileSettingsProps } from './settings-types';
 import { useProfileHandlers } from './hooks/use-profile-handlers';
 import { AVATAR_CATEGORIES, isImageAvatar } from '../../../utils/avatar-icons';
@@ -27,6 +28,16 @@ export function ProfileSection(props: ProfileSettingsProps) {
     return calculateUserLevel(stats);
   }, [stats]);
 
+  // Body scroll lock when avatar modal is open
+  useEffect(() => {
+    if (profileHandlers.showAvatarPicker) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [profileHandlers.showAvatarPicker]);
+
   if (!currentUser) {
     return (
       <div className="settings-tab-content">
@@ -35,12 +46,19 @@ export function ProfileSection(props: ProfileSettingsProps) {
     );
   }
 
+  const bannerBg = currentUser.profileBackground && currentUser.profileBackground !== 'transparent'
+    ? currentUser.profileBackground
+    : undefined;
+
   return (
     <div className="settings-tab-content">
       <section className="settings-section profile-section">
         <h3>Thông tin tài khoản</h3>
 
-        <div className="profile-info">
+        <div
+          className="profile-info"
+          style={bannerBg ? { '--profile-banner': bannerBg } as React.CSSProperties : undefined}
+        >
           <div className="profile-avatar-wrapper">
             <div
               className={`profile-avatar clickable ${(profileHandlers.selectedAvatar || currentUser.avatar) && isImageAvatar(profileHandlers.selectedAvatar || currentUser.avatar || '') ? 'has-image' : ''}`}
@@ -94,46 +112,58 @@ export function ProfileSection(props: ProfileSettingsProps) {
         </div>
 
         {profileHandlers.showAvatarPicker && (
-          <div className="avatar-picker avatar-picker-expanded">
-            <p className="avatar-picker-title">Chọn avatar (100 biểu tượng):</p>
-            {AVATAR_CATEGORIES.map((category) => (
-              <div key={category.key} className="avatar-category">
-                <p className="avatar-category-label">{category.label}</p>
-                <div className={`avatar-options ${category.isImage ? 'avatar-options-images' : ''}`}>
-                  {category.icons.map((avatar) => (
-                    <button
-                      key={avatar}
-                      className={`avatar-option ${category.isImage ? 'avatar-option-image' : ''} ${(profileHandlers.selectedAvatar || currentUser.avatar) === avatar ? 'active' : ''}`}
-                      onClick={() => profileHandlers.setSelectedAvatar(avatar)}
-                    >
-                      {isImageAvatar(avatar) ? (
-                        <img src={avatar} alt="avatar" />
-                      ) : (
-                        avatar
-                      )}
-                    </button>
-                  ))}
-                </div>
+          <div className="avatar-picker-overlay" onClick={() => { profileHandlers.setShowAvatarPicker(false); profileHandlers.setSelectedAvatar(null); }}>
+            <div className="avatar-picker-modal" onClick={e => e.stopPropagation()}>
+              <div className="avatar-picker-modal-header">
+                <p className="avatar-picker-title">Chọn avatar (100 biểu tượng)</p>
+                <button
+                  className="avatar-picker-close"
+                  onClick={() => { profileHandlers.setShowAvatarPicker(false); profileHandlers.setSelectedAvatar(null); }}
+                >
+                  <X size={20} />
+                </button>
               </div>
-            ))}
-            <div className="avatar-picker-actions">
-              <button
-                className="btn btn-primary"
-                onClick={() => profileHandlers.selectedAvatar && profileHandlers.handleUpdateAvatar(profileHandlers.selectedAvatar)}
-                disabled={!profileHandlers.selectedAvatar || profileHandlers.selectedAvatar === currentUser.avatar}
-              >
-                Lưu avatar
-              </button>
-              <button
-                className="btn btn-secondary"
-                onClick={() => { profileHandlers.setShowAvatarPicker(false); profileHandlers.setSelectedAvatar(null); }}
-              >
-                Hủy
-              </button>
+              <div className="avatar-picker-modal-body">
+                {AVATAR_CATEGORIES.map((category) => (
+                  <div key={category.key} className="avatar-category">
+                    <p className="avatar-category-label">{category.label}</p>
+                    <div className={`avatar-options ${category.isImage ? 'avatar-options-images' : ''}`}>
+                      {category.icons.map((avatar) => (
+                        <button
+                          key={avatar}
+                          className={`avatar-option ${category.isImage ? 'avatar-option-image' : ''} ${(profileHandlers.selectedAvatar || currentUser.avatar) === avatar ? 'active' : ''}`}
+                          onClick={() => profileHandlers.setSelectedAvatar(avatar)}
+                        >
+                          {isImageAvatar(avatar) ? (
+                            <img src={avatar} alt="avatar" />
+                          ) : (
+                            avatar
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="avatar-picker-actions">
+                <button
+                  className="btn btn-primary"
+                  onClick={() => profileHandlers.selectedAvatar && profileHandlers.handleUpdateAvatar(profileHandlers.selectedAvatar)}
+                  disabled={!profileHandlers.selectedAvatar || profileHandlers.selectedAvatar === currentUser.avatar}
+                >
+                  Lưu avatar
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => { profileHandlers.setShowAvatarPicker(false); profileHandlers.setSelectedAvatar(null); }}
+                >
+                  Hủy
+                </button>
+              </div>
+              {profileHandlers.avatarMessage && (
+                <p className={`form-message ${profileHandlers.avatarMessage.type}`}>{profileHandlers.avatarMessage.text}</p>
+              )}
             </div>
-            {profileHandlers.avatarMessage && (
-              <p className={`form-message ${profileHandlers.avatarMessage.type}`}>{profileHandlers.avatarMessage.text}</p>
-            )}
           </div>
         )}
       </section>
