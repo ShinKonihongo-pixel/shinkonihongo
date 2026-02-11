@@ -496,7 +496,7 @@ export function ReadingPracticePage({
                     <div className="audio-controls">
                       <button
                         className={`btn-audio ${audioState !== 'idle' ? 'active' : ''}`}
-                        onClick={() => handleAudioToggle(selectedPassage.content)}
+                        onClick={() => handleAudioToggle(selectedPassage.content.replace(/\[([^\]|]+)\|[^\]]+\]/g, '$1'))}
                         title={audioState === 'idle' ? 'Nghe' : 'Dừng'}
                       >
                         {audioState === 'idle' ? <Volume2 size={18} /> : <Square size={16} />}
@@ -1138,27 +1138,30 @@ export function ReadingPracticePage({
         .passage-grid-premium {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 0.75rem;
+          gap: 0.6rem;
           flex: 1;
           overflow-y: auto;
           padding-bottom: 1rem;
+          align-content: start;
         }
 
         .passage-card-compact {
           position: relative;
           display: flex;
           flex-direction: column;
-          padding: 0.6rem 0.875rem;
+          justify-content: center;
+          padding: 0.5rem 0.75rem;
           background: rgba(255, 255, 255, 0.02);
           backdrop-filter: blur(20px);
           border: 1px solid rgba(255, 255, 255, 0.06);
-          border-radius: 12px;
+          border-radius: 10px;
           cursor: pointer;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           animation: cardSlide 0.4s ease backwards;
           animation-delay: var(--card-delay);
           overflow: hidden;
           text-align: left;
+          min-height: 0;
         }
 
         @keyframes cardSlide {
@@ -1184,12 +1187,12 @@ export function ReadingPracticePage({
         .card-main {
           display: flex;
           align-items: center;
-          gap: 0.6rem;
-          margin-bottom: 0.3rem;
+          gap: 0.5rem;
+          margin-bottom: 0.15rem;
         }
 
         .card-kanji-big {
-          font-size: 1.5rem;
+          font-size: 1.25rem;
           font-weight: 800;
           background: var(--level-gradient);
           -webkit-background-clip: text;
@@ -1200,10 +1203,10 @@ export function ReadingPracticePage({
 
         .card-title-upper {
           margin: 0;
-          font-size: 0.8rem;
+          font-size: 0.75rem;
           font-weight: 600;
           color: white;
-          line-height: 1.4;
+          line-height: 1.3;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
@@ -1215,8 +1218,8 @@ export function ReadingPracticePage({
         .card-meta {
           display: flex;
           align-items: center;
-          gap: 0.4rem;
-          font-size: 0.7rem;
+          gap: 0.35rem;
+          font-size: 0.65rem;
           color: rgba(255, 255, 255, 0.45);
         }
 

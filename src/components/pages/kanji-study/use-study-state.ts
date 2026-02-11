@@ -10,7 +10,17 @@ const STORAGE_KEY = 'kanji-study-settings';
 function loadSettings(): KanjiStudySettings {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return { ...DEFAULT_KANJI_SETTINGS, ...JSON.parse(saved) };
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return {
+        ...DEFAULT_KANJI_SETTINGS,
+        ...parsed,
+        frontShow: { ...DEFAULT_KANJI_SETTINGS.frontShow, ...parsed.frontShow },
+        backShow: { ...DEFAULT_KANJI_SETTINGS.backShow, ...parsed.backShow },
+        frontFont: { ...DEFAULT_KANJI_SETTINGS.frontFont, ...parsed.frontFont },
+        backFont: { ...DEFAULT_KANJI_SETTINGS.backFont, ...parsed.backFont },
+      };
+    }
   } catch { /* ignore parse errors */ }
   return DEFAULT_KANJI_SETTINGS;
 }
@@ -63,6 +73,14 @@ export function useStudyState(
   }, [kanjiCards, selectedLevel, allSelectedLessonIds, memorizationFilter]);
 
   const displayCards = isShuffled ? shuffledCards : filteredCards;
+
+  // Reset index when card list shrinks below current position
+  useEffect(() => {
+    if (currentIndex >= displayCards.length && displayCards.length > 0) {
+      setCurrentIndex(0);
+      setIsFlipped(false);
+    }
+  }, [displayCards.length, currentIndex]);
 
   const handleStartStudy = useCallback((level: JLPTLevel, lessonIds: string[]) => {
     setSelectedLevel(level);

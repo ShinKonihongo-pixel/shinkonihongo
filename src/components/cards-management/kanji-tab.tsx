@@ -1,8 +1,8 @@
 // Kanji Tab - Level-based lesson structure
 // Navigation: Level → Parent Lesson → Child Lesson → Cards
 
-import { useState, useRef, useCallback } from 'react';
-import { Download, Upload, BookOpen, FolderOpen, FileText, ChevronRight, Plus, Trash2, Edit2, GripVertical } from 'lucide-react';
+import { useState, useRef, useCallback, useMemo } from 'react';
+import { Download, Upload, BookOpen, FolderOpen, FileText, ChevronRight, Plus, Trash2, Edit2, GripVertical, Search, X, AlertTriangle, Copy, ArrowRightLeft } from 'lucide-react';
 import { KanjiCardForm } from '../flashcard/kanji-card-form';
 import { KanjiCardList } from '../flashcard/kanji-card-list';
 import { KanjiMoveModal } from './kanji-move-modal';
@@ -13,6 +13,7 @@ import type { CurrentUser } from '../../types/user';
 
 // BT levels array (includes Bộ thủ)
 const KANJI_LEVELS: JLPTLevel[] = ['BT', 'N5', 'N4', 'N3', 'N2', 'N1'];
+const LEVEL_COLORS: Record<JLPTLevel, string> = { BT: '#8b5cf6', N5: '#4CAF50', N4: '#2196F3', N3: '#FF9800', N2: '#9C27B0', N1: '#E34234' };
 
 // Seed config for each level
 const SEED_CONFIG: Record<JLPTLevel, { start: number; end: number; folders: string[] }> = {
@@ -63,6 +64,7 @@ interface KanjiTabProps {
   onReorderLessons: (reorderedLessons: { id: string; order: number }[]) => Promise<void>;
   onImportKanjiCard?: (data: Omit<KanjiCard, 'id'>) => Promise<KanjiCard>;
   onSeedKanjiCards?: (level: JLPTLevel, lessonIds: string[], createdBy: string) => Promise<number>;
+  onRefreshKanjiFromSeed?: (level: JLPTLevel, lessonIds: string[]) => Promise<number>;
   getKanjiSeedCount?: (level: JLPTLevel) => number;
   currentUser: CurrentUser;
   isSuperAdmin: boolean;
@@ -72,7 +74,7 @@ export function KanjiTab({
   kanjiCards, onAddKanjiCard, onUpdateKanjiCard, onDeleteKanjiCard,
   kanjiLessons, getParentLessonsByLevel, getChildLessons, hasChildren,
   onAddLesson, onUpdateLesson, onDeleteLesson, onSeedLessons, onReorderLessons,
-  onImportKanjiCard, onSeedKanjiCards, getKanjiSeedCount, currentUser, isSuperAdmin,
+  onImportKanjiCard, onSeedKanjiCards, onRefreshKanjiFromSeed, getKanjiSeedCount, currentUser, isSuperAdmin,
 }: KanjiTabProps) {
   const [navState, setNavState] = useState<NavState>({ type: 'root' });
   const [showForm, setShowForm] = useState(false);
@@ -82,12 +84,63 @@ export function KanjiTab({
   const [editingLesson, setEditingLesson] = useState<KanjiLesson | null>(null);
   const [isSeeding, setIsSeeding] = useState(false);
   const [isSeedingCards, setIsSeedingCards] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [draggedLesson, setDraggedLesson] = useState<KanjiLesson | null>(null);
   const [dragOverLesson, setDragOverLesson] = useState<string | null>(null);
   const [movingCards, setMovingCards] = useState<KanjiCard[] | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchFilter, setSearchFilter] = useState<'all' | 'duplicates' | 'no-mnemonic' | 'no-words'>('all');
+
+  // Search results across all kanji cards
+  const searchResults = useMemo(() => {
+    if (!searchQuery && searchFilter === 'all') return null;
+
+    let results = kanjiCards;
+
+    // Text search: match character, sinoVietnamese, meaning
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      results = results.filter(c =>
+        c.character.includes(q) ||
+        c.sinoVietnamese.toLowerCase().includes(q) ||
+        c.meaning.toLowerCase().includes(q) ||
+        c.onYomi.some(r => r.includes(q)) ||
+        c.kunYomi.some(r => r.includes(q))
+      );
+    }
+
+    // Filter by issue type
+    if (searchFilter === 'duplicates') {
+      const charCount = new Map<string, number>();
+      kanjiCards.forEach(c => charCount.set(c.character, (charCount.get(c.character) || 0) + 1));
+      const dupChars = new Set([...charCount.entries()].filter(([, count]) => count > 1).map(([char]) => char));
+      results = results.filter(c => dupChars.has(c.character));
+    } else if (searchFilter === 'no-mnemonic') {
+      results = results.filter(c => !c.mnemonic);
+    } else if (searchFilter === 'no-words') {
+      results = results.filter(c => !c.sampleWords || c.sampleWords.length === 0);
+    }
+
+    return results;
+  }, [searchQuery, searchFilter, kanjiCards]);
+
+  // Duplicate count for badge
+  const duplicateCount = useMemo(() => {
+    const charCount = new Map<string, number>();
+    kanjiCards.forEach(c => charCount.set(c.character, (charCount.get(c.character) || 0) + 1));
+    return [...charCount.values()].filter(v => v > 1).reduce((sum, v) => sum + v, 0);
+  }, [kanjiCards]);
+
+  const noMnemonicCount = useMemo(() => kanjiCards.filter(c => !c.mnemonic).length, [kanjiCards]);
+  const noWordsCount = useMemo(() => kanjiCards.filter(c => !c.sampleWords || c.sampleWords.length === 0).length, [kanjiCards]);
+
+  // Find lesson name for a card
+  const getLessonName = useCallback((lessonId: string) => {
+    return kanjiLessons.find(l => l.id === lessonId)?.name || '';
+  }, [kanjiLessons]);
 
   // Move kanji cards to a different lesson/level
   const handleMoveCards = useCallback(async (cardIds: string[], targetLevel: JLPTLevel, targetLessonId: string) => {
@@ -171,6 +224,28 @@ export function KanjiTab({
       alert(`Đã tạo ${count} chữ Kanji mới! (bỏ qua trùng lặp)`);
     } catch { alert('Lỗi khi tạo Kanji!'); }
     setIsSeedingCards(false);
+  };
+
+  // Refresh existing kanji cards with mnemonic + sampleWords from seed
+  const handleRefreshFromSeed = async () => {
+    if (navState.type !== 'level' || !onRefreshKanjiFromSeed) return;
+    const parentLessons = getParentLessonsByLevel(navState.level);
+    const kanjiLessonIds: string[] = [];
+    parentLessons.forEach(parent => {
+      const children = getChildLessons(parent.id);
+      const kanjiChild = children.find(c => c.name === 'Kanji');
+      if (kanjiChild) kanjiLessonIds.push(kanjiChild.id);
+      else if (children.length === 0) kanjiLessonIds.push(parent.id);
+    });
+    if (kanjiLessonIds.length === 0) { alert('Chưa có bài học!'); return; }
+    const levelLabel = navState.level === 'BT' ? 'Bộ thủ' : navState.level;
+    if (!confirm(`Cập nhật mẹo nhớ & từ mẫu cho tất cả chữ ${levelLabel}?`)) return;
+    setIsRefreshing(true);
+    try {
+      const count = await onRefreshKanjiFromSeed(navState.level, kanjiLessonIds);
+      alert(`Đã cập nhật ${count} chữ Kanji!`);
+    } catch { alert('Lỗi khi cập nhật!'); }
+    setIsRefreshing(false);
   };
 
   const handleExport = () => {
@@ -330,6 +405,79 @@ export function KanjiTab({
         )}
       </div>
 
+      {/* Search Bar - always visible */}
+      <div className="kanji-search-section">
+        <div className="kanji-search-bar">
+          <Search size={16} className="kanji-search-icon" />
+          <input
+            type="text"
+            placeholder="Tìm kanji, Hán Việt, nghĩa..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="kanji-search-input"
+          />
+          {(searchQuery || searchFilter !== 'all') && (
+            <button className="kanji-search-clear" onClick={() => { setSearchQuery(''); setSearchFilter('all'); }}>
+              <X size={14} />
+            </button>
+          )}
+        </div>
+        <div className="kanji-search-filters">
+          <button className={`kanji-filter-chip ${searchFilter === 'duplicates' ? 'active danger' : ''}`} onClick={() => setSearchFilter(searchFilter === 'duplicates' ? 'all' : 'duplicates')}>
+            <Copy size={12} /> Trùng {duplicateCount > 0 && <span className="kanji-filter-badge">{duplicateCount}</span>}
+          </button>
+          <button className={`kanji-filter-chip ${searchFilter === 'no-mnemonic' ? 'active warning' : ''}`} onClick={() => setSearchFilter(searchFilter === 'no-mnemonic' ? 'all' : 'no-mnemonic')}>
+            <AlertTriangle size={12} /> Thiếu mẹo nhớ {noMnemonicCount > 0 && <span className="kanji-filter-badge">{noMnemonicCount}</span>}
+          </button>
+          <button className={`kanji-filter-chip ${searchFilter === 'no-words' ? 'active warning' : ''}`} onClick={() => setSearchFilter(searchFilter === 'no-words' ? 'all' : 'no-words')}>
+            <AlertTriangle size={12} /> Thiếu từ mẫu {noWordsCount > 0 && <span className="kanji-filter-badge">{noWordsCount}</span>}
+          </button>
+        </div>
+      </div>
+
+      {/* Search Results */}
+      {searchResults && (
+        <div className="kanji-search-results">
+          <div className="kanji-search-results-header">
+            <span>Tìm thấy {searchResults.length} kết quả</span>
+            <button className="btn btn-secondary btn-sm" onClick={() => { setSearchQuery(''); setSearchFilter('all'); }}>Đóng</button>
+          </div>
+          {searchResults.length === 0 ? (
+            <div style={{ textAlign: 'center', color: '#999', padding: '2rem' }}>Không tìm thấy kết quả</div>
+          ) : (
+            <div className="kanji-search-results-list">
+              {searchResults.map(card => (
+                <div key={card.id} className="kanji-search-result-item" style={{ borderLeft: `3px solid ${LEVEL_COLORS[card.jlptLevel]}` }}>
+                  <span className="kanji-result-char">{card.character}</span>
+                  <div className="kanji-result-info">
+                    <div className="kanji-result-main">
+                      <span className="kanji-result-hv">{card.sinoVietnamese}</span>
+                      <span className="kanji-result-meaning">{card.meaning}</span>
+                    </div>
+                    <div className="kanji-result-meta">
+                      <span className="kanji-result-level">{card.jlptLevel}</span>
+                      <span className="kanji-result-lesson">{getLessonName(card.lessonId)}</span>
+                      {!card.mnemonic && <span className="kanji-result-tag warning">Thiếu mẹo nhớ</span>}
+                      {(!card.sampleWords || card.sampleWords.length === 0) && <span className="kanji-result-tag warning">Thiếu từ mẫu</span>}
+                      {kanjiCards.filter(c => c.character === card.character).length > 1 && <span className="kanji-result-tag danger">Trùng</span>}
+                    </div>
+                  </div>
+                  {isSuperAdmin && (
+                    <div className="kanji-result-actions">
+                      <button className="btn btn-icon btn-sm" title="Sửa" onClick={() => setEditingCard(card)}><Edit2 size={14} /></button>
+                      <button className="btn btn-icon btn-sm" title="Di chuyển" onClick={() => setMovingCards([card])}><ArrowRightLeft size={14} /></button>
+                      <button className="btn btn-icon btn-sm btn-danger" title="Xoá" onClick={() => { if (confirm(`Xóa "${card.character}"?`)) onDeleteKanjiCard(card.id); }}><Trash2 size={14} /></button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Normal views - hidden when search is active */}
+      {!searchResults && <>
       {/* Root: Level Grid */}
       {navState.type === 'root' && (
         <LevelGrid levels={KANJI_LEVELS} onSelectLevel={(level) => setNavState({ type: 'level', level })} getCount={getCardCountByLevel} countLabel="chữ" />
@@ -349,6 +497,11 @@ export function KanjiTab({
                 {onSeedKanjiCards && (
                   <button className="btn btn-secondary btn-sm" onClick={handleSeedKanjiCards} disabled={isSeedingCards} style={{ background: 'linear-gradient(135deg, #8b5cf6, #ec4899)', color: 'white', border: 'none' }}>
                     {isSeedingCards ? 'Đang tạo Kanji...' : `Tạo Kanji tự động (${getKanjiSeedCount?.(navState.level) ?? 0})`}
+                  </button>
+                )}
+                {onRefreshKanjiFromSeed && (
+                  <button className="btn btn-secondary btn-sm" onClick={handleRefreshFromSeed} disabled={isRefreshing} style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', color: 'white', border: 'none' }}>
+                    {isRefreshing ? 'Đang cập nhật...' : 'Cập nhật mẹo nhớ & từ mẫu'}
                   </button>
                 )}
               </div>
@@ -415,6 +568,29 @@ export function KanjiTab({
           <KanjiCardList cards={getCardsForCurrentView()} onEdit={card => { setEditingCard(card); setShowForm(false); }} onDelete={onDeleteKanjiCard} canEdit={isSuperAdmin} />
         </>
       )}
+      </>}
+      {/* Edit modal from search results */}
+      {searchResults && editingCard && (
+        <div className="kanji-edit-modal-overlay" onClick={() => setEditingCard(null)}>
+          <div className="kanji-edit-modal" onClick={e => e.stopPropagation()}>
+            <div className="kanji-edit-modal-header">
+              <div className="kanji-edit-modal-title">
+                <span className="kanji-edit-modal-char" style={{ borderColor: LEVEL_COLORS[editingCard.jlptLevel] }}>{editingCard.character}</span>
+                <div className="kanji-edit-modal-info">
+                  <h3>{editingCard.sinoVietnamese} - {editingCard.meaning}</h3>
+                  <div className="kanji-edit-modal-meta">
+                    <span className="kanji-edit-modal-level" style={{ background: LEVEL_COLORS[editingCard.jlptLevel] }}>{editingCard.jlptLevel}</span>
+                    <span className="kanji-edit-modal-lesson">{getLessonName(editingCard.lessonId)}</span>
+                  </div>
+                </div>
+              </div>
+              <button className="kanji-edit-modal-close" onClick={() => setEditingCard(null)}><X size={18} /></button>
+            </div>
+            <KanjiCardForm onSubmit={handleUpdateCard} onCancel={() => setEditingCard(null)} initialData={editingCard} fixedLevel={editingCard.jlptLevel} fixedLessonId={editingCard.lessonId} />
+          </div>
+        </div>
+      )}
+
       {/* Move modal */}
       {movingCards && (
         <KanjiMoveModal

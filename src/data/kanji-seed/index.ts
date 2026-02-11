@@ -66,4 +66,54 @@ export function getKanjiSeedCount(level: JLPTLevel): number {
   return SEED_BY_LEVEL[level]?.length ?? 0;
 }
 
+// Parse w field into sample word objects
+function parseWords(w: string): { word: string; reading: string; meaning: string }[] {
+  return w.split(';').map(entry => {
+    const [word, reading, meaning] = entry.split('|');
+    return { word: word || '', reading: reading || '', meaning: meaning || '' };
+  });
+}
+
+// Lookup seed data by character (across all levels)
+// Returns primary sample words + extra words from other entries containing the character
+export function getSeedByCharacter(character: string): {
+  mnemonic: string;
+  sampleWords: { word: string; reading: string; meaning: string }[];
+  extraWords: { word: string; reading: string; meaning: string }[];
+} | null {
+  let mnemonic = '';
+  let sampleWords: { word: string; reading: string; meaning: string }[] = [];
+  let found = false;
+
+  // Find primary entry
+  for (const seeds of Object.values(SEED_BY_LEVEL)) {
+    const seed = seeds.find(s => s.c === character);
+    if (seed) {
+      mnemonic = seed.mn || '';
+      sampleWords = seed.w ? parseWords(seed.w) : [];
+      found = true;
+      break;
+    }
+  }
+  if (!found) return null;
+
+  // Collect extra words from other entries whose w field contains the character
+  const primaryWordSet = new Set(sampleWords.map(w => w.word));
+  const extraWords: { word: string; reading: string; meaning: string }[] = [];
+  for (const seeds of Object.values(SEED_BY_LEVEL)) {
+    for (const seed of seeds) {
+      if (seed.c === character || !seed.w) continue;
+      const words = parseWords(seed.w);
+      for (const w of words) {
+        if (w.word.includes(character) && !primaryWordSet.has(w.word)) {
+          primaryWordSet.add(w.word); // deduplicate
+          extraWords.push(w);
+        }
+      }
+    }
+  }
+
+  return { mnemonic, sampleWords, extraWords };
+}
+
 export type { KanjiSeed };

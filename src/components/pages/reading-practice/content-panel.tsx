@@ -52,7 +52,7 @@ export const ContentPanel = forwardRef<HTMLDivElement, ContentPanelProps>(({
             <div className="audio-controls">
               <button
                 className={`btn-audio ${audioState !== 'idle' ? 'active' : ''}`}
-                onClick={() => onAudioToggle(selectedPassage.content)}
+                onClick={() => onAudioToggle(selectedPassage.content.replace(/\[([^\]|]+)\|[^\]]+\]/g, '$1'))}
                 title={audioState === 'idle' ? 'Nghe' : 'Dừng'}
               >
                 {audioState === 'idle' ? <Volume2 size={18} /> : <Square size={16} />}

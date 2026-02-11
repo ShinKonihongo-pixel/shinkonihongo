@@ -86,7 +86,7 @@ export function ReadingSettingsPanel({ position = 'right' }: ReadingSettingsPane
               <button
                 className="size-btn"
                 onClick={increaseFontSize}
-                disabled={settings.fontSize >= 1.5}
+                disabled={settings.fontSize >= 2.5}
               >
                 <Plus size={14} />
               </button>

@@ -161,12 +161,12 @@ export function ReadingTab({
             id: editingPassage.questions[idx]?.id || `q_${Date.now()}_${idx}`,
             ...q,
           })),
-          vocabulary: validVocabulary.length > 0 ? validVocabulary : undefined,
+          vocabulary: validVocabulary,
           jlptLevel: formData.jlptLevel,
           folderId: formData.folderId,
         });
       } else {
-        await onAddPassage({ ...formData, vocabulary: validVocabulary.length > 0 ? validVocabulary : undefined }, currentUser.id);
+        await onAddPassage({ ...formData, vocabulary: validVocabulary }, currentUser.id);
       }
       setShowForm(false);
       resetForm();

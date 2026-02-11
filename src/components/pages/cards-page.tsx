@@ -175,6 +175,7 @@ export function CardsPage({
     updateKanjiCard,
     deleteKanjiCard,
     seedKanjiCards,
+    refreshKanjiFromSeed,
     getKanjiSeedCount,
   } = useKanjiCards();
 
@@ -317,6 +318,7 @@ export function CardsPage({
           onReorderLessons={reorderKanjiLessons}
           onImportKanjiCard={importKanjiCard}
           onSeedKanjiCards={seedKanjiCards}
+          onRefreshKanjiFromSeed={refreshKanjiFromSeed}
           getKanjiSeedCount={getKanjiSeedCount}
           currentUser={currentUser}
           isSuperAdmin={isSuperAdmin}

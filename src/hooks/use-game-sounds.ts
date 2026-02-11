@@ -1,7 +1,7 @@
 // Hook for managing game sound effects and background music
 // Professional game audio system with volume control and track selection
 
-import { useRef, useCallback, useEffect, useState } from 'react';
+import { useRef, useCallback, useEffect, useState, useMemo } from 'react';
 
 // Sound effect types
 export type SoundEffectType = 'correct' | 'wrong' | 'victory' | 'defeat' | 'countdown' | 'start' | 'powerup' | 'click';

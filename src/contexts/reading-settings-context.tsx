@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 
 export interface ReadingSettings {
   showFurigana: boolean;
-  fontSize: number; // 0.8 - 1.5 (multiplier)
+  fontSize: number; // 0.8 - 2.5 (multiplier)
   furiganaSize: number; // 0.4 - 0.8 (multiplier relative to text)
   textColor: string; // Text color for question content
   furiganaColor: string; // Furigana text color
@@ -65,7 +65,7 @@ export function ReadingSettingsProvider({ children }: { children: ReactNode }) {
   const increaseFontSize = () => {
     setSettings(prev => ({
       ...prev,
-      fontSize: Math.min(1.5, prev.fontSize + 0.1),
+      fontSize: Math.min(2.5, prev.fontSize + 0.1),
     }));
   };
 

@@ -42,11 +42,11 @@ export function StudyHeaderCompact({
         </div>
       </div>
       <div className="header-actions">
-        <button className={`action-btn shuffle-btn ${isShuffled ? 'active' : ''}`} onClick={onShuffle} title={isShuffled ? 'Bỏ trộn' : 'Trộn thẻ'}>
-          <span className="btn-text">Trộn</span> <Shuffle size={14} />
+        <button className={`header-btn shuffle-btn ${isShuffled ? 'active' : ''}`} onClick={onShuffle} title={isShuffled ? 'Bỏ trộn' : 'Trộn thẻ'}>
+          <Shuffle size={16} />
         </button>
-        <button className="action-btn restart-btn" onClick={onRestart} title="Học lại từ đầu">
-          <span className="btn-text">Reset</span> <RotateCcw size={14} />
+        <button className="header-btn restart-btn" onClick={onRestart} title="Học lại từ đầu">
+          <RotateCcw size={16} />
         </button>
         <button className="header-btn settings-btn" onClick={onOpenSettings} title="Cài đặt">
           <Settings size={16} />

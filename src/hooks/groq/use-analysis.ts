@@ -56,17 +56,18 @@ Format your response in Vietnamese, clearly and concisely. Use simple formatting
       throw new Error('Chưa cấu hình API key');
     }
 
-    const systemPrompt = `You are a Japanese language expert. Add furigana readings to ALL kanji in the given text.
+    const systemPrompt = `You are a Japanese language expert. Add furigana ONLY to kanji characters.
 
-RULES:
-- Use the format [kanji|reading] for EVERY kanji/kanji compound
-- Keep all hiragana, katakana, numbers, and punctuation unchanged
-- For kanji compounds (熟語), add furigana to the whole compound, e.g. [日本語|にほんご]
-- For single kanji with okurigana, include only the kanji in brackets: [食|た]べる
-- Be accurate with readings based on context
+STRICT RULES:
+- ONLY add [kanji|reading] for characters that contain kanji (漢字). NEVER wrap hiragana or katakana.
+- For kanji compounds (熟語), wrap the whole compound: [日本語|にほんご]
+- For single kanji with okurigana, wrap ONLY the kanji part: [食|た]べる
+- NEVER add furigana to pure hiragana words (e.g. ている, ください, それ must stay as-is)
+- NEVER add furigana to katakana words (e.g. コーヒー, テレビ must stay as-is)
+- Keep all punctuation, numbers, spaces unchanged
 
-Example input: 私は日本語を勉強しています。
-Example output: [私|わたし]は[日本語|にほんご]を[勉強|べんきょう]しています。
+Example input: 私はコーヒーを飲みながら日本語を勉強しています。
+Example output: [私|わたし]はコーヒーを[飲|の]みながら[日本語|にほんご]を[勉強|べんきょう]しています。
 
 Return ONLY the text with furigana added, nothing else.`;
 
@@ -92,7 +93,14 @@ Return ONLY the text with furigana added, nothing else.`;
     }
 
     const data = await response.json();
-    return data.choices?.[0]?.message?.content?.trim() || text;
+    const result = data.choices?.[0]?.message?.content?.trim() || text;
+    // Post-process: strip furigana from non-kanji text (hiragana/katakana only brackets)
+    // Kanji Unicode range: \u4e00-\u9faf, \u3400-\u4dbf (CJK unified)
+    return result.replace(/\[([^\]|]+)\|[^\]]+\]/g, (match: string, kanjiPart: string) => {
+      // Keep bracket only if kanjiPart contains at least one kanji character
+      if (/[\u4e00-\u9faf\u3400-\u4dbf]/.test(kanjiPart)) return match;
+      return kanjiPart; // Strip furigana, return plain text
+    });
   }, [getApiKey]);
 
   // Quick translate Japanese to Vietnamese (simple translation only)

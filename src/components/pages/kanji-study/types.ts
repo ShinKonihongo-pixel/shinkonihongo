@@ -2,6 +2,11 @@
 
 export type MemorizationFilter = 'all' | 'memorized' | 'learning';
 
+export interface FontSettings {
+  fontSize: number; // px
+  fontColor: string; // hex color
+}
+
 export interface KanjiStudySettings {
   frontShow: {
     character: boolean;
@@ -24,6 +29,9 @@ export interface KanjiStudySettings {
     sampleWords: boolean;
   };
   autoPlayStroke: boolean;
+  frontFont: FontSettings;
+  backFont: FontSettings;
+  backTextSize: number; // unified px for all back content text
 }
 
 export const DEFAULT_KANJI_SETTINGS: KanjiStudySettings = {
@@ -48,4 +56,7 @@ export const DEFAULT_KANJI_SETTINGS: KanjiStudySettings = {
     sampleWords: true,
   },
   autoPlayStroke: true,
+  frontFont: { fontSize: 120, fontColor: '#e9d5ff' },
+  backFont: { fontSize: 72, fontColor: '#e9d5ff' },
+  backTextSize: 24,
 };

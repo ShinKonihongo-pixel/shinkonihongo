@@ -31,6 +31,9 @@ export function KanjiDisplayCard({
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
 
+  // Scale HanziWriter size from frontFont.fontSize (clamped to reasonable range for SVG)
+  const writerSize = Math.min(Math.max(settings.frontFont.fontSize, 80), 360);
+
   useEffect(() => {
     if (!settings.frontShow.strokeOrder || !writerRef.current) return;
 
@@ -39,10 +42,10 @@ export function KanjiDisplayCard({
 
     try {
       const writer = HanziWriter.create(writerRef.current, card.character, {
-        width: 150,
-        height: 150,
+        width: writerSize,
+        height: writerSize,
         padding: 5,
-        strokeColor: '#e9d5ff',
+        strokeColor: settings.frontFont.fontColor,
         radicalColor: '#c4b5fd',
         delayBetweenStrokes: 300,
         strokeAnimationSpeed: 1.5,
@@ -56,14 +59,14 @@ export function KanjiDisplayCard({
     } catch {
       // Character may not be in hanzi-writer database
       if (writerRef.current) {
-        writerRef.current.innerHTML = `<div style="font-size:100px;color:#e9d5ff;font-family:'Noto Serif JP',serif;text-align:center;line-height:150px;">${card.character}</div>`;
+        writerRef.current.innerHTML = `<div style="font-size:${settings.frontFont.fontSize}px;color:${settings.frontFont.fontColor};font-family:'Noto Serif JP',serif;text-align:center;line-height:${writerSize}px;">${card.character}</div>`;
       }
     }
 
     return () => {
       writerInstance.current = null;
     };
-  }, [card.character, settings.frontShow.strokeOrder, settings.autoPlayStroke]);
+  }, [card.character, settings.frontShow.strokeOrder, settings.autoPlayStroke, writerSize, settings.frontFont.fontColor]);
 
   const replayAnimation = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -118,7 +121,7 @@ export function KanjiDisplayCard({
                 <button className="replay-btn" onClick={replayAnimation} title="Xem lại nét viết">↻</button>
               </div>
             ) : settings.frontShow.character ? (
-              <div className="kanji-large-character">{card.character}</div>
+              <div className="kanji-large-character" style={{ fontSize: `${settings.frontFont.fontSize}px`, color: settings.frontFont.fontColor, textShadow: `0 0 40px ${settings.frontFont.fontColor}40` }}>{card.character}</div>
             ) : null}
             {settings.frontShow.onYomi && card.onYomi.length > 0 && (
               <div className="reading-line on-yomi"><span className="reading-label">音</span> {card.onYomi.join('、')}</div>
@@ -135,19 +138,19 @@ export function KanjiDisplayCard({
         <div className="kanji-card-back">
           <div className="back-content-wrapper">
             <div className="back-section-left">
-              {settings.backShow.character && <div className="kanji-back-character">{card.character}</div>}
+              {settings.backShow.character && <div className="kanji-back-character" style={{ fontSize: `${settings.backFont.fontSize}px`, color: settings.backFont.fontColor }}>{card.character}</div>}
               {settings.backShow.onYomi && card.onYomi.length > 0 && (
-                <div className="reading-section"><span className="reading-label-back">音読み</span><span className="reading-value">{card.onYomi.join('、')}</span></div>
+                <div className="reading-section"><span className="reading-label-back">音読み</span><span className="reading-value" style={{ fontSize: `${settings.backTextSize}px` }}>{card.onYomi.join('、')}</span></div>
               )}
               {settings.backShow.kunYomi && card.kunYomi.length > 0 && (
-                <div className="reading-section"><span className="reading-label-back">訓読み</span><span className="reading-value">{card.kunYomi.join('、')}</span></div>
+                <div className="reading-section"><span className="reading-label-back">訓読み</span><span className="reading-value" style={{ fontSize: `${settings.backTextSize}px` }}>{card.kunYomi.join('、')}</span></div>
               )}
               {settings.backShow.sinoVietnamese && (
-                <div className="reading-section"><span className="reading-label-back">Hán Việt</span><span className="reading-value sino">{card.sinoVietnamese}</span></div>
+                <div className="reading-section"><span className="reading-label-back">Hán Việt</span><span className="reading-value sino" style={{ fontSize: `${settings.backTextSize}px` }}>{card.sinoVietnamese}</span></div>
               )}
-              {settings.backShow.meaning && <div className="kanji-meaning-back">{card.meaning}</div>}
+              {settings.backShow.meaning && <div className="kanji-meaning-back" style={{ fontSize: `${settings.backTextSize}px` }}>{card.meaning}</div>}
               {settings.backShow.mnemonic && card.mnemonic && (
-                <div className="mnemonic-section"><span className="mnemonic-label">Mẹo nhớ</span><p className="mnemonic-text">{card.mnemonic}</p></div>
+                <div className="mnemonic-section"><span className="mnemonic-label">Mẹo nhớ</span><p className="mnemonic-text" style={{ fontSize: `${settings.backTextSize}px` }}>{card.mnemonic}</p></div>
               )}
               {settings.backShow.radicals && card.radicals.length > 0 && (
                 <div className="radicals-section">
@@ -161,8 +164,8 @@ export function KanjiDisplayCard({
                 <strong className="sample-words-label">Từ mẫu</strong>
                 {card.sampleWords.map((sw, i) => (
                   <div key={i} className="sample-word">
-                    <div className="sample-word-main"><span className="sample-word-text">{sw.word}</span><span className="sample-word-reading">{sw.reading}</span></div>
-                    <div className="sample-word-meaning">{sw.meaning}</div>
+                    <div className="sample-word-main"><span className="sample-word-text" style={{ fontSize: `${settings.backTextSize}px` }}>{sw.word}</span><span className="sample-word-reading" style={{ fontSize: `${settings.backTextSize * 0.85}px` }}>{sw.reading}</span></div>
+                    <div className="sample-word-meaning" style={{ fontSize: `${settings.backTextSize * 0.8}px` }}>{sw.meaning}</div>
                   </div>
                 ))}
               </div>

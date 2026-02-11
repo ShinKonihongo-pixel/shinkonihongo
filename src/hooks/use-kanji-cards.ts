@@ -79,6 +79,32 @@ export function useKanjiCards() {
     return count;
   }, [kanjiCards]);
 
+  // Update existing kanji cards with mnemonic + sampleWords from seed data
+  const refreshKanjiFromSeed = useCallback(async (
+    level: JLPTLevel,
+    lessonIds: string[],
+  ): Promise<number> => {
+    const existingCards = kanjiCards.filter(c => c.jlptLevel === level);
+    const seedData = getKanjiSeedForLevel(level, lessonIds);
+    // Build lookup: character → seed data
+    const seedMap = new Map(seedData.map(s => [s.character, s]));
+    let count = 0;
+    for (const card of existingCards) {
+      const seed = seedMap.get(card.character);
+      if (!seed) continue;
+      // Only update if card is missing mnemonic or sampleWords
+      const needsMnemonic = !card.mnemonic && seed.mnemonic;
+      const needsWords = (!card.sampleWords || card.sampleWords.length === 0) && seed.sampleWords.length > 0;
+      if (!needsMnemonic && !needsWords) continue;
+      const updates: Partial<KanjiCard> = {};
+      if (needsMnemonic) updates.mnemonic = seed.mnemonic;
+      if (needsWords) updates.sampleWords = seed.sampleWords;
+      await firestoreService.updateKanjiCard(card.id, updates);
+      count++;
+    }
+    return count;
+  }, [kanjiCards]);
+
   return {
     kanjiCards,
     loading,
@@ -89,6 +115,7 @@ export function useKanjiCards() {
     getKanjiCardsByLevel,
     getKanjiCardsByLesson,
     seedKanjiCards,
+    refreshKanjiFromSeed,
     getKanjiSeedCount,
   };
 }

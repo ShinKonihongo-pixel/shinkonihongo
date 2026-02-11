@@ -1,8 +1,9 @@
 // Form for creating/editing kanji cards
-import { useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { Plus, Trash2, Sparkles, RefreshCw } from 'lucide-react';
 import type { KanjiCardFormData, KanjiCard, KanjiSampleWord } from '../../types/kanji';
 import type { JLPTLevel } from '../../types/flashcard';
+import { getSeedByCharacter } from '../../data/kanji-seed';
 
 interface KanjiCardFormProps {
   onSubmit: (data: KanjiCardFormData) => void;
@@ -27,6 +28,8 @@ export function KanjiCardForm({ onSubmit, onCancel, initialData, fixedLevel, fix
   const [radicals, setRadicals] = useState(initialData?.radicals?.join(', ') || '');
   const [sampleWords, setSampleWords] = useState<KanjiSampleWord[]>(initialData?.sampleWords?.length ? initialData.sampleWords : [{ ...emptySampleWord }]);
   const [jlptLevel, setJlptLevel] = useState<JLPTLevel>(fixedLevel || initialData?.jlptLevel || 'N5');
+  // Pool of alternative words for swapping (populated on auto-fill)
+  const [wordPool, setWordPool] = useState<KanjiSampleWord[]>([]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +55,37 @@ export function KanjiCardForm({ onSubmit, onCancel, initialData, fixedLevel, fix
     updated[index] = { ...updated[index], [field]: value };
     setSampleWords(updated);
   };
+
+  // Auto-fill sample words + mnemonic from seed data
+  const handleAutoFill = useCallback(() => {
+    if (!character.trim()) return;
+    const seed = getSeedByCharacter(character.trim());
+    if (!seed) { alert('Không tìm thấy dữ liệu mẫu cho chữ này'); return; }
+    if (seed.sampleWords.length > 0) setSampleWords(seed.sampleWords);
+    if (seed.mnemonic && !mnemonic.trim()) setMnemonic(seed.mnemonic);
+    setWordPool(seed.extraWords);
+  }, [character, mnemonic]);
+
+  // Swap a sample word at index with next available from seed pool
+  // Auto-loads pool on first swap if not yet loaded
+  const handleSwapWord = useCallback((index: number) => {
+    let pool = wordPool;
+    // Lazy-load pool if empty and character exists
+    if (pool.length === 0 && character.trim()) {
+      const seed = getSeedByCharacter(character.trim());
+      if (!seed || seed.extraWords.length === 0) return;
+      pool = seed.extraWords;
+    }
+    if (pool.length === 0) return;
+    const currentWord = sampleWords[index];
+    const replacement = pool[0];
+    const updated = [...sampleWords];
+    updated[index] = replacement;
+    setSampleWords(updated);
+    const newPool = pool.slice(1);
+    if (currentWord.word.trim()) newPool.push(currentWord);
+    setWordPool(newPool);
+  }, [sampleWords, wordPool, character]);
 
   return (
     <form onSubmit={handleSubmit} className="grammar-card-form" style={{ '--form-accent': LEVEL_COLORS[fixedLevel || jlptLevel] } as React.CSSProperties}>
@@ -90,10 +124,14 @@ export function KanjiCardForm({ onSubmit, onCancel, initialData, fixedLevel, fix
               <input type="text" value={sw.word} onChange={e => updateSampleWord(i, 'word', e.target.value)} placeholder="漢字" className="input" style={{ flex: 1 }} />
               <input type="text" value={sw.reading} onChange={e => updateSampleWord(i, 'reading', e.target.value)} placeholder="かんじ" className="input" style={{ flex: 1 }} />
               <input type="text" value={sw.meaning} onChange={e => updateSampleWord(i, 'meaning', e.target.value)} placeholder="Chữ Hán" className="input" style={{ flex: 1 }} />
+              <button type="button" className="btn btn-icon kanji-swap-btn" title="Đổi từ khác" onClick={() => handleSwapWord(i)}><RefreshCw size={14} /></button>
               <button type="button" className="btn btn-icon" onClick={() => sampleWords.length > 1 && setSampleWords(sampleWords.filter((_, j) => j !== i))} disabled={sampleWords.length <= 1}><Trash2 size={16} /></button>
             </div>
           ))}
-          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setSampleWords([...sampleWords, { ...emptySampleWord }])}><Plus size={14} /> Thêm từ mẫu</button>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setSampleWords([...sampleWords, { ...emptySampleWord }])}><Plus size={14} /> Thêm từ mẫu</button>
+            <button type="button" className="btn btn-sm kanji-auto-fill-btn" onClick={handleAutoFill} disabled={!character.trim()}><Sparkles size={14} /> Tự động điền</button>
+          </div>
         </div>
       </div>
       <div className="form-actions">
