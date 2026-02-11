@@ -50,7 +50,7 @@ export const styles = `
     font-size: 0.75rem;
     color: white;
     flex-shrink: 0;
-    height: 26px;
+    height: 32px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -72,7 +72,7 @@ export const styles = `
 
   .filter-chip {
     padding: 0.25rem 0.5rem;
-    border-radius: 12px;
+    border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(255, 255, 255, 0.03);
     color: rgba(255, 255, 255, 0.5);
@@ -84,7 +84,7 @@ export const styles = `
     min-width: 4.5rem;
     text-align: center;
     box-sizing: border-box;
-    height: 26px;
+    height: 32px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -121,18 +121,19 @@ export const styles = `
   }
 
   .action-btn {
-    display: flex;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
-    padding: 0.35rem 0.6rem;
-    border-radius: 6px;
+    justify-content: center;
+    border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(255, 255, 255, 0.05);
     color: rgba(255, 255, 255, 0.7);
-    font-size: 0.7rem;
-    font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
+    flex-shrink: 0;
+    box-sizing: border-box;
   }
 
   .action-btn:hover {
@@ -148,12 +149,6 @@ export const styles = `
 
   .action-btn .btn-text {
     display: none;
-  }
-
-  @media (min-width: 500px) {
-    .action-btn .btn-text {
-      display: inline;
-    }
   }
 
   .header-btn {
@@ -1054,8 +1049,20 @@ export const styles = `
 
     .filter-chip {
       font-size: 0.6rem;
-      padding: 0.2rem 0.35rem;
-      border-radius: 10px;
+      padding: 0 0.35rem;
+      height: 28px;
+    }
+
+    .btn-back, .header-btn, .action-btn {
+      height: 28px;
+    }
+
+    .btn-back, .header-btn {
+      width: 28px;
+    }
+
+    .level-badge {
+      height: 28px;
     }
   }
 
@@ -1064,28 +1071,31 @@ export const styles = `
       padding: 0.25rem;
     }
 
-    .btn-back {
-      width: 28px;
-      height: 28px;
-    }
-
-    .header-btn {
-      width: 28px;
-      height: 28px;
-    }
-
     .header-actions {
       gap: 0.2rem;
     }
 
     .level-badge {
-      padding: 0.2rem 0.4rem;
+      padding: 0 0.4rem;
       font-size: 0.65rem;
     }
 
     .filter-chip {
       font-size: 0.55rem;
-      padding: 0.15rem 0.3rem;
+      padding: 0 0.3rem;
+      min-width: 3.5rem;
+    }
+
+    .btn-back, .header-btn, .action-btn {
+      height: 26px;
+    }
+
+    .btn-back, .header-btn {
+      width: 26px;
+    }
+
+    .level-badge, .filter-chip {
+      height: 26px;
     }
 
     .side-nav-btn {
