@@ -14,6 +14,25 @@ export interface ListeningFolder {
   createdBy: string;
 }
 
+export type TtsMode = 'single' | 'kaiwa';
+
+export type KaiwaGender = 'male' | 'female' | 'boy' | 'girl';
+
+export interface KaiwaCharacter {
+  id: string;
+  name: string; // Display name (e.g., たなか, マリア)
+  gender: KaiwaGender;
+  voiceURI: string; // SpeechSynthesis voice URI
+  pitch?: number; // 0.1 - 2.0, default 1.0
+  rate?: number; // Multiplier for speech rate, default 1.0
+  presetId?: string; // Voice preset identifier
+}
+
+export interface KaiwaLine {
+  speaker: string; // Character name
+  text: string; // Line content (may include furigana markup)
+}
+
 export interface ListeningAudio {
   id: string;
   title: string;
@@ -22,8 +41,10 @@ export interface ListeningAudio {
   duration: number; // in seconds
   jlptLevel: JLPTLevel;
   folderId: string;
-  textContent?: string; // Japanese text for TTS playback
+  textContent?: string; // Japanese text for TTS playback (single mode)
   isTextToSpeech?: boolean; // true if this entry uses browser TTS instead of audio file
+  ttsMode?: TtsMode; // 'single' (default) or 'kaiwa' (conversation)
+  kaiwaLines?: KaiwaLine[]; // Conversation lines for kaiwa mode
   createdAt: Date;
   createdBy: string;
 }

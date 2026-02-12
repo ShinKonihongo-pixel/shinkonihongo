@@ -7,16 +7,18 @@ import {
   Trash2, Edit2, Save, X, ChevronRight, ChevronLeft,
   Upload, Music, FolderPlus, Play, Pause, Headphones, Sparkles,
   BookOpen, MessageCircle, FileText, Layers, Wand2, Loader2,
-  Type, Quote, Volume2, Square
+  Type, Quote, Volume2, Square, Plus, Users, Settings
 } from 'lucide-react';
 import { useGroq } from '../../hooks/use-groq';
 import { removeFurigana, hasFurigana } from '../../lib/furigana-utils';
 import { FuriganaText } from '../common/furigana-text';
 import { LevelGrid } from './level-grid';
 import { LISTENING_LESSONS } from '../../hooks/use-listening';
+import { useKaiwaCharacters, createUtteranceForCharacter, getPresetForCharacter } from '../../hooks/use-kaiwa-characters';
+import { KaiwaCharacterModal } from './kaiwa-character-modal';
 import type { JLPTLevel } from '../../types/flashcard';
 import type { CurrentUser } from '../../types/user';
-import type { ListeningAudio, ListeningFolder, ListeningLessonType } from '../../types/listening';
+import type { ListeningAudio, ListeningFolder, ListeningLessonType, KaiwaLine, TtsMode } from '../../types/listening';
 
 const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 void JLPT_LEVELS;
@@ -61,7 +63,7 @@ interface ListeningTabProps {
   audios: ListeningAudio[];
   folders: ListeningFolder[];
   onAddAudio: (data: Omit<ListeningAudio, 'id' | 'createdAt' | 'createdBy'>, file: File) => Promise<void>;
-  onAddTextAudio: (data: { title: string; description: string; textContent: string; jlptLevel: JLPTLevel; folderId: string }) => Promise<void>;
+  onAddTextAudio: (data: { title: string; description: string; textContent: string; jlptLevel: JLPTLevel; folderId: string; ttsMode?: TtsMode; kaiwaLines?: KaiwaLine[] }) => Promise<void>;
   onUpdateAudio: (id: string, data: Partial<ListeningAudio>) => Promise<void>;
   onDeleteAudio: (id: string) => Promise<void>;
   onAddFolder: (name: string, level: JLPTLevel, lessonType: ListeningLessonType, lessonNumber?: number) => Promise<void>;
@@ -95,8 +97,11 @@ export function ListeningTab({
   const [newFolderName, setNewFolderName] = useState('');
   const [editingFolder, setEditingFolder] = useState<{ id: string; name: string } | null>(null);
 
-  // Editing TTS audio state
-  const [editingAudio, setEditingAudio] = useState<{ id: string; title: string; textContent: string; description: string } | null>(null);
+  // Editing TTS audio state (supports both single and kaiwa modes)
+  const [editingAudio, setEditingAudio] = useState<{
+    id: string; title: string; textContent: string; description: string;
+    ttsMode?: TtsMode; kaiwaLines?: KaiwaLine[];
+  } | null>(null);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
 
   // Audio form state
@@ -112,6 +117,12 @@ export function ListeningTab({
   const [ttsText, setTtsText] = useState('');
   const [ttsDescription, setTtsDescription] = useState('');
   const [ttsPreviewing, setTtsPreviewing] = useState(false);
+  const [ttsMode, setTtsMode] = useState<TtsMode>('single');
+
+  // Kaiwa character system (localStorage-backed voices)
+  const { characters: kaiwaCharacters, jaVoices, addCharacter, updateCharacter, deleteCharacter, getCharacterByName } = useKaiwaCharacters();
+  const [showCharacterModal, setShowCharacterModal] = useState(false);
+  const [kaiwaLines, setKaiwaLines] = useState<KaiwaLine[]>([{ speaker: '', text: '' }]);
 
   // Furigana generation
   const { generateFurigana } = useGroq();
@@ -275,11 +286,22 @@ export function ListeningTab({
 
   const handleUpdateTtsAudio = async () => {
     if (!editingAudio || !editingAudio.title.trim()) return;
-    await onUpdateAudio(editingAudio.id, {
-      title: editingAudio.title.trim(),
-      textContent: editingAudio.textContent.trim(),
-      description: editingAudio.description.trim(),
-    });
+    if (editingAudio.ttsMode === 'kaiwa' && editingAudio.kaiwaLines) {
+      const validLines = editingAudio.kaiwaLines.filter(l => l.text.trim());
+      const textContent = validLines.map(l => `${l.speaker}：${l.text}`).join('\n');
+      await onUpdateAudio(editingAudio.id, {
+        title: editingAudio.title.trim(),
+        textContent,
+        description: editingAudio.description.trim(),
+        kaiwaLines: validLines,
+      });
+    } else {
+      await onUpdateAudio(editingAudio.id, {
+        title: editingAudio.title.trim(),
+        textContent: editingAudio.textContent.trim(),
+        description: editingAudio.description.trim(),
+      });
+    }
     setEditingAudio(null);
   };
 
@@ -299,24 +321,47 @@ export function ListeningTab({
 
   // TTS handlers
   const handlePreviewTts = () => {
-    if (!ttsText.trim()) return;
     if (ttsPreviewing) {
       speechSynthesis.cancel();
       setTtsPreviewing(false);
       return;
     }
-    const plainText = removeFurigana(ttsText);
-    const utterance = new SpeechSynthesisUtterance(plainText);
-    utterance.lang = 'ja-JP';
-    utterance.rate = 0.9;
-    utterance.onend = () => setTtsPreviewing(false);
-    utterance.onerror = () => setTtsPreviewing(false);
     setTtsPreviewing(true);
-    speechSynthesis.speak(utterance);
+
+    if (ttsMode === 'kaiwa') {
+      // Read kaiwa lines sequentially with character-specific voices
+      const validLines = kaiwaLines.filter(l => l.text.trim());
+      if (validLines.length === 0) { setTtsPreviewing(false); return; }
+      let idx = 0;
+      const speakNext = () => {
+        if (idx >= validLines.length) { setTtsPreviewing(false); return; }
+        const line = validLines[idx++];
+        const character = getCharacterByName(line.speaker);
+        const utterance = createUtteranceForCharacter(removeFurigana(line.text), character, 0.9);
+        utterance.onend = speakNext;
+        utterance.onerror = () => setTtsPreviewing(false);
+        speechSynthesis.speak(utterance);
+      };
+      speakNext();
+    } else {
+      if (!ttsText.trim()) { setTtsPreviewing(false); return; }
+      const plainText = removeFurigana(ttsText);
+      const utterance = new SpeechSynthesisUtterance(plainText);
+      utterance.lang = 'ja-JP';
+      utterance.rate = 0.9;
+      utterance.onend = () => setTtsPreviewing(false);
+      utterance.onerror = () => setTtsPreviewing(false);
+      speechSynthesis.speak(utterance);
+    }
   };
 
   const handleAddTextAudio = async () => {
-    if (!ttsTitle.trim() || !ttsText.trim() || navState.type !== 'lessonType') return;
+    if (!ttsTitle.trim() || navState.type !== 'lessonType') return;
+
+    // Validate based on mode
+    if (ttsMode === 'single' && !ttsText.trim()) return;
+    if (ttsMode === 'kaiwa' && kaiwaLines.every(l => !l.text.trim())) return;
+
     const typeFolders = getFoldersByLevelLessonAndType(navState.level, navState.lessonNumber, navState.lessonType);
     let folderId: string;
     if (typeFolders.length > 0) {
@@ -329,17 +374,27 @@ export function ListeningTab({
       if (!folderId) return;
     }
 
+    const validLines = kaiwaLines.filter(l => l.text.trim());
+    // For kaiwa, build textContent from lines for display/search
+    const textContent = ttsMode === 'kaiwa'
+      ? validLines.map(l => `${l.speaker}：${l.text}`).join('\n')
+      : ttsText.trim();
+
     await onAddTextAudio({
       title: ttsTitle.trim(),
       description: ttsDescription.trim(),
-      textContent: ttsText.trim(),
+      textContent,
       jlptLevel: navState.level,
       folderId,
+      ttsMode,
+      kaiwaLines: ttsMode === 'kaiwa' ? validLines : undefined,
     });
 
+    // Reset form
     setTtsTitle('');
     setTtsText('');
     setTtsDescription('');
+    setKaiwaLines([{ speaker: kaiwaCharacters[0]?.name || '', text: '' }]);
     setShowTextToSpeech(false);
   };
 
@@ -352,16 +407,31 @@ export function ListeningTab({
       }
       setPlayingAudioId(null);
     } else {
-      if (audio.isTextToSpeech && audio.textContent) {
+      if (audio.isTextToSpeech) {
         speechSynthesis.cancel();
-        const plainText = removeFurigana(audio.textContent);
-        const utterance = new SpeechSynthesisUtterance(plainText);
-        utterance.lang = 'ja-JP';
-        utterance.rate = 0.9;
-        utterance.onend = () => setPlayingAudioId(null);
-        utterance.onerror = () => setPlayingAudioId(null);
         setPlayingAudioId(audio.id);
-        speechSynthesis.speak(utterance);
+
+        if (audio.ttsMode === 'kaiwa' && audio.kaiwaLines?.length) {
+          // Play kaiwa lines sequentially with character-specific voices
+          let idx = 0;
+          const speakNext = () => {
+            if (idx >= audio.kaiwaLines!.length) { setPlayingAudioId(null); return; }
+            const line = audio.kaiwaLines![idx++];
+            const character = getCharacterByName(line.speaker);
+            const utterance = createUtteranceForCharacter(removeFurigana(line.text), character, 0.9);
+            utterance.onend = speakNext;
+            utterance.onerror = () => setPlayingAudioId(null);
+            speechSynthesis.speak(utterance);
+          };
+          speakNext();
+        } else if (audio.textContent) {
+          const utterance = new SpeechSynthesisUtterance(removeFurigana(audio.textContent));
+          utterance.lang = 'ja-JP';
+          utterance.rate = 0.9;
+          utterance.onend = () => setPlayingAudioId(null);
+          utterance.onerror = () => setPlayingAudioId(null);
+          speechSynthesis.speak(utterance);
+        }
       } else {
         const url = await getAudioUrl(audio);
         if (url && audioRef.current) {
@@ -940,6 +1010,186 @@ export function ListeningTab({
       color: rgba(6, 182, 212, 0.8);
     }
 
+    /* TTS mode toggle */
+    .tts-mode-toggle {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .mode-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.6rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .mode-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+    }
+
+    .mode-btn.active {
+      background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+      border-color: transparent;
+      color: white;
+    }
+
+    /* Kaiwa characters */
+    .kaiwa-characters {
+      margin-bottom: 0.75rem;
+    }
+
+    .kaiwa-characters label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 0.4rem;
+    }
+
+    .character-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      align-items: center;
+    }
+
+    .character-tag {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.35rem 0.7rem;
+      background: rgba(236, 72, 153, 0.15);
+      border: 1px solid rgba(236, 72, 153, 0.3);
+      border-radius: 8px;
+      color: #f472b6;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .character-tag button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: rgba(255, 255, 255, 0.4);
+      padding: 0;
+      display: flex;
+    }
+
+    .character-tag button:hover { color: #f87171; }
+
+    .add-character {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .add-character input {
+      width: 80px;
+      padding: 0.35rem 0.6rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: white;
+      font-size: 0.8rem;
+    }
+
+    .add-character input::placeholder { color: rgba(255, 255, 255, 0.4); }
+    .add-character input:focus { outline: none; border-color: rgba(236, 72, 153, 0.5); }
+
+    .add-character .btn-save {
+      padding: 0.35rem 0.5rem;
+      font-size: 0.75rem;
+    }
+
+    /* Kaiwa lines */
+    .kaiwa-lines {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .kaiwa-lines label {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .kaiwa-line {
+      display: flex;
+      gap: 0.4rem;
+      align-items: center;
+    }
+
+    .speaker-select {
+      width: 80px;
+      padding: 0.5rem;
+      background: rgba(236, 72, 153, 0.1);
+      border: 1px solid rgba(236, 72, 153, 0.3);
+      border-radius: 8px;
+      color: #f472b6;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .speaker-select:focus { outline: none; border-color: rgba(236, 72, 153, 0.5); }
+    .speaker-select option { background: #1a1a2e; color: white; }
+
+    .kaiwa-line input {
+      flex: 1;
+      padding: 0.5rem 0.75rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: white;
+      font-size: 0.85rem;
+    }
+
+    .kaiwa-line input::placeholder { color: rgba(255, 255, 255, 0.4); }
+    .kaiwa-line input:focus { outline: none; border-color: rgba(6, 182, 212, 0.5); }
+
+    /* Kaiwa preview in audio list */
+    .kaiwa-preview-lines {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      margin-top: 0.15rem;
+    }
+
+    .kaiwa-preview-line {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.6;
+    }
+
+    .kaiwa-preview-line strong {
+      color: #f472b6;
+      font-weight: 600;
+    }
+
+    .kaiwa-preview-line ruby rt {
+      font-size: 0.55em;
+      color: rgba(6, 182, 212, 0.7);
+    }
+
+    .kaiwa-preview-more {
+      font-size: 0.7rem;
+      color: rgba(255, 255, 255, 0.4);
+      font-style: italic;
+    }
+
     .audio-actions button {
       padding: 0.5rem;
       background: none;
@@ -1292,9 +1542,10 @@ export function ListeningTab({
           {typeLabel}
         </span>
         <h3>{allAudios.length} file</h3>
-        <button className="add-btn" onClick={() => { setShowAddAudio(true); setShowTextToSpeech(false); }}>
+        {/* TODO: Re-enable when Firebase Storage CORS is fixed */}
+        {/* <button className="add-btn" onClick={() => { setShowAddAudio(true); setShowTextToSpeech(false); }}>
           <Upload size={18} /> Tải file
-        </button>
+        </button> */}
         <button className="add-btn" onClick={() => { setShowTextToSpeech(true); setShowAddAudio(false); }} style={{ background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)' }}>
           <Type size={18} /> Tạo từ text
         </button>
@@ -1312,32 +1563,122 @@ export function ListeningTab({
               onChange={e => setTtsTitle(e.target.value)}
             />
           </div>
-          <div className="form-row">
-            <label className="label-with-furigana">
-              <span>Nội dung tiếng Nhật:</span>
-              <button
-                type="button"
-                className="furigana-btn"
-                onClick={handleGenerateFuriganaTtsText}
-                disabled={!!generatingFurigana || !ttsText.trim()}
-                title="Tạo furigana cho mỗi chữ kanji"
-              >
-                {generatingFurigana === 'ttsText' ? <Loader2 size={14} className="spin-icon" /> : <Wand2 size={14} />}
-                <span>Furigana</span>
-              </button>
-            </label>
-            <textarea
-              placeholder="Nhập nội dung tiếng Nhật để đọc..."
-              value={ttsText}
-              onChange={e => setTtsText(e.target.value)}
-              rows={4}
-            />
-            {hasFurigana(ttsText) && (
-              <div className="furigana-preview">
-                <FuriganaText text={ttsText} showFurigana={true} />
-              </div>
-            )}
+
+          {/* Mode toggle: Câu đơn / Kaiwa */}
+          <div className="tts-mode-toggle">
+            <button
+              className={`mode-btn ${ttsMode === 'single' ? 'active' : ''}`}
+              onClick={() => setTtsMode('single')}
+            >
+              <Type size={16} /> Câu đơn
+            </button>
+            <button
+              className={`mode-btn ${ttsMode === 'kaiwa' ? 'active' : ''}`}
+              onClick={() => setTtsMode('kaiwa')}
+            >
+              <Users size={16} /> Kaiwa
+            </button>
           </div>
+
+          {/* Single mode */}
+          {ttsMode === 'single' && (
+            <div className="form-row">
+              <label className="label-with-furigana">
+                <span>Nội dung tiếng Nhật:</span>
+                <button
+                  type="button"
+                  className="furigana-btn"
+                  onClick={handleGenerateFuriganaTtsText}
+                  disabled={!!generatingFurigana || !ttsText.trim()}
+                  title="Tạo furigana cho mỗi chữ kanji"
+                >
+                  {generatingFurigana === 'ttsText' ? <Loader2 size={14} className="spin-icon" /> : <Wand2 size={14} />}
+                  <span>Furigana</span>
+                </button>
+              </label>
+              <textarea
+                placeholder="Nhập nội dung tiếng Nhật để đọc..."
+                value={ttsText}
+                onChange={e => setTtsText(e.target.value)}
+                rows={4}
+              />
+              {hasFurigana(ttsText) && (
+                <div className="furigana-preview">
+                  <FuriganaText text={ttsText} showFurigana={true} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Kaiwa mode */}
+          {ttsMode === 'kaiwa' && (
+            <>
+              {/* Character management */}
+              <div className="kaiwa-characters">
+                <label>Nhân vật:</label>
+                <div className="character-list">
+                  {kaiwaCharacters.map(char => {
+                    const preset = getPresetForCharacter(char);
+                    return (
+                      <span key={char.id} className="character-tag">
+                        {preset?.emoji || '👤'} {char.name}
+                      </span>
+                    );
+                  })}
+                  <button
+                    className="add-btn"
+                    onClick={() => setShowCharacterModal(true)}
+                    style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+                  >
+                    <Settings size={14} /> Cài đặt
+                  </button>
+                </div>
+              </div>
+
+              {/* Dialogue lines */}
+              <div className="kaiwa-lines">
+                <label>Hội thoại:</label>
+                {kaiwaLines.map((line, idx) => (
+                  <div key={idx} className="kaiwa-line">
+                    <select
+                      value={line.speaker}
+                      onChange={e => {
+                        const updated = [...kaiwaLines];
+                        updated[idx] = { ...updated[idx], speaker: e.target.value };
+                        setKaiwaLines(updated);
+                      }}
+                      className="speaker-select"
+                    >
+                      {kaiwaCharacters.map(c => { const p = getPresetForCharacter(c); return <option key={c.id} value={c.name}>{p?.emoji || '👤'} {c.name}</option>; })}
+                    </select>
+                    <input
+                      type="text"
+                      placeholder="Nội dung câu nói..."
+                      value={line.text}
+                      onChange={e => {
+                        const updated = [...kaiwaLines];
+                        updated[idx] = { ...updated[idx], text: e.target.value };
+                        setKaiwaLines(updated);
+                      }}
+                    />
+                    {kaiwaLines.length > 1 && (
+                      <button className="btn-cancel" onClick={() => setKaiwaLines(kaiwaLines.filter((_, i) => i !== idx))} style={{ padding: '0.4rem' }}>
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  className="add-btn"
+                  onClick={() => setKaiwaLines([...kaiwaLines, { speaker: kaiwaCharacters[0]?.name || '', text: '' }])}
+                  style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', alignSelf: 'flex-start' }}
+                >
+                  <Plus size={14} /> Thêm câu
+                </button>
+              </div>
+            </>
+          )}
+
           <div className="form-row">
             <label>Mô tả (tuỳ chọn):</label>
             <textarea
@@ -1353,6 +1694,7 @@ export function ListeningTab({
               setTtsTitle('');
               setTtsText('');
               setTtsDescription('');
+              setKaiwaLines([{ speaker: kaiwaCharacters[0]?.name || '', text: '' }]);
               speechSynthesis.cancel();
               setTtsPreviewing(false);
             }}><X size={16} /> Huỷ</button>
@@ -1360,11 +1702,11 @@ export function ListeningTab({
               className="btn-save"
               onClick={handlePreviewTts}
               style={{ background: ttsPreviewing ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' : 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)' }}
-              disabled={!ttsText.trim()}
+              disabled={ttsMode === 'single' ? !ttsText.trim() : kaiwaLines.every(l => !l.text.trim())}
             >
               {ttsPreviewing ? <><Square size={16} /> Dừng</> : <><Volume2 size={16} /> Nghe thử</>}
             </button>
-            <button className="btn-save" onClick={handleAddTextAudio} disabled={!ttsTitle.trim() || !ttsText.trim()}>
+            <button className="btn-save" onClick={handleAddTextAudio} disabled={!ttsTitle.trim() || (ttsMode === 'single' ? !ttsText.trim() : kaiwaLines.every(l => !l.text.trim()))}>
               <Save size={16} /> Lưu
             </button>
           </div>
@@ -1511,7 +1853,7 @@ export function ListeningTab({
               <Music size={48} strokeWidth={1} />
             </div>
             <p>Chưa có file nghe nào</p>
-            <span className="empty-hint">Nhấn "Tải file" hoặc "Tạo từ text" để thêm nội dung mới</span>
+            <span className="empty-hint">Nhấn "Tạo từ text" để thêm nội dung mới</span>
           </div>
         ) : (
           allAudios.map((audio, idx) => (
@@ -1532,30 +1874,83 @@ export function ListeningTab({
                       autoFocus
                     />
                   </div>
-                  <div className="form-row">
-                    <label className="label-with-furigana">
-                      <span>Nội dung:</span>
+
+                  {/* Kaiwa edit: line-by-line editor */}
+                  {editingAudio.ttsMode === 'kaiwa' && editingAudio.kaiwaLines ? (
+                    <div className="kaiwa-lines">
+                      <label>Hội thoại:</label>
+                      {editingAudio.kaiwaLines.map((line, idx) => (
+                        <div key={idx} className="kaiwa-line">
+                          <select
+                            value={line.speaker}
+                            onChange={e => {
+                              const updated = [...editingAudio.kaiwaLines!];
+                              updated[idx] = { ...updated[idx], speaker: e.target.value };
+                              setEditingAudio({ ...editingAudio, kaiwaLines: updated });
+                            }}
+                            className="speaker-select"
+                          >
+                            {kaiwaCharacters.map(c => { const p = getPresetForCharacter(c); return <option key={c.id} value={c.name}>{p?.emoji || '👤'} {c.name}</option>; })}
+                          </select>
+                          <input
+                            type="text"
+                            placeholder="Nội dung câu nói..."
+                            value={line.text}
+                            onChange={e => {
+                              const updated = [...editingAudio.kaiwaLines!];
+                              updated[idx] = { ...updated[idx], text: e.target.value };
+                              setEditingAudio({ ...editingAudio, kaiwaLines: updated });
+                            }}
+                          />
+                          {editingAudio.kaiwaLines!.length > 1 && (
+                            <button className="btn-cancel" onClick={() => {
+                              const updated = editingAudio.kaiwaLines!.filter((_, i) => i !== idx);
+                              setEditingAudio({ ...editingAudio, kaiwaLines: updated });
+                            }} style={{ padding: '0.4rem' }}>
+                              <X size={14} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
                       <button
-                        type="button"
-                        className="furigana-btn"
-                        onClick={handleGenerateFuriganaEditText}
-                        disabled={!!generatingFurigana || !editingAudio.textContent.trim()}
+                        className="add-btn"
+                        onClick={() => setEditingAudio({
+                          ...editingAudio,
+                          kaiwaLines: [...editingAudio.kaiwaLines!, { speaker: kaiwaCharacters[0]?.name || '', text: '' }],
+                        })}
+                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', alignSelf: 'flex-start' }}
                       >
-                        {generatingFurigana === 'ttsText' ? <Loader2 size={14} className="spin-icon" /> : <Wand2 size={14} />}
-                        <span>Furigana</span>
+                        <Plus size={14} /> Thêm câu
                       </button>
-                    </label>
-                    <textarea
-                      value={editingAudio.textContent}
-                      onChange={e => setEditingAudio({ ...editingAudio, textContent: e.target.value })}
-                      rows={3}
-                    />
-                    {hasFurigana(editingAudio.textContent) && (
-                      <div className="furigana-preview">
-                        <FuriganaText text={editingAudio.textContent} showFurigana={true} />
-                      </div>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    /* Single text edit */
+                    <div className="form-row">
+                      <label className="label-with-furigana">
+                        <span>Nội dung:</span>
+                        <button
+                          type="button"
+                          className="furigana-btn"
+                          onClick={handleGenerateFuriganaEditText}
+                          disabled={!!generatingFurigana || !editingAudio.textContent.trim()}
+                        >
+                          {generatingFurigana === 'ttsText' ? <Loader2 size={14} className="spin-icon" /> : <Wand2 size={14} />}
+                          <span>Furigana</span>
+                        </button>
+                      </label>
+                      <textarea
+                        value={editingAudio.textContent}
+                        onChange={e => setEditingAudio({ ...editingAudio, textContent: e.target.value })}
+                        rows={3}
+                      />
+                      {hasFurigana(editingAudio.textContent) && (
+                        <div className="furigana-preview">
+                          <FuriganaText text={editingAudio.textContent} showFurigana={true} />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="form-row">
                     <label>Mô tả:</label>
                     <textarea
@@ -1580,15 +1975,33 @@ export function ListeningTab({
                     onClick={() => togglePlayAudio(audio)}
                     style={{ '--level-gradient': audio.isTextToSpeech ? 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)' : theme.gradient } as React.CSSProperties}
                   >
-                    {playingAudioId === audio.id ? <Pause size={20} /> : audio.isTextToSpeech ? <Type size={20} /> : <Play size={20} />}
+                    {playingAudioId === audio.id ? <Pause size={20} /> : audio.isTextToSpeech ? (audio.ttsMode === 'kaiwa' ? <Users size={20} /> : <Type size={20} />) : <Play size={20} />}
                   </button>
                   <div className="audio-info">
-                    <span className="audio-title">{audio.isTextToSpeech && <Type size={14} style={{ marginRight: 4, verticalAlign: 'middle', opacity: 0.6 }} />}{audio.title}</span>
-                    {audio.isTextToSpeech && audio.textContent && (
+                    <span className="audio-title">
+                      {audio.isTextToSpeech && (audio.ttsMode === 'kaiwa'
+                        ? <Users size={14} style={{ marginRight: 4, verticalAlign: 'middle', opacity: 0.6 }} />
+                        : <Type size={14} style={{ marginRight: 4, verticalAlign: 'middle', opacity: 0.6 }} />
+                      )}
+                      {audio.title}
+                    </span>
+                    {audio.isTextToSpeech && audio.ttsMode === 'kaiwa' && audio.kaiwaLines?.length ? (
+                      <div className="kaiwa-preview-lines">
+                        {audio.kaiwaLines.slice(0, 3).map((line, i) => (
+                          <span key={i} className="kaiwa-preview-line">
+                            <strong>{line.speaker}：</strong>
+                            <FuriganaText text={line.text} showFurigana={true} />
+                          </span>
+                        ))}
+                        {audio.kaiwaLines.length > 3 && (
+                          <span className="kaiwa-preview-more">...+{audio.kaiwaLines.length - 3} câu</span>
+                        )}
+                      </div>
+                    ) : audio.isTextToSpeech && audio.textContent ? (
                       <span className="audio-text-content">
                         <FuriganaText text={audio.textContent} showFurigana={true} />
                       </span>
-                    )}
+                    ) : null}
                     {audio.description && <span className="audio-desc">{audio.description}</span>}
                   </div>
                   <div className="audio-actions">
@@ -1598,6 +2011,8 @@ export function ListeningTab({
                         title: audio.title,
                         textContent: audio.textContent || '',
                         description: audio.description || '',
+                        ttsMode: audio.ttsMode,
+                        kaiwaLines: audio.kaiwaLines ? [...audio.kaiwaLines] : undefined,
                       })}><Edit2 size={16} /></button>
                     )}
                     <button className="delete-btn" onClick={() => handleDeleteAudio(audio.id)}><Trash2 size={16} /></button>
@@ -1608,6 +2023,18 @@ export function ListeningTab({
           ))
         )}
       </div>
+
+      {/* Character management modal */}
+      {showCharacterModal && (
+        <KaiwaCharacterModal
+          characters={kaiwaCharacters}
+          jaVoices={jaVoices}
+          onAdd={addCharacter}
+          onUpdate={updateCharacter}
+          onDelete={deleteCharacter}
+          onClose={() => setShowCharacterModal(false)}
+        />
+      )}
 
       <audio ref={audioRef} onEnded={() => setPlayingAudioId(null)} />
       <style>{sharedStyles}</style>

@@ -6,7 +6,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage } from '../lib/firebase';
-import type { ListeningAudio, ListeningFolder, ListeningLessonType } from '../types/listening';
+import type { ListeningAudio, ListeningFolder, ListeningLessonType, KaiwaLine, TtsMode } from '../types/listening';
 import type { JLPTLevel } from '../types/flashcard';
 
 const AUDIOS_COLLECTION = 'listeningAudios';
@@ -115,23 +115,32 @@ export function useListening() {
     };
   }, []);
 
-  // Add text-based audio entry (TTS, no file upload)
+  // Add text-based audio entry (TTS, no file upload). Supports single text or kaiwa mode.
   const addTextAudio = useCallback(async (
-    data: { title: string; description: string; textContent: string; jlptLevel: JLPTLevel; folderId: string },
+    data: {
+      title: string; description: string; textContent: string;
+      jlptLevel: JLPTLevel; folderId: string;
+      ttsMode?: TtsMode; kaiwaLines?: KaiwaLine[];
+    },
     createdBy: string
   ): Promise<ListeningAudio> => {
-    const docRef = await addDoc(collection(db, AUDIOS_COLLECTION), {
+    const docData: Record<string, unknown> = {
       title: data.title,
       description: data.description,
       textContent: data.textContent,
       isTextToSpeech: true,
+      ttsMode: data.ttsMode || 'single',
       audioUrl: '',
       duration: 0,
       jlptLevel: data.jlptLevel,
       folderId: data.folderId,
       createdAt: new Date().toISOString(),
       createdBy,
-    });
+    };
+    if (data.kaiwaLines && data.kaiwaLines.length > 0) {
+      docData.kaiwaLines = data.kaiwaLines;
+    }
+    const docRef = await addDoc(collection(db, AUDIOS_COLLECTION), docData);
 
     return {
       id: docRef.id,
@@ -139,6 +148,8 @@ export function useListening() {
       description: data.description,
       textContent: data.textContent,
       isTextToSpeech: true,
+      ttsMode: data.ttsMode || 'single',
+      kaiwaLines: data.kaiwaLines,
       audioUrl: '',
       duration: 0,
       jlptLevel: data.jlptLevel,

@@ -8,6 +8,7 @@ import {
   Type, Quote, Volume2
 } from 'lucide-react';
 import { useListening, LISTENING_LESSONS, LISTENING_LESSON_TYPES } from '../../hooks/use-listening';
+import { useKaiwaCharacters, createUtteranceForCharacter } from '../../hooks/use-kaiwa-characters';
 import { JLPTLevelSelector, LEVEL_THEMES } from '../ui/jlpt-level-selector';
 import { FuriganaText } from '../common/furigana-text';
 import { removeFurigana } from '../../lib/furigana-utils';
@@ -39,6 +40,7 @@ export function ListeningPracticePage() {
     audios, folders, loading,
     getFoldersByLevelLessonAndType, getAudiosByFolder, getAudioUrl, getCountByLevel,
   } = useListening();
+  const { getCharacterByName } = useKaiwaCharacters();
 
   const [viewMode, setViewMode] = useState<ViewMode>('level-select');
   const [selectedLevel, setSelectedLevel] = useState<JLPTLevel | null>(null);
@@ -138,16 +140,30 @@ export function ListeningPracticePage() {
   };
 
   const playAudio = async (audio: ListeningAudio) => {
-    if (audio.isTextToSpeech && audio.textContent) {
+    if (audio.isTextToSpeech) {
       speechSynthesis.cancel();
-      const plainText = removeFurigana(audio.textContent);
-      const utterance = new SpeechSynthesisUtterance(plainText);
-      utterance.lang = 'ja-JP';
-      utterance.rate = playbackSpeed * 0.9;
-      utterance.onend = () => setIsPlaying(false);
-      utterance.onerror = () => setIsPlaying(false);
       setIsPlaying(true);
-      speechSynthesis.speak(utterance);
+
+      if (audio.ttsMode === 'kaiwa' && audio.kaiwaLines?.length) {
+        let idx = 0;
+        const speakNext = () => {
+          if (idx >= audio.kaiwaLines!.length) { setIsPlaying(false); return; }
+          const line = audio.kaiwaLines![idx++];
+          const character = getCharacterByName(line.speaker);
+          const utterance = createUtteranceForCharacter(removeFurigana(line.text), character, playbackSpeed * 0.9);
+          utterance.onend = speakNext;
+          utterance.onerror = () => setIsPlaying(false);
+          speechSynthesis.speak(utterance);
+        };
+        speakNext();
+      } else if (audio.textContent) {
+        const utterance = new SpeechSynthesisUtterance(removeFurigana(audio.textContent));
+        utterance.lang = 'ja-JP';
+        utterance.rate = playbackSpeed * 0.9;
+        utterance.onend = () => setIsPlaying(false);
+        utterance.onerror = () => setIsPlaying(false);
+        speechSynthesis.speak(utterance);
+      }
       return;
     }
     const url = await getAudioUrl(audio);
@@ -403,11 +419,20 @@ export function ListeningPracticePage() {
             </div>
 
             {/* Text content display for TTS entries */}
-            {currentAudio.isTextToSpeech && currentAudio.textContent && (
+            {currentAudio.isTextToSpeech && currentAudio.ttsMode === 'kaiwa' && currentAudio.kaiwaLines?.length ? (
+              <div className="tts-text-content kaiwa-display">
+                {currentAudio.kaiwaLines.map((line, i) => (
+                  <div key={i} className="kaiwa-display-line">
+                    <strong className="kaiwa-speaker">{line.speaker}</strong>
+                    <span><FuriganaText text={line.text} showFurigana={true} /></span>
+                  </div>
+                ))}
+              </div>
+            ) : currentAudio.isTextToSpeech && currentAudio.textContent ? (
               <div className="tts-text-content">
                 <FuriganaText text={currentAudio.textContent} showFurigana={true} />
               </div>
-            )}
+            ) : null}
 
             {/* Progress - only for file-based audio */}
             {!currentAudio.isTextToSpeech && (
@@ -980,6 +1005,26 @@ const practiceStyles = `
   .tts-text-content rt {
     font-size: 0.55em;
     color: rgba(6, 182, 212, 0.8);
+  }
+
+  .kaiwa-display {
+    text-align: left;
+  }
+
+  .kaiwa-display-line {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .kaiwa-display-line:last-child { border-bottom: none; }
+
+  .kaiwa-speaker {
+    color: #f472b6;
+    font-weight: 600;
+    min-width: 50px;
+    flex-shrink: 0;
   }
 
   .tts-badge {
