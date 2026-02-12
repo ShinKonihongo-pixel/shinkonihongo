@@ -2,7 +2,7 @@
 
 export type JapaneseVoiceGender = 'male' | 'female';
 
-export type JLPTLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1';
+export type JLPTLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | 'BT';
 
 export type ConversationStyle = 'casual' | 'polite' | 'formal';
 

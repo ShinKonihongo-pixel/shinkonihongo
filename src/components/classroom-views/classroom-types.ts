@@ -36,10 +36,9 @@ export interface ClassroomSubmission {
   id: string;
   userId: string;
   testId: string;
-  submittedAt: string;
+  submittedAt?: string;
   score: number;
   totalPoints: number;
-  [key: string]: unknown;
 }
 
 export interface TestsTabProps {

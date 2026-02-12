@@ -4,6 +4,7 @@ import type {
   KanjiBattleGame,
   KanjiBattleSkill,
   KanjiBattleSkillType,
+  StrokeMatchResult,
 } from '../../types/kanji-battle';
 import { KANJI_BATTLE_SKILLS } from '../../types/kanji-battle';
 import { PlayerLeaderboard, type LeaderboardPlayer } from '../game-hub/player-leaderboard';
@@ -16,7 +17,7 @@ interface KanjiBattlePlayReadProps {
   onUseHint: () => void;
   onSelectSkill: (skillType: KanjiBattleSkillType, targetId?: string) => void;
   onNextRound: () => void;
-  onSubmitDrawing?: (strokes: unknown) => void; // unused in read mode
+  onSubmitDrawing?: (strokeResults: StrokeMatchResult[], drawingTimeMs: number) => void; // unused in read mode
 }
 
 export const KanjiBattlePlayRead: React.FC<KanjiBattlePlayReadProps> = ({

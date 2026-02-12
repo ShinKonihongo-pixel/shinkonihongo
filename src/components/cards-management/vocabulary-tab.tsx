@@ -8,7 +8,7 @@ import { FlashcardList } from '../flashcard/flashcard-list';
 import { KanjiAnalysisEditor } from '../flashcard/kanji-analysis-editor';
 import { ConfirmModal } from '../ui/confirm-modal';
 import { LevelGrid } from './level-grid';
-import type { VocabularyTabProps, FlashcardNavState, Flashcard, Lesson, JLPTLevel } from './cards-management-types';
+import type { VocabularyTabProps, FlashcardNavState, Flashcard, FlashcardFormData, Lesson, JLPTLevel } from './cards-management-types';
 import { seedN5Lessons, seedN4Lessons, fixLessonOrder } from '../../scripts/seed-n5-lessons';
 // Simple export/import utilities
 function downloadAsJSON(data: unknown, filename: string) {
@@ -366,7 +366,7 @@ export function VocabularyTab({
       }
       onUpdateCard(editingCard.id, updateData);
     } else {
-      onAddCard(data, currentUser.id);
+      onAddCard(data as FlashcardFormData, currentUser.id);
     }
     setShowForm(false);
     setEditingCard(null);

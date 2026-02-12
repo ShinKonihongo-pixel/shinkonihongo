@@ -85,67 +85,6 @@ export function DictationGame({ cards, onExit }: DictationGameProps) {
     setGameState('playing');
   };
 
-  // Start a new question
-  const startQuestion = useCallback(() => {
-    setUserAnswer('');
-    setReadingCount(0);
-    setShowAnswer(false);
-    questionStartTime.current = Date.now();
-
-    // Calculate total time: 3 readings + intervals + extra time
-    const totalTime = (READING_INTERVAL * 3) + EXTRA_TIME;
-    setTimeLeft(Math.ceil(totalTime / 1000));
-
-    // Start countdown timer
-    timerRef.current = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          // Time's up - auto submit
-          handleTimeUp();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    // Start reading sequence
-    setIsReading(true);
-    startReadingSequence();
-
-    // Focus input
-    setTimeout(() => inputRef.current?.focus(), 100);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount, deps are stable callbacks
-  }, []);
-
-  // Reading sequence: read the word 3 times
-  const startReadingSequence = useCallback(() => {
-    const currentCard = gameCards[currentIndex];
-    if (!currentCard) return;
-
-    let count = 0;
-    const readNext = () => {
-      if (count >= 3) {
-        setIsReading(false);
-        return;
-      }
-
-      count++;
-      setReadingCount(count);
-      speak(currentCard.vocabulary, () => {
-        readingTimerRef.current = setTimeout(readNext, READING_INTERVAL);
-      });
-    };
-
-    readNext();
-  }, [gameCards, currentIndex, speak]);
-
-  // Effect to start question when entering playing state or moving to next
-  useEffect(() => {
-    if (gameState === 'playing' && gameCards.length > 0 && currentIndex < gameCards.length) {
-      startQuestion();
-    }
-  }, [gameState, gameCards, currentIndex, startQuestion, handleTimeUp, startReadingSequence]);
-
   // Handle time up
   const handleTimeUp = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -177,6 +116,66 @@ export function DictationGame({ cards, onExit }: DictationGameProps) {
       }
     }, 2000);
   }, [gameCards, currentIndex, userAnswer]);
+
+  // Reading sequence: read the word 3 times
+  const startReadingSequence = useCallback(() => {
+    const currentCard = gameCards[currentIndex];
+    if (!currentCard) return;
+
+    let count = 0;
+    const readNext = () => {
+      if (count >= 3) {
+        setIsReading(false);
+        return;
+      }
+
+      count++;
+      setReadingCount(count);
+      speak(currentCard.vocabulary, () => {
+        readingTimerRef.current = setTimeout(readNext, READING_INTERVAL);
+      });
+    };
+
+    readNext();
+  }, [gameCards, currentIndex, speak]);
+
+  // Start a new question
+  const startQuestion = useCallback(() => {
+    setUserAnswer('');
+    setReadingCount(0);
+    setShowAnswer(false);
+    questionStartTime.current = Date.now();
+
+    // Calculate total time: 3 readings + intervals + extra time
+    const totalTime = (READING_INTERVAL * 3) + EXTRA_TIME;
+    setTimeLeft(Math.ceil(totalTime / 1000));
+
+    // Start countdown timer
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          handleTimeUp();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // Start reading sequence
+    setIsReading(true);
+    startReadingSequence();
+
+    // Focus input
+    setTimeout(() => inputRef.current?.focus(), 100);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount, deps are stable callbacks
+  }, []);
+
+  // Effect to start question when entering playing state or moving to next
+  useEffect(() => {
+    if (gameState === 'playing' && gameCards.length > 0 && currentIndex < gameCards.length) {
+      startQuestion();
+    }
+  }, [gameState, gameCards, currentIndex, startQuestion, handleTimeUp, startReadingSequence]);
 
   // Handle manual submit
   const handleSubmit = (e: React.FormEvent) => {

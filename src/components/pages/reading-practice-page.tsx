@@ -51,6 +51,7 @@ export function ReadingPracticePage({
   const [isPinned, setIsPinned] = useState(false);
   const [isQuestionCollapsed, setIsQuestionCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [mobileQOpen, setMobileQOpen] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Settings modal
@@ -479,7 +480,7 @@ export function ReadingPracticePage({
                       onClick={() => setContentTab('passage')}
                     >
                       <FileText size={16} />
-                      <span>Nội dung bài đọc</span>
+                      <span>Nội dung</span>
                     </button>
                     <button
                       className={`content-tab ${contentTab === 'vocabulary' ? 'active' : ''}`}
@@ -557,8 +558,17 @@ export function ReadingPracticePage({
               </div>
             </div>
 
-            {/* Question Panel */}
-            <div className="question-panel">
+            {/* Question Panel - bottom sheet on mobile */}
+            <div className={`question-panel ${isMobile ? (mobileQOpen ? 'mobile-open' : 'mobile-closed') : ''}`}>
+              {/* Mobile toggle tab */}
+              {isMobile && (
+                <button className="mobile-q-toggle" onClick={() => setMobileQOpen(!mobileQOpen)}>
+                  <span className="mobile-q-toggle-label">
+                    Câu hỏi {currentQuestionIndex + 1}/{selectedPassage.questions.length}
+                  </span>
+                  {mobileQOpen ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+                </button>
+              )}
               <div className="question-card-simple">
                 {/* Simple Header with Question Steps */}
                 <div className="question-simple-header">
@@ -878,6 +888,7 @@ export function ReadingPracticePage({
           display: flex;
           flex-direction: column;
           overflow: hidden;
+          overflow-y: auto;
         }
 
         .folder-view-header {
@@ -2606,11 +2617,88 @@ export function ReadingPracticePage({
           color: white;
         }
 
+        /* Mobile question toggle button */
+        .mobile-q-toggle {
+          display: none;
+        }
+
         /* Mobile Responsive */
         @media (max-width: 900px) {
           .split-layout {
             grid-template-columns: 1fr;
-            gap: 1rem;
+            gap: 0;
+            position: relative;
+          }
+
+          .question-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 75vh;
+            display: flex;
+            flex-direction: column;
+          }
+
+          .question-panel.mobile-closed {
+            transform: translateY(calc(100% - 48px));
+          }
+
+          .question-panel.mobile-open {
+            transform: translateY(0);
+          }
+
+          .mobile-q-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: linear-gradient(145deg, rgba(40, 40, 65, 0.98) 0%, rgba(25, 25, 40, 0.98) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-bottom: none;
+            border-radius: 16px 16px 0 0;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            flex-shrink: 0;
+          }
+
+          .mobile-q-toggle-label {
+            color: rgba(255, 255, 255, 0.9);
+          }
+
+          .question-panel.mobile-closed .question-card-simple {
+            display: none;
+          }
+
+          .question-panel.mobile-open .question-card-simple {
+            border-radius: 0;
+            max-height: calc(75vh - 48px);
+            overflow-y: auto;
+          }
+
+          /* Allow content to scroll on mobile */
+          .content-panel {
+            padding-bottom: 56px;
+            min-height: 0;
+            overflow: hidden;
+          }
+
+          .content-card {
+            overflow-y: auto;
+          }
+
+          .practice-mode {
+            overflow-y: auto;
+            overflow-x: hidden;
+          }
+
+          .split-layout {
+            overflow: visible;
           }
 
           .btn-pin {
@@ -2736,31 +2824,48 @@ export function ReadingPracticePage({
           }
 
           .lesson-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.75rem;
+            grid-template-columns: 1fr;
+            gap: 0.6rem;
           }
 
           .lesson-card {
-            padding: 1rem;
-            flex-direction: column;
-            align-items: flex-start;
+            padding: 1rem 1rem;
+            flex-direction: row;
+            align-items: center;
             gap: 0.75rem;
+            min-height: 64px;
           }
 
           .lesson-number {
-            width: 44px;
-            height: 44px;
-            font-size: 1.25rem;
-            border-radius: 12px;
+            width: 40px;
+            height: 40px;
+            font-size: 1.1rem;
+            border-radius: 10px;
           }
 
-          .lesson-meta {
-            width: 100%;
-            justify-content: space-between;
+          .lesson-content {
+            flex: 1;
+            min-width: 0;
+          }
+
+          .lesson-label {
+            font-size: 0.65rem;
           }
 
           .lesson-name {
-            font-size: 1rem;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          .lesson-meta {
+            flex-shrink: 0;
+          }
+
+          .lesson-count {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.5rem;
           }
 
           /* Passage Grid Premium - Mobile: 1 column */

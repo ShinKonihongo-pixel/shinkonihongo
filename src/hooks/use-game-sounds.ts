@@ -209,6 +209,7 @@ export interface GameSoundSettings {
   customWrongSound?: CustomSoundEffect;
   customVictorySound?: CustomSoundEffect;
   customDefeatSound?: CustomSoundEffect;
+  [key: string]: unknown;
 }
 
 export interface UseGameSoundsReturn {

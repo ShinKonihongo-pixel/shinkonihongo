@@ -5,6 +5,7 @@ import type {
   KanjiBattleGame,
   KanjiBattlePlayer,
   KanjiBattleSettings,
+  KanjiBattleResults,
   CreateKanjiBattleData,
 } from '../../types/kanji-battle';
 import { DEFAULT_KANJI_BATTLE_SETTINGS } from '../../types/kanji-battle';
@@ -19,7 +20,7 @@ interface UseGameCreationProps {
     role?: string;
   };
   setGame: (game: KanjiBattleGame | null | ((prev: KanjiBattleGame | null) => KanjiBattleGame | null)) => void;
-  setGameResults: (results: unknown) => void;
+  setGameResults: (results: KanjiBattleResults | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   botTimerRef: React.MutableRefObject<NodeJS.Timeout | null>;

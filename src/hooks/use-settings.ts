@@ -164,8 +164,8 @@ export interface AppSettings {
   aiChallengeSpeedMultiplier: number;      // 0.5-2.0, default 1.0 (global fallback)
   aiChallengeAutoAddDifficulty: AutoAddDifficulty; // Difficulty when auto-adding cards
   aiChallengeLevel: 'all' | 'N5' | 'N4' | 'N3' | 'N2' | 'N1';  // JLPT level filter for questions
-  aiChallengePerAISettings: Record<AIDifficultyId, AICustomSettings>; // Per-AI settings
-  aiChallengePerLevelConfig: Record<JLPTLevelKey, JLPTLevelQuestionConfig>; // Per-level question sources
+  aiChallengePerAISettings: Partial<Record<AIDifficultyId, AICustomSettings>>; // Per-AI settings
+  aiChallengePerLevelConfig: Partial<Record<JLPTLevelKey, JLPTLevelQuestionConfig>>; // Per-level question sources
 
   // JLPT Practice Settings
   jlptDefaultQuestionCount: number;        // Default question count per session

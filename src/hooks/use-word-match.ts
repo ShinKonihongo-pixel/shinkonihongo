@@ -116,6 +116,41 @@ export function useWordMatch({ currentUser, flashcards = [] }: UseWordMatchProps
     };
   }, []);
 
+  // Add bot
+  const addBot = useCallback(() => {
+    setGame(prev => {
+      if (!prev || prev.status !== 'waiting') return prev;
+
+      const currentCount = Object.keys(prev.players).length;
+      if (currentCount >= prev.settings.maxPlayers) return prev;
+
+      const bots = generateBots(1);
+      const bot = bots[0];
+      const botId = `bot-${generateId()}`;
+
+      const newPlayers = { ...prev.players };
+      newPlayers[botId] = {
+        odinhId: botId,
+        displayName: bot.name,
+        avatar: bot.avatar,
+        score: 0,
+        correctPairs: 0,
+        perfectRounds: 0,
+        isDisconnected: false,
+        disconnectedTurns: 0,
+        hasShield: false,
+        shieldTurns: 0,
+        isChallenged: false,
+        currentMatches: [],
+        hasSubmitted: false,
+        streak: 0,
+        isBot: true,
+      };
+
+      return { ...prev, players: newPlayers };
+    });
+  }, []);
+
   // Create game
   const createGame = useCallback(async (data: CreateWordMatchData) => {
     setLoading(true);
@@ -188,41 +223,6 @@ export function useWordMatch({ currentUser, flashcards = [] }: UseWordMatchProps
     }
   }, [currentUser, flashcards, addBot]);
 
-  // Add bot
-  const addBot = useCallback(() => {
-    setGame(prev => {
-      if (!prev || prev.status !== 'waiting') return prev;
-
-      const currentCount = Object.keys(prev.players).length;
-      if (currentCount >= prev.settings.maxPlayers) return prev;
-
-      const bots = generateBots(1);
-      const bot = bots[0];
-      const botId = `bot-${generateId()}`;
-
-      const newPlayers = { ...prev.players };
-      newPlayers[botId] = {
-        odinhId: botId,
-        displayName: bot.name,
-        avatar: bot.avatar,
-        score: 0,
-        correctPairs: 0,
-        perfectRounds: 0,
-        isDisconnected: false,
-        disconnectedTurns: 0,
-        hasShield: false,
-        shieldTurns: 0,
-        isChallenged: false,
-        currentMatches: [],
-        hasSubmitted: false,
-        streak: 0,
-        isBot: true,
-      };
-
-      return { ...prev, players: newPlayers };
-    });
-  }, []);
-
   // Join game
   const joinGame = useCallback(async (_code: string) => {
     void _code; // Placeholder for future implementation
@@ -255,26 +255,6 @@ export function useWordMatch({ currentUser, flashcards = [] }: UseWordMatchProps
       return { ...prev, players: remainingPlayers };
     });
   }, [game, currentUser, isHost]);
-
-  // Start game
-  const startGame = useCallback(async () => {
-    if (!game || !isHost) return;
-
-    const playerCount = Object.keys(game.players).length;
-    if (playerCount < game.settings.minPlayers) {
-      setError(`Cần ít nhất ${game.settings.minPlayers} người chơi`);
-      return;
-    }
-
-    if (botTimerRef.current) clearTimeout(botTimerRef.current);
-
-    setGame(prev => prev ? { ...prev, status: 'starting', startedAt: new Date().toISOString() } : null);
-
-    // Start first round after countdown
-    setTimeout(() => {
-      startNextRound();
-    }, 3000);
-  }, [game, isHost, startNextRound]);
 
   // Start next round
   const startNextRound = useCallback(() => {
@@ -383,6 +363,26 @@ export function useWordMatch({ currentUser, flashcards = [] }: UseWordMatchProps
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- game changes frequently, only called explicitly by startNextRound
   }, []);
+
+  // Start game
+  const startGame = useCallback(async () => {
+    if (!game || !isHost) return;
+
+    const playerCount = Object.keys(game.players).length;
+    if (playerCount < game.settings.minPlayers) {
+      setError(`Cần ít nhất ${game.settings.minPlayers} người chơi`);
+      return;
+    }
+
+    if (botTimerRef.current) clearTimeout(botTimerRef.current);
+
+    setGame(prev => prev ? { ...prev, status: 'starting', startedAt: new Date().toISOString() } : null);
+
+    // Start first round after countdown
+    setTimeout(() => {
+      startNextRound();
+    }, 3000);
+  }, [game, isHost, startNextRound]);
 
   // Submit matches
   const submitMatches = useCallback((matches: { leftId: string; rightId: string }[]) => {

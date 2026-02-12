@@ -35,7 +35,7 @@ export const ContentPanel = forwardRef<HTMLDivElement, ContentPanelProps>(({
               onClick={() => onTabChange('passage')}
             >
               <FileText size={16} />
-              <span>Nội dung bài đọc</span>
+              <span>Nội dung</span>
             </button>
             <button
               className={`content-tab ${contentTab === 'vocabulary' ? 'active' : ''}`}

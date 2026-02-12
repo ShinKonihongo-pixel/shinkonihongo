@@ -1,11 +1,11 @@
 // Leave game logic
 import { useCallback } from 'react';
-import type { RacingGame } from '../../types/racing-game';
+import type { RacingGame, RacingGameResults } from '../../types/racing-game';
 
 interface UseLeaveGameProps {
   game: RacingGame | null;
   setGame: React.Dispatch<React.SetStateAction<RacingGame | null>>;
-  setGameResults: React.Dispatch<React.SetStateAction<unknown>>;
+  setGameResults: React.Dispatch<React.SetStateAction<RacingGameResults | null>>;
   setAvailableRooms: React.Dispatch<React.SetStateAction<RacingGame[]>>;
   currentUserId: string;
   isHost: boolean;

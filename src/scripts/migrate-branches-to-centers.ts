@@ -53,5 +53,5 @@ export async function migrateBranchesToCenters() {
 
 // Auto-export for console access
 if (typeof window !== 'undefined') {
-  (window as Record<string, unknown>).migrateBranchesToCenters = migrateBranchesToCenters;
+  (window as unknown as Record<string, unknown>).migrateBranchesToCenters = migrateBranchesToCenters;
 }

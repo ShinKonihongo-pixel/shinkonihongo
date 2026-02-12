@@ -6,7 +6,7 @@ import { Download, Upload, BookOpen, FolderOpen, FileText, ChevronRight, Plus, T
 import { GrammarCardForm } from '../flashcard/grammar-card-form';
 import { GrammarCardList } from '../flashcard/grammar-card-list';
 import { LevelGrid } from './level-grid';
-import type { GrammarTabProps, GrammarCard, GrammarLesson, JLPTLevel } from './cards-management-types';
+import type { GrammarTabProps, GrammarCard, GrammarCardFormData, GrammarLesson, JLPTLevel } from './cards-management-types';
 
 // Seed config for each level
 const SEED_CONFIG: Record<JLPTLevel, { start: number; end: number; folders: string[] }> = {
@@ -162,7 +162,7 @@ export function GrammarTab({
     if (editingCard) {
       onUpdateGrammarCard(editingCard.id, data);
     } else {
-      onAddGrammarCard(data, currentUser.id);
+      onAddGrammarCard(data as GrammarCardFormData, currentUser.id);
     }
     setShowForm(false);
     setEditingCard(null);
@@ -197,7 +197,7 @@ export function GrammarTab({
       if (data.type !== 'grammar') throw new Error('File không hợp lệ');
       let count = 0;
       for (const card of data.grammarCards) {
-        await onImportGrammarCard(card as Partial<GrammarCard>);
+        await onImportGrammarCard(card as unknown as Omit<GrammarCard, 'id'>);
         count++;
       }
       alert(`Import thành công ${count} thẻ`);

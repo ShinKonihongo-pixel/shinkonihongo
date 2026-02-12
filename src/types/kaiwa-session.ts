@@ -115,6 +115,7 @@ export const DEFAULT_KAIWA_STATS: KaiwaStats = {
     N3: { sessions: 0, avgScore: 0 },
     N2: { sessions: 0, avgScore: 0 },
     N1: { sessions: 0, avgScore: 0 },
+    BT: { sessions: 0, avgScore: 0 },
   },
   topicProgress: {
     free: { sessions: 0, avgScore: 0 },

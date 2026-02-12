@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import type { Flashcard, JLPTLevel } from '../../../types/flashcard';
-import type { GameConfig, Question, Player, GameState } from './word-scramble-types';
+import type { GameConfig, Question, Player, PlayerRole, GameState } from './word-scramble-types';
 import { DEFAULT_TIME, DEFAULT_QUESTIONS, MIN_WORD_LENGTH, AUTO_FILL_PENALTIES } from './word-scramble-constants';
 import { scrambleWord, calculateScore, generateBots } from './word-scramble-utils';
 import { useGameSounds } from '../../../hooks/use-game-sounds';
@@ -98,7 +98,7 @@ export const useWordScrambleGame = ({ flashcards, currentUser }: UseWordScramble
       score: 0,
       correctAnswers: 0,
       isCurrentUser: true,
-      role: currentUser?.role || 'user',
+      role: (currentUser?.role || 'user') as PlayerRole,
     };
 
     setGameState({
@@ -128,7 +128,7 @@ export const useWordScrambleGame = ({ flashcards, currentUser }: UseWordScramble
       score: 0,
       correctAnswers: 0,
       isCurrentUser: true,
-      role: currentUser?.role || 'user',
+      role: (currentUser?.role || 'user') as PlayerRole,
     };
 
     setGameState({

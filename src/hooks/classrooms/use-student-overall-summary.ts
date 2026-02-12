@@ -11,7 +11,7 @@ import type {
 import type { User } from '../../types/user';
 
 export function useStudentOverallSummary(
-  classroomId: string | null,
+  _classroomId: string | null,
   members: ClassroomMember[],
   users: User[],
   studentGrades: StudentGrade[],

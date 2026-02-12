@@ -3,13 +3,14 @@
 import type { LevelConfig } from './types';
 
 export const LEVEL_CONFIG: LevelConfig = {
-  levels: ['N5', 'N4', 'N3', 'N2', 'N1'],
+  levels: ['N5', 'N4', 'N3', 'N2', 'N1', 'BT'],
   colors: {
     N5: '#27ae60',
     N4: '#3498db',
     N3: '#9b59b6',
     N2: '#e67e22',
     N1: '#e74c3c',
+    BT: '#8b5cf6',
   },
   descriptions: {
     N5: 'Sơ cấp - Cơ bản',
@@ -17,6 +18,7 @@ export const LEVEL_CONFIG: LevelConfig = {
     N3: 'Trung cấp',
     N2: 'Trung cao cấp',
     N1: 'Cao cấp',
+    BT: 'Bổ túc',
   },
 };
 

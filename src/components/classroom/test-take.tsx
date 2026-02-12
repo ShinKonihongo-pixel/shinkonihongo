@@ -23,31 +23,6 @@ export function TestTake({ test, submission, onSubmit, onCancel }: TestTakeProps
   // Calculate time spent from when submission started
   const startTime = new Date(submission.startedAt).getTime();
 
-  // Timer effect for tests
-  useEffect(() => {
-    if (!test.timeLimit || test.type !== 'test') return;
-
-    const interval = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          // Auto-submit when time runs out
-          handleSubmit(true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [test.timeLimit, test.type, handleSubmit]);
-
-  // Format time for display
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
   // Handle answer change
   const handleAnswerChange = (questionId: string, answer: string | number) => {
     setAnswers(prev => ({
@@ -95,6 +70,30 @@ export function TestTake({ test, submission, onSubmit, onCancel }: TestTakeProps
     await onSubmit(submissionAnswers, timeSpent);
     setSubmitting(false);
   }, [answers, submitting, showConfirm, startTime, test.questions, onSubmit]);
+
+  // Timer effect for tests
+  useEffect(() => {
+    if (!test.timeLimit || test.type !== 'test') return;
+
+    const interval = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          handleSubmit(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [test.timeLimit, test.type, handleSubmit]);
+
+  // Format time for display
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   // Count answered questions
   const answeredCount = Object.keys(answers).length;

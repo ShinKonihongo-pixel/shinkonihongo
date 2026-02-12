@@ -11,6 +11,7 @@ import type {
   EvaluationLevel,
   StudentGrade,
   StudentAttendanceSummary,
+  AttendanceRecord,
   ClassroomSubmission,
   ClassroomTest,
 } from '../../types/classroom';
@@ -39,7 +40,7 @@ interface EvaluationPanelProps {
   attendanceSummaries?: StudentAttendanceSummary[];
   submissions?: ClassroomSubmission[];
   tests?: ClassroomTest[];
-  attendanceRecords?: Array<{ userId: string; sessionDate: string; status: string; note?: string }>;
+  attendanceRecords?: AttendanceRecord[];
 }
 
 // Rating star component

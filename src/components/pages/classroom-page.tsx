@@ -36,7 +36,7 @@ import {
   StudentOverview,
   type ViewMode,
 } from '../classroom-views';
-import type { Classroom, ClassroomFormData, ClassroomMember, ClassroomTest, TestType, SubmissionAnswer } from '../../types/classroom';
+import type { Classroom, ClassroomFormData, ClassroomMember, ClassroomTest, ClassroomSubmission, TestType, SubmissionAnswer } from '../../types/classroom';
 import type { User } from '../../types/user';
 
 interface ClassroomPageProps {

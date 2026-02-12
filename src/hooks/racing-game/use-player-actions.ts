@@ -1,6 +1,7 @@
 // Player actions hook - wrapper that combines join, leave, and submit actions
 import type {
   RacingGame,
+  RacingGameResults,
   RacingPlayer,
   RacingQuestion,
   RacingVehicle,
@@ -19,7 +20,7 @@ interface UsePlayerActionsProps {
   selectedVehicle: RacingVehicle;
   game: RacingGame | null;
   setGame: React.Dispatch<React.SetStateAction<RacingGame | null>>;
-  setGameResults: React.Dispatch<React.SetStateAction<unknown>>;
+  setGameResults: React.Dispatch<React.SetStateAction<RacingGameResults | null>>;
   availableRooms: RacingGame[];
   setAvailableRooms: React.Dispatch<React.SetStateAction<RacingGame[]>>;
   setLoading: (loading: boolean) => void;

@@ -1,13 +1,13 @@
 // Basic game actions (join, leave, kick, start, reset)
 
 import { useCallback } from 'react';
-import type { KanjiBattleGame } from '../../types/kanji-battle';
+import type { KanjiBattleGame, KanjiBattleResults } from '../../types/kanji-battle';
 
 interface UseGameActionsProps {
   currentUser: { id: string };
   game: KanjiBattleGame | null;
   setGame: (game: KanjiBattleGame | null | ((prev: KanjiBattleGame | null) => KanjiBattleGame | null)) => void;
-  setGameResults: (results: unknown) => void;
+  setGameResults: (results: KanjiBattleResults | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   isHost: boolean;

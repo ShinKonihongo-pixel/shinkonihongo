@@ -7,7 +7,7 @@ import { FlashcardList } from '../flashcard/flashcard-list';
 import { GrammarCardForm } from '../flashcard/grammar-card-form';
 import { GrammarCardList } from '../flashcard/grammar-card-list';
 import { ConfirmModal } from '../ui/confirm-modal';
-import type { FlashcardsTabProps, FlashcardNavState, Flashcard, Lesson, JLPTLevel, GrammarCard } from './cards-management-types';
+import type { FlashcardsTabProps, FlashcardNavState, Flashcard, Lesson, JLPTLevel, GrammarCard, FlashcardFormData, GrammarCardFormData } from './cards-management-types';
 import { JLPT_LEVELS } from './cards-management-types';
 import { seedN5Lessons, seedN4Lessons, fixLessonOrder } from '../../scripts/seed-n5-lessons';
 import {
@@ -299,7 +299,7 @@ export function FlashcardsTab({
       }
       onUpdateCard(editingCard.id, updateData);
     } else {
-      onAddCard(data, currentUser.id);
+      onAddCard(data as FlashcardFormData, currentUser.id);
     }
     setFormMode('none');
     setEditingCard(null);
@@ -307,7 +307,7 @@ export function FlashcardsTab({
 
   const handleGrammarSubmit = (data: Partial<GrammarCard>) => {
     if (editingGrammarCard) onUpdateGrammarCard(editingGrammarCard.id, data);
-    else onAddGrammarCard(data, currentUser.id);
+    else onAddGrammarCard(data as GrammarCardFormData, currentUser.id);
     setFormMode('none');
     setEditingGrammarCard(null);
   };

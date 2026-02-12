@@ -24,7 +24,7 @@ import type { Flashcard } from '../types/flashcard';
 const STORAGE_KEY_PREFIX = 'ai_challenge_progress_';
 
 // JLPT levels
-export type JLPTLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1';
+export type JLPTLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | 'BT';
 
 // Load progress from localStorage for specific level
 function loadProgress(level: JLPTLevel): { totalWins: number; totalGames: number } {
