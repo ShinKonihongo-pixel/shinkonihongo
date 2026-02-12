@@ -4,10 +4,13 @@
 import { useState, useRef } from 'react';
 import {
   ChevronLeft, Headphones, Play, Pause, SkipBack, SkipForward,
-  Repeat, BookOpen, MessageCircle, FileText, Layers, ChevronRight, Music
+  Repeat, BookOpen, MessageCircle, FileText, Layers, ChevronRight, Music,
+  Type, Quote, Volume2
 } from 'lucide-react';
 import { useListening, LISTENING_LESSONS, LISTENING_LESSON_TYPES } from '../../hooks/use-listening';
 import { JLPTLevelSelector, LEVEL_THEMES } from '../ui/jlpt-level-selector';
+import { FuriganaText } from '../common/furigana-text';
+import { removeFurigana } from '../../lib/furigana-utils';
 import type { JLPTLevel } from '../../types/flashcard';
 import type { ListeningAudio, ListeningLessonType } from '../../types/listening';
 
@@ -17,6 +20,8 @@ const TYPE_ICONS: Record<ListeningLessonType, typeof BookOpen> = {
   practice: BookOpen,
   conversation: MessageCircle,
   reading: FileText,
+  bunpou: Type,
+  reibun: Quote,
   other: Layers,
 };
 
@@ -24,6 +29,8 @@ const TYPE_THEMES: Record<ListeningLessonType, { gradient: string; glow: string 
   practice: { gradient: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)', glow: 'rgba(34, 197, 94, 0.4)' },
   conversation: { gradient: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)', glow: 'rgba(236, 72, 153, 0.4)' },
   reading: { gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', glow: 'rgba(245, 158, 11, 0.4)' },
+  bunpou: { gradient: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)', glow: 'rgba(6, 182, 212, 0.4)' },
+  reibun: { gradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)', glow: 'rgba(249, 115, 22, 0.4)' },
   other: { gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', glow: 'rgba(139, 92, 246, 0.4)' },
 };
 
@@ -121,6 +128,7 @@ export function ListeningPracticePage() {
 
   // Audio controls
   const stopAudio = () => {
+    speechSynthesis.cancel();
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -130,6 +138,18 @@ export function ListeningPracticePage() {
   };
 
   const playAudio = async (audio: ListeningAudio) => {
+    if (audio.isTextToSpeech && audio.textContent) {
+      speechSynthesis.cancel();
+      const plainText = removeFurigana(audio.textContent);
+      const utterance = new SpeechSynthesisUtterance(plainText);
+      utterance.lang = 'ja-JP';
+      utterance.rate = playbackSpeed * 0.9;
+      utterance.onend = () => setIsPlaying(false);
+      utterance.onerror = () => setIsPlaying(false);
+      setIsPlaying(true);
+      speechSynthesis.speak(utterance);
+      return;
+    }
     const url = await getAudioUrl(audio);
     if (url && audioRef.current) {
       audioRef.current.src = url;
@@ -142,10 +162,16 @@ export function ListeningPracticePage() {
   const togglePlay = async () => {
     if (!currentAudio) return;
     if (isPlaying) {
-      audioRef.current?.pause();
+      if (currentAudio.isTextToSpeech) {
+        speechSynthesis.cancel();
+      } else {
+        audioRef.current?.pause();
+      }
       setIsPlaying(false);
     } else {
-      if (audioRef.current?.src) {
+      if (currentAudio.isTextToSpeech) {
+        await playAudio(currentAudio);
+      } else if (audioRef.current?.src) {
         audioRef.current.play();
         setIsPlaying(true);
       } else {
@@ -371,24 +397,33 @@ export function ListeningPracticePage() {
         {currentAudio ? (
           <div className="now-playing">
             <div className="now-playing-info">
-              <h3>{currentAudio.title}</h3>
+              <h3>{currentAudio.isTextToSpeech && <Volume2 size={18} style={{ marginRight: 6, verticalAlign: 'middle', opacity: 0.7 }} />}{currentAudio.title}</h3>
               {currentAudio.description && <p>{currentAudio.description}</p>}
               <span className="track-counter">{currentAudioIndex + 1} / {currentAudios.length}</span>
             </div>
 
-            {/* Progress */}
-            <div className="audio-progress">
-              <span className="time">{formatTime(currentTime)}</span>
-              <input
-                type="range"
-                min={0}
-                max={duration || 100}
-                value={currentTime}
-                onChange={(e) => handleSeek(parseFloat(e.target.value))}
-                className="progress-slider"
-              />
-              <span className="time">{formatTime(duration)}</span>
-            </div>
+            {/* Text content display for TTS entries */}
+            {currentAudio.isTextToSpeech && currentAudio.textContent && (
+              <div className="tts-text-content">
+                <FuriganaText text={currentAudio.textContent} showFurigana={true} />
+              </div>
+            )}
+
+            {/* Progress - only for file-based audio */}
+            {!currentAudio.isTextToSpeech && (
+              <div className="audio-progress">
+                <span className="time">{formatTime(currentTime)}</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={duration || 100}
+                  value={currentTime}
+                  onChange={(e) => handleSeek(parseFloat(e.target.value))}
+                  className="progress-slider"
+                />
+                <span className="time">{formatTime(duration)}</span>
+              </div>
+            )}
 
             {/* Controls */}
             <div className="playback-controls">
@@ -446,6 +481,8 @@ export function ListeningPracticePage() {
                 <span className="track-number">{idx + 1}</span>
                 {idx === currentAudioIndex && isPlaying ? (
                   <Pause size={16} className="track-play-icon" />
+                ) : audio.isTextToSpeech ? (
+                  <Type size={16} className="track-play-icon" />
                 ) : (
                   <Play size={16} className="track-play-icon" />
                 )}
@@ -453,9 +490,11 @@ export function ListeningPracticePage() {
                   <span className="track-title">{audio.title}</span>
                   {audio.description && <span className="track-desc">{audio.description}</span>}
                 </div>
-                {audio.duration > 0 && (
+                {audio.isTextToSpeech ? (
+                  <span className="track-duration tts-badge">TTS</span>
+                ) : audio.duration > 0 ? (
                   <span className="track-duration">{formatTime(audio.duration)}</span>
-                )}
+                ) : null}
               </button>
             ))}
           </div>
@@ -920,6 +959,37 @@ const practiceStyles = `
 
   .empty-state svg { margin-bottom: 1rem; opacity: 0.5; }
   .empty-state .hint { font-size: 0.875rem; margin-top: 0.5rem; }
+
+  /* TTS text content display */
+  .tts-text-content {
+    padding: 1rem 1.25rem;
+    background: rgba(6, 182, 212, 0.08);
+    border: 1px solid rgba(6, 182, 212, 0.2);
+    border-radius: 12px;
+    font-size: 1.15rem;
+    line-height: 2;
+    color: rgba(255, 255, 255, 0.9);
+    text-align: center;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+
+  .tts-text-content ruby {
+    ruby-position: over;
+  }
+
+  .tts-text-content rt {
+    font-size: 0.55em;
+    color: rgba(6, 182, 212, 0.8);
+  }
+
+  .tts-badge {
+    background: rgba(6, 182, 212, 0.15);
+    color: #06b6d4 !important;
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.65rem !important;
+    font-weight: 600;
+  }
 
   @media (max-width: 640px) {
     .practice-content { padding: 0.65rem; }

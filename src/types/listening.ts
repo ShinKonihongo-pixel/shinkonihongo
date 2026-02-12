@@ -2,7 +2,7 @@
 
 import type { JLPTLevel } from './flashcard';
 
-export type ListeningLessonType = 'practice' | 'conversation' | 'reading' | 'other';
+export type ListeningLessonType = 'practice' | 'conversation' | 'reading' | 'other' | 'bunpou' | 'reibun';
 
 export interface ListeningFolder {
   id: string;
@@ -22,6 +22,8 @@ export interface ListeningAudio {
   duration: number; // in seconds
   jlptLevel: JLPTLevel;
   folderId: string;
+  textContent?: string; // Japanese text for TTS playback
+  isTextToSpeech?: boolean; // true if this entry uses browser TTS instead of audio file
   createdAt: Date;
   createdBy: string;
 }

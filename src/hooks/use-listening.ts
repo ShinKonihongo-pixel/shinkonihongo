@@ -18,6 +18,8 @@ export const LISTENING_LESSON_TYPES: { value: ListeningLessonType; label: string
   { value: 'practice', label: '練習' },
   { value: 'conversation', label: '会話' },
   { value: 'reading', label: '読解' },
+  { value: 'bunpou', label: '文型' },
+  { value: 'reibun', label: '例文' },
   { value: 'other', label: 'その他' },
 ];
 
@@ -28,6 +30,8 @@ export function normalizeLessonType(type?: string): ListeningLessonType {
     grammar: 'practice',
     conversation: 'conversation',
     general: 'other',
+    bunpou: 'bunpou',
+    reibun: 'reibun',
   };
   return map[type || ''] || (type as ListeningLessonType) || 'other';
 }
@@ -106,6 +110,39 @@ export function useListening() {
       ...data,
       audioUrl,
       duration,
+      createdAt: new Date(),
+      createdBy,
+    };
+  }, []);
+
+  // Add text-based audio entry (TTS, no file upload)
+  const addTextAudio = useCallback(async (
+    data: { title: string; description: string; textContent: string; jlptLevel: JLPTLevel; folderId: string },
+    createdBy: string
+  ): Promise<ListeningAudio> => {
+    const docRef = await addDoc(collection(db, AUDIOS_COLLECTION), {
+      title: data.title,
+      description: data.description,
+      textContent: data.textContent,
+      isTextToSpeech: true,
+      audioUrl: '',
+      duration: 0,
+      jlptLevel: data.jlptLevel,
+      folderId: data.folderId,
+      createdAt: new Date().toISOString(),
+      createdBy,
+    });
+
+    return {
+      id: docRef.id,
+      title: data.title,
+      description: data.description,
+      textContent: data.textContent,
+      isTextToSpeech: true,
+      audioUrl: '',
+      duration: 0,
+      jlptLevel: data.jlptLevel,
+      folderId: data.folderId,
       createdAt: new Date(),
       createdBy,
     };
@@ -226,6 +263,7 @@ export function useListening() {
     folders,
     loading,
     addAudio,
+    addTextAudio,
     updateAudio,
     deleteAudio,
     addFolder,

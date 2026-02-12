@@ -6,9 +6,12 @@ import { useState, useRef } from 'react';
 import {
   Trash2, Edit2, Save, X, ChevronRight, ChevronLeft,
   Upload, Music, FolderPlus, Play, Pause, Headphones, Sparkles,
-  BookOpen, MessageCircle, FileText, Layers, Wand2, Loader2
+  BookOpen, MessageCircle, FileText, Layers, Wand2, Loader2,
+  Type, Quote, Volume2, Square
 } from 'lucide-react';
 import { useGroq } from '../../hooks/use-groq';
+import { removeFurigana, hasFurigana } from '../../lib/furigana-utils';
+import { FuriganaText } from '../common/furigana-text';
 import { LevelGrid } from './level-grid';
 import { LISTENING_LESSONS } from '../../hooks/use-listening';
 import type { JLPTLevel } from '../../types/flashcard';
@@ -23,6 +26,8 @@ const LESSON_TYPES: { value: ListeningLessonType; label: string; icon: typeof Bo
   { value: 'practice', label: '練習', icon: BookOpen },
   { value: 'conversation', label: '会話', icon: MessageCircle },
   { value: 'reading', label: '読解', icon: FileText },
+  { value: 'bunpou', label: '文型', icon: Type },
+  { value: 'reibun', label: '例文', icon: Quote },
   { value: 'other', label: 'その他', icon: Layers },
 ];
 
@@ -41,6 +46,8 @@ const LESSON_TYPE_THEMES: Record<ListeningLessonType, { gradient: string; glow: 
   practice: { gradient: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)', glow: 'rgba(34, 197, 94, 0.4)' },
   conversation: { gradient: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)', glow: 'rgba(236, 72, 153, 0.4)' },
   reading: { gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', glow: 'rgba(245, 158, 11, 0.4)' },
+  bunpou: { gradient: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)', glow: 'rgba(6, 182, 212, 0.4)' },
+  reibun: { gradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)', glow: 'rgba(249, 115, 22, 0.4)' },
   other: { gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', glow: 'rgba(139, 92, 246, 0.4)' },
 };
 
@@ -54,6 +61,7 @@ interface ListeningTabProps {
   audios: ListeningAudio[];
   folders: ListeningFolder[];
   onAddAudio: (data: Omit<ListeningAudio, 'id' | 'createdAt' | 'createdBy'>, file: File) => Promise<void>;
+  onAddTextAudio: (data: { title: string; description: string; textContent: string; jlptLevel: JLPTLevel; folderId: string }) => Promise<void>;
   onUpdateAudio: (id: string, data: Partial<ListeningAudio>) => Promise<void>;
   onDeleteAudio: (id: string) => Promise<void>;
   onAddFolder: (name: string, level: JLPTLevel, lessonType: ListeningLessonType, lessonNumber?: number) => Promise<void>;
@@ -71,6 +79,8 @@ interface ListeningTabProps {
 export function ListeningTab({
   audios,
   onAddAudio,
+  onAddTextAudio,
+  onUpdateAudio,
   onDeleteAudio,
   onAddFolder,
   onUpdateFolder,
@@ -84,6 +94,9 @@ export function ListeningTab({
   const [showAddAudio, setShowAddAudio] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [editingFolder, setEditingFolder] = useState<{ id: string; name: string } | null>(null);
+
+  // Editing TTS audio state
+  const [editingAudio, setEditingAudio] = useState<{ id: string; title: string; textContent: string; description: string } | null>(null);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
 
   // Audio form state
@@ -93,9 +106,16 @@ export function ListeningTab({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  // TTS form state
+  const [showTextToSpeech, setShowTextToSpeech] = useState(false);
+  const [ttsTitle, setTtsTitle] = useState('');
+  const [ttsText, setTtsText] = useState('');
+  const [ttsDescription, setTtsDescription] = useState('');
+  const [ttsPreviewing, setTtsPreviewing] = useState(false);
+
   // Furigana generation
   const { generateFurigana } = useGroq();
-  const [generatingFurigana, setGeneratingFurigana] = useState<'title' | 'desc' | null>(null);
+  const [generatingFurigana, setGeneratingFurigana] = useState<'title' | 'desc' | 'ttsText' | null>(null);
 
   const handleGenerateFuriganaTitle = async () => {
     if (!audioTitle.trim() || generatingFurigana) return;
@@ -116,6 +136,19 @@ export function ListeningTab({
     try {
       const result = await generateFurigana(audioDescription);
       setAudioDescription(result);
+    } catch (err) {
+      console.error('Furigana generation failed:', err);
+    } finally {
+      setGeneratingFurigana(null);
+    }
+  };
+
+  const handleGenerateFuriganaTtsText = async () => {
+    if (!ttsText.trim() || generatingFurigana) return;
+    setGeneratingFurigana('ttsText');
+    try {
+      const result = await generateFurigana(ttsText);
+      setTtsText(result);
     } catch (err) {
       console.error('Furigana generation failed:', err);
     } finally {
@@ -240,16 +273,102 @@ export function ListeningTab({
     await onDeleteAudio(id);
   };
 
+  const handleUpdateTtsAudio = async () => {
+    if (!editingAudio || !editingAudio.title.trim()) return;
+    await onUpdateAudio(editingAudio.id, {
+      title: editingAudio.title.trim(),
+      textContent: editingAudio.textContent.trim(),
+      description: editingAudio.description.trim(),
+    });
+    setEditingAudio(null);
+  };
+
+  // Furigana for editing TTS content
+  const handleGenerateFuriganaEditText = async () => {
+    if (!editingAudio || !editingAudio.textContent.trim() || generatingFurigana) return;
+    setGeneratingFurigana('ttsText');
+    try {
+      const result = await generateFurigana(editingAudio.textContent);
+      setEditingAudio({ ...editingAudio, textContent: result });
+    } catch (err) {
+      console.error('Furigana generation failed:', err);
+    } finally {
+      setGeneratingFurigana(null);
+    }
+  };
+
+  // TTS handlers
+  const handlePreviewTts = () => {
+    if (!ttsText.trim()) return;
+    if (ttsPreviewing) {
+      speechSynthesis.cancel();
+      setTtsPreviewing(false);
+      return;
+    }
+    const plainText = removeFurigana(ttsText);
+    const utterance = new SpeechSynthesisUtterance(plainText);
+    utterance.lang = 'ja-JP';
+    utterance.rate = 0.9;
+    utterance.onend = () => setTtsPreviewing(false);
+    utterance.onerror = () => setTtsPreviewing(false);
+    setTtsPreviewing(true);
+    speechSynthesis.speak(utterance);
+  };
+
+  const handleAddTextAudio = async () => {
+    if (!ttsTitle.trim() || !ttsText.trim() || navState.type !== 'lessonType') return;
+    const typeFolders = getFoldersByLevelLessonAndType(navState.level, navState.lessonNumber, navState.lessonType);
+    let folderId: string;
+    if (typeFolders.length > 0) {
+      folderId = typeFolders[0].id;
+    } else {
+      const typeLabel = LESSON_TYPES.find(t => t.value === navState.lessonType)?.label || navState.lessonType;
+      await onAddFolder(`Bài ${navState.lessonNumber} - ${typeLabel}`, navState.level, navState.lessonType, navState.lessonNumber);
+      const newFolders = getFoldersByLevelLessonAndType(navState.level, navState.lessonNumber, navState.lessonType);
+      folderId = newFolders.length > 0 ? newFolders[0].id : '';
+      if (!folderId) return;
+    }
+
+    await onAddTextAudio({
+      title: ttsTitle.trim(),
+      description: ttsDescription.trim(),
+      textContent: ttsText.trim(),
+      jlptLevel: navState.level,
+      folderId,
+    });
+
+    setTtsTitle('');
+    setTtsText('');
+    setTtsDescription('');
+    setShowTextToSpeech(false);
+  };
+
   const togglePlayAudio = async (audio: ListeningAudio) => {
     if (playingAudioId === audio.id) {
-      audioRef.current?.pause();
+      if (audio.isTextToSpeech) {
+        speechSynthesis.cancel();
+      } else {
+        audioRef.current?.pause();
+      }
       setPlayingAudioId(null);
     } else {
-      const url = await getAudioUrl(audio);
-      if (url && audioRef.current) {
-        audioRef.current.src = url;
-        audioRef.current.play();
+      if (audio.isTextToSpeech && audio.textContent) {
+        speechSynthesis.cancel();
+        const plainText = removeFurigana(audio.textContent);
+        const utterance = new SpeechSynthesisUtterance(plainText);
+        utterance.lang = 'ja-JP';
+        utterance.rate = 0.9;
+        utterance.onend = () => setPlayingAudioId(null);
+        utterance.onerror = () => setPlayingAudioId(null);
         setPlayingAudioId(audio.id);
+        speechSynthesis.speak(utterance);
+      } else {
+        const url = await getAudioUrl(audio);
+        if (url && audioRef.current) {
+          audioRef.current.src = url;
+          audioRef.current.play();
+          setPlayingAudioId(audio.id);
+        }
       }
     }
   };
@@ -718,6 +837,20 @@ export function ListeningTab({
       border-color: rgba(255, 255, 255, 0.12);
     }
 
+    .audio-item.editing {
+      padding: 0;
+      border-color: rgba(6, 182, 212, 0.3);
+    }
+
+    .audio-edit-form {
+      width: 100%;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      animation: slideDown 0.3s ease;
+    }
+
     .play-btn {
       width: 44px;
       height: 44px;
@@ -768,12 +901,43 @@ export function ListeningTab({
       white-space: nowrap;
     }
 
+    .audio-text-content {
+      font-size: 0.85rem;
+      line-height: 1.8;
+      color: rgba(6, 182, 212, 0.9);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .audio-text-content ruby rt {
+      font-size: 0.55em;
+      color: rgba(6, 182, 212, 0.6);
+    }
+
     .audio-desc {
       font-size: 0.8rem;
       color: rgba(255, 255, 255, 0.5);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .furigana-preview {
+      margin-top: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: rgba(6, 182, 212, 0.08);
+      border: 1px solid rgba(6, 182, 212, 0.2);
+      border-radius: 10px;
+      font-size: 1.05rem;
+      line-height: 2;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .furigana-preview ruby rt {
+      font-size: 0.55em;
+      color: rgba(6, 182, 212, 0.8);
     }
 
     .audio-actions button {
@@ -1128,10 +1292,84 @@ export function ListeningTab({
           {typeLabel}
         </span>
         <h3>{allAudios.length} file</h3>
-        <button className="add-btn" onClick={() => setShowAddAudio(true)}>
+        <button className="add-btn" onClick={() => { setShowAddAudio(true); setShowTextToSpeech(false); }}>
           <Upload size={18} /> Tải file
         </button>
+        <button className="add-btn" onClick={() => { setShowTextToSpeech(true); setShowAddAudio(false); }} style={{ background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)' }}>
+          <Type size={18} /> Tạo từ text
+        </button>
       </div>
+
+      {/* TTS form */}
+      {showTextToSpeech && (
+        <div className="upload-form">
+          <div className="form-row">
+            <label>Tiêu đề:</label>
+            <input
+              type="text"
+              placeholder="Nhập tiêu đề..."
+              value={ttsTitle}
+              onChange={e => setTtsTitle(e.target.value)}
+            />
+          </div>
+          <div className="form-row">
+            <label className="label-with-furigana">
+              <span>Nội dung tiếng Nhật:</span>
+              <button
+                type="button"
+                className="furigana-btn"
+                onClick={handleGenerateFuriganaTtsText}
+                disabled={!!generatingFurigana || !ttsText.trim()}
+                title="Tạo furigana cho mỗi chữ kanji"
+              >
+                {generatingFurigana === 'ttsText' ? <Loader2 size={14} className="spin-icon" /> : <Wand2 size={14} />}
+                <span>Furigana</span>
+              </button>
+            </label>
+            <textarea
+              placeholder="Nhập nội dung tiếng Nhật để đọc..."
+              value={ttsText}
+              onChange={e => setTtsText(e.target.value)}
+              rows={4}
+            />
+            {hasFurigana(ttsText) && (
+              <div className="furigana-preview">
+                <FuriganaText text={ttsText} showFurigana={true} />
+              </div>
+            )}
+          </div>
+          <div className="form-row">
+            <label>Mô tả (tuỳ chọn):</label>
+            <textarea
+              placeholder="Mô tả hoặc bản dịch..."
+              value={ttsDescription}
+              onChange={e => setTtsDescription(e.target.value)}
+              rows={2}
+            />
+          </div>
+          <div className="form-actions">
+            <button className="btn-cancel" onClick={() => {
+              setShowTextToSpeech(false);
+              setTtsTitle('');
+              setTtsText('');
+              setTtsDescription('');
+              speechSynthesis.cancel();
+              setTtsPreviewing(false);
+            }}><X size={16} /> Huỷ</button>
+            <button
+              className="btn-save"
+              onClick={handlePreviewTts}
+              style={{ background: ttsPreviewing ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' : 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)' }}
+              disabled={!ttsText.trim()}
+            >
+              {ttsPreviewing ? <><Square size={16} /> Dừng</> : <><Volume2 size={16} /> Nghe thử</>}
+            </button>
+            <button className="btn-save" onClick={handleAddTextAudio} disabled={!ttsTitle.trim() || !ttsText.trim()}>
+              <Save size={16} /> Lưu
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Upload form */}
       {showAddAudio && (
@@ -1273,29 +1511,99 @@ export function ListeningTab({
               <Music size={48} strokeWidth={1} />
             </div>
             <p>Chưa có file nghe nào</p>
-            <span className="empty-hint">Nhấn "Tải file" để thêm nội dung mới</span>
+            <span className="empty-hint">Nhấn "Tải file" hoặc "Tạo từ text" để thêm nội dung mới</span>
           </div>
         ) : (
           allAudios.map((audio, idx) => (
             <div
               key={audio.id}
-              className="audio-item"
+              className={`audio-item ${editingAudio?.id === audio.id ? 'editing' : ''}`}
               style={{ '--item-delay': `${idx * 0.05}s` } as React.CSSProperties}
             >
-              <button
-                className={`play-btn ${playingAudioId === audio.id ? 'playing' : ''}`}
-                onClick={() => togglePlayAudio(audio)}
-                style={{ '--level-gradient': theme.gradient } as React.CSSProperties}
-              >
-                {playingAudioId === audio.id ? <Pause size={20} /> : <Play size={20} />}
-              </button>
-              <div className="audio-info">
-                <span className="audio-title">{audio.title}</span>
-                {audio.description && <span className="audio-desc">{audio.description}</span>}
-              </div>
-              <div className="audio-actions">
-                <button className="delete-btn" onClick={() => handleDeleteAudio(audio.id)}><Trash2 size={16} /></button>
-              </div>
+              {editingAudio?.id === audio.id ? (
+                /* Inline edit form for TTS entries */
+                <div className="audio-edit-form">
+                  <div className="form-row">
+                    <label>Tiêu đề:</label>
+                    <input
+                      type="text"
+                      value={editingAudio.title}
+                      onChange={e => setEditingAudio({ ...editingAudio, title: e.target.value })}
+                      autoFocus
+                    />
+                  </div>
+                  <div className="form-row">
+                    <label className="label-with-furigana">
+                      <span>Nội dung:</span>
+                      <button
+                        type="button"
+                        className="furigana-btn"
+                        onClick={handleGenerateFuriganaEditText}
+                        disabled={!!generatingFurigana || !editingAudio.textContent.trim()}
+                      >
+                        {generatingFurigana === 'ttsText' ? <Loader2 size={14} className="spin-icon" /> : <Wand2 size={14} />}
+                        <span>Furigana</span>
+                      </button>
+                    </label>
+                    <textarea
+                      value={editingAudio.textContent}
+                      onChange={e => setEditingAudio({ ...editingAudio, textContent: e.target.value })}
+                      rows={3}
+                    />
+                    {hasFurigana(editingAudio.textContent) && (
+                      <div className="furigana-preview">
+                        <FuriganaText text={editingAudio.textContent} showFurigana={true} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="form-row">
+                    <label>Mô tả:</label>
+                    <textarea
+                      value={editingAudio.description}
+                      onChange={e => setEditingAudio({ ...editingAudio, description: e.target.value })}
+                      rows={2}
+                      placeholder="Mô tả hoặc bản dịch..."
+                    />
+                  </div>
+                  <div className="form-actions">
+                    <button className="btn-cancel" onClick={() => setEditingAudio(null)}><X size={16} /> Huỷ</button>
+                    <button className="btn-save" onClick={handleUpdateTtsAudio} disabled={!editingAudio.title.trim()}>
+                      <Save size={16} /> Lưu
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Normal display mode */
+                <>
+                  <button
+                    className={`play-btn ${playingAudioId === audio.id ? 'playing' : ''}`}
+                    onClick={() => togglePlayAudio(audio)}
+                    style={{ '--level-gradient': audio.isTextToSpeech ? 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)' : theme.gradient } as React.CSSProperties}
+                  >
+                    {playingAudioId === audio.id ? <Pause size={20} /> : audio.isTextToSpeech ? <Type size={20} /> : <Play size={20} />}
+                  </button>
+                  <div className="audio-info">
+                    <span className="audio-title">{audio.isTextToSpeech && <Type size={14} style={{ marginRight: 4, verticalAlign: 'middle', opacity: 0.6 }} />}{audio.title}</span>
+                    {audio.isTextToSpeech && audio.textContent && (
+                      <span className="audio-text-content">
+                        <FuriganaText text={audio.textContent} showFurigana={true} />
+                      </span>
+                    )}
+                    {audio.description && <span className="audio-desc">{audio.description}</span>}
+                  </div>
+                  <div className="audio-actions">
+                    {audio.isTextToSpeech && (
+                      <button onClick={() => setEditingAudio({
+                        id: audio.id,
+                        title: audio.title,
+                        textContent: audio.textContent || '',
+                        description: audio.description || '',
+                      })}><Edit2 size={16} /></button>
+                    )}
+                    <button className="delete-btn" onClick={() => handleDeleteAudio(audio.id)}><Trash2 size={16} /></button>
+                  </div>
+                </>
+              )}
             </div>
           ))
         )}

@@ -220,6 +220,7 @@ export function CardsPage({
     audios: listeningAudios,
     folders: listeningFolders,
     addAudio: addListeningAudio,
+    addTextAudio: addListeningTextAudio,
     updateAudio: updateListeningAudio,
     deleteAudio: deleteListeningAudio,
     addFolder: addListeningFolder,
@@ -349,6 +350,7 @@ export function CardsPage({
           audios={listeningAudios}
           folders={listeningFolders}
           onAddAudio={async (data, file) => { await addListeningAudio(data, file, currentUser.id); }}
+          onAddTextAudio={async (data) => { await addListeningTextAudio(data, currentUser.id); }}
           onUpdateAudio={updateListeningAudio}
           onDeleteAudio={deleteListeningAudio}
           onAddFolder={async (name, level, lessonType, lessonNumber) => { await addListeningFolder(name, level, lessonType, lessonNumber, currentUser.id); }}
