@@ -21,6 +21,8 @@ import {
   emuToPercentHeight,
   MAX_FILE_SIZE,
 } from './pptx-constants';
+import { generateId } from '../game-utils';
+
 // Helper function to convert blob to data URL
 function blobToDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -29,11 +31,6 @@ function blobToDataUrl(blob: Blob): Promise<string> {
     reader.onerror = reject;
     reader.readAsDataURL(blob);
   });
-}
-
-// Generate unique ID for elements
-function generateId(): string {
-  return `el-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
 // Calculate minimum height needed for text based on font size and content

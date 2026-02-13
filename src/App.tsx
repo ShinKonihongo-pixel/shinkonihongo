@@ -1,6 +1,6 @@
 // Main App component with authentication and page routing
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, lazy, Suspense } from 'react';
 
 // Dev: Load seed functions to window for console access
 import './scripts/seed-folders';
@@ -13,30 +13,34 @@ import { type Page } from './components/layout/header';
 import { Sidebar } from './components/layout/sidebar';
 import { LoginPage } from './components/pages/login-page';
 import { HomePage } from './components/pages/home-page';
-import { CardsPage } from './components/pages/cards-page';
-import { StudyPage } from './components/pages/study-page';
-// QuizGamePage imported by GameHubPage
-import { SettingsPage } from './components/pages/settings-page';
-import { JLPTPage } from './components/pages/jlpt-page';
-import { ChatPage } from './components/pages/chat-page';
-import { KaiwaPage } from './components/pages/kaiwa-page';
-import { LecturePage } from './components/pages/lecture-page';
-import { LectureEditorPage } from './components/pages/lecture-editor-page';
-import { ProgressPage } from './components/pages/progress-page';
-import { ClassroomPage } from './components/pages/classroom-page';
-import { BranchManagementPage } from './components/pages/branch-management-page';
-import { TeacherManagementPage } from './components/pages/teacher-management-page';
-import { SalaryPage } from './components/pages/salary-page';
-import { MyTeachingPage } from './components/pages/my-teaching-page';
-import { NotificationsPage } from './components/pages/notifications-page';
-import { GameHubPage } from './components/pages/game-hub-page';
-// DailyWordsPage removed - now uses modal from homepage/notification
-import { ListeningPracticePage } from './components/pages/listening-practice-page';
-import { GrammarStudyPage } from './components/pages/grammar-study-page';
-import { ReadingPracticePage } from './components/pages/reading-practice-page';
-import { ExercisePage } from './components/pages/exercise-page';
+import { ErrorBoundary } from './components/common/error-boundary';
 import { useReading } from './hooks/use-reading';
 import { useExercises } from './hooks/use-exercises';
+
+// Lazy-loaded page components
+const CardsPage = lazy(() => import('./components/pages/cards-page').then(m => ({ default: m.CardsPage })));
+const StudyPage = lazy(() => import('./components/pages/study-page').then(m => ({ default: m.StudyPage })));
+const SettingsPage = lazy(() => import('./components/pages/settings-page').then(m => ({ default: m.SettingsPage })));
+const JLPTPage = lazy(() => import('./components/pages/jlpt-page').then(m => ({ default: m.JLPTPage })));
+const ChatPage = lazy(() => import('./components/pages/chat-page').then(m => ({ default: m.ChatPage })));
+const KaiwaPage = lazy(() => import('./components/pages/kaiwa-page').then(m => ({ default: m.KaiwaPage })));
+const LecturePage = lazy(() => import('./components/pages/lecture-page').then(m => ({ default: m.LecturePage })));
+const LectureEditorPage = lazy(() => import('./components/pages/lecture-editor-page').then(m => ({ default: m.LectureEditorPage })));
+const ProgressPage = lazy(() => import('./components/pages/progress-page').then(m => ({ default: m.ProgressPage })));
+const ClassroomPage = lazy(() => import('./components/pages/classroom-page').then(m => ({ default: m.ClassroomPage })));
+const BranchManagementPage = lazy(() => import('./components/pages/branch-management-page').then(m => ({ default: m.BranchManagementPage })));
+const TeacherManagementPage = lazy(() => import('./components/pages/teacher-management-page').then(m => ({ default: m.TeacherManagementPage })));
+const SalaryPage = lazy(() => import('./components/pages/salary-page').then(m => ({ default: m.SalaryPage })));
+const MyTeachingPage = lazy(() => import('./components/pages/my-teaching-page').then(m => ({ default: m.MyTeachingPage })));
+const NotificationsPage = lazy(() => import('./components/pages/notifications-page').then(m => ({ default: m.NotificationsPage })));
+const GameHubPage = lazy(() => import('./components/pages/game-hub-page').then(m => ({ default: m.GameHubPage })));
+const ListeningPracticePage = lazy(() => import('./components/pages/listening-practice-page').then(m => ({ default: m.ListeningPracticePage })));
+const GrammarStudyPage = lazy(() => import('./components/pages/grammar-study-page').then(m => ({ default: m.GrammarStudyPage })));
+const ReadingPracticePage = lazy(() => import('./components/pages/reading-practice-page').then(m => ({ default: m.ReadingPracticePage })));
+const ExercisePage = lazy(() => import('./components/pages/exercise-page').then(m => ({ default: m.ExercisePage })));
+const KanjiStudyPage = lazy(() => import('./components/pages/kanji-study-page').then(m => ({ default: m.KanjiStudyPage })));
+const CenterMembersPage = lazy(() => import('./components/pages/center-members-page').then(m => ({ default: m.CenterMembersPage })));
+const CenterDashboardPage = lazy(() => import('./components/pages/center-dashboard-page').then(m => ({ default: m.CenterDashboardPage })));
 import type { GameType } from './types/game-hub';
 import { useJLPTQuestions } from './hooks/use-jlpt-questions';
 import { useKaiwaQuestions } from './hooks/use-kaiwa-questions';
@@ -53,7 +57,6 @@ import { useGrammarCards } from './hooks/use-grammar-cards';
 import { useGrammarLessons } from './hooks/use-grammar-lessons';
 import { useKanjiCards } from './hooks/use-kanji-cards';
 import { useKanjiLessons } from './hooks/use-kanji-lessons';
-import { KanjiStudyPage } from './components/pages/kanji-study-page';
 import { OfflineIndicator } from './components/common/offline-indicator';
 import { FloatingChatButton } from './components/common/floating-chat-button';
 import { FloatingChatPanel } from './components/common/floating-chat-panel';
@@ -65,8 +68,6 @@ import { useUrlRouter } from './hooks/use-url-router';
 import { CenterRouter } from './components/center/center-router';
 import { CenterProvider } from './contexts/center-context';
 import { useCenterData } from './hooks/use-center-data';
-import { CenterMembersPage } from './components/pages/center-members-page';
-import { CenterDashboardPage } from './components/pages/center-dashboard-page';
 import './App.css';
 
 function App() {
@@ -481,6 +482,8 @@ function App() {
         />
 
         <main className="main-content">
+        <ErrorBoundary>
+        <Suspense fallback={<div className="center-loading"><div className="loading-spinner" /><span>Đang tải...</span></div>}>
         {currentPage === 'home' && (
           <HomePage
             statsByLevel={statsByLevel}
@@ -832,6 +835,8 @@ function App() {
         {currentPage === 'center-dashboard' && currentUser && (
           <CenterDashboardPage currentUser={currentUser} />
         )}
+        </Suspense>
+        </ErrorBoundary>
         </main>
       </div>
 
@@ -842,11 +847,13 @@ function App() {
             onClick={() => setIsChatOpen(!isChatOpen)}
             isActive={isChatOpen}
           />
-          <FloatingChatPanel
-            currentUser={currentUser}
-            isOpen={isChatOpen}
-            onClose={() => setIsChatOpen(false)}
-          />
+          <ErrorBoundary fallback={null}>
+            <FloatingChatPanel
+              currentUser={currentUser}
+              isOpen={isChatOpen}
+              onClose={() => setIsChatOpen(false)}
+            />
+          </ErrorBoundary>
         </>
       )}
 

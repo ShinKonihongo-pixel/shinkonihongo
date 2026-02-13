@@ -19,6 +19,7 @@ import {
   getNextLockedAI,
 } from '../types/ai-challenge';
 import type { Flashcard } from '../types/flashcard';
+import { shuffleArray } from '../lib/game-utils';
 
 // Storage key for player progress (per JLPT level)
 const STORAGE_KEY_PREFIX = 'ai_challenge_progress_';
@@ -61,16 +62,6 @@ function loadAllProgress(): Record<JLPTLevel, { totalWins: number; totalGames: n
 // Generate unique ID
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
-}
-
-// Shuffle array
-function shuffleArray<T>(array: T[]): T[] {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
 }
 
 // Convert flashcards to challenge questions

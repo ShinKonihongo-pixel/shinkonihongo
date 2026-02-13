@@ -10,6 +10,7 @@ import type {
 } from '../../types/racing-game';
 import { TEAM_COLORS } from '../../types/racing-game';
 import type { Flashcard } from '../../types/flashcard';
+import { shuffleArray } from '../../lib/game-utils';
 
 // Generate random 6-digit code
 export function generateGameCode(): string {
@@ -21,15 +22,8 @@ export function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
 
-// Shuffle array
-export function shuffleArray<T>(array: T[]): T[] {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
+// Re-export shuffleArray for backwards compatibility
+export { shuffleArray };
 
 // Create teams based on count
 export function createTeams(count: number): Record<string, RacingTeam> {

@@ -3,16 +3,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import type { Flashcard, StudyStats, JLPTLevel, MemorizationStatus, DifficultyLevel } from '../types/flashcard';
 import { getCardsForReview } from '../lib/spaced-repetition';
-
-// Fisher-Yates shuffle algorithm
-function shuffleArray<T>(array: T[]): T[] {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
+import { shuffleArray } from '../lib/game-utils';
 
 interface UseStudySessionProps {
   cards: Flashcard[];

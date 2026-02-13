@@ -3,6 +3,7 @@
 import type { KanjiBattleQuestion, KanjiBattleMode, JLPTLevel } from '../../types/kanji-battle';
 import { generateKanjiHints } from '../../types/kanji-battle';
 import { getKanjiSeedForLevel } from '../../data/kanji-seed/index';
+import { shuffleArray } from '../../lib/game-utils';
 
 export function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
@@ -12,14 +13,8 @@ export function generateGameCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-export function shuffleArray<T>(array: T[]): T[] {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
+// Re-export shuffleArray for backwards compatibility
+export { shuffleArray };
 
 export function convertKanjiSeedToQuestions(
   selectedLevels: JLPTLevel[],

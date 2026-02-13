@@ -108,9 +108,8 @@ export function SalaryPage({ users }: SalaryPageProps) {
   }, []);
 
   // Handle export
-  const handleExport = useCallback((format: 'csv' | 'pdf') => {
+  const handleExport = useCallback((_format: 'csv' | 'pdf') => {
     // TODO: Implement export
-    console.log('Export as', format);
   }, []);
 
   // Get salary with full details

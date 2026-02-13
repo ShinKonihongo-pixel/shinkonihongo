@@ -15,30 +15,11 @@ import type {
 } from '../types/golden-bell';
 import type { Flashcard } from '../types/flashcard';
 import { generateBots } from '../types/game-hub';
+import { generateId, generateGameCode, shuffleArray } from '../lib/game-utils';
 
 // Bot auto-join settings
 const BOT_FIRST_JOIN_DELAY = 15000; // 15 seconds - add 1 bot
 const BOT_SECOND_JOIN_DELAY = 30000; // 30 seconds - add 2 more bots
-
-// Generate random 6-digit code
-function generateGameCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-// Generate unique ID
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
-}
-
-// Shuffle array
-function shuffleArray<T>(array: T[]): T[] {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
 
 // Convert flashcards to Golden Bell questions
 function convertFlashcardsToQuestions(

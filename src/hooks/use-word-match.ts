@@ -17,25 +17,7 @@ import type {
 import { DEFAULT_WORD_MATCH_SETTINGS } from '../types/word-match';
 import type { Flashcard } from '../types/flashcard';
 import { generateBots } from '../types/game-hub';
-
-// Generate IDs
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
-}
-
-function generateGameCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-// Shuffle array
-function shuffleArray<T>(array: T[]): T[] {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
+import { generateId, generateGameCode, shuffleArray } from '../lib/game-utils';
 
 // Generate rounds from flashcards
 function generateRounds(

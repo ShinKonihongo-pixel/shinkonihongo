@@ -62,7 +62,7 @@ export function BranchSalariesTab({
           branch={branch}
           month={selectedMonth}
           onMonthChange={onMonthChange}
-          onExport={(format) => console.log('Export as', format)}
+          onExport={(_format) => { /* TODO: Implement export */ }}
           loading={loading}
         />
       )}

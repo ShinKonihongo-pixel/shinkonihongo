@@ -16,6 +16,7 @@ import { LevelGrid } from './level-grid';
 import { LISTENING_LESSONS } from '../../hooks/use-listening';
 import { useKaiwaCharacters, createUtteranceForCharacter, getPresetForCharacter } from '../../hooks/use-kaiwa-characters';
 import { KaiwaCharacterModal } from './kaiwa-character-modal';
+import { LEVEL_THEMES } from '../../constants/themes';
 import type { JLPTLevel } from '../../types/flashcard';
 import type { CurrentUser } from '../../types/user';
 import type { ListeningAudio, ListeningFolder, ListeningLessonType, KaiwaLine, TtsMode } from '../../types/listening';
@@ -32,16 +33,6 @@ const LESSON_TYPES: { value: ListeningLessonType; label: string; icon: typeof Bo
   { value: 'reibun', label: '例文', icon: Quote },
   { value: 'other', label: 'その他', icon: Layers },
 ];
-
-// Level theme configurations
-const LEVEL_THEMES: Record<JLPTLevel, { gradient: string; glow: string; border: string }> = {
-  BT: { gradient: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)', glow: 'rgba(139, 92, 246, 0.4)', border: 'rgba(139, 92, 246, 0.3)' },
-  N5: { gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', glow: 'rgba(16, 185, 129, 0.4)', border: 'rgba(16, 185, 129, 0.3)' },
-  N4: { gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', glow: 'rgba(59, 130, 246, 0.4)', border: 'rgba(59, 130, 246, 0.3)' },
-  N3: { gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', glow: 'rgba(139, 92, 246, 0.4)', border: 'rgba(139, 92, 246, 0.3)' },
-  N2: { gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', glow: 'rgba(245, 158, 11, 0.4)', border: 'rgba(245, 158, 11, 0.3)' },
-  N1: { gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', glow: 'rgba(239, 68, 68, 0.4)', border: 'rgba(239, 68, 68, 0.3)' },
-};
 
 // Lesson type theme configurations
 const LESSON_TYPE_THEMES: Record<ListeningLessonType, { gradient: string; glow: string }> = {

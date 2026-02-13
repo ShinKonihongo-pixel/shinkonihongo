@@ -9,7 +9,8 @@ import {
 } from 'lucide-react';
 import { useListening, LISTENING_LESSONS, LISTENING_LESSON_TYPES } from '../../hooks/use-listening';
 import { useKaiwaCharacters, createUtteranceForCharacter } from '../../hooks/use-kaiwa-characters';
-import { JLPTLevelSelector, LEVEL_THEMES } from '../ui/jlpt-level-selector';
+import { JLPTLevelSelector } from '../ui/jlpt-level-selector';
+import { LEVEL_THEMES } from '../../constants/themes';
 import { FuriganaText } from '../common/furigana-text';
 import { removeFurigana } from '../../lib/furigana-utils';
 import type { JLPTLevel } from '../../types/flashcard';

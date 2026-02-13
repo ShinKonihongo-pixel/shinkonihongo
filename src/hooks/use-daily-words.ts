@@ -4,6 +4,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { Flashcard } from '../types/flashcard';
 import type { DailyWordsSession, DailyWordsState } from '../types/daily-words';
+import { shuffleArray } from '../lib/game-utils';
 
 const STORAGE_KEY = 'daily-words-data';
 const MAX_HISTORY = 30;
@@ -12,16 +13,6 @@ const DAY_MS = 86400000;
 // Date utilities
 const getToday = (): string => new Date().toISOString().split('T')[0];
 const getYesterday = (): string => new Date(Date.now() - DAY_MS).toISOString().split('T')[0];
-
-// Fisher-Yates shuffle
-function shuffleArray<T>(array: T[]): T[] {
-  const result = [...array];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-}
 
 // Calculate streak from history
 function calculateStreak(history: DailyWordsSession[]): { current: number; longest: number } {

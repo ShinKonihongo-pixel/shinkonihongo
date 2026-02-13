@@ -115,19 +115,11 @@ export function PPTXImportModal({
     const result = await importPPTX(selectedFile, lectureId);
     setImportResult(result);
 
-    console.log('Import result:', {
-      success: result.success,
-      slidesCount: result.slides.length,
-      errors: result.errors,
-      warnings: result.warnings,
-    });
-
     if (result.success && result.slides.length > 0) {
       // Now save slides to Firestore
       setSavingSlides(true);
       try {
         await onImport(result.slides, importMode);
-        console.log('Slides saved successfully!');
         // Wait a bit to show success, then close
         setTimeout(() => {
           handleClose();
