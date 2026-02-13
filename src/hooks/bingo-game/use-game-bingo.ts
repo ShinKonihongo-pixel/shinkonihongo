@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import type {
+  BingoGame,
   BingoPlayer,
   BingoPlayerResult,
   BingoResults,
@@ -11,6 +12,7 @@ import type { UseBingoGameProps, BingoGameState } from './types';
 
 export function useGameBingo(
   state: BingoGameState,
+  setGame: (updater: (prev: BingoGame | null) => BingoGame | null) => void,
   setState: React.Dispatch<React.SetStateAction<BingoGameState>>,
   currentUser: UseBingoGameProps['currentUser'],
   currentPlayer: BingoPlayer | undefined
@@ -29,10 +31,10 @@ export function useGameBingo(
 
     // Set winner
     const gameSnapshot = state.game;
-    setState(prev => {
-      if (!prev.game) return prev;
+    setGame(prev => {
+      if (!prev) return null;
 
-      const updatedPlayers = { ...prev.game.players };
+      const updatedPlayers = { ...prev.players };
       updatedPlayers[currentUser.id] = {
         ...updatedPlayers[currentUser.id],
         hasBingoed: true,
@@ -40,13 +42,10 @@ export function useGameBingo(
 
       return {
         ...prev,
-        game: {
-          ...prev.game,
-          players: updatedPlayers,
-          status: 'finished',
-          winnerId: currentUser.id,
-          finishedAt: new Date().toISOString(),
-        }
+        players: updatedPlayers,
+        status: 'finished',
+        winnerId: currentUser.id,
+        finishedAt: new Date().toISOString(),
       };
     });
 
@@ -83,7 +82,7 @@ export function useGameBingo(
 
       setState(prev => ({ ...prev, gameResults: results }));
     }, 100);
-  }, [state.game, currentPlayer, currentUser, setState]);
+  }, [state.game, currentPlayer, currentUser, setGame, setState]);
 
   return { claimBingo };
 }

@@ -28,6 +28,7 @@ interface WordMatchPageProps {
   // XP tracking
   onSaveGameSession?: (data: Omit<GameSession, 'id' | 'userId'>) => void;
   initialRoomConfig?: Record<string, unknown>;
+  initialJoinCode?: string;
 }
 
 export const WordMatchPage: React.FC<WordMatchPageProps> = ({
@@ -37,6 +38,7 @@ export const WordMatchPage: React.FC<WordMatchPageProps> = ({
   initialView = 'menu',
   onSaveGameSession,
   initialRoomConfig,
+  initialJoinCode,
 }) => {
   const [view, setView] = useState<PageView>(initialView);
   const [notification, setNotification] = useState<{ message: string; type: 'info' | 'warning' } | null>(null);
@@ -74,6 +76,14 @@ export const WordMatchPage: React.FC<WordMatchPageProps> = ({
         timePerRound: (cfg.timePerQuestion as number) || 60,
         maxPlayers: (cfg.maxPlayers as number) || 4,
       });
+      setView('lobby');
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-join game from WaitingRoom or QR code
+  React.useEffect(() => {
+    if (initialJoinCode && !game) {
+      joinGame(initialJoinCode);
       setView('lobby');
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

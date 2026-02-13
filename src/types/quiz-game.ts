@@ -113,16 +113,21 @@ export type GameQuestionSource = 'flashcards' | 'jlpt';
 export type GameQuestionContent = 'kanji' | 'vocabulary' | 'meaning';
 export type GameAnswerContent = 'kanji' | 'vocabulary' | 'meaning' | 'vocabulary_meaning';
 
+// Difficulty levels for flashcard-based questions
+export type GameDifficultyLevel = 'super_hard' | 'hard' | 'medium' | 'easy';
+
 // Form data for creating a game
 export interface CreateGameData {
   title: string;
   source: GameQuestionSource;   // Nguồn câu hỏi
   lessonIds: string[];          // Lessons to pick questions from (flashcards)
   lessonNames?: string[];       // Tên các bài học đã chọn (flashcards)
+  difficultyLevels?: GameDifficultyLevel[]; // Mức độ khó (flashcards)
   jlptLevels?: string[];        // JLPT levels to pick from (jlpt)
   jlptCategories?: string[];    // JLPT categories to pick from (jlpt)
   totalRounds: number;          // 20-50
   timePerQuestion: number;      // 10-30 seconds
+  maxPlayers?: number;          // Max players (role-based limit)
   questionContent?: GameQuestionContent;  // Nội dung câu hỏi (kanji/vocabulary/meaning)
   answerContent?: GameAnswerContent;      // Nội dung đáp án
   settings?: Partial<GameSettings>;

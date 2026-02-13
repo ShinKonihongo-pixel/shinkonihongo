@@ -20,9 +20,10 @@ interface PictureGuessPageProps {
   currentUser: CurrentUser | null;
   flashcards: Flashcard[];
   initialRoomConfig?: Record<string, unknown>;
+  initialJoinCode?: string;
 }
 
-export function PictureGuessPage({ currentUser, flashcards, initialRoomConfig }: PictureGuessPageProps) {
+export function PictureGuessPage({ currentUser, flashcards, initialRoomConfig, initialJoinCode }: PictureGuessPageProps) {
   const [view, setView] = useState<ViewState>('menu');
 
   // Initialize hook with current user
@@ -57,6 +58,13 @@ export function PictureGuessPage({ currentUser, flashcards, initialRoomConfig }:
     },
     flashcards,
   });
+
+  // Auto-join game from WaitingRoom or QR code
+  useEffect(() => {
+    if (initialJoinCode && !game) {
+      joinGame(initialJoinCode).then(() => setView('lobby')).catch(() => {});
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-create room from unified setup
   useEffect(() => {

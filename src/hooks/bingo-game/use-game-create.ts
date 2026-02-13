@@ -1,4 +1,5 @@
 // Game creation logic
+// Handles game initialization - writes to Firestore for cross-device multiplayer
 
 import { useCallback } from 'react';
 import type {
@@ -15,11 +16,14 @@ import {
 import { generateBots } from '../../types/game-hub';
 import { generateGameCode, generateId, BOT_FIRST_JOIN_DELAY, BOT_SECOND_JOIN_DELAY } from './utils';
 import type { UseBingoGameProps, BingoGameState, BingoGameRefs } from './types';
+import { createGameRoom } from '../../services/game-rooms';
 
 export function useGameCreate(
+  setGame: (updater: ((prev: BingoGame | null) => BingoGame | null) | BingoGame | null) => void,
   setState: React.Dispatch<React.SetStateAction<BingoGameState>>,
   refs: BingoGameRefs,
-  currentUser: UseBingoGameProps['currentUser']
+  currentUser: UseBingoGameProps['currentUser'],
+  setRoomId: (id: string | null) => void
 ) {
   const { botTimerRef, botTimer2Ref } = refs;
 
@@ -57,8 +61,7 @@ export function useGameCreate(
         hasFiftyFifty: false,
       };
 
-      const newGame: BingoGame = {
-        id: generateId(),
+      const gameData: Omit<BingoGame, 'id'> = {
         code: generateGameCode(),
         hostId: currentUser.id,
         title: data.title,
@@ -74,27 +77,36 @@ export function useGameCreate(
         createdAt: new Date().toISOString(),
       };
 
-      setState(prev => ({ ...prev, game: newGame, gameResults: null }));
+      // Write to Firestore
+      const firestoreId = await createGameRoom('bingo', gameData as unknown as Record<string, unknown>);
+
+      // Set room ID first (enables Firestore subscription)
+      setRoomId(firestoreId);
+
+      // Set local game state
+      const newGame: BingoGame = { id: firestoreId, ...gameData };
+      setGame(newGame);
+      setState(prev => ({ ...prev, gameResults: null }));
 
       // Helper to add bots
       const addBotsToGame = (botCount: number) => {
-        setState(prev => {
-          if (!prev.game || prev.game.status !== 'waiting') return prev;
+        setGame(prev => {
+          if (!prev || prev.status !== 'waiting') return prev;
 
-          const currentPlayerCount = Object.keys(prev.game.players).length;
-          const availableSlots = prev.game.settings.maxPlayers - currentPlayerCount;
+          const currentPlayerCount = Object.keys(prev.players).length;
+          const availableSlots = prev.settings.maxPlayers - currentPlayerCount;
           if (availableSlots <= 0) return prev;
 
           const actualBotCount = Math.min(botCount, availableSlots);
           const bots = generateBots(actualBotCount);
-          const newPlayers: Record<string, BingoPlayer> = { ...prev.game.players };
+          const newPlayers: Record<string, BingoPlayer> = { ...prev.players };
 
           bots.forEach((bot) => {
             const botId = `bot-${generateId()}`;
             const botRows = generateBingoRows(
-              prev.game!.settings.rowsPerPlayer,
-              prev.game!.settings.numbersPerRow,
-              prev.game!.settings.numberRange
+              prev.settings.rowsPerPlayer,
+              prev.settings.numbersPerRow,
+              prev.settings.numberRange
             );
 
             newPlayers[botId] = {
@@ -115,7 +127,7 @@ export function useGameCreate(
             };
           });
 
-          return { ...prev, game: { ...prev.game, players: newPlayers } };
+          return { ...prev, players: newPlayers };
         });
       };
 
@@ -134,7 +146,7 @@ export function useGameCreate(
     } finally {
       setState(prev => ({ ...prev, loading: false }));
     }
-  }, [currentUser, setState, botTimerRef, botTimer2Ref]);
+  }, [currentUser, setGame, setState, setRoomId, botTimerRef, botTimer2Ref]);
 
   return { createGame };
 }

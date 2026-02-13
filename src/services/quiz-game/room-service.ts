@@ -23,7 +23,10 @@ export async function getAvailableRooms(): Promise<QuizGame[]> {
 }
 
 // Subscribe to available rooms (real-time updates)
-export function subscribeToAvailableRooms(callback: (games: QuizGame[]) => void): Unsubscribe {
+export function subscribeToAvailableRooms(
+  callback: (games: QuizGame[]) => void,
+  onError?: (error: Error) => void
+): Unsubscribe {
   const q = query(
     collection(db, COLLECTIONS.GAMES),
     where('status', '==', 'waiting')
@@ -31,5 +34,8 @@ export function subscribeToAvailableRooms(callback: (games: QuizGame[]) => void)
   return onSnapshot(q, (snapshot) => {
     const games = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as QuizGame));
     callback(games);
+  }, (error) => {
+    console.error('Error subscribing to available rooms:', error);
+    onError?.(error);
   });
 }

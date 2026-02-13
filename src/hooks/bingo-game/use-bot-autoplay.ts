@@ -1,11 +1,12 @@
 // Bot autoplay logic
 
 import { useEffect } from 'react';
-import type { BingoPlayerResult, BingoResults } from '../../types/bingo-game';
+import type { BingoGame, BingoPlayerResult, BingoResults } from '../../types/bingo-game';
 import type { BingoGameState, BingoGameRefs } from './types';
 
 export function useBotAutoplay(
   state: BingoGameState,
+  setGame: (updater: (prev: BingoGame | null) => BingoGame | null) => void,
   setState: React.Dispatch<React.SetStateAction<BingoGameState>>,
   refs: BingoGameRefs,
   isHost: boolean
@@ -32,10 +33,10 @@ export function useBotAutoplay(
         // Bot claims bingo with 80% chance
         if (Math.random() < 0.8) {
           const gameSnapshot = state.game;
-          setState(prev => {
-            if (!prev.game) return prev;
+          setGame(prev => {
+            if (!prev) return null;
 
-            const updatedPlayers = { ...prev.game.players };
+            const updatedPlayers = { ...prev.players };
             updatedPlayers[botWithBingo.odinhId] = {
               ...updatedPlayers[botWithBingo.odinhId],
               hasBingoed: true,
@@ -43,13 +44,10 @@ export function useBotAutoplay(
 
             return {
               ...prev,
-              game: {
-                ...prev.game,
-                players: updatedPlayers,
-                status: 'finished',
-                winnerId: botWithBingo.odinhId,
-                finishedAt: new Date().toISOString(),
-              }
+              players: updatedPlayers,
+              status: 'finished',
+              winnerId: botWithBingo.odinhId,
+              finishedAt: new Date().toISOString(),
             };
           });
 
@@ -92,5 +90,5 @@ export function useBotAutoplay(
     return () => {
       if (botDrawTimerRef.current) clearTimeout(botDrawTimerRef.current);
     };
-  }, [state.game, isHost, botDrawTimerRef, setState]);
+  }, [state.game, isHost, botDrawTimerRef, setGame, setState]);
 }

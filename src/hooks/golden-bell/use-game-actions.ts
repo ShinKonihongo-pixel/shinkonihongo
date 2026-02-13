@@ -1,5 +1,6 @@
 // Golden Bell Game Actions
 // Handles join, leave, kick, start, and reset game actions
+// Join uses Firestore to find and subscribe to remote rooms
 
 import { useCallback } from 'react';
 import type {
@@ -7,6 +8,7 @@ import type {
   GoldenBellPlayer,
   GoldenBellResults,
 } from '../../types/golden-bell';
+import { findRoomByCode, updateGameRoom } from '../../services/game-rooms';
 
 interface UseGameActionsProps {
   currentUser: {
@@ -19,7 +21,7 @@ interface UseGameActionsProps {
   setGameResults: (results: GoldenBellResults | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  availableRooms: GoldenBellGame[];
+  setRoomId: (id: string | null) => void;
   isHost: boolean;
   clearBotTimers: () => void;
 }
@@ -31,32 +33,40 @@ export function useGameActions({
   setGameResults,
   setLoading,
   setError,
-  availableRooms,
+  setRoomId,
   isHost,
   clearBotTimers,
 }: UseGameActionsProps) {
-  // Join existing game
+  // Join existing game via Firestore
   const joinGame = useCallback(async (code: string) => {
     setLoading(true);
     setError(null);
 
     try {
-      // In real implementation, this would fetch from server
-      // For demo, we'll simulate joining
-      const foundGame = availableRooms.find(r => r.code === code);
+      const room = await findRoomByCode(code);
 
-      if (!foundGame) {
-        throw new Error('Không tìm thấy phòng với mã này');
+      if (!room || room.gameType !== 'golden-bell') {
+        throw new Error('Không tìm thấy phòng Rung Chuông Vàng với mã này');
       }
 
-      if (foundGame.status !== 'waiting') {
+      const roomData = room.data as unknown as GoldenBellGame;
+
+      if (roomData.status !== 'waiting') {
         throw new Error('Trò chơi đã bắt đầu');
       }
 
-      if (Object.keys(foundGame.players).length >= foundGame.settings.maxPlayers) {
+      const players = roomData.players || {};
+      if (Object.keys(players).length >= (roomData.settings?.maxPlayers || 20)) {
         throw new Error('Phòng đã đầy');
       }
 
+      // Already in the game? Just subscribe
+      if (players[currentUser.id]) {
+        setRoomId(room.id);
+        return;
+      }
+
+      // Add player to the room via Firestore
       const player: GoldenBellPlayer = {
         odinhId: currentUser.id,
         displayName: currentUser.displayName,
@@ -67,13 +77,14 @@ export function useGameActions({
         streak: 0,
       };
 
-      const updatedGame: GoldenBellGame = {
-        ...foundGame,
-        players: { ...foundGame.players, [currentUser.id]: player },
-        alivePlayers: foundGame.alivePlayers + 1,
-      };
+      const updatedPlayers = { ...players, [currentUser.id]: player };
+      await updateGameRoom(room.id, {
+        players: updatedPlayers,
+        alivePlayers: Object.keys(updatedPlayers).length,
+      });
 
-      setGame(() => updatedGame);
+      // Subscribe to the room (subscription in use-game-state will update local state)
+      setRoomId(room.id);
       setGameResults(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể tham gia phòng');
@@ -81,14 +92,12 @@ export function useGameActions({
     } finally {
       setLoading(false);
     }
-  }, [currentUser, availableRooms, setGame, setGameResults, setLoading, setError]);
+  }, [currentUser, setRoomId, setGameResults, setLoading, setError]);
 
   // Leave game
   const leaveGame = useCallback(() => {
     if (!game) return;
     clearBotTimers();
-    // In a real implementation, this would update the server
-    // For now, just clear the local game state
     setGame(() => null);
   }, [game, clearBotTimers, setGame]);
 

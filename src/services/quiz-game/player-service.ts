@@ -32,7 +32,7 @@ export async function joinGame(
   const newPlayer: GamePlayer = {
     id: playerId,
     name: playerName,
-    avatar: playerAvatar,
+    avatar: playerAvatar || '',
     score: 0,
     isHost: false,
     isBlocked: false,
@@ -57,11 +57,23 @@ export async function leaveGame(gameId: string, playerId: string): Promise<void>
   if (!game) return;
 
   const { [playerId]: _removed, ...remainingPlayers } = game.players;
+  const remainingCount = Object.keys(remainingPlayers).length;
 
-  // If host leaves and game is waiting, delete game
-  if (playerId === game.hostId && game.status === 'waiting') {
+  // If no players left after removal, delete the game
+  if (remainingCount === 0) {
     await deleteGame(gameId);
     return;
+  }
+
+  // If host leaves, transfer host to next player
+  if (playerId === game.hostId) {
+    const nextHost = Object.values(remainingPlayers)
+      .sort((a, b) => a.joinedAt.localeCompare(b.joinedAt))[0];
+    if (nextHost) {
+      remainingPlayers[nextHost.id] = { ...nextHost, isHost: true };
+      await updateGame(gameId, { players: remainingPlayers, hostId: nextHost.id, hostName: nextHost.name });
+      return;
+    }
   }
 
   await updateGame(gameId, { players: remainingPlayers });

@@ -1,9 +1,11 @@
 // Word match game actions - join, leave, kick, start, add bot, reset
+// Join uses Firestore to find and subscribe to remote rooms
 
 import { useCallback } from 'react';
 import type { WordMatchGame, WordMatchPlayer, WordMatchResults } from '../../types/word-match';
 import { generateBots } from '../../types/game-hub';
 import { generateId } from '../../lib/game-utils';
+import { findRoomByCode, updateGameRoom } from '../../services/game-rooms';
 
 interface UseGameActionsProps {
   game: WordMatchGame | null;
@@ -17,6 +19,7 @@ interface UseGameActionsProps {
   setGameResults: (results: WordMatchResults | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  setRoomId: (id: string | null) => void;
   isHost: boolean;
   clearBotTimers: () => void;
   roundTimerRef: React.MutableRefObject<NodeJS.Timeout | null>;
@@ -30,32 +33,83 @@ export function useGameActions({
   setGameResults,
   setLoading,
   setError,
+  setRoomId,
   isHost,
   clearBotTimers,
   roundTimerRef,
   startNextRound,
 }: UseGameActionsProps) {
-  // Join game
-  const joinGame = useCallback(async (_code: string) => {
-    void _code; // Placeholder for future implementation
+  // Join game via Firestore
+  const joinGame = useCallback(async (code: string) => {
     setLoading(true);
     setError(null);
+
     try {
-      throw new Error('Chức năng tham gia phòng đang phát triển');
-    } catch (_err) {
-      setError(_err instanceof Error ? _err.message : 'Không thể tham gia');
+      const room = await findRoomByCode(code);
+
+      if (!room || room.gameType !== 'word-match') {
+        throw new Error('Không tìm thấy phòng Word Match với mã này');
+      }
+
+      const roomData = room.data as unknown as WordMatchGame;
+
+      if (roomData.status !== 'waiting') {
+        throw new Error('Trò chơi đã bắt đầu');
+      }
+
+      const players = roomData.players || {};
+      if (Object.keys(players).length >= (roomData.settings?.maxPlayers || 20)) {
+        throw new Error('Phòng đã đầy');
+      }
+
+      // Already in the game? Just subscribe
+      if (players[currentUser.id]) {
+        setRoomId(room.id);
+        return;
+      }
+
+      // Add player to the room via Firestore
+      const player: WordMatchPlayer = {
+        odinhId: currentUser.id,
+        displayName: currentUser.displayName,
+        avatar: currentUser.avatar,
+        role: currentUser.role,
+        score: 0,
+        correctPairs: 0,
+        perfectRounds: 0,
+        isDisconnected: false,
+        disconnectedTurns: 0,
+        hasShield: false,
+        shieldTurns: 0,
+        isChallenged: false,
+        currentMatches: [],
+        hasSubmitted: false,
+        streak: 0,
+      };
+
+      const updatedPlayers = { ...players, [currentUser.id]: player };
+      await updateGameRoom(room.id, {
+        players: updatedPlayers,
+      });
+
+      // Subscribe to the room (subscription in use-game-state will update local state)
+      setRoomId(room.id);
+      setGameResults(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không thể tham gia phòng');
+      throw err;
     } finally {
       setLoading(false);
     }
-  }, [setLoading, setError]);
+  }, [currentUser, setRoomId, setGameResults, setLoading, setError]);
 
   // Leave game
   const leaveGame = useCallback(() => {
+    if (!game) return;
     clearBotTimers();
     if (roundTimerRef.current) clearTimeout(roundTimerRef.current);
-    setGame(null);
-    setGameResults(null);
-  }, [clearBotTimers, roundTimerRef, setGame, setGameResults]);
+    setGame(() => null);
+  }, [game, clearBotTimers, roundTimerRef, setGame]);
 
   // Kick player (host only)
   const kickPlayer = useCallback((playerId: string) => {
@@ -123,13 +177,12 @@ export function useGameActions({
     });
   }, [setGame]);
 
-  // Reset
+  // Reset game
   const resetGame = useCallback(() => {
-    clearBotTimers();
-    if (roundTimerRef.current) clearTimeout(roundTimerRef.current);
-    setGame(null);
+    setGame(() => null);
     setGameResults(null);
-  }, [clearBotTimers, roundTimerRef, setGame, setGameResults]);
+    setError(null);
+  }, [setGame, setGameResults, setError]);
 
   return {
     joinGame,

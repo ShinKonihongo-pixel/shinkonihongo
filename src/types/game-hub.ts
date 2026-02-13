@@ -78,7 +78,7 @@ export function generateBots(count: number): Array<{ name: string; avatar: strin
 export const GAMES: Record<GameType, GameInfo> = {
   quiz: {
     id: 'quiz',
-    name: 'Quiz Battle',
+    name: 'Đại Chiến Tiếng Nhật',
     description: 'Đối kháng kiến thức tiếng Nhật với bạn bè',
     icon: '🎯',
     color: '#FF6B6B',

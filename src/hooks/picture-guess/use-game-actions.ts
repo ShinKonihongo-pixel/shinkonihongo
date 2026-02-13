@@ -1,4 +1,5 @@
 // Game actions: join, leave, start, reset
+// Join uses Firestore to find and subscribe to remote rooms
 
 import { useCallback } from 'react';
 import type {
@@ -6,6 +7,7 @@ import type {
   PictureGuessPlayer,
   PictureGuessResults,
 } from '../../types/picture-guess';
+import { findRoomByCode, updateGameRoom } from '../../services/game-rooms';
 
 interface UseGameActionsProps {
   currentUser: {
@@ -14,11 +16,11 @@ interface UseGameActionsProps {
     avatar: string;
   };
   game: PictureGuessGame | null;
-  availableRooms: PictureGuessGame[];
-  setGame: (game: PictureGuessGame | null | ((prev: PictureGuessGame | null) => PictureGuessGame | null)) => void;
+  setGame: (updater: (prev: PictureGuessGame | null) => PictureGuessGame | null) => void;
   setGameResults: (results: PictureGuessResults | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  setRoomId: (id: string | null) => void;
   isHost: boolean;
   clearBotTimers: () => void;
 }
@@ -26,35 +28,44 @@ interface UseGameActionsProps {
 export function useGameActions({
   currentUser,
   game,
-  availableRooms,
   setGame,
   setGameResults,
   setLoading,
   setError,
+  setRoomId,
   isHost,
   clearBotTimers,
 }: UseGameActionsProps) {
-  // Join existing game
+  // Join existing game via Firestore
   const joinGame = useCallback(async (code: string) => {
     setLoading(true);
     setError(null);
 
     try {
-      // In real implementation, this would fetch from server
-      const foundGame = availableRooms.find(r => r.code === code);
+      const room = await findRoomByCode(code);
 
-      if (!foundGame) {
-        throw new Error('Không tìm thấy phòng với mã này');
+      if (!room || room.gameType !== 'picture-guess') {
+        throw new Error('Không tìm thấy phòng Picture Guess với mã này');
       }
 
-      if (foundGame.status !== 'waiting') {
+      const roomData = room.data as unknown as PictureGuessGame;
+
+      if (roomData.status !== 'waiting') {
         throw new Error('Trò chơi đã bắt đầu');
       }
 
-      if (Object.keys(foundGame.players).length >= foundGame.settings.maxPlayers) {
+      const players = roomData.players || {};
+      if (Object.keys(players).length >= (roomData.settings?.maxPlayers || 20)) {
         throw new Error('Phòng đã đầy');
       }
 
+      // Already in the game? Just subscribe
+      if (players[currentUser.id]) {
+        setRoomId(room.id);
+        return;
+      }
+
+      // Add player to the room via Firestore
       const player: PictureGuessPlayer = {
         odinhId: currentUser.id,
         displayName: currentUser.displayName,
@@ -67,12 +78,13 @@ export function useGameActions({
         status: 'playing',
       };
 
-      const updatedGame: PictureGuessGame = {
-        ...foundGame,
-        players: { ...foundGame.players, [currentUser.id]: player },
-      };
+      const updatedPlayers = { ...players, [currentUser.id]: player };
+      await updateGameRoom(room.id, {
+        players: updatedPlayers,
+      });
 
-      setGame(updatedGame);
+      // Subscribe to the room (subscription in use-game-state will update local state)
+      setRoomId(room.id);
       setGameResults(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể tham gia phòng');
@@ -80,13 +92,13 @@ export function useGameActions({
     } finally {
       setLoading(false);
     }
-  }, [currentUser, availableRooms, setGame, setGameResults, setLoading, setError]);
+  }, [currentUser, setRoomId, setGameResults, setLoading, setError]);
 
   // Leave game
   const leaveGame = useCallback(() => {
     if (!game) return;
     clearBotTimers();
-    setGame(null);
+    setGame(() => null);
   }, [game, clearBotTimers, setGame]);
 
   // Start game (host only or single player)
@@ -139,7 +151,7 @@ export function useGameActions({
 
   // Reset game
   const resetGame = useCallback(() => {
-    setGame(null);
+    setGame(() => null);
     setGameResults(null);
     setError(null);
   }, [setGame, setGameResults, setError]);

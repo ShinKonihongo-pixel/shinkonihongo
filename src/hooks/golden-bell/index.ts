@@ -17,30 +17,31 @@ interface UseGoldenBellProps {
 }
 
 export function useGoldenBell({ currentUser, flashcards = [] }: UseGoldenBellProps) {
-  // State management
+  // State management (with Firestore sync)
   const {
     game, setGame,
     gameResults, setGameResults,
-    availableRooms,
     loading, setLoading,
     error, setError,
+    roomId, setRoomId,
     isHost, currentPlayer, currentQuestion,
     sortedPlayers, aliveCount,
     scheduleBotJoin, clearBotTimers,
   } = useGameState({ currentUserId: currentUser.id });
 
-  // Game creation
+  // Game creation (writes to Firestore)
   const { createGame } = useGameCreation({
     currentUser,
     setGame,
     setGameResults,
     setLoading,
     setError,
+    setRoomId,
     flashcards,
     scheduleBotJoin,
   });
 
-  // Game actions
+  // Game actions (join via Firestore, leave, kick, start)
   const {
     joinGame,
     leaveGame,
@@ -54,7 +55,7 @@ export function useGoldenBell({ currentUser, flashcards = [] }: UseGoldenBellPro
     setGameResults,
     setLoading,
     setError,
-    availableRooms,
+    setRoomId,
     isHost,
     clearBotTimers,
   });
@@ -78,9 +79,9 @@ export function useGoldenBell({ currentUser, flashcards = [] }: UseGoldenBellPro
     // State
     game,
     gameResults,
-    availableRooms,
     loading,
     error,
+    roomId,
 
     // Computed
     isHost,

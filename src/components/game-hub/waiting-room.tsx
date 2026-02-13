@@ -1,24 +1,22 @@
-/* eslint-disable react-hooks/purity */
 // WaitingRoom - Lobby for browsing available game rooms
-// Only shows REAL rooms created by users, no virtual/mock rooms
+// Subscribes to Firestore for real-time room updates across all game types
 
 import { useState, useEffect, useMemo } from 'react';
 import { Users, Clock, ArrowRight, RefreshCw, Search, Filter, ArrowLeft, Gamepad2, Plus } from 'lucide-react';
 import type { GameType, WaitingRoomGame } from '../../types/game-hub';
 import { GAMES, getVisibleGames } from '../../types/game-hub';
 import { getHiddenGames } from '../../services/game-visibility-storage';
+import { subscribeToAllWaitingRooms } from '../../services/game-rooms';
 
 interface WaitingRoomProps {
   onJoinGame: (gameType: GameType, code: string) => void;
   onBack: () => void;
   onCreateRoom?: () => void;
   filterGameType?: GameType | null;
-  // Real rooms from server/database
-  realRooms?: WaitingRoomGame[];
 }
 
-export function WaitingRoom({ onJoinGame, onBack, onCreateRoom, filterGameType, realRooms = [] }: WaitingRoomProps) {
-  const [games, setGames] = useState<WaitingRoomGame[]>([]);
+export function WaitingRoom({ onJoinGame, onBack, onCreateRoom, filterGameType }: WaitingRoomProps) {
+  const [rooms, setRooms] = useState<WaitingRoomGame[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGameFilter, setSelectedGameFilter] = useState<GameType | 'all'>(filterGameType || 'all');
@@ -26,27 +24,28 @@ export function WaitingRoom({ onJoinGame, onBack, onCreateRoom, filterGameType, 
 
   // Load hidden games
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHiddenGames(getHiddenGames());
   }, []);
 
   // Get visible games for filter options
   const visibleGames = useMemo(() => getVisibleGames(hiddenGames), [hiddenGames]);
 
-  // Load REAL rooms only - no mock/virtual rooms
+  // Subscribe to Firestore waiting rooms (real-time)
   useEffect(() => {
     setIsLoading(true);
-    const timer = setTimeout(() => {
-      // Only use real rooms passed from parent, filter out hidden game types
-      const filteredRealRooms = realRooms.filter(room => !hiddenGames.includes(room.gameType));
-      setGames(filteredRealRooms);
+    const unsubscribe = subscribeToAllWaitingRooms((allRooms) => {
+      // Filter out hidden game types
+      const visible = allRooms.filter(room => !hiddenGames.includes(room.gameType));
+      setRooms(visible);
       setIsLoading(false);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [realRooms, hiddenGames]);
+    });
+    return unsubscribe;
+  }, [hiddenGames]);
 
-  // Filter games
-  const filteredGames = useMemo(() => {
-    let result = games;
+  // Filter rooms
+  const filteredRooms = useMemo(() => {
+    let result = rooms;
 
     // Filter by specific game type
     if (selectedGameFilter !== 'all') {
@@ -55,27 +54,18 @@ export function WaitingRoom({ onJoinGame, onBack, onCreateRoom, filterGameType, 
 
     // Filter by search query
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase();
       result = result.filter(g =>
-        g.title.toLowerCase().includes(query) ||
-        g.hostName.toLowerCase().includes(query) ||
-        g.code.toLowerCase().includes(query) ||
-        GAMES[g.gameType].name.toLowerCase().includes(query)
+        g.title.toLowerCase().includes(q) ||
+        g.hostName.toLowerCase().includes(q) ||
+        g.code.toLowerCase().includes(q) ||
+        GAMES[g.gameType]?.name.toLowerCase().includes(q)
       );
     }
 
-    return result;
-  }, [games, selectedGameFilter, searchQuery]);
-
-  // Refresh games list - re-filter real rooms
-  const handleRefresh = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      const filteredRealRooms = realRooms.filter(room => !hiddenGames.includes(room.gameType));
-      setGames(filteredRealRooms);
-      setIsLoading(false);
-    }, 300);
-  };
+    // Sort by newest first
+    return result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [rooms, selectedGameFilter, searchQuery]);
 
   // Format time ago
   const formatTimeAgo = (dateString: string) => {
@@ -103,7 +93,7 @@ export function WaitingRoom({ onJoinGame, onBack, onCreateRoom, filterGameType, 
             </span>
           )}
         </div>
-        <button className="wr-refresh-btn" onClick={handleRefresh} disabled={isLoading}>
+        <button className="wr-refresh-btn" onClick={() => {}} disabled={isLoading} title="Tự động cập nhật">
           <RefreshCw size={18} className={isLoading ? 'spinning' : ''} />
         </button>
       </div>
@@ -150,11 +140,11 @@ export function WaitingRoom({ onJoinGame, onBack, onCreateRoom, filterGameType, 
       <div className="wr-stats-bar">
         <span className="wr-stat">
           <Gamepad2 size={14} />
-          {filteredGames.length} phòng
+          {filteredRooms.length} phòng
         </span>
         <span className="wr-stat">
           <Users size={14} />
-          {filteredGames.reduce((sum, g) => sum + g.playerCount, 0)} người chơi
+          {filteredRooms.reduce((sum, g) => sum + g.playerCount, 0)} người chơi
         </span>
       </div>
 
@@ -165,7 +155,7 @@ export function WaitingRoom({ onJoinGame, onBack, onCreateRoom, filterGameType, 
             <div className="loading-spinner"></div>
             <p>Đang tải danh sách phòng...</p>
           </div>
-        ) : filteredGames.length === 0 ? (
+        ) : filteredRooms.length === 0 ? (
           <div className="wr-empty">
             <span className="wr-empty-icon">🎮</span>
             <h3>Chưa có phòng chờ nào</h3>
@@ -179,8 +169,9 @@ export function WaitingRoom({ onJoinGame, onBack, onCreateRoom, filterGameType, 
           </div>
         ) : (
           <div className="wr-games-grid">
-            {filteredGames.map(game => {
+            {filteredRooms.map(game => {
               const gameInfo = GAMES[game.gameType];
+              if (!gameInfo) return null;
               const isFull = game.playerCount >= game.maxPlayers;
 
               return (

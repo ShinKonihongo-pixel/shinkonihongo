@@ -74461,6 +74461,95 @@ a.jp-link:hover {
 }
 
 /* =============================================== */
+/* =============================================== */
+/* Đại Chiến Tiếng Nhật Settings Panel            */
+/* =============================================== */
+
+.gm-quiz-settings {
+  padding: 1.5rem 2rem;
+}
+
+/* Difficulty mix visual bar */
+.quiz-mix-bar {
+  display: flex;
+  height: 28px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.quiz-mix-segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 0.3s ease;
+  min-width: 0;
+}
+
+.quiz-mix-segment span {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+}
+
+/* Per-level expandable card */
+.quiz-mix-level-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 8px;
+  border-left: 4px solid;
+  background: rgba(0, 0, 0, 0.02);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.quiz-mix-level-header:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.quiz-mix-level-title {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 90px;
+  font-size: 0.9rem;
+}
+
+.quiz-mix-level-title svg {
+  transition: transform 0.2s;
+  opacity: 0.5;
+}
+
+.quiz-mix-level-title svg.rotated {
+  transform: rotate(90deg);
+}
+
+.quiz-mix-bar.mini {
+  flex: 1;
+  height: 20px;
+  margin-bottom: 0;
+}
+
+.quiz-mix-bar.mini .quiz-mix-segment span {
+  font-size: 0.6rem;
+}
+
+.quiz-mix-level-body {
+  padding: 0.5rem 0.75rem 0.5rem 1.5rem;
+  border-left: 4px solid rgba(0, 0, 0, 0.06);
+  margin-left: 0;
+}
+
+.gm-hint-text {
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
 /* AI Challenge Per-AI Settings Panel             */
 /* =============================================== */
 
@@ -80940,10 +81029,19 @@ a.jp-link:hover {
   white-space: nowrap;
 }
 
-.rm-pill:hover {
+.rm-pill:hover:not(:disabled) {
   border-color: var(--rm-primary);
   color: var(--rm-text);
   background: var(--rm-bg-hover);
+}
+
+.rm-pill:disabled {
+  opacity: 0.4;
+  background: #d1d5db;
+  border-color: #d1d5db;
+  color: #9ca3af;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .rm-pill.active {
@@ -81646,6 +81744,26 @@ a.jp-link:hover {
   background: var(--rm-bg-dark);
 }
 
+/* 3-column grid layout for flat lesson selection */
+.rm-lesson-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--rm-space-xs, 4px) var(--rm-space-sm, 8px);
+  padding: var(--rm-space-sm) var(--rm-space-md);
+  background: var(--rm-bg-dark);
+}
+
+.rm-lesson-grid .rm-checkbox-label {
+  font-size: 0.82rem;
+  padding: 0.25rem 0;
+}
+
+@media (max-width: 480px) {
+  .rm-lesson-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 .rm-lesson-item {
   padding: var(--rm-space-sm) 0;
 }
@@ -81705,6 +81823,22 @@ a.jp-link:hover {
   font-size: 0.75rem;
   color: var(--rm-text-dim);
   font-style: italic;
+}
+
+/* VIP upgrade hint for role-limited sliders */
+.rm-upgrade-hint {
+  margin-top: var(--rm-space-xs, 4px);
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8rem;
+  color: #7C3AED;
+  background: #7C3AED12;
+  border-radius: var(--rm-radius-sm, 8px);
+  animation: rm-hint-fade 3s ease-out forwards;
+}
+
+@keyframes rm-hint-fade {
+  0%, 70% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 /* === Settings Info Box === */

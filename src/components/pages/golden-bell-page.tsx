@@ -46,7 +46,6 @@ export function GoldenBellPage({
   const {
     game,
     gameResults,
-    availableRooms,
     loading,
     error,
     isHost,
@@ -221,7 +220,7 @@ export function GoldenBellPage({
       {/* Menu View */}
       {view === 'menu' && (
         <GoldenBellMenu
-          availableRooms={availableRooms}
+          availableRooms={[]}
           onCreateGame={handleCreateGame}
           onJoinGame={handleJoinGame}
           onSelectRoom={handleSelectRoom}

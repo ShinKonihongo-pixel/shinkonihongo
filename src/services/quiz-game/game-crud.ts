@@ -99,7 +99,7 @@ export async function createGame(
   const hostPlayer: GamePlayer = {
     id: hostId,
     name: hostName,
-    avatar: hostAvatar,
+    avatar: hostAvatar || '',
     score: 0,
     isHost: true,
     isBlocked: false,

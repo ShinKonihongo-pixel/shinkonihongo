@@ -24,6 +24,7 @@ export function useKanjiBattle({ currentUser }: UseKanjiBattleProps) {
     availableRooms,
     loading, setLoading,
     error, setError,
+    roomId, setRoomId,
     isHost, currentPlayer,
     sortedPlayers, isSkillPhase,
     botTimerRef, roundTimerRef,
@@ -37,13 +38,13 @@ export function useKanjiBattle({ currentUser }: UseKanjiBattleProps) {
   });
 
   const { createGame } = useGameCreation({
-    currentUser, setGame, setGameResults, setLoading, setError, botTimerRef,
+    currentUser, setGame, setGameResults, setLoading, setError, setRoomId, botTimerRef,
   });
 
   const {
     joinGame, leaveGame, kickPlayer, startGame, resetGame,
   } = useGameActions({
-    currentUser, game, setGame, setGameResults, setLoading, setError,
+    currentUser, game, setGame, setGameResults, setLoading, setError, setRoomId,
     isHost, botTimerRef, clearTimers, startNextRound,
   });
 
@@ -58,7 +59,7 @@ export function useKanjiBattle({ currentUser }: UseKanjiBattleProps) {
   });
 
   return {
-    game, gameResults, availableRooms, loading, error,
+    game, gameResults, availableRooms, loading, error, roomId,
     isHost, currentPlayer, sortedPlayers, isSkillPhase,
     createGame, joinGame, leaveGame, kickPlayer, startGame,
     submitAnswer, submitDrawing, useHint, continueGame,

@@ -1,4 +1,5 @@
 // Main word match hook - orchestrates all modules
+// Combines all sub-hooks and exports unified interface with Firestore sync
 
 import type { Flashcard } from '../../types/flashcard';
 import { useGameState } from './use-game-state';
@@ -24,6 +25,7 @@ export function useWordMatch({ currentUser, flashcards = [] }: UseWordMatchProps
     gameResults, setGameResults,
     loading, setLoading,
     error, setError,
+    roomId, setRoomId,
     isHost, currentPlayer,
     sortedPlayers,
     roundTimerRef,
@@ -36,13 +38,13 @@ export function useWordMatch({ currentUser, flashcards = [] }: UseWordMatchProps
   });
 
   const { createGame } = useGameCreation({
-    currentUser, flashcards, setGame, setGameResults, setLoading, setError, scheduleBotJoin,
+    currentUser, flashcards, setGame, setGameResults, setLoading, setError, setRoomId, scheduleBotJoin,
   });
 
   const {
     joinGame, leaveGame, kickPlayer, startGame, addBot, resetGame,
   } = useGameActions({
-    currentUser, game, setGame, setGameResults, setLoading, setError,
+    currentUser, game, setGame, setGameResults, setLoading, setError, setRoomId,
     isHost, clearBotTimers, roundTimerRef, startNextRound,
   });
 
@@ -57,6 +59,7 @@ export function useWordMatch({ currentUser, flashcards = [] }: UseWordMatchProps
     gameResults,
     loading,
     error,
+    roomId,
     isHost,
     currentPlayer,
     sortedPlayers,

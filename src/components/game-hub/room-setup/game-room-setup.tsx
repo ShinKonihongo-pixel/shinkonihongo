@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { GAMES } from '../../../types/game-hub';
 import type { JLPTLevel } from '../../../types/flashcard';
 import type { GameRoomSetupProps, GameRoomConfig } from './types';
+import { useBodyScrollLock } from '../../../hooks/use-body-scroll-lock';
 import { RoomHeader } from './room-header';
 import { FormFields } from './form-fields';
 import { RulesSection } from './rules-section';
@@ -17,6 +18,7 @@ export function GameRoomSetup({
   error,
   inline = false,
 }: GameRoomSetupProps) {
+  useBodyScrollLock();
   const gameInfo = GAMES[gameType];
 
   const [title, setTitle] = useState(config.titlePlaceholder || gameInfo.name);

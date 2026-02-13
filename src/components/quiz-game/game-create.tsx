@@ -8,16 +8,17 @@ import {
   Layers,
   Clock,
   HelpCircle,
-  Zap,
-  Settings,
+  Users,
   Play,
   ChevronRight,
   Check,
 } from 'lucide-react';
 import type { Flashcard, JLPTLevel, Lesson } from '../../types/flashcard';
-import type { JLPTQuestion, QuestionCategory, JLPTLevel as JLPTQuestionLevel } from '../../types/jlpt-question';
-import type { CreateGameData, GameQuestionSource } from '../../types/quiz-game';
+import type { JLPTQuestion, JLPTLevel as JLPTQuestionLevel } from '../../types/jlpt-question';
+import type { CreateGameData, GameQuestionSource, GameDifficultyLevel } from '../../types/quiz-game';
 import type { AppSettings } from '../../hooks/use-settings';
+import type { UserRole } from '../../types/user';
+import { useBodyScrollLock } from '../../hooks/use-body-scroll-lock';
 
 interface GameCreateProps {
   flashcards: Flashcard[];
@@ -29,16 +30,31 @@ interface GameCreateProps {
   loading: boolean;
   error: string | null;
   gameSettings: AppSettings;
+  userRole?: UserRole;
 }
 
 const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 const JLPT_QUESTION_LEVELS: JLPTQuestionLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
-const QUESTION_CATEGORIES: { value: QuestionCategory; label: string }[] = [
-  { value: 'vocabulary', label: '📝 Từ vựng' },
-  { value: 'grammar', label: '📖 Ngữ pháp' },
-  { value: 'reading', label: '📚 Đọc hiểu' },
-  { value: 'listening', label: '🎧 Nghe' },
+
+// Difficulty options for flashcard source
+const DIFFICULTY_OPTIONS: { value: GameDifficultyLevel; label: string; color: string }[] = [
+  { value: 'super_hard', label: 'Siêu khó', color: '#DC2626' },
+  { value: 'hard', label: 'Khó', color: '#F59E0B' },
+  { value: 'medium', label: 'Vừa', color: '#3B82F6' },
+  { value: 'easy', label: 'Dễ', color: '#10B981' },
 ];
+
+// Role-based limits
+function getMaxRounds(role?: UserRole): number {
+  if (role === 'super_admin' || role === 'vip_user') return 50;
+  return 20;
+}
+
+function getMaxPlayers(role?: UserRole): number {
+  if (role === 'super_admin' || role === 'vip_user') return 50;
+  if (role === 'admin' || role === 'branch_admin' || role === 'director') return 20;
+  return 10;
+}
 
 export function GameCreate({
   flashcards,
@@ -50,20 +66,95 @@ export function GameCreate({
   loading,
   error,
   gameSettings,
+  userRole,
 }: GameCreateProps) {
+  useBodyScrollLock();
   const [title, setTitle] = useState('');
   const [source, setSource] = useState<GameQuestionSource>('flashcards');
   const [selectedLessons, setSelectedLessons] = useState<string[]>([]);
   const [selectedJLPTLevels, setSelectedJLPTLevels] = useState<string[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [totalRounds, setTotalRounds] = useState(20);
   const [timePerQuestion, setTimePerQuestion] = useState(15);
-  const [specialRoundEvery, setSpecialRoundEvery] = useState(5);
+  const [maxPlayers, setMaxPlayers] = useState(10);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<GameDifficultyLevel | null>(null);
   const [expandedLevel, setExpandedLevel] = useState<JLPTLevel | null>(null);
-  const [activeTab, setActiveTab] = useState<'basic' | 'settings'>('basic');
+  const [upgradeHint, setUpgradeHint] = useState<string | null>(null);
 
-  // Count available cards from selected lessons
-  const availableCards = flashcards.filter(c => selectedLessons.includes(c.lessonId)).length;
+  const maxRoundsLimit = getMaxRounds(userRole);
+  const maxPlayersLimit = getMaxPlayers(userRole);
+  // VIP/Super Admin max — always shown on slider
+  const VIP_MAX_ROUNDS = 50;
+  const VIP_MAX_PLAYERS = 50;
+  const isVipOrAdmin = userRole === 'super_admin' || userRole === 'vip_user';
+
+  // Show upgrade hint briefly
+  const showUpgradeHint = (field: string) => {
+    setUpgradeHint(field);
+    setTimeout(() => setUpgradeHint(prev => prev === field ? null : prev), 3000);
+  };
+
+  // Cards in selected lessons
+  const lessonCards = useMemo(
+    () => flashcards.filter(c => selectedLessons.includes(c.lessonId)),
+    [flashcards, selectedLessons],
+  );
+
+  // Count cards per card-difficulty from selected lessons
+  const difficultyCount = useMemo(() => {
+    const counts: Record<GameDifficultyLevel, number> = { super_hard: 0, hard: 0, medium: 0, easy: 0 };
+    for (const c of lessonCards) {
+      if (c.difficultyLevel && c.difficultyLevel !== 'unset') {
+        counts[c.difficultyLevel]++;
+      }
+    }
+    return counts;
+  }, [lessonCards]);
+
+  // Check if a game difficulty level can be fulfilled based on mix config + totalRounds
+  const mixConfig = gameSettings.quizDifficultyMix;
+  const canFulfillDifficulty = useMemo(() => {
+    const result: Record<GameDifficultyLevel, boolean> = { super_hard: false, hard: false, medium: false, easy: false };
+    const levels: GameDifficultyLevel[] = ['super_hard', 'hard', 'medium', 'easy'];
+
+    for (const level of levels) {
+      const row = mixConfig[level];
+      const rowTotal = row.super_hard + row.hard + row.medium + row.easy;
+      if (rowTotal === 0) {
+        // No mix configured — need at least 4 cards total
+        result[level] = lessonCards.length >= 4;
+        continue;
+      }
+      // For each card difficulty in the mix, check if enough cards exist
+      let canFulfill = true;
+      for (const cardDiff of levels) {
+        const pct = row[cardDiff] / rowTotal;
+        const needed = Math.ceil(pct * totalRounds);
+        if (needed > 0 && difficultyCount[cardDiff] < needed) {
+          canFulfill = false;
+          break;
+        }
+      }
+      result[level] = canFulfill;
+    }
+    return result;
+  }, [mixConfig, totalRounds, difficultyCount, lessonCards.length]);
+
+  // Auto-deselect if selected difficulty can no longer be fulfilled
+  if (selectedDifficulty && !canFulfillDifficulty[selectedDifficulty]) {
+    setTimeout(() => setSelectedDifficulty(null), 0);
+  }
+
+  // Available cards after difficulty filter
+  const availableCards = useMemo(() => {
+    if (!selectedDifficulty) return lessonCards.length;
+    // When a difficulty is selected, count cards that match the mix ratios
+    const row = mixConfig[selectedDifficulty];
+    const rowTotal = row.super_hard + row.hard + row.medium + row.easy;
+    if (rowTotal === 0) return lessonCards.length;
+    // Sum available cards weighted by mix (cards that will actually be used)
+    const levels: GameDifficultyLevel[] = ['super_hard', 'hard', 'medium', 'easy'];
+    return levels.reduce((sum, d) => sum + Math.min(difficultyCount[d], Math.ceil((row[d] / rowTotal) * 999)), 0);
+  }, [lessonCards.length, selectedDifficulty, mixConfig, difficultyCount]);
 
   // Get all lessons for lookup
   const allLessonsMap = useMemo(() => {
@@ -90,11 +181,13 @@ export function GameCreate({
     if (selectedJLPTLevels.length > 0) {
       filtered = filtered.filter(q => selectedJLPTLevels.includes(q.level));
     }
-    if (selectedCategories.length > 0) {
-      filtered = filtered.filter(q => selectedCategories.includes(q.category));
-    }
     return filtered.length;
-  }, [jlptQuestions, selectedJLPTLevels, selectedCategories]);
+  }, [jlptQuestions, selectedJLPTLevels]);
+
+  // Select/deselect a single difficulty level
+  const handleToggleDifficulty = (diff: GameDifficultyLevel) => {
+    setSelectedDifficulty(prev => prev === diff ? null : diff);
+  };
 
   // Toggle JLPT level selection
   const handleToggleJLPTLevel = (level: string) => {
@@ -105,21 +198,18 @@ export function GameCreate({
     );
   };
 
-  // Toggle category selection
-  const handleToggleCategory = (category: string) => {
-    setSelectedCategories(prev =>
-      prev.includes(category)
-        ? prev.filter(c => c !== category)
-        : [...prev, category]
-    );
-  };
-
+  // Toggle a parent lesson + all its children together
   const handleToggleLesson = (lessonId: string) => {
-    setSelectedLessons(prev =>
-      prev.includes(lessonId)
-        ? prev.filter(id => id !== lessonId)
-        : [...prev, lessonId]
-    );
+    const children = getChildLessons(lessonId);
+    const allIds = [lessonId, ...children.map(c => c.id)];
+
+    setSelectedLessons(prev => {
+      const isSelected = prev.includes(lessonId);
+      if (isSelected) {
+        return prev.filter(id => !allIds.includes(id));
+      }
+      return [...new Set([...prev, ...allIds])];
+    });
   };
 
   const handleSelectAllInLevel = (level: JLPTLevel) => {
@@ -145,51 +235,46 @@ export function GameCreate({
     e.preventDefault();
 
     if (source === 'flashcards') {
-      if (selectedLessons.length === 0) {
-        return;
-      }
-      if (availableCards < 4) {
-        return;
-      }
+      if (selectedLessons.length === 0) return;
+      if (availableCards < 4) return;
       const actualRounds = Math.min(totalRounds, availableCards);
       await onCreateGame({
-        title: title || 'Đại Chiến N5',
+        title: title || 'Đại Chiến Tiếng Nhật',
         source: 'flashcards',
         lessonIds: selectedLessons,
         lessonNames: selectedLessonNames,
+        difficultyLevels: selectedDifficulty ? [selectedDifficulty] : undefined,
         totalRounds: actualRounds,
         timePerQuestion,
+        maxPlayers,
         questionContent: gameSettings.gameQuestionContent,
         answerContent: gameSettings.gameAnswerContent,
-        settings: { specialRoundEvery },
+        settings: { specialRoundEvery: 5 },
       });
     } else {
-      if (availableJLPTQuestions < 4) {
-        return;
-      }
+      if (availableJLPTQuestions < 4) return;
       const actualRounds = Math.min(totalRounds, availableJLPTQuestions);
       await onCreateGame({
         title: title || 'Đại Chiến JLPT',
         source: 'jlpt',
         lessonIds: [],
         jlptLevels: selectedJLPTLevels.length > 0 ? selectedJLPTLevels : undefined,
-        jlptCategories: selectedCategories.length > 0 ? selectedCategories : undefined,
         totalRounds: actualRounds,
         timePerQuestion,
-        settings: { specialRoundEvery },
+        maxPlayers,
+        settings: { specialRoundEvery: 5 },
       });
     }
   };
 
-  const availableQuestions = source === 'flashcards' ? availableCards : availableJLPTQuestions;
   const canSubmit = source === 'flashcards'
     ? selectedLessons.length > 0 && availableCards >= 4
     : availableJLPTQuestions >= 4;
 
-  // Calculate slider progress percentages
-  const roundsPercent = ((totalRounds - 10) / (50 - 10)) * 100;
+  // Calculate slider progress percentages (against full VIP range)
+  const roundsPercent = ((totalRounds - 10) / (VIP_MAX_ROUNDS - 10)) * 100;
   const timePercent = ((timePerQuestion - 5) / (30 - 5)) * 100;
-  const specialPercent = ((specialRoundEvery - 1) / (20 - 1)) * 100;
+  const playersPercent = ((maxPlayers - 2) / (VIP_MAX_PLAYERS - 2)) * 100;
 
   return (
     <div className="rm-overlay" onClick={onCancel}>
@@ -204,8 +289,8 @@ export function GameCreate({
             <Gamepad2 size={24} color="white" />
           </div>
           <div className="rm-header-content">
-            <h1 className="rm-title">Tạo phòng mới</h1>
-            <span className="rm-subtitle">Quiz Game - Đại Chiến</span>
+            <h1 className="rm-title">Tạo Phòng Chơi</h1>
+            <span className="rm-subtitle">Đại Chiến Tiếng Nhật</span>
           </div>
           <button className="rm-close-btn" onClick={onCancel} type="button">
             <X size={20} />
@@ -214,26 +299,6 @@ export function GameCreate({
 
         {/* Body */}
         <div className="rm-body">
-          {/* Tabs */}
-          <div className="rm-tabs">
-            <button
-              type="button"
-              className={`rm-tab ${activeTab === 'basic' ? 'active' : ''}`}
-              onClick={() => setActiveTab('basic')}
-            >
-              <BookOpen size={16} />
-              Cơ bản
-            </button>
-            <button
-              type="button"
-              className={`rm-tab ${activeTab === 'settings' ? 'active' : ''}`}
-              onClick={() => setActiveTab('settings')}
-            >
-              <Settings size={16} />
-              Cài đặt
-            </button>
-          </div>
-
           {error && (
             <div className="rm-error">
               <span>⚠️</span>
@@ -241,310 +306,283 @@ export function GameCreate({
             </div>
           )}
 
-          {activeTab === 'basic' && (
-            <>
-              {/* Room Title */}
-              <div className="rm-field">
-                <label className="rm-label">
-                  <Gamepad2 size={16} />
-                  <span>Tên phòng</span>
-                </label>
-                <input
-                  type="text"
-                  className="rm-input"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder={source === 'flashcards' ? 'Đại Chiến N5' : 'Đại Chiến JLPT'}
-                />
-              </div>
+          {/* Room Title */}
+          <div className="rm-field">
+            <label className="rm-label">
+              <Gamepad2 size={16} />
+              <span>Tên phòng</span>
+            </label>
+            <input
+              type="text"
+              className="rm-input"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder={source === 'flashcards' ? 'Đại Chiến Tiếng Nhật' : 'Đại Chiến JLPT'}
+            />
+          </div>
 
-              {/* Source Selection */}
-              <div className="rm-field">
-                <label className="rm-label">
-                  <BookOpen size={16} />
-                  <span>Nguồn câu hỏi</span>
-                </label>
-                <div className="rm-pills">
-                  <button
-                    type="button"
-                    className={`rm-pill lg ${source === 'flashcards' ? 'active' : ''}`}
-                    onClick={() => setSource('flashcards')}
-                  >
-                    Flashcards ({flashcards.length})
-                  </button>
-                  <button
-                    type="button"
-                    className={`rm-pill lg ${source === 'jlpt' ? 'active' : ''}`}
-                    onClick={() => setSource('jlpt')}
-                  >
-                    JLPT ({jlptQuestions.length})
-                  </button>
-                </div>
-              </div>
+          {/* Source Selection */}
+          <div className="rm-field">
+            <label className="rm-label">
+              <BookOpen size={16} />
+              <span>Đại chiến</span>
+            </label>
+            <div className="rm-pills">
+              <button
+                type="button"
+                className={`rm-pill lg ${source === 'flashcards' ? 'active' : ''}`}
+                onClick={() => setSource('flashcards')}
+              >
+                Từ vựng
+              </button>
+              <button
+                type="button"
+                className={`rm-pill lg ${source === 'jlpt' ? 'active' : ''}`}
+                onClick={() => setSource('jlpt')}
+              >
+                JLPT
+              </button>
+            </div>
+          </div>
 
-              {source === 'flashcards' ? (
-                <div className="rm-field">
-                  <label className="rm-label">
-                    <Layers size={16} />
-                    <span>Chọn bài học</span>
-                    <span className="rm-label-hint">
-                      <span className="rm-label-value">{availableCards} thẻ</span>
-                    </span>
-                  </label>
+          {source === 'flashcards' ? (
+            <div className="rm-field">
+              <label className="rm-label">
+                <Layers size={16} />
+                <span>Chọn phạm vi câu hỏi</span>
+              </label>
 
-                  <div className="rm-lesson-selector">
-                    {JLPT_LEVELS.map(level => {
-                      const levelLessons = getLessonsByLevel(level);
-                      const isExpanded = expandedLevel === level;
+              <div className="rm-lesson-selector">
+                {JLPT_LEVELS.map(level => {
+                  const levelLessons = getLessonsByLevel(level);
+                  const isExpanded = expandedLevel === level;
 
-                      if (levelLessons.length === 0) return null;
+                  if (levelLessons.length === 0) return null;
 
-                      // Check if all lessons in this level are selected
-                      const allLessonIdsInLevel: string[] = [];
-                      levelLessons.forEach(lesson => {
-                        allLessonIdsInLevel.push(lesson.id);
-                        const children = getChildLessons(lesson.id);
-                        children.forEach(child => allLessonIdsInLevel.push(child.id));
-                      });
-                      const allSelected = allLessonIdsInLevel.length > 0 &&
-                        allLessonIdsInLevel.every(id => selectedLessons.includes(id));
+                  // Check if all parent lessons in this level are selected
+                  const allSelected = levelLessons.length > 0 &&
+                    levelLessons.every(l => selectedLessons.includes(l.id));
 
-                      return (
-                        <div key={level} className={`rm-lesson-level ${isExpanded ? 'expanded' : ''}`}>
-                          <div
-                            className="rm-lesson-level-header"
-                            onClick={() => setExpandedLevel(isExpanded ? null : level)}
-                          >
-                            <ChevronRight size={16} className="rm-expand-icon" />
-                            <span className="rm-level-name">{level}</span>
-                            <button
-                              type="button"
-                              className={`rm-btn ${allSelected ? 'rm-btn-primary' : ''}`}
-                              style={{ padding: '0.375rem 0.75rem', fontSize: '0.8rem' }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleSelectAllInLevel(level);
-                              }}
-                            >
-                              {allSelected ? (
-                                <>
-                                  <Check size={14} />
-                                  Đã chọn
-                                </>
-                              ) : 'Chọn tất cả'}
-                            </button>
-                          </div>
+                  return (
+                    <div key={level} className={`rm-lesson-level ${isExpanded ? 'expanded' : ''}`}>
+                      <div
+                        className="rm-lesson-level-header"
+                        onClick={() => setExpandedLevel(isExpanded ? null : level)}
+                      >
+                        <ChevronRight size={16} className="rm-expand-icon" />
+                        <span className="rm-level-name">{level}</span>
+                        <button
+                          type="button"
+                          className={`rm-btn ${allSelected ? 'rm-btn-primary' : ''}`}
+                          style={{ padding: '0.375rem 0.75rem', fontSize: '0.8rem' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSelectAllInLevel(level);
+                          }}
+                        >
+                          {allSelected ? (
+                            <>
+                              <Check size={14} />
+                              Đã chọn
+                            </>
+                          ) : 'Chọn tất cả'}
+                        </button>
+                      </div>
 
-                          {isExpanded && (
-                            <div className="rm-lesson-list">
-                              {levelLessons.map(lesson => {
-                                const childLessons = getChildLessons(lesson.id);
-                                const lessonCards = flashcards.filter(c => c.lessonId === lesson.id).length;
-
-                                return (
-                                  <div key={lesson.id} className="rm-lesson-item">
-                                    <label className="rm-checkbox-label">
-                                      <input
-                                        type="checkbox"
-                                        checked={selectedLessons.includes(lesson.id)}
-                                        onChange={() => handleToggleLesson(lesson.id)}
-                                      />
-                                      <span>{lesson.name} ({lessonCards} thẻ)</span>
-                                    </label>
-
-                                    {childLessons.length > 0 && (
-                                      <div className="rm-child-lessons">
-                                        {childLessons.map(child => {
-                                          const childCards = flashcards.filter(c => c.lessonId === child.id).length;
-                                          return (
-                                            <label key={child.id} className="rm-checkbox-label">
-                                              <input
-                                                type="checkbox"
-                                                checked={selectedLessons.includes(child.id)}
-                                                onChange={() => handleToggleLesson(child.id)}
-                                              />
-                                              <span>{child.name} ({childCards} thẻ)</span>
-                                            </label>
-                                          );
-                                        })}
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
+                      {/* Only show parent lessons — selecting auto-includes children */}
+                      {isExpanded && (
+                        <div className="rm-lesson-grid">
+                          {levelLessons.map(lesson => (
+                            <label key={lesson.id} className="rm-checkbox-label">
+                              <input
+                                type="checkbox"
+                                checked={selectedLessons.includes(lesson.id)}
+                                onChange={() => handleToggleLesson(lesson.id)}
+                              />
+                              <span>{lesson.name}</span>
+                            </label>
+                          ))}
                         </div>
-                      );
-                    })}
-                  </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
 
-                  {selectedLessons.length > 0 && availableCards < 4 && (
-                    <div className="rm-error" style={{ marginTop: 'var(--rm-space-sm)' }}>
-                      <span>⚠️</span>
-                      <span>Cần ít nhất 4 thẻ để tạo game</span>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="rm-filter-section">
-                  <div className="rm-filter-group">
-                    <label className="rm-label">
-                      <Layers size={16} />
-                      <span>Cấp độ JLPT</span>
-                      <span className="rm-label-hint">
-                        <span className="rm-label-value">{availableJLPTQuestions} câu hỏi</span>
-                      </span>
-                    </label>
-                    <div className="rm-pills">
-                      {JLPT_QUESTION_LEVELS.map(level => (
-                        <button
-                          key={level}
-                          type="button"
-                          className={`rm-pill ${selectedJLPTLevels.includes(level) ? 'active' : ''}`}
-                          onClick={() => handleToggleJLPTLevel(level)}
-                          data-level={level}
-                        >
-                          {level}
-                        </button>
-                      ))}
-                    </div>
-                    <span className="rm-filter-hint">Không chọn = tất cả cấp độ</span>
-                  </div>
-
-                  <div className="rm-filter-group">
-                    <label className="rm-label">
-                      <HelpCircle size={16} />
-                      <span>Danh mục</span>
-                    </label>
-                    <div className="rm-pills">
-                      {QUESTION_CATEGORIES.map(cat => (
-                        <button
-                          key={cat.value}
-                          type="button"
-                          className={`rm-pill sm ${selectedCategories.includes(cat.value) ? 'active' : ''}`}
-                          onClick={() => handleToggleCategory(cat.value)}
-                        >
-                          {cat.label}
-                        </button>
-                      ))}
-                    </div>
-                    <span className="rm-filter-hint">Không chọn = tất cả danh mục</span>
-                  </div>
-
-                  {availableJLPTQuestions < 4 && (
-                    <div className="rm-error">
-                      <span>⚠️</span>
-                      <span>Cần ít nhất 4 câu hỏi JLPT để tạo game</span>
-                    </div>
-                  )}
+              {selectedLessons.length > 0 && availableCards < 4 && (
+                <div className="rm-error" style={{ marginTop: 'var(--rm-space-sm)' }}>
+                  <span>⚠️</span>
+                  <span>Cần ít nhất 4 thẻ để tạo game</span>
                 </div>
               )}
-
-              {/* Rounds & Time */}
-              <div className="rm-field">
-                <label className="rm-label">
-                  <HelpCircle size={16} />
-                  <span>Số câu hỏi</span>
-                  <span className="rm-label-hint">
-                    <span className="rm-label-value">{totalRounds} câu</span>
-                    <span style={{ marginLeft: '8px', color: 'var(--rm-text-dim)' }}>
-                      (tối đa {availableQuestions})
-                    </span>
-                  </span>
-                </label>
-                <div className="rm-slider-wrap">
-                  <input
-                    type="range"
-                    className="rm-slider"
-                    min={10}
-                    max={50}
-                    step={5}
-                    value={totalRounds}
-                    onChange={(e) => setTotalRounds(parseInt(e.target.value))}
-                    style={{ '--progress': `${roundsPercent}%` } as React.CSSProperties}
-                  />
-                  <div className="rm-slider-labels">
-                    <span>10</span>
-                    <span>30</span>
-                    <span>50</span>
-                  </div>
-                </div>
+            </div>
+          ) : (
+            <div className="rm-field">
+              <label className="rm-label">
+                <Layers size={16} />
+                <span>Chọn phạm vi câu hỏi</span>
+              </label>
+              <div className="rm-pills">
+                {JLPT_QUESTION_LEVELS.map(level => (
+                  <button
+                    key={level}
+                    type="button"
+                    className={`rm-pill ${selectedJLPTLevels.includes(level) ? 'active' : ''}`}
+                    onClick={() => handleToggleJLPTLevel(level)}
+                    data-level={level}
+                  >
+                    {level}
+                  </button>
+                ))}
               </div>
+              <span className="rm-filter-hint">Không chọn = tất cả cấp độ</span>
 
-              <div className="rm-field">
-                <label className="rm-label">
-                  <Clock size={16} />
-                  <span>Thời gian mỗi câu</span>
-                  <span className="rm-label-hint">
-                    <span className="rm-label-value">{timePerQuestion}s</span>
-                  </span>
-                </label>
-                <div className="rm-slider-wrap">
-                  <input
-                    type="range"
-                    className="rm-slider"
-                    min={5}
-                    max={30}
-                    step={5}
-                    value={timePerQuestion}
-                    onChange={(e) => setTimePerQuestion(parseInt(e.target.value))}
-                    style={{ '--progress': `${timePercent}%` } as React.CSSProperties}
-                  />
-                  <div className="rm-slider-labels">
-                    <span>5s</span>
-                    <span>15s</span>
-                    <span>30s</span>
-                  </div>
+              {availableJLPTQuestions < 4 && (
+                <div className="rm-error" style={{ marginTop: 'var(--rm-space-sm)' }}>
+                  <span>⚠️</span>
+                  <span>Cần ít nhất 4 câu hỏi JLPT để tạo game</span>
                 </div>
-              </div>
-            </>
+              )}
+            </div>
           )}
 
-          {activeTab === 'settings' && (
-            <>
-              <div className="rm-field">
-                <label className="rm-label">
-                  <Zap size={16} />
-                  <span>Câu đặc biệt (mỗi N câu)</span>
-                  <span className="rm-label-hint">
-                    <span className="rm-label-value">{specialRoundEvery}</span>
-                  </span>
-                </label>
-                <div className="rm-slider-wrap">
-                  <input
-                    type="range"
-                    className="rm-slider"
-                    min={1}
-                    max={20}
-                    step={1}
-                    value={specialRoundEvery}
-                    onChange={(e) => setSpecialRoundEvery(parseInt(e.target.value))}
-                    style={{ '--progress': `${specialPercent}%` } as React.CSSProperties}
-                  />
-                  <div className="rm-slider-labels">
-                    <span>1</span>
-                    <span>10</span>
-                    <span>20</span>
-                  </div>
-                </div>
-                <span className="rm-filter-hint" style={{ marginTop: '8px' }}>
-                  Câu {specialRoundEvery}, {specialRoundEvery * 2}, {specialRoundEvery * 3}... sẽ là câu đặc biệt
+          {/* Difficulty level — flashcards source only */}
+          {source === 'flashcards' && (
+            <div className="rm-field">
+              <label className="rm-label">
+                <Layers size={16} />
+                <span>Mức độ</span>
+              </label>
+              <div className="rm-pills">
+                {DIFFICULTY_OPTIONS.map(opt => {
+                  const canFulfill = canFulfillDifficulty[opt.value];
+                  const isSelected = selectedDifficulty === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      className={`rm-pill ${isSelected ? 'active' : ''}`}
+                      disabled={!canFulfill}
+                      onClick={() => canFulfill && handleToggleDifficulty(opt.value)}
+                      style={isSelected ? { background: opt.color, borderColor: opt.color } : undefined}
+                      title={canFulfill ? 'Đủ câu hỏi' : 'Chưa đủ câu hỏi cho mức độ này'}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <span className="rm-filter-hint">Không chọn = tất cả mức độ. Phần trăm trộn thiết lập ở tab Quản lí</span>
+            </div>
+          )}
+
+          {/* Rounds */}
+          <div className="rm-field">
+            <label className="rm-label">
+              <HelpCircle size={16} />
+              <span>Số câu hỏi</span>
+              <span className="rm-label-hint">
+                <span className="rm-label-value">{totalRounds} câu</span>
+              </span>
+            </label>
+            <div className="rm-slider-wrap">
+              <input
+                type="range"
+                className="rm-slider"
+                min={10}
+                max={VIP_MAX_ROUNDS}
+                step={5}
+                value={totalRounds}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
+                  if (val > maxRoundsLimit) {
+                    setTotalRounds(maxRoundsLimit);
+                    showUpgradeHint('rounds');
+                  } else {
+                    setTotalRounds(val);
+                  }
+                }}
+                style={{ '--progress': `${roundsPercent}%` } as React.CSSProperties}
+              />
+              <div className="rm-slider-labels">
+                <span>10</span>
+                {!isVipOrAdmin && <span style={{ color: 'var(--rm-primary, #7C3AED)' }}>{maxRoundsLimit}</span>}
+                <span>{VIP_MAX_ROUNDS}</span>
+              </div>
+            </div>
+            {upgradeHint === 'rounds' && (
+              <div className="rm-upgrade-hint">🌟 Nâng cấp VIP để tạo tới {VIP_MAX_ROUNDS} câu hỏi</div>
+            )}
+          </div>
+
+          {/* Time per question - only for flashcards source (JLPT uses per-category settings) */}
+          {source === 'flashcards' && (
+            <div className="rm-field">
+              <label className="rm-label">
+                <Clock size={16} />
+                <span>Thời gian mỗi câu</span>
+                <span className="rm-label-hint">
+                  <span className="rm-label-value">{timePerQuestion}s</span>
                 </span>
+              </label>
+              <div className="rm-slider-wrap">
+                <input
+                  type="range"
+                  className="rm-slider"
+                  min={5}
+                  max={30}
+                  step={5}
+                  value={timePerQuestion}
+                  onChange={(e) => setTimePerQuestion(parseInt(e.target.value))}
+                  style={{ '--progress': `${timePercent}%` } as React.CSSProperties}
+                />
+                <div className="rm-slider-labels">
+                  <span>5s</span>
+                  <span>15s</span>
+                  <span>30s</span>
+                </div>
               </div>
-
-              <div className="rm-info-box">
-                <p><strong>💡 Câu đặc biệt:</strong> Người chơi có thể nhận power-up khi trả lời đúng câu đặc biệt</p>
-                <p style={{ marginTop: '12px' }}><strong>Power-ups:</strong></p>
-                <ul>
-                  <li>🛡️ Shield - Bảo vệ điểm</li>
-                  <li>⚡ Double - Nhân đôi điểm</li>
-                  <li>⏱️ Time Freeze - Thêm thời gian</li>
-                  <li>💰 Steal - Cướp điểm đối thủ</li>
-                </ul>
-              </div>
-            </>
+            </div>
           )}
+
+          {/* Max Players */}
+          <div className="rm-field">
+            <label className="rm-label">
+              <Users size={16} />
+              <span>Số người chơi tối đa</span>
+              <span className="rm-label-hint">
+                <span className="rm-label-value">{maxPlayers} người</span>
+              </span>
+            </label>
+            <div className="rm-slider-wrap">
+              <input
+                type="range"
+                className="rm-slider"
+                min={2}
+                max={VIP_MAX_PLAYERS}
+                step={1}
+                value={maxPlayers}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
+                  if (val > maxPlayersLimit) {
+                    setMaxPlayers(maxPlayersLimit);
+                    showUpgradeHint('players');
+                  } else {
+                    setMaxPlayers(val);
+                  }
+                }}
+                style={{ '--progress': `${playersPercent}%` } as React.CSSProperties}
+              />
+              <div className="rm-slider-labels">
+                <span>2</span>
+                {!isVipOrAdmin && <span style={{ color: 'var(--rm-primary, #7C3AED)' }}>{maxPlayersLimit}</span>}
+                <span>{VIP_MAX_PLAYERS}</span>
+              </div>
+            </div>
+            {upgradeHint === 'players' && (
+              <div className="rm-upgrade-hint">🌟 Nâng cấp VIP để mời tới {VIP_MAX_PLAYERS} người chơi</div>
+            )}
+          </div>
         </div>
 
         {/* Footer */}

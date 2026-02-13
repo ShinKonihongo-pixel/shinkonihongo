@@ -69,7 +69,6 @@ export function GameSelector({ onSelectGame, onQuickJoin, onSetupGame }: GameSel
           onBack={() => setCurrentView('games')}
           onCreateRoom={() => setCurrentView('games')}
           filterGameType={filterGameType}
-          realRooms={[]} // Only real rooms - fetched from server when available
         />
       </div>
     );

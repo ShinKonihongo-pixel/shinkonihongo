@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { X, Swords, BookOpen, PenTool, Clock, Users, Hash, Sparkles, Play } from 'lucide-react';
 import type { CreateKanjiBattleData, KanjiBattleMode, JLPTLevel } from '../../types/kanji-battle';
 import { getKanjiSeedCount } from '../../data/kanji-seed/index';
+import { useBodyScrollLock } from '../../hooks/use-body-scroll-lock';
 
 const JLPT_LEVELS: { level: JLPTLevel; label: string }[] = [
   { level: 'N5', label: 'N5' },
@@ -27,6 +28,7 @@ export function KanjiBattleSetup({
   loading = false,
   error,
 }: KanjiBattleSetupProps) {
+  useBodyScrollLock();
   const [title, setTitle] = useState('Đại Chiến Kanji');
   const [gameMode, setGameMode] = useState<KanjiBattleMode>('read');
   const [selectedLevels, setSelectedLevels] = useState<JLPTLevel[]>(['N5']);

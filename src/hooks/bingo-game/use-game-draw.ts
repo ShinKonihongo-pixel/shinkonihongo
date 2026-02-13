@@ -1,12 +1,13 @@
 // Game draw number logic
 
 import { useCallback } from 'react';
-import type { BingoPlayer, DrawnNumber } from '../../types/bingo-game';
+import type { BingoGame, BingoPlayer, DrawnNumber } from '../../types/bingo-game';
 import type { UseBingoGameProps, BingoGameState } from './types';
 
 export function useGameDraw(
   state: BingoGameState,
-  setState: React.Dispatch<React.SetStateAction<BingoGameState>>,
+  setGame: (updater: (prev: BingoGame | null) => BingoGame | null) => void,
+  _setState: React.Dispatch<React.SetStateAction<BingoGameState>>,
   currentUser: UseBingoGameProps['currentUser'],
   currentPlayer: BingoPlayer | undefined
 ) {
@@ -16,16 +17,16 @@ export function useGameDraw(
     if (!currentPlayer || currentPlayer.isBlocked) return;
     if (state.game.availableNumbers.length === 0) return;
 
-    setState(prev => {
-      if (!prev.game) return prev;
+    setGame(prev => {
+      if (!prev) return null;
 
       // Pick random number (considering luck bonus)
-      const luckBonus = prev.game.players[currentUser.id]?.luckBonus || 1.0;
+      const luckBonus = prev.players[currentUser.id]?.luckBonus || 1.0;
       let drawnNumber: number;
 
       // Find numbers that would benefit the current player
       const myNumbers = new Set<number>();
-      prev.game.players[currentUser.id]?.rows.forEach(row => {
+      prev.players[currentUser.id]?.rows.forEach(row => {
         row.cells.forEach(cell => {
           if (!cell.marked) myNumbers.add(cell.number);
         });
@@ -33,18 +34,18 @@ export function useGameDraw(
 
       // Apply luck: higher chance to draw a number that matches player's cards
       if (luckBonus > 1 && Math.random() < (luckBonus - 1)) {
-        const beneficialNumbers = prev.game.availableNumbers.filter(n => myNumbers.has(n));
+        const beneficialNumbers = prev.availableNumbers.filter(n => myNumbers.has(n));
         if (beneficialNumbers.length > 0) {
           drawnNumber = beneficialNumbers[Math.floor(Math.random() * beneficialNumbers.length)];
         } else {
-          drawnNumber = prev.game.availableNumbers[Math.floor(Math.random() * prev.game.availableNumbers.length)];
+          drawnNumber = prev.availableNumbers[Math.floor(Math.random() * prev.availableNumbers.length)];
         }
       } else {
-        drawnNumber = prev.game.availableNumbers[Math.floor(Math.random() * prev.game.availableNumbers.length)];
+        drawnNumber = prev.availableNumbers[Math.floor(Math.random() * prev.availableNumbers.length)];
       }
 
       // Remove from available
-      const newAvailable = prev.game.availableNumbers.filter(n => n !== drawnNumber);
+      const newAvailable = prev.availableNumbers.filter(n => n !== drawnNumber);
 
       // Add to drawn history
       const newDrawn: DrawnNumber = {
@@ -56,7 +57,7 @@ export function useGameDraw(
 
       // Mark number for all players
       const newPlayers: Record<string, BingoPlayer> = {};
-      Object.entries(prev.game.players).forEach(([id, player]) => {
+      Object.entries(prev.players).forEach(([id, player]) => {
         const updatedRows = player.rows.map(row => {
           const updatedCells = row.cells.map(cell => {
             if (cell.number === drawnNumber && !cell.marked) {
@@ -96,28 +97,25 @@ export function useGameDraw(
           isBlocked: false,
           luckBonus: newLuckBonus,
           luckTurnsLeft: newLuckTurns,
-          hasSkillAvailable: (prev.game!.currentTurn + 1) % prev.game!.settings.skillInterval === 0 && prev.game!.settings.skillsEnabled,
+          hasSkillAvailable: (prev.currentTurn + 1) % prev.settings.skillInterval === 0 && prev.settings.skillsEnabled,
         };
       });
 
-      const newTurn = prev.game.currentTurn + 1;
-      const isSkillTime = newTurn % prev.game.settings.skillInterval === 0 && prev.game.settings.skillsEnabled;
+      const newTurn = prev.currentTurn + 1;
+      const isSkillTime = newTurn % prev.settings.skillInterval === 0 && prev.settings.skillsEnabled;
 
       return {
         ...prev,
-        game: {
-          ...prev.game,
-          availableNumbers: newAvailable,
-          drawnNumbers: [...prev.game.drawnNumbers, newDrawn],
-          lastDrawnNumber: drawnNumber,
-          players: newPlayers,
-          currentTurn: newTurn,
-          currentDrawerId: currentUser.id,
-          status: isSkillTime ? 'skill_phase' : 'playing',
-        }
+        availableNumbers: newAvailable,
+        drawnNumbers: [...prev.drawnNumbers, newDrawn],
+        lastDrawnNumber: drawnNumber,
+        players: newPlayers,
+        currentTurn: newTurn,
+        currentDrawerId: currentUser.id,
+        status: isSkillTime ? 'skill_phase' : 'playing',
       };
     });
-  }, [state.game, currentPlayer, currentUser, setState]);
+  }, [state.game, currentPlayer, currentUser, setGame]);
 
   return { drawNumber };
 }

@@ -1,4 +1,5 @@
 // Game creation logic
+// Handles game initialization - writes to Firestore for cross-device multiplayer
 
 import { useCallback } from 'react';
 import type {
@@ -11,6 +12,7 @@ import type {
 import { DEFAULT_KANJI_BATTLE_SETTINGS } from '../../types/kanji-battle';
 import { generateBots } from '../../types/game-hub';
 import { generateId, generateGameCode, convertKanjiSeedToQuestions } from './utils';
+import { createGameRoom } from '../../services/game-rooms';
 
 interface UseGameCreationProps {
   currentUser: {
@@ -23,6 +25,7 @@ interface UseGameCreationProps {
   setGameResults: (results: KanjiBattleResults | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  setRoomId: (id: string | null) => void;
   botTimerRef: React.MutableRefObject<NodeJS.Timeout | null>;
 }
 
@@ -32,6 +35,7 @@ export function useGameCreation({
   setGameResults,
   setLoading,
   setError,
+  setRoomId,
   botTimerRef,
 }: UseGameCreationProps) {
   const createGame = useCallback(async (data: CreateKanjiBattleData) => {
@@ -80,8 +84,7 @@ export function useGameCreation({
         streak: 0,
       };
 
-      const newGame: KanjiBattleGame = {
-        id: generateId(),
+      const gameData: Omit<KanjiBattleGame, 'id'> = {
         code: generateGameCode(),
         hostId: currentUser.id,
         title: data.title,
@@ -95,6 +98,14 @@ export function useGameCreation({
         createdAt: new Date().toISOString(),
       };
 
+      // Write to Firestore
+      const firestoreId = await createGameRoom('kanji-battle', gameData as Record<string, unknown>);
+
+      // Set room ID first (enables Firestore subscription)
+      setRoomId(firestoreId);
+
+      // Set local game state
+      const newGame: KanjiBattleGame = { id: firestoreId, ...gameData };
       setGame(newGame);
       setGameResults(null);
 
@@ -143,7 +154,7 @@ export function useGameCreation({
     } finally {
       setLoading(false);
     }
-  }, [currentUser, setGame, setGameResults, setLoading, setError, botTimerRef]);
+  }, [currentUser, setGame, setGameResults, setLoading, setError, setRoomId, botTimerRef]);
 
   return { createGame };
 }

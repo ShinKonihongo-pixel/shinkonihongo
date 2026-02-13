@@ -1,5 +1,5 @@
 // Golden Bell Game Creation
-// Handles game initialization and setup
+// Handles game initialization - writes to Firestore for cross-device multiplayer
 
 import { useCallback } from 'react';
 import type {
@@ -10,7 +10,8 @@ import type {
   CreateGoldenBellData,
 } from '../../types/golden-bell';
 import type { Flashcard } from '../../types/flashcard';
-import { generateId, generateGameCode } from '../../lib/game-utils';
+import { generateGameCode } from '../../lib/game-utils';
+import { createGameRoom } from '../../services/game-rooms';
 import { convertFlashcardsToQuestions } from './utils';
 
 interface UseGameCreationProps {
@@ -23,6 +24,7 @@ interface UseGameCreationProps {
   setGameResults: (results: GoldenBellResults | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  setRoomId: (id: string | null) => void;
   flashcards: Flashcard[];
   scheduleBotJoin: (
     setGame: (updater: (prev: any) => any) => void,
@@ -36,6 +38,7 @@ export function useGameCreation({
   setGameResults,
   setLoading,
   setError,
+  setRoomId,
   flashcards,
   scheduleBotJoin,
 }: UseGameCreationProps) {
@@ -77,8 +80,7 @@ export function useGameCreation({
         streak: 0,
       };
 
-      const newGame: GoldenBellGame = {
-        id: generateId(),
+      const gameData: Omit<GoldenBellGame, 'id'> = {
         code: generateGameCode(),
         hostId: currentUser.id,
         title: data.title,
@@ -92,6 +94,14 @@ export function useGameCreation({
         createdAt: new Date().toISOString(),
       };
 
+      // Write to Firestore
+      const firestoreId = await createGameRoom('golden-bell', gameData as unknown as Record<string, unknown>);
+
+      // Set room ID first (enables Firestore subscription)
+      setRoomId(firestoreId);
+
+      // Set local game state
+      const newGame: GoldenBellGame = { id: firestoreId, ...gameData };
       setGame(newGame);
       setGameResults(null);
 
@@ -102,7 +112,7 @@ export function useGameCreation({
     } finally {
       setLoading(false);
     }
-  }, [currentUser, flashcards, scheduleBotJoin, setGame, setGameResults, setLoading, setError]);
+  }, [currentUser, flashcards, scheduleBotJoin, setGame, setGameResults, setLoading, setError, setRoomId]);
 
   return { createGame };
 }

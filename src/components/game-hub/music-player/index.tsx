@@ -142,7 +142,7 @@ export function FloatingMusicPlayer({ onClose }: FloatingMusicPlayerProps) {
     >
       <PlayerHeader onClose={onClose} onMinimize={() => setIsExpanded(false)} />
 
-      <NowPlaying track={selectedTrack} isPlaying={isMusicPlaying} />
+      {selectedTrack && <NowPlaying track={selectedTrack} isPlaying={isMusicPlaying} />}
 
       <PlayerControls
         isPlaying={isMusicPlaying}

@@ -1,4 +1,5 @@
 // Main picture guess hook - orchestrates all modules
+// Combines all sub-hooks and exports unified interface
 
 import type { Flashcard } from '../../types/flashcard';
 import { useGameState } from './use-game-state';
@@ -16,17 +17,19 @@ interface UsePictureGuessProps {
 }
 
 export function usePictureGuess({ currentUser, flashcards = [] }: UsePictureGuessProps) {
+  // State management (with Firestore sync)
   const {
     game, setGame,
     gameResults, setGameResults,
-    availableRooms,
     loading, setLoading,
     error, setError,
+    roomId, setRoomId,
     isHost, currentPlayer, currentPuzzle,
     sortedPlayers,
     scheduleBotJoin, clearBotTimers,
   } = useGameState({ currentUserId: currentUser.id });
 
+  // Game creation (writes to Firestore)
   const { createGame } = useGameCreation({
     currentUser,
     flashcards,
@@ -34,19 +37,21 @@ export function usePictureGuess({ currentUser, flashcards = [] }: UsePictureGues
     setGameResults,
     setLoading,
     setError,
+    setRoomId,
     scheduleBotJoin,
   });
 
+  // Game actions (join via Firestore, leave, start)
   const {
     joinGame, leaveGame, startGame, resetGame,
   } = useGameActions({
     currentUser,
     game,
-    availableRooms,
     setGame,
     setGameResults,
     setLoading,
     setError,
+    setRoomId,
     isHost,
     clearBotTimers,
   });
@@ -66,9 +71,9 @@ export function usePictureGuess({ currentUser, flashcards = [] }: UsePictureGues
     // State
     game,
     gameResults,
-    availableRooms,
     loading,
     error,
+    roomId,
 
     // Computed
     isHost,

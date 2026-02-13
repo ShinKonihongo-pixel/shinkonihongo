@@ -210,6 +210,7 @@ export function GameHubPage({
             loading={false}
             error={null}
             gameSettings={settings}
+            userRole={currentUser?.role}
           />
         );
       case 'kanji-battle':
@@ -263,8 +264,6 @@ export function GameHubPage({
           currentUserAvatar={currentUser.avatar}
           flashcards={flashcards}
           jlptQuestions={jlptQuestions}
-          getLessonsByLevel={getLessonsByLevel}
-          getChildLessons={getChildLessons}
           onGoHome={handleBackToHub}
           initialJoinCode={joinCode}
           onJoinCodeUsed={() => setJoinCode(null)}
@@ -273,6 +272,7 @@ export function GameHubPage({
           onInviteFriend={onInviteFriend}
           onSaveGameSession={onSaveGameSession}
           initialRoomConfig={pendingRoomConfig?.gameType === 'quiz' ? pendingRoomConfig.data : undefined}
+          userRole={currentUser.role}
         />
       )}
 
@@ -295,6 +295,7 @@ export function GameHubPage({
         <PictureGuessPage
           currentUser={currentUser}
           flashcards={flashcards}
+          initialJoinCode={joinCode || undefined}
           initialRoomConfig={pendingRoomConfig?.gameType === 'picture-guess' ? pendingRoomConfig.data : undefined}
         />
       )}
@@ -324,6 +325,7 @@ export function GameHubPage({
             role: currentUser.role,
           }}
           initialView={joinCode ? 'menu' : 'setup'}
+          initialJoinCode={joinCode || undefined}
           onSaveGameSession={onSaveGameSession}
           initialRoomConfig={pendingRoomConfig?.gameType === 'kanji-battle' ? pendingRoomConfig.data : undefined}
         />
@@ -340,6 +342,7 @@ export function GameHubPage({
           }}
           flashcards={flashcards}
           initialView={joinCode ? 'menu' : 'setup'}
+          initialJoinCode={joinCode || undefined}
           onSaveGameSession={onSaveGameSession}
           initialRoomConfig={pendingRoomConfig?.gameType === 'word-match' ? pendingRoomConfig.data : undefined}
         />

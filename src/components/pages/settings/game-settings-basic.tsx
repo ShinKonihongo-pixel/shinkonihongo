@@ -9,7 +9,7 @@ export function GameSettingsBasic({ settings, onUpdateSetting }: GameSettingsBas
   return (
     <section className="settings-section">
       <h3>Cài đặt trò chơi</h3>
-      <p className="settings-description">Cài đặt nội dung hiển thị trong trò chơi Quiz Game</p>
+      <p className="settings-description">Cài đặt nội dung hiển thị trong Đại Chiến Tiếng Nhật</p>
 
       <div className="setting-item">
         <label>Nội dung câu hỏi</label>

@@ -28,6 +28,7 @@ interface KanjiBattlePageProps {
   // XP tracking
   onSaveGameSession?: (data: Omit<GameSession, 'id' | 'userId'>) => void;
   initialRoomConfig?: Record<string, unknown>;
+  initialJoinCode?: string;
 }
 
 export const KanjiBattlePage: React.FC<KanjiBattlePageProps> = ({
@@ -36,6 +37,7 @@ export const KanjiBattlePage: React.FC<KanjiBattlePageProps> = ({
   initialView = 'menu',
   onSaveGameSession,
   initialRoomConfig,
+  initialJoinCode,
 }) => {
   const [view, setView] = useState<PageView>(initialView);
   const [notification, setNotification] = useState<{ message: string; type: 'info' | 'warning' } | null>(null);
@@ -77,6 +79,14 @@ export const KanjiBattlePage: React.FC<KanjiBattlePageProps> = ({
         gameMode: cfg.gameMode || 'read',
         selectedLevels: cfg.selectedLevels || ['N5'],
       });
+      setView('lobby');
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-join game from WaitingRoom or QR code
+  React.useEffect(() => {
+    if (initialJoinCode && !game) {
+      joinGame(initialJoinCode);
       setView('lobby');
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

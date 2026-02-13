@@ -1,12 +1,13 @@
 // Game skills actions
 
 import { useCallback } from 'react';
-import type { BingoPlayer, BingoSkillType } from '../../types/bingo-game';
+import type { BingoGame, BingoPlayer, BingoSkillType } from '../../types/bingo-game';
 import type { UseBingoGameProps, BingoGameState } from './types';
 
 export function useGameSkills(
   state: BingoGameState,
-  setState: React.Dispatch<React.SetStateAction<BingoGameState>>,
+  setGame: (updater: (prev: BingoGame | null) => BingoGame | null) => void,
+  _setState: React.Dispatch<React.SetStateAction<BingoGameState>>,
   currentUser: UseBingoGameProps['currentUser'],
   currentPlayer: BingoPlayer | undefined
 ) {
@@ -15,10 +16,10 @@ export function useGameSkills(
     if (!state.game || !currentPlayer) return;
     if (!currentPlayer.hasSkillAvailable) return;
 
-    setState(prev => {
-      if (!prev.game) return prev;
+    setGame(prev => {
+      if (!prev) return null;
 
-      const newPlayers: Record<string, BingoPlayer> = { ...prev.game.players };
+      const newPlayers: Record<string, BingoPlayer> = { ...prev.players };
       const player = newPlayers[currentUser.id];
 
       switch (skillType) {
@@ -77,23 +78,20 @@ export function useGameSkills(
       // Return to playing status
       return {
         ...prev,
-        game: {
-          ...prev.game,
-          players: newPlayers,
-          status: 'playing',
-        }
+        players: newPlayers,
+        status: 'playing',
       };
     });
-  }, [state.game, currentPlayer, currentUser, setState]);
+  }, [state.game, currentPlayer, currentUser, setGame]);
 
   // Skip skill phase
   const skipSkill = useCallback(() => {
     if (!state.game) return;
 
-    setState(prev => {
-      if (!prev.game) return prev;
+    setGame(prev => {
+      if (!prev) return null;
 
-      const newPlayers = { ...prev.game.players };
+      const newPlayers = { ...prev.players };
       if (newPlayers[currentUser.id]) {
         newPlayers[currentUser.id].hasSkillAvailable = false;
       }
@@ -103,14 +101,11 @@ export function useGameSkills(
 
       return {
         ...prev,
-        game: {
-          ...prev.game,
-          players: newPlayers,
-          status: allDone ? 'playing' : 'skill_phase',
-        }
+        players: newPlayers,
+        status: allDone ? 'playing' : 'skill_phase',
       };
     });
-  }, [state.game, currentUser, setState]);
+  }, [state.game, currentUser, setGame]);
 
   return {
     useSkill,

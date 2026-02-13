@@ -126,6 +126,12 @@ export interface AppSettings {
   gameQuestionFontSize: number;  // Font size for game questions (rem)
   gameAnswerFontSize: number;    // Font size for game answers (rem)
 
+  // Đại Chiến Tiếng Nhật — per-level difficulty mix (each row sums to ~100%)
+  // Key = game difficulty chosen by player, Value = % of cards from each card difficulty
+  quizDifficultyMix: Record<'super_hard' | 'hard' | 'medium' | 'easy', { super_hard: number; hard: number; medium: number; easy: number }>;
+  // Đại Chiến Tiếng Nhật — JLPT time per question category (seconds)
+  quizJlptTimePerCategory: { vocabulary: number; grammar: number; reading: number; listening: number };
+
   // Kaiwa (conversation) settings
   kaiwaVoiceGender: JapaneseVoiceGender;
   kaiwaVoiceRate: number;
@@ -243,6 +249,14 @@ const DEFAULT_SETTINGS: AppSettings = {
   gameAnswerContent: 'vocabulary_meaning',
   gameQuestionFontSize: 8,   // 8rem default
   gameAnswerFontSize: 1.1,   // 1.1rem default
+  // Đại Chiến Tiếng Nhật defaults
+  quizDifficultyMix: {
+    super_hard: { super_hard: 60, hard: 25, medium: 10, easy: 5 },
+    hard:       { super_hard: 20, hard: 45, medium: 25, easy: 10 },
+    medium:     { super_hard: 5,  hard: 20, medium: 50, easy: 25 },
+    easy:       { super_hard: 0,  hard: 10, medium: 30, easy: 60 },
+  },
+  quizJlptTimePerCategory: { vocabulary: 15, grammar: 20, reading: 30, listening: 25 },
   // Kaiwa defaults
   kaiwaVoiceGender: 'female',
   kaiwaVoiceRate: 1.0,

@@ -1,4 +1,5 @@
 // Word match game creation
+// Handles game initialization - writes to Firestore for cross-device multiplayer
 
 import { useCallback } from 'react';
 import type {
@@ -10,7 +11,8 @@ import type {
 } from '../../types/word-match';
 import { DEFAULT_WORD_MATCH_SETTINGS } from '../../types/word-match';
 import type { Flashcard } from '../../types/flashcard';
-import { generateId, generateGameCode } from '../../lib/game-utils';
+import { generateGameCode } from '../../lib/game-utils';
+import { createGameRoom } from '../../services/game-rooms';
 import { generateRounds } from './utils';
 
 interface UseGameCreationProps {
@@ -25,6 +27,7 @@ interface UseGameCreationProps {
   setGameResults: (results: WordMatchResults | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  setRoomId: (id: string | null) => void;
   scheduleBotJoin: <TGame extends { status: string; players: Record<string, WordMatchPlayer> }>(
     setGame: (updater: (prev: TGame | null) => TGame | null) => void,
     maxPlayers: number
@@ -38,6 +41,7 @@ export function useGameCreation({
   setGameResults,
   setLoading,
   setError,
+  setRoomId,
   scheduleBotJoin,
 }: UseGameCreationProps) {
   const createGame = useCallback(async (data: CreateWordMatchData) => {
@@ -82,8 +86,7 @@ export function useGameCreation({
         streak: 0,
       };
 
-      const newGame: WordMatchGame = {
-        id: generateId(),
+      const gameData: Omit<WordMatchGame, 'id'> = {
         code: generateGameCode(),
         hostId: currentUser.id,
         title: data.title,
@@ -97,6 +100,14 @@ export function useGameCreation({
         createdAt: new Date().toISOString(),
       };
 
+      // Write to Firestore
+      const firestoreId = await createGameRoom('word-match', gameData as unknown as Record<string, unknown>);
+
+      // Set room ID first (enables Firestore subscription)
+      setRoomId(firestoreId);
+
+      // Set local game state
+      const newGame: WordMatchGame = { id: firestoreId, ...gameData };
       setGame(newGame);
       setGameResults(null);
 
@@ -107,7 +118,7 @@ export function useGameCreation({
     } finally {
       setLoading(false);
     }
-  }, [currentUser, flashcards, setGame, setGameResults, setLoading, setError, scheduleBotJoin]);
+  }, [currentUser, flashcards, setGame, setGameResults, setLoading, setError, setRoomId, scheduleBotJoin]);
 
   return { createGame };
 }
