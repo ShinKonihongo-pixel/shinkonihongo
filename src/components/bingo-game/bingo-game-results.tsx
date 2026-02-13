@@ -1,7 +1,8 @@
 // Bingo Game Results - Show winner and rankings after game ends
 
-import { Trophy, RotateCcw, Home } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import type { BingoResults } from '../../types/bingo-game';
+import { RankingsTable, ResultsActionBar, type BaseRankedPlayer } from '../shared/game-results';
 
 interface BingoGameResultsProps {
   results: BingoResults;
@@ -15,6 +16,16 @@ export function BingoGameResults({
   onGoHome,
 }: BingoGameResultsProps) {
   const { winner, rankings, totalTurns, totalPlayers } = results;
+
+  // Map to BaseRankedPlayer
+  const rankedPlayers: BaseRankedPlayer[] = rankings.map((player, idx) => ({
+    id: player.odinhId,
+    displayName: player.displayName,
+    avatar: player.avatar,
+    rank: idx + 1,
+    score: player.markedCount,
+    isWinner: player.isWinner,
+  }));
 
   return (
     <div className="bingo-results">
@@ -51,40 +62,33 @@ export function BingoGameResults({
       </div>
 
       {/* Rankings */}
-      <div className="rankings-section">
-        <h3>Bảng Xếp Hạng</h3>
-        <div className="rankings-list">
-          {rankings.map((player, idx) => (
-            <div
-              key={player.odinhId}
-              className={`ranking-item ${player.isWinner ? 'winner' : ''} rank-${idx + 1}`}
-            >
-              <div className="rank-badge">
-                {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}
-              </div>
-              <div className="ranking-avatar">{player.avatar}</div>
-              <div className="ranking-info">
-                <span className="ranking-name">{player.displayName}</span>
+      <RankingsTable
+        rankings={rankedPlayers}
+        className="rankings-section"
+        title="Bảng Xếp Hạng"
+        columns={[
+          {
+            key: 'stats',
+            label: 'Thống kê',
+            render: (player) => {
+              const originalPlayer = rankings.find(p => p.odinhId === player.id);
+              return (
                 <span className="ranking-stats">
-                  ✓ {player.markedCount} số | 🏆 {player.completedRows} dãy hoàn thành
+                  ✓ {originalPlayer?.markedCount} số | 🏆 {originalPlayer?.completedRows} dãy hoàn thành
                 </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+              );
+            },
+          },
+        ]}
+      />
 
       {/* Action buttons */}
-      <div className="results-actions">
-        <button className="play-again-btn" onClick={onPlayAgain}>
-          <RotateCcw size={20} />
-          Chơi Lại
-        </button>
-        <button className="go-home-btn" onClick={onGoHome}>
-          <Home size={20} />
-          Về Trang Chủ
-        </button>
-      </div>
+      <ResultsActionBar
+        onPlayAgain={onPlayAgain}
+        onGoHome={onGoHome}
+        playAgainLabel="Chơi Lại"
+        goHomeLabel="Về Trang Chủ"
+      />
     </div>
   );
 }

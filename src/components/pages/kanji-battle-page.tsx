@@ -27,6 +27,7 @@ interface KanjiBattlePageProps {
   initialView?: PageView;
   // XP tracking
   onSaveGameSession?: (data: Omit<GameSession, 'id' | 'userId'>) => void;
+  initialRoomConfig?: Record<string, unknown>;
 }
 
 export const KanjiBattlePage: React.FC<KanjiBattlePageProps> = ({
@@ -34,6 +35,7 @@ export const KanjiBattlePage: React.FC<KanjiBattlePageProps> = ({
   currentUser = { id: 'user-1', displayName: 'Player', avatar: '👤' },
   initialView = 'menu',
   onSaveGameSession,
+  initialRoomConfig,
 }) => {
   const [view, setView] = useState<PageView>(initialView);
   const [notification, setNotification] = useState<{ message: string; type: 'info' | 'warning' } | null>(null);
@@ -61,6 +63,23 @@ export const KanjiBattlePage: React.FC<KanjiBattlePageProps> = ({
     useSkill,
     resetGame,
   } = useKanjiBattle({ currentUser });
+
+  // Auto-create room from unified setup
+  React.useEffect(() => {
+    if (initialRoomConfig && !game) {
+      const cfg = initialRoomConfig as unknown as CreateKanjiBattleData;
+      createGame({
+        title: cfg.title || 'Dai Chien Kanji',
+        totalRounds: cfg.totalRounds || 15,
+        timePerQuestion: cfg.timePerQuestion || 15,
+        maxPlayers: cfg.maxPlayers || 10,
+        skillsEnabled: cfg.skillsEnabled ?? true,
+        gameMode: cfg.gameMode || 'read',
+        selectedLevels: cfg.selectedLevels || ['N5'],
+      });
+      setView('lobby');
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCreateGame = useCallback(
     (data: CreateKanjiBattleData) => {

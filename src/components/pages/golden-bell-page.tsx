@@ -2,14 +2,14 @@
 // Orchestrates all Golden Bell components based on game state
 
 import { useState, useEffect, useRef } from 'react';
-import { useGoldenBell } from '../../hooks/use-golden-bell';
+import { useGoldenBell } from '../../hooks/golden-bell';
 import { GoldenBellMenu } from '../golden-bell/golden-bell-menu';
 import { GoldenBellSetup } from '../golden-bell/golden-bell-setup';
 import { GoldenBellLobby } from '../golden-bell/golden-bell-lobby';
 import { GoldenBellPlay } from '../golden-bell/golden-bell-play';
 import { GoldenBellResultsView } from '../golden-bell/golden-bell-results';
-import type { CreateGoldenBellData, GoldenBellGame } from '../../types/golden-bell';
-import type { Flashcard } from '../../types/flashcard';
+import type { CreateGoldenBellData, GoldenBellGame, QuestionCategory } from '../../types/golden-bell';
+import type { Flashcard, JLPTLevel } from '../../types/flashcard';
 import type { GameSession } from '../../types/user';
 
 // Simple user interface for props
@@ -29,6 +29,8 @@ interface GoldenBellPageProps {
   initialJoinCode?: string;
   // XP tracking
   onSaveGameSession?: (data: Omit<GameSession, 'id' | 'userId'>) => void;
+  // Auto-create room from unified setup
+  initialRoomConfig?: Record<string, unknown>;
 }
 
 export function GoldenBellPage({
@@ -36,6 +38,7 @@ export function GoldenBellPage({
   flashcards,
   initialJoinCode,
   onSaveGameSession,
+  initialRoomConfig,
 }: GoldenBellPageProps) {
   const [view, setView] = useState<PageView>('menu');
   const gameSessionSaved = useRef(false);
@@ -74,10 +77,27 @@ export function GoldenBellPage({
   useEffect(() => {
     if (initialJoinCode && !game) {
       joinGame(initialJoinCode).catch(() => {
-        setError('Không thể tham gia phòng với mã này');
+        setError('Khong the tham gia phong voi ma nay');
       });
     }
   }, [initialJoinCode, game, joinGame, setError]);
+
+  // Auto-create room from unified setup
+  useEffect(() => {
+    if (initialRoomConfig && !game) {
+      const cfg = initialRoomConfig;
+      createGame({
+        title: (cfg.title as string) || 'Rung Chuong Vang',
+        jlptLevel: (cfg.jlptLevel as JLPTLevel) || 'N5',
+        contentSource: 'flashcard',
+        questionCount: (cfg.totalRounds as number) || 20,
+        timePerQuestion: (cfg.timePerQuestion as number) || 15,
+        maxPlayers: (cfg.maxPlayers as number) || 20,
+        categories: (cfg.categories as QuestionCategory[]) || ['vocabulary', 'kanji'],
+        difficultyProgression: (cfg.difficultyProgression as boolean) ?? true,
+      });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update view based on game state
   useEffect(() => {

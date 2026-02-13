@@ -1,10 +1,9 @@
 // Bingo Game Lobby - Waiting room before game starts
 
-import { Copy, Users, Play, LogOut, Check, X } from 'lucide-react';
+import { Users, Play } from 'lucide-react';
 import { useState } from 'react';
 import type { BingoGame } from '../../types/bingo-game';
-import { isImageAvatar } from '../../utils/avatar-icons';
-import { getVipAvatarClasses, getVipNameClasses, isVipRole, getVipBadge } from '../../utils/vip-styling';
+import { GameCodeDisplay, PlayerListGrid, LobbyActionBar, normalizePlayer } from '../shared/game-lobby';
 
 interface BingoGameLobbyProps {
   game: BingoGame;
@@ -27,6 +26,7 @@ export function BingoGameLobby({
 }: BingoGameLobbyProps) {
   const [copied, setCopied] = useState(false);
   const players = Object.values(game.players);
+  const normalizedPlayers = players.map(p => normalizePlayer({ ...p, odinhId: p.odinhId, isHost: p.odinhId === game.hostId }));
   const canStart = players.length >= game.settings.minPlayers;
 
   const copyCode = () => {
@@ -40,13 +40,13 @@ export function BingoGameLobby({
       {/* Header with room code */}
       <div className="lobby-header">
         <h2>{game.title}</h2>
-        <div className="room-code-display" onClick={copyCode}>
-          <span className="code-label">Mã Phòng:</span>
-          <span className="code-value">{game.code}</span>
-          <button className="copy-btn">
-            {copied ? <Check size={16} /> : <Copy size={16} />}
-          </button>
-        </div>
+        <GameCodeDisplay
+          code={game.code}
+          copied={copied}
+          onCopy={copyCode}
+          label="Mã Phòng:"
+          className="room-code-display"
+        />
       </div>
 
       {/* Settings info */}
@@ -70,53 +70,14 @@ export function BingoGameLobby({
       {/* Players list */}
       <div className="lobby-players">
         <h3>Người Chơi</h3>
-        <div className="players-grid">
-          {players.map(player => {
-            const playerIsVip = isVipRole(player.role);
-            const vipBadge = getVipBadge(player.role);
-
-            return (
-              <div
-                key={player.odinhId}
-                className={`player-card ${player.odinhId === currentPlayerId ? 'is-me' : ''} ${player.odinhId === game.hostId ? 'is-host' : ''} ${playerIsVip ? 'vip-player' : ''}`}
-              >
-                <div className={getVipAvatarClasses(player.role, 'player-avatar')}>
-                  {player.avatar && isImageAvatar(player.avatar) ? (
-                    <img src={player.avatar} alt={player.displayName} />
-                  ) : (
-                    player.avatar
-                  )}
-                  {playerIsVip && <span className="vip-frame" />}
-                </div>
-                <div className={getVipNameClasses(player.role, 'player-name')}>
-                  {vipBadge && <span className="vip-badge">{vipBadge}</span>}
-                  {player.displayName}
-                </div>
-                {player.odinhId === game.hostId && (
-                  <span className="host-badge">👑</span>
-                )}
-                {/* Kick button for host */}
-                {isHost && player.odinhId !== game.hostId && player.odinhId !== currentPlayerId && onKickPlayer && (
-                  <button
-                    className="kick-btn"
-                    onClick={() => onKickPlayer(player.odinhId)}
-                    title="Kick khỏi phòng"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
-            );
-          })}
-
-          {/* Empty slots */}
-          {Array.from({ length: Math.min(game.settings.maxPlayers - players.length, 4) }).map((_, i) => (
-            <div key={`empty-${i}`} className="player-card empty">
-              <div className="player-avatar">?</div>
-              <div className="player-name">Đang chờ...</div>
-            </div>
-          ))}
-        </div>
+        <PlayerListGrid
+          players={normalizedPlayers}
+          hostId={game.hostId}
+          currentPlayerId={currentPlayerId}
+          maxPlayers={game.settings.maxPlayers}
+          onKickPlayer={onKickPlayer}
+          maxEmptySlots={4}
+        />
       </div>
 
       {/* Waiting message */}
@@ -129,28 +90,17 @@ export function BingoGameLobby({
       </div>
 
       {/* Action buttons */}
-      <div className="lobby-actions">
-        {isHost ? (
-          <button
-            className="start-btn"
-            onClick={onStartGame}
-            disabled={!canStart || loading}
-          >
-            <Play size={20} />
-            {loading ? 'Đang bắt đầu...' : 'Bắt Đầu'}
-          </button>
-        ) : (
-          <div className="waiting-for-host">
-            <span className="loading-dots">⏳</span>
-            Đang chờ chủ phòng bắt đầu...
-          </div>
-        )}
-
-        <button className="leave-btn" onClick={onLeaveGame}>
-          <LogOut size={18} />
-          Rời Phòng
-        </button>
-      </div>
+      <LobbyActionBar
+        isHost={isHost}
+        canStart={canStart}
+        onStart={onStartGame}
+        onLeave={onLeaveGame}
+        startLabel="Bắt Đầu"
+        disabledLabel="Cần thêm người chơi"
+        waitingLabel="Đang chờ chủ phòng bắt đầu..."
+        loading={loading}
+        startIcon={<Play size={20} />}
+      />
     </div>
   );
 }

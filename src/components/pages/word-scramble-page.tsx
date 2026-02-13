@@ -11,6 +11,7 @@ export const WordScramblePage: React.FC<WordScramblePageProps> = ({
   onClose,
   flashcards,
   currentUser,
+  initialRoomConfig: _initialRoomConfig, // Multiplayer not implemented yet
 }) => {
   const {
     config,

@@ -13,9 +13,10 @@ type SelectorView = 'games' | 'waiting-room';
 interface GameSelectorProps {
   onSelectGame: (game: GameType) => void;
   onQuickJoin: (gameType: GameType, code: string) => void;
+  onSetupGame: (game: GameType) => void;
 }
 
-export function GameSelector({ onSelectGame, onQuickJoin }: GameSelectorProps) {
+export function GameSelector({ onSelectGame, onQuickJoin, onSetupGame }: GameSelectorProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentView, setCurrentView] = useState<SelectorView>('games');
   const [filterGameType, setFilterGameType] = useState<GameType | null>(null);
@@ -155,7 +156,13 @@ export function GameSelector({ onSelectGame, onQuickJoin }: GameSelectorProps) {
               <GameCardMinimal
                 key={game.id}
                 game={game}
-                onCreateRoom={() => onSelectGame(game.id)}
+                onCreateRoom={() => {
+                  if (game.id === 'ai-challenge') {
+                    onSelectGame(game.id);
+                  } else {
+                    onSetupGame(game.id);
+                  }
+                }}
                 onJoinWaitingRoom={() => handleOpenWaitingRoom(game.id)}
                 getDifficultyLabel={getDifficultyLabel}
               />
@@ -186,6 +193,7 @@ interface GameCardMinimalProps {
 
 function GameCardMinimal({ game, onCreateRoom, onJoinWaitingRoom, getDifficultyLabel }: GameCardMinimalProps) {
   const difficulty = getDifficultyLabel(game.difficulty);
+  const isAIChallenge = game.id === 'ai-challenge';
 
   return (
     <div className="game-card-minimal">
@@ -218,14 +226,23 @@ function GameCardMinimal({ game, onCreateRoom, onJoinWaitingRoom, getDifficultyL
 
       {/* Actions */}
       <div className="card-actions-row">
-        <button className="btn-create-room" onClick={onCreateRoom} style={{ background: game.color }}>
-          <Plus size={16} />
-          Tạo phòng
-        </button>
-        <button className="btn-join-waiting" onClick={onJoinWaitingRoom}>
-          <DoorOpen size={16} />
-          Tham gia
-        </button>
+        {isAIChallenge ? (
+          <button className="btn-create-room" onClick={onCreateRoom} style={{ background: game.color, flex: 1 }}>
+            <Zap size={16} />
+            Choi ngay
+          </button>
+        ) : (
+          <>
+            <button className="btn-create-room" onClick={onCreateRoom} style={{ background: game.color }}>
+              <Plus size={16} />
+              Tao phong
+            </button>
+            <button className="btn-join-waiting" onClick={onJoinWaitingRoom}>
+              <DoorOpen size={16} />
+              Tham gia
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

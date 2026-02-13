@@ -1,9 +1,10 @@
 // Picture Guess Lobby - Waiting room for multiplayer games
 // Shows room code, player list, and start button for host
 
-import { Copy, Users, Play, LogOut, Crown, Check, Image } from 'lucide-react';
+import { Users, Play, Image } from 'lucide-react';
 import { useState } from 'react';
 import type { PictureGuessGame, PictureGuessPlayer } from '../../types/picture-guess';
+import { GameCodeDisplay, PlayerListGrid, LobbyActionBar, normalizePlayer } from '../shared/game-lobby';
 
 interface PictureGuessLobbyProps {
   game: PictureGuessGame;
@@ -22,6 +23,8 @@ export function PictureGuessLobby({
 }: PictureGuessLobbyProps) {
   const [copied, setCopied] = useState(false);
   const playerCount = Object.keys(game.players).length;
+  const players = Object.values(game.players);
+  const normalizedPlayers = players.map(p => normalizePlayer({ ...p, odinhId: p.odinhId, isHost: p.odinhId === game.hostId }));
   const canStart = playerCount >= (game.settings.mode === 'single' ? 1 : 2);
 
   const handleCopyCode = async () => {
@@ -47,17 +50,13 @@ export function PictureGuessLobby({
 
       {/* Room Code */}
       {game.settings.mode === 'multiplayer' && (
-        <div className="pg-room-code-section">
-          <p className="pg-code-label">Mã phòng</p>
-          <div className="pg-code-display" onClick={handleCopyCode}>
-            <span className="pg-code-value">{game.code}</span>
-            <button className="pg-copy-btn" title="Sao chép mã">
-              {copied ? <Check size={20} /> : <Copy size={20} />}
-            </button>
-          </div>
-          {copied && <span className="pg-copied-text">Đã sao chép!</span>}
-          <p className="pg-code-hint">Chia sẻ mã này với bạn bè để họ tham gia</p>
-        </div>
+        <GameCodeDisplay
+          code={game.code}
+          copied={copied}
+          onCopy={handleCopyCode}
+          label="Mã phòng"
+          className="pg-room-code-section"
+        />
       )}
 
       {/* Game Settings Summary */}
@@ -86,59 +85,28 @@ export function PictureGuessLobby({
           <Users size={20} />
           <span>Người chơi ({playerCount}/{game.settings.maxPlayers})</span>
         </div>
-        <div className="pg-players-list">
-          {Object.values(game.players).map(player => (
-            <div
-              key={player.odinhId}
-              className={`pg-player-item ${player.odinhId === currentPlayer?.odinhId ? 'current' : ''}`}
-            >
-              <span className="pg-player-avatar">{player.avatar}</span>
-              <span className="pg-player-name">{player.displayName}</span>
-              {player.odinhId === game.hostId && (
-                <span className="pg-host-badge" title="Host">
-                  <Crown size={16} />
-                </span>
-              )}
-            </div>
-          ))}
-
-          {/* Empty slots */}
-          {Array.from({ length: Math.min(game.settings.maxPlayers - playerCount, 4) }).map((_, i) => (
-            <div key={`empty-${i}`} className="pg-player-item empty">
-              <span className="pg-player-avatar">?</span>
-              <span className="pg-player-name">Đang chờ...</span>
-            </div>
-          ))}
-        </div>
+        <PlayerListGrid
+          players={normalizedPlayers}
+          hostId={game.hostId}
+          currentPlayerId={currentPlayer?.odinhId || ''}
+          maxPlayers={game.settings.maxPlayers}
+          className="pg-players-list"
+          maxEmptySlots={4}
+        />
       </div>
 
       {/* Action Buttons */}
-      <div className="pg-lobby-actions">
-        {isHost || game.settings.mode === 'single' ? (
-          <button
-            className="pg-start-btn"
-            onClick={onStart}
-            disabled={!canStart}
-          >
-            <Play size={20} />
-            <span>
-              {!canStart
-                ? `Cần ${game.settings.mode === 'single' ? 1 : 2} người`
-                : 'Bắt Đầu'}
-            </span>
-          </button>
-        ) : (
-          <div className="pg-waiting-host">
-            <div className="pg-waiting-spinner"></div>
-            <span>Đang chờ host bắt đầu...</span>
-          </div>
-        )}
-
-        <button className="pg-leave-btn" onClick={onLeave}>
-          <LogOut size={18} />
-          <span>Rời Phòng</span>
-        </button>
-      </div>
+      <LobbyActionBar
+        isHost={isHost || game.settings.mode === 'single'}
+        canStart={canStart}
+        onStart={onStart}
+        onLeave={onLeave}
+        startLabel="Bắt Đầu"
+        disabledLabel={`Cần ${game.settings.mode === 'single' ? 1 : 2} người`}
+        waitingLabel="Đang chờ host bắt đầu..."
+        className="pg-lobby-actions"
+        startIcon={<Play size={20} />}
+      />
     </div>
   );
 }

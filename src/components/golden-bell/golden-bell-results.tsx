@@ -1,8 +1,9 @@
 // Golden Bell Results - Final game results and rankings
 // Shows winner, rankings, and statistics
 
-import { Trophy, Crown, Target, Home, RotateCcw, Users, Skull } from 'lucide-react';
+import { Trophy, Crown, Target, Users, Skull } from 'lucide-react';
 import type { GoldenBellResults } from '../../types/golden-bell';
+import { Podium, RankingsTable, ResultsActionBar, type BaseRankedPlayer } from '../shared/game-results';
 
 interface GoldenBellResultsProps {
   results: GoldenBellResults;
@@ -22,7 +23,16 @@ export function GoldenBellResultsView({
 }: GoldenBellResultsProps) {
   const currentPlayerResult = results.rankings.find(r => r.odinhId === currentPlayerId);
   const currentRank = currentPlayerResult?.rank || 0;
-  const top3 = results.rankings.slice(0, 3);
+
+  // Map to BaseRankedPlayer
+  const rankedPlayers: BaseRankedPlayer[] = results.rankings.map(player => ({
+    id: player.odinhId,
+    displayName: player.displayName,
+    avatar: player.avatar,
+    rank: player.rank,
+    score: player.correctAnswers,
+    isWinner: player.isWinner,
+  }));
 
   return (
     <div className="golden-bell-results">
@@ -64,61 +74,16 @@ export function GoldenBellResultsView({
       )}
 
       {/* Podium */}
-      <div className="results-podium golden-bell-podium">
-        {/* 2nd Place */}
-        {top3[1] && (
-          <div className="podium-place second">
-            <div className="podium-player">
-              <span className="player-avatar">{top3[1].avatar}</span>
-            </div>
-            <span className="player-name">{top3[1].displayName}</span>
-            <div className="podium-stats">
-              <span>{top3[1].survivedRounds} vòng</span>
-            </div>
-            <div className="podium-block">
-              <span className="medal">{RANK_EMOJIS[1]}</span>
-              <span className="position">2</span>
-            </div>
-          </div>
-        )}
-
-        {/* 1st Place */}
-        {top3[0] && (
-          <div className="podium-place first">
-            <div className="winner-crown">
-              <Crown size={32} />
-            </div>
-            <div className="podium-player">
-              <span className="player-avatar">{top3[0].avatar}</span>
-            </div>
-            <span className="player-name">{top3[0].displayName}</span>
-            <div className="podium-stats">
-              <span>{top3[0].survivedRounds} vòng</span>
-            </div>
-            <div className="podium-block">
-              <span className="medal">{RANK_EMOJIS[0]}</span>
-              <span className="position">1</span>
-            </div>
-          </div>
-        )}
-
-        {/* 3rd Place */}
-        {top3[2] && (
-          <div className="podium-place third">
-            <div className="podium-player">
-              <span className="player-avatar">{top3[2].avatar}</span>
-            </div>
-            <span className="player-name">{top3[2].displayName}</span>
-            <div className="podium-stats">
-              <span>{top3[2].survivedRounds} vòng</span>
-            </div>
-            <div className="podium-block">
-              <span className="medal">{RANK_EMOJIS[2]}</span>
-              <span className="position">3</span>
-            </div>
-          </div>
-        )}
-      </div>
+      <Podium
+        players={rankedPlayers}
+        className="golden-bell-podium"
+        renderPlayerExtra={(player) => {
+          const originalPlayer = results.rankings.find(p => p.odinhId === player.id);
+          return <span>{originalPlayer?.survivedRounds} vòng</span>;
+        }}
+        showCrown={true}
+        medalEmojis={RANK_EMOJIS}
+      />
 
       {/* Your Result */}
       {currentPlayerResult && (
@@ -152,45 +117,36 @@ export function GoldenBellResultsView({
       )}
 
       {/* Full Rankings */}
-      <div className="full-rankings golden-bell-rankings">
-        <h3>Bảng Xếp Hạng</h3>
-        <div className="rankings-list">
-          {results.rankings.map((player, idx) => (
-            <div
-              key={player.odinhId}
-              className={`ranking-item ${player.odinhId === currentPlayerId ? 'current' : ''} ${player.isWinner ? 'winner' : ''}`}
-            >
-              <div className="ranking-position">
-                {idx < 3 ? RANK_EMOJIS[idx] : `#${idx + 1}`}
-              </div>
-              <div className="ranking-avatar">{player.avatar}</div>
-              <div className="ranking-info">
-                <span className="ranking-name">
-                  {player.displayName}
-                  {player.isWinner && <Crown size={14} className="winner-icon" />}
-                </span>
-                <span className="ranking-survived">Sống {player.survivedRounds} vòng</span>
-              </div>
-              <div className="ranking-stats">
-                <span className="ranking-correct">{player.correctAnswers} đúng</span>
-                <span className="ranking-accuracy">{player.accuracy}%</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <RankingsTable
+        rankings={rankedPlayers}
+        currentPlayerId={currentPlayerId}
+        className="golden-bell-rankings"
+        title="Bảng Xếp Hạng"
+        medalEmojis={RANK_EMOJIS}
+        columns={[
+          {
+            key: 'survived',
+            label: 'Sống sót',
+            render: (player) => {
+              const originalPlayer = results.rankings.find(p => p.odinhId === player.id);
+              return (
+                <>
+                  <span className="ranking-survived">Sống {originalPlayer?.survivedRounds} vòng</span>
+                  <span className="ranking-accuracy">{originalPlayer?.accuracy}%</span>
+                </>
+              );
+            },
+          },
+        ]}
+      />
 
       {/* Actions */}
-      <div className="results-actions">
-        <button className="play-again-btn golden-bell-btn" onClick={onPlayAgain}>
-          <RotateCcw size={20} />
-          Chơi Lại
-        </button>
-        <button className="go-home-btn" onClick={onGoHome}>
-          <Home size={20} />
-          Về Trang Chủ
-        </button>
-      </div>
+      <ResultsActionBar
+        onPlayAgain={onPlayAgain}
+        onGoHome={onGoHome}
+        playAgainLabel="Chơi Lại"
+        goHomeLabel="Về Trang Chủ"
+      />
     </div>
   );
 }

@@ -77,6 +77,7 @@ export interface WordScramblePageProps {
     avatar: string;
     role?: PlayerRole;
   };
+  initialRoomConfig?: Record<string, unknown>;
 }
 
 // Scramble result

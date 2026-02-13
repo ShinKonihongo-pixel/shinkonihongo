@@ -13,9 +13,10 @@ type PageView = 'menu' | 'lessons' | 'play' | 'results' | 'management' | 'guide'
 interface ImageWordPageProps {
   onClose: () => void;
   initialView?: PageView;
+  initialRoomConfig?: Record<string, unknown>;
 }
 
-export const ImageWordPage: React.FC<ImageWordPageProps> = ({ onClose, initialView = 'menu' }) => {
+export const ImageWordPage: React.FC<ImageWordPageProps> = ({ onClose, initialView = 'menu', initialRoomConfig: _initialRoomConfig }) => {
   const [view, setView] = useState<PageView>(initialView);
 
   const {

@@ -63,6 +63,8 @@ export interface GameRoomSetupProps {
   onBack: () => void;
   loading?: boolean;
   error?: string | null;
+  /** When true, renders form content without modal overlay wrapper */
+  inline?: boolean;
 }
 
 export const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];

@@ -1,14 +1,15 @@
 // Picture Guess Page - Main page orchestrating all game components
 // Manages view state and routes to appropriate game phase
 
-import { useState, useCallback } from 'react';
-import { usePictureGuess } from '../../hooks/use-picture-guess';
+import { useState, useCallback, useEffect } from 'react';
+import { usePictureGuess } from '../../hooks/picture-guess';
 import { PictureGuessMenu } from '../picture-guess/picture-guess-menu';
 import { PictureGuessSetup } from '../picture-guess/picture-guess-setup';
 import { PictureGuessLobby } from '../picture-guess/picture-guess-lobby';
 import { PictureGuessPlay } from '../picture-guess/picture-guess-play';
 import { PictureGuessResultsView } from '../picture-guess/picture-guess-results';
 import type { CreatePictureGuessData } from '../../types/picture-guess';
+import type { JLPTLevel } from '../../types/flashcard';
 import type { CurrentUser } from '../../types/user';
 import type { Flashcard } from '../../types/flashcard';
 
@@ -18,9 +19,10 @@ type ViewState = 'menu' | 'setup-single' | 'setup-multi' | 'lobby' | 'playing' |
 interface PictureGuessPageProps {
   currentUser: CurrentUser | null;
   flashcards: Flashcard[];
+  initialRoomConfig?: Record<string, unknown>;
 }
 
-export function PictureGuessPage({ currentUser, flashcards }: PictureGuessPageProps) {
+export function PictureGuessPage({ currentUser, flashcards, initialRoomConfig }: PictureGuessPageProps) {
   const [view, setView] = useState<ViewState>('menu');
 
   // Initialize hook with current user
@@ -55,6 +57,25 @@ export function PictureGuessPage({ currentUser, flashcards }: PictureGuessPagePr
     },
     flashcards,
   });
+
+  // Auto-create room from unified setup
+  useEffect(() => {
+    if (initialRoomConfig && !game) {
+      const cfg = initialRoomConfig;
+      createGame({
+        title: (cfg.title as string) || 'Duoi Hinh Bat Chu',
+        mode: 'multiplayer',
+        jlptLevel: (cfg.jlptLevel as JLPTLevel) || 'N5',
+        contentSource: 'flashcard',
+        puzzleCount: (cfg.totalRounds as number) || 10,
+        timePerPuzzle: (cfg.timePerQuestion as number) || 30,
+        maxPlayers: (cfg.maxPlayers as number) || 10,
+        allowHints: (cfg.hints as boolean) ?? true,
+        speedBonus: (cfg.speedBonus as boolean) ?? true,
+        penaltyWrongAnswer: (cfg.penaltyWrongAnswer as boolean) ?? false,
+      }).then(() => setView('lobby'));
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle creating a game
   const handleCreate = useCallback(async (data: CreatePictureGuessData) => {

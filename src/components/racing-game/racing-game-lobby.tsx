@@ -1,12 +1,13 @@
 // Racing Game Lobby - Waiting room before race starts
 // Shows players, game code, team assignment, and start button for host
 
-import { Copy, Play, LogOut, Users, Share2, Check, X } from 'lucide-react';
+import { Play, Users, Check } from 'lucide-react';
 import { useState } from 'react';
 import type { RacingGame, RacingVehicle } from '../../types/racing-game';
 import { DEFAULT_VEHICLES, TEAM_COLORS } from '../../types/racing-game';
 import { isImageAvatar } from '../../utils/avatar-icons';
 import { getVipAvatarClasses, getVipNameClasses, isVipRole, getVipBadge } from '../../utils/vip-styling';
+import { GameCodeDisplay, LobbyActionBar, normalizePlayer } from '../shared/game-lobby';
 
 interface RacingGameLobbyProps {
   game: RacingGame;
@@ -96,19 +97,12 @@ export function RacingGameLobby({
       </div>
 
       {/* Game Code */}
-      <div className="lobby-code-section">
-        <span className="code-label">Mã Phòng</span>
-        <div className="code-display">
-          <span className="code-value">{game.code}</span>
-          <button className="copy-btn" onClick={copyCode}>
-            {copied ? <Check size={18} /> : <Copy size={18} />}
-          </button>
-        </div>
-        <button className="share-btn" onClick={shareGame}>
-          <Share2 size={16} />
-          Chia sẻ link
-        </button>
-      </div>
+      <GameCodeDisplay
+        code={game.code}
+        copied={copied}
+        onCopy={copyCode}
+        onShare={shareGame}
+      />
 
       {/* Players List */}
       <div className="lobby-players">
@@ -272,27 +266,17 @@ export function RacingGameLobby({
       )}
 
       {/* Actions */}
-      <div className="lobby-actions">
-        {isHost ? (
-          <button
-            className="start-btn"
-            onClick={handleStart}
-            disabled={!canStart || loading}
-          >
-            <Play size={20} />
-            {loading ? 'Đang tải...' : canStart ? 'Bắt Đầu Đua' : `Cần ${game.settings.minPlayers} người`}
-          </button>
-        ) : (
-          <div className="waiting-message">
-            Đang chờ host bắt đầu...
-          </div>
-        )}
-
-        <button className="leave-btn" onClick={handleLeave}>
-          <LogOut size={18} />
-          Rời Phòng
-        </button>
-      </div>
+      <LobbyActionBar
+        isHost={isHost}
+        canStart={canStart}
+        onStart={handleStart || (() => {})}
+        onLeave={handleLeave || (() => {})}
+        startLabel="Bắt Đầu Đua"
+        disabledLabel={`Cần ${game.settings.minPlayers} người`}
+        waitingLabel="Đang chờ host bắt đầu..."
+        loading={loading}
+        startIcon={<Play size={20} />}
+      />
     </div>
   );
 }

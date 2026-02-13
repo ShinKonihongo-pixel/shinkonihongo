@@ -1,15 +1,17 @@
 // Kanji Battle Setup - Mode selection + JLPT level selection + room config
+// Uses .rm-* design system for consistent modal styling
 import { useState } from 'react';
+import { X, Swords, BookOpen, PenTool, Clock, Users, Hash, Sparkles, Play } from 'lucide-react';
 import type { CreateKanjiBattleData, KanjiBattleMode, JLPTLevel } from '../../types/kanji-battle';
 import { getKanjiSeedCount } from '../../data/kanji-seed/index';
 
-const JLPT_LEVELS: { level: JLPTLevel; label: string; color: string }[] = [
-  { level: 'N5', label: 'N5', color: '#22c55e' },
-  { level: 'N4', label: 'N4', color: '#3b82f6' },
-  { level: 'N3', label: 'N3', color: '#f59e0b' },
-  { level: 'N2', label: 'N2', color: '#ef4444' },
-  { level: 'N1', label: 'N1', color: '#8b5cf6' },
-  { level: 'BT', label: 'BT', color: '#6366f1' },
+const JLPT_LEVELS: { level: JLPTLevel; label: string }[] = [
+  { level: 'N5', label: 'N5' },
+  { level: 'N4', label: 'N4' },
+  { level: 'N3', label: 'N3' },
+  { level: 'N2', label: 'N2' },
+  { level: 'N1', label: 'N1' },
+  { level: 'BT', label: 'BT' },
 ];
 
 interface KanjiBattleSetupProps {
@@ -44,6 +46,14 @@ export function KanjiBattleSetup({
   };
 
   const totalKanji = selectedLevels.reduce((sum, level) => sum + getKanjiSeedCount(level), 0);
+  const maxRounds = Math.min(30, totalKanji);
+
+  // Slider progress calculations
+  const roundsPercent = ((totalRounds - 5) / (maxRounds - 5)) * 100;
+  const timeMin = gameMode === 'write' ? 15 : 5;
+  const timeMax = gameMode === 'write' ? 60 : 30;
+  const timePercent = ((timePerQuestion - timeMin) / (timeMax - timeMin)) * 100;
+  const playersPercent = ((maxPlayers - 2) / (20 - 2)) * 100;
 
   const handleCreate = () => {
     onCreateGame({
@@ -58,175 +68,252 @@ export function KanjiBattleSetup({
   };
 
   return (
-    <div className="speed-quiz-setup" style={{ maxWidth: 500, margin: '0 auto', padding: '1.5rem' }}>
-      <button className="speed-quiz-back-btn" onClick={onBack} style={{ marginBottom: '1rem' }}>
-        ← Quay lại
-      </button>
-
-      <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>⚔️ Tạo Phòng Đại Chiến Kanji</h2>
-
-      {error && (
-        <div style={{ background: '#fee2e2', color: '#dc2626', padding: '0.75rem', borderRadius: 8, marginBottom: '1rem' }}>
-          {error}
-        </div>
-      )}
-
-      {/* Title */}
-      <div style={{ marginBottom: '1.25rem' }}>
-        <label style={{ display: 'block', fontWeight: 600, marginBottom: 6 }}>Tên phòng</label>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          maxLength={30}
-          style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #d1d5db', fontSize: '1rem' }}
-        />
-      </div>
-
-      {/* Game Mode Toggle */}
-      <div style={{ marginBottom: '1.25rem' }}>
-        <label style={{ display: 'block', fontWeight: 600, marginBottom: 8 }}>Chế độ chơi</label>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            onClick={() => setGameMode('read')}
-            style={{
-              flex: 1, padding: '0.75rem', borderRadius: 12, border: '2px solid',
-              borderColor: gameMode === 'read' ? '#FF5722' : '#d1d5db',
-              background: gameMode === 'read' ? '#FFF3E0' : '#fff',
-              fontWeight: 600, cursor: 'pointer', fontSize: '0.95rem',
-            }}
-          >
-            📖 Đọc Kanji
-            <div style={{ fontSize: '0.75rem', fontWeight: 400, marginTop: 4, opacity: 0.7 }}>
-              Gõ nghĩa / cách đọc
-            </div>
+    <div className="rm-overlay" onClick={onBack}>
+      <div className="rm-modal large" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <header className="rm-header">
+          <div
+            className="rm-header-gradient"
+            style={{ background: 'linear-gradient(135deg, #FF5722 0%, #FF9800 100%)' }}
+          />
+          <div className="rm-header-icon">
+            <Swords size={24} color="white" />
+          </div>
+          <div className="rm-header-content">
+            <h1 className="rm-title">Tạo Phòng Chơi</h1>
+            <span className="rm-subtitle">Đại Chiến Kanji</span>
+          </div>
+          <button className="rm-close-btn" onClick={onBack} type="button">
+            <X size={20} />
           </button>
-          <button
-            onClick={() => {
-              setGameMode('write');
-              setTimePerQuestion(30); // More time for writing
-            }}
-            style={{
-              flex: 1, padding: '0.75rem', borderRadius: 12, border: '2px solid',
-              borderColor: gameMode === 'write' ? '#FF5722' : '#d1d5db',
-              background: gameMode === 'write' ? '#FFF3E0' : '#fff',
-              fontWeight: 600, cursor: 'pointer', fontSize: '0.95rem',
-            }}
-          >
-            ✍️ Viết Kanji
-            <div style={{ fontSize: '0.75rem', fontWeight: 400, marginTop: 4, opacity: 0.7 }}>
-              Vẽ theo thứ tự nét
-            </div>
-          </button>
-        </div>
-      </div>
+        </header>
 
-      {/* JLPT Level Selection */}
-      <div style={{ marginBottom: '1.25rem' }}>
-        <label style={{ display: 'block', fontWeight: 600, marginBottom: 8 }}>
-          Cấp độ JLPT <span style={{ fontWeight: 400, color: '#6b7280' }}>({totalKanji} kanji)</span>
-        </label>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {JLPT_LEVELS.map(({ level, label, color }) => {
-            const isSelected = selectedLevels.includes(level);
-            const count = getKanjiSeedCount(level);
-            return (
+        {/* Body */}
+        <div className="rm-body">
+          {error && (
+            <div className="rm-error">
+              <span>⚠️</span>
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Room Title */}
+          <div className="rm-field">
+            <label className="rm-label">
+              <Swords size={16} />
+              <span>Tên phòng</span>
+            </label>
+            <input
+              type="text"
+              className="rm-input"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={30}
+              placeholder="Đại Chiến Kanji"
+            />
+          </div>
+
+          {/* Game Mode Toggle */}
+          <div className="rm-field">
+            <label className="rm-label">
+              <BookOpen size={16} />
+              <span>Chế độ chơi</span>
+            </label>
+            <div className="rm-pills">
               <button
-                key={level}
-                onClick={() => toggleLevel(level)}
-                style={{
-                  padding: '0.5rem 1rem', borderRadius: 20, border: '2px solid',
-                  borderColor: isSelected ? color : '#d1d5db',
-                  background: isSelected ? `${color}15` : '#fff',
-                  color: isSelected ? color : '#6b7280',
-                  fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem',
-                  transition: 'all 0.15s ease',
+                type="button"
+                className={`rm-pill lg ${gameMode === 'read' ? 'active' : ''}`}
+                onClick={() => setGameMode('read')}
+              >
+                <BookOpen size={16} />
+                Đọc Kanji
+                <span className="rm-pill-sub">Gõ nghĩa / cách đọc</span>
+              </button>
+              <button
+                type="button"
+                className={`rm-pill lg ${gameMode === 'write' ? 'active' : ''}`}
+                onClick={() => {
+                  setGameMode('write');
+                  setTimePerQuestion(30);
                 }}
               >
-                {label} ({count})
+                <PenTool size={16} />
+                Viết Kanji
+                <span className="rm-pill-sub">Vẽ theo thứ tự nét</span>
               </button>
-            );
-          })}
+            </div>
+          </div>
+
+          {/* JLPT Level Selection */}
+          <div className="rm-field">
+            <label className="rm-label">
+              <Hash size={16} />
+              <span>Cấp độ JLPT</span>
+              <span className="rm-label-hint">
+                <span className="rm-label-value">{totalKanji} kanji</span>
+              </span>
+            </label>
+            <div className="rm-pills">
+              {JLPT_LEVELS.map(({ level, label }) => (
+                <button
+                  key={level}
+                  type="button"
+                  className={`rm-pill ${selectedLevels.includes(level) ? 'active' : ''}`}
+                  onClick={() => toggleLevel(level)}
+                  data-level={level}
+                >
+                  {label} ({getKanjiSeedCount(level)})
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Total Rounds */}
+          <div className="rm-field">
+            <label className="rm-label">
+              <Hash size={16} />
+              <span>Số câu hỏi</span>
+              <span className="rm-label-hint">
+                <span className="rm-label-value">{totalRounds} câu</span>
+              </span>
+            </label>
+            <div className="rm-slider-wrap">
+              <input
+                type="range"
+                className="rm-slider"
+                min={5}
+                max={maxRounds}
+                step={5}
+                value={totalRounds}
+                onChange={(e) => setTotalRounds(Number(e.target.value))}
+                style={{ '--progress': `${roundsPercent}%` } as React.CSSProperties}
+              />
+              <div className="rm-slider-labels">
+                <span>5</span>
+                <span>{maxRounds}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Time per Question */}
+          <div className="rm-field">
+            <label className="rm-label">
+              <Clock size={16} />
+              <span>Thời gian mỗi câu</span>
+              <span className="rm-label-hint">
+                <span className="rm-label-value">{timePerQuestion}s</span>
+              </span>
+            </label>
+            <div className="rm-slider-wrap">
+              <input
+                type="range"
+                className="rm-slider"
+                min={timeMin}
+                max={timeMax}
+                step={5}
+                value={timePerQuestion}
+                onChange={(e) => setTimePerQuestion(Number(e.target.value))}
+                style={{ '--progress': `${timePercent}%` } as React.CSSProperties}
+              />
+              <div className="rm-slider-labels">
+                <span>{timeMin}s</span>
+                <span>{timeMax}s</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Max Players */}
+          <div className="rm-field">
+            <label className="rm-label">
+              <Users size={16} />
+              <span>Số người chơi tối đa</span>
+              <span className="rm-label-hint">
+                <span className="rm-label-value">{maxPlayers} người</span>
+              </span>
+            </label>
+            <div className="rm-slider-wrap">
+              <input
+                type="range"
+                className="rm-slider"
+                min={2}
+                max={20}
+                step={1}
+                value={maxPlayers}
+                onChange={(e) => setMaxPlayers(Number(e.target.value))}
+                style={{ '--progress': `${playersPercent}%` } as React.CSSProperties}
+              />
+              <div className="rm-slider-labels">
+                <span>2</span>
+                <span>10</span>
+                <span>20</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Skills Toggle */}
+          <div className="rm-toggle-row">
+            <div className="rm-toggle-info">
+              <Sparkles size={18} />
+              <div>
+                <span className="rm-toggle-label">Kỹ năng đặc biệt</span>
+                <span className="rm-toggle-desc">Mở khóa kỹ năng mỗi 5 câu</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              className={`rm-toggle-btn ${skillsEnabled ? 'active' : ''}`}
+              onClick={() => setSkillsEnabled(!skillsEnabled)}
+            >
+              <span className="rm-toggle-thumb" />
+            </button>
+          </div>
+
+          {/* Rules */}
+          <div className="rm-rules">
+            <div className="rm-rules-title">Luật chơi</div>
+            <ul className="rm-rules-list">
+              {gameMode === 'read' ? (
+                <>
+                  <li>⚔️ Kanji hiện lên - gõ nghĩa / cách đọc nhanh nhất</li>
+                  <li>💡 Có 3 lượt gợi ý miễn phí</li>
+                  <li>🏆 Người có điểm cao nhất thắng</li>
+                </>
+              ) : (
+                <>
+                  <li>⚔️ Kanji hiện lên - vẽ theo đúng thứ tự nét</li>
+                  <li>✍️ Mỗi nét được chấm điểm chính xác</li>
+                  <li>🏆 Điểm = chính xác × tốc độ</li>
+                </>
+              )}
+            </ul>
+          </div>
         </div>
-      </div>
 
-      {/* Rounds */}
-      <div style={{ marginBottom: '1.25rem' }}>
-        <label style={{ display: 'block', fontWeight: 600, marginBottom: 6 }}>
-          Số câu hỏi: <span style={{ color: '#FF5722' }}>{totalRounds}</span>
-        </label>
-        <input
-          type="range" min={5} max={Math.min(30, totalKanji)} step={5} value={totalRounds}
-          onChange={(e) => setTotalRounds(Number(e.target.value))}
-          style={{ width: '100%' }}
-        />
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#9ca3af' }}>
-          <span>5</span><span>{Math.min(30, totalKanji)}</span>
-        </div>
-      </div>
-
-      {/* Time per question */}
-      <div style={{ marginBottom: '1.25rem' }}>
-        <label style={{ display: 'block', fontWeight: 600, marginBottom: 6 }}>
-          Thời gian mỗi câu: <span style={{ color: '#FF5722' }}>{timePerQuestion}s</span>
-        </label>
-        <input
-          type="range" min={gameMode === 'write' ? 15 : 5} max={gameMode === 'write' ? 60 : 30}
-          step={5} value={timePerQuestion}
-          onChange={(e) => setTimePerQuestion(Number(e.target.value))}
-          style={{ width: '100%' }}
-        />
-      </div>
-
-      {/* Max Players */}
-      <div style={{ marginBottom: '1.25rem' }}>
-        <label style={{ display: 'block', fontWeight: 600, marginBottom: 6 }}>
-          Số người chơi tối đa: <span style={{ color: '#FF5722' }}>{maxPlayers}</span>
-        </label>
-        <input
-          type="range" min={2} max={20} step={1} value={maxPlayers}
-          onChange={(e) => setMaxPlayers(Number(e.target.value))}
-          style={{ width: '100%' }}
-        />
-      </div>
-
-      {/* Skills Toggle */}
-      <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <input
-          type="checkbox" id="skills-toggle" checked={skillsEnabled}
-          onChange={(e) => setSkillsEnabled(e.target.checked)}
-        />
-        <label htmlFor="skills-toggle" style={{ fontWeight: 600 }}>✨ Bật kỹ năng đặc biệt</label>
-      </div>
-
-      {/* Create Button */}
-      <button
-        className="speed-quiz-btn primary large"
-        onClick={handleCreate}
-        disabled={loading || totalKanji < 5}
-        style={{ width: '100%', padding: '0.875rem', fontSize: '1.1rem' }}
-      >
-        {loading ? '⏳ Đang tạo...' : '🚀 Tạo Phòng'}
-      </button>
-
-      {/* Rules */}
-      <div style={{ marginTop: '1.25rem', padding: '1rem', background: '#f9fafb', borderRadius: 12 }}>
-        <h4 style={{ marginBottom: 8 }}>📋 Luật chơi</h4>
-        <ul style={{ paddingLeft: '1.25rem', margin: 0, lineHeight: 1.8, fontSize: '0.85rem', color: '#6b7280' }}>
-          {gameMode === 'read' ? (
-            <>
-              <li>⚔️ Kanji hiện lên - gõ nghĩa / cách đọc nhanh nhất</li>
-              <li>💡 Có 3 lượt gợi ý miễn phí</li>
-              <li>🏆 Người có điểm cao nhất thắng</li>
-            </>
-          ) : (
-            <>
-              <li>⚔️ Kanji hiện lên - vẽ theo đúng thứ tự nét</li>
-              <li>✍️ Mỗi nét được chấm điểm chính xác</li>
-              <li>🏆 Điểm = chính xác × tốc độ</li>
-            </>
-          )}
-        </ul>
+        {/* Footer */}
+        <footer className="rm-footer">
+          <button type="button" className="rm-btn rm-btn-ghost" onClick={onBack}>
+            Hủy
+          </button>
+          <button
+            type="button"
+            className="rm-btn rm-btn-primary rm-btn-lg"
+            disabled={loading || totalKanji < 5}
+            onClick={handleCreate}
+            style={{ background: 'linear-gradient(135deg, #FF5722 0%, #FF9800 100%)' }}
+          >
+            {loading ? (
+              <>
+                <span className="rm-spinner" />
+                <span>Đang tạo...</span>
+              </>
+            ) : (
+              <>
+                <Play size={20} fill="white" />
+                <span>Tạo Phòng</span>
+              </>
+            )}
+          </button>
+        </footer>
       </div>
     </div>
   );

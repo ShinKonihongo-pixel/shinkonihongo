@@ -29,6 +29,7 @@ interface BingoPageProps {
   initialView?: PageView;
   // XP tracking
   onSaveGameSession?: (data: Omit<GameSession, 'id' | 'userId'>) => void;
+  initialRoomConfig?: Record<string, unknown>;
 }
 
 export function BingoPage({
@@ -36,6 +37,7 @@ export function BingoPage({
   initialJoinCode,
   initialView = 'menu',
   onSaveGameSession,
+  initialRoomConfig,
 }: BingoPageProps) {
   const [view, setView] = useState<PageView>(initialView);
   const [showGuide, setShowGuide] = useState(false);
@@ -76,10 +78,22 @@ export function BingoPage({
   useEffect(() => {
     if (initialJoinCode && !game) {
       joinGame(initialJoinCode).catch(() => {
-        setError('Không thể tham gia phòng với mã này');
+        setError('Khong the tham gia phong voi ma nay');
       });
     }
   }, [initialJoinCode, game, joinGame, setError]);
+
+  // Auto-create room from unified setup
+  useEffect(() => {
+    if (initialRoomConfig && !game) {
+      const cfg = initialRoomConfig;
+      createGame({
+        title: (cfg.title as string) || 'Bingo Vui Ve',
+        maxPlayers: (cfg.maxPlayers as number) || 10,
+        skillsEnabled: (cfg.skills as boolean) ?? true,
+      });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update view based on game state
   useEffect(() => {

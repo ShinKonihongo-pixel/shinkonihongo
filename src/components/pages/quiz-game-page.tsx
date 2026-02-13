@@ -32,6 +32,7 @@ interface QuizGamePageProps {
   onInviteFriend?: (gameId: string, gameCode: string, gameTitle: string, friendId: string) => Promise<boolean>;
   // XP tracking
   onSaveGameSession?: (data: Omit<GameSession, 'id' | 'userId'>) => void;
+  initialRoomConfig?: Record<string, unknown>;
 }
 
 type GameView = 'menu' | 'create' | 'join' | 'lobby' | 'play' | 'results';
@@ -51,6 +52,7 @@ export function QuizGamePage({
   friends = [],
   onInviteFriend,
   onSaveGameSession,
+  initialRoomConfig,
 }: QuizGamePageProps) {
   const [view, setView] = useState<GameView>(initialJoinCode ? 'join' : 'menu');
   const [joinCode, setJoinCode] = useState(initialJoinCode || '');
@@ -98,6 +100,24 @@ export function QuizGamePage({
       return () => unsubscribe();
     }
   }, [view, game, subscribeToRooms]);
+
+  // Auto-create room from unified setup
+  useEffect(() => {
+    if (initialRoomConfig && !game) {
+      const cfg = initialRoomConfig;
+      const source = (cfg.source as string) === 'flashcards' ? 'flashcards' : 'jlpt';
+      handleCreateGame({
+        title: (cfg.title as string) || 'Quiz Battle',
+        source: source as CreateGameData['source'],
+        lessonIds: [],
+        jlptLevels: cfg.jlptLevel ? [cfg.jlptLevel as string] : undefined,
+        totalRounds: (cfg.totalRounds as number) || 20,
+        timePerQuestion: (cfg.timePerQuestion as number) || 15,
+        questionContent: settings.gameQuestionContent,
+        answerContent: settings.gameAnswerContent,
+      });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-clear join error when code changes or view changes
   useEffect(() => {

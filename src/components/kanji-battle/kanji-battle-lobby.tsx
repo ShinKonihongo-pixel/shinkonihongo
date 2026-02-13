@@ -1,9 +1,7 @@
 // Kanji Battle Lobby - Waiting room for players
-import React from 'react';
-import { X } from 'lucide-react';
+import React, { useState } from 'react';
 import type { KanjiBattleGame, KanjiBattlePlayer } from '../../types/kanji-battle';
-import { isImageAvatar } from '../../utils/avatar-icons';
-import { getVipAvatarClasses, getVipNameClasses, isVipRole, getVipBadge } from '../../utils/vip-styling';
+import { GameCodeDisplay, PlayerListGrid, LobbyActionBar, normalizePlayer } from '../shared/game-lobby';
 
 interface KanjiBattleLobbyProps {
   game: KanjiBattleGame;
@@ -22,9 +20,21 @@ export const KanjiBattleLobby: React.FC<KanjiBattleLobbyProps> = ({
   onLeave,
   onKickPlayer,
 }) => {
+  const [copied, setCopied] = useState(false);
   const isHost = game.hostId === currentPlayerId;
   const players = Object.values(game.players);
+  const normalizedPlayers = players.map(p => normalizePlayer({ ...p, odinhId: p.odinhId, isHost: p.odinhId === game.hostId, isBot: p.isBot }));
   const canStart = players.length >= game.settings.minPlayers;
+
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(game.code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback
+    }
+  };
 
   return (
     <div className="speed-quiz-lobby">
@@ -34,17 +44,13 @@ export const KanjiBattleLobby: React.FC<KanjiBattleLobbyProps> = ({
         </button>
         <div className="room-info">
           <h2>⚔️ {game.title}</h2>
-          <div className="room-code">
-            <span className="label">Mã phòng:</span>
-            <span className="code">{game.code}</span>
-            <button
-              className="copy-btn"
-              onClick={() => navigator.clipboard.writeText(game.code)}
-              title="Sao chép"
-            >
-              📋
-            </button>
-          </div>
+          <GameCodeDisplay
+            code={game.code}
+            copied={copied}
+            onCopy={copyCode}
+            label="Mã phòng:"
+            className="room-code"
+          />
         </div>
       </div>
 
@@ -81,76 +87,32 @@ export const KanjiBattleLobby: React.FC<KanjiBattleLobbyProps> = ({
           )}
         </div>
 
-        <div className="players-grid">
-          {players.map((player: KanjiBattlePlayer) => {
-            const playerIsVip = isVipRole(player.role);
-            const vipBadge = getVipBadge(player.role);
-
-            return (
-              <div
-                key={player.odinhId}
-                className={`player-card ${player.odinhId === game.hostId ? 'host' : ''} ${
-                  player.isBot ? 'bot' : ''
-                } ${playerIsVip ? 'vip-player' : ''}`}
-              >
-                <div className={getVipAvatarClasses(player.role, 'player-avatar')}>
-                  {player.avatar && isImageAvatar(player.avatar) ? (
-                    <img src={player.avatar} alt={player.displayName} />
-                  ) : (
-                    player.avatar
-                  )}
-                  {playerIsVip && <span className="vip-frame" />}
-                </div>
-                <div className="player-info">
-                  <span className={getVipNameClasses(player.role, 'player-name')}>
-                    {vipBadge && <span className="vip-badge">{vipBadge}</span>}
-                    {player.displayName}
-                  </span>
-                  {player.odinhId === game.hostId && (
-                    <span className="host-badge">👑 Chủ phòng</span>
-                  )}
-                  {player.isBot && <span className="bot-badge">🤖</span>}
-                </div>
-                {isHost && player.odinhId !== game.hostId && player.odinhId !== currentPlayerId && onKickPlayer && (
-                  <button
-                    className="kick-btn"
-                    onClick={() => onKickPlayer(player.odinhId)}
-                    title="Kick khỏi phòng"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
-            );
-          })}
-
-          {Array.from({ length: game.settings.maxPlayers - players.length }).map((_, i) => (
-            <div key={`empty-${i}`} className="player-card empty">
-              <div className="player-avatar">?</div>
-              <div className="player-info">
-                <span className="player-name">Chờ người chơi...</span>
-              </div>
-            </div>
-          ))}
-        </div>
+        <PlayerListGrid
+          players={normalizedPlayers}
+          hostId={game.hostId}
+          currentPlayerId={currentPlayerId}
+          maxPlayers={game.settings.maxPlayers}
+          onKickPlayer={onKickPlayer}
+          emptySlotLabel="Chờ người chơi..."
+          maxEmptySlots={game.settings.maxPlayers}
+          renderExtra={(player) => (
+            <>
+              {player.isBot && <span className="bot-badge">🤖</span>}
+            </>
+          )}
+        />
       </div>
 
-      <div className="speed-quiz-lobby-actions">
-        {isHost ? (
-          <button
-            className="speed-quiz-btn primary large"
-            onClick={onStartGame}
-            disabled={!canStart}
-          >
-            {canStart ? '🚀 Bắt Đầu' : `Cần ít nhất ${game.settings.minPlayers} người`}
-          </button>
-        ) : (
-          <div className="waiting-message">
-            <span className="spinner">⏳</span>
-            <span>Đợi chủ phòng bắt đầu...</span>
-          </div>
-        )}
-      </div>
+      <LobbyActionBar
+        isHost={isHost}
+        canStart={canStart}
+        onStart={onStartGame}
+        onLeave={() => {}}
+        startLabel="🚀 Bắt Đầu"
+        disabledLabel={`Cần ít nhất ${game.settings.minPlayers} người`}
+        waitingLabel="Đợi chủ phòng bắt đầu..."
+        className="speed-quiz-lobby-actions"
+      />
     </div>
   );
 };

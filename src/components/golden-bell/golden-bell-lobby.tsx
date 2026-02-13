@@ -1,12 +1,11 @@
 // Golden Bell Lobby - Waiting room before game starts
 // Shows players, game code, and start button for host
 
-import { Copy, Play, LogOut, Users, Share2, Check, Bell, X } from 'lucide-react';
+import { Users, Bell } from 'lucide-react';
 import { useState } from 'react';
 import type { GoldenBellGame } from '../../types/golden-bell';
 import { CATEGORY_INFO } from '../../types/golden-bell';
-import { isImageAvatar } from '../../utils/avatar-icons';
-import { getVipAvatarClasses, getVipNameClasses, isVipRole, getVipBadge } from '../../utils/vip-styling';
+import { GameCodeDisplay, PlayerListGrid, LobbyActionBar, normalizePlayer } from '../shared/game-lobby';
 
 interface GoldenBellLobbyProps {
   game: GoldenBellGame;
@@ -28,6 +27,7 @@ export function GoldenBellLobby({
   const [copied, setCopied] = useState(false);
 
   const players = Object.values(game.players);
+  const normalizedPlayers = players.map(p => normalizePlayer({ ...p, odinhId: p.odinhId, isHost: p.odinhId === game.hostId }));
   const canStart = players.length >= game.settings.minPlayers;
 
   const copyCode = async () => {
@@ -86,19 +86,13 @@ export function GoldenBellLobby({
       </div>
 
       {/* Game Code */}
-      <div className="lobby-code-section golden-bell-code">
-        <span className="code-label">Mã Phòng</span>
-        <div className="code-display">
-          <span className="code-value">{game.code}</span>
-          <button className="copy-btn" onClick={copyCode}>
-            {copied ? <Check size={18} /> : <Copy size={18} />}
-          </button>
-        </div>
-        <button className="share-btn" onClick={shareGame}>
-          <Share2 size={16} />
-          Chia sẻ link
-        </button>
-      </div>
+      <GameCodeDisplay
+        code={game.code}
+        copied={copied}
+        onCopy={copyCode}
+        onShare={shareGame}
+        className="golden-bell-code"
+      />
 
       {/* Players List */}
       <div className="lobby-players">
@@ -106,54 +100,15 @@ export function GoldenBellLobby({
           <Users size={18} />
           <span>Người chơi ({players.length}/{game.settings.maxPlayers})</span>
         </div>
-        <div className="players-grid golden-bell-players">
-          {players.map(player => {
-            const playerIsVip = isVipRole(player.role);
-            const vipBadge = getVipBadge(player.role);
-
-            return (
-              <div
-                key={player.odinhId}
-                className={`player-card ${player.odinhId === currentPlayerId ? 'current' : ''} ${player.odinhId === game.hostId ? 'host' : ''} ${playerIsVip ? 'vip-player' : ''}`}
-              >
-                <div className={getVipAvatarClasses(player.role, 'player-avatar')}>
-                  {player.avatar && isImageAvatar(player.avatar) ? (
-                    <img src={player.avatar} alt={player.displayName} />
-                  ) : (
-                    player.avatar
-                  )}
-                  {playerIsVip && <span className="vip-frame" />}
-                </div>
-                <div className="player-info">
-                  <span className={getVipNameClasses(player.role, 'player-name')}>
-                    {vipBadge && <span className="vip-badge">{vipBadge}</span>}
-                    {player.displayName}
-                    {player.odinhId === game.hostId && <span className="host-badge">Host</span>}
-                  </span>
-                  <span className="player-status alive">Sẵn sàng</span>
-                </div>
-                {/* Kick button for host */}
-                {isHost && player.odinhId !== game.hostId && player.odinhId !== currentPlayerId && onKickPlayer && (
-                  <button
-                    className="kick-btn"
-                    onClick={() => onKickPlayer(player.odinhId)}
-                    title="Kick khỏi phòng"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
-            );
-          })}
-
-          {/* Empty slots */}
-          {Array.from({ length: Math.min(game.settings.maxPlayers - players.length, 10) }).map((_, i) => (
-            <div key={`empty-${i}`} className="player-card empty">
-              <div className="player-avatar empty">?</div>
-              <span className="player-name">Đang chờ...</span>
-            </div>
-          ))}
-        </div>
+        <PlayerListGrid
+          players={normalizedPlayers}
+          hostId={game.hostId}
+          currentPlayerId={currentPlayerId}
+          maxPlayers={game.settings.maxPlayers}
+          onKickPlayer={onKickPlayer}
+          className="golden-bell-players"
+          renderExtra={() => <span className="player-status alive">Sẵn sàng</span>}
+        />
       </div>
 
       {/* Game Rules Preview */}
@@ -168,28 +123,16 @@ export function GoldenBellLobby({
       </div>
 
       {/* Actions */}
-      <div className="lobby-actions">
-        {isHost ? (
-          <button
-            className="start-btn golden-bell-start"
-            onClick={onStart}
-            disabled={!canStart}
-          >
-            <Play size={20} />
-            {canStart ? 'Bắt Đầu Game' : `Cần ${game.settings.minPlayers} người`}
-          </button>
-        ) : (
-          <div className="waiting-message">
-            <Bell size={24} className="bell-waiting" />
-            Đang chờ host bắt đầu...
-          </div>
-        )}
-
-        <button className="leave-btn" onClick={onLeave}>
-          <LogOut size={18} />
-          Rời Phòng
-        </button>
-      </div>
+      <LobbyActionBar
+        isHost={isHost}
+        canStart={canStart}
+        onStart={onStart}
+        onLeave={onLeave}
+        startLabel="Bắt Đầu Game"
+        disabledLabel={`Cần ${game.settings.minPlayers} người`}
+        waitingLabel="Đang chờ host bắt đầu..."
+        startIcon={<Bell size={20} />}
+      />
     </div>
   );
 }

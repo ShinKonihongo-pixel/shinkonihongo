@@ -2,8 +2,9 @@
 // Shows rankings, statistics, and learned words
 
 import { useState } from 'react';
-import { Trophy, Medal, Star, RotateCcw, Home, BookOpen, Share2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Star, BookOpen, Share2, ChevronDown, ChevronUp } from 'lucide-react';
 import type { PictureGuessResults } from '../../types/picture-guess';
+import { RankingsTable, ResultsActionBar, type BaseRankedPlayer } from '../shared/game-results';
 
 interface PictureGuessResultsProps {
   results: PictureGuessResults;
@@ -25,19 +26,15 @@ export function PictureGuessResultsView({
   const winner = results.rankings[0];
   const isWinner = currentPlayerResult?.rank === 1;
 
-  const getRankIcon = (rank: number) => {
-    if (rank === 1) return <Trophy className="rank-icon gold" size={24} />;
-    if (rank === 2) return <Medal className="rank-icon silver" size={24} />;
-    if (rank === 3) return <Medal className="rank-icon bronze" size={24} />;
-    return <span className="rank-number">#{rank}</span>;
-  };
-
-  const getRankClass = (rank: number) => {
-    if (rank === 1) return 'first';
-    if (rank === 2) return 'second';
-    if (rank === 3) return 'third';
-    return '';
-  };
+  // Map to BaseRankedPlayer
+  const rankedPlayers: BaseRankedPlayer[] = results.rankings.map(player => ({
+    id: player.odinhId,
+    displayName: player.displayName,
+    avatar: player.avatar,
+    rank: player.rank,
+    score: player.score,
+    isWinner: player.rank === 1,
+  }));
 
   return (
     <div className="picture-guess-results">
@@ -92,28 +89,27 @@ export function PictureGuessResultsView({
 
       {/* Rankings (multiplayer) */}
       {results.mode === 'multiplayer' && (
-        <div className="pg-rankings">
-          <h3>Bảng Xếp Hạng</h3>
-          <div className="pg-rankings-list">
-            {results.rankings.map(player => (
-              <div
-                key={player.odinhId}
-                className={`pg-ranking-item ${getRankClass(player.rank)} ${player.odinhId === currentUserId ? 'current' : ''}`}
-              >
-                <div className="rank-cell">{getRankIcon(player.rank)}</div>
-                <div className="player-cell">
-                  <span className="avatar">{player.avatar}</span>
-                  <span className="name">{player.displayName}</span>
-                </div>
-                <div className="score-cell">{player.score} điểm</div>
-                <div className="stats-cell">
-                  <span>{player.correctGuesses} đúng</span>
-                  <span>{player.accuracy}% chính xác</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <RankingsTable
+          rankings={rankedPlayers}
+          currentPlayerId={currentUserId}
+          className="pg-rankings"
+          title="Bảng Xếp Hạng"
+          columns={[
+            {
+              key: 'accuracy',
+              label: 'Chính xác',
+              render: (player) => {
+                const originalPlayer = results.rankings.find(p => p.odinhId === player.id);
+                return (
+                  <>
+                    <span>{originalPlayer?.correctGuesses} đúng</span>
+                    <span>{originalPlayer?.accuracy}% chính xác</span>
+                  </>
+                );
+              },
+            },
+          ]}
+        />
       )}
 
       {/* Vocabulary Review */}
@@ -175,20 +171,19 @@ export function PictureGuessResultsView({
       </div>
 
       {/* Action Buttons */}
-      <div className="pg-results-actions">
-        <button className="pg-action-btn primary" onClick={onPlayAgain}>
-          <RotateCcw size={20} />
-          <span>Chơi Lại</span>
-        </button>
-        <button className="pg-action-btn secondary" onClick={onBackToMenu}>
-          <Home size={20} />
-          <span>Về Menu</span>
-        </button>
-        <button className="pg-action-btn share">
-          <Share2 size={20} />
-          <span>Chia Sẻ</span>
-        </button>
-      </div>
+      <ResultsActionBar
+        onPlayAgain={onPlayAgain}
+        onGoHome={onBackToMenu}
+        playAgainLabel="Chơi Lại"
+        goHomeLabel="Về Menu"
+        className="pg-results-actions"
+        extraButtons={
+          <button className="pg-action-btn share">
+            <Share2 size={20} />
+            <span>Chia Sẻ</span>
+          </button>
+        }
+      />
     </div>
   );
 }

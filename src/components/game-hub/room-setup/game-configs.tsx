@@ -4,3 +4,7 @@ export {
   PICTURE_GUESS_SETUP_CONFIG,
   WORD_MATCH_SETUP_CONFIG,
 } from './game-configs-advanced';
+export {
+  IMAGE_WORD_SETUP_CONFIG,
+  WORD_SCRAMBLE_SETUP_CONFIG,
+} from './game-configs-extra';

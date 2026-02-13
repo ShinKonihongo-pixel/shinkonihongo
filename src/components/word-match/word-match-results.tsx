@@ -1,6 +1,7 @@
 // Word Match Results - Final game results
 import React from 'react';
 import type { WordMatchResults as Results, WordMatchPlayerResult } from '../../types/word-match';
+import { Podium, RankingsTable, ResultsActionBar, type BaseRankedPlayer } from '../shared/game-results';
 
 interface WordMatchResultsProps {
   results: Results;
@@ -16,7 +17,16 @@ export const WordMatchResults: React.FC<WordMatchResultsProps> = ({
   onExit,
 }) => {
   const currentPlayerResult = results.rankings.find((r) => r.odinhId === currentPlayerId);
-  const top3 = results.rankings.slice(0, 3);
+
+  // Map to BaseRankedPlayer
+  const rankedPlayers: BaseRankedPlayer[] = results.rankings.map(player => ({
+    id: player.odinhId,
+    displayName: player.displayName,
+    avatar: player.avatar,
+    rank: player.rank,
+    score: player.score,
+    isWinner: player.isWinner,
+  }));
 
   return (
     <div className="word-match-results">
@@ -42,43 +52,11 @@ export const WordMatchResults: React.FC<WordMatchResultsProps> = ({
       )}
 
       {/* Podium */}
-      <div className="podium">
-        {top3[1] && (
-          <div className="podium-place second">
-            <div className="podium-player">
-              <span className="medal">🥈</span>
-              <span className="avatar">{top3[1].avatar}</span>
-              <span className="name">{top3[1].displayName}</span>
-              <span className="score">{top3[1].score}</span>
-            </div>
-            <div className="podium-stand">2</div>
-          </div>
-        )}
-
-        {top3[0] && (
-          <div className="podium-place first">
-            <div className="podium-player">
-              <span className="medal">🥇</span>
-              <span className="avatar">{top3[0].avatar}</span>
-              <span className="name">{top3[0].displayName}</span>
-              <span className="score">{top3[0].score}</span>
-            </div>
-            <div className="podium-stand">1</div>
-          </div>
-        )}
-
-        {top3[2] && (
-          <div className="podium-place third">
-            <div className="podium-player">
-              <span className="medal">🥉</span>
-              <span className="avatar">{top3[2].avatar}</span>
-              <span className="name">{top3[2].displayName}</span>
-              <span className="score">{top3[2].score}</span>
-            </div>
-            <div className="podium-stand">3</div>
-          </div>
-        )}
-      </div>
+      <Podium
+        players={rankedPlayers}
+        renderPlayerExtra={(player) => <span>{player.score}</span>}
+        showCrown={false}
+      />
 
       {/* Your result */}
       {currentPlayerResult && (
@@ -110,55 +88,48 @@ export const WordMatchResults: React.FC<WordMatchResultsProps> = ({
       )}
 
       {/* Full rankings */}
-      <div className="full-rankings">
-        <h3>📋 Bảng Xếp Hạng Đầy Đủ</h3>
-        <div className="rankings-table">
-          <div className="rankings-header">
-            <span className="col-rank">#</span>
-            <span className="col-player">Người chơi</span>
-            <span className="col-score">Điểm</span>
-            <span className="col-pairs">Cặp đúng</span>
-            <span className="col-perfect">Hoàn hảo</span>
-            <span className="col-accuracy">Chính xác</span>
-          </div>
-          {results.rankings.map((player: WordMatchPlayerResult) => (
-            <div
-              key={player.odinhId}
-              className={`rankings-row ${player.odinhId === currentPlayerId ? 'current' : ''} ${
-                player.isWinner ? 'winner' : ''
-              }`}
-            >
-              <span className="col-rank">
-                {player.rank === 1
-                  ? '🥇'
-                  : player.rank === 2
-                  ? '🥈'
-                  : player.rank === 3
-                  ? '🥉'
-                  : `#${player.rank}`}
-              </span>
-              <span className="col-player">
-                <span className="avatar">{player.avatar}</span>
-                <span className="name">{player.displayName}</span>
-              </span>
-              <span className="col-score">{player.score}</span>
-              <span className="col-pairs">{player.correctPairs}</span>
-              <span className="col-perfect">{player.perfectRounds}</span>
-              <span className="col-accuracy">{player.accuracy}%</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <RankingsTable
+        rankings={rankedPlayers}
+        currentPlayerId={currentPlayerId}
+        title="📋 Bảng Xếp Hạng Đầy Đủ"
+        className="rankings-table"
+        columns={[
+          {
+            key: 'pairs',
+            label: 'Cặp đúng',
+            render: (player) => {
+              const originalPlayer = results.rankings.find(p => p.odinhId === player.id);
+              return <span className="col-pairs">{originalPlayer?.correctPairs}</span>;
+            },
+          },
+          {
+            key: 'perfect',
+            label: 'Hoàn hảo',
+            render: (player) => {
+              const originalPlayer = results.rankings.find(p => p.odinhId === player.id);
+              return <span className="col-perfect">{originalPlayer?.perfectRounds}</span>;
+            },
+          },
+          {
+            key: 'accuracy',
+            label: 'Chính xác',
+            render: (player) => {
+              const originalPlayer = results.rankings.find(p => p.odinhId === player.id);
+              return <span className="col-accuracy">{originalPlayer?.accuracy}%</span>;
+            },
+          },
+        ]}
+      />
 
       {/* Actions */}
-      <div className="results-actions">
-        <button className="word-match-btn primary large" onClick={onPlayAgain}>
-          🔄 Chơi Lại
-        </button>
-        <button className="word-match-btn secondary large" onClick={onExit}>
-          🚪 Thoát
-        </button>
-      </div>
+      <ResultsActionBar
+        onPlayAgain={onPlayAgain}
+        onGoHome={onExit}
+        playAgainLabel="🔄 Chơi Lại"
+        goHomeLabel="🚪 Thoát"
+        playAgainIcon={null}
+        goHomeIcon={null}
+      />
     </div>
   );
 };

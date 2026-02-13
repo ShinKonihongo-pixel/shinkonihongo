@@ -5,7 +5,7 @@ import { useCallback, useState } from 'react';
 import type { Flashcard } from '../../types/flashcard';
 import type { AppSettings } from '../../hooks/use-settings';
 import { useSettings } from '../../hooks/use-settings';
-import { useAIChallenge, type JLPTLevel } from '../../hooks/use-ai-challenge';
+import { useAIChallenge, type JLPTLevel } from '../../hooks/ai-challenge';
 import { AIChallengeMenu } from '../ai-challenge/ai-challenge-menu';
 import { AIChallengePlay } from '../ai-challenge/ai-challenge-play';
 import { AIChallengeResults } from '../ai-challenge/ai-challenge-results';

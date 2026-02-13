@@ -8,7 +8,7 @@ import {
   WordMatchResults,
   WordMatchGuide,
 } from '../word-match';
-import { useWordMatch } from '../../hooks/use-word-match';
+import { useWordMatch } from '../../hooks/word-match';
 import type { CreateWordMatchData, WordMatchEffectType } from '../../types/word-match';
 import type { Flashcard } from '../../types/flashcard';
 import type { GameSession } from '../../types/user';
@@ -27,6 +27,7 @@ interface WordMatchPageProps {
   initialView?: PageView;
   // XP tracking
   onSaveGameSession?: (data: Omit<GameSession, 'id' | 'userId'>) => void;
+  initialRoomConfig?: Record<string, unknown>;
 }
 
 export const WordMatchPage: React.FC<WordMatchPageProps> = ({
@@ -35,6 +36,7 @@ export const WordMatchPage: React.FC<WordMatchPageProps> = ({
   flashcards = [],
   initialView = 'menu',
   onSaveGameSession,
+  initialRoomConfig,
 }) => {
   const [view, setView] = useState<PageView>(initialView);
   const [notification, setNotification] = useState<{ message: string; type: 'info' | 'warning' } | null>(null);
@@ -61,6 +63,20 @@ export const WordMatchPage: React.FC<WordMatchPageProps> = ({
     continueGame,
     resetGame,
   } = useWordMatch({ currentUser, flashcards });
+
+  // Auto-create room from unified setup
+  React.useEffect(() => {
+    if (initialRoomConfig && !game) {
+      const cfg = initialRoomConfig;
+      createGame({
+        title: (cfg.title as string) || 'Noi Tu Thach Dau',
+        totalRounds: (cfg.totalRounds as number) || 10,
+        timePerRound: (cfg.timePerQuestion as number) || 60,
+        maxPlayers: (cfg.maxPlayers as number) || 4,
+      });
+      setView('lobby');
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle create game
   const handleCreateGame = useCallback(

@@ -2,6 +2,7 @@
 
 import type { QuizGame, GameResults as GameResultsType } from '../../types/quiz-game';
 import { isImageAvatar } from '../../utils/avatar-icons';
+import { Podium, RankingsTable, ResultsActionBar, type BaseRankedPlayer } from '../shared/game-results';
 
 interface GameResultsProps {
   game: QuizGame;
@@ -22,23 +23,15 @@ export function GameResults({
   const myRank = players.findIndex(p => p.id === currentPlayerId) + 1;
   const myPlayer = players.find(p => p.id === currentPlayerId);
 
-  const getPositionEmoji = (rank: number) => {
-    switch (rank) {
-      case 1: return '🥇';
-      case 2: return '🥈';
-      case 3: return '🥉';
-      default: return `#${rank}`;
-    }
-  };
-
-  const getPositionClass = (rank: number) => {
-    switch (rank) {
-      case 1: return 'gold';
-      case 2: return 'silver';
-      case 3: return 'bronze';
-      default: return '';
-    }
-  };
+  // Map to BaseRankedPlayer (note: quiz-game uses id/name, not odinhId/displayName)
+  const rankedPlayers: BaseRankedPlayer[] = players.map((player, idx) => ({
+    id: player.id,
+    displayName: player.name,
+    avatar: player.avatar,
+    rank: idx + 1,
+    score: player.score,
+    isWinner: idx === 0,
+  }));
 
   return (
     <div className="quiz-game-page">
@@ -58,25 +51,11 @@ export function GameResults({
           )}
         </div>
 
-        <div className="podium">
-          {players.slice(0, 3).map((player, index) => (
-            <div
-              key={player.id}
-              className={`podium-item position-${index + 1} ${getPositionClass(index + 1)}`}
-            >
-              <div className="podium-rank">{getPositionEmoji(index + 1)}</div>
-              <div className="podium-avatar">
-                {player.avatar && isImageAvatar(player.avatar) ? (
-                  <img src={player.avatar} alt="avatar" />
-                ) : (
-                  player.avatar || player.name.charAt(0).toUpperCase()
-                )}
-              </div>
-              <div className="podium-name">{player.name}</div>
-              <div className="podium-score">{player.score}</div>
-            </div>
-          ))}
-        </div>
+        <Podium
+          players={rankedPlayers}
+          renderPlayerExtra={(player) => <span>{player.score}</span>}
+          showCrown={false}
+        />
 
         {myRank > 3 && myPlayer && (
           <div className="my-result">
@@ -84,31 +63,24 @@ export function GameResults({
           </div>
         )}
 
-        <div className="full-rankings">
-          <h3>Bảng xếp hạng đầy đủ</h3>
-          <div className="ranking-list">
-            {players.map((player, index) => (
-              <div
-                key={player.id}
-                className={`ranking-item ${player.id === currentPlayerId ? 'is-me' : ''} ${getPositionClass(index + 1)}`}
-              >
-                <span className="rank">{getPositionEmoji(index + 1)}</span>
-                <span className="ranking-avatar">
-                  {player.avatar && isImageAvatar(player.avatar) ? (
-                    <img src={player.avatar} alt="avatar" />
-                  ) : (
-                    player.avatar || player.name.charAt(0).toUpperCase()
-                  )}
-                </span>
-                <span className="name">{player.name}</span>
-                <span className="score">{player.score}</span>
-                {player.streak >= 3 && (
-                  <span className="streak">🔥 {player.streak}</span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+        <RankingsTable
+          rankings={rankedPlayers}
+          currentPlayerId={currentPlayerId}
+          title="Bảng xếp hạng đầy đủ"
+          className="full-rankings"
+          columns={[
+            {
+              key: 'streak',
+              label: 'Streak',
+              render: (player) => {
+                const originalPlayer = players.find(p => p.id === player.id);
+                return originalPlayer && originalPlayer.streak >= 3 ? (
+                  <span className="streak">🔥 {originalPlayer.streak}</span>
+                ) : null;
+              },
+            },
+          ]}
+        />
 
         <div className="game-stats">
           <div className="stat">
@@ -121,14 +93,14 @@ export function GameResults({
           </div>
         </div>
 
-        <div className="results-actions">
-          <button className="btn btn-primary btn-large" onClick={onPlayAgain}>
-            Chơi lại
-          </button>
-          <button className="btn btn-outline" onClick={onGoHome}>
-            Về trang chủ
-          </button>
-        </div>
+        <ResultsActionBar
+          onPlayAgain={onPlayAgain}
+          onGoHome={onGoHome}
+          playAgainLabel="Chơi lại"
+          goHomeLabel="Về trang chủ"
+          playAgainIcon={null}
+          goHomeIcon={null}
+        />
       </div>
     </div>
   );

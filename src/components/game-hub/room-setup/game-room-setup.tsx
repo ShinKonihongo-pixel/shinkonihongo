@@ -15,6 +15,7 @@ export function GameRoomSetup({
   onBack,
   loading = false,
   error,
+  inline = false,
 }: GameRoomSetupProps) {
   const gameInfo = GAMES[gameType];
 
@@ -64,6 +65,54 @@ export function GameRoomSetup({
   const handleToggle = (id: string, enabled: boolean) => {
     setToggleStates(prev => ({ ...prev, [id]: enabled }));
   };
+
+  // Inline mode: render form content without modal wrapper
+  if (inline) {
+    return (
+      <div className="setup-form-inline">
+        <form onSubmit={handleSubmit}>
+          {error && (
+            <div className="rm-error">
+              <span>⚠️</span>
+              <span>{error}</span>
+            </div>
+          )}
+
+          <FormFields
+            config={config}
+            title={title}
+            setTitle={setTitle}
+            jlptLevel={jlptLevel}
+            setJlptLevel={setJlptLevel}
+            selectedCategories={selectedCategories}
+            setSelectedCategories={setSelectedCategories}
+            maxPlayers={maxPlayers}
+            setMaxPlayers={setMaxPlayers}
+            totalRounds={totalRounds}
+            setTotalRounds={setTotalRounds}
+            timePerQuestion={timePerQuestion}
+            setTimePerQuestion={setTimePerQuestion}
+            toggleStates={toggleStates}
+            handleToggle={handleToggle}
+            gameInfoName={gameInfo.name}
+          />
+
+          {config.rules && <RulesSection rules={config.rules} />}
+
+          <RoomPreview
+            gameInfo={gameInfo}
+            config={config}
+            title={title}
+            maxPlayers={maxPlayers}
+            totalRounds={totalRounds}
+            timePerQuestion={timePerQuestion}
+            jlptLevel={jlptLevel}
+            skillsEnabled={toggleStates['skills']}
+          />
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="rm-overlay" onClick={onBack}>
