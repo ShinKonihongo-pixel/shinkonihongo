@@ -1,6 +1,6 @@
-// Power-up selection screen component
+// Power-up selection — premium animated screen
 import { useState } from 'react';
-import { Zap, Target, Shield, ChevronRight, LogOut } from 'lucide-react';
+import { Zap, Target, Shield, ChevronRight, LogOut, Sparkles, Eye } from 'lucide-react';
 import type { GamePlayer, GameQuestion, PowerUpType } from '../../../types/quiz-game';
 import { POWER_UPS } from '../../../types/quiz-game';
 
@@ -9,6 +9,7 @@ interface GamePowerUpProps {
   currentQuestion: GameQuestion;
   sortedPlayers: GamePlayer[];
   powerUpTimer: number;
+  isSpectator?: boolean;
   onUsePowerUp: (type: PowerUpType, targetId?: string) => Promise<boolean>;
   onLeaveGame: () => Promise<void>;
 }
@@ -18,6 +19,7 @@ export function GamePowerUp({
   currentQuestion,
   sortedPlayers,
   powerUpTimer,
+  isSpectator = false,
   onUsePowerUp,
   onLeaveGame,
 }: GamePowerUpProps) {
@@ -25,13 +27,12 @@ export function GamePowerUp({
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
   const [powerUpConfirmed, setPowerUpConfirmed] = useState(false);
 
-  const otherPlayers = sortedPlayers.filter(p => p.id !== currentPlayer?.id);
+  const otherPlayers = sortedPlayers.filter(p => p.id !== currentPlayer?.id && !p.isSpectator);
   const needsTarget = selectedPowerUp === 'steal_points' || selectedPowerUp === 'block_player';
-  const answeredCorrectly = currentPlayer?.currentAnswer === currentQuestion.correctIndex;
+  const answeredCorrectly = !isSpectator && currentPlayer?.currentAnswer === currentQuestion.correctIndex;
 
   const handleUsePowerUp = async () => {
-    if (powerUpConfirmed) return;
-    if (!selectedPowerUp) return;
+    if (powerUpConfirmed || !selectedPowerUp) return;
     if (needsTarget && !selectedTarget) return;
 
     const success = await onUsePowerUp(selectedPowerUp, selectedTarget || undefined);
@@ -40,7 +41,38 @@ export function GamePowerUp({
     }
   };
 
-  // Player did not answer correctly
+  // Timer display shared between states
+  const timerBadge = (
+    <div className="powerup-timer-badge">
+      <span className="powerup-timer-value">{powerUpTimer}</span>
+      <span className="powerup-timer-label">giây</span>
+    </div>
+  );
+
+  // Spectator view — just observe the power-up phase
+  if (isSpectator) {
+    return (
+      <div className="game-fullscreen game-powerup-screen ineligible">
+        <button className="leave-game-btn floating" onClick={onLeaveGame} title="Rời game">
+          <LogOut size={18} /> Rời
+        </button>
+        <div className="powerup-header">
+          <div className="powerup-icon-glow">
+            <Zap size={32} className="powerup-icon-large" />
+          </div>
+          <h2>Round Đặc Biệt!</h2>
+          {timerBadge}
+        </div>
+        <div className="powerup-ineligible-content">
+          <div className="ineligible-icon"><Eye size={48} /></div>
+          <p className="ineligible-text">Đang theo dõi</p>
+          <p className="ineligible-hint">Người chơi đang chọn power-up...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Not eligible state
   if (!answeredCorrectly) {
     return (
       <div className="game-fullscreen game-powerup-screen ineligible">
@@ -48,9 +80,11 @@ export function GamePowerUp({
           <LogOut size={18} /> Rời
         </button>
         <div className="powerup-header">
-          <Zap size={32} className="powerup-icon-large" />
+          <div className="powerup-icon-glow">
+            <Zap size={32} className="powerup-icon-large" />
+          </div>
           <h2>Round Đặc Biệt!</h2>
-          <div className="powerup-timer">{powerUpTimer}s</div>
+          {timerBadge}
         </div>
         <div className="powerup-ineligible-content">
           <div className="ineligible-icon">😔</div>
@@ -61,7 +95,7 @@ export function GamePowerUp({
     );
   }
 
-  // Power-up confirmed
+  // Confirmed state
   if (powerUpConfirmed) {
     const confirmedPowerUp = POWER_UPS.find(p => p.type === selectedPowerUp);
     return (
@@ -70,9 +104,11 @@ export function GamePowerUp({
           <LogOut size={18} /> Rời
         </button>
         <div className="powerup-header">
-          <Zap size={32} className="powerup-icon-large" />
-          <h2>Round Đặc Biệt!</h2>
-          <div className="powerup-timer">{powerUpTimer}s</div>
+          <div className="powerup-icon-glow">
+            <Sparkles size={32} className="powerup-icon-large" />
+          </div>
+          <h2>Power-up Đã Kích Hoạt!</h2>
+          {timerBadge}
         </div>
         <div className="powerup-confirmed-content">
           <div className="confirmed-check">✓</div>
@@ -88,20 +124,22 @@ export function GamePowerUp({
     );
   }
 
-  // Power-up selection
+  // Selection state
   return (
     <div className="game-fullscreen game-powerup-screen">
       <button className="leave-game-btn floating" onClick={onLeaveGame} title="Rời game">
         <LogOut size={18} /> Rời
       </button>
       <div className="powerup-header">
-        <Zap size={32} className="powerup-icon-large" />
+        <div className="powerup-icon-glow">
+          <Zap size={32} className="powerup-icon-large" />
+        </div>
         <h2>Chọn Power-up!</h2>
-        <div className="powerup-timer">{powerUpTimer}s</div>
+        {timerBadge}
       </div>
 
       <div className="powerup-grid">
-        {POWER_UPS.map(powerUp => (
+        {POWER_UPS.map((powerUp, i) => (
           <button
             key={powerUp.type}
             className={`powerup-card ${selectedPowerUp === powerUp.type ? 'selected' : ''}`}
@@ -109,6 +147,7 @@ export function GamePowerUp({
               setSelectedPowerUp(powerUp.type);
               setSelectedTarget(null);
             }}
+            style={{ animationDelay: `${i * 0.08}s` }}
           >
             <span className="powerup-emoji">{powerUp.icon}</span>
             <span className="powerup-name">{powerUp.name}</span>

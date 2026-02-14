@@ -52,7 +52,7 @@ export function PlayerListGrid({
               )}
               {playerIsVip && <span className="vip-frame" />}
             </div>
-            <div className="player-info">
+            <div className="player-info" title={player.displayName}>
               <span className={getVipNameClasses(player.role, 'player-name')}>
                 {vipBadge && <span className="vip-badge">{vipBadge}</span>}
                 {player.displayName}

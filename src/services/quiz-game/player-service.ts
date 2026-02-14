@@ -7,7 +7,8 @@ export async function joinGame(
   gameCode: string,
   playerId: string,
   playerName: string,
-  playerAvatar?: string
+  playerAvatar?: string,
+  playerRole?: string
 ): Promise<{ game: QuizGame; error?: string }> {
   const game = await getGameByCode(gameCode);
 
@@ -33,6 +34,7 @@ export async function joinGame(
     id: playerId,
     name: playerName,
     avatar: playerAvatar || '',
+    role: playerRole,
     score: 0,
     isHost: false,
     isBlocked: false,

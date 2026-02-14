@@ -16,8 +16,8 @@ export async function endGame(gameId: string): Promise<void> {
   const game = await getGame(gameId);
   if (!game) return;
 
-  // Calculate rankings
-  const playerList = Object.values(game.players);
+  // Calculate rankings (exclude spectators)
+  const playerList = Object.values(game.players).filter(p => !p.isSpectator);
   const sortedPlayers = [...playerList].sort((a, b) => b.score - a.score);
 
   const rankings: PlayerResult[] = sortedPlayers.map((player, index) => ({

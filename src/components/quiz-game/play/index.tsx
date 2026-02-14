@@ -45,6 +45,7 @@ export function GamePlay({
   gameAnswerFontSize = 1.1,
 }: GamePlayProps) {
   const [prevScores, setPrevScores] = useState<Record<string, number>>({});
+  const isSpectator = currentPlayer?.isSpectator === true;
 
   // Game sounds
   const { playCorrect, playWrong } = useGameSounds();
@@ -61,9 +62,9 @@ export function GamePlay({
     onContinueFromLeaderboard,
   });
 
-  // Play sound when answer is revealed
+  // Play sound when answer is revealed (not for spectators)
   useEffect(() => {
-    if (game.status === 'answer_reveal' && currentPlayer) {
+    if (game.status === 'answer_reveal' && currentPlayer && !isSpectator) {
       const soundKey = `reveal-${game.currentRound}`;
       if (soundPlayedRef.current !== soundKey) {
         soundPlayedRef.current = soundKey;
@@ -75,7 +76,7 @@ export function GamePlay({
         }
       }
     }
-  }, [game.status, game.currentRound, currentPlayer, currentQuestion.correctIndex, playCorrect, playWrong]);
+  }, [game.status, game.currentRound, currentPlayer, isSpectator, currentQuestion.correctIndex, playCorrect, playWrong]);
 
   // Save previous scores when entering question phase
   useEffect(() => {
@@ -103,6 +104,7 @@ export function GamePlay({
         currentQuestion={currentQuestion}
         sortedPlayers={sortedPlayers}
         timeLeft={timeLeft}
+        isSpectator={isSpectator}
         onSubmitAnswer={onSubmitAnswer}
         onLeaveGame={onLeaveGame}
         gameQuestionFontSize={gameQuestionFontSize}
@@ -120,6 +122,7 @@ export function GamePlay({
         sortedPlayers={sortedPlayers}
         prevScores={prevScores}
         revealTimer={revealTimer}
+        isSpectator={isSpectator}
         onLeaveGame={onLeaveGame}
       />
     );
@@ -133,6 +136,7 @@ export function GamePlay({
         currentQuestion={currentQuestion}
         sortedPlayers={sortedPlayers}
         powerUpTimer={powerUpTimer}
+        isSpectator={isSpectator}
         onUsePowerUp={onUsePowerUp}
         onLeaveGame={onLeaveGame}
       />

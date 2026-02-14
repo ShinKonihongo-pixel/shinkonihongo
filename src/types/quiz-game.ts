@@ -29,6 +29,8 @@ export interface GamePlayer {
   id: string;
   name: string;
   avatar?: string; // Player avatar emoji/icon
+  role?: string; // User role for VIP styling
+  isSpectator?: boolean; // Theo dõi (không tham gia chơi)
   score: number;
   isHost: boolean;
   isBlocked: boolean;           // Bị block ở round hiện tại
@@ -83,6 +85,7 @@ export interface QuizGame {
   source?: GameQuestionSource;  // Nguồn câu hỏi
   jlptLevels?: string[];        // Các level JLPT đã chọn
   lessonNames?: string[];       // Tên các bài học đã chọn
+  hostMessage?: string;         // Custom host message shown in lobby (max 50 chars)
 }
 
 export interface GameSettings {
@@ -116,13 +119,21 @@ export type GameAnswerContent = 'kanji' | 'vocabulary' | 'meaning' | 'vocabulary
 // Difficulty levels for flashcard-based questions
 export type GameDifficultyLevel = 'super_hard' | 'hard' | 'medium' | 'easy';
 
+// Difficulty mix config: % of each card difficulty for a game difficulty level
+export type DifficultyMixRow = { super_hard: number; hard: number; medium: number; easy: number };
+export type DifficultyMixConfig = Record<GameDifficultyLevel, DifficultyMixRow>;
+
 // Form data for creating a game
+export type HostMode = 'play' | 'spectate'; // Chơi cùng hoặc theo dõi
+
 export interface CreateGameData {
   title: string;
   source: GameQuestionSource;   // Nguồn câu hỏi
+  hostMode?: HostMode;          // Super admin: chơi cùng hoặc theo dõi
   lessonIds: string[];          // Lessons to pick questions from (flashcards)
   lessonNames?: string[];       // Tên các bài học đã chọn (flashcards)
   difficultyLevels?: GameDifficultyLevel[]; // Mức độ khó (flashcards)
+  difficultyMix?: DifficultyMixConfig;      // % mix config from settings
   jlptLevels?: string[];        // JLPT levels to pick from (jlpt)
   jlptCategories?: string[];    // JLPT categories to pick from (jlpt)
   totalRounds: number;          // 20-50

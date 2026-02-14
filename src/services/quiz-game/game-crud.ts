@@ -18,12 +18,70 @@ import type {
   QuizGame,
   GamePlayer,
   CreateGameData,
+  GameDifficultyLevel,
 } from '../../types/quiz-game';
-import type { Flashcard } from '../../types/flashcard';
+import type { Flashcard, DifficultyLevel } from '../../types/flashcard';
 import type { JLPTQuestion } from '../../types/jlpt-question';
 import { COLLECTIONS } from './constants';
-import { generateGameCode } from './utils';
+import { generateGameCode, shuffleArray } from './utils';
 import { generateQuestionsFromFlashcards, generateQuestionsFromJLPT } from './question-generator';
+
+// Filter flashcards by difficulty mix percentages
+// Returns a shuffled pool of cards selected according to the mix ratios
+function filterByDifficultyMix(
+  cards: Flashcard[],
+  gameDifficulty: GameDifficultyLevel,
+  mixConfig: Record<GameDifficultyLevel, { super_hard: number; hard: number; medium: number; easy: number }>,
+  totalRounds: number
+): Flashcard[] {
+  const row = mixConfig[gameDifficulty];
+  const rowTotal = row.super_hard + row.hard + row.medium + row.easy;
+  if (rowTotal === 0) return shuffleArray(cards);
+
+  // Group cards by their difficulty level
+  const buckets: Record<GameDifficultyLevel, Flashcard[]> = {
+    super_hard: [], hard: [], medium: [], easy: [],
+  };
+  const unset: Flashcard[] = [];
+  for (const card of cards) {
+    const d = card.difficultyLevel as DifficultyLevel;
+    if (d && d !== 'unset' && buckets[d as GameDifficultyLevel]) {
+      buckets[d as GameDifficultyLevel].push(card);
+    } else {
+      unset.push(card);
+    }
+  }
+
+  // Calculate how many cards needed from each difficulty
+  const levels: GameDifficultyLevel[] = ['super_hard', 'hard', 'medium', 'easy'];
+  const selected: Flashcard[] = [];
+
+  for (const diff of levels) {
+    const pct = row[diff] / rowTotal;
+    const needed = Math.round(pct * totalRounds);
+    if (needed <= 0) continue;
+
+    const available = shuffleArray(buckets[diff]);
+    const picked = available.slice(0, needed);
+    selected.push(...picked);
+
+    // If not enough cards in this bucket, will be supplemented from unset pool
+    if (picked.length < needed) {
+      const deficit = needed - picked.length;
+      const supplement = shuffleArray(unset).splice(0, deficit);
+      selected.push(...supplement);
+    }
+  }
+
+  // If total selected is still less than totalRounds, fill from remaining unset + all cards
+  if (selected.length < totalRounds) {
+    const selectedIds = new Set(selected.map(c => c.id));
+    const remaining = shuffleArray(cards.filter(c => !selectedIds.has(c.id)));
+    selected.push(...remaining.slice(0, totalRounds - selected.length));
+  }
+
+  return shuffleArray(selected);
+}
 
 export async function createGame(
   data: CreateGameData,
@@ -31,7 +89,8 @@ export async function createGame(
   hostName: string,
   hostAvatar: string | undefined,
   flashcards: Flashcard[],
-  jlptQuestions?: JLPTQuestion[]
+  jlptQuestions?: JLPTQuestion[],
+  hostRole?: string
 ): Promise<QuizGame> {
   const settings = {
     minPlayers: 2,
@@ -68,10 +127,16 @@ export async function createGame(
     );
   } else {
     // Filter flashcards by selected lessons
-    const lessonCards = flashcards.filter(card => data.lessonIds.includes(card.lessonId));
+    let lessonCards = flashcards.filter(card => data.lessonIds.includes(card.lessonId));
 
     if (lessonCards.length < 4) {
       throw new Error('Cần ít nhất 4 thẻ để tạo game');
+    }
+
+    // Apply difficulty mix filtering when a difficulty level is selected
+    const gameDifficulty = data.difficultyLevels?.[0];
+    if (gameDifficulty && data.difficultyMix) {
+      lessonCards = filterByDifficultyMix(lessonCards, gameDifficulty, data.difficultyMix, data.totalRounds);
     }
 
     questions = generateQuestionsFromFlashcards(
@@ -80,7 +145,9 @@ export async function createGame(
       data.timePerQuestion,
       settings.specialRoundEvery,
       data.questionContent || 'kanji',
-      data.answerContent || 'vocabulary_meaning'
+      data.answerContent || 'vocabulary_meaning',
+      gameDifficulty,
+      flashcards, // pass all flashcards for similar option generation
     );
   }
 
@@ -100,6 +167,8 @@ export async function createGame(
     id: hostId,
     name: hostName,
     avatar: hostAvatar || '',
+    role: hostRole,
+    isSpectator: data.hostMode === 'spectate',
     score: 0,
     isHost: true,
     isBlocked: false,

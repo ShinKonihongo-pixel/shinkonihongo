@@ -9,8 +9,9 @@ export async function startGame(gameId: string, hostId: string): Promise<boolean
   if (!game || game.hostId !== hostId) return false;
   if (game.status !== 'waiting') return false;
 
-  const playerCount = Object.keys(game.players).length;
-  if (playerCount < game.settings.minPlayers) return false;
+  // Spectators don't count toward minPlayers
+  const activePlayers = Object.values(game.players).filter(p => !p.isSpectator);
+  if (activePlayers.length < game.settings.minPlayers) return false;
 
   await updateGame(gameId, {
     status: 'starting',
@@ -37,7 +38,7 @@ export async function submitAnswer(
   if (!game || game.status !== 'question') return;
 
   const player = game.players[playerId];
-  if (!player || player.isBlocked || player.currentAnswer !== null) return;
+  if (!player || player.isSpectator || player.isBlocked || player.currentAnswer !== null) return;
 
   const answerTime = Date.now() - (game.roundStartTime || Date.now());
 
@@ -60,9 +61,11 @@ export async function revealAnswer(gameId: string, hostId: string): Promise<void
   const currentQuestion = game.questions[game.currentRound];
   const updatedPlayers = { ...game.players };
 
-  // Calculate scores
+  // Calculate scores (skip spectators)
   for (const playerId of Object.keys(updatedPlayers)) {
     const player = updatedPlayers[playerId];
+
+    if (player.isSpectator) continue;
 
     if (player.isBlocked) {
       // Reset blocked status for next round

@@ -48,6 +48,7 @@ export function QuizGamePage({
   onInviteFriend,
   onSaveGameSession,
   initialRoomConfig,
+  userRole,
 }: QuizGamePageProps) {
   const [showFriendInvite, setShowFriendInvite] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
@@ -73,11 +74,13 @@ export function QuizGamePage({
     continueFromPowerUp,
     continueFromLeaderboard,
     usePowerUp,
+    updateHostMessage,
     resetGame,
   } = useQuizGame({
     playerId: currentUserId,
     playerName: currentUserName,
     playerAvatar: currentUserAvatar,
+    playerRole: userRole,
   });
 
   // Auto-create room from hub modal
@@ -147,6 +150,7 @@ export function QuizGamePage({
           onStartGame={startGame}
           onKickPlayer={kickPlayer}
           onLeaveGame={handleLeaveGame}
+          onUpdateHostMessage={updateHostMessage}
           onInviteFriends={() => setShowFriendInvite(true)}
           hasFriends={friends.length > 0}
           error={error}

@@ -1,5 +1,5 @@
-// Answer reveal screen component
-import { Crown, LogOut } from 'lucide-react';
+// Answer reveal — premium animated results display
+import { Crown, LogOut, Flame, Eye } from 'lucide-react';
 import type { GamePlayer, GameQuestion } from '../../../types/quiz-game';
 import { ANSWER_OPTIONS } from '../../../constants/answer-options';
 
@@ -9,6 +9,7 @@ interface GameAnswerRevealProps {
   sortedPlayers: GamePlayer[];
   prevScores: Record<string, number>;
   revealTimer: number;
+  isSpectator?: boolean;
   onLeaveGame: () => Promise<void>;
 }
 
@@ -24,6 +25,7 @@ export function GameAnswerReveal({
   sortedPlayers,
   prevScores,
   revealTimer,
+  isSpectator = false,
   onLeaveGame,
 }: GameAnswerRevealProps) {
   const playersWithChanges: PlayerWithChanges[] = sortedPlayers.map(player => {
@@ -41,24 +43,33 @@ export function GameAnswerReveal({
       <button className="leave-game-btn floating" onClick={onLeaveGame} title="Rời game">
         <LogOut size={18} /> Rời
       </button>
+
       {/* Result header */}
       <div className="reveal-header">
-        <div className={`result-banner ${myResult?.answeredCorrectly ? 'correct' : 'wrong'}`}>
-          {myResult?.answeredCorrectly ? (
-            <>
-              <span className="result-icon">🎉</span>
-              <span className="result-text">Chính xác!</span>
-              {myResult.scoreChange > 0 && (
+        {isSpectator ? (
+          <div className="result-banner spectator">
+            <span className="result-icon"><Eye size={24} /></span>
+            <div className="result-info">
+              <span className="result-text">Đang theo dõi</span>
+              <span className="spectator-hint">{correctCount}/{sortedPlayers.length} trả lời đúng</span>
+            </div>
+          </div>
+        ) : (
+          <div className={`result-banner ${myResult?.answeredCorrectly ? 'correct' : 'wrong'}`}>
+            <span className="result-icon">{myResult?.answeredCorrectly ? '🎉' : '😔'}</span>
+            <div className="result-info">
+              <span className="result-text">{myResult?.answeredCorrectly ? 'Chính xác!' : 'Sai rồi!'}</span>
+              {myResult?.answeredCorrectly && myResult.scoreChange > 0 && (
                 <span className="score-gained">+{myResult.scoreChange}</span>
               )}
-            </>
-          ) : (
-            <>
-              <span className="result-icon">😔</span>
-              <span className="result-text">Sai rồi!</span>
-            </>
-          )}
-        </div>
+              {myResult?.answeredCorrectly && (myResult.streak || 0) >= 3 && (
+                <span className="streak-gained">
+                  <Flame size={14} /> {myResult.streak} streak
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Correct answer display */}
@@ -71,7 +82,10 @@ export function GameAnswerReveal({
           <img src={ANSWER_OPTIONS[currentQuestion.correctIndex].icon} alt={ANSWER_OPTIONS[currentQuestion.correctIndex].label} className="correct-answer-icon" />
           {currentQuestion.options[currentQuestion.correctIndex]}
         </span>
-        <span className="answer-stats">{correctCount}/{sortedPlayers.length} trả lời đúng</span>
+        <div className="answer-stats-bar">
+          <div className="answer-stats-fill" style={{ width: `${(correctCount / sortedPlayers.length) * 100}%` }} />
+          <span className="answer-stats">{correctCount}/{sortedPlayers.length} trả lời đúng</span>
+        </div>
       </div>
 
       {/* Players results */}
@@ -84,6 +98,7 @@ export function GameAnswerReveal({
               <div
                 key={player.id}
                 className={`reveal-item ${isMe ? 'is-me' : ''} ${player.answeredCorrectly ? 'correct' : 'wrong'}`}
+                style={{ animationDelay: `${index * 0.06}s` }}
               >
                 <span className="reveal-rank">
                   {index === 0 && player.scoreChange > 0 ? <Crown size={16} /> : `#${index + 1}`}

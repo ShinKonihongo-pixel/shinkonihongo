@@ -12,10 +12,11 @@ import {
   Play,
   ChevronRight,
   Check,
+  Eye,
 } from 'lucide-react';
 import type { Flashcard, JLPTLevel, Lesson } from '../../types/flashcard';
 import type { JLPTQuestion, JLPTLevel as JLPTQuestionLevel } from '../../types/jlpt-question';
-import type { CreateGameData, GameQuestionSource, GameDifficultyLevel } from '../../types/quiz-game';
+import type { CreateGameData, GameQuestionSource, GameDifficultyLevel, HostMode } from '../../types/quiz-game';
 import type { AppSettings } from '../../hooks/use-settings';
 import type { UserRole } from '../../types/user';
 import { useBodyScrollLock } from '../../hooks/use-body-scroll-lock';
@@ -79,6 +80,8 @@ export function GameCreate({
   const [selectedDifficulty, setSelectedDifficulty] = useState<GameDifficultyLevel | null>(null);
   const [expandedLevel, setExpandedLevel] = useState<JLPTLevel | null>(null);
   const [upgradeHint, setUpgradeHint] = useState<string | null>(null);
+  const [hostMode, setHostMode] = useState<HostMode>('play');
+  const isSuperAdmin = userRole === 'super_admin';
 
   const maxRoundsLimit = getMaxRounds(userRole);
   const maxPlayersLimit = getMaxPlayers(userRole);
@@ -241,9 +244,11 @@ export function GameCreate({
       await onCreateGame({
         title: title || 'Đại Chiến Tiếng Nhật',
         source: 'flashcards',
+        hostMode: isSuperAdmin ? hostMode : undefined,
         lessonIds: selectedLessons,
         lessonNames: selectedLessonNames,
         difficultyLevels: selectedDifficulty ? [selectedDifficulty] : undefined,
+        difficultyMix: gameSettings.quizDifficultyMix,
         totalRounds: actualRounds,
         timePerQuestion,
         maxPlayers,
@@ -257,6 +262,7 @@ export function GameCreate({
       await onCreateGame({
         title: title || 'Đại Chiến JLPT',
         source: 'jlpt',
+        hostMode: isSuperAdmin ? hostMode : undefined,
         lessonIds: [],
         jlptLevels: selectedJLPTLevels.length > 0 ? selectedJLPTLevels : undefined,
         totalRounds: actualRounds,
@@ -472,7 +478,7 @@ export function GameCreate({
                   );
                 })}
               </div>
-              <span className="rm-filter-hint">Không chọn = tất cả mức độ. Phần trăm trộn thiết lập ở tab Quản lí</span>
+              <span className="rm-filter-hint">Không chọn = tất cả mức độ</span>
             </div>
           )}
 
@@ -583,6 +589,35 @@ export function GameCreate({
               <div className="rm-upgrade-hint">🌟 Nâng cấp VIP để mời tới {VIP_MAX_PLAYERS} người chơi</div>
             )}
           </div>
+
+          {/* Host Mode — super_admin only */}
+          {isSuperAdmin && (
+            <div className="rm-field">
+              <label className="rm-label">
+                <Eye size={16} />
+                <span>Chế độ</span>
+              </label>
+              <div className="rm-pills">
+                <button
+                  type="button"
+                  className={`rm-pill lg ${hostMode === 'play' ? 'active' : ''}`}
+                  onClick={() => setHostMode('play')}
+                >
+                  🎮 Chơi cùng
+                </button>
+                <button
+                  type="button"
+                  className={`rm-pill lg ${hostMode === 'spectate' ? 'active' : ''}`}
+                  onClick={() => setHostMode('spectate')}
+                >
+                  👁️ Theo dõi
+                </button>
+              </div>
+              {hostMode === 'spectate' && (
+                <span className="rm-filter-hint">Bạn sẽ theo dõi tiến trình chơi mà không tham gia trả lời</span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Footer */}

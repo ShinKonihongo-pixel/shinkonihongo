@@ -15,9 +15,10 @@ interface UseQuizGameOptions {
   playerId: string;
   playerName: string;
   playerAvatar?: string;
+  playerRole?: string;
 }
 
-export function useQuizGame({ playerId, playerName, playerAvatar }: UseQuizGameOptions) {
+export function useQuizGame({ playerId, playerName, playerAvatar, playerRole }: UseQuizGameOptions) {
   const [game, setGame] = useState<QuizGame | null>(null);
   const [gameResults, setGameResults] = useState<GameResults | null>(null);
   const [availableRooms, setAvailableRooms] = useState<QuizGame[]>([]);
@@ -56,7 +57,7 @@ export function useQuizGame({ playerId, playerName, playerAvatar }: UseQuizGameO
     setLoading(true);
     setError(null);
     try {
-      const newGame = await gameService.createGame(data, playerId, playerName, playerAvatar, flashcards, jlptQuestions);
+      const newGame = await gameService.createGame(data, playerId, playerName, playerAvatar, flashcards, jlptQuestions, playerRole);
       setGame(newGame);
       return newGame;
     } catch (err) {
@@ -66,7 +67,7 @@ export function useQuizGame({ playerId, playerName, playerAvatar }: UseQuizGameO
     } finally {
       setLoading(false);
     }
-  }, [playerId, playerName, playerAvatar]);
+  }, [playerId, playerName, playerAvatar, playerRole]);
 
   // Join an existing game by code
   const joinGame = useCallback(async (gameCode: string): Promise<boolean> => {
@@ -77,7 +78,8 @@ export function useQuizGame({ playerId, playerName, playerAvatar }: UseQuizGameO
         gameCode,
         playerId,
         playerName,
-        playerAvatar
+        playerAvatar,
+        playerRole
       );
 
       if (joinError) {
@@ -93,7 +95,7 @@ export function useQuizGame({ playerId, playerName, playerAvatar }: UseQuizGameO
     } finally {
       setLoading(false);
     }
-  }, [playerId, playerName, playerAvatar]);
+  }, [playerId, playerName, playerAvatar, playerRole]);
 
   // Leave current game
   const leaveGame = useCallback(async (): Promise<void> => {
@@ -194,6 +196,16 @@ export function useQuizGame({ playerId, playerName, playerAvatar }: UseQuizGameO
     }
   }, [game, playerId]);
 
+  // Update host message in lobby
+  const updateHostMessage = useCallback(async (message: string): Promise<void> => {
+    if (!game) return;
+    try {
+      await gameService.updateGame(game.id, { hostMessage: message });
+    } catch (err) {
+      console.error('Error updating host message:', err);
+    }
+  }, [game]);
+
   // Reset game state
   const resetGame = useCallback(() => {
     setGame(null);
@@ -255,15 +267,16 @@ export function useQuizGame({ playerId, playerName, playerAvatar }: UseQuizGameO
     } finally {
       setLoading(false);
     }
-  }, [playerId, playerName, playerAvatar]);
+  }, [playerId, playerName, playerAvatar, playerRole]);
 
   // Computed values
   const isHost = game?.hostId === playerId;
   const currentPlayer = game?.players[playerId] || null;
   const currentQuestion = game ? game.questions[game.currentRound] : null;
   const playerCount = game ? Object.keys(game.players).length : 0;
+  // Active players only (exclude spectators) for scoring/rankings
   const sortedPlayers = game
-    ? Object.values(game.players).sort((a, b) => b.score - a.score)
+    ? Object.values(game.players).filter(p => !p.isSpectator).sort((a, b) => b.score - a.score)
     : [];
 
   return {
@@ -295,6 +308,7 @@ export function useQuizGame({ playerId, playerName, playerAvatar }: UseQuizGameO
     continueFromPowerUp,
     continueFromLeaderboard,
     usePowerUp,
+    updateHostMessage,
     resetGame,
     fetchAvailableRooms,
     subscribeToRooms,
