@@ -121,6 +121,14 @@ const defaultSettings: AppSettings = {
   // Card size defaults
   cardScale: 100,
   grammarCardScale: 100,
+  // Quiz game defaults
+  quizDifficultyMix: {
+    super_hard: { super_hard: 60, hard: 25, medium: 10, easy: 5 },
+    hard:       { super_hard: 20, hard: 45, medium: 25, easy: 10 },
+    medium:     { super_hard: 5,  hard: 20, medium: 50, easy: 25 },
+    easy:       { super_hard: 0,  hard: 10, medium: 30, easy: 60 },
+  },
+  quizJlptTimePerCategory: { vocabulary: 15, grammar: 20, reading: 30, listening: 25 },
 };
 
 // Get card frame styles based on settings

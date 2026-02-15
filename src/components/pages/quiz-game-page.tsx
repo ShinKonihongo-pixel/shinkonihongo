@@ -2,7 +2,7 @@
 // Entry: always via initialRoomConfig (create) or initialJoinCode (join via QR/code)
 // No intermediate room list — goes directly to lobby (Phòng chờ)
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Flashcard } from '../../types/flashcard';
 import type { JLPTQuestion } from '../../types/jlpt-question';
 import type { CreateGameData } from '../../types/quiz-game';
@@ -83,9 +83,11 @@ export function QuizGamePage({
     playerRole: userRole,
   });
 
-  // Auto-create room from hub modal
+  // Auto-create room from hub modal (guard against React StrictMode double-fire)
+  const createOnceRef = useRef(false);
   useEffect(() => {
-    if (initialRoomConfig && !game) {
+    if (initialRoomConfig && !game && !createOnceRef.current) {
+      createOnceRef.current = true;
       createGame(initialRoomConfig as unknown as CreateGameData, flashcards, jlptQuestions);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -124,6 +126,33 @@ export function QuizGamePage({
     }
   }, [game, gameResults, currentUserId, onSaveGameSession]);
 
+  // Track if player was ever in a game (to distinguish "deleted/kicked" from "loading")
+  const wasInGame = useRef(false);
+  if (game) wasInGame.current = true;
+
+  // Kicked/deleted notification state
+  const [kickedMessage, setKickedMessage] = useState<string | null>(null);
+
+  // Auto-navigate when game deleted or player kicked
+  useEffect(() => {
+    if (!wasInGame.current || game) return;
+    if (error === 'Game đã bị xóa') {
+      setKickedMessage('Phòng chơi đã bị huỷ bởi host.');
+    } else if (error === 'Bạn đã bị kick khỏi phòng') {
+      setKickedMessage('Bạn đã bị kick khỏi phòng bởi host.');
+    }
+  }, [game, error]);
+
+  // Auto-dismiss kicked modal after 3s
+  useEffect(() => {
+    if (!kickedMessage) return;
+    const timer = setTimeout(() => {
+      setKickedMessage(null);
+      onGoHome();
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [kickedMessage, onGoHome]);
+
   // Determine current view based on game state
   const getCurrentView = (): GameView => {
     if (!game) return 'lobby'; // loading/creating/joining state
@@ -134,11 +163,11 @@ export function QuizGamePage({
 
   const currentView = getCurrentView();
 
-  const handleLeaveGame = async () => {
+  const handleLeaveGame = useCallback(async () => {
     await leaveGame();
     resetGame();
-    onGoHome(); // Back to Game Hub after leaving
-  };
+    onGoHome();
+  }, [leaveGame, resetGame, onGoHome]);
 
   // Lobby view — shows game info when game exists
   if (currentView === 'lobby' && game) {
@@ -147,6 +176,7 @@ export function QuizGamePage({
         <GameLobby
           game={game}
           isHost={isHost}
+          currentPlayerId={currentUserId}
           onStartGame={startGame}
           onKickPlayer={kickPlayer}
           onLeaveGame={handleLeaveGame}
@@ -202,6 +232,24 @@ export function QuizGamePage({
         onPlayAgain={onGoHome}
         onGoHome={onGoHome}
       />
+    );
+  }
+
+  // Kicked/deleted notification — full-screen overlay with auto-dismiss
+  if (kickedMessage) {
+    return (
+      <div className="quiz-game-page">
+        <div className="kicked-overlay">
+          <div className="kicked-modal">
+            <span className="kicked-icon">🚪</span>
+            <p className="kicked-message">{kickedMessage}</p>
+            <p className="kicked-hint">Tự động quay lại sau 3 giây...</p>
+            <button className="btn btn-outline" onClick={() => { setKickedMessage(null); onGoHome(); }}>
+              Quay lại ngay
+            </button>
+          </div>
+        </div>
+      </div>
     );
   }
 

@@ -84,6 +84,7 @@ export function GameHubPage({
   const [showMusicPlayer, setShowMusicPlayer] = useState(true);
   const [setupModalGame, setSetupModalGame] = useState<GameType | null>(null);
   const [pendingRoomConfig, setPendingRoomConfig] = useState<{ gameType: GameType; data: Record<string, unknown> } | null>(null);
+  const [returnToWaitingRoom, setReturnToWaitingRoom] = useState(false);
 
   // Handle game selection - also collapse sidebar
   const handleSelectGame = useCallback((game: GameType) => {
@@ -106,6 +107,15 @@ export function GameHubPage({
     setSelectedGame(null);
     setJoinCode(null);
     setPendingRoomConfig(null);
+    setReturnToWaitingRoom(false);
+  }, []);
+
+  // Return to waiting room (after leaving a game)
+  const handleBackToWaitingRoom = useCallback(() => {
+    setSelectedGame(null);
+    setJoinCode(null);
+    setPendingRoomConfig(null);
+    setReturnToWaitingRoom(true);
   }, []);
 
   // Close setup modal
@@ -246,6 +256,8 @@ export function GameHubPage({
           onSelectGame={handleSelectGame}
           onQuickJoin={handleQuickJoin}
           onSetupGame={setSetupModalGame}
+          userRole={currentUser?.role}
+          initialView={returnToWaitingRoom ? 'waiting-room' : 'games'}
         />
         {renderSetupModal()}
       </div>
@@ -264,7 +276,7 @@ export function GameHubPage({
           currentUserAvatar={currentUser.avatar}
           flashcards={flashcards}
           jlptQuestions={jlptQuestions}
-          onGoHome={handleBackToHub}
+          onGoHome={handleBackToWaitingRoom}
           initialJoinCode={joinCode}
           onJoinCodeUsed={() => setJoinCode(null)}
           settings={settings}

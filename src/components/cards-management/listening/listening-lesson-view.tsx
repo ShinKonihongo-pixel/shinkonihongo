@@ -2,7 +2,8 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { LEVEL_THEMES } from '../../../constants/themes';
 import { LESSON_TYPES, LESSON_TYPE_THEMES } from './listening-tab-types';
-import type { JLPTLevel, ListeningLessonType } from '../../../types/flashcard';
+import type { JLPTLevel } from '../../../types/flashcard';
+import type { ListeningLessonType } from '../../../types/listening';
 
 interface ListeningLessonViewProps {
   level: JLPTLevel;

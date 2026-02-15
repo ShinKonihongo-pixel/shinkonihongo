@@ -2,7 +2,7 @@
 // Shows rankings, statistics, and learned words
 
 import { useState } from 'react';
-import { Star, BookOpen, Share2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Star, BookOpen, Share2, ChevronDown, ChevronUp, Trophy } from 'lucide-react';
 import type { PictureGuessResults } from '../../types/picture-guess';
 import { RankingsTable, ResultsActionBar, type BaseRankedPlayer } from '../shared/game-results';
 

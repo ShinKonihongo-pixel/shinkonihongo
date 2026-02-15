@@ -144,8 +144,6 @@ function pickSimilarOptions(
         // If answer format is "vocabulary - meaning", make fake match format
         if (correctAnswer.includes(' - ')) {
           // Create a fake with scrambled vocab but keep plausible structure
-          const fakeFull = `${fake} - ???`;
-          // Actually, better to just use a similar real word or scrambled vocab
           result[result.length - 1 - i] = fake;
         } else {
           result[result.length - 1 - i] = fake;

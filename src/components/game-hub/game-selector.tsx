@@ -4,6 +4,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Search, Users, Zap, Trophy, Home, EyeOff, Plus, DoorOpen } from 'lucide-react';
 import type { GameType, GameInfo } from '../../types/game-hub';
+import type { UserRole } from '../../types/user';
 import { getVisibleGames } from '../../types/game-hub';
 import { getHiddenGames } from '../../services/game-visibility-storage';
 import { WaitingRoom } from './waiting-room';
@@ -14,11 +15,13 @@ interface GameSelectorProps {
   onSelectGame: (game: GameType) => void;
   onQuickJoin: (gameType: GameType, code: string) => void;
   onSetupGame: (game: GameType) => void;
+  userRole?: UserRole;
+  initialView?: SelectorView;
 }
 
-export function GameSelector({ onSelectGame, onQuickJoin, onSetupGame }: GameSelectorProps) {
+export function GameSelector({ onSelectGame, onQuickJoin, onSetupGame, userRole, initialView = 'games' }: GameSelectorProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentView, setCurrentView] = useState<SelectorView>('games');
+  const [currentView, setCurrentView] = useState<SelectorView>(initialView);
   const [filterGameType, setFilterGameType] = useState<GameType | null>(null);
   const [hiddenGames, setHiddenGames] = useState<GameType[]>([]);
 
@@ -69,6 +72,7 @@ export function GameSelector({ onSelectGame, onQuickJoin, onSetupGame }: GameSel
           onBack={() => setCurrentView('games')}
           onCreateRoom={() => setCurrentView('games')}
           filterGameType={filterGameType}
+          userRole={userRole}
         />
       </div>
     );

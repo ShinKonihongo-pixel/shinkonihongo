@@ -32,11 +32,19 @@ export function useQuizGame({ playerId, playerName, playerAvatar, playerRole }: 
 
     const unsubscribe = gameService.subscribeToGame(game.id, (updatedGame) => {
       if (!updatedGame) {
-        // Game was deleted
+        // Game was deleted (host left)
         setGame(null);
         setError('Game đã bị xóa');
         return;
       }
+
+      // Detect if current player was kicked
+      if (!updatedGame.players[playerId] && updatedGame.status === 'waiting') {
+        setGame(null);
+        setError('Bạn đã bị kick khỏi phòng');
+        return;
+      }
+
       setGame(updatedGame);
 
       // Fetch results when game is finished

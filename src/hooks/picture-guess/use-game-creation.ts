@@ -21,7 +21,7 @@ interface UseGameCreationProps {
     avatar: string;
   };
   flashcards: Flashcard[];
-  setGame: (game: PictureGuessGame | null) => void;
+  setGame: (value: PictureGuessGame | null | ((prev: PictureGuessGame | null) => PictureGuessGame | null)) => void;
   setGameResults: (results: PictureGuessResults | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;

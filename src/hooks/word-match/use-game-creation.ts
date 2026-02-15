@@ -23,7 +23,7 @@ interface UseGameCreationProps {
     role?: string;
   };
   flashcards: Flashcard[];
-  setGame: (game: WordMatchGame | null) => void;
+  setGame: (value: WordMatchGame | null | ((prev: WordMatchGame | null) => WordMatchGame | null)) => void;
   setGameResults: (results: WordMatchResults | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;

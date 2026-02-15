@@ -16,14 +16,14 @@ import { removeFurigana } from '../../../lib/furigana-utils';
 
 export function useKaiwaState({
   settings,
-  defaultQuestions = [],
+  defaultQuestions: _defaultQuestions = [],
   getFoldersByLevelAndTopic,
   getQuestionsByFolder,
   getQuestionsByLevelAndTopic,
-  advancedTopics = [],
+  advancedTopics: _advancedTopics = [],
   advancedQuestions = [],
   getAdvancedQuestionsByTopic,
-  customTopics = [],
+  customTopics: _customTopics = [],
   customTopicQuestions = [],
   getCustomTopicQuestionsByTopic,
 }: KaiwaPageProps) {

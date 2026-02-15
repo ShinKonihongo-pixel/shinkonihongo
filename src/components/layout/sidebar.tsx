@@ -191,18 +191,20 @@ export function Sidebar({
 
   return (
     <>
-      {/* Mobile hamburger button */}
-      <button
-        className="sidebar-mobile-toggle"
-        onClick={() => setMobileOpen(!mobileOpen)}
-        aria-label="Toggle menu"
-      >
-        <span className={`hamburger-icon ${mobileOpen ? 'open' : ''}`}>
-          <span></span>
-          <span></span>
-          <span></span>
-        </span>
-      </button>
+      {/* Mobile hamburger button - hidden on game pages */}
+      {currentPage !== 'game-hub' && (
+        <button
+          className="sidebar-mobile-toggle"
+          onClick={() => setMobileOpen(!mobileOpen)}
+          aria-label="Toggle menu"
+        >
+          <span className={`hamburger-icon ${mobileOpen ? 'open' : ''}`}>
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        </button>
+      )}
 
       {/* Mobile overlay */}
       {mobileOpen && (

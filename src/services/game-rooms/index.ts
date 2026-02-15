@@ -91,6 +91,20 @@ export function subscribeToGameRoom<T>(
   });
 }
 
+/** Auto-clean rooms with 0 players (stale from crashes/disconnects) */
+function autoCleanEmptyRooms(
+  docs: { id: string; data: () => Record<string, unknown> }[],
+  collectionName: string
+) {
+  for (const d of docs) {
+    const data = d.data();
+    const players = data.players as Record<string, unknown> | undefined;
+    if (!players || Object.keys(players).length === 0) {
+      deleteDoc(doc(db, collectionName, d.id)).catch(() => {});
+    }
+  }
+}
+
 /** Extract WaitingRoomGame from a Firestore document */
 function toWaitingRoomGame(
   docId: string,
@@ -121,6 +135,35 @@ function toWaitingRoomGame(
   };
 }
 
+/** Delete a waiting room by ID and game type (admin only). */
+export async function deleteWaitingRoom(roomId: string, gameType: GameType): Promise<void> {
+  const collectionName = gameType === 'quiz' ? QUIZ_GAMES : GAME_ROOMS;
+  await deleteDoc(doc(db, collectionName, roomId));
+}
+
+/** Delete all waiting rooms across both collections (admin only). Returns count deleted. */
+export async function deleteAllWaitingRooms(): Promise<number> {
+  let count = 0;
+
+  // Delete from game_rooms (status=waiting)
+  const q1 = query(collection(db, GAME_ROOMS), where('status', '==', 'waiting'));
+  const snap1 = await getDocs(q1);
+  for (const d of snap1.docs) {
+    await deleteDoc(doc(db, GAME_ROOMS, d.id));
+    count++;
+  }
+
+  // Delete from quiz_games (status=waiting)
+  const q2 = query(collection(db, QUIZ_GAMES), where('status', '==', 'waiting'));
+  const snap2 = await getDocs(q2);
+  for (const d of snap2.docs) {
+    await deleteDoc(doc(db, QUIZ_GAMES, d.id));
+    count++;
+  }
+
+  return count;
+}
+
 /**
  * Subscribe to ALL waiting rooms across all game types.
  * Queries both `game_rooms` and `quiz_games` collections.
@@ -139,19 +182,32 @@ export function subscribeToAllWaitingRooms(
   // Subscribe to game_rooms (non-quiz games)
   const q1 = query(collection(db, GAME_ROOMS), where('status', '==', 'waiting'));
   const unsub1 = onSnapshot(q1, (snapshot) => {
-    allRooms.gameRooms = snapshot.docs.map((d) => {
-      const data = d.data();
-      return toWaitingRoomGame(d.id, data, data.gameType as GameType);
-    });
+    // Auto-clean empty rooms (stale from crashes)
+    autoCleanEmptyRooms(snapshot.docs, GAME_ROOMS);
+    allRooms.gameRooms = snapshot.docs
+      .filter(d => {
+        const players = d.data().players as Record<string, unknown> | undefined;
+        return players && Object.keys(players).length > 0;
+      })
+      .map((d) => {
+        const data = d.data();
+        return toWaitingRoomGame(d.id, data, data.gameType as GameType);
+      });
     emit();
   }, (err) => console.error('game_rooms subscription error:', err));
 
   // Subscribe to quiz_games
   const q2 = query(collection(db, QUIZ_GAMES), where('status', '==', 'waiting'));
   const unsub2 = onSnapshot(q2, (snapshot) => {
-    allRooms.quizRooms = snapshot.docs.map((d) =>
-      toWaitingRoomGame(d.id, d.data(), 'quiz')
-    );
+    autoCleanEmptyRooms(snapshot.docs, QUIZ_GAMES);
+    allRooms.quizRooms = snapshot.docs
+      .filter(d => {
+        const players = d.data().players as Record<string, unknown> | undefined;
+        return players && Object.keys(players).length > 0;
+      })
+      .map((d) =>
+        toWaitingRoomGame(d.id, d.data(), 'quiz')
+      );
     emit();
   }, (err) => console.error('quiz_games subscription error:', err));
 

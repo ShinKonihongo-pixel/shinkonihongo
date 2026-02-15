@@ -1,6 +1,6 @@
 // Word Match Results - Final game results
 import React from 'react';
-import type { WordMatchResults as Results, WordMatchPlayerResult } from '../../types/word-match';
+import type { WordMatchResults as Results } from '../../types/word-match';
 import { Podium, RankingsTable, ResultsActionBar, type BaseRankedPlayer } from '../shared/game-results';
 
 interface WordMatchResultsProps {

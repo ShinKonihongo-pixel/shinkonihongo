@@ -2,7 +2,6 @@
 // Manages 1v1 quiz battle against AI
 
 import type { Flashcard } from '../../types/flashcard';
-import type { AIChallengeSettings, AIDifficulty } from '../../types/ai-challenge';
 import { useGameState } from './use-game-state';
 import { useGameStart } from './use-game-start';
 import { useGameplay } from './use-gameplay';
@@ -38,7 +37,7 @@ export function useAIChallenge({ currentUser, flashcards, aiSettings, currentLev
     setGame,
     result,
     setResult,
-    progressByLevel,
+    progressByLevel: _progressByLevel,
     setProgressByLevel,
     progress,
     aiTimerRef,

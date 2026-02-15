@@ -2,25 +2,33 @@
 // Subscribes to Firestore for real-time room updates across all game types
 
 import { useState, useEffect, useMemo } from 'react';
-import { Users, Clock, ArrowRight, RefreshCw, Search, Filter, ArrowLeft, Gamepad2, Plus } from 'lucide-react';
+import { Users, Clock, ArrowRight, RefreshCw, Search, Filter, ArrowLeft, Gamepad2, Plus, Trash2 } from 'lucide-react';
 import type { GameType, WaitingRoomGame } from '../../types/game-hub';
+import type { UserRole } from '../../types/user';
 import { GAMES, getVisibleGames } from '../../types/game-hub';
 import { getHiddenGames } from '../../services/game-visibility-storage';
-import { subscribeToAllWaitingRooms } from '../../services/game-rooms';
+import { subscribeToAllWaitingRooms, deleteWaitingRoom, deleteAllWaitingRooms } from '../../services/game-rooms';
+import { isImageAvatar } from '../../utils/avatar-icons';
+import { ConfirmModal } from '../ui/confirm-modal';
 
 interface WaitingRoomProps {
   onJoinGame: (gameType: GameType, code: string) => void;
   onBack: () => void;
   onCreateRoom?: () => void;
   filterGameType?: GameType | null;
+  userRole?: UserRole;
 }
 
-export function WaitingRoom({ onJoinGame, onBack, onCreateRoom, filterGameType }: WaitingRoomProps) {
+export function WaitingRoom({ onJoinGame, onBack, onCreateRoom, filterGameType, userRole }: WaitingRoomProps) {
   const [rooms, setRooms] = useState<WaitingRoomGame[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGameFilter, setSelectedGameFilter] = useState<GameType | 'all'>(filterGameType || 'all');
   const [hiddenGames, setHiddenGames] = useState<GameType[]>([]);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'single'; room: WaitingRoomGame } | { type: 'all' } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const isSuperAdmin = userRole === 'super_admin';
 
   // Load hidden games
   useEffect(() => {
@@ -76,6 +84,32 @@ export function WaitingRoom({ onJoinGame, onBack, onCreateRoom, filterGameType }
     return `${Math.floor(minutes / 60)} giờ`;
   };
 
+  // Admin: delete single room
+  const handleDeleteRoom = async (room: WaitingRoomGame) => {
+    setDeleting(true);
+    try {
+      await deleteWaitingRoom(room.id, room.gameType);
+    } catch (err) {
+      console.error('Error deleting room:', err);
+    } finally {
+      setDeleting(false);
+      setDeleteConfirm(null);
+    }
+  };
+
+  // Admin: delete all rooms
+  const handleDeleteAllRooms = async () => {
+    setDeleting(true);
+    try {
+      await deleteAllWaitingRooms();
+    } catch (err) {
+      console.error('Error deleting all rooms:', err);
+    } finally {
+      setDeleting(false);
+      setDeleteConfirm(null);
+    }
+  };
+
   return (
     <div className="waiting-room-v2">
       {/* Header */}
@@ -114,24 +148,20 @@ export function WaitingRoom({ onJoinGame, onBack, onCreateRoom, filterGameType }
         </div>
 
         {!filterGameType && (
-          <div className="wr-filters">
-            <Filter size={16} />
-            <button
-              className={`wr-filter-chip ${selectedGameFilter === 'all' ? 'active' : ''}`}
-              onClick={() => setSelectedGameFilter('all')}
+          <div className="wr-filter-select-wrap">
+            <Filter size={14} />
+            <select
+              className="wr-filter-select"
+              value={selectedGameFilter}
+              onChange={e => setSelectedGameFilter(e.target.value as GameType | 'all')}
             >
-              Tất cả
-            </button>
-            {visibleGames.slice(0, 5).map(game => (
-              <button
-                key={game.id}
-                className={`wr-filter-chip ${selectedGameFilter === game.id ? 'active' : ''}`}
-                onClick={() => setSelectedGameFilter(game.id)}
-                style={selectedGameFilter === game.id ? { background: game.gradient } : undefined}
-              >
-                {game.icon}
-              </button>
-            ))}
+              <option value="all">Tất cả game</option>
+              {visibleGames.map(game => (
+                <option key={game.id} value={game.id}>
+                  {game.icon} {game.name}
+                </option>
+              ))}
+            </select>
           </div>
         )}
       </div>
@@ -146,6 +176,16 @@ export function WaitingRoom({ onJoinGame, onBack, onCreateRoom, filterGameType }
           <Users size={14} />
           {filteredRooms.reduce((sum, g) => sum + g.playerCount, 0)} người chơi
         </span>
+        {isSuperAdmin && filteredRooms.length > 0 && (
+          <button
+            className="wr-admin-delete-all"
+            onClick={() => setDeleteConfirm({ type: 'all' })}
+            disabled={deleting}
+          >
+            <Trash2 size={14} />
+            Xoá tất cả phòng
+          </button>
+        )}
       </div>
 
       {/* Games Grid */}
@@ -192,7 +232,11 @@ export function WaitingRoom({ onJoinGame, onBack, onCreateRoom, filterGameType }
                   {/* Room Info */}
                   <div className="wr-room-info">
                     <div className="wr-room-host">
-                      <span className="wr-host-avatar">{game.hostAvatar}</span>
+                      <span className="wr-host-avatar">
+                        {isImageAvatar(game.hostAvatar)
+                          ? <img src={game.hostAvatar} alt={game.hostName} className="wr-host-avatar-img" />
+                          : game.hostAvatar}
+                      </span>
                       <span className="wr-host-name">{game.hostName}</span>
                     </div>
                     <div className="wr-room-meta">
@@ -207,28 +251,58 @@ export function WaitingRoom({ onJoinGame, onBack, onCreateRoom, filterGameType }
                     </div>
                   </div>
 
-                  {/* Join Button */}
-                  <button
-                    className="wr-join-btn"
-                    onClick={() => onJoinGame(game.gameType, game.code)}
-                    disabled={isFull}
-                    style={!isFull ? { background: gameInfo.color } : undefined}
-                  >
-                    {isFull ? (
-                      'Đã đầy'
-                    ) : (
-                      <>
-                        Tham gia
-                        <ArrowRight size={16} />
-                      </>
+                  {/* Actions */}
+                  <div className="wr-room-actions">
+                    <button
+                      className="wr-join-btn"
+                      onClick={() => onJoinGame(game.gameType, game.code)}
+                      disabled={isFull}
+                      style={!isFull ? { background: gameInfo.color } : undefined}
+                    >
+                      {isFull ? (
+                        'Đã đầy'
+                      ) : (
+                        <>
+                          Tham gia
+                          <ArrowRight size={16} />
+                        </>
+                      )}
+                    </button>
+                    {isSuperAdmin && (
+                      <button
+                        className="wr-admin-delete-btn"
+                        onClick={() => setDeleteConfirm({ type: 'single', room: game })}
+                        disabled={deleting}
+                        title="Xoá phòng (Admin)"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     )}
-                  </button>
+                  </div>
                 </div>
               );
             })}
           </div>
         )}
       </div>
+
+      {/* Admin confirm modals */}
+      {deleteConfirm && (
+        <ConfirmModal
+          isOpen
+          title={deleteConfirm.type === 'all' ? 'Xoá tất cả phòng?' : 'Xoá phòng này?'}
+          message={deleteConfirm.type === 'all'
+            ? `Bạn sắp xoá tất cả ${rooms.length} phòng chờ. Hành động này không thể hoàn tác.`
+            : `Xoá phòng "${deleteConfirm.room.title}" (${deleteConfirm.room.code}) với ${deleteConfirm.room.playerCount} người chơi?`}
+          confirmText={deleting ? 'Đang xoá...' : 'Xoá'}
+          cancelText="Huỷ"
+          onConfirm={() => {
+            if (deleteConfirm.type === 'all') handleDeleteAllRooms();
+            else handleDeleteRoom(deleteConfirm.room);
+          }}
+          onCancel={() => setDeleteConfirm(null)}
+        />
+      )}
     </div>
   );
 }

@@ -20,7 +20,7 @@ interface UseGameCreationProps {
     displayName: string;
     avatar: string;
   };
-  setGame: (game: GoldenBellGame | null) => void;
+  setGame: (value: GoldenBellGame | null | ((prev: GoldenBellGame | null) => GoldenBellGame | null)) => void;
   setGameResults: (results: GoldenBellResults | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;

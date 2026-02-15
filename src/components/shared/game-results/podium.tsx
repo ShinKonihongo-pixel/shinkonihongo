@@ -20,7 +20,7 @@ export function Podium({
   renderPlayerExtra,
   showCrown = true,
   medalEmojis = ['🥇', '🥈', '🥉'],
-  scoreLabel = '',
+  scoreLabel: _scoreLabel = '',
 }: PodiumProps) {
   const top3 = players.slice(0, 3);
 

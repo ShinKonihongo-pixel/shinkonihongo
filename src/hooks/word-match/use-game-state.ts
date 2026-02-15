@@ -3,8 +3,6 @@
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import type { WordMatchGame, WordMatchResults, WordMatchPlayer } from '../../types/word-match';
-import { generateBots } from '../../types/game-hub';
-import { generateId } from '../../lib/game-utils';
 import { useBotAutoJoin } from '../shared/use-bot-auto-join';
 import {
   updateGameRoom,

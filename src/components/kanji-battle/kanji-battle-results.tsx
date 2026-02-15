@@ -1,6 +1,6 @@
 // Kanji Battle Results - Final game results
 import React from 'react';
-import type { KanjiBattleResults as Results, KanjiBattlePlayerResult } from '../../types/kanji-battle';
+import type { KanjiBattleResults as Results } from '../../types/kanji-battle';
 import { Podium, RankingsTable, ResultsActionBar, type BaseRankedPlayer } from '../shared/game-results';
 
 interface KanjiBattleResultsProps {

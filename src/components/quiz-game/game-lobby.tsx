@@ -10,10 +10,24 @@ import type { QuizGame } from '../../types/quiz-game';
 import { PlayerListGrid, normalizePlayer } from '../shared/game-lobby';
 import { isImageAvatar } from '../../utils/avatar-icons';
 import { getVipNameClasses, getVipBadge, isVipRole } from '../../utils/vip-styling';
+import { ConfirmModal } from '../ui/confirm-modal';
+
+// Fallback copy for non-HTTPS contexts (mobile via LAN IP)
+function fallbackCopy(text: string) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+}
 
 interface GameLobbyProps {
   game: QuizGame;
   isHost: boolean;
+  currentPlayerId: string;
   onStartGame: () => Promise<boolean>;
   onKickPlayer: (playerId: string) => Promise<boolean>;
   onLeaveGame: () => Promise<void>;
@@ -26,6 +40,7 @@ interface GameLobbyProps {
 export function GameLobby({
   game,
   isHost,
+  currentPlayerId,
   onStartGame,
   onKickPlayer,
   onLeaveGame,
@@ -36,7 +51,11 @@ export function GameLobby({
 }: GameLobbyProps) {
   const [copied, setCopied] = useState(false);
   const [qrVisible, setQrVisible] = useState(true);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [kickTarget, setKickTarget] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sharingRef = useRef(false);
 
   // -- Derived player data (memoized) --
   const { hostPlayer, normalizedPlayers, playerCount, activePlayerCount, fillPercent } = useMemo(() => {
@@ -64,30 +83,50 @@ export function GameLobby({
       : 'qz-lobby-host-name';
   }, [hostPlayer]);
 
+  // -- Clipboard fallback for non-HTTPS (mobile via IP) --
+  const copyText = useCallback((text: string) => {
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+    } else {
+      fallbackCopy(text);
+    }
+    // Clear previous timer to prevent stacking
+    if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+    setCopied(true);
+    copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
+  }, []);
+
   // -- Stable callbacks --
-  const copyCode = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(game.code);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch { /* fallback */ }
-  }, [game.code]);
+  const copyCode = useCallback(() => {
+    copyText(game.code);
+  }, [game.code, copyText]);
 
   const shareLink = useCallback(async () => {
+    // Guard against rapid presses while share sheet is open
+    if (sharingRef.current) return;
+    sharingRef.current = true;
     try {
       if (navigator.share) {
         await navigator.share({ title: game.title, text: `Tham gia game: ${game.code}`, url: joinUrl });
       } else {
-        await navigator.clipboard.writeText(joinUrl);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        copyText(joinUrl);
       }
-    } catch { /* cancelled */ }
-  }, [game.title, game.code, joinUrl]);
+    } catch { /* user cancelled */ }
+    sharingRef.current = false;
+  }, [game.title, game.code, joinUrl, copyText]);
 
   const toggleQr = useCallback(() => setQrVisible(v => !v), []);
-  const handleKick = useCallback(async (id: string) => { await onKickPlayer(id); }, [onKickPlayer]);
+  const handleKick = useCallback((id: string) => { setKickTarget(id); }, []);
+  const handleKickConfirm = useCallback(async () => {
+    if (!kickTarget) return;
+    await onKickPlayer(kickTarget);
+    setKickTarget(null);
+  }, [kickTarget, onKickPlayer]);
   const handleStart = useCallback(async () => { await onStartGame(); }, [onStartGame]);
+  const handleLeaveConfirm = useCallback(async () => {
+    setShowLeaveConfirm(false);
+    await onLeaveGame();
+  }, [onLeaveGame]);
 
   // Debounced host message (500ms)
   const handleHostMessage = useCallback((value: string) => {
@@ -109,7 +148,7 @@ export function GameLobby({
       {/* Header */}
       <header className="qz-lobby-header">
         <div className="qz-lobby-title-row">
-          <button className="qz-lobby-leave-btn" onClick={onLeaveGame} title="Rời phòng">
+          <button className="qz-lobby-leave-btn" onClick={() => setShowLeaveConfirm(true)} title="Rời phòng">
             <LogOut size={16} />
           </button>
           <div className="qz-lobby-icon-wrap">
@@ -234,7 +273,7 @@ export function GameLobby({
             <PlayerListGrid
               players={normalizedPlayers}
               hostId={hostPlayer?.id || ''}
-              currentPlayerId={hostPlayer?.id || ''}
+              currentPlayerId={currentPlayerId}
               maxPlayers={game.settings.maxPlayers}
               onKickPlayer={handleKick}
               className="qz-lobby-players-grid"
@@ -264,6 +303,30 @@ export function GameLobby({
           <div className="qz-lobby-waiting-msg">Đang chờ host bắt đầu...</div>
         )}
       </footer>
+
+      {/* Leave confirmation modal */}
+      <ConfirmModal
+        isOpen={showLeaveConfirm}
+        title="Rời khỏi phòng?"
+        message={isHost
+          ? 'Bạn là host. Nếu bạn rời đi, phòng sẽ bị huỷ và tất cả người chơi sẽ bị đuổi ra.'
+          : 'Bạn có chắc muốn rời khỏi phòng chơi này?'}
+        confirmText="Rời phòng"
+        cancelText="Ở lại"
+        onConfirm={handleLeaveConfirm}
+        onCancel={() => setShowLeaveConfirm(false)}
+      />
+
+      {/* Kick confirmation modal */}
+      <ConfirmModal
+        isOpen={!!kickTarget}
+        title="Kick người chơi?"
+        message={`Bạn có chắc muốn kick "${normalizedPlayers.find(p => p.id === kickTarget)?.displayName || ''}" khỏi phòng?`}
+        confirmText="Kick"
+        cancelText="Huỷ"
+        onConfirm={handleKickConfirm}
+        onCancel={() => setKickTarget(null)}
+      />
     </div>,
     document.body,
   );

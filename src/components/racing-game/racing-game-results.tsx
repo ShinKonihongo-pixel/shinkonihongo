@@ -3,18 +3,8 @@
 
 import { Trophy, Target, Zap, Users, AlertTriangle } from 'lucide-react';
 import type { RacingGameResults } from '../../types/racing-game';
-import { TEAM_COLORS } from '../../types/racing-game';
-import { isImageAvatar } from '../../utils/avatar-icons';
 import { TeamResults } from './shared/team-view';
 import { Podium, RankingsTable, ResultsActionBar, type BaseRankedPlayer } from '../shared/game-results';
-
-// Helper to render avatar
-function renderAvatar(avatar: string | undefined, name: string) {
-  if (avatar && isImageAvatar(avatar)) {
-    return <img src={avatar} alt={name} />;
-  }
-  return avatar || name.charAt(0).toUpperCase();
-}
 
 interface RacingGameResultsProps {
   results: RacingGameResults;

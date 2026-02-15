@@ -67,15 +67,10 @@ export async function leaveGame(gameId: string, playerId: string): Promise<void>
     return;
   }
 
-  // If host leaves, transfer host to next player
+  // If host leaves, destroy the entire room
   if (playerId === game.hostId) {
-    const nextHost = Object.values(remainingPlayers)
-      .sort((a, b) => a.joinedAt.localeCompare(b.joinedAt))[0];
-    if (nextHost) {
-      remainingPlayers[nextHost.id] = { ...nextHost, isHost: true };
-      await updateGame(gameId, { players: remainingPlayers, hostId: nextHost.id, hostName: nextHost.name });
-      return;
-    }
+    await deleteGame(gameId);
+    return;
   }
 
   await updateGame(gameId, { players: remainingPlayers });

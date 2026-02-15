@@ -3,7 +3,6 @@
 import { useRef } from 'react';
 import { ArrowLeft, Volume2, VolumeX, RefreshCw, CheckCircle2, XCircle, Clock, ChevronRight, Trophy } from 'lucide-react';
 import type { Exercise, ExerciseSession } from '../../../types/exercise';
-import type { JLPTLevel } from '../../../types/flashcard';
 import { LEVEL_THEMES } from '../../ui/jlpt-level-selector';
 import { ANSWER_OPTIONS } from '../../../constants/answer-options';
 import { getExerciseLevels, getQuestionText, getQuestionTypeLabel } from './exercise-utils';

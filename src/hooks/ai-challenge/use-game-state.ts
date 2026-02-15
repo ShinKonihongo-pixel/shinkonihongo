@@ -11,7 +11,7 @@ interface UseGameStateProps {
   currentLevel: JLPTLevel;
 }
 
-export function useGameState({ currentUserId, currentLevel }: UseGameStateProps) {
+export function useGameState({ currentUserId: _currentUserId, currentLevel }: UseGameStateProps) {
   const [game, setGame] = useState<AIChallengeGame | null>(null);
   const [result, setResult] = useState<AIChallengeResult | null>(null);
 

@@ -1,6 +1,6 @@
 // Word Match Lobby - Waiting room for players
 import React, { useState } from 'react';
-import type { WordMatchGame, WordMatchPlayer } from '../../types/word-match';
+import type { WordMatchGame } from '../../types/word-match';
 import { GameCodeDisplay, PlayerListGrid, LobbyActionBar, normalizePlayer } from '../shared/game-lobby';
 
 interface WordMatchLobbyProps {

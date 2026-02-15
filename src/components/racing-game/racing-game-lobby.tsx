@@ -1,13 +1,13 @@
 // Racing Game Lobby - Waiting room before race starts
 // Shows players, game code, team assignment, and start button for host
 
-import { Play, Users, Check } from 'lucide-react';
+import { Play, Users, Check, X } from 'lucide-react';
 import { useState } from 'react';
 import type { RacingGame, RacingVehicle } from '../../types/racing-game';
 import { DEFAULT_VEHICLES, TEAM_COLORS } from '../../types/racing-game';
 import { isImageAvatar } from '../../utils/avatar-icons';
 import { getVipAvatarClasses, getVipNameClasses, isVipRole, getVipBadge } from '../../utils/vip-styling';
-import { GameCodeDisplay, LobbyActionBar, normalizePlayer } from '../shared/game-lobby';
+import { GameCodeDisplay, LobbyActionBar } from '../shared/game-lobby';
 
 interface RacingGameLobbyProps {
   game: RacingGame;

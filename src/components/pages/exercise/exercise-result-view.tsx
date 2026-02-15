@@ -2,7 +2,6 @@
 
 import { Trophy, RotateCcw, BookOpen, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import type { Exercise, ExerciseSession } from '../../../types/exercise';
-import type { JLPTLevel } from '../../../types/flashcard';
 import { EXERCISE_TYPE_ICONS } from '../../../types/exercise';
 import { LEVEL_THEMES } from '../../ui/jlpt-level-selector';
 import { getExerciseLevels, getScoreGrade } from './exercise-utils';

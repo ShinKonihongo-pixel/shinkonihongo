@@ -3,6 +3,8 @@
 import {
   collection,
   getDocs,
+  deleteDoc,
+  doc,
   query,
   where,
   onSnapshot,
@@ -20,6 +22,28 @@ export async function getAvailableRooms(): Promise<QuizGame[]> {
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as QuizGame));
+}
+
+// Get all rooms (any status) — for admin management
+export async function getAllRooms(): Promise<QuizGame[]> {
+  const snapshot = await getDocs(collection(db, COLLECTIONS.GAMES));
+  return snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as QuizGame));
+}
+
+// Delete all game rooms — admin only
+export async function deleteAllRooms(): Promise<number> {
+  const snapshot = await getDocs(collection(db, COLLECTIONS.GAMES));
+  let count = 0;
+  for (const docSnap of snapshot.docs) {
+    await deleteDoc(doc(db, COLLECTIONS.GAMES, docSnap.id));
+    count++;
+  }
+  return count;
+}
+
+// Delete a specific room by ID — admin only
+export async function deleteRoom(gameId: string): Promise<void> {
+  await deleteDoc(doc(db, COLLECTIONS.GAMES, gameId));
 }
 
 // Subscribe to available rooms (real-time updates)

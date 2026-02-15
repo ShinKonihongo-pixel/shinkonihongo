@@ -1,6 +1,6 @@
 // Kanji Battle Lobby - Waiting room for players
 import React, { useState } from 'react';
-import type { KanjiBattleGame, KanjiBattlePlayer } from '../../types/kanji-battle';
+import type { KanjiBattleGame } from '../../types/kanji-battle';
 import { GameCodeDisplay, PlayerListGrid, LobbyActionBar, normalizePlayer } from '../shared/game-lobby';
 
 interface KanjiBattleLobbyProps {
