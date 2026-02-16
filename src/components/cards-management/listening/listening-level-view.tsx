@@ -1,17 +1,17 @@
-// Level view showing lesson grid (Bài)
+// Level view showing lesson number grid
 import { ChevronLeft, Music } from 'lucide-react';
 import { LEVEL_THEMES } from '../../../constants/themes';
 import { LISTENING_LESSONS } from '../../../hooks/use-listening';
 import type { JLPTLevel } from '../../../types/flashcard';
+import './listening-shared.css';
 
 interface ListeningLevelViewProps {
   level: JLPTLevel;
   onBack: () => void;
   onSelectLesson: (lessonNumber: number) => void;
   getCountByLesson: (level: JLPTLevel, lessonNumber: number) => number;
-  audioRef: React.RefObject<HTMLAudioElement>;
+  audioRef: React.RefObject<HTMLAudioElement | null>;
   onAudioEnded: () => void;
-  sharedStyles: string;
 }
 
 export function ListeningLevelView({
@@ -21,17 +21,21 @@ export function ListeningLevelView({
   getCountByLesson,
   audioRef,
   onAudioEnded,
-  sharedStyles,
 }: ListeningLevelViewProps) {
   const theme = LEVEL_THEMES[level];
-  const config = LISTENING_LESSONS[level];
-  const lessonNumbers: number[] = [];
-
-  if (config) {
+  
+  // Get lesson numbers for current level
+  const getLessonNumbers = (lvl: JLPTLevel): number[] => {
+    const config = LISTENING_LESSONS[lvl];
+    if (!config) return [];
+    const numbers: number[] = [];
     for (let i = config.start; i <= config.end; i++) {
-      lessonNumbers.push(i);
+      numbers.push(i);
     }
-  }
+    return numbers;
+  };
+
+  const lessonNumbers = getLessonNumbers(level);
 
   return (
     <div className="listening-tab">
@@ -79,7 +83,6 @@ export function ListeningLevelView({
       )}
 
       <audio ref={audioRef} onEnded={onAudioEnded} />
-      <style>{sharedStyles}</style>
     </div>
   );
 }

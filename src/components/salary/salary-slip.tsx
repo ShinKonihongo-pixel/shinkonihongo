@@ -9,6 +9,7 @@ import {
   formatCurrency,
 } from '../../types/teacher';
 import { BRANCH_MEMBER_ROLE_LABELS } from '../../types/branch';
+import './salary-slip.css';
 
 interface SalaryWithDetails extends Salary {
   teacher?: User;
@@ -317,27 +318,6 @@ export function SalarySlip({ salary, onClose, onPrint }: SalarySlipProps) {
           </div>
         </div>
       </div>
-
-      {/* Print styles */}
-      <style>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          .no-print {
-            display: none !important;
-          }
-          [ref="printRef"], [ref="printRef"] * {
-            visibility: visible;
-          }
-          [ref="printRef"] {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-          }
-        }
-      `}</style>
     </div>
   );
 }

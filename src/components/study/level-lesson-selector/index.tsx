@@ -1,7 +1,8 @@
 // Level and lesson selection component for study pages
 // Premium UI with Japanese-inspired design and glassmorphism effects
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
+import { BookOpen, Layers } from 'lucide-react';
 import type { LevelLessonSelectorProps, JLPTLevel, StudyMode } from './types';
 import {
   useCardCountByLevel,
@@ -9,9 +10,27 @@ import {
   useCardsPerLesson,
   useTotalSelectedCards,
 } from './hooks';
-import { LevelSelector } from './level-selector';
+import { JLPTLevelSelector } from '../../ui/jlpt-level-selector';
 import { LessonSelector } from './lesson-selector';
-import { styles } from './styles';
+import './level-lesson-selector.css';
+
+const TITLES: Record<string, string> = {
+  vocabulary: 'Học Từ Vựng',
+  grammar: 'Học Ngữ Pháp',
+  kanji: 'Học Hán Tự',
+};
+
+const ICONS: Record<string, ReactNode> = {
+  vocabulary: <Layers size={32} />,
+  grammar: <BookOpen size={32} />,
+  kanji: <BookOpen size={32} />,
+};
+
+const COUNT_LABELS: Record<string, string | ((level: JLPTLevel) => string)> = {
+  vocabulary: 'từ',
+  grammar: 'mẫu',
+  kanji: (level: JLPTLevel) => (level === 'BT' ? 'bộ' : 'chữ'),
+};
 
 export function LevelLessonSelector({
   type,
@@ -23,7 +42,6 @@ export function LevelLessonSelector({
 }: LevelLessonSelectorProps) {
   const [selectedLevel, setSelectedLevel] = useState<JLPTLevel | null>(null);
   const [selectedLessons, setSelectedLessons] = useState<string[]>([]);
-  const [hoveredLevel, setHoveredLevel] = useState<JLPTLevel | null>(null);
 
   const countByLevel = useCardCountByLevel(cards, type, levels);
   const levelLessons = useLevelLessons(selectedLevel, getLessonsByLevel);
@@ -58,42 +76,35 @@ export function LevelLessonSelector({
     setSelectedLessons([]);
   };
 
+  if (!selectedLevel) {
+    return (
+      <JLPTLevelSelector
+        title={TITLES[type]}
+        subtitle="Chọn cấp độ để bắt đầu"
+        icon={ICONS[type]}
+        countByLevel={countByLevel}
+        countLabel={COUNT_LABELS[type]}
+        onSelectLevel={setSelectedLevel}
+        levels={levels}
+      />
+    );
+  }
+
   return (
     <div className="premium-selector">
-      {/* Animated Background */}
-      <div className="bg-aurora" />
-      <div className="bg-grid" />
-
-      {/* Level Selection Screen */}
-      {!selectedLevel && (
-        <LevelSelector
-          type={type}
-          countByLevel={countByLevel}
-          hoveredLevel={hoveredLevel}
-          onHover={setHoveredLevel}
-          onSelect={setSelectedLevel}
-          levels={levels}
-        />
-      )}
-
-      {/* Lesson Selection Screen */}
-      {selectedLevel && (
-        <LessonSelector
-          type={type}
-          selectedLevel={selectedLevel}
-          levelLessons={levelLessons}
-          selectedLessons={selectedLessons}
-          cardsPerLesson={cardsPerLesson}
-          totalSelectedCards={totalSelectedCards}
-          onBack={backToLevelSelect}
-          onToggleLesson={toggleLesson}
-          onSelectAll={selectAllLessons}
-          onDeselectAll={deselectAllLessons}
-          onStart={handleStart}
-        />
-      )}
-
-      <style>{styles}</style>
+      <LessonSelector
+        type={type}
+        selectedLevel={selectedLevel}
+        levelLessons={levelLessons}
+        selectedLessons={selectedLessons}
+        cardsPerLesson={cardsPerLesson}
+        totalSelectedCards={totalSelectedCards}
+        onBack={backToLevelSelect}
+        onToggleLesson={toggleLesson}
+        onSelectAll={selectAllLessons}
+        onDeselectAll={deselectAllLessons}
+        onStart={handleStart}
+      />
     </div>
   );
 }

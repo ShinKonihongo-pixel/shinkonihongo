@@ -1,14 +1,14 @@
-// Root view showing JLPT level grid
+// Root view showing level grid
 import { Headphones, Sparkles } from 'lucide-react';
 import { LevelGrid } from '../level-grid';
 import type { JLPTLevel } from '../../../types/flashcard';
+import './listening-shared.css';
 
 interface ListeningRootViewProps {
   onSelectLevel: (level: JLPTLevel) => void;
   getCountByLevel: (level: JLPTLevel) => number;
-  audioRef: React.RefObject<HTMLAudioElement>;
+  audioRef: React.RefObject<HTMLAudioElement | null>;
   onAudioEnded: () => void;
-  sharedStyles: string;
 }
 
 export function ListeningRootView({
@@ -16,7 +16,6 @@ export function ListeningRootView({
   getCountByLevel,
   audioRef,
   onAudioEnded,
-  sharedStyles,
 }: ListeningRootViewProps) {
   return (
     <div className="listening-tab">
@@ -41,7 +40,6 @@ export function ListeningRootView({
       />
 
       <audio ref={audioRef} onEnded={onAudioEnded} />
-      <style>{sharedStyles}</style>
     </div>
   );
 }

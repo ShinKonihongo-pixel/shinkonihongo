@@ -1,6 +1,6 @@
 // Hook for managing Quiz Game state and actions
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type {
   QuizGame,
   CreateGameData,
@@ -26,22 +26,29 @@ export function useQuizGame({ playerId, playerName, playerAvatar, playerRole }: 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Guard: suppress error when player voluntarily leaves
+  const leavingRef = useRef(false);
+
   // Subscribe to game updates when game is set
   useEffect(() => {
     if (!game?.id) return;
 
     const unsubscribe = gameService.subscribeToGame(game.id, (updatedGame) => {
       if (!updatedGame) {
-        // Game was deleted (host left)
+        // Game was deleted — skip error if we voluntarily left
         setGame(null);
-        setError('Game đã bị xóa');
+        if (!leavingRef.current) {
+          setError('Game đã bị xóa');
+        }
         return;
       }
 
-      // Detect if current player was kicked
+      // Detect if current player was kicked (skip if voluntary leave)
       if (!updatedGame.players[playerId] && updatedGame.status === 'waiting') {
         setGame(null);
-        setError('Bạn đã bị kick khỏi phòng');
+        if (!leavingRef.current) {
+          setError('Bạn đã bị kick khỏi phòng');
+        }
         return;
       }
 
@@ -105,9 +112,10 @@ export function useQuizGame({ playerId, playerName, playerAvatar, playerRole }: 
     }
   }, [playerId, playerName, playerAvatar, playerRole]);
 
-  // Leave current game
+  // Leave current game (set flag to suppress subscription errors)
   const leaveGame = useCallback(async (): Promise<void> => {
     if (!game) return;
+    leavingRef.current = true;
     try {
       await gameService.leaveGame(game.id, playerId);
       setGame(null);
@@ -115,6 +123,8 @@ export function useQuizGame({ playerId, playerName, playerAvatar, playerRole }: 
       setError(null);
     } catch (err) {
       console.error('Error leaving game:', err);
+    } finally {
+      leavingRef.current = false;
     }
   }, [game, playerId]);
 

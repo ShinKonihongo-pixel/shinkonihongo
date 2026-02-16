@@ -4,6 +4,7 @@ import { LEVEL_THEMES } from '../../../constants/themes';
 import { LESSON_TYPES, LESSON_TYPE_THEMES } from './listening-tab-types';
 import type { JLPTLevel } from '../../../types/flashcard';
 import type { ListeningLessonType } from '../../../types/listening';
+import './listening-shared.css';
 
 interface ListeningLessonViewProps {
   level: JLPTLevel;
@@ -11,9 +12,8 @@ interface ListeningLessonViewProps {
   onBack: () => void;
   onSelectLessonType: (lessonType: ListeningLessonType) => void;
   getCountByLessonType: (level: JLPTLevel, lessonNumber: number, lessonType: ListeningLessonType) => number;
-  audioRef: React.RefObject<HTMLAudioElement>;
+  audioRef: React.RefObject<HTMLAudioElement | null>;
   onAudioEnded: () => void;
-  sharedStyles: string;
 }
 
 export function ListeningLessonView({
@@ -24,7 +24,6 @@ export function ListeningLessonView({
   getCountByLessonType,
   audioRef,
   onAudioEnded,
-  sharedStyles,
 }: ListeningLessonViewProps) {
   const theme = LEVEL_THEMES[level];
 
@@ -69,7 +68,6 @@ export function ListeningLessonView({
       </div>
 
       <audio ref={audioRef} onEnded={onAudioEnded} />
-      <style>{sharedStyles}</style>
     </div>
   );
 }

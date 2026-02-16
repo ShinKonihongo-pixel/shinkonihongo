@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { Plus, Trash2, Sparkles, RefreshCw } from 'lucide-react';
 import type { GrammarCardFormData, GrammarCard, GrammarExample, JLPTLevel, Lesson, Flashcard } from '../../types/flashcard';
 import { generateGrammarExample, type VocabularyItem } from '../../services/kanji-ai-service';
+import { JLPT_LEVELS } from '../../constants/jlpt';
+import { LEVEL_COLORS } from '../../constants/themes';
 
 interface GrammarCardFormProps {
   onSubmit: (data: GrammarCardFormData) => void;
@@ -15,19 +17,7 @@ interface GrammarCardFormProps {
   vocabularyCards?: Flashcard[];
 }
 
-const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
-
 const emptyExample: GrammarExample = { japanese: '', vietnamese: '' };
-
-// JLPT Level colors - consistent with system
-const LEVEL_COLORS: Record<JLPTLevel, string> = {
-  BT: '#8b5cf6',
-  N5: '#4CAF50',
-  N4: '#2196F3',
-  N3: '#FF9800',
-  N2: '#9C27B0',
-  N1: '#E34234',
-};
 
 export function GrammarCardForm({
   onSubmit,

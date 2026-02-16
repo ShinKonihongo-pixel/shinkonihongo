@@ -4,6 +4,7 @@ import HanziWriter from 'hanzi-writer';
 import type { KanjiCard, KanjiLesson } from '../../../types/kanji';
 import type { JLPTLevel } from '../../../types/flashcard';
 import type { KanjiStudySettings } from './types';
+import { LEVEL_COLORS } from '../../../constants/themes';
 
 interface KanjiDisplayCardProps {
   card: KanjiCard;
@@ -16,10 +17,6 @@ interface KanjiDisplayCardProps {
   onSwipeRight: () => void;
   // Remove ref props - manage touch state locally
 }
-
-const LEVEL_COLORS: Record<JLPTLevel, string> = {
-  BT: '#8b5cf6', N5: '#22c55e', N4: '#3b82f6', N3: '#f59e0b', N2: '#a855f7', N1: '#ef4444',
-};
 
 export function KanjiDisplayCard({
   card, isFlipped, settings, selectedLevel, lessons,

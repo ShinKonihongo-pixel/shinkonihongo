@@ -12,6 +12,7 @@ import { useWordMatch } from '../../hooks/word-match';
 import type { CreateWordMatchData, WordMatchEffectType } from '../../types/word-match';
 import type { Flashcard } from '../../types/flashcard';
 import type { GameSession } from '../../types/user';
+import '../word-match/word-match.css';
 
 type PageView = 'menu' | 'setup' | 'lobby' | 'play' | 'results' | 'guide';
 

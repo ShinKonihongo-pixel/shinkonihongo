@@ -4,6 +4,8 @@ import { Plus, Trash2, Sparkles, RefreshCw } from 'lucide-react';
 import type { KanjiCardFormData, KanjiCard, KanjiSampleWord } from '../../types/kanji';
 import type { JLPTLevel } from '../../types/flashcard';
 import { getSeedByCharacter } from '../../data/kanji-seed';
+import { JLPT_LEVELS_WITH_BT } from '../../constants/jlpt';
+import { LEVEL_COLORS } from '../../constants/themes';
 
 interface KanjiCardFormProps {
   onSubmit: (data: KanjiCardFormData) => void;
@@ -12,9 +14,6 @@ interface KanjiCardFormProps {
   fixedLevel?: JLPTLevel | null;
   fixedLessonId?: string | null;
 }
-
-const JLPT_LEVELS: JLPTLevel[] = ['BT', 'N5', 'N4', 'N3', 'N2', 'N1'];
-const LEVEL_COLORS: Record<JLPTLevel, string> = { BT: '#8b5cf6', N5: '#4CAF50', N4: '#2196F3', N3: '#FF9800', N2: '#9C27B0', N1: '#E34234' };
 const emptySampleWord: KanjiSampleWord = { word: '', reading: '', meaning: '' };
 
 export function KanjiCardForm({ onSubmit, onCancel, initialData, fixedLevel, fixedLessonId }: KanjiCardFormProps) {
@@ -103,7 +102,7 @@ export function KanjiCardForm({ onSubmit, onCancel, initialData, fixedLevel, fix
           {!fixedLevel && (
             <div className="form-group" style={{ flex: 1 }}>
               <label>JLPT Level</label>
-              <select value={jlptLevel} onChange={e => setJlptLevel(e.target.value as JLPTLevel)} className="input">{JLPT_LEVELS.map(l => <option key={l} value={l}>{l}</option>)}</select>
+              <select value={jlptLevel} onChange={e => setJlptLevel(e.target.value as JLPTLevel)} className="input">{JLPT_LEVELS_WITH_BT.map(l => <option key={l} value={l}>{l}</option>)}</select>
             </div>
           )}
         </div>

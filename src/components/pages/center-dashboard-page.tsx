@@ -8,6 +8,7 @@ import { CenterInviteManager } from '../center/center-invite-manager';
 import { CenterBrandingEditor } from '../center/center-branding-editor';
 import type { BranchStats } from '../../types/branch';
 import type { CurrentUser } from '../../types/user';
+import '../center/center.css';
 
 interface CenterDashboardPageProps {
   currentUser: CurrentUser;

@@ -12,6 +12,7 @@ import type { CreatePictureGuessData } from '../../types/picture-guess';
 import type { JLPTLevel } from '../../types/flashcard';
 import type { CurrentUser } from '../../types/user';
 import type { Flashcard } from '../../types/flashcard';
+import '../picture-guess/picture-guess.css';
 
 // View state for page routing
 type ViewState = 'menu' | 'setup-single' | 'setup-multi' | 'lobby' | 'playing' | 'results';

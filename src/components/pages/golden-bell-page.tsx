@@ -11,6 +11,7 @@ import { GoldenBellResultsView } from '../golden-bell/golden-bell-results';
 import type { CreateGoldenBellData, GoldenBellGame, QuestionCategory } from '../../types/golden-bell';
 import type { Flashcard, JLPTLevel } from '../../types/flashcard';
 import type { GameSession } from '../../types/user';
+import '../golden-bell/golden-bell.css';
 
 // Simple user interface for props
 interface GoldenBellUser {

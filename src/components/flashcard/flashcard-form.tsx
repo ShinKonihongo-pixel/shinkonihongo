@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { Sparkles, RefreshCw, BookOpen } from 'lucide-react';
 import type { FlashcardFormData, JLPTLevel, Flashcard, Lesson, DifficultyLevel, GrammarCard } from '../../types/flashcard';
 import { generateKanjiInfo, generateExample, generateMeaningFromVocabulary, generateExampleWithGrammar, type GrammarPattern } from '../../services/kanji-ai-service';
+import { JLPT_LEVELS } from '../../constants/jlpt';
+import './flashcard-form.css';
 interface FlashcardFormProps {
   onSubmit: (data: FlashcardFormData) => void;
   onCancel: () => void;
@@ -17,8 +19,6 @@ interface FlashcardFormProps {
   // Callback to notify parent of kanji text changes (for external kanji analysis)
   onKanjiTextChange?: (text: string) => void;
 }
-
-const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 
 const DIFFICULTY_OPTIONS: { value: DifficultyLevel; label: string; color: string }[] = [
   { value: 'easy', label: 'Dễ', color: '#22c55e' },
@@ -461,134 +461,6 @@ export function FlashcardForm({
         <button type="button" className="btn btn-secondary" onClick={onCancel}>Hủy</button>
         <button type="submit" className="btn btn-primary">{initialData ? 'Cập nhật' : 'Tạo thẻ'}</button>
       </div>
-
-      <style>{`
-        .btn-ai {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          margin-left: 8px;
-          padding: 2px 8px;
-          font-size: 0.75rem;
-          border: 1px solid var(--primary-color, #4a90d9);
-          background: white;
-          color: var(--primary-color, #4a90d9);
-          border-radius: 12px;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        .btn-ai:hover:not(:disabled) {
-          background: var(--primary-color, #4a90d9);
-          color: white;
-        }
-        .btn-ai:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .example-input-row {
-          display: flex;
-          gap: 8px;
-          margin-bottom: 8px;
-        }
-        .example-input-row textarea {
-          flex: 1;
-        }
-        .example-actions {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-        }
-
-        .btn-ai-example {
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border: 1px solid var(--primary-color, #4a90d9);
-          background: white;
-          color: var(--primary-color, #4a90d9);
-          border-radius: 6px;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        .btn-ai-example:hover:not(:disabled) {
-          background: var(--primary-color, #4a90d9);
-          color: white;
-        }
-        .btn-ai-example:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .btn-grammar-example {
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border: 1px solid #0d9488;
-          background: white;
-          color: #0d9488;
-          border-radius: 6px;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        .btn-grammar-example:hover:not(:disabled) {
-          background: #0d9488;
-          color: white;
-        }
-        .btn-grammar-example:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .btn-remove-example {
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border: 1px solid #ef4444;
-          background: white;
-          color: #ef4444;
-          border-radius: 6px;
-          cursor: pointer;
-          font-size: 1.25rem;
-          line-height: 1;
-        }
-        .btn-remove-example:hover {
-          background: #ef4444;
-          color: white;
-        }
-
-        .spin {
-          animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-
-        .difficulty-selector {
-          display: flex;
-          gap: 0.5rem;
-          flex-wrap: wrap;
-        }
-        .difficulty-btn {
-          padding: 0.375rem 0.75rem;
-          border: 2px solid var(--border-color, #ddd);
-          background: white;
-          border-radius: 8px;
-          cursor: pointer;
-          font-size: 0.875rem;
-          transition: all 0.2s;
-        }
-        .difficulty-btn.active {
-          font-weight: 600;
-        }
-      `}</style>
     </form>
   );
 }

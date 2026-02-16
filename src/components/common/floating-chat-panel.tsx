@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import type { CurrentUser } from '../../types/user';
+import '../ui/floating-chat.css';
 
 interface ChatMessage {
   id: string;

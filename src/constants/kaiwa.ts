@@ -1,14 +1,7 @@
 // Kaiwa feature constants
 
-import type { JLPTLevel, ConversationStyle, ConversationTopic, KaiwaScenario } from '../types/kaiwa';
-
-export const JLPT_LEVELS: { value: JLPTLevel; label: string }[] = [
-  { value: 'N5', label: 'N5 (Sơ cấp)' },
-  { value: 'N4', label: 'N4' },
-  { value: 'N3', label: 'N3' },
-  { value: 'N2', label: 'N2' },
-  { value: 'N1', label: 'N1 (Cao cấp)' },
-];
+import type { ConversationStyle, ConversationTopic, KaiwaScenario } from '../types/kaiwa';
+export { JLPT_LEVELS_LABELED as JLPT_LEVELS } from './jlpt';
 
 export const CONVERSATION_STYLES: { value: ConversationStyle; label: string }[] = [
   { value: 'casual', label: 'Thân mật (タメ口)' },

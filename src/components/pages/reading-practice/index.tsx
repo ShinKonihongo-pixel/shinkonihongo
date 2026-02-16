@@ -134,10 +134,6 @@ export function ReadingPracticePage({
           />
         )}
       </div>
-      <style>{STYLES}</style>
     </>
   );
 }
-
-// Styles extracted from original file - kept inline for scoping
-const STYLES = `/* Styles will be imported from original file */`;

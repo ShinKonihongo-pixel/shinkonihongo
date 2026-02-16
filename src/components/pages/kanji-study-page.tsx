@@ -6,7 +6,7 @@ import { useStudyState } from './kanji-study/use-study-state';
 import { StudyView } from './kanji-study/study-view';
 import { EmptyState } from './kanji-study/empty-state';
 import { SettingsModal } from './kanji-study/settings-modal';
-import { styles } from './kanji-study/styles';
+import './kanji-study-page.css';
 
 interface KanjiStudyPageProps {
   kanjiCards: KanjiCard[];
@@ -90,8 +90,6 @@ export function KanjiStudyPage({
           onUpdateSettings={state.setStudySettings}
         />
       )}
-
-      <style>{styles}</style>
     </div>
   );
 }

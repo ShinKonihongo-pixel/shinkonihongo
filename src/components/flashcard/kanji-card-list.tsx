@@ -2,9 +2,7 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, Edit, Trash2, ArrowRightLeft } from 'lucide-react';
 import type { KanjiCard } from '../../types/kanji';
-import type { JLPTLevel } from '../../types/flashcard';
-
-const LEVEL_COLORS: Record<JLPTLevel, string> = { BT: '#8b5cf6', N5: '#4CAF50', N4: '#2196F3', N3: '#FF9800', N2: '#9C27B0', N1: '#E34234' };
+import { LEVEL_COLORS } from '../../constants/themes';
 
 interface KanjiCardListProps {
   cards: KanjiCard[];

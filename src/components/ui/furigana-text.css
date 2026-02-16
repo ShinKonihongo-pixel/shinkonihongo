@@ -1,0 +1,11 @@
+        .furigana-text ruby {
+          ruby-align: center;
+          ruby-position: over;
+        }
+        .furigana-text rt {
+          font-size: var(--furigana-size, 0.5em);
+          color: var(--furigana-color, rgba(167, 139, 250, 0.95));
+          font-weight: 400;
+          text-align: center;
+          ruby-align: center;
+        }

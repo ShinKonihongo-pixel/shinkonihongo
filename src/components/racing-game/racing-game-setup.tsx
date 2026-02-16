@@ -6,6 +6,7 @@ import { ArrowLeft, Play, Settings, BookOpen, Clock, Map, HelpCircle, Users, Ale
 import type { VehicleType, RacingVehicle, CreateRacingGameData, GameMode } from '../../types/racing-game';
 import { DEFAULT_VEHICLES, DEFAULT_TRACK_ZONES } from '../../types/racing-game';
 import type { JLPTLevel } from '../../types/flashcard';
+import { JLPT_LEVELS } from '../../constants/jlpt';
 
 interface RacingGameSetupProps {
   raceType: VehicleType;
@@ -16,8 +17,6 @@ interface RacingGameSetupProps {
   loading?: boolean;
   error?: string | null;
 }
-
-const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 
 export function RacingGameSetup({
   raceType,

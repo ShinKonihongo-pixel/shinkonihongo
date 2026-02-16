@@ -15,7 +15,7 @@ import { useGrammarCards } from '../../hooks/use-grammar-cards';
 import { useGrammarLessons } from '../../hooks/use-grammar-lessons';
 import { useKanjiCards } from '../../hooks/use-kanji-cards';
 import { useKanjiLessons } from '../../hooks/use-kanji-lessons';
-import { TestBankPanel } from '../classroom/test-bank-panel';
+import { TestBankPanel } from '../classroom/test-bank';
 import {
   importLesson,
   importFlashcard,
@@ -41,6 +41,7 @@ import {
 import { useExercises } from '../../hooks/use-exercises';
 import { useReading } from '../../hooks/use-reading';
 import { useListening } from '../../hooks/use-listening';
+import '../cards-management/cards-management.css';
 
 interface CardsPageProps {
   cards: Flashcard[];

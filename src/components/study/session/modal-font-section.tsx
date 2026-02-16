@@ -1,6 +1,7 @@
 // Font and color settings section for study modal
 import type { AppSettings } from '../../../hooks/use-settings';
 import { FONT_OPTIONS } from './constants';
+import './modal-font-section.css';
 
 const COLOR_OPTIONS = [
   { value: '#FFFFFF', label: 'Trắng' },
@@ -159,42 +160,6 @@ export function ModalFontSection({
           onChange={(c) => onSettingsChange?.('exampleTextColor', c)}
         />
       </div>
-
-      <style>{colorPickerStyles}</style>
     </>
   );
 }
-
-const colorPickerStyles = `
-  .color-picker-row {
-    margin-top: 0.5rem;
-    flex-wrap: wrap;
-  }
-
-  .color-swatch-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-
-  .color-swatch {
-    width: 24px;
-    height: 24px;
-    border-radius: 6px;
-    border: 2px solid rgba(255, 255, 255, 0.15);
-    cursor: pointer;
-    transition: all 0.15s;
-    padding: 0;
-  }
-
-  .color-swatch:hover {
-    transform: scale(1.15);
-    border-color: rgba(255, 255, 255, 0.4);
-  }
-
-  .color-swatch.active {
-    border-color: white;
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
-    transform: scale(1.15);
-  }
-`;

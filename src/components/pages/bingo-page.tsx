@@ -13,6 +13,7 @@ import {
 } from '../bingo-game';
 import type { CreateBingoGameData } from '../../types/bingo-game';
 import type { GameSession } from '../../types/user';
+import '../bingo-game/bingo-game.css';
 
 interface BingoUser {
   id: string;

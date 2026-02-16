@@ -22,7 +22,7 @@ import { AssignTestModal } from '../classroom/assign-test-modal';
 import { TestTake } from '../classroom/test-take';
 import { SubmissionReview } from '../classroom/submission-review';
 import { AttendancePanel } from '../classroom/attendance-panel';
-import { EvaluationPanel } from '../classroom/evaluation-panel';
+import { EvaluationPanel } from '../classroom/evaluation';
 import { TeacherDashboard } from '../classroom/teacher-dashboard';
 import { StudentDetailModal } from '../classroom/student-detail-modal';
 import { SubmissionTracker } from '../classroom/submission-tracker';
@@ -38,6 +38,7 @@ import {
 } from '../classroom-views';
 import type { Classroom, ClassroomFormData, ClassroomMember, ClassroomTest, ClassroomSubmission, TestType, SubmissionAnswer } from '../../types/classroom';
 import type { User } from '../../types/user';
+import '../classroom/classroom.css';
 
 interface ClassroomPageProps {
   users: User[];

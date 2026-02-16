@@ -10,6 +10,7 @@ import { RacingGamePlay } from '../racing-game/racing-game-play';
 import { RacingGameResults } from '../racing-game/racing-game-results';
 import type { VehicleType, CreateRacingGameData, RacingGame } from '../../types/racing-game';
 import type { Flashcard } from '../../types/flashcard';
+import '../racing-game/racing-game.css';
 // Simple user interface for racing game props
 interface RacingUser {
   id: string;

@@ -5,15 +5,9 @@ import { X, Swords, BookOpen, PenTool, Clock, Users, Hash, Sparkles, Play } from
 import type { CreateKanjiBattleData, KanjiBattleMode, JLPTLevel } from '../../types/kanji-battle';
 import { getKanjiSeedCount } from '../../data/kanji-seed/index';
 import { useBodyScrollLock } from '../../hooks/use-body-scroll-lock';
+import { JLPT_LEVELS_WITH_BT } from '../../constants/jlpt';
 
-const JLPT_LEVELS: { level: JLPTLevel; label: string }[] = [
-  { level: 'N5', label: 'N5' },
-  { level: 'N4', label: 'N4' },
-  { level: 'N3', label: 'N3' },
-  { level: 'N2', label: 'N2' },
-  { level: 'N1', label: 'N1' },
-  { level: 'BT', label: 'BT' },
-];
+const JLPT_LEVEL_OPTIONS = JLPT_LEVELS_WITH_BT.map(level => ({ level, label: level }));
 
 interface KanjiBattleSetupProps {
   onCreateGame: (data: CreateKanjiBattleData) => void;
@@ -156,7 +150,7 @@ export function KanjiBattleSetup({
               </span>
             </label>
             <div className="rm-pills">
-              {JLPT_LEVELS.map(({ level, label }) => (
+              {JLPT_LEVEL_OPTIONS.map(({ level, label }) => (
                 <button
                   key={level}
                   type="button"

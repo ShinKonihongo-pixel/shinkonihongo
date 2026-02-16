@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { GraduationCap, ChevronRight, Sparkles } from 'lucide-react';
 import type { UserJLPTLevel } from '../../types/user';
 import { USER_JLPT_LEVELS, USER_JLPT_LEVEL_LABELS } from '../../types/user';
+import { LEVEL_COLORS as ALL_LEVEL_COLORS } from '../../constants/themes';
 
 interface JLPTLevelModalProps {
   onSelect: (level: UserJLPTLevel) => void;
@@ -19,12 +20,13 @@ const LEVEL_DESCRIPTIONS: Record<UserJLPTLevel, string> = {
   N1: 'Trình độ cao, đọc hiểu văn bản phức tạp',
 };
 
+// UserJLPTLevel is a subset (N5-N1 without BT), extract from canonical colors
 const LEVEL_COLORS: Record<UserJLPTLevel, string> = {
-  N5: '#10b981', // green
-  N4: '#3b82f6', // blue
-  N3: '#f59e0b', // amber
-  N2: '#f97316', // orange
-  N1: '#ef4444', // red
+  N5: ALL_LEVEL_COLORS.N5,
+  N4: ALL_LEVEL_COLORS.N4,
+  N3: ALL_LEVEL_COLORS.N3,
+  N2: ALL_LEVEL_COLORS.N2,
+  N1: ALL_LEVEL_COLORS.N1,
 };
 
 export function JLPTLevelModal({ onSelect, onSkip }: JLPTLevelModalProps) {

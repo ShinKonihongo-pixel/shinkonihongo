@@ -4,7 +4,7 @@
 import type { JLPTLevel } from '../../../types/jlpt-question';
 import type { AssessmentLevel, CategoryConfig } from './jlpt-types';
 
-// JLPT levels
+// JLPT levels (typed to jlpt-question.JLPTLevel which excludes BT)
 export const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 
 // Question category configurations

@@ -7,6 +7,8 @@ import type { Lecture } from '../../types/lecture';
 import { ConfirmModal } from '../ui/confirm-modal';
 import { useLectures } from '../../hooks/use-lectures';
 import { LectureCard } from '../lecture/lecture-card';
+import { JLPT_LEVELS } from '../../constants/jlpt';
+import './admin-page.css';
 
 interface AdminPageProps {
   users: User[];
@@ -21,8 +23,6 @@ interface AdminPageProps {
   getChildLessons: (parentId: string) => Lesson[];
   onNavigateToLectureEditor?: (lectureId?: string) => void;
 }
-
-const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 
 export function AdminPage({
   users,

@@ -2,11 +2,10 @@
 
 import { useMemo } from 'react';
 import type { StudySession, GameSession, JLPTSession, UserStats } from '../types/user';
-import type { Flashcard, JLPTLevel } from '../types/flashcard';
+import type { Flashcard } from '../types/flashcard';
 import type { DailyActivity, StreakInfo, LevelProgress, WeeklyGoal, ProgressSummary } from '../types/progress';
 import { calculateUserLevel } from '../types/user';
-
-const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
+import { JLPT_LEVELS } from '../constants/jlpt';
 
 function getTodayISO(): string {
   return new Date().toISOString().split('T')[0];

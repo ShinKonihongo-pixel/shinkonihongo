@@ -21,6 +21,7 @@ import {
   Medal,
   Crown,
 } from 'lucide-react';
+import './progress-page.css';
 
 interface ProgressPageProps {
   progress: ProgressSummary;

@@ -6,7 +6,7 @@ import { useStudyState } from './grammar-study/use-study-state';
 import { EmptyState } from './grammar-study/empty-state';
 import { StudyView } from './grammar-study/study-view';
 import { SettingsModal } from './grammar-study/settings-modal';
-import { styles } from './grammar-study/styles';
+import './grammar-study-page.css';
 
 interface GrammarStudyPageProps {
   grammarCards: GrammarCard[];
@@ -95,8 +95,6 @@ export function GrammarStudyPage({
           onUpdateSettings={state.setStudySettings}
         />
       )}
-
-      <style>{styles}</style>
     </div>
   );
 }

@@ -11,7 +11,7 @@ import { FilterButtons } from '../pages/listening-practice/filter-buttons';
 import { LEVEL_THEMES } from '../ui/jlpt-level-selector';
 import { useListeningSettings } from '../../contexts/listening-settings-context';
 import { ListeningSettingsButton, ListeningSettingsModal } from '../ui/listening-settings-modal';
-import { listeningPracticeStyles } from '../pages/listening-practice/listening-practice-styles';
+import './listening-study-view.css';
 
 interface ListeningStudyViewProps {
   flashcards: Flashcard[];
@@ -308,8 +308,6 @@ export function ListeningStudyView({
       </div>
 
       <ListeningSettingsModal isOpen={showSettingsModal} onClose={() => setShowSettingsModal(false)} />
-
-      <style>{listeningPracticeStyles}</style>
     </div>
   );
 }

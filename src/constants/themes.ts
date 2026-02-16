@@ -11,6 +11,26 @@ export interface LevelTheme {
   border: string;
 }
 
+/** Simple level accent colors - derived from LEVEL_THEMES.accent */
+export const LEVEL_COLORS: Record<JLPTLevel, string> = {
+  BT: '#8b5cf6',
+  N5: '#22c55e',
+  N4: '#3b82f6',
+  N3: '#f59e0b',
+  N2: '#ec4899',
+  N1: '#ef4444',
+};
+
+/** Extended level colors with bg/text/border for cards & badges */
+export const LEVEL_COLORS_EXTENDED: Record<JLPTLevel, { bg: string; text: string; border: string }> = {
+  BT: { bg: '#ede9fe', text: '#6d28d9', border: '#a78bfa' },
+  N5: { bg: '#ecfdf5', text: '#059669', border: '#10b981' },
+  N4: { bg: '#eff6ff', text: '#2563eb', border: '#3b82f6' },
+  N3: { bg: '#fef3c7', text: '#d97706', border: '#f59e0b' },
+  N2: { bg: '#fce7f3', text: '#db2777', border: '#ec4899' },
+  N1: { bg: '#fef2f2', text: '#dc2626', border: '#ef4444' },
+};
+
 export const LEVEL_THEMES: Record<JLPTLevel, LevelTheme> = {
   BT: {
     gradient: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 50%, #5b21b6 100%)',

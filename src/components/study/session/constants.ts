@@ -1,5 +1,5 @@
 // Constants for study session
-import type { MemorizationStatus, DifficultyLevel, JLPTLevel } from '../../../types/flashcard';
+import type { MemorizationStatus, DifficultyLevel } from '../../../types/flashcard';
 
 export const MEMORIZATION_OPTIONS: { value: MemorizationStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'Tất cả' },
@@ -17,14 +17,7 @@ export const DIFFICULTY_OPTIONS: { value: DifficultyLevel | 'all'; label: string
   { value: 'easy', label: 'Dễ nhớ' },
 ];
 
-export const LEVEL_COLORS: Record<JLPTLevel, { bg: string; text: string }> = {
-  BT: { bg: '#ede9fe', text: '#6d28d9' },
-  N5: { bg: '#ecfdf5', text: '#059669' },
-  N4: { bg: '#eff6ff', text: '#2563eb' },
-  N3: { bg: '#fef3c7', text: '#d97706' },
-  N2: { bg: '#fce7f3', text: '#db2777' },
-  N1: { bg: '#fef2f2', text: '#dc2626' },
-};
+export { LEVEL_COLORS_EXTENDED as LEVEL_COLORS } from '../../../constants/themes';
 
 export const FONT_OPTIONS = [
   { value: 'Noto Serif JP', label: 'Noto Serif JP' },

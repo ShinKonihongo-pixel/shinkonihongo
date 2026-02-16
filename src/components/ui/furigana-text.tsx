@@ -4,6 +4,7 @@
 
 import { useMemo } from 'react';
 import { useReadingSettings } from '../../contexts/reading-settings-context';
+import './furigana-text.css';
 
 // Convert [kanji|reading] format to ruby HTML
 function convertManualFuriganaToHtml(text: string): string {
@@ -51,26 +52,15 @@ export function FuriganaText({ text, className = '' }: FuriganaTextProps) {
   const furiganaHtml = convertManualFuriganaToHtml(text);
 
   return (
-    <>
-      <span
-        className={`furigana-text ${className}`}
-        style={textStyle}
-        dangerouslySetInnerHTML={{ __html: furiganaHtml }}
-      />
-      <style>{`
-        .furigana-text ruby {
-          ruby-align: center;
-          ruby-position: over;
-        }
-        .furigana-text rt {
-          font-size: ${settings.furiganaSize}em;
-          color: ${settings.furiganaColor || 'rgba(167, 139, 250, 0.95)'};
-          font-weight: 400;
-          text-align: center;
-          ruby-align: center;
-        }
-      `}</style>
-    </>
+    <span
+      className={`furigana-text ${className}`}
+      style={{
+        ...textStyle,
+        '--furigana-size': `${settings.furiganaSize}em`,
+        '--furigana-color': settings.furiganaColor || 'rgba(167, 139, 250, 0.95)',
+      } as React.CSSProperties}
+      dangerouslySetInnerHTML={{ __html: furiganaHtml }}
+    />
   );
 }
 

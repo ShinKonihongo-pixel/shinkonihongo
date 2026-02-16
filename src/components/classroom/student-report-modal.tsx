@@ -31,6 +31,7 @@ import {
   Users,
   Calendar,
 } from 'lucide-react';
+import './student-report-modal.css';
 
 interface StudentReportModalProps {
   isOpen: boolean;
@@ -551,13 +552,6 @@ export function StudentReportModal({
           {config.schoolAddress && ` | ${config.schoolAddress}`}
         </div>
       </div>
-
-      <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 }

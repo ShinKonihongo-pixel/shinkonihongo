@@ -9,6 +9,7 @@ import { useAIChallenge, type JLPTLevel } from '../../hooks/ai-challenge';
 import { AIChallengeMenu } from '../ai-challenge/ai-challenge-menu';
 import { AIChallengePlay } from '../ai-challenge/ai-challenge-play';
 import { AIChallengeResults } from '../ai-challenge/ai-challenge-results';
+import '../ai-challenge/ai-challenge.css';
 
 interface AIChallengePageProps {
   currentUser: {

@@ -25,6 +25,7 @@ import {
 import { GameCreate } from '../quiz-game/game-create';
 import { KanjiBattleSetup } from '../kanji-battle/kanji-battle-setup';
 import { FloatingMusicPlayer } from '../game-hub/floating-music-player';
+import '../game-hub/game-hub.css';
 
 // Lazy load game pages for code splitting
 const QuizGamePage = lazy(() => import('./quiz-game-page').then(m => ({ default: m.QuizGamePage })));

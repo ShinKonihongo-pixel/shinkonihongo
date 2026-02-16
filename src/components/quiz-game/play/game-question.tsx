@@ -1,5 +1,7 @@
 // Question and answers — premium game screen
-import { Trophy, Zap, Users, Shield, Snowflake, LogOut, Flame, Eye } from 'lucide-react';
+// Two-step answer: select (changeable) → press Submit to lock in
+import { useState } from 'react';
+import { Trophy, Zap, Users, Shield, Snowflake, LogOut, Flame, Eye, Send } from 'lucide-react';
 import type { QuizGame, GamePlayer, GameQuestion as GameQuestionType } from '../../../types/quiz-game';
 import { ANSWER_OPTIONS } from '../../../constants/answer-options';
 
@@ -28,6 +30,8 @@ export function GameQuestion({
   gameQuestionFontSize = 2,
   gameAnswerFontSize = 1.1,
 }: GameQuestionProps) {
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const hasAnswered = isSpectator || currentPlayer?.currentAnswer !== null;
   const isBlocked = currentPlayer?.isBlocked;
   const hasTimeFreeze = currentPlayer?.hasTimeFreeze;
@@ -35,6 +39,13 @@ export function GameQuestion({
   const answeredCount = sortedPlayers.filter(p => p.currentAnswer !== null).length;
   const timerProgress = (timeLeft / currentQuestion.timeLimit) * 100;
   const streak = currentPlayer?.streak || 0;
+
+  const handleSubmitAnswer = async () => {
+    if (selectedAnswer === null || hasAnswered || submitting) return;
+    setSubmitting(true);
+    await onSubmitAnswer(selectedAnswer);
+    setSubmitting(false);
+  };
 
   return (
     <div className="game-fullscreen game-question-screen">
@@ -125,26 +136,31 @@ export function GameQuestion({
         </div>
       ) : (
         <div className="answers-grid">
-          {currentQuestion.options.map((option, index) => (
-            <button
-              key={index}
-              className={`answer-card ${currentPlayer?.currentAnswer === index ? 'selected' : ''} ${hasAnswered ? 'disabled' : ''}`}
-              onClick={() => !hasAnswered && onSubmitAnswer(index)}
-              style={{
-                background: ANSWER_OPTIONS[index].bg,
-                fontSize: `${gameAnswerFontSize}rem`,
-                animationDelay: `${index * 0.08}s`,
-              }}
-              disabled={hasAnswered}
-            >
-              <img src={ANSWER_OPTIONS[index].icon} alt={ANSWER_OPTIONS[index].label} className="answer-icon" />
-              <span className="answer-text">{option}</span>
-            </button>
-          ))}
+          {currentQuestion.options.map((option, index) => {
+            const isSelected = hasAnswered
+              ? currentPlayer?.currentAnswer === index
+              : selectedAnswer === index;
+            return (
+              <button
+                key={index}
+                className={`answer-card ${isSelected ? 'selected' : ''} ${hasAnswered ? 'disabled' : ''}`}
+                onClick={() => !hasAnswered && setSelectedAnswer(index)}
+                style={{
+                  background: ANSWER_OPTIONS[index].bg,
+                  fontSize: `${gameAnswerFontSize}rem`,
+                  animationDelay: `${index * 0.08}s`,
+                }}
+                disabled={hasAnswered}
+              >
+                <img src={ANSWER_OPTIONS[index].icon} alt={ANSWER_OPTIONS[index].label} className="answer-icon" />
+                <span className="answer-text">{option}</span>
+              </button>
+            );
+          })}
         </div>
       )}
 
-      {/* Bottom status bar */}
+      {/* Bottom bar: submit button + status */}
       <div className="game-bottom-bar">
         {isSpectator ? (
           <div className="spectator-status">
@@ -156,6 +172,15 @@ export function GameQuestion({
             <span className="status-check">✓</span>
             <span>Đã trả lời</span>
           </div>
+        ) : selectedAnswer !== null ? (
+          <button
+            className="submit-answer-btn"
+            onClick={handleSubmitAnswer}
+            disabled={submitting}
+          >
+            <Send size={18} />
+            <span>{submitting ? 'Đang gửi...' : 'Trả lời'}</span>
+          </button>
         ) : (
           <div className="waiting-status">
             <Users size={16} />

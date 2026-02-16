@@ -14,6 +14,7 @@ import { GameLobby } from '../quiz-game/game-lobby';
 import { GamePlay } from '../quiz-game/game-play';
 import { GameResults } from '../quiz-game/game-results';
 import { GameFriendInvite } from '../quiz-game/game-friend-invite';
+import '../quiz-game/quiz-game.css';
 
 interface QuizGamePageProps {
   currentUserId: string;
@@ -130,12 +131,15 @@ export function QuizGamePage({
   const wasInGame = useRef(false);
   if (game) wasInGame.current = true;
 
+  // Guard: skip kicked modal when player voluntarily leaves
+  const leavingVoluntarily = useRef(false);
+
   // Kicked/deleted notification state
   const [kickedMessage, setKickedMessage] = useState<string | null>(null);
 
-  // Auto-navigate when game deleted or player kicked
+  // Auto-navigate when game deleted or player kicked (skip if voluntary leave)
   useEffect(() => {
-    if (!wasInGame.current || game) return;
+    if (!wasInGame.current || game || leavingVoluntarily.current) return;
     if (error === 'Game đã bị xóa') {
       setKickedMessage('Phòng chơi đã bị huỷ bởi host.');
     } else if (error === 'Bạn đã bị kick khỏi phòng') {
@@ -164,6 +168,7 @@ export function QuizGamePage({
   const currentView = getCurrentView();
 
   const handleLeaveGame = useCallback(async () => {
+    leavingVoluntarily.current = true;
     await leaveGame();
     resetGame();
     onGoHome();

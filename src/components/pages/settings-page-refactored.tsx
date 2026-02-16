@@ -13,6 +13,7 @@ import { ListeningSettings } from './settings/listening-settings';
 import { SystemSettings } from './settings/system-settings';
 import { ProfileSection } from './settings/profile-section';
 import { FriendsSection } from './settings/friends-section';
+import './settings/settings.css';
 
 export type { SettingsPageProps } from './settings/settings-types';
 

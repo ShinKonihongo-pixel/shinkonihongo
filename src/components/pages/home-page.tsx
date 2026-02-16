@@ -5,6 +5,8 @@ import { useState } from 'react';
 import type { JLPTLevel, Lesson, Flashcard } from '../../types/flashcard';
 import type { ProgressSummary } from '../../types/progress';
 import { DailyWordsTask } from '../home/daily-words-task';
+import { JLPT_LEVELS } from '../../constants/jlpt';
+import { LEVEL_COLORS } from '../../constants/themes';
 import {
   Play,
   ChevronRight,
@@ -22,6 +24,7 @@ import {
   ArrowRight,
   Sparkles,
 } from 'lucide-react';
+import '../home/home.css';
 
 export interface StudySelection {
   levels: JLPTLevel[];
@@ -60,17 +63,6 @@ interface HomePageProps {
   dailyWords?: DailyWordsProps;
   onSpeak?: (text: string) => void;
 }
-
-const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
-
-const LEVEL_COLORS: Record<JLPTLevel, string> = {
-  BT: '#8b5cf6',
-  N5: '#22c55e',
-  N4: '#06b6d4',
-  N3: '#3b82f6',
-  N2: '#8b5cf6',
-  N1: '#f59e0b',
-};
 
 const ACTIVITIES = [
   { id: 'study', icon: BookOpen, label: 'Từ vựng', desc: '単語', color: '#3b82f6' },

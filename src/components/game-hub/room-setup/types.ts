@@ -67,4 +67,4 @@ export interface GameRoomSetupProps {
   inline?: boolean;
 }
 
-export const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
+export { JLPT_LEVELS } from '../../../constants/jlpt';

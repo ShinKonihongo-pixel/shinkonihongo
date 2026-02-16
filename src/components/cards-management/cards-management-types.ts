@@ -37,7 +37,7 @@ export type LectureNavState =
   | { type: 'folder'; level: JLPTLevel; folderId: string; folderName: string };
 
 // Constants
-export const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
+export { JLPT_LEVELS } from '../../constants/jlpt';
 export const JLPT_QUESTION_LEVELS: JLPTQuestionLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 export const KAIWA_LEVELS: KaiwaJLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 export const QUESTION_CATEGORIES: { value: QuestionCategory; label: string }[] = [

@@ -9,19 +9,13 @@ import type { CurrentUser } from '../../types/user';
 import { EXERCISE_TYPE_LABELS, EXERCISE_TYPE_ICONS, QUESTION_COUNT_OPTIONS, TIME_PER_QUESTION_OPTIONS, getTotalQuestionCount, initQuestionCountByType } from '../../types/exercise';
 import { ConfirmModal } from '../ui/confirm-modal';
 import { LevelGrid } from './level-grid';
+import { JLPT_LEVELS } from '../../constants/jlpt';
+import { LEVEL_COLORS_EXTENDED } from '../../constants/themes';
 
-const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 const EXERCISE_TYPES: ExerciseType[] = ['vocabulary', 'meaning', 'kanji_to_vocab', 'vocab_to_kanji', 'listening_write', 'sentence_translation'];
 
 // Level colors for visual distinction
-const LEVEL_COLORS: Record<JLPTLevel, { bg: string; text: string; border: string }> = {
-  BT: { bg: '#ede9fe', text: '#6d28d9', border: '#a78bfa' },
-  N5: { bg: '#e8f5e9', text: '#2e7d32', border: '#81c784' },
-  N4: { bg: '#e3f2fd', text: '#1565c0', border: '#64b5f6' },
-  N3: { bg: '#fff3e0', text: '#ef6c00', border: '#ffb74d' },
-  N2: { bg: '#fce4ec', text: '#c2185b', border: '#f06292' },
-  N1: { bg: '#f3e5f5', text: '#7b1fa2', border: '#ba68c8' },
-};
+const LEVEL_COLORS = LEVEL_COLORS_EXTENDED;
 
 interface ExercisesTabProps {
   exercises: Exercise[];

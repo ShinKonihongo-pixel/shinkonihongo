@@ -1,0 +1,17 @@
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          .no-print {
+            display: none !important;
+          }
+          [ref="printRef"], [ref="printRef"] * {
+            visibility: visible;
+          }
+          [ref="printRef"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
+        }

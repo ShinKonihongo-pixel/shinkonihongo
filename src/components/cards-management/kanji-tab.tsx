@@ -10,10 +10,10 @@ import { LevelGrid } from './level-grid';
 import type { JLPTLevel } from './cards-management-types';
 import type { KanjiCard, KanjiCardFormData, KanjiLesson } from '../../types/kanji';
 import type { CurrentUser } from '../../types/user';
+import { LEVEL_COLORS } from '../../constants/themes';
 
 // BT levels array (includes Bộ thủ)
 const KANJI_LEVELS: JLPTLevel[] = ['BT', 'N5', 'N4', 'N3', 'N2', 'N1'];
-const LEVEL_COLORS: Record<JLPTLevel, string> = { BT: '#8b5cf6', N5: '#4CAF50', N4: '#2196F3', N3: '#FF9800', N2: '#9C27B0', N1: '#E34234' };
 
 // Seed config for each level
 const SEED_CONFIG: Record<JLPTLevel, { start: number; end: number; folders: string[] }> = {

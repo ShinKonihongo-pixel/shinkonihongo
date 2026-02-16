@@ -20,6 +20,7 @@ import type { CreateGameData, GameQuestionSource, GameDifficultyLevel, HostMode 
 import type { AppSettings } from '../../hooks/use-settings';
 import type { UserRole } from '../../types/user';
 import { useBodyScrollLock } from '../../hooks/use-body-scroll-lock';
+import { JLPT_LEVELS } from '../../constants/jlpt';
 
 interface GameCreateProps {
   flashcards: Flashcard[];
@@ -34,7 +35,6 @@ interface GameCreateProps {
   userRole?: UserRole;
 }
 
-const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 const JLPT_QUESTION_LEVELS: JLPTQuestionLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 
 // Difficulty options for flashcard source

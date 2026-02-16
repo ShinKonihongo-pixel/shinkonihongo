@@ -14,6 +14,7 @@ import { useKaiwaCharacters, createUtteranceForCharacter, getPresetForCharacter 
 import { KaiwaCharacterModal } from '../kaiwa-character-modal';
 import type { JLPTLevel } from '../../../types/flashcard';
 import type { ListeningAudio, ListeningFolder, ListeningLessonType, KaiwaLine, TtsMode } from '../../../types/listening';
+import './listening-shared.css';
 
 interface ListeningAudioViewProps {
   level: JLPTLevel;
@@ -58,8 +59,8 @@ interface ListeningAudioViewProps {
   setAudioDescription: (desc: string) => void;
   selectedFile: File | null;
   setSelectedFile: (file: File | null) => void;
-  fileInputRef: React.RefObject<HTMLInputElement>;
-  audioRef: React.RefObject<HTMLAudioElement>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  audioRef: React.RefObject<HTMLAudioElement | null>;
   showTextToSpeech: boolean;
   setShowTextToSpeech: (show: boolean) => void;
   ttsTitle: string;
@@ -78,7 +79,6 @@ interface ListeningAudioViewProps {
   setKaiwaLines: (lines: KaiwaLine[]) => void;
   generatingFurigana: 'title' | 'desc' | 'ttsText' | null;
   setGeneratingFurigana: (field: 'title' | 'desc' | 'ttsText' | null) => void;
-  sharedStyles: string;
 }
 
 export function ListeningAudioView({
@@ -136,7 +136,6 @@ export function ListeningAudioView({
   setKaiwaLines,
   generatingFurigana,
   setGeneratingFurigana,
-  sharedStyles,
 }: ListeningAudioViewProps) {
   const theme = LEVEL_THEMES[level];
   const typeTheme = LESSON_TYPE_THEMES[lessonType];
@@ -914,7 +913,6 @@ export function ListeningAudioView({
       )}
 
       <audio ref={audioRef} onEnded={() => setPlayingAudioId(null)} />
-      <style>{sharedStyles}</style>
     </div>
   );
 }

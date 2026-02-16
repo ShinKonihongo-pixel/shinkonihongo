@@ -7,8 +7,6 @@ import { Lock, Swords, ChevronLeft, Crown, Sparkles, Trophy } from 'lucide-react
 import type { AIDifficulty, AIOpponent } from '../../types/ai-challenge';
 import { getAllAIsSorted } from '../../types/ai-challenge';
 import { useSettings } from '../../hooks/use-settings';
-
-// JLPT levels - each level has 27 AI opponents
 const JLPT_LEVELS = ['N5', 'N4', 'N3', 'N2', 'N1'] as const;
 type JLPTLevel = typeof JLPT_LEVELS[number];
 

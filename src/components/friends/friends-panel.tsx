@@ -5,6 +5,7 @@ import type { User } from '../../types/user';
 import type { FriendWithUser } from '../../types/friendship';
 import { Users, UserPlus, UserMinus, MessageCircle, Gamepad2, Gift, Search } from 'lucide-react';
 import { ConfirmModal } from '../ui/confirm-modal';
+import './friends.css';
 
 interface FriendsPanelProps {
   friends: FriendWithUser[];

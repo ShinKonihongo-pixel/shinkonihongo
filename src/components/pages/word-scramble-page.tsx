@@ -5,7 +5,7 @@ import { useGameTimer } from './word-scramble/use-game-timer';
 import { SetupScreen } from './word-scramble/setup-screen';
 import { PlayingScreen } from './word-scramble/playing-screen';
 import { ResultScreen } from './word-scramble/result-screen';
-import { WordScrambleStyles } from './word-scramble/word-scramble-styles';
+import './word-scramble/word-scramble.css';
 
 export const WordScramblePage: React.FC<WordScramblePageProps> = ({
   onClose,
@@ -78,8 +78,6 @@ export const WordScramblePage: React.FC<WordScramblePageProps> = ({
           onResetGame={resetGame}
         />
       )}
-
-      <WordScrambleStyles />
     </div>
   );
 };

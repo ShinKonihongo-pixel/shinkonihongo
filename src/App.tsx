@@ -5,27 +5,22 @@ import { useState, useMemo, useEffect, useCallback, lazy, Suspense } from 'react
 // Dev: Load seed functions to window for console access
 import './scripts/seed-folders';
 import type { JLPTLevel, Lesson } from './types/flashcard';
-import { useFlashcards } from './hooks/use-flashcards';
-import { useLessons } from './hooks/use-lessons';
 import { useSettings, useGlobalTheme, THEME_PRESETS } from './hooks/use-settings';
-import { useAuth } from './hooks/use-auth';
 import { type Page } from './components/layout/header';
 import { Sidebar } from './components/layout/sidebar';
 import { LoginPage } from './components/pages/login-page';
 import { HomePage } from './components/pages/home-page';
 import { ErrorBoundary } from './components/common/error-boundary';
-import { useReading } from './hooks/use-reading';
-import { useExercises } from './hooks/use-exercises';
 
 // Lazy-loaded page components
 const CardsPage = lazy(() => import('./components/pages/cards-page').then(m => ({ default: m.CardsPage })));
 const StudyPage = lazy(() => import('./components/pages/study-page').then(m => ({ default: m.StudyPage })));
 const SettingsPage = lazy(() => import('./components/pages/settings-page').then(m => ({ default: m.SettingsPage })));
-const JLPTPage = lazy(() => import('./components/pages/jlpt-page').then(m => ({ default: m.JLPTPage })));
+const JLPTPage = lazy(() => import('./components/pages/jlpt/index.tsx').then(m => ({ default: m.JLPTPage })));
 const ChatPage = lazy(() => import('./components/pages/chat-page').then(m => ({ default: m.ChatPage })));
-const KaiwaPage = lazy(() => import('./components/pages/kaiwa-page').then(m => ({ default: m.KaiwaPage })));
+const KaiwaPage = lazy(() => import('./components/pages/kaiwa/index.tsx').then(m => ({ default: m.KaiwaPage })));
 const LecturePage = lazy(() => import('./components/pages/lecture-page').then(m => ({ default: m.LecturePage })));
-const LectureEditorPage = lazy(() => import('./components/pages/lecture-editor-page').then(m => ({ default: m.LectureEditorPage })));
+const LectureEditorPage = lazy(() => import('./components/pages/lecture-editor').then(m => ({ default: m.LectureEditorPage })));
 const ProgressPage = lazy(() => import('./components/pages/progress-page').then(m => ({ default: m.ProgressPage })));
 const ClassroomPage = lazy(() => import('./components/pages/classroom-page').then(m => ({ default: m.ClassroomPage })));
 const BranchManagementPage = lazy(() => import('./components/pages/branch-management-page').then(m => ({ default: m.BranchManagementPage })));
@@ -34,29 +29,19 @@ const SalaryPage = lazy(() => import('./components/pages/salary-page').then(m =>
 const MyTeachingPage = lazy(() => import('./components/pages/my-teaching-page').then(m => ({ default: m.MyTeachingPage })));
 const NotificationsPage = lazy(() => import('./components/pages/notifications-page').then(m => ({ default: m.NotificationsPage })));
 const GameHubPage = lazy(() => import('./components/pages/game-hub-page').then(m => ({ default: m.GameHubPage })));
-const ListeningPracticePage = lazy(() => import('./components/pages/listening-practice-page').then(m => ({ default: m.ListeningPracticePage })));
+const ListeningPracticePage = lazy(() => import('./components/pages/audio-player-page/index.tsx').then(m => ({ default: m.ListeningPracticePage })));
 const GrammarStudyPage = lazy(() => import('./components/pages/grammar-study-page').then(m => ({ default: m.GrammarStudyPage })));
-const ReadingPracticePage = lazy(() => import('./components/pages/reading-practice-page').then(m => ({ default: m.ReadingPracticePage })));
-const ExercisePage = lazy(() => import('./components/pages/exercise-page').then(m => ({ default: m.ExercisePage })));
+const ReadingPracticePage = lazy(() => import('./components/pages/reading-practice/index.tsx').then(m => ({ default: m.ReadingPracticePage })));
+const ExercisePage = lazy(() => import('./components/pages/exercise/index.tsx').then(m => ({ default: m.ExercisePage })));
 const KanjiStudyPage = lazy(() => import('./components/pages/kanji-study-page').then(m => ({ default: m.KanjiStudyPage })));
 const CenterMembersPage = lazy(() => import('./components/pages/center-members-page').then(m => ({ default: m.CenterMembersPage })));
 const CenterDashboardPage = lazy(() => import('./components/pages/center-dashboard-page').then(m => ({ default: m.CenterDashboardPage })));
+
 import type { GameType } from './types/game-hub';
-import { useJLPTQuestions } from './hooks/use-jlpt-questions';
-import { useKaiwaQuestions } from './hooks/use-kaiwa-questions';
-import { useKaiwaTopics } from './hooks/use-kaiwa-topics';
-import { useCustomTopics } from './hooks/use-custom-topics';
-import { useUserHistory } from './hooks/use-user-history';
 import { useProgress } from './hooks/use-progress';
 import { useNotifications } from './hooks/use-notifications';
 import { useOffline } from './hooks/use-offline';
-import { useFriendships, useBadges, useGameInvitations, useFriendNotifications } from './hooks/use-friendships';
-import { useClassroomNotifications } from './hooks/use-classrooms';
 import { useDailyWords } from './hooks/use-daily-words';
-import { useGrammarCards } from './hooks/use-grammar-cards';
-import { useGrammarLessons } from './hooks/use-grammar-lessons';
-import { useKanjiCards } from './hooks/use-kanji-cards';
-import { useKanjiLessons } from './hooks/use-kanji-lessons';
 import { OfflineIndicator } from './components/common/offline-indicator';
 import { FloatingChatButton } from './components/common/floating-chat-button';
 import { FloatingChatPanel } from './components/common/floating-chat-panel';
@@ -68,15 +53,143 @@ import { useUrlRouter } from './hooks/use-url-router';
 import { CenterRouter } from './components/center/center-router';
 import { CenterProvider } from './contexts/center-context';
 import { useCenterData } from './hooks/use-center-data';
+
+// Data contexts
+import { UserDataProvider, useUserData } from './contexts/user-data-context';
+import { FlashcardDataProvider, useFlashcardData } from './contexts/flashcard-data-context';
+import { JLPTDataProvider, useJLPTData } from './contexts/jlpt-data-context';
+
 import './App.css';
 
 function App() {
-  // Center URL router - check if we're on a /center/:slug path
+  return (
+    <UserDataProvider>
+      <AppInner />
+    </UserDataProvider>
+  );
+}
+
+function AppInner() {
+  const { currentUser, isLoggedIn, login, register } = useUserData();
   const urlRouter = useUrlRouter();
 
+  // Center router - non-app center routes (landing, join) → CenterRouter
+  if (urlRouter.centerSlug && !urlRouter.isCenterApp) {
+    return (
+      <CenterRouter
+        slug={urlRouter.centerSlug}
+        isPublicLanding={urlRouter.isPublicLanding}
+        isJoinPage={urlRouter.isJoinPage}
+        inviteCode={urlRouter.inviteCode}
+        currentUser={currentUser}
+        navigate={urlRouter.navigate}
+      />
+    );
+  }
+
+  // Show login page if not logged in
+  if (!isLoggedIn) {
+    return (
+      <div className="app">
+        <LoginPage onLogin={login} onRegister={register} />
+      </div>
+    );
+  }
+
+  // Center app mode - loading/error/not-member states
+  const isCenterApp = urlRouter.isCenterApp && !!urlRouter.centerSlug;
+  const centerSlug = urlRouter.isCenterApp ? urlRouter.centerSlug : null;
+  const centerData = useCenterData(centerSlug, currentUser?.id ?? null);
+
+  if (isCenterApp && centerData.loading) {
+    return (
+      <div className="center-loading">
+        <div className="loading-spinner" />
+        <span>Đang tải trung tâm...</span>
+      </div>
+    );
+  }
+
+  if (isCenterApp && (centerData.error || !centerData.center)) {
+    return (
+      <div className="center-error">
+        <h2>404</h2>
+        <p>{centerData.error || 'Không tìm thấy trung tâm'}</p>
+        <button className="btn btn-primary" onClick={() => urlRouter.navigate('/')}>
+          Về trang chủ
+        </button>
+      </div>
+    );
+  }
+
+  if (isCenterApp && !centerData.userRole) {
+    return (
+      <div className="center-error">
+        <h2>Chưa là thành viên</h2>
+        <p>Bạn chưa tham gia trung tâm {centerData.center?.name}.</p>
+        <button
+          className="btn btn-primary"
+          onClick={() => urlRouter.navigate(`/center/${urlRouter.centerSlug}/join`)}
+        >
+          Tham gia ngay
+        </button>
+        <button
+          className="btn btn-secondary"
+          style={{ marginLeft: '0.5rem' }}
+          onClick={() => urlRouter.navigate('/')}
+        >
+          Về trang chủ
+        </button>
+      </div>
+    );
+  }
+
+  // Wrap in data providers
+  return (
+    <FlashcardDataProvider>
+      <JLPTDataProvider currentUserId={currentUser?.id ?? ''}>
+        <ReadingSettingsProvider>
+          <ListeningSettingsProvider>
+            <AppContentWrapper
+              isCenterApp={isCenterApp}
+              centerData={centerData}
+            />
+          </ListeningSettingsProvider>
+        </ReadingSettingsProvider>
+      </JLPTDataProvider>
+    </FlashcardDataProvider>
+  );
+}
+
+interface AppContentWrapperProps {
+  isCenterApp: boolean;
+  centerData: ReturnType<typeof useCenterData>;
+}
+
+function AppContentWrapper({ isCenterApp, centerData }: AppContentWrapperProps) {
+  const content = <AppContent />;
+
+  // Wrap in CenterProvider when in center app mode
+  if (isCenterApp && centerData.center && centerData.userRole) {
+    return (
+      <CenterProvider center={centerData.center} userRole={centerData.userRole}>
+        {content}
+      </CenterProvider>
+    );
+  }
+
+  return content;
+}
+
+function AppContent() {
+  // Use all 3 contexts
+  const userData = useUserData();
+  const flashcardData = useFlashcardData();
+  const jlptData = useJLPTData();
+
+  // Local navigation state
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [, setInitialFilterLevel] = useState<JLPTLevel | 'all'>('all');
-  // Game Hub state - unified game join handling
   const [initialGameType, setInitialGameType] = useState<GameType | null>(null);
   const [initialGameJoinCode, setInitialGameJoinCode] = useState<string | null>(null);
   const [editingLectureId, setEditingLectureId] = useState<string | undefined>(undefined);
@@ -120,13 +233,13 @@ function App() {
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
-  // Auth
+  // Destructure from contexts
   const {
     currentUser,
     users,
-    isLoggedIn,
     isAdmin,
-    login,
+    isSuperAdmin,
+    canAccessLocked,
     logout,
     register,
     updateUserRole,
@@ -137,11 +250,100 @@ function App() {
     updateProfileBackground,
     updateJlptLevel,
     updateVipExpiration,
-  } = useAuth();
+    studySessions,
+    gameSessions,
+    jlptSessions,
+    userStats,
+    historyLoading,
+    addStudySession,
+    addGameSession,
+    addJLPTSession,
+    friendsWithUsers,
+    pendingRequests,
+    friendsLoading,
+    sendFriendRequest,
+    respondFriendRequest,
+    removeFriend,
+    isFriend,
+    receivedBadges,
+    badgeStats,
+    sendBadge,
+    sendGameInvitation,
+    classroomNotifications,
+    markClassroomRead,
+    markAllClassroomRead,
+    friendNotifications,
+    markFriendRead,
+    markAllFriendRead,
+  } = userData;
 
-  // Center data - called unconditionally (React hook rules), returns empty when no slug
-  const centerSlug = urlRouter.isCenterApp ? urlRouter.centerSlug : null;
-  const centerData = useCenterData(centerSlug, currentUser?.id ?? null);
+  const {
+    cards,
+    addCard,
+    updateCard,
+    deleteCard,
+    getStatsByLevel,
+    lessons,
+    addLesson,
+    updateLesson,
+    deleteLesson,
+    getLessonsByLevel,
+    getChildLessons,
+    toggleLock,
+    toggleLessonHide,
+    reorderLessons,
+    grammarCards,
+    updateGrammarCard,
+    grammarLessons,
+    getGrammarLessonsByLevel,
+    getGrammarChildLessons,
+    kanjiCards,
+    updateKanjiCard,
+    kanjiLessons,
+    getKanjiLessonsByLevel,
+    getKanjiChildLessons,
+    getPublishedExercises,
+    readingPassages,
+    readingFolders,
+    getReadingFoldersByLevel,
+    getReadingPassagesByFolder,
+  } = flashcardData;
+
+  const {
+    jlptQuestions,
+    jlptFolders,
+    addJLPTQuestion,
+    updateJLPTQuestion,
+    deleteJLPTQuestion,
+    addJLPTFolder,
+    updateJLPTFolder,
+    deleteJLPTFolder,
+    getFoldersByLevelAndCategory,
+    getQuestionsByFolder,
+    kaiwaQuestions,
+    kaiwaFolders,
+    addKaiwaQuestion,
+    updateKaiwaQuestion,
+    deleteKaiwaQuestion,
+    addKaiwaFolder,
+    updateKaiwaFolder,
+    deleteKaiwaFolder,
+    getFoldersByLevelAndTopic,
+    getQuestionsByKaiwaFolder,
+    getQuestionsByLevelAndTopic,
+    advancedKaiwaTopics,
+    advancedKaiwaQuestions,
+    addAdvancedKaiwaTopic,
+    updateAdvancedKaiwaTopic,
+    deleteAdvancedKaiwaTopic,
+    addAdvancedKaiwaQuestion,
+    updateAdvancedKaiwaQuestion,
+    deleteAdvancedKaiwaQuestion,
+    getAdvancedKaiwaQuestionsByTopic,
+    customTopics,
+    customTopicQuestions,
+    getCustomTopicQuestionsByTopic,
+  } = jlptData;
 
   // JLPT level modal state - show if logged in but no level set
   const [showJlptLevelModal, setShowJlptLevelModal] = useState(false);
@@ -150,87 +352,24 @@ function App() {
   // Show JLPT level modal on first login - derived state sync
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (isLoggedIn && currentUser && !currentUser.jlptLevel && !jlptLevelSkipped) {
+    if (currentUser && !currentUser.jlptLevel && !jlptLevelSkipped) {
       setShowJlptLevelModal(true);
     } else {
       setShowJlptLevelModal(false);
     }
-  }, [isLoggedIn, currentUser, jlptLevelSkipped]);
+  }, [currentUser, jlptLevelSkipped]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   // Reset to home page when user logs in (unless joining via QR code)
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (isLoggedIn && !initialGameJoinCode) {
+    if (currentUser && !initialGameJoinCode) {
       setCurrentPage('home');
-    } else if (isLoggedIn && initialGameJoinCode) {
+    } else if (currentUser && initialGameJoinCode) {
       setCurrentPage('game-hub');
     }
-  }, [isLoggedIn, initialGameJoinCode]);
+  }, [currentUser, initialGameJoinCode]);
   /* eslint-enable react-hooks/set-state-in-effect */
-
-  // User history
-  const {
-    studySessions,
-    gameSessions,
-    jlptSessions,
-    stats: userStats,
-    loading: historyLoading,
-    addStudySession,
-    addGameSession,
-    addJLPTSession,
-  } = useUserHistory(currentUser?.id);
-
-  const {
-    cards,
-    addCard,
-    updateCard,
-    deleteCard,
-    getStatsByLevel,
-  } = useFlashcards();
-
-  const {
-    lessons,
-    addLesson,
-    updateLesson,
-    deleteLesson,
-    getLessonsByLevel,
-    getChildLessons,
-    toggleLock,
-    toggleHide: toggleLessonHide,
-    reorderLessons,
-  } = useLessons();
-
-  // Grammar cards
-  const { grammarCards, updateGrammarCard } = useGrammarCards();
-
-  // Grammar lessons (separate from vocabulary lessons)
-  const {
-    lessons: grammarLessons,
-    getParentLessonsByLevel: getGrammarLessonsByLevel,
-    getChildLessons: getGrammarChildLessons,
-  } = useGrammarLessons();
-
-  // Kanji cards
-  const { kanjiCards, updateKanjiCard } = useKanjiCards();
-
-  // Kanji lessons (separate from vocabulary/grammar lessons)
-  const {
-    lessons: kanjiLessons,
-    getParentLessonsByLevel: getKanjiLessonsByLevel,
-    getChildLessons: getKanjiChildLessons,
-  } = useKanjiLessons();
-
-  // Exercises
-  const { getPublishedExercises } = useExercises();
-
-  // Reading passages
-  const {
-    passages: readingPassages,
-    folders: readingFolders,
-    getFoldersByLevel: getReadingFoldersByLevel,
-    getPassagesByFolder: getReadingPassagesByFolder,
-  } = useReading();
 
   const { settings, updateSetting, resetSettings } = useSettings();
   const { theme, applyPreset, resetTheme } = useGlobalTheme();
@@ -242,58 +381,6 @@ function App() {
     enabled: settings.dailyWordsEnabled,
     userJlptLevel: currentUser?.jlptLevel,
   });
-
-  const {
-    questions: jlptQuestions,
-    folders: jlptFolders,
-    addJLPTQuestion,
-    updateJLPTQuestion,
-    deleteJLPTQuestion,
-    addJLPTFolder,
-    updateJLPTFolder,
-    deleteJLPTFolder,
-    getFoldersByLevelAndCategory,
-    getQuestionsByFolder,
-  } = useJLPTQuestions();
-
-  const {
-    questions: kaiwaQuestions,
-    folders: kaiwaFolders,
-    addKaiwaQuestion,
-    updateKaiwaQuestion,
-    deleteKaiwaQuestion,
-    addKaiwaFolder,
-    updateKaiwaFolder,
-    deleteKaiwaFolder,
-    getFoldersByLevelAndTopic,
-    getQuestionsByFolder: getQuestionsByKaiwaFolder,
-    getQuestionsByLevelAndTopic,
-  } = useKaiwaQuestions();
-
-  // Advanced Kaiwa topics for conversation practice
-  const {
-    topics: advancedKaiwaTopics,
-    questions: advancedKaiwaQuestions,
-    addTopic: addAdvancedKaiwaTopic,
-    updateTopic: updateAdvancedKaiwaTopic,
-    deleteTopic: deleteAdvancedKaiwaTopic,
-    addQuestion: addAdvancedKaiwaQuestion,
-    updateQuestion: updateAdvancedKaiwaQuestion,
-    deleteQuestion: deleteAdvancedKaiwaQuestion,
-    getQuestionsByTopic: getAdvancedKaiwaQuestionsByTopic,
-  } = useKaiwaTopics({ currentUserId: currentUser?.id ?? '' });
-
-  // Custom topics for Kaiwa conversation practice
-  const {
-    topics: customTopics,
-    questions: customTopicQuestions,
-    getQuestionsByTopic: getCustomTopicQuestionsByTopic,
-  } = useCustomTopics();
-
-  // Check if user is VIP (can access locked lessons)
-  const isVip = currentUser?.role === 'vip_user';
-  const isSuperAdmin = currentUser?.role === 'super_admin';
-  const canAccessLocked = isAdmin || isVip;
 
   // Check if user can see hidden lessons (creator or super_admin)
   const canSeeHiddenLesson = useCallback((lesson: Lesson): boolean => {
@@ -347,113 +434,7 @@ function App() {
   // Offline support
   const offline = useOffline(cards, lessons);
 
-  // Friendships & Badges
-  const {
-    friendsWithUsers,
-    pendingRequests,
-    loading: friendsLoading,
-    sendRequest: sendFriendRequest,
-    respondToRequest: respondFriendRequest,
-    removeFriend,
-    isFriend,
-  } = useFriendships(currentUser?.id ?? null, users);
-
-  const {
-    receivedBadges,
-    badgeStats,
-    sendBadge,
-  } = useBadges(currentUser?.id ?? null, users);
-
-  const {
-    sendInvitation: sendGameInvitation,
-  } = useGameInvitations(currentUser?.id ?? null);
-
-  // Notifications hooks
-  const {
-    notifications: classroomNotifications,
-    markAsRead: markClassroomRead,
-    markAllAsRead: markAllClassroomRead,
-  } = useClassroomNotifications(currentUser?.id ?? null);
-
-  const {
-    notifications: friendNotifications,
-    markAsRead: markFriendRead,
-    markAllAsRead: markAllFriendRead,
-  } = useFriendNotifications(currentUser?.id ?? null);
-
-  // Center router - non-app center routes (landing, join) → CenterRouter
-  if (urlRouter.centerSlug && !urlRouter.isCenterApp) {
-    return (
-      <CenterRouter
-        slug={urlRouter.centerSlug}
-        isPublicLanding={urlRouter.isPublicLanding}
-        isJoinPage={urlRouter.isJoinPage}
-        inviteCode={urlRouter.inviteCode}
-        currentUser={currentUser}
-        navigate={urlRouter.navigate}
-      />
-    );
-  }
-
-  // Show login page if not logged in
-  if (!isLoggedIn) {
-    return (
-      <div className="app">
-        <LoginPage onLogin={login} onRegister={register} />
-      </div>
-    );
-  }
-
-  // Center app mode - loading/error/not-member states
-  const isCenterApp = urlRouter.isCenterApp && !!urlRouter.centerSlug;
-
-  if (isCenterApp && centerData.loading) {
-    return (
-      <div className="center-loading">
-        <div className="loading-spinner" />
-        <span>Đang tải trung tâm...</span>
-      </div>
-    );
-  }
-
-  if (isCenterApp && (centerData.error || !centerData.center)) {
-    return (
-      <div className="center-error">
-        <h2>404</h2>
-        <p>{centerData.error || 'Không tìm thấy trung tâm'}</p>
-        <button className="btn btn-primary" onClick={() => urlRouter.navigate('/')}>
-          Về trang chủ
-        </button>
-      </div>
-    );
-  }
-
-  if (isCenterApp && !centerData.userRole) {
-    return (
-      <div className="center-error">
-        <h2>Chưa là thành viên</h2>
-        <p>Bạn chưa tham gia trung tâm {centerData.center?.name}.</p>
-        <button
-          className="btn btn-primary"
-          onClick={() => urlRouter.navigate(`/center/${urlRouter.centerSlug}/join`)}
-        >
-          Tham gia ngay
-        </button>
-        <button
-          className="btn btn-secondary"
-          style={{ marginLeft: '0.5rem' }}
-          onClick={() => urlRouter.navigate('/')}
-        >
-          Về trang chủ
-        </button>
-      </div>
-    );
-  }
-
-  // Build main app content - optionally wrapped in CenterProvider
-  const mainAppContent = (
-    <ReadingSettingsProvider>
-    <ListeningSettingsProvider>
+  return (
     <div className={`app app-with-sidebar ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
       <Sidebar
         currentPage={currentPage}
@@ -526,7 +507,9 @@ function App() {
             lessons={lessons}
             getLessonsByLevel={filteredGetLessonsByLevel}
             getChildLessons={filteredGetChildLessons}
-            onAddLesson={addLesson}
+            onAddLesson={async (name, level, parentId) => {
+              await addLesson(name, level, parentId ?? null, currentUser.id);
+            }}
             onUpdateLesson={updateLesson}
             onDeleteLesson={deleteLesson}
             currentUser={currentUser}
@@ -543,13 +526,21 @@ function App() {
             // Kaiwa question management props
             kaiwaQuestions={kaiwaQuestions}
             kaiwaFolders={kaiwaFolders}
-            onAddKaiwaQuestion={async (data) => { return await addKaiwaQuestion(data, currentUser.id); }}
+            onAddKaiwaQuestion={async (data) => {
+              const result = await addKaiwaQuestion(data, currentUser.id);
+              if (!result) throw new Error('Failed to add kaiwa question');
+              return result;
+            }}
             onUpdateKaiwaQuestion={updateKaiwaQuestion}
             onDeleteKaiwaQuestion={deleteKaiwaQuestion}
-            onAddKaiwaFolder={async (name, level, topic) => { return await addKaiwaFolder(name, level, topic, currentUser.id); }}
+            onAddKaiwaFolder={async (name, level, topic) => {
+              const result = await addKaiwaFolder(name, level as any, topic, currentUser.id);
+              if (!result) throw new Error('Failed to add kaiwa folder');
+              return result;
+            }}
             onUpdateKaiwaFolder={updateKaiwaFolder}
             onDeleteKaiwaFolder={deleteKaiwaFolder}
-            getFoldersByLevelAndTopic={getFoldersByLevelAndTopic}
+            getFoldersByLevelAndTopic={getFoldersByLevelAndTopic as any}
             getQuestionsByKaiwaFolder={getQuestionsByKaiwaFolder}
             // Advanced Kaiwa Topics props
             advancedKaiwaTopics={advancedKaiwaTopics}
@@ -750,9 +741,9 @@ function App() {
             settings={settings}
             defaultQuestions={kaiwaQuestions}
             kaiwaFolders={kaiwaFolders}
-            getFoldersByLevelAndTopic={getFoldersByLevelAndTopic}
+            getFoldersByLevelAndTopic={getFoldersByLevelAndTopic as any}
             getQuestionsByFolder={getQuestionsByKaiwaFolder}
-            getQuestionsByLevelAndTopic={getQuestionsByLevelAndTopic}
+            getQuestionsByLevelAndTopic={getQuestionsByLevelAndTopic as any}
             // Advanced session props
             advancedTopics={advancedKaiwaTopics}
             advancedQuestions={advancedKaiwaQuestions}
@@ -871,20 +862,7 @@ function App() {
         />
       )}
     </div>
-    </ListeningSettingsProvider>
-    </ReadingSettingsProvider>
   );
-
-  // Wrap in CenterProvider when in center app mode
-  if (isCenterApp && centerData.center && centerData.userRole) {
-    return (
-      <CenterProvider center={centerData.center} userRole={centerData.userRole}>
-        {mainAppContent}
-      </CenterProvider>
-    );
-  }
-
-  return mainAppContent;
 }
 
 export default App;

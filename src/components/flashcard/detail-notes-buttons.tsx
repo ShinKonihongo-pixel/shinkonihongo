@@ -7,6 +7,7 @@ import { useAuth } from '../../hooks/use-auth';
 import { getVocabularyNote } from '../../services/firestore';
 import { KanjiDetailModal } from './kanji-detail-modal';
 import { VocabularyNotesModal } from './vocabulary-notes-modal';
+import './detail-notes-buttons.css';
 
 interface DetailNotesButtonsProps {
   flashcard: Flashcard;
@@ -72,100 +73,6 @@ export function DetailNotesButtons({ flashcard, readOnly = false, compact = fals
           }}
         />
       )}
-
-      <style>{detailNotesStyles}</style>
     </>
   );
 }
-
-const detailNotesStyles = `
-  .dn-bar {
-    display: flex;
-    justify-content: center;
-    gap: 0.625rem;
-    padding: 0.625rem 1rem;
-    background: rgba(0, 0, 0, 0.15);
-    backdrop-filter: blur(10px);
-    position: relative;
-    z-index: 5;
-  }
-
-  .dn-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    padding: 0.5rem 1rem;
-    border-radius: 10px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: 1px solid;
-    letter-spacing: 0.2px;
-  }
-
-  .dn-detail {
-    background: rgba(99, 102, 241, 0.12);
-    border-color: rgba(99, 102, 241, 0.2);
-    color: #a5b4fc;
-  }
-
-  .dn-detail:hover {
-    background: rgba(99, 102, 241, 0.22);
-    border-color: rgba(99, 102, 241, 0.4);
-    transform: translateY(-1px);
-  }
-
-  .dn-notes {
-    background: rgba(16, 185, 129, 0.12);
-    border-color: rgba(16, 185, 129, 0.2);
-    color: #6ee7b7;
-  }
-
-  .dn-notes:hover {
-    background: rgba(16, 185, 129, 0.22);
-    border-color: rgba(16, 185, 129, 0.4);
-    transform: translateY(-1px);
-  }
-
-  /* Highlight when flashcard has a note */
-  .dn-btn.dn-notes.dn-has-note {
-    background: rgba(16, 185, 129, 0.35);
-    border-color: rgba(16, 185, 129, 0.7);
-    color: #34d399;
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
-    font-weight: 600;
-  }
-
-  /* Compact variant for header placement */
-  .dn-compact {
-    padding: 0;
-    background: transparent;
-    backdrop-filter: none;
-    gap: 0.375rem;
-    justify-content: flex-start;
-  }
-
-  .dn-compact .dn-btn {
-    padding: 0.3rem 0.5rem;
-    font-size: 0.75rem;
-    border-radius: 7px;
-    gap: 0;
-  }
-
-  @media (max-width: 480px) {
-    .dn-bar {
-      padding: 0.5rem 0.75rem;
-      gap: 0.5rem;
-    }
-
-    .dn-btn {
-      padding: 0.425rem 0.75rem;
-      font-size: 0.78rem;
-    }
-
-    .dn-compact .dn-btn {
-      padding: 0.25rem 0.4rem;
-    }
-  }
-`;

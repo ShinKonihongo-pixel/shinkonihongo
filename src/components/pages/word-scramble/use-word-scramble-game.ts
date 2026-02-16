@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import type { Flashcard, JLPTLevel } from '../../../types/flashcard';
 import type { GameConfig, Question, Player, PlayerRole, GameState } from './word-scramble-types';
-import { DEFAULT_TIME, DEFAULT_QUESTIONS, MIN_WORD_LENGTH, AUTO_FILL_PENALTIES } from './word-scramble-constants';
+import { DEFAULT_TIME, DEFAULT_QUESTIONS, MIN_WORD_LENGTH, AUTO_FILL_PENALTIES, JLPT_LEVELS } from './word-scramble-constants';
 import { scrambleWord, calculateScore, generateBots } from './word-scramble-utils';
 import { useGameSounds } from '../../../hooks/use-game-sounds';
 
@@ -65,8 +65,7 @@ export const useWordScrambleGame = ({ flashcards, currentUser }: UseWordScramble
   const countByLevel = useMemo(() => {
     const counts: Record<string, number> = {};
     const validCards = flashcards.filter(f => (f.vocabulary || '').length >= MIN_WORD_LENGTH);
-    const levels = ['N5', 'N4', 'N3', 'N2', 'N1'] as JLPTLevel[];
-    levels.forEach(level => {
+    JLPT_LEVELS.forEach(level => {
       counts[level] = validCards.filter(f => f.jlptLevel === level).length;
     });
     return counts;
