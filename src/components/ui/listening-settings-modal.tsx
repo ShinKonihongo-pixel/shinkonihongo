@@ -264,6 +264,9 @@ export function ListeningSettingsModal({ isOpen, onClose }: ListeningSettingsMod
               </button>
             </div>
 
+            {/* Gradient Divider */}
+            <div style={{ height: '4px', background: 'linear-gradient(90deg, #8b5cf6, #ec4899)', borderRadius: '2px', margin: '0.75rem 0' }} />
+
             {/* Auto Play Next Toggle */}
             <div
               style={{

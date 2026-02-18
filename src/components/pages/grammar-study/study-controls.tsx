@@ -1,4 +1,4 @@
-// Study controls (memorization buttons and card counter)
+// Study controls (memorization buttons, progress bar, and card counter)
 import { CheckCircle2, Circle } from 'lucide-react';
 import type { GrammarCard } from '../../../types/flashcard';
 
@@ -15,6 +15,8 @@ export function StudyControls({
   totalCards,
   onToggleMemorization,
 }: StudyControlsProps) {
+  const progressPercent = totalCards > 0 ? ((currentIndex + 1) / totalCards) * 100 : 0;
+
   return (
     <div className="study-controls">
       <div className="memorization-buttons">
@@ -32,6 +34,10 @@ export function StudyControls({
           <CheckCircle2 size={18} />
           Đã thuộc
         </button>
+      </div>
+
+      <div className="study-progress-bar">
+        <div className="study-progress-fill" style={{ width: `${progressPercent}%` }} />
       </div>
 
       <div className="card-counter-fixed">

@@ -12,6 +12,7 @@ import { FolderListView } from './folder-list-view';
 import { PassageListView } from './passage-list-view';
 import { CompletedView } from './completed-view';
 import { PracticeView } from './practice-view';
+import '../reading-practice-page.css';
 
 interface ReadingPracticePageProps {
   passages: ReadingPassage[];

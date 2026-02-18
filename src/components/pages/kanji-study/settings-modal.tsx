@@ -1,6 +1,19 @@
 // Settings modal for kanji study
-import { X, Eye, Type, Settings } from 'lucide-react';
-import type { KanjiStudySettings, FontSettings } from './types';
+import { X, Eye, Type, Settings, Sparkles } from 'lucide-react';
+import type { KanjiStudySettings, FontSettings, CardFlipStyle } from './types';
+
+const FLIP_STYLES: { value: CardFlipStyle; label: string }[] = [
+  { value: 'horizontal', label: 'Lật ngang' },
+  { value: 'vertical', label: 'Lật dọc' },
+  { value: 'fade', label: 'Chuyển mờ' },
+  { value: 'slide', label: 'Trượt ngang' },
+  { value: 'swing', label: 'Mở cửa' },
+  { value: 'flip-up', label: 'Lật lên' },
+  { value: 'airplane', label: 'Chuyển trang' },
+  { value: 'crumple', label: 'Thu phóng' },
+  { value: 'flyaway', label: 'Đảo bài' },
+  { value: 'none', label: 'Tức thì' },
+];
 
 interface SettingsModalProps {
   settings: KanjiStudySettings;
@@ -73,9 +86,11 @@ export function SettingsModal({ settings, onClose, onUpdateSettings }: SettingsM
               {renderToggle('Level', settings.frontShow.level, () => toggleFront('level'))}
               {renderToggle('Bài học', settings.frontShow.lesson, () => toggleFront('lesson'))}
             </div>
-            <div className="settings-subsection-divider" />
+            <div className="section-gradient-divider" />
             {renderFontSection(settings.frontFont, updateFrontFont, 40, 360)}
           </div>
+
+          <div className="section-gradient-divider" />
 
           {/* Mặt sau */}
           <div className="settings-section">
@@ -90,9 +105,9 @@ export function SettingsModal({ settings, onClose, onUpdateSettings }: SettingsM
               {renderToggle('Bộ thủ', settings.backShow.radicals, () => toggleBack('radicals'))}
               {renderToggle('Từ mẫu', settings.backShow.sampleWords, () => toggleBack('sampleWords'))}
             </div>
-            <div className="settings-subsection-divider" />
+            <div className="section-gradient-divider" />
             {renderFontSection(settings.backFont, updateBackFont, 30, 120)}
-            <div className="settings-subsection-divider" />
+            <div className="section-gradient-divider" />
             <div className="font-inline-section">
               <div className="font-inline-row">
                 <span className="font-inline-label">Nội dung</span>
@@ -102,11 +117,44 @@ export function SettingsModal({ settings, onClose, onUpdateSettings }: SettingsM
             </div>
           </div>
 
+          <div className="section-gradient-divider" />
+
           {/* Nét viết */}
           <div className="settings-section">
             <div className="section-header"><Type size={18} /><h4>Nét viết</h4></div>
             <div className="settings-grid">
               {renderToggle('Tự động phát', settings.autoPlayStroke, () => onUpdateSettings({ ...settings, autoPlayStroke: !settings.autoPlayStroke }))}
+            </div>
+          </div>
+
+          <div className="section-gradient-divider" />
+
+          {/* Hiệu ứng lật thẻ */}
+          <div className="settings-section">
+            <div className="section-header"><Sparkles size={18} /><h4>Hiệu ứng lật thẻ</h4></div>
+            <select
+              className="flip-style-select"
+              value={settings.cardFlipStyle || 'horizontal'}
+              onChange={e => onUpdateSettings({ ...settings, cardFlipStyle: e.target.value as CardFlipStyle })}
+            >
+              {FLIP_STYLES.map(style => (
+                <option key={style.value} value={style.value}>{style.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="section-gradient-divider" />
+
+          {/* Kích thước thẻ */}
+          <div className="settings-section">
+            <div className="section-header"><Settings size={18} /><h4>Kích thước thẻ</h4></div>
+            <div className="font-size-control">
+              <div className="font-size-label"><span>Tỉ lệ</span></div>
+              <div className="font-size-slider">
+                <button className="font-btn" onClick={() => onUpdateSettings({ ...settings, cardScale: Math.max(60, (settings.cardScale ?? 100) - 5) })}>−</button>
+                <div className="font-value">{settings.cardScale ?? 100}%</div>
+                <button className="font-btn" onClick={() => onUpdateSettings({ ...settings, cardScale: Math.min(150, (settings.cardScale ?? 100) + 5) })}>+</button>
+              </div>
             </div>
           </div>
         </div>

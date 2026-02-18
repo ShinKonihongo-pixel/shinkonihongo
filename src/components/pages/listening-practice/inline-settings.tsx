@@ -74,6 +74,7 @@ export function InlineSettings({
               </div>
             </div>
           </div>
+          <div style={{ height: '4px', background: 'linear-gradient(90deg, #8b5cf6, #ec4899)', borderRadius: '2px', margin: '0.75rem 0' }} />
           <div className="settings-row checkbox-settings">
             <label className="checkbox-label">
               <input

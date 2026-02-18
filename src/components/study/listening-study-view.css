@@ -1,3 +1,490 @@
-/* Listening Study View Styles */
-/* Note: Content extracted from listening-practice-styles.ts */
-/* Styles are already modular in listening-practice-styles.ts file */
+/* ===========================================================
+   Listening Study View — Vocabulary TTS Practice
+   Dark Glassmorphism theme matching other study pages
+   =========================================================== */
+
+/* ---- Animations ---- */
+@keyframes lsvFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes lsvSlideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes lsvPulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--level-glow, rgba(139,92,246,0.3)); }
+  50%      { box-shadow: 0 0 30px var(--level-glow, rgba(139,92,246,0.15)); }
+}
+
+/* ---- Vocabulary Mode Container ---- */
+.vocabulary-mode {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.75rem;
+}
+.vocabulary-mode .vocab-header,
+.vocabulary-mode .filter-buttons,
+.vocabulary-mode .vocab-stats,
+.vocabulary-mode .playback-controls,
+.vocabulary-mode .inline-settings-wrapper {
+  flex-shrink: 0;
+}
+.vocabulary-mode .current-word-display {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+.vocabulary-mode .word-card {
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+/* ---- Header ---- */
+.vocabulary-mode .vocab-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  position: relative;
+  padding-bottom: 1.25rem;
+}
+
+.vocabulary-mode .vocab-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #8b5cf6, #ec4899, transparent);
+  opacity: 0.5;
+}
+.vocabulary-mode .btn-back {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(12px);
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.vocabulary-mode .btn-back:hover {
+  background: rgba(255,255,255,0.1);
+  color: white;
+  transform: scale(1.05);
+}
+.vocabulary-mode .btn-back:active {
+  transform: scale(0.93);
+}
+.vocabulary-mode .current-level {
+  display: flex;
+  align-items: center;
+  padding: 0.4rem 0.85rem;
+  border-radius: 10px;
+  font-weight: 700;
+  color: white;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+.vocabulary-mode .desktop-level { display: flex; }
+.vocabulary-mode .mobile-lesson-info { display: none; }
+.vocabulary-mode .mobile-lesson-info {
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+}
+.vocabulary-mode .mobile-lesson-info svg {
+  flex-shrink: 0;
+  color: rgba(255,255,255,0.7);
+}
+.vocabulary-mode .mobile-lesson-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vocabulary-mode .lesson-title {
+  flex: 1;
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+}
+
+/* ---- Filter Buttons ---- */
+.vocabulary-mode .filter-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.vocabulary-mode .filter-btn {
+  flex: 0 0 auto;
+  min-width: 5.5rem;
+  padding: 0.55rem 0.5rem;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.55);
+  transition: all 0.2s;
+  text-align: center;
+  white-space: nowrap;
+}
+.vocabulary-mode .filter-btn:hover {
+  border-color: rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.8);
+}
+.vocabulary-mode .filter-btn:active {
+  transform: scale(0.95);
+}
+.vocabulary-mode .filter-btn.active {
+  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  border-color: transparent;
+  color: white;
+  font-weight: 500;
+  box-shadow: 0 4px 15px rgba(139,92,246,0.3);
+}
+
+/* ---- Vocab Stats ---- */
+.vocabulary-mode .vocab-stats {
+  text-align: center;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 1.25rem;
+}
+
+/* ---- Word Card ---- */
+.vocabulary-mode .current-word-display {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+.vocabulary-mode .word-counter {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 0.75rem;
+}
+.vocabulary-mode .word-card {
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 24px;
+  padding: 2.5rem 2rem;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.4s ease;
+  animation: lsvFadeIn 0.3s ease;
+}
+.vocabulary-mode .word-card:hover {
+  animation: lsvPulse 2s ease infinite;
+}
+
+/* Word card text */
+.vocabulary-mode .vocabulary-text {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: white;
+  line-height: 1.2;
+}
+.vocabulary-mode .kanji-text {
+  font-size: 1.5rem;
+  color: rgba(255,255,255,0.55);
+}
+.vocabulary-mode .meaning-text {
+  font-size: 1.25rem;
+  color: rgba(255,255,255,0.85);
+  margin-top: 0.5rem;
+}
+.vocabulary-mode .sino-text {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.45);
+}
+.vocabulary-mode .lesson-info {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.35);
+  margin-top: 0.5rem;
+}
+
+/* ---- Memorization Toggle ---- */
+.vocabulary-mode .memorization-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.vocabulary-mode .mem-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+.vocabulary-mode .mem-btn:hover {
+  transform: scale(1.03);
+}
+.vocabulary-mode .mem-btn:active {
+  transform: scale(0.97);
+}
+.vocabulary-mode .mem-btn.learned {
+  background: rgba(34,197,94,0.08);
+  border-color: rgba(34,197,94,0.25);
+  color: rgba(34,197,94,0.65);
+}
+.vocabulary-mode .mem-btn.learned.active {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 4px 16px rgba(34,197,94,0.3);
+}
+.vocabulary-mode .mem-btn.not-learned {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.55);
+}
+.vocabulary-mode .mem-btn.not-learned.active {
+  background: rgba(239,68,68,0.12);
+  border-color: rgba(239,68,68,0.35);
+  color: #f87171;
+}
+
+/* ---- Playback Controls ---- */
+.vocabulary-mode .playback-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+.vocabulary-mode .control-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  color: rgba(255,255,255,0.75);
+}
+.vocabulary-mode .control-btn:hover:not(:disabled) {
+  border-color: rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.1);
+  color: white;
+  transform: scale(1.05);
+}
+.vocabulary-mode .control-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+.vocabulary-mode .control-btn.active {
+  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 0 12px rgba(139,92,246,0.3);
+}
+.vocabulary-mode .control-btn.play-btn {
+  width: 66px;
+  height: 66px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 8px 28px rgba(139,92,246,0.35);
+}
+.vocabulary-mode .control-btn.play-btn:hover:not(:disabled) {
+  transform: scale(1.08);
+  box-shadow: 0 10px 36px rgba(139,92,246,0.45);
+}
+.vocabulary-mode .control-btn.play-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+.vocabulary-mode .control-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ---- Inline Settings ---- */
+.vocabulary-mode .inline-settings-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.vocabulary-mode .settings-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.9rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  color: rgba(255,255,255,0.6);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  align-self: center;
+}
+.vocabulary-mode .settings-toggle-btn:hover {
+  background: rgba(255,255,255,0.08);
+  color: white;
+}
+.vocabulary-mode .settings-toggle-btn:active {
+  transform: scale(0.96);
+}
+.vocabulary-mode .inline-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  animation: lsvSlideDown 0.2s ease-out;
+}
+.vocabulary-mode .settings-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+}
+.vocabulary-mode .settings-row.numeric-settings { gap: 1rem; }
+.vocabulary-mode .settings-row.checkbox-settings {
+  gap: 1.5rem;
+  padding-top: 0.25rem;
+}
+.vocabulary-mode .setting-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgba(255,255,255,0.65);
+  font-size: 0.8rem;
+  padding: 0.45rem 0.7rem;
+  background: rgba(255,255,255,0.02);
+  border-radius: 10px;
+}
+.vocabulary-mode .setting-group label {
+  min-width: 55px;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.45);
+}
+.vocabulary-mode .setting-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+.vocabulary-mode .setting-control button {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  cursor: pointer;
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.vocabulary-mode .setting-control button:hover {
+  background: rgba(139,92,246,0.25);
+  border-color: rgba(139,92,246,0.4);
+}
+.vocabulary-mode .setting-control button:active {
+  transform: scale(0.95);
+}
+.vocabulary-mode .setting-control span {
+  min-width: 50px;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #c4b5fd;
+}
+.vocabulary-mode .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  color: rgba(255,255,255,0.65);
+  font-size: 0.8rem;
+  user-select: none;
+}
+.vocabulary-mode .checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #8b5cf6;
+  cursor: pointer;
+}
+
+/* ---- Empty State ---- */
+.vocabulary-mode .empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: rgba(255,255,255,0.45);
+}
+.vocabulary-mode .empty-state svg {
+  margin-bottom: 0.75rem;
+  opacity: 0.4;
+}
+.vocabulary-mode .empty-state .hint {
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  color: rgba(255,255,255,0.3);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 640px) {
+  .vocabulary-mode { padding: 0.5rem; }
+  .vocabulary-mode .vocab-header { gap: 0.5rem; margin-bottom: 0.75rem; }
+  .vocabulary-mode .desktop-level { display: none; }
+  .vocabulary-mode .lesson-title { display: none; }
+  .vocabulary-mode .mobile-lesson-info { display: flex; }
+  .vocabulary-mode .filter-buttons { max-width: 100%; }
+  .vocabulary-mode .filter-btn { padding: 0.4rem 0.35rem; font-size: 0.7rem; min-width: 4.5rem; }
+  .vocabulary-mode .vocabulary-text { font-size: 2rem; }
+  .vocabulary-mode .word-card { padding: 2rem 1.25rem; min-height: 150px; }
+  .vocabulary-mode .memorization-toggle { gap: 0.5rem; }
+  .vocabulary-mode .mem-btn { padding: 0.5rem 0.75rem; font-size: 0.8rem; flex: 1; justify-content: center; }
+  .vocabulary-mode .mem-btn svg { width: 16px; height: 16px; }
+  .vocabulary-mode .playback-controls { flex-wrap: wrap; gap: 0.5rem; }
+  .vocabulary-mode .control-btn { width: 44px; height: 44px; }
+  .vocabulary-mode .control-btn.play-btn { width: 58px; height: 58px; }
+  .vocabulary-mode .inline-settings { padding: 0.65rem; gap: 0.5rem; }
+  .vocabulary-mode .settings-row.numeric-settings { flex-direction: column; gap: 0.5rem; }
+  .vocabulary-mode .setting-group { width: 100%; justify-content: space-between; }
+  .vocabulary-mode .settings-row.checkbox-settings { justify-content: space-around; gap: 1rem; }
+  .vocabulary-mode .settings-toggle-btn { padding: 0.35rem 0.65rem; font-size: 0.72rem; }
+}

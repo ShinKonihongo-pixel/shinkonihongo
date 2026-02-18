@@ -86,10 +86,10 @@ export const ContentPanel = forwardRef<HTMLDivElement, ContentPanelProps>(({
                   </div>
                   {selectedPassage.vocabulary.map((vocab, idx) => (
                     <div key={idx} className="vocab-item" style={{ fontSize: `${settings.fontSize * 0.95}rem` }}>
-                      <span className="vocab-num" style={{ color: 'white' }}>{idx + 1}</span>
-                      <span className="vocab-word" style={{ color: 'white' }}>{vocab.word}</span>
-                      <span className="vocab-reading" style={{ color: 'white' }}>{vocab.reading || '—'}</span>
-                      <span className="vocab-meaning" style={{ color: 'white' }}>{vocab.meaning}</span>
+                      <span className="vocab-num">{idx + 1}</span>
+                      <span className="vocab-word">{vocab.word}</span>
+                      <span className="vocab-reading">{vocab.reading || '—'}</span>
+                      <span className="vocab-meaning">{vocab.meaning}</span>
                     </div>
                   ))}
                 </>

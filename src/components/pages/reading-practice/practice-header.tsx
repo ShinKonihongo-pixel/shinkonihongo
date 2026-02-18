@@ -29,7 +29,7 @@ export function PracticeHeader({
         <span className="level-pill" style={{ background: theme.gradient }}>
           {selectedLevel}
         </span>
-        <h1 className="header-title" style={{ textTransform: 'uppercase' }}>{selectedPassage.title}</h1>
+        <h1 className="header-title">{selectedPassage.title}</h1>
         <span className="progress-badge">
           {Object.keys(selectedAnswers).length}/{selectedPassage.questions.length}
         </span>

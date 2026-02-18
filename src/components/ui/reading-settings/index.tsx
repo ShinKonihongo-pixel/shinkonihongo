@@ -75,6 +75,8 @@ export function ReadingSettingsModal({ isOpen, onClose }: ReadingSettingsModalPr
         <div style={{ padding: '1rem', overflowY: 'auto', flex: 1 }}>
           <FuriganaToggle showFurigana={settings.showFurigana} onToggle={toggleFurigana} />
 
+          <div style={{ height: '4px', background: 'linear-gradient(90deg, #8b5cf6, #ec4899)', borderRadius: '2px', margin: '0.75rem 0' }} />
+
           <SizeControl
             label="Cỡ chữ"
             description="Kích thước văn bản"
@@ -106,6 +108,8 @@ export function ReadingSettingsModal({ isOpen, onClose }: ReadingSettingsModalPr
             disabled={!settings.showFurigana}
           />
 
+          <div style={{ height: '4px', background: 'linear-gradient(90deg, #8b5cf6, #ec4899)', borderRadius: '2px', margin: '0.75rem 0' }} />
+
           <ColorPicker
             label="Màu chữ văn bản"
             description="Chọn màu cho nội dung"
@@ -134,6 +138,8 @@ export function ReadingSettingsModal({ isOpen, onClose }: ReadingSettingsModalPr
             onColorSelect={color => updateSettings({ furiganaColor: color })}
             disabled={!settings.showFurigana}
           />
+
+          <div style={{ height: '4px', background: 'linear-gradient(90deg, #8b5cf6, #ec4899)', borderRadius: '2px', margin: '0.75rem 0' }} />
 
           <PreviewSection
             fontSize={settings.fontSize}

@@ -16,6 +16,7 @@ export function GrammarCardBack({ card, settings }: GrammarCardBackProps) {
     <div className="grammar-card-back">
       <div className="back-content-wrapper">
         <div className="back-section back-section-left">
+          <div className="back-section-label">Nghĩa</div>
           {backShow.title && <h3 className="grammar-title">{card.title}</h3>}
           {backShow.formula && <div className="grammar-formula">{card.formula}</div>}
           {backShow.meaning && (
@@ -32,8 +33,8 @@ export function GrammarCardBack({ card, settings }: GrammarCardBackProps) {
 
         {backShow.examples && card.examples.length > 0 && (
           <div className="back-section back-section-right">
+            <div className="back-section-label">Ví dụ</div>
             <div className="grammar-examples">
-              <strong>Ví dụ:</strong>
               {card.examples.map((ex, idx) => (
                 <div key={idx} className="grammar-example">
                   <div className="example-japanese">

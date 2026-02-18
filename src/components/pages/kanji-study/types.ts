@@ -7,6 +7,8 @@ export interface FontSettings {
   fontColor: string; // hex color
 }
 
+export type CardFlipStyle = 'horizontal' | 'vertical' | 'fade' | 'slide' | 'swing' | 'flip-up' | 'airplane' | 'crumple' | 'flyaway' | 'none';
+
 export interface KanjiStudySettings {
   frontShow: {
     character: boolean;
@@ -32,6 +34,8 @@ export interface KanjiStudySettings {
   frontFont: FontSettings;
   backFont: FontSettings;
   backTextSize: number; // unified px for all back content text
+  cardFlipStyle: CardFlipStyle;
+  cardScale: number; // percentage 60-150
 }
 
 export const DEFAULT_KANJI_SETTINGS: KanjiStudySettings = {
@@ -59,4 +63,6 @@ export const DEFAULT_KANJI_SETTINGS: KanjiStudySettings = {
   frontFont: { fontSize: 120, fontColor: '#e9d5ff' },
   backFont: { fontSize: 72, fontColor: '#e9d5ff' },
   backTextSize: 24,
+  cardFlipStyle: 'horizontal',
+  cardScale: 100,
 };

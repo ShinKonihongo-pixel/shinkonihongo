@@ -93,6 +93,8 @@ export function SettingsModal({ settings, onClose, onUpdateSettings }: SettingsM
             </div>
           </div>
 
+          <div className="section-gradient-divider" />
+
           <div className="settings-section">
             <div className="section-header">
               <EyeOff size={18} />
@@ -134,6 +136,8 @@ export function SettingsModal({ settings, onClose, onUpdateSettings }: SettingsM
             </div>
           </div>
 
+          <div className="section-gradient-divider" />
+
           <div className="settings-section">
             <div className="section-header">
               <Sparkles size={18} />
@@ -149,6 +153,8 @@ export function SettingsModal({ settings, onClose, onUpdateSettings }: SettingsM
               ))}
             </select>
           </div>
+
+          <div className="section-gradient-divider" />
 
           <div className="settings-section">
             <div className="section-header">

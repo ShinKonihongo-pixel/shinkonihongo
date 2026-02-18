@@ -254,7 +254,7 @@ export function AudioPlayerView({
             <button className="control-btn" onClick={goToPrevious}>
               <SkipBack size={20} />
             </button>
-            <button className="control-btn play-btn" onClick={togglePlay}>
+            <button className={`control-btn play-btn ${isPlaying ? 'playing' : ''}`} onClick={togglePlay}>
               {isPlaying ? <Pause size={32} /> : <Play size={32} />}
             </button>
             <button className="control-btn" onClick={goToNext}>

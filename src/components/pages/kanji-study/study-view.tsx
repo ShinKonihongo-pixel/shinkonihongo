@@ -66,10 +66,14 @@ export function StudyView({
         <button className="side-nav-btn side-nav-next" onClick={onNext} disabled={currentIndex >= displayCards.length - 1}><ChevronRight size={28} /></button>
       </div>
       <div className="study-controls">
+        <div className="study-progress-bar">
+          <div className="study-progress-fill" style={{ width: `${((currentIndex + 1) / displayCards.length) * 100}%` }} />
+        </div>
         <div className="memorization-buttons">
           <button className={`mem-btn not-learned ${currentCard?.memorizationStatus === 'not_memorized' ? 'active' : ''}`} onClick={() => onToggleMemorization('not_memorized')}>✗ Chưa thuộc</button>
           <button className={`mem-btn learned ${currentCard?.memorizationStatus === 'memorized' ? 'active' : ''}`} onClick={() => onToggleMemorization('memorized')}>✓ Đã thuộc</button>
         </div>
+        <p className="swipe-hint">Vuốt trái/phải để chuyển thẻ</p>
         <div className="card-counter-fixed">{currentIndex + 1} / {displayCards.length}</div>
       </div>
     </>

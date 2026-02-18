@@ -96,11 +96,11 @@ export function KanjiDisplayCard({
 
   return (
     <div
-      className={`kanji-card-container ${isFlipped ? 'flipped' : ''}`}
+      className={`kanji-card-container kflip-${settings.cardFlipStyle ?? 'horizontal'} ${isFlipped ? 'flipped' : ''}`}
       onClick={onFlip}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      style={{ '--level-glow': `${levelColor}40` } as React.CSSProperties}
+      style={{ '--level-glow': `${levelColor}40`, '--card-scale': `${(settings.cardScale ?? 100) / 100}` } as React.CSSProperties}
     >
       <div className="kanji-card">
         {/* FRONT */}
