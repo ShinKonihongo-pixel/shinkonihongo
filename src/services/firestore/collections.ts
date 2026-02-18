@@ -40,6 +40,7 @@ export const COLLECTIONS = {
   VOCABULARY_NOTES: 'vocabularyNotes',
   KANJI_CARDS: 'kanjiCards',
   KANJI_LESSONS: 'kanjiLessons',
+  VOCABULARY_NOTEBOOKS: 'vocabularyNotebooks',
 } as const;
 
 // Shared utilities

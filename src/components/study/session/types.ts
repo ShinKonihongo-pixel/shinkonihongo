@@ -1,6 +1,7 @@
 // Type definitions for study session components
 import type { Flashcard, JLPTLevel, MemorizationStatus, DifficultyLevel } from '../../../types/flashcard';
 import type { AppSettings } from '../../../hooks/use-settings';
+import type { NotebookHook } from '../level-lesson-selector/types';
 
 export interface StudySessionProps {
   currentCard: Flashcard | undefined;
@@ -29,6 +30,7 @@ export interface StudySessionProps {
   frontFontSize?: number;
   onFrontFontSizeChange?: (size: number) => void;
   onSettingsChange?: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
+  notebookHook?: NotebookHook;
 }
 
 export interface StudySettingsModalProps {

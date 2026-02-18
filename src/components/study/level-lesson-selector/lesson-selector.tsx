@@ -2,6 +2,7 @@ import { ChevronRight, Check, BookOpen, Play, Headphones } from 'lucide-react';
 import type { JLPTLevel, BaseLesson, StudyMode } from './types';
 import { LEVEL_THEMES } from './constants';
 import { LessonCard } from './lesson-card';
+import { NotebookButton } from '../notebook';
 
 interface LessonSelectorProps {
   type: 'vocabulary' | 'grammar' | 'kanji';
@@ -15,6 +16,8 @@ interface LessonSelectorProps {
   onSelectAll: () => void;
   onDeselectAll: () => void;
   onStart: (mode: StudyMode) => void;
+  notebookCount?: number;
+  onNotebookClick?: () => void;
 }
 
 export function LessonSelector({
@@ -29,6 +32,8 @@ export function LessonSelector({
   onSelectAll,
   onDeselectAll,
   onStart,
+  notebookCount,
+  onNotebookClick,
 }: LessonSelectorProps) {
   const availableLessons = levelLessons.filter(l => (cardsPerLesson[l.id] || 0) > 0);
   const allSelected = selectedLessons.length === availableLessons.length;
@@ -78,6 +83,12 @@ export function LessonSelector({
             >
               Bỏ chọn
             </button>
+            {type === 'vocabulary' && onNotebookClick && (
+              <NotebookButton
+                notebookCount={notebookCount ?? 0}
+                onClick={onNotebookClick}
+              />
+            )}
           </div>
         </div>
       </header>

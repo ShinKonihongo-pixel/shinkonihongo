@@ -35,6 +35,7 @@ export function StudySession({
   frontFontSize = 250,
   onFrontFontSizeChange,
   onSettingsChange,
+  notebookHook,
 }: StudySessionProps) {
   const isMobile = useIsMobile();
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -86,6 +87,7 @@ export function StudySession({
         isMobile={isMobile}
         currentCard={currentCard}
         onResetAll={onResetAll}
+        notebookHook={notebookHook}
       />
 
       <CardArea

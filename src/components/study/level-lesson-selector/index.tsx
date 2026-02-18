@@ -3,7 +3,7 @@
 
 import { useState, type ReactNode } from 'react';
 import { BookOpen, Layers } from 'lucide-react';
-import type { LevelLessonSelectorProps, JLPTLevel, StudyMode } from './types';
+import type { LevelLessonSelectorProps, JLPTLevel, StudyMode, Flashcard } from './types';
 import {
   useCardCountByLevel,
   useLevelLessons,
@@ -12,6 +12,7 @@ import {
 } from './hooks';
 import { JLPTLevelSelector } from '../../ui/jlpt-level-selector';
 import { LessonSelector } from './lesson-selector';
+import { NotebookPanel } from '../notebook';
 import './level-lesson-selector.css';
 
 const TITLES: Record<string, string> = {
@@ -39,9 +40,13 @@ export function LevelLessonSelector({
   getChildLessons,
   onStart,
   levels,
+  notebookHook,
+  allCards,
+  onNotebookStudy,
 }: LevelLessonSelectorProps) {
   const [selectedLevel, setSelectedLevel] = useState<JLPTLevel | null>(null);
   const [selectedLessons, setSelectedLessons] = useState<string[]>([]);
+  const [showNotebookPanel, setShowNotebookPanel] = useState(false);
 
   const countByLevel = useCardCountByLevel(cards, type, levels);
   const levelLessons = useLevelLessons(selectedLevel, getLessonsByLevel);
@@ -104,7 +109,22 @@ export function LevelLessonSelector({
         onSelectAll={selectAllLessons}
         onDeselectAll={deselectAllLessons}
         onStart={handleStart}
+        notebookCount={notebookHook?.notebookCount}
+        onNotebookClick={notebookHook ? () => setShowNotebookPanel(true) : undefined}
       />
+      {showNotebookPanel && notebookHook && allCards && onNotebookStudy && (
+        <NotebookPanel
+          notebooks={notebookHook.notebooks}
+          allCards={allCards as Flashcard[]}
+          onClose={() => setShowNotebookPanel(false)}
+          onCreateNotebook={notebookHook.createNotebook}
+          onUpdateNotebook={notebookHook.updateNotebook}
+          onDeleteNotebook={notebookHook.deleteNotebook}
+          onRemoveCard={notebookHook.removeCardFromNotebook}
+          getNotebookCards={notebookHook.getNotebookCards}
+          onStudy={onNotebookStudy}
+        />
+      )}
     </div>
   );
 }

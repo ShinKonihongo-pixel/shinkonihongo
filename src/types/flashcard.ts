@@ -127,6 +127,18 @@ export interface VocabularyNote {
   updatedAt: string;
 }
 
+// User personal vocabulary notebook (curated word lists)
+export interface VocabularyNotebook {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  flashcardIds: string[];
+  color: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Bài học ngữ pháp - riêng biệt với bài học từ vựng
 export interface GrammarLesson {
   id: string;

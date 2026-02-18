@@ -1,12 +1,14 @@
 // Study session header with filters and controls
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Settings, BookOpen, PenLine, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Settings, BookOpen, PenLine, RotateCcw, BookmarkPlus } from 'lucide-react';
 import type { MemorizationStatus, DifficultyLevel, JLPTLevel, Flashcard } from '../../../types/flashcard';
+import type { NotebookHook } from '../level-lesson-selector/types';
 import { MEMORIZATION_OPTIONS, DIFFICULTY_OPTIONS, LEVEL_COLORS } from './constants';
 import { useAuth } from '../../../hooks/use-auth';
 import { getVocabularyNote } from '../../../services/firestore';
 import { KanjiDetailModal } from '../../flashcard/kanji-detail-modal';
 import { VocabularyNotesModal } from '../../flashcard/vocabulary-notes-modal';
+import { NotebookAddPopover } from '../notebook';
 import { ConfirmModal } from '../../ui/confirm-modal';
 
 interface StudyHeaderProps {
@@ -25,6 +27,7 @@ interface StudyHeaderProps {
   isMobile: boolean;
   currentCard?: Flashcard;
   onResetAll?: () => void;
+  notebookHook?: NotebookHook;
 }
 
 export function StudyHeader({
@@ -42,12 +45,14 @@ export function StudyHeader({
   isMobile,
   currentCard,
   onResetAll,
+  notebookHook,
 }: StudyHeaderProps) {
   const { currentUser } = useAuth();
   const levelColors = selectedLevel ? LEVEL_COLORS[selectedLevel] : null;
   const [showDetail, setShowDetail] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showNotebookPopover, setShowNotebookPopover] = useState(false);
   const [hasNote, setHasNote] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
 
@@ -139,6 +144,27 @@ export function StudyHeader({
               <PenLine size={16} />
               {!isMobile && <span className="btn-label">Ghi chú</span>}
             </button>
+          )}
+          {currentCard && notebookHook && currentUser && (
+            <div className="nb-popover-anchor">
+              <button
+                className="header-action-btn has-label"
+                onClick={() => setShowNotebookPopover((v) => !v)}
+                title="Thêm vào sổ tay"
+              >
+                <BookmarkPlus size={16} />
+                {!isMobile && <span className="btn-label">Sổ tay</span>}
+              </button>
+              {showNotebookPopover && (
+                <NotebookAddPopover
+                  flashcardId={currentCard.id}
+                  notebooks={notebookHook.notebooks}
+                  onToggle={notebookHook.toggleCardInNotebook}
+                  onClose={() => setShowNotebookPopover(false)}
+                  onQuickCreate={notebookHook.createNotebook}
+                />
+              )}
+            </div>
           )}
           <button className="header-action-btn" onClick={onShuffle} title="Xáo trộn thẻ">
             🔀

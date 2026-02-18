@@ -7,6 +7,8 @@ import type { AppSettings } from '../../hooks/use-settings';
 import type { StudySession as StudySessionType } from '../../types/user';
 import type { StudyMode } from '../study/level-lesson-selector/types';
 import { useStudySession } from '../../hooks/use-study-session';
+import { useAuth } from '../../hooks/use-auth';
+import { useVocabularyNotebooks } from '../../hooks/use-vocabulary-notebooks';
 import { StudySession } from '../study/study-session';
 import { StudyResult } from '../study/study-result';
 import { LevelLessonSelector } from '../study/level-lesson-selector';
@@ -23,7 +25,7 @@ interface StudyPageProps {
   onSaveStudySession?: (data: Omit<StudySessionType, 'id' | 'userId'>) => void;
 }
 
-type ViewMode = 'select' | 'study' | 'result' | 'listening';
+type ViewMode = 'select' | 'study' | 'result' | 'listening' | 'notebook-study';
 
 export function StudyPage({
   cards,
@@ -41,11 +43,17 @@ export function StudyPage({
   const [filterMemorization, setFilterMemorization] = useState<MemorizationStatus | 'all'>('all');
   const [filterDifficulty, setFilterDifficulty] = useState<DifficultyLevel | 'all'>('all');
   const [frontFontSize, setFrontFontSize] = useState<number>(settings.kanjiFontSize);
+  const [notebookStudyCards, setNotebookStudyCards] = useState<Flashcard[]>([]);
   const sessionStartTime = useRef<number>(Date.now());
   const sessionSaved = useRef<boolean>(false);
 
-  // Filter cards based on selected lessons
+  // Notebook hook
+  const { currentUser } = useAuth();
+  const notebookHook = useVocabularyNotebooks(currentUser?.id);
+
+  // Filter cards based on selected lessons (or notebook cards)
   const filteredCards = useMemo(() => {
+    if (viewMode === 'notebook-study') return notebookStudyCards;
     if (selectedLessonIds.length === 0) return [];
 
     // Get all child lesson IDs for each selected lesson
@@ -57,7 +65,7 @@ export function StudyPage({
     });
 
     return cards.filter(card => allLessonIds.has(card.lessonId));
-  }, [cards, selectedLessonIds, getChildLessons]);
+  }, [cards, selectedLessonIds, getChildLessons, viewMode, notebookStudyCards]);
 
   const {
     currentCard,
@@ -91,7 +99,7 @@ export function StudyPage({
 
   // Start session when entering study mode
   useEffect(() => {
-    if (viewMode === 'study') {
+    if (viewMode === 'study' || viewMode === 'notebook-study') {
       sessionStartTime.current = Date.now();
       sessionSaved.current = false;
       startSession();
@@ -115,7 +123,7 @@ export function StudyPage({
 
   // Handle transition to result when session complete
   useEffect(() => {
-    if (isSessionComplete && viewMode === 'study') {
+    if (isSessionComplete && (viewMode === 'study' || viewMode === 'notebook-study')) {
       setViewMode('result');
     }
   }, [isSessionComplete, viewMode]);
@@ -133,18 +141,25 @@ export function StudyPage({
     setViewMode(mode === 'listening' ? 'listening' : 'study');
   };
 
+  // Handle notebook study start
+  const handleNotebookStudy = (notebookCards: Flashcard[]) => {
+    setNotebookStudyCards(notebookCards);
+    setViewMode('notebook-study');
+  };
+
   // Handle restart
   const handleRestart = () => {
     sessionStartTime.current = Date.now();
     sessionSaved.current = false;
     startSession();
-    setViewMode('study');
+    setViewMode(notebookStudyCards.length > 0 && viewMode === 'result' ? 'notebook-study' : 'study');
   };
 
   // Handle back to selection
   const handleBackToSelect = () => {
     setViewMode('select');
     setSelectedLessonIds([]);
+    setNotebookStudyCards([]);
   };
 
   // Level selection screen
@@ -157,6 +172,9 @@ export function StudyPage({
         getChildLessons={getChildLessons}
         onStart={handleStart}
         onGoHome={onGoHome}
+        notebookHook={notebookHook}
+        allCards={cards}
+        onNotebookStudy={handleNotebookStudy}
       />
     );
   }
@@ -184,7 +202,7 @@ export function StudyPage({
     );
   }
 
-  // Study session
+  // Study session (normal or notebook-study)
   return (
     <StudySession
       currentCard={currentCard}
@@ -210,9 +228,10 @@ export function StudyPage({
       settings={studySettings}
       onSettingsChange={onUpdateSetting}
       onBack={handleBackToSelect}
-      selectedLevel={selectedLevel}
+      selectedLevel={viewMode === 'notebook-study' ? undefined : selectedLevel}
       frontFontSize={frontFontSize}
       onFrontFontSizeChange={setFrontFontSize}
+      notebookHook={notebookHook}
     />
   );
 }

@@ -135,6 +135,16 @@ export {
   deleteVocabularyNote,
 } from './vocabulary-notes-service';
 
+// Vocabulary notebook operations
+export {
+  subscribeToVocabularyNotebooks,
+  addVocabularyNotebook,
+  updateVocabularyNotebook as updateVocabularyNotebookDoc,
+  deleteVocabularyNotebook as deleteVocabularyNotebookDoc,
+  addFlashcardToNotebook,
+  removeFlashcardFromNotebook,
+} from './vocabulary-notebook-service';
+
 // Kanji card operations
 export {
   subscribeToKanjiCards,
