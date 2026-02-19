@@ -1,7 +1,9 @@
 // Lobby Action Bar - Reusable start/wait/leave button pattern
-// Extracted from common pattern across all game lobbies
+// Leave button shows confirm modal before actually leaving
 
+import { useState } from 'react';
 import { Play, LogOut } from 'lucide-react';
+import { ConfirmModal } from '../../ui/confirm-modal';
 
 interface LobbyActionBarProps {
   isHost: boolean;
@@ -30,6 +32,8 @@ export function LobbyActionBar({
   startIcon = <Play size={20} />,
   leaveLabel = 'Rời Phòng',
 }: LobbyActionBarProps) {
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+
   return (
     <div className={`lobby-actions ${className}`}>
       {isHost ? (
@@ -47,10 +51,25 @@ export function LobbyActionBar({
         </div>
       )}
 
-      <button className="leave-btn" onClick={onLeave}>
+      <button className="leave-btn" onClick={() => setShowLeaveConfirm(true)}>
         <LogOut size={18} />
         {leaveLabel}
       </button>
+
+      <ConfirmModal
+        isOpen={showLeaveConfirm}
+        title="Rời khỏi phòng?"
+        message={isHost
+          ? 'Bạn là host. Nếu bạn rời đi, phòng sẽ bị huỷ và tất cả người chơi sẽ bị đuổi ra.'
+          : 'Bạn có chắc muốn rời khỏi phòng chơi này?'}
+        confirmText="Rời phòng"
+        cancelText="Ở lại"
+        onConfirm={() => {
+          setShowLeaveConfirm(false);
+          onLeave();
+        }}
+        onCancel={() => setShowLeaveConfirm(false)}
+      />
     </div>
   );
 }

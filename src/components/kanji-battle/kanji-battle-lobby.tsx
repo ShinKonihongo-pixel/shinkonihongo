@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import type { KanjiBattleGame } from '../../types/kanji-battle';
 import { GameCodeDisplay, PlayerListGrid, LobbyActionBar, normalizePlayer } from '../shared/game-lobby';
+import { ConfirmModal } from '../ui/confirm-modal';
 
 interface KanjiBattleLobbyProps {
   game: KanjiBattleGame;
@@ -21,6 +22,7 @@ export const KanjiBattleLobby: React.FC<KanjiBattleLobbyProps> = ({
   onKickPlayer,
 }) => {
   const [copied, setCopied] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const isHost = game.hostId === currentPlayerId;
   const players = Object.values(game.players);
   const normalizedPlayers = players.map(p => normalizePlayer({ ...p, odinhId: p.odinhId, isHost: p.odinhId === game.hostId, isBot: p.isBot }));
@@ -39,7 +41,7 @@ export const KanjiBattleLobby: React.FC<KanjiBattleLobbyProps> = ({
   return (
     <div className="speed-quiz-lobby">
       <div className="speed-quiz-lobby-header">
-        <button className="speed-quiz-back-btn" onClick={onLeave}>
+        <button className="speed-quiz-back-btn" onClick={() => setShowLeaveConfirm(true)}>
           ← Rời phòng
         </button>
         <div className="room-info">
@@ -107,11 +109,24 @@ export const KanjiBattleLobby: React.FC<KanjiBattleLobbyProps> = ({
         isHost={isHost}
         canStart={canStart}
         onStart={onStartGame}
-        onLeave={() => {}}
+        onLeave={onLeave}
         startLabel="🚀 Bắt Đầu"
         disabledLabel={`Cần ít nhất ${game.settings.minPlayers} người`}
         waitingLabel="Đợi chủ phòng bắt đầu..."
         className="speed-quiz-lobby-actions"
+      />
+
+      {/* Leave confirm from header button */}
+      <ConfirmModal
+        isOpen={showLeaveConfirm}
+        title="Rời khỏi phòng?"
+        message={isHost
+          ? 'Bạn là host. Nếu bạn rời đi, phòng sẽ bị huỷ.'
+          : 'Bạn có chắc muốn rời khỏi phòng?'}
+        confirmText="Rời phòng"
+        cancelText="Ở lại"
+        onConfirm={() => { setShowLeaveConfirm(false); onLeave(); }}
+        onCancel={() => setShowLeaveConfirm(false)}
       />
     </div>
   );

@@ -103,9 +103,11 @@ function AppInner() {
 
   if (isCenterApp && centerData.loading) {
     return (
-      <div className="center-loading">
-        <div className="loading-spinner" />
-        <span>Đang tải trung tâm...</span>
+      <div className="app-loading-screen">
+        <div className="app-loading-content">
+          <div className="app-loading-spinner" />
+          <span className="app-loading-label">Đang tải trung tâm...</span>
+        </div>
       </div>
     );
   }
@@ -464,7 +466,7 @@ function AppContent() {
 
         <main className="main-content">
         <ErrorBoundary>
-        <Suspense fallback={<div className="center-loading"><div className="loading-spinner" /><span>Đang tải...</span></div>}>
+        <Suspense fallback={<div className="app-loading-screen app-loading-inline"><div className="app-loading-content"><div className="app-loading-spinner" /><span className="app-loading-label">Đang tải...</span></div></div>}>
         {currentPage === 'home' && (
           <HomePage
             statsByLevel={statsByLevel}

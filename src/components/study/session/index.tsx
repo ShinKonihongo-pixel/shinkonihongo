@@ -7,6 +7,7 @@ import { StudyHeader } from './study-header';
 import { CardArea } from './card-area';
 import { ActionButtons } from './action-buttons';
 import { StudySettingsModal } from './settings-modal';
+import '../../cards-management/cards-management.css';
 
 export function StudySession({
   currentCard,

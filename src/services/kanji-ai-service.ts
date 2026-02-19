@@ -420,3 +420,97 @@ Trả về JSON (không markdown):
     throw error;
   }
 }
+
+// Level-specific prompt guidelines for JLPT levels
+const LEVEL_PROMPTS: Record<string, string> = {
+  N5: 'Trình độ N5 (sơ cấp): Dùng thể です/ます, chủ đề sinh hoạt hàng ngày đơn giản, câu 5-10 từ. Chỉ dùng ngữ pháp cơ bản nhất.',
+  N4: 'Trình độ N4 (tiền trung cấp): Dùng thể て-form, chia động từ cơ bản, câu 8-12 từ. Có thể dùng ~たい, ~ている, ~てから.',
+  N3: 'Trình độ N3 (trung cấp): Dùng câu điều kiện (~ば/~たら), bị động, sai khiến, câu 10-15 từ. Ngữ pháp phong phú hơn.',
+  N2: 'Trình độ N2 (trung cao cấp): Dùng ngữ pháp phức tạp, kính ngữ, câu 12-18 từ. Có thể dùng ~にもかかわらず, ~わけではない, etc.',
+  N1: 'Trình độ N1 (cao cấp): Dùng biểu hiện văn chương, ngữ pháp kép, câu 15-20 từ. Có thể dùng ~ざるを得ない, ~もさることながら, etc.',
+};
+
+// Structured example with Vietnamese + English
+export interface StructuredExampleResult {
+  japanese: string;
+  vietnamese: string;
+  english: string;
+}
+
+// Generate a JLPT-level-appropriate example sentence with both Vi+En translations
+export async function generateLeveledExample(
+  vocabulary: string,
+  kanji: string | undefined,
+  meaning: string,
+  targetLevel: string,
+  lessonVocabulary?: VocabularyItem[],
+  existingExamples?: StructuredExampleResult[]
+): Promise<StructuredExampleResult | null> {
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    throw new Error('Chưa cấu hình VITE_GROQ_API_KEY');
+  }
+
+  const word = kanji || vocabulary;
+  const levelGuide = LEVEL_PROMPTS[targetLevel] || LEVEL_PROMPTS.N5;
+
+  const existingText = existingExamples?.length
+    ? `\n\nCác ví dụ đã có cho level này (KHÔNG lặp lại):\n${existingExamples.map((e, i) => `${i + 1}. ${e.japanese}`).join('\n')}`
+    : '';
+
+  const vocabText = lessonVocabulary?.length
+    ? `\n\nTừ vựng bài học (ưu tiên kết hợp):\n${lessonVocabulary.slice(0, 10).map(v => `- ${v.kanji || v.vocabulary} (${v.meaning})`).join('\n')}`
+    : '';
+
+  const prompt = `Tạo MỘT câu ví dụ tiếng Nhật sử dụng từ "${word}"${meaning ? ` (nghĩa: ${meaning})` : ''}.
+
+${levelGuide}${vocabText}${existingText}
+
+Yêu cầu:
+- Câu PHẢI sử dụng từ "${word}"
+- Độ khó phải phù hợp level ${targetLevel}
+- Kèm furigana cho kanji: format 漢字(かんじ)
+- Kèm nghĩa tiếng Việt VÀ tiếng Anh
+
+Trả về JSON (không markdown):
+{
+  "japanese": "câu tiếng Nhật có furigana",
+  "vietnamese": "nghĩa tiếng Việt",
+  "english": "English translation"
+}`;
+
+  try {
+    const response = await fetch(GROQ_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.9,
+        max_tokens: 300,
+      }),
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const data = await response.json();
+    const text = data.choices?.[0]?.message?.content;
+    if (!text) throw new Error('Không nhận được phản hồi');
+
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('Không tìm thấy JSON');
+
+    const parsed = JSON.parse(jsonMatch[0]) as StructuredExampleResult;
+    return {
+      japanese: parsed.japanese || '',
+      vietnamese: parsed.vietnamese || '',
+      english: parsed.english || '',
+    };
+  } catch (error) {
+    console.error('generateLeveledExample error:', error);
+    throw error;
+  }
+}

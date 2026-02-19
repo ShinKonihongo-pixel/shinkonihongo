@@ -1,6 +1,6 @@
 // Public landing page for a center
 
-import { MapPin, Phone, Users, BookOpen, ArrowRight, LogIn } from 'lucide-react';
+import { MapPin, Phone, Users, BookOpen, ArrowRight, LogIn, Sparkles } from 'lucide-react';
 import type { Branch } from '../../types/branch';
 import { DEFAULT_CENTER_BRANDING } from '../../types/branch';
 
@@ -39,14 +39,14 @@ export function CenterLandingPage({ center, navigate, isLoggedIn, isMember }: Ce
           <div className="center-landing-actions">
             {isMember ? (
               <button
-                className="btn center-landing-btn center-landing-btn-primary"
+                className="center-landing-btn center-landing-btn-primary"
                 onClick={() => navigate(`/center/${center.slug}/app`)}
               >
                 Vào trung tâm <ArrowRight size={18} />
               </button>
             ) : (
               <button
-                className="btn center-landing-btn center-landing-btn-primary"
+                className="center-landing-btn center-landing-btn-primary"
                 onClick={() => navigate(`/center/${center.slug}/join`)}
               >
                 Tham gia ngay <ArrowRight size={18} />
@@ -54,7 +54,7 @@ export function CenterLandingPage({ center, navigate, isLoggedIn, isMember }: Ce
             )}
             {!isLoggedIn && (
               <button
-                className="btn center-landing-btn center-landing-btn-secondary"
+                className="center-landing-btn center-landing-btn-secondary"
                 onClick={() => navigate('/')}
               >
                 <LogIn size={18} /> Đăng nhập
@@ -68,7 +68,9 @@ export function CenterLandingPage({ center, navigate, isLoggedIn, isMember }: Ce
       <div className="center-landing-info">
         {center.address && (
           <div className="center-landing-card">
-            <MapPin size={24} className="center-landing-card-icon" />
+            <div className="center-landing-card-icon">
+              <MapPin size={22} />
+            </div>
             <div>
               <h3>Địa chỉ</h3>
               <p>{center.address}</p>
@@ -77,7 +79,9 @@ export function CenterLandingPage({ center, navigate, isLoggedIn, isMember }: Ce
         )}
         {center.phone && (
           <div className="center-landing-card">
-            <Phone size={24} className="center-landing-card-icon" />
+            <div className="center-landing-card-icon">
+              <Phone size={22} />
+            </div>
             <div>
               <h3>Liên hệ</h3>
               <p>{center.phone}</p>
@@ -85,14 +89,18 @@ export function CenterLandingPage({ center, navigate, isLoggedIn, isMember }: Ce
           </div>
         )}
         <div className="center-landing-card">
-          <Users size={24} className="center-landing-card-icon" />
+          <div className="center-landing-card-icon">
+            <Users size={22} />
+          </div>
           <div>
             <h3>Cộng đồng</h3>
             <p>Học viên & giáo viên</p>
           </div>
         </div>
         <div className="center-landing-card">
-          <BookOpen size={24} className="center-landing-card-icon" />
+          <div className="center-landing-card-icon">
+            <BookOpen size={22} />
+          </div>
           <div>
             <h3>Học liệu</h3>
             <p>Từ vựng, ngữ pháp, Kanji</p>
@@ -102,7 +110,8 @@ export function CenterLandingPage({ center, navigate, isLoggedIn, isMember }: Ce
 
       {/* Footer */}
       <div className="center-landing-footer">
-        <p>Powered by <strong>Shinko 日本語</strong></p>
+        <Sparkles size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4, opacity: 0.6 }} />
+        Powered by <strong>Shinko 日本語</strong>
       </div>
     </div>
   );

@@ -2523,29 +2523,22 @@ body:has(.qz-lobby) .nav.nav-open {
   border-color: rgba(239,68,68,0.3);
   color: #fca5a5;
 }
-.qz-lobby-icon-wrap {
-  width: 36px; height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,215,0,0.05));
-  border: 1px solid rgba(255,215,0,0.25);
-  border-radius: 10px;
-  color: #ffd700;
-  flex-shrink: 0;
-}
 .qz-lobby-title-text {
   flex: 1;
   min-width: 0;
 }
 .qz-lobby-title {
   font-size: 1.1rem;
-  font-weight: 700;
+  font-weight: 800;
   margin: 0 0 0.35rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   letter-spacing: -0.01em;
+  background: linear-gradient(135deg, #c4b5fd, #a78bfa, #f0abfc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 .qz-lobby-meta {
   display: flex;
@@ -2897,13 +2890,17 @@ body:has(.qz-lobby) .nav.nav-open {
   border-color: rgba(255,215,0,0.4);
   background: rgba(255,255,255,0.08);
 }
-/* Read-only host message for non-host */
+/* Read-only host message for non-host — 2-line clamp */
 .qz-lobby-host-msg {
   font-size: 0.82rem;
   color: rgba(255,255,255,0.65);
   line-height: 1.4;
-  /* Allow wrapping for long messages */
   word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* --- RIGHT column: Players --- */
@@ -3202,6 +3199,7 @@ body:has(.qz-lobby) .nav.nav-open {
 .qz-lobby .player-avatar {
   width: 80px;
   height: 80px;
+  border-radius: 50%;
   font-size: 2.8rem;
   background: rgba(255,255,255,0.08);
   border: 2px solid rgba(255,255,255,0.1);
@@ -3248,9 +3246,22 @@ body:has(.qz-lobby) .nav.nav-open {
   display: block;
   max-width: 100%;
 }
-/* Hide "Host" badge in player grid — it's shown in the QR host card instead */
+/* Host badge on avatar — small gold pill */
 .qz-lobby .host-badge {
-  display: none;
+  position: absolute;
+  top: -5px;
+  right: -8px;
+  padding: 0.1rem 0.3rem;
+  background: #ffd700;
+  color: #1a1a2e;
+  border-radius: 4px;
+  font-size: 0.45rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  z-index: 3;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
 /* VIP card glow */

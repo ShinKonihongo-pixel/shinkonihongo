@@ -1,6 +1,7 @@
 // Center join page - invite code entry and student enrollment
 
 import { useState } from 'react';
+import { KeyRound, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
 import { useJoinCenter } from '../../hooks/use-center-invite';
 import { addBranchMember } from '../../services/branch-firestore';
 import type { Branch, BranchMemberRole } from '../../types/branch';
@@ -25,14 +26,16 @@ export function CenterJoinPage({ center, inviteCode, currentUser, navigate, user
       <div className="center-join">
         <div className="center-join-card">
           <div className="center-join-success">
-            <div className="center-join-success-icon">🎉</div>
+            <div className="center-join-success-icon">
+              <CheckCircle2 size={48} className="center-join-check-icon" />
+            </div>
             <h2>Bạn đã là thành viên!</h2>
-            <p>Bạn đã là thành viên của {center.name}</p>
+            <p>Bạn đã là thành viên của <strong>{center.name}</strong></p>
             <button
               className="center-join-btn"
               onClick={() => navigate(`/center/${center.slug}/app`)}
             >
-              Vào trung tâm
+              Vào trung tâm <ArrowRight size={18} />
             </button>
           </div>
         </div>
@@ -53,7 +56,6 @@ export function CenterJoinPage({ center, inviteCode, currentUser, navigate, user
 
     const result = await joinWithCode(code.trim());
     if (result.success && result.branchId) {
-      // Add user as student member
       try {
         await addBranchMember(result.branchId, { role: 'student' }, currentUser.id, code.trim());
         setSuccess(true);
@@ -68,14 +70,16 @@ export function CenterJoinPage({ center, inviteCode, currentUser, navigate, user
       <div className="center-join">
         <div className="center-join-card">
           <div className="center-join-success">
-            <div className="center-join-success-icon">🎉</div>
+            <div className="center-join-success-icon">
+              <CheckCircle2 size={48} className="center-join-check-icon" />
+            </div>
             <h2>Tham gia thành công!</h2>
-            <p>Chào mừng bạn đến với {center.name}</p>
+            <p>Chào mừng bạn đến với <strong>{center.name}</strong></p>
             <button
               className="center-join-btn"
               onClick={() => navigate(`/center/${center.slug}/app`)}
             >
-              Vào trung tâm
+              Vào trung tâm <ArrowRight size={18} />
             </button>
           </div>
         </div>
@@ -87,6 +91,9 @@ export function CenterJoinPage({ center, inviteCode, currentUser, navigate, user
     <div className="center-join">
       <div className="center-join-card">
         <div className="center-join-header">
+          <div className="center-join-icon-ring">
+            <KeyRound size={28} />
+          </div>
           <h1>Tham gia {center.name}</h1>
           <p>Nhập mã mời để tham gia trung tâm</p>
         </div>
@@ -109,7 +116,11 @@ export function CenterJoinPage({ center, inviteCode, currentUser, navigate, user
           onClick={handleJoin}
           disabled={joining || !code.trim()}
         >
-          {joining ? 'Đang xử lý...' : 'Tham gia'}
+          {joining ? (
+            <><Loader2 size={18} className="center-join-spinner" /> Đang xử lý...</>
+          ) : (
+            <>Tham gia <ArrowRight size={18} /></>
+          )}
         </button>
 
         {error && <p className="center-join-error">{error}</p>}

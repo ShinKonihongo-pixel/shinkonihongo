@@ -123,3 +123,151 @@
         .difficulty-btn.active {
           font-weight: 600;
         }
+
+        /* Generate all levels button */
+        .btn-generate-all {
+          padding: 2px 10px;
+          font-size: 0.75rem;
+          background: #8b5cf6;
+          color: white;
+          border-color: #8b5cf6;
+        }
+        .btn-generate-all:hover:not(:disabled) {
+          background: #7c3aed;
+          color: white;
+          border-color: #7c3aed;
+        }
+        .btn-generate-all:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        /* === Leveled Example Tabs === */
+        .level-tabs {
+          display: flex;
+          gap: 0.25rem;
+          margin-bottom: 0.75rem;
+        }
+        .level-tab {
+          position: relative;
+          padding: 0.375rem 0.75rem;
+          border: 1px solid #ddd;
+          background: white;
+          border-radius: 8px 8px 0 0;
+          cursor: pointer;
+          font-size: 0.8rem;
+          font-weight: 600;
+          color: #666;
+          transition: all 0.2s;
+        }
+        .level-tab.active {
+          background: #8b5cf6;
+          color: white;
+          border-color: #8b5cf6;
+        }
+        .level-tab:hover:not(.active) {
+          background: #f3f0ff;
+          border-color: #8b5cf6;
+          color: #8b5cf6;
+        }
+        .level-tab-badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 16px;
+          height: 16px;
+          margin-left: 4px;
+          padding: 0 4px;
+          font-size: 0.65rem;
+          font-weight: 700;
+          background: #ec4899;
+          color: white;
+          border-radius: 8px;
+        }
+        .level-tab.active .level-tab-badge {
+          background: white;
+          color: #8b5cf6;
+        }
+
+        /* Level examples content area */
+        .level-examples-content {
+          border: 1px solid #e5e7eb;
+          border-radius: 0 8px 8px 8px;
+          padding: 0.75rem;
+          background: #fafafa;
+        }
+
+        /* Individual leveled example row */
+        .leveled-example-row {
+          margin-bottom: 0.75rem;
+          padding: 0.5rem;
+          border: 1px solid #e5e7eb;
+          border-left: 3px solid #8b5cf6;
+          border-radius: 6px;
+          background: white;
+        }
+        .leveled-example-row:last-of-type {
+          margin-bottom: 0.5rem;
+        }
+        .leveled-example-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 0.375rem;
+        }
+        .leveled-example-num {
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: #8b5cf6;
+        }
+        .leveled-example-actions {
+          display: flex;
+          gap: 4px;
+        }
+
+        /* Leveled example inputs */
+        .leveled-input {
+          display: block;
+          width: 100%;
+          padding: 0.375rem 0.5rem;
+          margin-bottom: 0.25rem;
+          border: 1px solid #e5e7eb;
+          border-radius: 4px;
+          font-size: 0.85rem;
+          box-sizing: border-box;
+        }
+        .leveled-input:focus {
+          outline: none;
+          border-color: #8b5cf6;
+          box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15);
+        }
+        .leveled-input-jp {
+          font-family: "Noto Sans JP", sans-serif;
+        }
+
+        /* Add leveled example button */
+        .btn-add-leveled {
+          display: inline-block;
+          padding: 0.375rem 0.75rem;
+          border: 1px dashed #8b5cf6;
+          background: transparent;
+          color: #8b5cf6;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 0.8rem;
+          transition: all 0.2s;
+        }
+        .btn-add-leveled:hover {
+          background: #f3f0ff;
+        }
+
+        /* Empty state */
+        .leveled-empty {
+          text-align: center;
+          color: #999;
+          padding: 1rem;
+          font-size: 0.85rem;
+        }
+        .leveled-empty .btn-add-leveled {
+          margin-top: 0.5rem;
+        }

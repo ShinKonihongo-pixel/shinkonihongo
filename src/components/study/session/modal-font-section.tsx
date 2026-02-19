@@ -1,9 +1,12 @@
 // Font and color settings section for study modal
+import { useRef } from 'react';
 import type { AppSettings } from '../../../hooks/use-settings';
 import { FONT_OPTIONS } from './constants';
 import './modal-font-section.css';
 
-const COLOR_OPTIONS = [
+const AUTO_COLOR = 'auto';
+
+const PRESET_COLORS = [
   { value: '#FFFFFF', label: 'Trắng' },
   { value: '#000000', label: 'Đen' },
   { value: '#ef4444', label: 'Đỏ' },
@@ -22,17 +25,31 @@ const COLOR_OPTIONS = [
   { value: '#e2e8f0', label: 'Xám nhạt' },
 ];
 
-// Reusable color swatch picker
+const PRESET_VALUES = new Set(PRESET_COLORS.map(c => c.value));
+
+// Reusable color swatch picker with Auto option + custom color input
 function ColorPicker({ value, onChange, label }: {
   value: string;
   onChange: (color: string) => void;
   label: string;
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const isCustom = value !== AUTO_COLOR && !PRESET_VALUES.has(value);
+
   return (
     <div className="modal-setting-row color-picker-row">
       <span className="modal-setting-label">{label}</span>
       <div className="color-swatch-list">
-        {COLOR_OPTIONS.map(opt => (
+        {/* Auto swatch */}
+        <button
+          className={`color-swatch ${value === AUTO_COLOR ? 'active' : ''} color-swatch-auto`}
+          onClick={() => onChange(AUTO_COLOR)}
+          title="Tự động"
+        >
+          <span className="auto-label">A</span>
+        </button>
+        {/* Preset swatches */}
+        {PRESET_COLORS.map(opt => (
           <button
             key={opt.value}
             className={`color-swatch ${value === opt.value ? 'active' : ''}`}
@@ -41,6 +58,22 @@ function ColorPicker({ value, onChange, label }: {
             title={opt.label}
           />
         ))}
+        {/* Custom color picker swatch */}
+        <button
+          className={`color-swatch color-swatch-custom ${isCustom ? 'active' : ''}`}
+          style={isCustom ? { background: value } : {}}
+          onClick={() => inputRef.current?.click()}
+          title="Chọn màu tùy chỉnh"
+        >
+          {!isCustom && <span className="custom-label">+</span>}
+        </button>
+        <input
+          ref={inputRef}
+          type="color"
+          className="color-input-hidden"
+          value={isCustom ? value : '#8b5cf6'}
+          onChange={(e) => onChange(e.target.value)}
+        />
       </div>
     </div>
   );
@@ -112,7 +145,7 @@ export function ModalFontSection({
               fontSize: `${Math.min(frontFontSize / 3, 50)}px`,
               fontFamily: `"${settings.kanjiFont}", serif`,
               fontWeight: settings.kanjiBold ? 900 : 400,
-              color: settings.frontTextColor || '#FFFFFF',
+              color: settings.frontTextColor === AUTO_COLOR ? '#FFFFFF' : (settings.frontTextColor || '#FFFFFF'),
             }}>
               漢字
             </div>
@@ -128,7 +161,43 @@ export function ModalFontSection({
 
       <div className="modal-section">
         <div className="modal-section-title">Chữ mặt sau</div>
-        <div className="font-slider-container">
+
+        <div className="modal-toggle-group">
+          <label className="modal-toggle-item">
+            <input
+              type="checkbox"
+              checked={settings.showVocabulary}
+              onChange={(e) => onSettingsChange?.('showVocabulary', e.target.checked)}
+            />
+            <span className="toggle-text">Từ vựng (読み方)</span>
+          </label>
+          <label className="modal-toggle-item">
+            <input
+              type="checkbox"
+              checked={settings.showSinoVietnamese}
+              onChange={(e) => onSettingsChange?.('showSinoVietnamese', e.target.checked)}
+            />
+            <span className="toggle-text">Hán Việt</span>
+          </label>
+          <label className="modal-toggle-item">
+            <input
+              type="checkbox"
+              checked={settings.showMeaning}
+              onChange={(e) => onSettingsChange?.('showMeaning', e.target.checked)}
+            />
+            <span className="toggle-text">Nghĩa</span>
+          </label>
+          <label className="modal-toggle-item">
+            <input
+              type="checkbox"
+              checked={settings.showExample}
+              onChange={(e) => onSettingsChange?.('showExample', e.target.checked)}
+            />
+            <span className="toggle-text">Ví dụ</span>
+          </label>
+        </div>
+
+        <div className="font-slider-container" style={{ marginTop: '0.75rem' }}>
           <div className="font-slider-row">
             <input
               type="range"

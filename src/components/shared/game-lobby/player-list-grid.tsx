@@ -51,12 +51,12 @@ export function PlayerListGrid({
                 player.avatar || player.displayName.charAt(0).toUpperCase()
               )}
               {playerIsVip && <span className="vip-frame" />}
+              {playerIsHost && <span className="host-badge">Host</span>}
             </div>
             <div className="player-info" title={player.displayName}>
               <span className={getVipNameClasses(player.role, 'player-name')}>
                 {vipBadge && <span className="vip-badge">{vipBadge}</span>}
                 {player.displayName}
-                {playerIsHost && <span className="host-badge">Host</span>}
               </span>
               {renderExtra?.(player)}
             </div>

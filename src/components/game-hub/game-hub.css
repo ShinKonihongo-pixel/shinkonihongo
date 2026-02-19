@@ -858,6 +858,7 @@
 .player-avatar {
   position: relative;
   flex-shrink: 0;
+  border-radius: 50%;
 }
 
 .player-avatar .avatar-emoji {
@@ -902,73 +903,38 @@
   pointer-events: none;
 }
 
-/* VIP User - Purple shimmer */
+/* VIP User - Purple shimmer (border ring only via mask) */
 .player-avatar.role-vip_user .vip-frame {
   background: conic-gradient(from 0deg, #a855f7, #ec4899, #a855f7);
   animation: vipFrameSpin 3s linear infinite;
-  opacity: 0.8;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 3px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 3px));
 }
 
-.player-avatar.role-vip_user .vip-frame::before {
-  content: '';
-  position: absolute;
-  inset: 2px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.8);
-}
-
-/* Super Admin - Rainbow fire effect */
+/* Super Admin - Rainbow border ring */
 .player-avatar.role-super_admin .vip-frame {
   background: conic-gradient(from 0deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff, #9b59b6, #ff6b6b);
   animation: vipFrameSpin 2s linear infinite;
-  opacity: 0.9;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 3px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 3px));
 }
 
-.player-avatar.role-super_admin .vip-frame::before {
-  content: '';
-  position: absolute;
-  inset: 2px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.8);
-}
+/* Crown removed — HOST badge on avatar handles host indicator */
 
-.player-avatar.role-super_admin::after {
-  content: '👑';
-  position: absolute;
-  top: -12px;
-  right: -8px;
-  font-size: 0.7rem;
-  animation: crownBounce 1.5s ease infinite;
-}
-
-/* Director - Gold flame */
+/* Director - Gold border ring */
 .player-avatar.role-director .vip-frame {
   background: conic-gradient(from 0deg, #ffd700, #ffb347, #ffd700);
   animation: vipFrameSpin 2.5s linear infinite, vipGlow 1.5s ease infinite;
-  opacity: 0.85;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 3px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 3px));
 }
 
-.player-avatar.role-director .vip-frame::before {
-  content: '';
-  position: absolute;
-  inset: 2px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.8);
-}
-
-/* Admin - Red glow */
+/* Admin - Red border ring */
 .player-avatar.role-admin .vip-frame {
   background: conic-gradient(from 0deg, #e34234, #ff6b6b, #e34234);
   animation: vipFrameSpin 3s linear infinite;
-  opacity: 0.8;
-}
-
-.player-avatar.role-admin .vip-frame::before {
-  content: '';
-  position: absolute;
-  inset: 2px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.8);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 3px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 3px));
 }
 
 @keyframes vipFrameSpin {
@@ -981,10 +947,7 @@
   50% { filter: brightness(1.2) drop-shadow(0 0 15px currentColor); }
 }
 
-@keyframes crownBounce {
-  0%, 100% { transform: translateY(0) rotate(-10deg); }
-  50% { transform: translateY(-3px) rotate(10deg); }
-}
+/* crownBounce removed */
 
 /* VIP Player Item highlight */
 .leaderboard-item.vip-player {
@@ -2735,6 +2698,10 @@
   font-size: 1.2rem;
   font-weight: 700;
   letter-spacing: -0.01em;
+  background: linear-gradient(135deg, #c4b5fd, #a78bfa, #f0abfc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .wr-filter-badge {
@@ -7127,8 +7094,19 @@
 
 .host-badge {
   position: absolute;
-  top: -8px;
-  right: -8px;
+  top: -6px;
+  right: -10px;
+  padding: 0.1rem 0.35rem;
+  background: #ffd700;
+  color: #1a1a2e;
+  border-radius: 4px;
+  font-size: 0.5rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  z-index: 3;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
 }
 
 .lobby-waiting {

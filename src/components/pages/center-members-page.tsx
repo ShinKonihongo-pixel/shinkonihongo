@@ -1,7 +1,7 @@
 // Center members page - member list with roles, search, filters, admin actions
 
 import { useState, useMemo } from 'react';
-import { Search, UserMinus, Users, GraduationCap, BookOpen, Shield } from 'lucide-react';
+import { Search, UserMinus, Users, GraduationCap, BookOpen, Shield, UserX } from 'lucide-react';
 import { useCenter } from '../../contexts/center-context';
 import { useCenterMembers, type CenterMemberInfo } from '../../hooks/use-center-members';
 import { BRANCH_MEMBER_ROLE_LABELS, BRANCH_MEMBER_ROLE_COLORS } from '../../types/branch';
@@ -24,7 +24,6 @@ export function CenterMembersPage({ users }: CenterMembersPageProps) {
   const filteredMembers = useMemo(() => {
     let filtered = members;
 
-    // Apply role filter
     if (activeFilter === 'student') {
       filtered = filtered.filter(m => m.member.role === 'student');
     } else if (activeFilter === 'teacher') {
@@ -35,7 +34,6 @@ export function CenterMembersPage({ users }: CenterMembersPageProps) {
       filtered = filtered.filter(m => m.member.role === 'branch_admin');
     }
 
-    // Apply search
     if (search.trim()) {
       const q = search.toLowerCase();
       filtered = filtered.filter(m =>
@@ -47,7 +45,6 @@ export function CenterMembersPage({ users }: CenterMembersPageProps) {
     return filtered;
   }, [members, activeFilter, search]);
 
-  // Stats
   const studentCount = members.filter(m => m.member.role === 'student').length;
   const teacherCount = members.filter(m =>
     ['main_teacher', 'part_time_teacher', 'assistant'].includes(m.member.role)
@@ -66,18 +63,18 @@ export function CenterMembersPage({ users }: CenterMembersPageProps) {
 
   if (loading) {
     return (
-      <div className="center-members-page">
-        <div className="loading-spinner" />
-        <span>Đang tải danh sách...</span>
+      <div className="center-members-page center-members-loading">
+        <div className="app-loading-spinner" />
+        <span className="app-loading-label">Đang tải danh sách...</span>
       </div>
     );
   }
 
   return (
     <div className="center-members-page">
-      <h2 className="center-members-title">Thành viên - {center.name}</h2>
+      <h2 className="center-members-title">Thành viên</h2>
 
-      {/* Stats header */}
+      {/* Stats */}
       <div className="center-members-stats">
         <div className="center-members-stat">
           <Users size={18} />
@@ -101,7 +98,7 @@ export function CenterMembersPage({ users }: CenterMembersPageProps) {
         </div>
       </div>
 
-      {/* Search + filter */}
+      {/* Toolbar */}
       <div className="center-members-toolbar">
         <div className="center-members-search">
           <Search size={16} />
@@ -131,10 +128,20 @@ export function CenterMembersPage({ users }: CenterMembersPageProps) {
         </div>
       </div>
 
+      {/* Result count when filtered */}
+      {(search.trim() || activeFilter !== 'all') && (
+        <div className="center-members-result-count">
+          {filteredMembers.length} kết quả
+        </div>
+      )}
+
       {/* Member list */}
       <div className="center-members-list">
         {filteredMembers.length === 0 ? (
-          <p className="empty-text">Không có thành viên nào</p>
+          <div className="center-members-empty">
+            <UserX size={40} />
+            <p>Không tìm thấy thành viên nào</p>
+          </div>
         ) : (
           filteredMembers.map(m => (
             <div key={m.member.id} className="center-member-card">

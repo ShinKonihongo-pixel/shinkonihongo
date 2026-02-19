@@ -201,6 +201,10 @@ export interface AppSettings {
   // Card size settings (scale percentage)
   cardScale: number;                         // Vocabulary card scale (60-150%, default 100)
   grammarCardScale: number;                  // Grammar card scale (60-150%, default 100)
+
+  // Leveled example settings
+  exampleLevel: 'N5' | 'N4' | 'N3' | 'N2' | 'N1';  // Which level's examples to show (default N5)
+  exampleTranslationLang: 'vietnamese' | 'english' | 'both'; // Translation language (default vietnamese)
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -357,6 +361,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   // Card size defaults (100% = normal size)
   cardScale: 100,
   grammarCardScale: 100,
+  // Leveled example defaults
+  exampleLevel: 'N5',
+  exampleTranslationLang: 'vietnamese',
 };
 
 const STORAGE_KEY = 'flashcard-settings';

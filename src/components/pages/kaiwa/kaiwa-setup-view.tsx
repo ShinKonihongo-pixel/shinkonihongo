@@ -14,6 +14,10 @@ import {
   Star,
   BookOpen,
   MessageCircle,
+  Sparkles,
+  Play,
+  Volume2,
+  Zap,
 } from 'lucide-react';
 import type { JLPTLevel, ConversationStyle, ConversationTopic } from '../../../types/kaiwa';
 import type { SessionMode } from './kaiwa-types';
@@ -112,71 +116,95 @@ export function KaiwaSetupView(props: KaiwaSetupViewProps) {
     <div className="kaiwa-page kaiwa-page-start">
       <div className="kaiwa-container">
         <div className="kaiwa-start-screen">
-          <h2>会話練習 - Luyện Hội Thoại</h2>
-          <p className="kaiwa-description">
-            Luyện tập hội thoại tiếng Nhật với trợ lý AI. Bạn có thể nói hoặc gõ để trả lời.
-          </p>
+          {/* Hero section */}
+          <div className="kaiwa-hero">
+            <div className="kaiwa-hero-icon-wrap">
+              <div className="kaiwa-hero-ring" />
+              <div className="kaiwa-hero-ring ring-2" />
+              <div className="kaiwa-hero-icon">💬</div>
+            </div>
+            <h2>会話練習</h2>
+            <span className="kaiwa-hero-subtitle">Luyện Hội Thoại</span>
+            <p className="kaiwa-description">
+              Luyện tập hội thoại tiếng Nhật với trợ lý AI
+            </p>
+          </div>
 
-          {/* Session Mode Selector */}
-          <div className="kaiwa-session-mode-selector">
-            <button
-              className={`session-mode-btn ${sessionMode === 'default' ? 'active' : ''}`}
-              onClick={() => {
-                setSessionMode('default');
-                setSelectedAdvancedTopic(null);
-                setSelectedAdvancedQuestion(null);
-                setSelectedCustomTopic(null);
-                setSelectedCustomQuestion(null);
-              }}
-            >
-              <MessagesSquare size={18} />
-              <span>Hội thoại</span>
-            </button>
-            <button
-              className={`session-mode-btn ${sessionMode === 'speaking' ? 'active' : ''}`}
-              onClick={() => {
-                setSessionMode('speaking');
-                setSelectedDefaultQuestion(null);
-                setQuestionSelectorState({ type: 'hidden' });
-                setSelectedAdvancedTopic(null);
-                setSelectedAdvancedQuestion(null);
-                setSelectedCustomTopic(null);
-                setSelectedCustomQuestion(null);
-              }}
-            >
-              <Mic size={18} />
-              <span>Luyện nói</span>
-            </button>
-            {advancedTopics.length > 0 && (
+          {/* Section: Chọn chế độ */}
+          <div className="kaiwa-section">
+            <div className="kaiwa-section-header">
+              <div className="kaiwa-section-line" />
+              <span className="kaiwa-section-label">
+                <span className="kaiwa-step-badge">1</span>
+                Chọn chế độ
+              </span>
+              <div className="kaiwa-section-line" />
+            </div>
+
+            <div className="kaiwa-mode-cards">
               <button
-                className={`session-mode-btn ${sessionMode === 'advanced' ? 'active' : ''}`}
+                className={`kaiwa-mode-card ${sessionMode === 'default' ? 'active' : ''}`}
                 onClick={() => {
-                  setSessionMode('advanced');
-                  setSelectedDefaultQuestion(null);
-                  setQuestionSelectorState({ type: 'hidden' });
+                  setSessionMode('default');
+                  setSelectedAdvancedTopic(null);
+                  setSelectedAdvancedQuestion(null);
                   setSelectedCustomTopic(null);
                   setSelectedCustomQuestion(null);
                 }}
               >
-                <Star size={18} />
-                <span>Nâng cao</span>
+                <div className="mode-card-icon"><MessagesSquare size={22} /></div>
+                <span className="mode-card-title">Hội thoại</span>
+                <span className="mode-card-desc">Luyện giao tiếp tự nhiên</span>
               </button>
-            )}
-            {customTopics.length > 0 && (
               <button
-                className={`session-mode-btn ${sessionMode === 'custom' ? 'active' : ''}`}
+                className={`kaiwa-mode-card ${sessionMode === 'speaking' ? 'active' : ''}`}
                 onClick={() => {
-                  setSessionMode('custom');
+                  setSessionMode('speaking');
                   setSelectedDefaultQuestion(null);
                   setQuestionSelectorState({ type: 'hidden' });
                   setSelectedAdvancedTopic(null);
                   setSelectedAdvancedQuestion(null);
+                  setSelectedCustomTopic(null);
+                  setSelectedCustomQuestion(null);
                 }}
               >
-                <BookOpen size={18} />
-                <span>Mở rộng</span>
+                <div className="mode-card-icon"><Mic size={22} /></div>
+                <span className="mode-card-title">Luyện nói</span>
+                <span className="mode-card-desc">Luyện phát âm theo mẫu</span>
               </button>
-            )}
+              {advancedTopics.length > 0 && (
+                <button
+                  className={`kaiwa-mode-card ${sessionMode === 'advanced' ? 'active' : ''}`}
+                  onClick={() => {
+                    setSessionMode('advanced');
+                    setSelectedDefaultQuestion(null);
+                    setQuestionSelectorState({ type: 'hidden' });
+                    setSelectedCustomTopic(null);
+                    setSelectedCustomQuestion(null);
+                  }}
+                >
+                  <div className="mode-card-icon"><Sparkles size={22} /></div>
+                  <span className="mode-card-title">Nâng cao</span>
+                  <span className="mode-card-desc">Chủ đề chuyên sâu</span>
+                </button>
+              )}
+              {customTopics.length > 0 && (
+                <button
+                  className={`kaiwa-mode-card ${sessionMode === 'custom' ? 'active' : ''}`}
+                  onClick={() => {
+                    setSessionMode('custom');
+                    setSelectedDefaultQuestion(null);
+                    setQuestionSelectorState({ type: 'hidden' });
+                    setSelectedAdvancedTopic(null);
+                    setSelectedAdvancedQuestion(null);
+                  }}
+                >
+                  <div className="mode-card-icon"><BookOpen size={22} /></div>
+                  <span className="mode-card-title">Mở rộng</span>
+                  <span className="mode-card-desc">Chủ đề tùy chỉnh</span>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Speaking Practice Mode */}
@@ -532,26 +560,44 @@ export function KaiwaSetupView(props: KaiwaSetupViewProps) {
 
           {/* Free conversation setup */}
           {!selectedDefaultQuestion && sessionMode !== 'advanced' && sessionMode !== 'custom' && sessionMode !== 'speaking' && (
-            <div className="kaiwa-setup">
-              <div className="kaiwa-setup-row">
-                <div className="kaiwa-setup-item">
+            <>
+              <div className="kaiwa-section-header">
+                <div className="kaiwa-section-line" />
+                <span className="kaiwa-section-label">
+                  <span className="kaiwa-step-badge">2</span>
+                  Tùy chỉnh
+                </span>
+                <div className="kaiwa-section-line" />
+              </div>
+              <div className="kaiwa-setup">
+              <div className="kaiwa-setup-row-inline">
+                <div className="kaiwa-setup-col">
                   <label>Cấp độ JLPT</label>
-                  <select value={level} onChange={e => setLevel(e.target.value as JLPTLevel)}>
+                  <div className="kaiwa-level-pills">
                     {JLPT_LEVELS.map(l => (
-                      <option key={l.value} value={l.value}>{l.label}</option>
+                      <button
+                        key={l.value}
+                        className={`kaiwa-pill ${level === l.value ? 'active' : ''}`}
+                        onClick={() => setLevel(l.value as JLPTLevel)}
+                      >{l.label}</button>
                     ))}
-                  </select>
+                  </div>
                 </div>
-
-                <div className="kaiwa-setup-item">
+                <div className="kaiwa-setup-col">
                   <label>Phong cách nói</label>
-                  <select value={style} onChange={e => setStyle(e.target.value as ConversationStyle)}>
+                  <div className="kaiwa-style-pills">
                     {CONVERSATION_STYLES.map(s => (
-                      <option key={s.value} value={s.value}>{s.label}</option>
+                      <button
+                        key={s.value}
+                        className={`kaiwa-pill ${style === s.value ? 'active' : ''}`}
+                        onClick={() => setStyle(s.value as ConversationStyle)}
+                      >{s.label}</button>
                     ))}
-                  </select>
+                  </div>
                 </div>
               </div>
+
+              <div className="kaiwa-setup-divider" />
 
               <div className="kaiwa-setup-item kaiwa-topic-section">
                 <label>Chủ đề hội thoại</label>
@@ -592,44 +638,62 @@ export function KaiwaSetupView(props: KaiwaSetupViewProps) {
                 </div>
               )}
             </div>
+            </>
           )}
 
-          {/* Options row */}
+          {/* Launch section */}
           {sessionMode !== 'custom' && sessionMode !== 'speaking' && (
-            <div className="kaiwa-setup-item kaiwa-options-row">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={slowMode}
-                  onChange={e => setSlowMode(e.target.checked)}
-                />
-                Chế độ chậm (luyện nghe)
-              </label>
-              <span className="kaiwa-voice-info">
-                Giọng: {settings.kaiwaVoiceGender === 'female' ? 'Nữ' : 'Nam'}
-              </span>
+            <>
+              <div className="kaiwa-section-header">
+                <div className="kaiwa-section-line" />
+                <span className="kaiwa-section-label">
+                  <span className="kaiwa-step-badge">3</span>
+                  Bắt đầu
+                </span>
+                <div className="kaiwa-section-line" />
+              </div>
+              <div className="kaiwa-launch-section">
+              <div className="kaiwa-options-bar">
+                <button
+                  className={`kaiwa-toggle-option ${slowMode ? 'active' : ''}`}
+                  onClick={() => setSlowMode(!slowMode)}
+                >
+                  <Volume2 size={15} />
+                  <span>Chế độ chậm</span>
+                  <div className={`kaiwa-toggle-switch ${slowMode ? 'on' : ''}`}>
+                    <div className="kaiwa-toggle-thumb" />
+                  </div>
+                </button>
+                <div className="kaiwa-voice-badge">
+                  <Mic size={13} />
+                  {settings.kaiwaVoiceGender === 'female' ? 'Nữ' : 'Nam'}
+                </div>
+              </div>
+
+              {!recognitionSupported && (
+                <div className="kaiwa-warning">
+                  <Zap size={16} />
+                  <span>Trình duyệt không hỗ trợ nhận dạng giọng nói. Vui lòng dùng Chrome.</span>
+                </div>
+              )}
+
+              <button
+                className="kaiwa-cta-btn"
+                onClick={handleStart}
+                disabled={sessionMode === 'advanced' && !selectedAdvancedTopic}
+              >
+                <span className="kaiwa-cta-shimmer" />
+                <Play size={20} />
+                <span>
+                  {sessionMode === 'advanced' && selectedAdvancedTopic
+                    ? `Bắt đầu: ${selectedAdvancedTopic.name}`
+                    : selectedDefaultQuestion
+                      ? 'Bắt đầu với câu hỏi đã chọn'
+                      : 'Bắt đầu hội thoại'}
+                </span>
+              </button>
             </div>
-          )}
-
-          {!recognitionSupported && sessionMode !== 'speaking' && (
-            <p className="kaiwa-warning">
-              Trình duyệt không hỗ trợ nhận dạng giọng nói. Vui lòng dùng Chrome.
-            </p>
-          )}
-
-          {/* Start button */}
-          {sessionMode !== 'custom' && sessionMode !== 'speaking' && (
-            <button
-              className="btn btn-primary btn-large"
-              onClick={handleStart}
-              disabled={sessionMode === 'advanced' && !selectedAdvancedTopic}
-            >
-              {sessionMode === 'advanced' && selectedAdvancedTopic
-                ? `Bắt đầu: ${selectedAdvancedTopic.name}`
-                : selectedDefaultQuestion
-                  ? 'Bắt đầu với câu hỏi đã chọn'
-                  : 'Bắt đầu hội thoại'}
-            </button>
+            </>
           )}
         </div>
       </div>

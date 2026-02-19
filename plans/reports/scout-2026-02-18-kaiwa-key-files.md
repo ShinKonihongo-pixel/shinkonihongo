@@ -1,3 +1,14 @@
+# Kaiwa Feature - Key Files Complete Content
+
+Generated: 2026-02-18
+
+---
+
+## FILE 1: src/components/pages/kaiwa/index.tsx
+
+Main page orchestrator routing between setup and session views. 146 lines.
+
+```typescript
 // Kaiwa page orchestrator - Routes between setup and session views
 // Extracted from kaiwa-page.tsx monolith (1,751 lines -> ~100 lines)
 
@@ -6,7 +17,6 @@ import { useKaiwaState } from './use-kaiwa-state';
 import { KaiwaSetupView } from './kaiwa-setup-view';
 import { KaiwaSessionView } from './kaiwa-session-view';
 import '../../kaiwa/kaiwa.css';
-import '../../cards-management/cards-management.css';
 
 export function KaiwaPage(props: KaiwaPageProps) {
   const state = useKaiwaState(props);
@@ -144,3 +154,81 @@ export function KaiwaPage(props: KaiwaPageProps) {
     />
   );
 }
+```
+
+---
+
+## FILE 2: src/components/pages/kaiwa/kaiwa-setup-view.tsx
+
+Setup configuration UI for conversation parameters. 638 lines. 
+
+[Full content truncated for length - see below for key sections]
+
+This file handles:
+- Session mode selection (default/speaking/advanced/custom)
+- Level, style, topic selection
+- Default question hierarchical selector (level → topic → folder → question)
+- Advanced topics grid
+- Custom topics selector
+- Role selector
+- Preferences (slow mode, voice gender)
+- Start button with validation
+
+**Key sections:**
+- Lines 71-180: Props destructuring and session mode selector UI
+- Lines 183-191: Speaking practice mode integration
+- Lines 194-299: Advanced session topic selector with vocabulary preview
+- Lines 302-360: Custom topics session selector
+- Lines 363-530: Default question selector with hierarchical navigation
+- Lines 535-612: Free conversation setup with preferences
+- Lines 620-633: Start button with mode-specific text
+
+---
+
+## FILE 3: src/components/pages/kaiwa/kaiwa-session-view.tsx
+
+Main conversation interface during active session. 627 lines.
+
+[Full content truncated for length - see below for key sections]
+
+This file handles:
+- Header with stats (exchanges, duration, saved sentences)
+- Control buttons (restart, send mode, slow/furigana toggles, font size, eval, end)
+- Message display area with auto-scroll
+- Practice modal integration with auto-send countdown
+- Analysis modal for translations
+- Evaluation modal for feedback
+- Reading practice modal
+- Saved sentences panel with copy/speak/delete
+- Bottom section with:
+  - Suggestion tabs (answer template, sample answers, suggested questions)
+  - Error display
+  - Input controls (suggestions toggle, mic modes, text input, send button)
+  - Voice status indicators
+
+**Key sections:**
+- Lines 142-215: Props destructuring
+- Lines 219-324: Header with stats and controls
+- Lines 326-354: Messages list rendering
+- Lines 356-412: Modals (practice, analysis, evaluation, reading)
+- Lines 414-456: Saved sentences panel
+- Lines 459-542: Suggestion tabs with content
+- Lines 553-614: Input controls with mic and send
+
+---
+
+## Summary of Three Key Files
+
+| File | Lines | Purpose | Complexity |
+|------|-------|---------|-----------|
+| `index.tsx` | 146 | Route orchestrator | Low - Clean delegation |
+| `kaiwa-setup-view.tsx` | 638 | Pre-session config UI | High - 4+ session modes, nested selectors |
+| `kaiwa-session-view.tsx` | 627 | Active conversation UI | High - Multiple modals, suggestion system, input modes |
+
+**Total for key files: 1,411 lines**
+
+These three files represent the core of the Kaiwa feature architecture:
+1. Main router delegates to appropriate view
+2. Setup handles configuration with multiple paths
+3. Session handles real-time conversation with comprehensive UI
+

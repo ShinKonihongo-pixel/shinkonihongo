@@ -22,7 +22,8 @@ export interface Flashcard {
   sinoVietnamese: string;  // Âm Hán Việt
   meaning: string;         // Nghĩa tiếng Việt
   english?: string;        // English meaning
-  examples: string[];      // Danh sách câu ví dụ
+  examples: string[];      // Danh sách câu ví dụ (legacy flat format)
+  leveledExamples?: LeveledExamples; // Per-JLPT-level structured examples
   jlptLevel: JLPTLevel;    // Level (để filter nhanh)
   lessonId: string;        // ID của bài học
   // Spaced Repetition (SM-2) fields
@@ -62,6 +63,7 @@ export interface FlashcardFormData {
   meaning: string;
   english?: string;        // English meaning
   examples: string[];
+  leveledExamples?: LeveledExamples;
   jlptLevel: JLPTLevel;
   lessonId: string;
   difficultyLevel?: DifficultyLevel; // Optional - defaults to 'unset' if not provided
@@ -88,6 +90,22 @@ export interface GrammarCard {
 export interface GrammarExample {
   japanese: string;        // Câu ví dụ tiếng Nhật
   vietnamese: string;      // Nghĩa tiếng Việt
+}
+
+// Structured example sentence with both Vietnamese and English translations
+export interface StructuredExample {
+  japanese: string;   // With furigana: 漢字(かんじ)
+  vietnamese: string;
+  english: string;
+}
+
+// Per-JLPT-level example sentences (max 3 each)
+export interface LeveledExamples {
+  N5: StructuredExample[];
+  N4: StructuredExample[];
+  N3: StructuredExample[];
+  N2: StructuredExample[];
+  N1: StructuredExample[];
 }
 
 export interface GrammarCardFormData {

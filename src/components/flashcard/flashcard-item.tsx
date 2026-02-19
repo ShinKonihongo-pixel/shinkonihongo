@@ -1,7 +1,7 @@
 // Flashcard display component with flip animation
 
-import React from 'react';
-import type { Flashcard } from '../../types/flashcard';
+import React, { useState } from 'react';
+import type { Flashcard, StructuredExample } from '../../types/flashcard';
 import type { AppSettings } from '../../hooks/use-settings';
 import { CARD_FRAME_PRESETS } from '../../hooks/use-settings';
 import { useTextToSpeech } from '../../hooks/use-text-to-speech';
@@ -121,6 +121,9 @@ const defaultSettings: AppSettings = {
   // Card size defaults
   cardScale: 100,
   grammarCardScale: 100,
+  // Leveled example defaults
+  exampleLevel: 'N5',
+  exampleTranslationLang: 'vietnamese',
   // Quiz game defaults
   quizDifficultyMix: {
     super_hard: { super_hard: 60, hard: 25, medium: 10, easy: 5 },
@@ -206,6 +209,61 @@ function parseFurigana(text: string, furiganaColor?: string): React.ReactNode {
   );
 }
 
+// Parse furigana for a single Japanese line (no Vietnamese splitting)
+function parseFuriganaJapanese(text: string, furiganaColor?: string): React.ReactNode {
+  const furiganaRegex = /([一-龯々]+)\(([ぁ-んァ-ン]+)\)/g;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = furiganaRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+    parts.push(
+      <ruby key={match.index}>
+        {match[1]}
+        <rt style={furiganaColor ? { color: furiganaColor } : undefined}>{match[2]}</rt>
+      </ruby>
+    );
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : text;
+}
+
+// Render a structured example with translation based on settings
+function renderStructuredExample(
+  ex: StructuredExample,
+  index: number,
+  furiganaColor?: string,
+  translationLang: 'vietnamese' | 'english' | 'both' = 'vietnamese'
+): React.ReactNode {
+  return (
+    <div key={index} className="structured-example">
+      <span className="example-japanese">{parseFuriganaJapanese(ex.japanese, furiganaColor)}</span>
+      {translationLang === 'vietnamese' && ex.vietnamese && (
+        <span className="example-translation">({ex.vietnamese})</span>
+      )}
+      {translationLang === 'english' && ex.english && (
+        <span className="example-translation">({ex.english})</span>
+      )}
+      {translationLang === 'both' && (
+        <>
+          {ex.vietnamese && <span className="example-translation">({ex.vietnamese})</span>}
+          {ex.english && <span className="example-translation example-translation-en">({ex.english})</span>}
+        </>
+      )}
+    </div>
+  );
+}
+
+const EXAMPLE_LEVELS = ['N5', 'N4', 'N3', 'N2', 'N1'] as const;
+
 // Check if current screen is mobile
 function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
@@ -252,6 +310,11 @@ export function FlashcardItem({
   const { speak, isSpeaking } = useTextToSpeech();
   const isMobile = useIsMobile();
   const kanjiText = card.kanji || card.vocabulary;
+  const [selectedExampleLevel, setSelectedExampleLevel] = useState<typeof EXAMPLE_LEVELS[number]>(
+    (settings.exampleLevel as typeof EXAMPLE_LEVELS[number]) || 'N5'
+  );
+  const hasLeveledExamples = card.leveledExamples && EXAMPLE_LEVELS.some(l => (card.leveledExamples?.[l]?.length || 0) > 0);
+  const lang = settings.exampleTranslationLang || 'vietnamese';
 
   // Get font sizes based on screen size (auto scale down 50% on mobile)
   // Apply backFontSize scale (100 = 100%) for back side elements
@@ -269,6 +332,12 @@ export function FlashcardItem({
   const meaningFontSize = isMobile
     ? Math.max(settings.meaningFontSize * mobileScale * backScale, 12)
     : settings.meaningFontSize * backScale;
+
+  // Resolve "auto" colors — front: white on gradient, back: contextual defaults
+  const AUTO = 'auto';
+  const resolvedFrontColor = settings.frontTextColor === AUTO ? '#FFFFFF' : (settings.frontTextColor || '#FFFFFF');
+  const resolvedExampleColor = settings.exampleTextColor === AUTO ? '#4a4a4a' : (settings.exampleTextColor || '#4a4a4a');
+  const resolvedFuriganaColor = settings.furiganaTextColor === AUTO ? '#c53d43' : (settings.furiganaTextColor || '#c53d43');
 
   // Speak the vocabulary (use vocabulary for correct pronunciation)
   const handleSpeak = (e: React.MouseEvent) => {
@@ -292,14 +361,14 @@ export function FlashcardItem({
         <div className={`flashcard-face flashcard-front ${getFrameAnimationClass(settings)}`} style={{ ...getCardBackgroundStyle(settings), ...getCardFrameStyle(settings) }}>
           <span className="jlpt-badge">{levelBadge}</span>
           <div className="card-content">
-            <div className="kanji" style={{ fontSize: `${kanjiFontSize}px`, fontFamily: `"${settings.kanjiFont}", serif`, fontWeight: settings.kanjiBold ? 900 : 400, color: settings.frontTextColor || '#FFFFFF' }}>
+            <div className="kanji" style={{ fontSize: `${kanjiFontSize}px`, fontFamily: `"${settings.kanjiFont}", serif`, fontWeight: settings.kanjiBold ? 900 : 400, color: resolvedFrontColor }}>
               {kanjiText}
             </div>
           </div>
           <p className="flip-hint">Nhấn để lật thẻ</p>
         </div>
 
-        {/* Back side - Answer */}
+        {/* Back side - Answer (pro redesign) */}
         <div className={`flashcard-face flashcard-back ${getFrameAnimationClass(settings)}`} style={{ ...getCardFrameStyle(settings), '--back-scale': backScale } as React.CSSProperties}>
           <div className="card-back-header">
             <span className="jlpt-badge jlpt-badge-left">{levelBadge}</span>
@@ -312,31 +381,63 @@ export function FlashcardItem({
             </button>
           </div>
           <div className={`card-content card-back-content ${!isMobile ? 'desktop-split' : ''}`}>
-            {/* Main info section */}
+            {/* Left column: reading + meaning */}
             <div className="card-main-info">
               {settings.showSinoVietnamese && card.sinoVietnamese && (
-                <div className="sino-vietnamese" style={{ fontSize: `${sinoVietnameseFontSize}px` }}>
+                <div className="back-sino-vietnamese" style={{ fontSize: `${sinoVietnameseFontSize}px` }}>
                   {card.sinoVietnamese}
                 </div>
               )}
               {settings.showVocabulary && (
-                <div className="vocabulary" style={{ fontSize: `${vocabularyFontSize}px` }}>
+                <div className="back-vocabulary" style={{ fontSize: `${vocabularyFontSize}px` }}>
                   {card.vocabulary}
                 </div>
               )}
               {settings.showMeaning && (
-                <div className="meaning" style={{ fontSize: `${meaningFontSize}px` }}>
-                  {card.meaning}
+                <div className="back-meaning-block">
+                  {(lang === 'vietnamese' || lang === 'both') && (
+                    <div className="back-meaning back-meaning-vi" style={{ fontSize: `${meaningFontSize}px` }}>
+                      {card.meaning}
+                    </div>
+                  )}
+                  {(lang === 'english' || lang === 'both') && card.english && (
+                    <div className="back-meaning back-meaning-en" style={{ fontSize: `${meaningFontSize * 0.9}px` }}>
+                      {card.english}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
-            {/* Example section */}
-            {settings.showExample && card.examples && card.examples.length > 0 && (
-              <div className="card-example-section" style={{ color: settings.exampleTextColor || '#94a3b8' }}>
+            {/* Right column: examples */}
+            {settings.showExample && hasLeveledExamples && (
+              <div className="card-example-section" style={{ color: resolvedExampleColor }}>
+                <div className="example-level-pills" onClick={(e) => e.stopPropagation()}>
+                  {EXAMPLE_LEVELS.map(level => {
+                    const count = card.leveledExamples?.[level]?.length || 0;
+                    return (
+                      <button
+                        key={level}
+                        className={`example-level-pill ${selectedExampleLevel === level ? 'active' : ''} ${count === 0 ? 'empty' : ''}`}
+                        onClick={() => count > 0 && setSelectedExampleLevel(level)}
+                      >
+                        {level}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="example-list">
+                  {(card.leveledExamples?.[selectedExampleLevel] || []).map((ex, idx) =>
+                    renderStructuredExample(ex, idx, resolvedFuriganaColor, lang)
+                  )}
+                </div>
+              </div>
+            )}
+            {settings.showExample && !hasLeveledExamples && card.examples && card.examples.length > 0 && (
+              <div className="card-example-section" style={{ color: resolvedExampleColor }}>
                 <span className="example-label">Ví dụ:</span>
                 {card.examples.map((ex, idx) => (
-                  <p key={idx}>{parseFurigana(ex, settings.furiganaTextColor)}</p>
+                  <p key={idx}>{parseFurigana(ex, resolvedFuriganaColor)}</p>
                 ))}
               </div>
             )}

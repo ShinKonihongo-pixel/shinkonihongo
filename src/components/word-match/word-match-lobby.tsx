@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import type { WordMatchGame } from '../../types/word-match';
 import { GameCodeDisplay, PlayerListGrid, LobbyActionBar, normalizePlayer } from '../shared/game-lobby';
+import { ConfirmModal } from '../ui/confirm-modal';
 
 interface WordMatchLobbyProps {
   game: WordMatchGame;
@@ -21,6 +22,7 @@ export const WordMatchLobby: React.FC<WordMatchLobbyProps> = ({
   onKickPlayer,
 }) => {
   const [copied, setCopied] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const isHost = game.hostId === currentPlayerId;
   const players = Object.values(game.players);
   const normalizedPlayers = players.map(p => normalizePlayer({ ...p, odinhId: p.odinhId, isHost: p.odinhId === game.hostId, isBot: p.isBot }));
@@ -39,7 +41,7 @@ export const WordMatchLobby: React.FC<WordMatchLobbyProps> = ({
   return (
     <div className="word-match-lobby">
       <div className="word-match-lobby-header">
-        <button className="word-match-back-btn" onClick={onLeave}>
+        <button className="word-match-back-btn" onClick={() => setShowLeaveConfirm(true)}>
           ← Rời phòng
         </button>
         <div className="room-info">
@@ -103,11 +105,23 @@ export const WordMatchLobby: React.FC<WordMatchLobbyProps> = ({
         isHost={isHost}
         canStart={canStart}
         onStart={onStartGame}
-        onLeave={() => {}}
+        onLeave={onLeave}
         startLabel="🚀 Bắt Đầu"
         disabledLabel={`Cần ít nhất ${game.settings.minPlayers} người`}
         waitingLabel="Đợi chủ phòng bắt đầu..."
         className="word-match-lobby-actions"
+      />
+
+      <ConfirmModal
+        isOpen={showLeaveConfirm}
+        title="Rời khỏi phòng?"
+        message={isHost
+          ? 'Bạn là host. Nếu bạn rời đi, phòng sẽ bị huỷ.'
+          : 'Bạn có chắc muốn rời khỏi phòng?'}
+        confirmText="Rời phòng"
+        cancelText="Ở lại"
+        onConfirm={() => { setShowLeaveConfirm(false); onLeave(); }}
+        onCancel={() => setShowLeaveConfirm(false)}
       />
     </div>
   );

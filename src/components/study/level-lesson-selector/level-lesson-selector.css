@@ -60,6 +60,9 @@
   display: flex;
   align-items: center;
   gap: 0.875rem;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
 }
 
 .back-btn {
@@ -109,6 +112,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .lesson-header .header-title {
@@ -117,17 +122,24 @@
   color: white;
   margin: 0;
   letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .lesson-header .header-subtitle {
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.5);
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .header-actions {
   display: flex;
   gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 .header-btn {

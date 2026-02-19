@@ -3568,3 +3568,10 @@
   }
 }
 
+/* Mobile: hide greeting (title shown in mobile topbar instead) */
+@media (max-width: 768px) {
+  .hp-greeting {
+    display: none;
+  }
+}
+

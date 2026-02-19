@@ -564,12 +564,14 @@
   font-size: var(--back-font-size, 22px);
 }
 
-ruby {
+.grammar-card-back ruby,
+.grammar-card-front ruby {
   ruby-position: over;
   ruby-align: center;
 }
 
-ruby rt {
+.grammar-card-back ruby rt,
+.grammar-card-front ruby rt {
   font-size: 0.55em;
   color: rgba(255, 255, 255, 0.7);
   font-weight: 400;
@@ -644,7 +646,7 @@ ruby rt {
   border-left: 3px solid #8b5cf6;
 }
 
-.example-japanese {
+.grammar-example .example-japanese {
   display: flex;
   align-items: center;
   gap: 0.5rem;

@@ -66,6 +66,10 @@ export function StudyHeader({
     return () => { cancelled = true; };
   }, [currentUser, currentCard?.id]);
 
+  // Check if current card is in any notebook
+  const isInNotebook = !!(currentCard && notebookHook &&
+    notebookHook.notebooks.some(nb => nb.flashcardIds.includes(currentCard.id)));
+
   // Check if anything can be reset (shuffle or card changes)
   const cardHasChanges = currentCard && (
     currentCard.memorizationStatus !== 'unset' ||
@@ -79,7 +83,7 @@ export function StudyHeader({
         {onBack && (
           <button className="back-btn-study" onClick={onBack}>
             <ArrowLeft size={isMobile ? 16 : 18} />
-            {!isMobile && <span>Chọn bài khác</span>}
+            {!isMobile && <span>Quay lại</span>}
           </button>
         )}
         {/* Hide level badge on mobile */}
@@ -148,9 +152,9 @@ export function StudyHeader({
           {currentCard && notebookHook && currentUser && (
             <div className="nb-popover-anchor">
               <button
-                className="header-action-btn has-label"
+                className={`header-action-btn has-label ${isInNotebook ? 'in-notebook-active' : ''}`}
                 onClick={() => setShowNotebookPopover((v) => !v)}
-                title="Thêm vào sổ tay"
+                title={isInNotebook ? 'Đã lưu trong sổ tay' : 'Thêm vào sổ tay'}
               >
                 <BookmarkPlus size={16} />
                 {!isMobile && <span className="btn-label">Sổ tay</span>}

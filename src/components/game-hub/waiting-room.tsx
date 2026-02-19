@@ -27,6 +27,7 @@ export function WaitingRoom({ onJoinGame, onBack, onCreateRoom, filterGameType, 
   const [hiddenGames, setHiddenGames] = useState<GameType[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'single'; room: WaitingRoomGame } | { type: 'all' } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [showBackConfirm, setShowBackConfirm] = useState(false);
 
   const isSuperAdmin = userRole === 'super_admin';
 
@@ -114,7 +115,7 @@ export function WaitingRoom({ onJoinGame, onBack, onCreateRoom, filterGameType, 
     <div className="waiting-room-v2">
       {/* Header */}
       <div className="wr-header">
-        <button className="wr-back-btn" onClick={onBack}>
+        <button className="wr-back-btn" onClick={() => setShowBackConfirm(true)}>
           <ArrowLeft size={20} />
           <span>Quay lại</span>
         </button>
@@ -183,7 +184,7 @@ export function WaitingRoom({ onJoinGame, onBack, onCreateRoom, filterGameType, 
             disabled={deleting}
           >
             <Trash2 size={14} />
-            Xoá tất cả phòng
+            Xoá all
           </button>
         )}
       </div>
@@ -303,6 +304,18 @@ export function WaitingRoom({ onJoinGame, onBack, onCreateRoom, filterGameType, 
           onCancel={() => setDeleteConfirm(null)}
         />
       )}
+
+      {/* Back confirm modal */}
+      <ConfirmModal
+        isOpen={showBackConfirm}
+        title="Rời khỏi phòng chờ?"
+        message="Bạn có muốn quay lại trang trước?"
+        confirmText="Quay lại"
+        cancelText="Ở lại"
+        variant="info"
+        onConfirm={() => { setShowBackConfirm(false); onBack(); }}
+        onCancel={() => setShowBackConfirm(false)}
+      />
     </div>
   );
 }

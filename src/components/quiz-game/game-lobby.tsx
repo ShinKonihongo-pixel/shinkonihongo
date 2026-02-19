@@ -3,7 +3,7 @@
 // All computed values memoized, callbacks stable, no inline object creation in render
 
 import { QRCodeSVG } from 'qrcode.react';
-import { Users, Clock, HelpCircle, Sparkles, Copy, Check, Share2, ChevronUp, ChevronDown, QrCode, LogOut } from 'lucide-react';
+import { Users, Clock, HelpCircle, Copy, Check, Share2, ChevronUp, ChevronDown, QrCode, LogOut } from 'lucide-react';
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { QuizGame } from '../../types/quiz-game';
@@ -53,6 +53,7 @@ export function GameLobby({
   const [qrVisible, setQrVisible] = useState(true);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [kickTarget, setKickTarget] = useState<string | null>(null);
+  const [hostMsg, setHostMsg] = useState(game.hostMessage || '');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sharingRef = useRef(false);
@@ -130,9 +131,11 @@ export function GameLobby({
 
   // Debounced host message (500ms)
   const handleHostMessage = useCallback((value: string) => {
+    const trimmed = value.slice(0, 50);
+    setHostMsg(trimmed);
     if (!onUpdateHostMessage) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => onUpdateHostMessage(value.slice(0, 50)), 500);
+    debounceRef.current = setTimeout(() => onUpdateHostMessage(trimmed), 500);
   }, [onUpdateHostMessage]);
 
   return createPortal(
@@ -151,9 +154,6 @@ export function GameLobby({
           <button className="qz-lobby-leave-btn" onClick={() => setShowLeaveConfirm(true)} title="Rời phòng">
             <LogOut size={16} />
           </button>
-          <div className="qz-lobby-icon-wrap">
-            <Sparkles size={18} />
-          </div>
           <div className="qz-lobby-title-text">
             <h1 className="qz-lobby-title">{game.title}</h1>
             <div className="qz-lobby-meta">
@@ -200,7 +200,7 @@ export function GameLobby({
                     className="qz-lobby-host-msg-input"
                     type="text"
                     maxLength={50}
-                    defaultValue={game.hostMessage || ''}
+                    value={hostMsg}
                     placeholder="Nhập lời nhắn cho phòng..."
                     onChange={e => handleHostMessage(e.target.value)}
                   />

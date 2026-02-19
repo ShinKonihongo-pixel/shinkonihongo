@@ -1,0 +1,163 @@
+================================================================================
+KAIWA (会話) FEATURE - SCOUT REPORT SUMMARY
+Generated: 2026-02-18
+================================================================================
+
+SCOPE: All files related to Japanese conversation (Kaiwa) feature in the app
+
+RESULTS:
+- Total files found: 37+
+- Total lines of code: ~12,712
+- File types: TSX (21 files), TS (13 files), CSS (2 files), (1 more TBD)
+
+================================================================================
+REPORTS CREATED
+================================================================================
+
+1. scout-2026-02-18-kaiwa-feature.md
+   - Complete feature inventory and architecture
+   - Descriptions of all components
+   - Dependencies and integration points
+   - Conversation flow overview
+   - Audio/speech features
+   - Data persistence model
+
+2. scout-2026-02-18-kaiwa-key-files.md
+   - Full content of 3 main files:
+     * src/components/pages/kaiwa/index.tsx (146 lines)
+     * src/components/pages/kaiwa/kaiwa-setup-view.tsx (638 lines) 
+     * src/components/pages/kaiwa/kaiwa-session-view.tsx (627 lines)
+   - Structural breakdown and line ranges
+   - Comparison table
+
+3. scout-2026-02-18-kaiwa-file-listing.md
+   - Complete file listing with absolute paths
+   - Line counts for each file
+   - Directory structure visualization
+   - Integration points reference
+   - Suggested reading order
+
+================================================================================
+QUICK REFERENCE - ABSOLUTE FILE PATHS
+================================================================================
+
+CORE ORCHESTRATION (2,331 lines):
+  /Users/admin/Documents/名称未設定フォルダ/src/components/pages/kaiwa/index.tsx
+  /Users/admin/Documents/名称未設定フォルダ/src/components/pages/kaiwa/kaiwa-setup-view.tsx
+  /Users/admin/Documents/名称未設定フォルダ/src/components/pages/kaiwa/kaiwa-session-view.tsx
+  /Users/admin/Documents/名称未設定フォルダ/src/components/pages/kaiwa/use-kaiwa-state.ts
+  /Users/admin/Documents/名称未設定フォルダ/src/components/pages/kaiwa/mic-mode-selector.tsx
+  /Users/admin/Documents/名称未設定フォルダ/src/components/pages/kaiwa/kaiwa-page-types.ts
+  /Users/admin/Documents/名称未設定フォルダ/src/components/pages/kaiwa/kaiwa-types.ts
+
+UI COMPONENTS (1,570 lines):
+  Message & Communication:
+    /Users/admin/Documents/名称未設定フォルダ/src/components/kaiwa/kaiwa-message-item.tsx
+    /Users/admin/Documents/名称未設定フォルダ/src/components/kaiwa/kaiwa-input-area.tsx
+    /Users/admin/Documents/名称未設定フォルダ/src/components/kaiwa/kaiwa-suggestions-box.tsx
+  
+  Modals:
+    /Users/admin/Documents/名称未設定フォルダ/src/components/kaiwa/kaiwa-practice-modal.tsx
+    /Users/admin/Documents/名称未設定フォルダ/src/components/kaiwa/kaiwa-reading-practice-modal.tsx
+    /Users/admin/Documents/名称未設定フォルダ/src/components/kaiwa/kaiwa-analysis-modal.tsx
+    /Users/admin/Documents/名称未設定フォルダ/src/components/kaiwa/kaiwa-evaluation-modal.tsx
+  
+  Support:
+    /Users/admin/Documents/名称未設定フォルダ/src/components/kaiwa/kaiwa-answer-template.tsx
+    /Users/admin/Documents/名称未設定フォルダ/src/components/kaiwa/kaiwa-karaoke-text.tsx
+    /Users/admin/Documents/名称未設定フォルダ/src/components/kaiwa/kaiwa-start-screen.tsx
+    /Users/admin/Documents/名称未設定フォルダ/src/components/kaiwa/kaiwa-conversation-header.tsx
+    /Users/admin/Documents/名称未設定フォルダ/src/components/kaiwa/kaiwa-stats-dashboard.tsx
+    /Users/admin/Documents/名称未設定フォルダ/src/components/kaiwa/kaiwa-shadowing-mode.tsx
+
+STYLING (480 lines):
+  /Users/admin/Documents/名称未設定フォルダ/src/components/kaiwa/kaiwa.css
+  /Users/admin/Documents/名称未設定フォルダ/src/components/kaiwa/kaiwa-reading-practice-modal.css
+
+HOOKS (937 lines):
+  /Users/admin/Documents/名称未設定フォルダ/src/hooks/use-kaiwa-characters.ts
+  /Users/admin/Documents/名称未設定フォルダ/src/hooks/use-kaiwa-questions.ts
+  /Users/admin/Documents/名称未設定フォルダ/src/hooks/use-kaiwa-topics.ts
+  /Users/admin/Documents/名称未設定フォルダ/src/hooks/use-kaiwa-session-history.ts
+
+TYPES (467 lines):
+  /Users/admin/Documents/名称未設定フォルダ/src/types/kaiwa.ts
+  /Users/admin/Documents/名称未設定フォルダ/src/types/kaiwa-session.ts
+  /Users/admin/Documents/名称未設定フォルダ/src/types/kaiwa-advanced.ts
+  /Users/admin/Documents/名称未設定フォルダ/src/types/kaiwa-question.ts
+
+SERVICES (94 lines):
+  /Users/admin/Documents/名称未設定フォルダ/src/services/firestore/kaiwa-question-service.ts
+  /Users/admin/Documents/名称未設定フォルダ/src/services/firestore/kaiwa-folder-service.ts
+
+CONFIGURATION & SETTINGS (265 lines):
+  /Users/admin/Documents/名称未設定フォルダ/src/constants/kaiwa.ts
+  /Users/admin/Documents/名称未設定フォルダ/src/components/pages/settings/kaiwa-settings.tsx
+
+CARDS MANAGEMENT INTEGRATION (568+ lines):
+  /Users/admin/Documents/名称未設定フォルダ/src/components/cards-management/kaiwa-character-modal.tsx
+  /Users/admin/Documents/名称未設定フォルダ/src/components/cards-management/kaiwa-character-modal.css
+  /Users/admin/Documents/名称未設定フォルダ/src/components/cards-management/kaiwa/kaiwa-tab-types.ts
+
+================================================================================
+KEY ARCHITECTURE INSIGHTS
+================================================================================
+
+ROUTING PATTERN:
+  KaiwaPage (orchestrator)
+    ├── Setup Phase: KaiwaSetupView (config UI)
+    └── Session Phase: KaiwaSessionView (conversation UI)
+
+STATE MANAGEMENT:
+  Centralized in: use-kaiwa-state.ts (796 lines)
+  - Manages all state for both views
+  - Handles AI interaction (Groq API)
+  - Handles speech (recognition & synthesis)
+  - Manages session persistence
+
+SESSION MODES:
+  1. Default: Free conversation with preset questions
+  2. Speaking: Speaking practice without conversation
+  3. Advanced: Topic-based with vocabulary
+  4. Custom: User-defined topics and questions
+
+MAIN FEATURES:
+  - Speech recognition (mic input)
+  - Text-to-speech (10 voice presets)
+  - Pronunciation evaluation (character-level)
+  - Reading practice (visual feedback)
+  - Shadowing mode (listen-and-repeat)
+  - Answer suggestions (pattern + examples)
+  - Session history & persistence
+  - CSV export
+
+SUGGESTION SYSTEM:
+  - Answer templates (sentence patterns)
+  - Sample answers (multiple options)
+  - Follow-up questions
+
+DATA PERSISTENCE:
+  - Firestore: Questions, topics, sessions
+  - localStorage: Characters (device-specific TTS)
+  - Session cache: Temporary conversation state
+
+================================================================================
+RECOMMENDED READING ORDER
+================================================================================
+
+1. src/types/kaiwa.ts (136 lines) - Core domain model
+2. src/constants/kaiwa.ts (109 lines) - Configuration data
+3. src/components/pages/kaiwa/index.tsx (146 lines) - Main router
+4. src/components/pages/kaiwa/use-kaiwa-state.ts (796 lines) - State machine
+5. src/components/pages/kaiwa/kaiwa-setup-view.tsx (638 lines) - Config UI
+6. src/components/pages/kaiwa/kaiwa-session-view.tsx (627 lines) - Conversation UI
+
+================================================================================
+UNRESOLVED QUESTIONS
+================================================================================
+
+None identified. Complete inventory provided.
+
+================================================================================
+END OF REPORT
+================================================================================

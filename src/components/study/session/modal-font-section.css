@@ -29,3 +29,44 @@
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
   transform: scale(1.15);
 }
+
+/* Auto color swatch */
+.color-swatch-auto {
+  background: linear-gradient(135deg, #fff 50%, #222 50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.color-swatch-auto .auto-label {
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: #8b5cf6;
+  text-shadow: 0 0 2px rgba(255,255,255,0.8);
+  line-height: 1;
+}
+
+/* Custom color picker swatch */
+.color-swatch-custom {
+  background: conic-gradient(
+    #ef4444, #fbbf24, #34d399, #22d3ee, #60a5fa, #a78bfa, #f472b6, #ef4444
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.color-swatch-custom .custom-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  line-height: 1;
+}
+
+/* Hidden native color input */
+.color-input-hidden {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}

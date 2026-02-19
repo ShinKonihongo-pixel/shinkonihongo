@@ -23,7 +23,6 @@ export function KanjiDetailModal({ flashcard, onClose, readOnly = false }: Kanji
           <div className="kd-title">
             <Sparkles size={18} className="kd-title-icon" />
             <h3>{flashcard.kanji || flashcard.vocabulary}</h3>
-            <span className="kd-subtitle">Chi tiết Kanji</span>
           </div>
           <div className="kd-header-actions">
             {!readOnly && (
@@ -69,7 +68,7 @@ export function KanjiDetailModal({ flashcard, onClose, readOnly = false }: Kanji
           {!loading && !error && analyses.length === 0 && (
             <div className="kd-empty">
               {readOnly
-                ? 'Chưa có dữ liệu phân tích. Hãy mở "Chi tiết" ở màn Quản lý để tạo.'
+                ? 'Chưa có dữ liệu phân tích.'
                 : 'Không tìm thấy chữ Kanji trong từ này.'}
             </div>
           )}

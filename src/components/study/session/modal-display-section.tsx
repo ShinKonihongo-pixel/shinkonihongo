@@ -67,44 +67,19 @@ export function ModalDisplaySection({
       </div>
 
       <div className="modal-section">
-        <div className="modal-section-title">Hiển thị mặt sau</div>
-
-        <div className="modal-toggle-group">
-          <label className="modal-toggle-item">
-            <input
-              type="checkbox"
-              checked={settings.showVocabulary}
-              onChange={(e) => onSettingsChange?.('showVocabulary', e.target.checked)}
-            />
-            <span className="toggle-text">Từ vựng (読み方)</span>
-          </label>
-
-          <label className="modal-toggle-item">
-            <input
-              type="checkbox"
-              checked={settings.showSinoVietnamese}
-              onChange={(e) => onSettingsChange?.('showSinoVietnamese', e.target.checked)}
-            />
-            <span className="toggle-text">Hán Việt</span>
-          </label>
-
-          <label className="modal-toggle-item">
-            <input
-              type="checkbox"
-              checked={settings.showMeaning}
-              onChange={(e) => onSettingsChange?.('showMeaning', e.target.checked)}
-            />
-            <span className="toggle-text">Nghĩa</span>
-          </label>
-
-          <label className="modal-toggle-item">
-            <input
-              type="checkbox"
-              checked={settings.showExample}
-              onChange={(e) => onSettingsChange?.('showExample', e.target.checked)}
-            />
-            <span className="toggle-text">Ví dụ</span>
-          </label>
+        <div className="modal-section-title" style={{ display: 'flex', alignItems: 'center', marginBottom: 0 }}>
+          <span>Ngôn ngữ</span>
+          <div style={{ flex: 1 }} />
+          <select
+            className="modal-select"
+            style={{ width: 'auto', minWidth: '8rem' }}
+            value={settings.exampleTranslationLang || 'vietnamese'}
+            onChange={(e) => onSettingsChange?.('exampleTranslationLang', e.target.value as AppSettings['exampleTranslationLang'])}
+          >
+            <option value="vietnamese">Tiếng Việt</option>
+            <option value="english">English</option>
+            <option value="both">Cả hai</option>
+          </select>
         </div>
       </div>
     </>

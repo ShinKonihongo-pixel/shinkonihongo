@@ -1,4 +1,8 @@
-// Reusable confirmation modal component
+// Premium confirm modal — dark glassmorphism, centered, with accent bar
+
+import { createPortal } from 'react-dom';
+import { AlertTriangle, Info } from 'lucide-react';
+import './confirm-modal.css';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -8,6 +12,7 @@ interface ConfirmModalProps {
   cancelText?: string;
   onConfirm: () => void;
   onCancel: () => void;
+  variant?: 'danger' | 'info';
 }
 
 export function ConfirmModal({
@@ -18,23 +23,33 @@ export function ConfirmModal({
   cancelText = 'Hủy',
   onConfirm,
   onCancel,
+  variant = 'danger',
 }: ConfirmModalProps) {
   if (!isOpen) return null;
 
-  return (
-    <div className="modal-overlay" onClick={onCancel}>
-      <div className="modal-content confirm-modal" onClick={e => e.stopPropagation()}>
-        <h3 className="modal-title">{title}</h3>
-        <p className="modal-message">{message}</p>
-        <div className="modal-actions">
-          <button className="btn btn-secondary" onClick={onCancel}>
+  const isDanger = variant === 'danger';
+
+  return createPortal(
+    <div className="confirm-overlay" onClick={onCancel}>
+      <div className="confirm-dialog" onClick={e => e.stopPropagation()}>
+        <div className={`confirm-accent-bar ${isDanger ? 'danger' : 'info'}`} />
+        <div className="confirm-body">
+          <div className={`confirm-icon-circle ${isDanger ? 'danger' : 'info'}`}>
+            {isDanger ? <AlertTriangle size={22} /> : <Info size={22} />}
+          </div>
+          <h3 className="confirm-title">{title}</h3>
+          <p className="confirm-message">{message}</p>
+        </div>
+        <div className="confirm-actions">
+          <button className="confirm-btn cancel" onClick={onCancel}>
             {cancelText}
           </button>
-          <button className="btn btn-danger" onClick={onConfirm}>
+          <button className={`confirm-btn ${isDanger ? 'danger' : 'primary'}`} onClick={onConfirm}>
             {confirmText}
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
