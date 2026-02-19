@@ -1,9 +1,43 @@
-import { HelpCircle, Layers, Sparkles, Zap } from 'lucide-react';
+import { HelpCircle, Sparkles, Zap, Shield, Users } from 'lucide-react';
 import type { GameSetupConfig } from './types';
 
 export const GOLDEN_BELL_SETUP_CONFIG: GameSetupConfig = {
   showTitle: true,
   titlePlaceholder: 'Rung Chuông Vàng',
+  // Game mode selector — solo vs team
+  showGameMode: true,
+  gameModeDefault: 'solo',
+  gameModeOptions: [
+    {
+      value: 'solo',
+      label: 'Đấu Đơn',
+      description: 'Mỗi người tự chiến đấu',
+      icon: <Shield size={22} />,
+    },
+    {
+      value: 'team',
+      label: 'Đấu Đội',
+      description: 'Chia đội cùng chiến đấu',
+      icon: <Users size={22} />,
+    },
+  ],
+  teamCountSlider: {
+    min: 2,
+    max: 6,
+    step: 1,
+    defaultValue: 3,
+    labels: ['2', '4', '6'],
+  },
+  maxPlayersPerTeamSlider: {
+    min: 3,
+    max: 6,
+    step: 1,
+    defaultValue: 4,
+    labels: ['3', '4', '5', '6'],
+  },
+  // Free user limits: max 3 teams, max 3 per team
+  teamCountFreeMax: 3,
+  maxPlayersPerTeamFreeMax: 3,
   showJLPTLevel: true,
   showCategories: true,
   multiSelectCategories: true,
@@ -37,19 +71,13 @@ export const GOLDEN_BELL_SETUP_CONFIG: GameSetupConfig = {
     defaultValue: 20,
     labels: ['10', '50', '100'],
   },
-  toggles: [
-    {
-      id: 'difficulty',
-      label: 'Tăng độ khó dần',
-      description: 'Câu hỏi sẽ khó hơn theo thời gian',
-      icon: <Layers size={18} />,
-      defaultEnabled: true,
-    },
-  ],
+  // Skills always enabled — no toggle needed (special skill questions)
   rules: [
-    '🔔 Trả lời sai = Bị loại',
-    '🏆 Người cuối cùng sống sót chiến thắng',
-    '⏱️ Hết giờ = Tính như sai',
+    'Trả lời sai = Bị loại',
+    'Người cuối cùng sống sót chiến thắng',
+    'Hết giờ = Tính như sai',
+    'Câu đặc biệt: sai không bị loại, chỉ mất lượt quay kỹ năng',
+    'Kỹ năng: Khiên, Tự Cứu, 50/50, Gấp Đôi TG',
   ],
 };
 

@@ -1,13 +1,27 @@
-// Bingo Game Types - Trò chơi Bingo số
-// 6 dãy số, mỗi dãy 5 số (1-99), bốc số ngẫu nhiên, ai BINGO trước thắng
+// Bingo Game Types - Trò chơi Bingo câu hỏi
+// Trả lời đúng → Quay số → Đánh dấu trên thẻ → Ai BINGO trước thắng
+
+import type { JLPTLevel } from './flashcard';
 
 // Game status
 export type BingoGameStatus =
-  | 'waiting'      // Waiting for players
-  | 'starting'     // Countdown before game
-  | 'playing'      // Game in progress
-  | 'skill_phase'  // Skill selection phase (every 5 turns)
-  | 'finished';    // Game over
+  | 'waiting'         // Waiting for players
+  | 'starting'        // Countdown before game
+  | 'playing'         // Idle between questions
+  | 'question_phase'  // Players answering a question
+  | 'spin_phase'      // Number spin animation
+  | 'skill_phase'     // Skill selection (every 5 turns)
+  | 'finished';       // Game over
+
+// Quiz question for bingo
+export interface BingoQuestion {
+  id: string;
+  questionText: string;
+  questionHint?: string;
+  options: string[];
+  correctIndex: number;
+  timeLimit: number;
+}
 
 // Special skill types (available every 5 turns)
 export type BingoSkillType =
@@ -94,6 +108,8 @@ export interface BingoPlayer {
   luckTurnsLeft: number;      // Turns remaining for luck bonus
   hasSkillAvailable: boolean; // Can use skill this phase
   hasFiftyFifty: boolean;     // Has 50/50 skill stored
+  correctAnswers: number;     // Total correct answers
+  totalAnswers: number;       // Total answers submitted
   isBot?: boolean;
 }
 
@@ -114,6 +130,9 @@ export interface BingoGameSettings {
   numbersPerRow: number;      // Default 5
   skillsEnabled: boolean;     // Enable special skills
   skillInterval: number;      // Turns between skill phases (default 5)
+  timePerQuestion: number;    // Seconds per question (default 15)
+  jlptLevel: JLPTLevel;       // JLPT level for questions
+  selectedLessons: string[];  // Selected lesson IDs (empty = all)
 }
 
 // Main game state
@@ -131,6 +150,11 @@ export interface BingoGame {
   currentDrawerId: string | null; // Who is drawing
   lastDrawnNumber: number | null;
   winnerId: string | null;
+  // Question-based gameplay
+  questions: BingoQuestion[];
+  currentQuestionIndex: number;
+  currentQuestionAnswers: Record<string, { selectedIndex: number; correct: boolean; answeredAt: number }>;
+  correctAnswerPlayerId: string | null;
   createdAt: string;
   startedAt?: string;
   finishedAt?: string;
@@ -162,6 +186,9 @@ export interface CreateBingoGameData {
   title: string;
   maxPlayers: number;
   skillsEnabled: boolean;
+  timePerQuestion: number;
+  jlptLevel: JLPTLevel;
+  selectedLessons: string[];
 }
 
 // Generate random bingo rows for a player
@@ -231,4 +258,7 @@ export const DEFAULT_BINGO_SETTINGS: BingoGameSettings = {
   numbersPerRow: 5,
   skillsEnabled: true,
   skillInterval: 5,
+  timePerQuestion: 15,
+  jlptLevel: 'N5',
+  selectedLessons: [],
 };

@@ -4,8 +4,18 @@ import type { GameSetupConfig } from './types';
 export const BINGO_SETUP_CONFIG: GameSetupConfig = {
   showTitle: true,
   titlePlaceholder: 'Bingo Vui Vẻ',
+  showJLPTLevel: true,
+  showLessonPicker: true,
   showMaxPlayers: true,
   maxPlayersOptions: [4, 6, 8, 10, 15, 20],
+  showTimePerQuestion: true,
+  timeSlider: {
+    min: 10,
+    max: 30,
+    step: 5,
+    defaultValue: 15,
+    labels: ['10s', '20s', '30s'],
+  },
   toggles: [
     {
       id: 'skills',
@@ -16,9 +26,9 @@ export const BINGO_SETUP_CONFIG: GameSetupConfig = {
     },
   ],
   rules: [
-    '🎯 Mỗi người chơi có 6 dãy, mỗi dãy 5 số (1-99)',
-    '🎰 Bốc số ngẫu nhiên, đánh dấu số trùng',
-    '🏆 Ai có đủ 5 số trong một dãy nhấn BINGO trước thắng!',
+    '❓ Trả lời đúng → Quay số',
+    '🎰 Số trúng đánh dấu trên thẻ',
+    '🏆 Hoàn thành 1 dãy → BINGO!',
   ],
 };
 

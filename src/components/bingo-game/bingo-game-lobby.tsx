@@ -1,9 +1,25 @@
-// Bingo Game Lobby - Waiting room before game starts
+// Bingo Game Lobby — Premium full-screen lobby using shared PremiumLobbyShell
+// Thin wrapper: provides Bingo-specific accent color, meta tags, rules, and settings
 
-import { Users, Play } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { Grid3X3, Clock, Sparkles, Layers } from 'lucide-react';
 import type { BingoGame } from '../../types/bingo-game';
-import { GameCodeDisplay, PlayerListGrid, LobbyActionBar, normalizePlayer } from '../shared/game-lobby';
+import {
+  PremiumLobbyShell,
+  LobbyHostCard,
+  LobbyJoinSection,
+  LobbyPlayersPanel,
+  LobbyStartFooter,
+  normalizePlayer,
+} from '../shared/game-lobby';
+import { ConfirmModal } from '../ui/confirm-modal';
+
+// Bingo accent: purple/magenta
+const BINGO_ACCENT = {
+  accent: '#E040FB',
+  accentDark: '#9C27B0',
+  accentRgb: '224, 64, 251',
+};
 
 interface BingoGameLobbyProps {
   game: BingoGame;
@@ -24,83 +40,155 @@ export function BingoGameLobby({
   onLeaveGame,
   onKickPlayer,
 }: BingoGameLobbyProps) {
-  const [copied, setCopied] = useState(false);
-  const players = Object.values(game.players);
-  const normalizedPlayers = players.map(p => normalizePlayer({ ...p, odinhId: p.odinhId, isHost: p.odinhId === game.hostId }));
-  const canStart = players.length >= game.settings.minPlayers;
+  const [qrVisible, setQrVisible] = useState(true);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [kickTarget, setKickTarget] = useState<string | null>(null);
 
-  const copyCode = () => {
-    navigator.clipboard.writeText(game.code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const { hostPlayer, normalizedPlayers, playerCount, fillPercent } = useMemo(() => {
+    const list = Object.values(game.players);
+    return {
+      hostPlayer: list.find(p => p.odinhId === game.hostId),
+      normalizedPlayers: list.map(p => normalizePlayer({
+        ...p, odinhId: p.odinhId, isHost: p.odinhId === game.hostId,
+      })),
+      playerCount: list.length,
+      fillPercent: Math.min(100, (list.length / game.settings.maxPlayers) * 100),
+    };
+  }, [game.players, game.settings.maxPlayers, game.hostId]);
+
+  const canStart = playerCount >= game.settings.minPlayers;
+  const joinUrl = `${window.location.origin}?game=bingo&join=${game.code}`;
+
+  const handleKick = useCallback((id: string) => setKickTarget(id), []);
+  const handleKickConfirm = useCallback(() => {
+    if (!kickTarget || !onKickPlayer) return;
+    onKickPlayer(kickTarget);
+    setKickTarget(null);
+  }, [kickTarget, onKickPlayer]);
+
+  // Meta tags
+  const metaTags = (
+    <>
+      <span className="pl-lobby-tag">
+        <Layers size={13} />
+        {game.settings.jlptLevel}
+      </span>
+      <span className="pl-lobby-tag">
+        <Grid3X3 size={13} />
+        {game.settings.rowsPerPlayer} dãy × {game.settings.numbersPerRow} số
+      </span>
+      <span className="pl-lobby-tag">
+        <Clock size={13} />
+        {game.settings.timePerQuestion}s/câu
+      </span>
+      {game.settings.skillsEnabled && (
+        <span className="pl-lobby-tag pl-lobby-tag-accent">
+          <Sparkles size={13} />
+          Kỹ năng
+        </span>
+      )}
+      <span className="pl-lobby-tag pl-lobby-tag-live">
+        <span className="pl-lobby-live-dot" />
+        Live
+      </span>
+    </>
+  );
+
+  // Left column: host card, QR/join, rules
+  const leftContent = (
+    <>
+      {hostPlayer && (
+        <LobbyHostCard
+          displayName={hostPlayer.displayName}
+          avatar={hostPlayer.avatar}
+          role={(hostPlayer as any).role}
+        />
+      )}
+      <LobbyJoinSection
+        code={game.code}
+        joinUrl={joinUrl}
+        shareText={`Tham gia Bingo: ${game.title}`}
+        qrVisible={qrVisible}
+        onToggleQr={() => setQrVisible(v => !v)}
+      />
+      <div className="pl-lobby-rules">
+        <h4>Luật chơi</h4>
+        <ul>
+          <li>Trả lời đúng câu hỏi → Quay số ngẫu nhiên</li>
+          <li>Số trúng tự đánh dấu trên thẻ ({game.settings.rowsPerPlayer} dãy × {game.settings.numbersPerRow} số)</li>
+          <li>Hoàn thành 1 dãy = Được hô BINGO!</li>
+          <li>Ai hô BINGO đầu tiên = Chiến thắng!</li>
+          {game.settings.skillsEnabled && (
+            <li>Mỗi {game.settings.skillInterval} lượt: người trả lời đúng nhận kỹ năng</li>
+          )}
+        </ul>
+      </div>
+    </>
+  );
+
+  // Right column: players panel
+  const rightContent = (
+    <LobbyPlayersPanel
+      players={normalizedPlayers}
+      hostId={game.hostId}
+      currentPlayerId={currentPlayerId}
+      maxPlayers={game.settings.maxPlayers}
+      playerCount={playerCount}
+      fillPercent={fillPercent}
+      minPlayers={game.settings.minPlayers}
+      onKickPlayer={handleKick}
+    />
+  );
+
+  // Footer
+  const footerContent = (
+    <LobbyStartFooter
+      isHost={isHost}
+      canStart={canStart}
+      loading={loading}
+      onStart={onStartGame}
+      startIcon={<Grid3X3 size={20} />}
+      startLabel="Bắt Đầu Game"
+      disabledLabel={`Cần ${game.settings.minPlayers} người chơi`}
+    />
+  );
 
   return (
-    <div className="bingo-lobby">
-      {/* Header with room code */}
-      <div className="lobby-header">
-        <h2>{game.title}</h2>
-        <GameCodeDisplay
-          code={game.code}
-          copied={copied}
-          onCopy={copyCode}
-          label="Mã Phòng:"
-          className="room-code-display"
-        />
-      </div>
-
-      {/* Settings info */}
-      <div className="lobby-settings">
-        <div className="setting-item">
-          <Users size={16} />
-          <span>{players.length}/{game.settings.maxPlayers} người chơi</span>
-        </div>
-        <div className="setting-item">
-          <span>🎯</span>
-          <span>6 dãy × 5 số</span>
-        </div>
-        {game.settings.skillsEnabled && (
-          <div className="setting-item">
-            <span>✨</span>
-            <span>Kỹ năng đặc biệt</span>
-          </div>
-        )}
-      </div>
-
-      {/* Players list */}
-      <div className="lobby-players">
-        <h3>Người Chơi</h3>
-        <PlayerListGrid
-          players={normalizedPlayers}
-          hostId={game.hostId}
-          currentPlayerId={currentPlayerId}
-          maxPlayers={game.settings.maxPlayers}
-          onKickPlayer={onKickPlayer}
-          maxEmptySlots={4}
-        />
-      </div>
-
-      {/* Waiting message */}
-      <div className="lobby-waiting">
-        {!canStart ? (
-          <p>⏳ Cần ít nhất {game.settings.minPlayers} người để bắt đầu</p>
-        ) : (
-          <p>✅ Sẵn sàng! Chủ phòng có thể bắt đầu</p>
-        )}
-      </div>
-
-      {/* Action buttons */}
-      <LobbyActionBar
-        isHost={isHost}
-        canStart={canStart}
-        onStart={onStartGame}
-        onLeave={onLeaveGame}
-        startLabel="Bắt Đầu"
-        disabledLabel="Cần thêm người chơi"
-        waitingLabel="Đang chờ chủ phòng bắt đầu..."
-        loading={loading}
-        startIcon={<Play size={20} />}
+    <>
+      <PremiumLobbyShell
+        title={game.title}
+        metaTags={metaTags}
+        leftContent={leftContent}
+        rightContent={rightContent}
+        footerContent={footerContent}
+        accent={BINGO_ACCENT}
+        onLeave={() => setShowLeaveConfirm(true)}
+        qrHidden={!qrVisible}
       />
-    </div>
+
+      {/* Leave confirmation modal */}
+      <ConfirmModal
+        isOpen={showLeaveConfirm}
+        title="Rời khỏi phòng?"
+        message={isHost
+          ? 'Bạn là host. Nếu bạn rời đi, phòng sẽ bị huỷ và tất cả người chơi sẽ bị đuổi ra.'
+          : 'Bạn có chắc muốn rời khỏi phòng chơi này?'}
+        confirmText="Rời phòng"
+        cancelText="Ở lại"
+        onConfirm={() => { setShowLeaveConfirm(false); onLeaveGame(); }}
+        onCancel={() => setShowLeaveConfirm(false)}
+      />
+
+      {/* Kick confirmation modal */}
+      <ConfirmModal
+        isOpen={!!kickTarget}
+        title="Kick người chơi?"
+        message={`Bạn có chắc muốn kick "${normalizedPlayers.find(p => p.id === kickTarget)?.displayName || ''}" khỏi phòng?`}
+        confirmText="Kick"
+        cancelText="Huỷ"
+        onConfirm={handleKickConfirm}
+        onCancel={() => setKickTarget(null)}
+      />
+    </>
   );
 }

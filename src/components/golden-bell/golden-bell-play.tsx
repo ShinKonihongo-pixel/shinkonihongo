@@ -2,10 +2,12 @@
 // Shows questions, answer options, player status, and elimination results
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Clock, Users, Bell, ChevronRight, Skull, CheckCircle, XCircle, LogOut } from 'lucide-react';
+import { Clock, Users, Bell, ChevronRight, Skull, CheckCircle, XCircle, LogOut, Sparkles, Star } from 'lucide-react';
 import type { GoldenBellGame, GoldenBellPlayer, GoldenBellQuestion } from '../../types/golden-bell';
-import { ANSWER_COLORS, ANSWER_LABELS, DIFFICULTY_INFO, CATEGORY_INFO } from '../../types/golden-bell';
+import { ANSWER_COLORS, ANSWER_LABELS, DIFFICULTY_INFO, CATEGORY_INFO, ALL_GOLDEN_BELL_SKILLS } from '../../types/golden-bell';
+import type { GoldenBellSkillType, GoldenBellSkill } from '../../types/golden-bell';
 import { useGameSounds } from '../../hooks/use-game-sounds';
+import { SkillSpinWheel } from './skill-spin-wheel';
 
 interface GoldenBellPlayProps {
   game: GoldenBellGame;
@@ -18,6 +20,10 @@ interface GoldenBellPlayProps {
   onRevealAnswer: () => void;
   onNextQuestion: () => void;
   onLeave?: () => void;
+  onUseSkill?: (skillType: GoldenBellSkillType) => void;
+  onAssignRandomSkill?: (playerId: string) => GoldenBellSkillType | null;
+  onCompleteSkillPhase?: () => void;
+  enabledSkills?: GoldenBellSkill[];
 }
 
 export function GoldenBellPlay({
@@ -31,6 +37,10 @@ export function GoldenBellPlay({
   onRevealAnswer,
   onNextQuestion,
   onLeave,
+  onUseSkill,
+  onAssignRandomSkill,
+  onCompleteSkillPhase,
+  enabledSkills,
 }: GoldenBellPlayProps) {
   const [timeLeft, setTimeLeft] = useState(currentQuestion?.timeLimit || 15);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -120,6 +130,10 @@ export function GoldenBellPlay({
   // Check if player is eliminated
   const isEliminated = currentPlayer?.status === 'eliminated';
 
+  // Check if current question is a "special skill question" (no elimination)
+  const isSpecial = game.settings.skillsEnabled &&
+    ((game.currentQuestionIndex + 1) % (game.settings.skillInterval || 5) === 0);
+
   // Render starting countdown
   if (game.status === 'starting') {
     return (
@@ -137,6 +151,71 @@ export function GoldenBellPlay({
           <div className="countdown-number">3</div>
           <p>{Object.keys(game.players).length} người chơi sẵn sàng</p>
         </div>
+      </div>
+    );
+  }
+
+  // Render skill phase
+  if (game.status === 'skill_phase') {
+    const isMyTurn = game.skillPhaseData?.eligiblePlayers.includes(currentPlayer?.odinhId || '') &&
+      !game.skillPhaseData?.completedPlayers.includes(currentPlayer?.odinhId || '');
+    const hasCompleted = game.skillPhaseData?.completedPlayers.includes(currentPlayer?.odinhId || '');
+    const allDone = game.skillPhaseData?.eligiblePlayers.every(
+      pid => game.skillPhaseData?.completedPlayers.includes(pid) || game.players[pid]?.isBot
+    );
+
+    return (
+      <div className="golden-bell-play gb-skill-phase">
+        {onLeave && (
+          <button className="leave-game-btn floating" onClick={onLeave} title="Rời game">
+            <LogOut size={18} /> Rời
+          </button>
+        )}
+        <div className="gb-skill-phase-header">
+          <Sparkles size={32} />
+          <h2>Vòng Quay Kỹ Năng!</h2>
+          <p>Câu {game.currentQuestionIndex + 1} / {game.questions.length}</p>
+        </div>
+
+        {isMyTurn && enabledSkills && enabledSkills.length > 0 && (
+          <div className="gb-skill-phase-wheel">
+            <SkillSpinWheel
+              skills={enabledSkills}
+              onResult={(skill) => {
+                if (currentPlayer && onAssignRandomSkill) {
+                  onAssignRandomSkill(currentPlayer.odinhId);
+                }
+              }}
+              isSpinning={false}
+            />
+          </div>
+        )}
+
+        {hasCompleted && (
+          <div className="gb-skill-phase-done">
+            <p>Bạn đã quay xong! Đang chờ người chơi khác...</p>
+          </div>
+        )}
+
+        {!currentPlayer || currentPlayer.status !== 'alive' ? (
+          <div className="gb-skill-phase-spectator">
+            <p>Đang chờ vòng quay kỹ năng...</p>
+          </div>
+        ) : null}
+
+        {/* Host complete button */}
+        {isHost && (
+          <div className="host-controls">
+            <button
+              className="next-btn"
+              onClick={onCompleteSkillPhase}
+              disabled={!allDone}
+            >
+              {allDone ? 'Tiếp Tục' : 'Đang chờ quay...'}
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        )}
       </div>
     );
   }
@@ -224,8 +303,15 @@ export function GoldenBellPlay({
           </div>
 
           {/* Category Badge */}
-          <div className="question-category" style={{ background: CATEGORY_INFO[currentQuestion.category].color }}>
-            {CATEGORY_INFO[currentQuestion.category].emoji} {CATEGORY_INFO[currentQuestion.category].name}
+          <div className="question-badges">
+            <div className="question-category" style={{ background: CATEGORY_INFO[currentQuestion.category].color }}>
+              {CATEGORY_INFO[currentQuestion.category].emoji} {CATEGORY_INFO[currentQuestion.category].name}
+            </div>
+            {isSpecial && (
+              <div className="question-special-badge">
+                <Star size={14} /> Câu đặc biệt
+              </div>
+            )}
           </div>
 
           {/* Question */}
@@ -239,14 +325,15 @@ export function GoldenBellPlay({
               const isSelected = selectedAnswer === index;
               const isCorrect = game.status === 'revealing' && index === currentQuestion.correctIndex;
               const isWrong = game.status === 'revealing' && isSelected && index !== currentQuestion.correctIndex;
+              const isHiddenByFiftyFifty = currentPlayer?.fiftyFiftyExcluded?.includes(index);
 
               return (
                 <button
                   key={index}
-                  className={`answer-option ${isSelected ? 'selected' : ''} ${isCorrect ? 'correct' : ''} ${isWrong ? 'wrong' : ''}`}
+                  className={`answer-option ${isSelected ? 'selected' : ''} ${isCorrect ? 'correct' : ''} ${isWrong ? 'wrong' : ''} ${isHiddenByFiftyFifty ? 'gb-fifty-fifty-hidden' : ''}`}
                   style={{ background: ANSWER_COLORS[index] }}
                   onClick={() => handleAnswer(index)}
-                  disabled={game.status !== 'answering' || selectedAnswer !== null}
+                  disabled={game.status !== 'answering' || selectedAnswer !== null || !!isHiddenByFiftyFifty}
                 >
                   <span className="option-label">{ANSWER_LABELS[index]}</span>
                   <span className="option-text">{option}</span>
@@ -261,6 +348,14 @@ export function GoldenBellPlay({
           {game.status === 'revealing' && currentQuestion.explanation && (
             <div className="answer-explanation">
               <span>{currentQuestion.explanation}</span>
+            </div>
+          )}
+
+          {/* Special question: no elimination notice */}
+          {game.status === 'revealing' && isSpecial && (
+            <div className="gb-special-notice">
+              <Star size={18} />
+              <span>Câu đặc biệt — Không bị loại! Trả lời đúng được quay kỹ năng</span>
             </div>
           )}
 
@@ -325,6 +420,30 @@ export function GoldenBellPlay({
         </div>
       )}
 
+      {/* Skill Inventory */}
+      {currentPlayer && currentPlayer.skills.length > 0 && (
+        <div className="gb-skill-inventory">
+          {currentPlayer.skills.map((skillType, idx) => {
+            const skill = ALL_GOLDEN_BELL_SKILLS[skillType];
+            if (!skill) return null;
+            const canUse = (skillType === 'fifty_fifty' && game.status === 'answering' && !currentPlayer.fiftyFiftyExcluded) ||
+              (skillType === 'double_time' && game.status === 'answering');
+            return (
+              <button
+                key={`${skillType}-${idx}`}
+                className={`gb-skill-item ${canUse ? 'usable' : ''}`}
+                onClick={() => canUse && onUseSkill?.(skillType)}
+                disabled={!canUse}
+                title={`${skill.name}: ${skill.description}`}
+              >
+                <span className="gb-skill-emoji">{skill.emoji}</span>
+                <span className="gb-skill-name">{skill.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Players Sidebar - Show alive/eliminated status */}
       <div className="players-sidebar">
         <div className="sidebar-header">
@@ -342,6 +461,7 @@ export function GoldenBellPlay({
               <span className="player-status-icon">
                 {player.status === 'alive' ? '✓' : '✗'}
               </span>
+              {player.hasShield && <span className="gb-shield-badge" title="Có khiên">🛡️</span>}
             </div>
           ))}
           {sortedPlayers.length > 10 && (

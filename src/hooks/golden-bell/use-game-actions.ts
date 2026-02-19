@@ -15,15 +15,18 @@ interface UseGameActionsProps {
     id: string;
     displayName: string;
     avatar: string;
+    role?: string;
   };
   game: GoldenBellGame | null;
   setGame: (updater: (prev: GoldenBellGame | null) => GoldenBellGame | null) => void;
   setGameResults: (results: GoldenBellResults | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  roomId: string | null;
   setRoomId: (id: string | null) => void;
   isHost: boolean;
   clearBotTimers: () => void;
+  clearLocalGameState: () => void;
 }
 
 export function useGameActions({
@@ -33,9 +36,11 @@ export function useGameActions({
   setGameResults,
   setLoading,
   setError,
+  roomId,
   setRoomId,
   isHost,
   clearBotTimers,
+  clearLocalGameState,
 }: UseGameActionsProps) {
   // Join existing game via Firestore
   const joinGame = useCallback(async (code: string) => {
@@ -71,17 +76,43 @@ export function useGameActions({
         odinhId: currentUser.id,
         displayName: currentUser.displayName,
         avatar: currentUser.avatar,
+        role: currentUser.role,
         status: 'alive',
         correctAnswers: 0,
         totalAnswers: 0,
         streak: 0,
+        skills: [],
       };
 
       const updatedPlayers = { ...players, [currentUser.id]: player };
-      await updateGameRoom(room.id, {
+      const updateData: Record<string, unknown> = {
         players: updatedPlayers,
         alivePlayers: Object.keys(updatedPlayers).length,
-      });
+      };
+
+      // Team mode: auto-assign to smallest team
+      if (roomData.settings?.gameMode === 'team' && roomData.teams) {
+        const teams = { ...(roomData.teams as Record<string, any>) };
+        let smallestTeamId = Object.keys(teams)[0];
+        let smallestCount = Infinity;
+        Object.entries(teams).forEach(([tid, team]: [string, any]) => {
+          if ((team.members?.length || 0) < smallestCount) {
+            smallestCount = team.members?.length || 0;
+            smallestTeamId = tid;
+          }
+        });
+        if (smallestTeamId && teams[smallestTeamId]) {
+          teams[smallestTeamId] = {
+            ...teams[smallestTeamId],
+            members: [...(teams[smallestTeamId].members || []), currentUser.id],
+            aliveCount: (teams[smallestTeamId].aliveCount || 0) + 1,
+          };
+          (updatedPlayers[currentUser.id] as any).teamId = smallestTeamId;
+          updateData.teams = teams;
+        }
+      }
+
+      await updateGameRoom(room.id, updateData);
 
       // Subscribe to the room (subscription in use-game-state will update local state)
       setRoomId(room.id);
@@ -94,12 +125,45 @@ export function useGameActions({
     }
   }, [currentUser, setRoomId, setGameResults, setLoading, setError]);
 
-  // Leave game
+  // Leave game — host destroys room, non-host removes self
   const leaveGame = useCallback(() => {
     if (!game) return;
     clearBotTimers();
-    setGame(() => null);
-  }, [game, clearBotTimers, setGame]);
+
+    if (isHost) {
+      // Host leaves → delete entire room from Firestore
+      setGame(() => null);
+    } else {
+      // Non-host → remove self from players, keep room alive for others
+      if (roomId) {
+        const { [currentUser.id]: _removed, ...remainingPlayers } = game.players;
+        const updateData: Record<string, unknown> = {
+          players: remainingPlayers,
+          alivePlayers: Object.keys(remainingPlayers).length,
+        };
+
+        // Also remove from team if in team mode
+        if (game.teams) {
+          const updatedTeams = { ...game.teams };
+          Object.keys(updatedTeams).forEach(tid => {
+            const team = updatedTeams[tid];
+            if (team.members.includes(currentUser.id)) {
+              updatedTeams[tid] = {
+                ...team,
+                members: team.members.filter((m: string) => m !== currentUser.id),
+                aliveCount: Math.max(0, team.aliveCount - 1),
+              };
+            }
+          });
+          updateData.teams = updatedTeams;
+        }
+
+        updateGameRoom(roomId, updateData).catch(console.error);
+      }
+      // Clear local state without triggering Firestore room deletion
+      clearLocalGameState();
+    }
+  }, [game, isHost, roomId, currentUser.id, clearBotTimers, setGame, clearLocalGameState]);
 
   // Kick player (host only)
   const kickPlayer = useCallback((playerId: string) => {

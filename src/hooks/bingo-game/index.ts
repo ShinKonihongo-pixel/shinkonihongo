@@ -18,7 +18,7 @@ import {
   subscribeToGameRoom,
 } from '../../services/game-rooms';
 
-export function useBingoGame({ currentUser }: UseBingoGameProps) {
+export function useBingoGame({ currentUser, flashcards }: UseBingoGameProps) {
   // Game state
   const [state, setState] = useState<BingoGameState>({
     game: null,
@@ -80,12 +80,12 @@ export function useBingoGame({ currentUser }: UseBingoGameProps) {
   const computed = useGameComputed(state.game, currentUser);
 
   // Game creation
-  const create = useGameCreate(setGame, setState, refs, currentUser, setRoomId);
+  const create = useGameCreate(setGame, setState, refs, currentUser, setRoomId, flashcards);
 
   // Game management
   const management = useGameManagement(state, setGame, setState, refs, currentUser, computed.isHost, setRoomId);
 
-  // Game draw
+  // Game draw (question-based)
   const draw = useGameDraw(state, setGame, setState, currentUser, computed.currentPlayer);
 
   // Game bingo
@@ -145,7 +145,10 @@ export function useBingoGame({ currentUser }: UseBingoGameProps) {
     leaveGame: management.leaveGame,
     kickPlayer: management.kickPlayer,
     startGame: management.startGame,
-    drawNumber: draw.drawNumber,
+    startQuestion: draw.startQuestion,
+    submitAnswer: draw.submitAnswer,
+    revealAndSpin: draw.revealAndSpin,
+    completeSpin: draw.completeSpin,
     claimBingo: bingo.claimBingo,
     useSkill: skills.useSkill,
     skipSkill: skills.skipSkill,

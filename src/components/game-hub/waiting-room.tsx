@@ -214,67 +214,76 @@ export function WaitingRoom({ onJoinGame, onBack, onCreateRoom, filterGameType, 
               const gameInfo = GAMES[game.gameType];
               if (!gameInfo) return null;
               const isFull = game.playerCount >= game.maxPlayers;
+              const capacityPct = Math.min((game.playerCount / game.maxPlayers) * 100, 100);
 
               return (
-                <div key={game.id} className={`wr-room-card ${isFull ? 'full' : ''}`}>
-                  {/* Game Type Badge */}
-                  <div className="wr-room-type" style={{ background: gameInfo.gradient }}>
-                    {gameInfo.iconImage ? (
-                      <img src={gameInfo.iconImage} alt={gameInfo.name} className="wr-type-icon" />
-                    ) : (
-                      <span className="wr-type-emoji">{gameInfo.icon}</span>
-                    )}
-                    <span className="wr-type-name">{gameInfo.name}</span>
+                <div
+                  key={game.id}
+                  className={`wr-room-card ${isFull ? 'full' : ''}`}
+                  style={{ '--card-accent': gameInfo.color, '--card-gradient': gameInfo.gradient } as React.CSSProperties}
+                >
+                  {/* Header: Game tag + Time */}
+                  <div className="wr-card-top">
+                    <div className="wr-game-tag">
+                      {gameInfo.iconImage ? (
+                        <img src={gameInfo.iconImage} alt="" className="wr-tag-icon" />
+                      ) : (
+                        <span className="wr-tag-emoji">{gameInfo.icon}</span>
+                      )}
+                      <span>{gameInfo.name}</span>
+                    </div>
+                    <span className="wr-time">
+                      <Clock size={11} />
+                      {formatTimeAgo(game.createdAt)}
+                    </span>
                   </div>
 
-                  {/* Room Code */}
-                  <div className="wr-room-code">{game.code}</div>
+                  {/* Room Code — hero element */}
+                  <div className="wr-code-block">
+                    <span className="wr-code-text">{game.code}</span>
+                  </div>
 
-                  {/* Room Info */}
-                  <div className="wr-room-info">
-                    <div className="wr-room-host">
+                  {/* Host + Capacity */}
+                  <div className="wr-card-body">
+                    <div className="wr-host">
                       <span className="wr-host-avatar">
                         {isImageAvatar(game.hostAvatar)
-                          ? <img src={game.hostAvatar} alt={game.hostName} className="wr-host-avatar-img" />
+                          ? <img src={game.hostAvatar} alt="" className="wr-host-img" />
                           : game.hostAvatar}
                       </span>
                       <span className="wr-host-name">{game.hostName}</span>
                     </div>
-                    <div className="wr-room-meta">
-                      <span className="wr-meta-item">
-                        <Users size={14} />
+                    <div className="wr-capacity">
+                      <div className="wr-capacity-track">
+                        <div
+                          className={`wr-capacity-fill ${capacityPct >= 80 ? 'high' : ''}`}
+                          style={{ width: `${capacityPct}%` }}
+                        />
+                      </div>
+                      <span className="wr-capacity-label">
+                        <Users size={12} />
                         {game.playerCount}/{game.maxPlayers}
-                      </span>
-                      <span className="wr-meta-item">
-                        <Clock size={14} />
-                        {formatTimeAgo(game.createdAt)}
                       </span>
                     </div>
                   </div>
 
                   {/* Actions */}
-                  <div className="wr-room-actions">
+                  <div className="wr-card-actions">
                     <button
                       className="wr-join-btn"
                       onClick={() => onJoinGame(game.gameType, game.code)}
                       disabled={isFull}
-                      style={!isFull ? { background: gameInfo.color } : undefined}
                     >
-                      {isFull ? (
-                        'Đã đầy'
-                      ) : (
-                        <>
-                          Tham gia
-                          <ArrowRight size={16} />
-                        </>
+                      {isFull ? 'Đã đầy' : (
+                        <>Tham gia <ArrowRight size={15} /></>
                       )}
                     </button>
                     {isSuperAdmin && (
                       <button
-                        className="wr-admin-delete-btn"
+                        className="wr-delete-btn"
                         onClick={() => setDeleteConfirm({ type: 'single', room: game })}
                         disabled={deleting}
-                        title="Xoá phòng (Admin)"
+                        title="Xoá phòng"
                       >
                         <Trash2 size={14} />
                       </button>

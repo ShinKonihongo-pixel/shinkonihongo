@@ -6,12 +6,15 @@ import { useGameState } from './use-game-state';
 import { useGameCreation } from './use-game-creation';
 import { useGameActions } from './use-game-actions';
 import { useGameplay } from './use-gameplay';
+import { useSkills } from './use-skills';
+import { useTeamActions } from './use-team-actions';
 
 interface UseGoldenBellProps {
   currentUser: {
     id: string;
     displayName: string;
     avatar: string;
+    role?: string;
   };
   flashcards?: Flashcard[];
 }
@@ -27,6 +30,7 @@ export function useGoldenBell({ currentUser, flashcards = [] }: UseGoldenBellPro
     isHost, currentPlayer, currentQuestion,
     sortedPlayers, aliveCount,
     scheduleBotJoin, clearBotTimers,
+    clearLocalGameState,
   } = useGameState({ currentUserId: currentUser.id });
 
   // Game creation (writes to Firestore)
@@ -55,9 +59,11 @@ export function useGoldenBell({ currentUser, flashcards = [] }: UseGoldenBellPro
     setGameResults,
     setLoading,
     setError,
+    roomId,
     setRoomId,
     isHost,
     clearBotTimers,
+    clearLocalGameState,
   });
 
   // Gameplay
@@ -72,6 +78,35 @@ export function useGoldenBell({ currentUser, flashcards = [] }: UseGoldenBellPro
     currentUser,
     setGame,
     setGameResults,
+    isHost,
+  });
+
+  // Skill system
+  const {
+    getEnabledSkills,
+    triggerSkillPhase,
+    assignRandomSkill,
+    useSkill,
+    completeSkillPhase,
+    shouldTriggerSkillPhase,
+    setCurrentSpinner,
+  } = useSkills({
+    game,
+    currentUser,
+    setGame,
+    isHost,
+  });
+
+  // Team actions
+  const {
+    joinTeam,
+    leaveTeam,
+    shuffleTeams,
+    updateTeamStats,
+    autoAssignToTeam,
+  } = useTeamActions({
+    game,
+    setGame,
     isHost,
   });
 
@@ -101,5 +136,21 @@ export function useGoldenBell({ currentUser, flashcards = [] }: UseGoldenBellPro
     nextQuestion,
     resetGame,
     setError,
+
+    // Skills
+    getEnabledSkills,
+    triggerSkillPhase,
+    assignRandomSkill,
+    useSkill,
+    completeSkillPhase,
+    shouldTriggerSkillPhase,
+    setCurrentSpinner,
+
+    // Teams
+    joinTeam,
+    leaveTeam,
+    shuffleTeams,
+    updateTeamStats,
+    autoAssignToTeam,
   };
 }

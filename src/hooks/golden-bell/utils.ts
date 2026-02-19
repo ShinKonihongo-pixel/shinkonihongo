@@ -7,7 +7,11 @@ import type {
   GoldenBellPlayerResult,
   QuestionDifficulty,
   QuestionCategory,
+  GoldenBellTeam,
+  GBTeamColorKey,
+  GoldenBellTeamResult,
 } from '../../types/golden-bell';
+import { GB_TEAM_COLORS } from '../../types/golden-bell';
 import type { Flashcard } from '../../types/flashcard';
 import { generateId, shuffleArray } from '../../lib/game-utils';
 import { generateMultipleChoiceOptions } from '../../lib/game-question-utils';
@@ -55,6 +59,74 @@ export function convertFlashcardsToQuestions(
       explanation: card.sinoVietnamese ? `Hán Việt: ${card.sinoVietnamese}` : undefined,
     };
   });
+}
+
+/**
+ * Create teams for team mode
+ */
+export function createGoldenBellTeams(teamCount: number): Record<string, GoldenBellTeam> {
+  const colorKeys: GBTeamColorKey[] = ['red', 'blue', 'yellow', 'purple', 'green', 'orange'];
+  const teams: Record<string, GoldenBellTeam> = {};
+
+  for (let i = 0; i < Math.min(teamCount, colorKeys.length); i++) {
+    const colorKey = colorKeys[i];
+    const color = GB_TEAM_COLORS[colorKey];
+    const teamId = `team-${colorKey}`;
+    teams[teamId] = {
+      id: teamId,
+      name: `Đội ${color.name}`,
+      colorKey,
+      emoji: color.emoji,
+      members: [],
+      aliveCount: 0,
+      totalCorrect: 0,
+    };
+  }
+
+  return teams;
+}
+
+/**
+ * Generate team rankings for team mode results
+ */
+export function generateTeamResults(game: GoldenBellGame): GoldenBellTeamResult[] {
+  if (!game.teams) return [];
+
+  const teamResults: GoldenBellTeamResult[] = Object.values(game.teams).map(team => {
+    const members = team.members.map(mid => game.players[mid]).filter(Boolean);
+    const aliveMemberCount = members.filter(m => m.status === 'alive' || m.status === 'winner').length;
+    const totalCorrectCount = members.reduce((sum, m) => sum + m.correctAnswers, 0);
+
+    // Find MVP (most correct answers)
+    let mvp = members[0];
+    members.forEach(m => {
+      if (m.correctAnswers > (mvp?.correctAnswers || 0)) mvp = m;
+    });
+
+    return {
+      teamId: team.id,
+      teamName: team.name,
+      colorKey: team.colorKey,
+      emoji: team.emoji,
+      rank: 0, // computed below
+      aliveMembers: aliveMemberCount,
+      totalMembers: team.members.length,
+      totalCorrect: totalCorrectCount,
+      mvpId: mvp?.odinhId,
+      mvpName: mvp?.displayName,
+    };
+  });
+
+  // Sort: most alive members first, then by total correct
+  teamResults.sort((a, b) => {
+    if (a.aliveMembers !== b.aliveMembers) return b.aliveMembers - a.aliveMembers;
+    return b.totalCorrect - a.totalCorrect;
+  });
+
+  // Assign ranks
+  teamResults.forEach((t, i) => { t.rank = i + 1; });
+
+  return teamResults;
 }
 
 /**

@@ -1,3 +1,4 @@
+// @refresh reset
 import { useState, useMemo } from 'react';
 import { GAMES } from '../../../types/game-hub';
 import type { JLPTLevel } from '../../../types/flashcard';
@@ -6,7 +7,6 @@ import { useBodyScrollLock } from '../../../hooks/use-body-scroll-lock';
 import { RoomHeader } from './room-header';
 import { FormFields } from './form-fields';
 import { RulesSection } from './rules-section';
-import { RoomPreview } from './room-preview';
 import { RoomFooter } from './room-footer';
 
 export function GameRoomSetup({
@@ -17,6 +17,9 @@ export function GameRoomSetup({
   loading = false,
   error,
   inline = false,
+  getAvailableQuestionCount,
+  getLessonsByLevel,
+  userRole,
 }: GameRoomSetupProps) {
   useBodyScrollLock();
   const gameInfo = GAMES[gameType];
@@ -43,25 +46,50 @@ export function GameRoomSetup({
     return initial;
   });
 
+  // Lesson picker state
+  const [selectedLessons, setSelectedLessons] = useState<string[]>([]);
+
+  // Game mode state (solo/team)
+  const [gameMode, setGameMode] = useState(config.gameModeDefault || 'solo');
+  const [teamCount, setTeamCount] = useState(config.teamCountSlider?.defaultValue || 3);
+  const [maxPlayersPerTeam, setMaxPlayersPerTeam] = useState(config.maxPlayersPerTeamSlider?.defaultValue || 4);
+
   const roomConfig = useMemo<GameRoomConfig>(() => ({
     title: title.trim() || gameInfo.name,
     maxPlayers,
     timePerQuestion: config.showTimePerQuestion ? timePerQuestion : undefined,
     totalRounds: config.showTotalRounds ? totalRounds : undefined,
     jlptLevel: config.showJLPTLevel ? jlptLevel : undefined,
+    selectedLessons: config.showLessonPicker ? selectedLessons : undefined,
     categories: config.showCategories ? selectedCategories as string[] : undefined,
     skillsEnabled: toggleStates['skills'],
-    difficultyProgression: toggleStates['difficulty'],
+    difficultyProgression: true,
     ...toggleStates,
+    // Game mode fields
+    ...(config.showGameMode ? {
+      gameMode,
+      teamCount: gameMode === 'team' ? teamCount : undefined,
+      maxPlayersPerTeam: gameMode === 'team' ? maxPlayersPerTeam : undefined,
+    } : {}),
   }), [
     title, maxPlayers, timePerQuestion, totalRounds,
-    jlptLevel, selectedCategories, toggleStates,
-    config, gameInfo.name
+    jlptLevel, selectedLessons, selectedCategories, toggleStates,
+    config, gameInfo.name, gameMode, teamCount, maxPlayersPerTeam,
   ]);
+
+  // Check if enough questions available for selected settings
+  const requiredCount = totalRounds;
+  const availableCount = getAvailableQuestionCount ? getAvailableQuestionCount(jlptLevel) : undefined;
+  const hasEnoughQuestions = availableCount === undefined || availableCount >= requiredCount;
+
+  const handleCreate = () => {
+    if (!hasEnoughQuestions) return;
+    onCreateRoom(roomConfig);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onCreateRoom(roomConfig);
+    handleCreate();
   };
 
   const handleToggle = (id: string, enabled: boolean) => {
@@ -96,21 +124,20 @@ export function GameRoomSetup({
             setTimePerQuestion={setTimePerQuestion}
             toggleStates={toggleStates}
             handleToggle={handleToggle}
+            selectedLessons={selectedLessons}
+            setSelectedLessons={setSelectedLessons}
+            getLessonsByLevel={getLessonsByLevel}
             gameInfoName={gameInfo.name}
+            gameMode={gameMode}
+            setGameMode={setGameMode}
+            teamCount={teamCount}
+            setTeamCount={setTeamCount}
+            maxPlayersPerTeam={maxPlayersPerTeam}
+            setMaxPlayersPerTeam={setMaxPlayersPerTeam}
+            userRole={userRole}
           />
 
           {config.rules && <RulesSection rules={config.rules} />}
-
-          <RoomPreview
-            gameInfo={gameInfo}
-            config={config}
-            title={title}
-            maxPlayers={maxPlayers}
-            totalRounds={totalRounds}
-            timePerQuestion={timePerQuestion}
-            jlptLevel={jlptLevel}
-            skillsEnabled={toggleStates['skills']}
-          />
         </form>
       </div>
     );
@@ -145,28 +172,30 @@ export function GameRoomSetup({
             setTimePerQuestion={setTimePerQuestion}
             toggleStates={toggleStates}
             handleToggle={handleToggle}
+            selectedLessons={selectedLessons}
+            setSelectedLessons={setSelectedLessons}
+            getLessonsByLevel={getLessonsByLevel}
             gameInfoName={gameInfo.name}
+            gameMode={gameMode}
+            setGameMode={setGameMode}
+            teamCount={teamCount}
+            setTeamCount={setTeamCount}
+            maxPlayersPerTeam={maxPlayersPerTeam}
+            setMaxPlayersPerTeam={setMaxPlayersPerTeam}
+            userRole={userRole}
           />
 
           {config.rules && <RulesSection rules={config.rules} />}
-
-          <RoomPreview
-            gameInfo={gameInfo}
-            config={config}
-            title={title}
-            maxPlayers={maxPlayers}
-            totalRounds={totalRounds}
-            timePerQuestion={timePerQuestion}
-            jlptLevel={jlptLevel}
-            skillsEnabled={toggleStates['skills']}
-          />
         </form>
 
         <RoomFooter
           gameInfo={gameInfo}
           loading={loading}
           onBack={onBack}
-          onSubmit={handleSubmit}
+          onSubmit={handleCreate}
+          disabled={!hasEnoughQuestions}
+          availableCount={availableCount}
+          requiredCount={requiredCount}
         />
       </div>
     </div>

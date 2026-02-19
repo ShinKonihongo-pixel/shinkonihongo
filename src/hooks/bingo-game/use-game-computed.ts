@@ -27,7 +27,7 @@ export function useGameComputed(
 
   const isSkillPhase = useMemo(() => {
     if (!game || !game.settings.skillsEnabled) return false;
-    return game.currentTurn > 0 && game.currentTurn % game.settings.skillInterval === 0;
+    return game.status === 'skill_phase';
   }, [game]);
 
   return {

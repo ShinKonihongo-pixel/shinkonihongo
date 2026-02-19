@@ -1,17 +1,16 @@
-// Bingo Page - Main page for Bingo game
-// Complete game flow: Menu -> Setup -> Lobby -> Play -> Results
+// Bingo Page — manages game state and renders lobby/play/results
+// Entry: always via initialRoomConfig (create) or initialJoinCode (join)
+// No intermediate menu — goes directly to lobby
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useBingoGame } from '../../hooks/use-bingo-game';
 import {
-  BingoGameMenu,
-  BingoGameSetup,
   BingoGameLobby,
   BingoGamePlay,
   BingoGameResults,
   BingoGameGuide,
 } from '../bingo-game';
-import type { CreateBingoGameData } from '../../types/bingo-game';
+import type { Flashcard, JLPTLevel } from '../../types/flashcard';
 import type { GameSession } from '../../types/user';
 import '../bingo-game/bingo-game.css';
 
@@ -22,34 +21,35 @@ interface BingoUser {
   role?: string;
 }
 
-type PageView = 'menu' | 'setup' | 'lobby' | 'play' | 'results';
+type PageView = 'lobby' | 'play' | 'results';
 
 interface BingoPageProps {
   currentUser: BingoUser;
+  flashcards: Flashcard[];
   initialJoinCode?: string;
-  initialView?: PageView;
-  // XP tracking
   onSaveGameSession?: (data: Omit<GameSession, 'id' | 'userId'>) => void;
   initialRoomConfig?: Record<string, unknown>;
+  onGoHome?: () => void;
 }
 
 export function BingoPage({
   currentUser,
+  flashcards,
   initialJoinCode,
-  initialView = 'menu',
   onSaveGameSession,
   initialRoomConfig,
+  onGoHome,
 }: BingoPageProps) {
-  const [view, setView] = useState<PageView>(initialView);
+  const [view, setView] = useState<PageView>('lobby');
   const [showGuide, setShowGuide] = useState(false);
   const [showCountdown, setShowCountdown] = useState(false);
   const [countdown, setCountdown] = useState(3);
   const gameSessionSaved = useRef(false);
+  const createOnceRef = useRef(false);
 
   const {
     game,
     gameResults,
-    availableRooms,
     loading,
     error,
     isHost,
@@ -61,7 +61,10 @@ export function BingoPage({
     leaveGame,
     kickPlayer,
     startGame,
-    drawNumber,
+    startQuestion,
+    submitAnswer,
+    revealAndSpin,
+    completeSpin,
     claimBingo,
     useSkill,
     skipSkill,
@@ -72,26 +75,32 @@ export function BingoPage({
       id: currentUser.id,
       displayName: currentUser.displayName || 'Player',
       avatar: currentUser.avatar || '🎯',
+      role: currentUser.role,
     },
+    flashcards,
   });
 
-  // Handle initial join code
+  // Handle initial join code from URL
   useEffect(() => {
     if (initialJoinCode && !game) {
       joinGame(initialJoinCode).catch(() => {
-        setError('Khong the tham gia phong voi ma nay');
+        setError('Không thể tham gia phòng với mã này');
       });
     }
   }, [initialJoinCode, game, joinGame, setError]);
 
-  // Auto-create room from unified setup
+  // Auto-create room from Game Hub unified setup (guarded against StrictMode double-fire)
   useEffect(() => {
-    if (initialRoomConfig && !game) {
+    if (initialRoomConfig && !game && !createOnceRef.current) {
+      createOnceRef.current = true;
       const cfg = initialRoomConfig;
       createGame({
-        title: (cfg.title as string) || 'Bingo Vui Ve',
+        title: (cfg.title as string) || 'Bingo Vui Vẻ',
         maxPlayers: (cfg.maxPlayers as number) || 10,
         skillsEnabled: (cfg.skills as boolean) ?? true,
+        timePerQuestion: (cfg.timePerQuestion as number) || 15,
+        jlptLevel: (cfg.jlptLevel as JLPTLevel) || 'N5',
+        selectedLessons: (cfg.selectedLessons as string[]) || [],
       });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -100,10 +109,7 @@ export function BingoPage({
   useEffect(() => {
     if (!game) {
       if (gameResults) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setView('results');
-      } else if (view === 'lobby' || view === 'play') {
-        setView('menu');
       }
       return;
     }
@@ -117,6 +123,8 @@ export function BingoPage({
         setCountdown(3);
         break;
       case 'playing':
+      case 'question_phase':
+      case 'spin_phase':
       case 'skill_phase':
         setView('play');
         setShowCountdown(false);
@@ -125,7 +133,7 @@ export function BingoPage({
         setView('results');
         break;
     }
-  }, [game, gameResults, view]);
+  }, [game, gameResults]);
 
   // Countdown effect
   useEffect(() => {
@@ -144,12 +152,10 @@ export function BingoPage({
     return () => clearInterval(timer);
   }, [showCountdown]);
 
-  // Save game session when game finishes (for XP tracking)
+  // Save game session when game finishes (XP tracking)
   useEffect(() => {
     if (game?.status === 'finished' && !gameSessionSaved.current && onSaveGameSession && gameResults) {
       gameSessionSaved.current = true;
-
-      // Find current player's result from rankings
       const myResult = gameResults.rankings.find(p => p.odinhId === currentUser.id);
       if (myResult) {
         onSaveGameSession({
@@ -163,36 +169,19 @@ export function BingoPage({
         });
       }
     }
-
-    // Reset flag when game changes (new game)
     if (!game || game.status !== 'finished') {
       gameSessionSaved.current = false;
     }
   }, [game, gameResults, currentUser.id, onSaveGameSession]);
 
-  // Handlers
-  const handleCreateGame = useCallback(() => {
-    setView('setup');
-  }, []);
-
-  const handleSetupComplete = useCallback(async (data: CreateBingoGameData) => {
-    await createGame(data);
-    setView('lobby');
-  }, [createGame]);
-
-  const handleStartGame = useCallback(async () => {
-    await startGame();
-  }, [startGame]);
-
-  const handlePlayAgain = useCallback(() => {
-    resetGame();
-    setView('menu');
-  }, [resetGame]);
-
-  const handleLeave = useCallback(() => {
+  const handleLeaveGame = () => {
     leaveGame();
-    setView('menu');
-  }, [leaveGame]);
+    onGoHome?.();
+  };
+
+  const handlePlayAgain = () => {
+    resetGame();
+  };
 
   // Render countdown
   if (showCountdown) {
@@ -213,104 +202,69 @@ export function BingoPage({
     <BingoGameGuide onClose={() => setShowGuide(false)} />
   ) : null;
 
-  // Render Menu
-  if (view === 'menu') {
-    return (
-      <div className="bingo-page">
-        <div className="bingo-header">
-          <div className="header-icon">🎱</div>
-          <h1>Bingo</h1>
-          <p>Bốc số may mắn - Ai BINGO trước thắng!</p>
+  return (
+    <div className="bingo-page">
+      {/* Error Toast */}
+      {error && (
+        <div className="golden-bell-error-toast">
+          <span>{error}</span>
+          <button onClick={() => setError(null)}>✕</button>
         </div>
-        <BingoGameMenu
-          availableRooms={availableRooms}
-          loading={loading}
-          error={error}
-          onCreateGame={handleCreateGame}
-          onJoinGame={joinGame}
-          onShowGuide={() => setShowGuide(true)}
-        />
-        {guideOverlay}
-      </div>
-    );
-  }
+      )}
 
-  // Render Setup
-  if (view === 'setup') {
-    return (
-      <div className="bingo-page">
-        <BingoGameSetup
-          loading={loading}
-          error={error}
-          onCreateGame={handleSetupComplete}
-          onCancel={() => setView('menu')}
-        />
-        {guideOverlay}
-      </div>
-    );
-  }
+      {/* Loading state while creating/joining */}
+      {!game && loading && (
+        <div className="game-loading-fallback">
+          <div className="loading-spinner" />
+          <p>Đang tạo phòng...</p>
+        </div>
+      )}
 
-  // Render Lobby
-  if (view === 'lobby' && game) {
-    return (
-      <div className="bingo-page">
+      {/* Lobby View */}
+      {view === 'lobby' && game && (
         <BingoGameLobby
           game={game}
           isHost={isHost}
           currentPlayerId={currentUser.id}
           loading={loading}
-          onStartGame={handleStartGame}
-          onLeaveGame={handleLeave}
+          onStartGame={startGame}
+          onLeaveGame={handleLeaveGame}
           onKickPlayer={kickPlayer}
         />
-        {guideOverlay}
-      </div>
-    );
-  }
+      )}
 
-  // Render Play
-  if (view === 'play' && game) {
-    return (
-      <div className="bingo-page playing">
-        <BingoGamePlay
-          game={game}
-          currentPlayer={currentPlayer}
-          sortedPlayers={sortedPlayers}
-          isHost={isHost}
-          isSkillPhase={isSkillPhase}
-          onDrawNumber={drawNumber}
-          onClaimBingo={claimBingo}
-          onUseSkill={useSkill}
-          onSkipSkill={skipSkill}
-          onLeave={handleLeave}
-          onShowGuide={() => setShowGuide(true)}
-        />
-        {guideOverlay}
-      </div>
-    );
-  }
+      {/* Play View */}
+      {view === 'play' && game && (
+        <div className="bingo-page playing">
+          <BingoGamePlay
+            game={game}
+            currentPlayer={currentPlayer}
+            sortedPlayers={sortedPlayers}
+            isHost={isHost}
+            isSkillPhase={isSkillPhase}
+            onStartQuestion={startQuestion}
+            onSubmitAnswer={submitAnswer}
+            onRevealAndSpin={revealAndSpin}
+            onCompleteSpin={completeSpin}
+            onClaimBingo={claimBingo}
+            onUseSkill={useSkill}
+            onSkipSkill={skipSkill}
+            onLeave={handleLeaveGame}
+            onShowGuide={() => setShowGuide(true)}
+          />
+        </div>
+      )}
 
-  // Render Results
-  if (view === 'results' && gameResults) {
-    return (
-      <div className="bingo-page">
+      {/* Results View */}
+      {view === 'results' && gameResults && (
         <BingoGameResults
           results={gameResults}
           onPlayAgain={handlePlayAgain}
-          onGoHome={handlePlayAgain}
+          onGoHome={() => onGoHome?.()}
         />
-        {guideOverlay}
-      </div>
-    );
-  }
+      )}
 
-  // Loading state
-  return (
-    <div className="bingo-page">
-      <div className="loading-state">
-        <div className="loading-spinner" />
-        <p>Đang tải...</p>
-      </div>
+      {guideOverlay}
     </div>
   );
 }

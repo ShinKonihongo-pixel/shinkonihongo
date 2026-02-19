@@ -3,6 +3,8 @@
 
 import { Trophy, Crown, Target, Users, Skull } from 'lucide-react';
 import type { GoldenBellResults } from '../../types/golden-bell';
+import type { GoldenBellTeamResult } from '../../types/golden-bell';
+import { GB_TEAM_COLORS } from '../../types/golden-bell';
 import { Podium, RankingsTable, ResultsActionBar, type BaseRankedPlayer } from '../shared/game-results';
 
 interface GoldenBellResultsProps {
@@ -70,6 +72,38 @@ export function GoldenBellResultsView({
           <Skull size={48} />
           <h2>Không có người thắng!</h2>
           <p>Tất cả mọi người đều đã bị loại</p>
+        </div>
+      )}
+
+      {/* Team Rankings (team mode only) */}
+      {results.gameMode === 'team' && results.teamRankings && results.teamRankings.length > 0 && (
+        <div className="gb-team-results">
+          <h3 className="gb-team-results-title">Xếp Hạng Đội</h3>
+          <div className="gb-team-podium">
+            {results.teamRankings.map((team) => {
+              const color = GB_TEAM_COLORS[team.colorKey];
+              return (
+                <div
+                  key={team.teamId}
+                  className={`gb-team-podium-item rank-${team.rank}`}
+                  style={{ '--team-color': color.color } as React.CSSProperties}
+                >
+                  <div className="gb-team-podium-rank">#{team.rank}</div>
+                  <div className="gb-team-podium-emoji">{team.emoji}</div>
+                  <div className="gb-team-podium-name">{team.teamName}</div>
+                  <div className="gb-team-podium-stats">
+                    <span>{team.aliveMembers}/{team.totalMembers} sống</span>
+                    <span>{team.totalCorrect} đúng</span>
+                  </div>
+                  {team.mvpName && (
+                    <div className="gb-team-podium-mvp">
+                      MVP: {team.mvpName}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

@@ -12,13 +12,15 @@ import type {
 import type { Flashcard } from '../../types/flashcard';
 import { generateGameCode } from '../../lib/game-utils';
 import { createGameRoom } from '../../services/game-rooms';
-import { convertFlashcardsToQuestions } from './utils';
+import { convertFlashcardsToQuestions, createGoldenBellTeams } from './utils';
+import { generateGoldenBellSoloBotSchedules } from '../shared/use-bot-auto-join';
 
 interface UseGameCreationProps {
   currentUser: {
     id: string;
     displayName: string;
     avatar: string;
+    role?: string;
   };
   setGame: (value: GoldenBellGame | null | ((prev: GoldenBellGame | null) => GoldenBellGame | null)) => void;
   setGameResults: (results: GoldenBellResults | null) => void;
@@ -47,16 +49,19 @@ export function useGameCreation({
     setError(null);
 
     try {
+      // Filter flashcards by selected JLPT level
+      const filteredCards = flashcards.filter(c => c.jlptLevel === data.jlptLevel);
+
+      if (filteredCards.length < data.questionCount) {
+        throw new Error(`Không đủ câu hỏi. Cần ${data.questionCount}, chỉ có ${filteredCards.length} câu ở ${data.jlptLevel}`);
+      }
+
       const questions = convertFlashcardsToQuestions(
-        flashcards,
+        filteredCards,
         data.questionCount,
         data.timePerQuestion,
         data.difficultyProgression
       );
-
-      if (questions.length < 5) {
-        throw new Error('Cần ít nhất 5 câu hỏi để bắt đầu trò chơi');
-      }
 
       const settings: GoldenBellSettings = {
         maxPlayers: data.maxPlayers,
@@ -68,16 +73,26 @@ export function useGameCreation({
         difficultyProgression: data.difficultyProgression,
         contentSource: data.contentSource,
         lessonId: data.lessonId,
+        gameMode: data.gameMode || 'solo',
+        skillsEnabled: data.skillsEnabled ?? true, // Always enabled by default
+        skillInterval: data.skillInterval ?? 5,
       };
+
+      // Create teams for team mode
+      const teams = (data.gameMode === 'team' && data.teamCount)
+        ? createGoldenBellTeams(data.teamCount)
+        : undefined;
 
       const player: GoldenBellPlayer = {
         odinhId: currentUser.id,
         displayName: currentUser.displayName,
         avatar: currentUser.avatar,
+        role: currentUser.role,
         status: 'alive',
         correctAnswers: 0,
         totalAnswers: 0,
         streak: 0,
+        skills: [],
       };
 
       const gameData: Omit<GoldenBellGame, 'id'> = {
@@ -92,6 +107,7 @@ export function useGameCreation({
         alivePlayers: 1,
         eliminatedThisRound: [],
         createdAt: new Date().toISOString(),
+        teams,
       };
 
       // Write to Firestore
@@ -105,8 +121,38 @@ export function useGameCreation({
       setGame(newGame);
       setGameResults(null);
 
-      // Schedule bot auto-join
-      scheduleBotJoin(setGame, data.maxPlayers);
+      // Auto-assign host to first team in team mode
+      if (teams) {
+        const firstTeamId = Object.keys(teams)[0];
+        if (firstTeamId) {
+          setGame(prev => {
+            if (!prev || !prev.teams) return prev;
+            const updatedTeams = { ...prev.teams };
+            updatedTeams[firstTeamId] = {
+              ...updatedTeams[firstTeamId],
+              members: [currentUser.id],
+              aliveCount: 1,
+            };
+            return {
+              ...prev,
+              teams: updatedTeams,
+              players: {
+                ...prev.players,
+                [currentUser.id]: { ...prev.players[currentUser.id], teamId: firstTeamId },
+              },
+            };
+          });
+        }
+      }
+
+      // Schedule bot auto-join (respect settings toggle, use staggered schedules for solo)
+      const botAutoJoinEnabled = localStorage.getItem('gb_bot_auto_join') !== 'false';
+      if (botAutoJoinEnabled) {
+        const botSchedules = (data.gameMode || 'solo') === 'solo'
+          ? generateGoldenBellSoloBotSchedules()
+          : undefined; // team mode uses default schedules
+        scheduleBotJoin(setGame, data.maxPlayers, botSchedules);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể tạo trò chơi');
     } finally {

@@ -5,6 +5,8 @@ import { GameSettingsSources } from './game-settings-sources';
 import { GameSettingsAI } from './game-settings-ai';
 import { GameSettingsJLPT } from './game-settings-jlpt';
 import { GameSoundSettings } from './settings-sound-panel';
+import { GameSettingsGoldenBell } from './game-settings-golden-bell';
+import { GameSettingsGoldenBellSkills } from './game-settings-golden-bell-skills';
 
 interface GameSettingsExtendedProps extends GameSettingsProps {
   flashcards?: Flashcard[];
@@ -28,6 +30,10 @@ export function GameSettings({ settings, onUpdateSetting, flashcards = [], lesso
       <GameSettingsJLPT settings={settings} onUpdateSetting={onUpdateSetting} />
 
       <GameSoundSettings />
+
+      <GameSettingsGoldenBell />
+
+      <GameSettingsGoldenBellSkills />
     </>
   );
 }

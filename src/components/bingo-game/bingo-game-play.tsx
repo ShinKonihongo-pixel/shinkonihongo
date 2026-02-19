@@ -1,10 +1,12 @@
-// Bingo Game Play - Main game interface with number boards and drawing
+// Bingo Game Play — Main game interface with question-based gameplay
 
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { LogOut, Target, Sparkles, X, HelpCircle } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { LogOut, HelpCircle } from 'lucide-react';
 import type { BingoGame, BingoPlayer, BingoSkillType } from '../../types/bingo-game';
-import { BINGO_SKILLS } from '../../types/bingo-game';
 import { PlayerLeaderboard, type LeaderboardPlayer } from '../game-hub/player-leaderboard';
+import { BingoQuestionPhase } from './bingo-question-phase';
+import { BingoNumberSpinner } from './bingo-number-spinner';
+import { BingoSkillPicker } from './bingo-skill-picker';
 import { useGameSounds } from '../../hooks/use-game-sounds';
 
 interface BingoGamePlayProps {
@@ -13,7 +15,10 @@ interface BingoGamePlayProps {
   sortedPlayers: BingoPlayer[];
   isHost: boolean;
   isSkillPhase: boolean;
-  onDrawNumber: () => void;
+  onStartQuestion: () => void;
+  onSubmitAnswer: (selectedIndex: number) => void;
+  onRevealAndSpin: () => void;
+  onCompleteSpin: () => void;
   onClaimBingo: () => void;
   onUseSkill: (skillType: BingoSkillType, targetId?: string) => void;
   onSkipSkill: () => void;
@@ -25,24 +30,47 @@ export function BingoGamePlay({
   game,
   currentPlayer,
   sortedPlayers,
-  isHost: _isHost,
-  isSkillPhase,
-  onDrawNumber,
+  isHost,
+  isSkillPhase: _isSkillPhase,
+  onStartQuestion,
+  onSubmitAnswer,
+  onRevealAndSpin,
+  onCompleteSpin,
   onClaimBingo,
   onUseSkill,
   onSkipSkill,
   onLeave,
   onShowGuide,
 }: BingoGamePlayProps) {
-  void _isHost; // Reserved for future use
-  const [selectedSkill, setSelectedSkill] = useState<BingoSkillType | null>(null);
-  const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
   const [showDrawAnimation, setShowDrawAnimation] = useState(false);
   const [animatedNumber, setAnimatedNumber] = useState<number | null>(null);
 
   // Game sounds
   const { playCorrect, playVictory, playDefeat, startMusic, stopMusic, settings: soundSettings } = useGameSounds();
   const soundPlayedRef = useRef<string>('');
+
+  // Auto-reveal after timer ends (host only)
+  const revealTimerRef = useRef<NodeJS.Timeout | null>(null);
+  useEffect(() => {
+    if (game.status !== 'question_phase' || !isHost) return;
+    const question = game.questions[game.currentQuestionIndex];
+    if (!question) return;
+
+    if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+    // Auto-reveal after question time limit + 1s buffer
+    revealTimerRef.current = setTimeout(() => {
+      onRevealAndSpin();
+    }, (question.timeLimit + 1) * 1000);
+
+    return () => {
+      if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+    };
+  }, [game.status, game.currentQuestionIndex, isHost, onRevealAndSpin, game.questions]);
+
+  // Stable callback for spinner
+  const handleSpinComplete = useCallback(() => {
+    onCompleteSpin();
+  }, [onCompleteSpin]);
 
   // Play sound when number is drawn (matches on player's rows)
   useEffect(() => {
@@ -98,45 +126,21 @@ export function BingoGamePlay({
     }));
   }, [sortedPlayers, currentPlayer?.odinhId]);
 
-  // Animate drawn number
+  // Animate drawn number popup
   useEffect(() => {
-    if (game.lastDrawnNumber !== null) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (game.lastDrawnNumber !== null && game.status !== 'spin_phase') {
       setAnimatedNumber(game.lastDrawnNumber);
       setShowDrawAnimation(true);
-      const timer = setTimeout(() => {
-        setShowDrawAnimation(false);
-      }, 2000);
+      const timer = setTimeout(() => setShowDrawAnimation(false), 2000);
       return () => clearTimeout(timer);
     }
-  }, [game.lastDrawnNumber, game.drawnNumbers.length]);
+  }, [game.lastDrawnNumber, game.drawnNumbers.length, game.status]);
 
-  // Handle skill selection
-  const handleSkillSelect = (skillType: BingoSkillType) => {
-    const skill = BINGO_SKILLS[skillType];
-    setSelectedSkill(skillType);
-
-    if (!skill.targetOther) {
-      // Apply skill immediately
-      onUseSkill(skillType);
-      setSelectedSkill(null);
-    }
-  };
-
-  // Handle target selection for skills
-  const handleTargetSelect = (targetId: string) => {
-    if (selectedSkill) {
-      onUseSkill(selectedSkill, targetId);
-      setSelectedSkill(null);
-      setSelectedTarget(null);
-    }
-  };
-
-  // Check if current player can draw
-  const canDraw = currentPlayer && !currentPlayer.isBlocked && game.availableNumbers.length > 0;
-
-  // Check if current player can claim bingo
   const canBingo = currentPlayer?.canBingo && !currentPlayer?.hasBingoed;
+  const currentQuestion = game.questions[game.currentQuestionIndex];
+  const spinWinnerName = game.correctAnswerPlayerId
+    ? game.players[game.correctAnswerPlayerId]?.displayName || 'Player'
+    : '';
 
   return (
     <div className="bingo-play with-leaderboard">
@@ -160,8 +164,8 @@ export function BingoGamePlay({
         </div>
       </div>
 
-      {/* Last drawn number animation */}
-      {showDrawAnimation && animatedNumber !== null && (
+      {/* Last drawn number animation (non-spin) */}
+      {showDrawAnimation && animatedNumber !== null && game.status !== 'spin_phase' && (
         <div className="drawn-number-popup">
           <div className="number-ball">
             <span>{animatedNumber.toString().padStart(2, '0')}</span>
@@ -239,17 +243,19 @@ export function BingoGamePlay({
 
           {/* Action buttons */}
           <div className="bingo-play-actions">
-            {/* Draw button */}
-            <button
-              className="draw-btn"
-              onClick={onDrawNumber}
-              disabled={!canDraw || isSkillPhase}
-            >
-              <span className="draw-icon">🎱</span>
-              <span>Bốc Số</span>
-            </button>
+            {/* Next Question button (host only, during playing) */}
+            {game.status === 'playing' && isHost && (
+              <button
+                className="draw-btn"
+                onClick={onStartQuestion}
+                disabled={game.currentQuestionIndex + 1 >= game.questions.length}
+              >
+                <span className="draw-icon">❓</span>
+                <span>Câu Hỏi Tiếp</span>
+              </button>
+            )}
 
-            {/* Bingo button - only show when eligible */}
+            {/* Bingo button */}
             {canBingo && (
               <button className="bingo-btn" onClick={onClaimBingo}>
                 <span className="bingo-text">🎉 BINGO! 🎉</span>
@@ -270,74 +276,34 @@ export function BingoGamePlay({
         </div>
       </div>
 
-      {/* Skill phase overlay */}
-      {isSkillPhase && currentPlayer?.hasSkillAvailable && (
-        <div className="skill-phase-overlay">
-          <div className="skill-phase-content">
-            <h3>
-              <Sparkles size={24} />
-              Kỹ Năng Đặc Biệt!
-            </h3>
-            <p>Chọn một kỹ năng để sử dụng</p>
+      {/* Question Phase Overlay */}
+      {game.status === 'question_phase' && currentQuestion && (
+        <BingoQuestionPhase
+          question={currentQuestion}
+          currentQuestionAnswers={game.currentQuestionAnswers}
+          currentPlayerId={currentPlayer?.odinhId || ''}
+          totalPlayers={Object.keys(game.players).length}
+          onSubmitAnswer={onSubmitAnswer}
+        />
+      )}
 
-            {!selectedSkill ? (
-              <>
-                <div className="skills-grid">
-                  {Object.values(BINGO_SKILLS).map(skill => (
-                    <button
-                      key={skill.type}
-                      className="skill-card"
-                      onClick={() => handleSkillSelect(skill.type)}
-                    >
-                      <span className="skill-emoji">{skill.emoji}</span>
-                      <span className="skill-name">{skill.name}</span>
-                      <span className="skill-desc">{skill.description}</span>
-                    </button>
-                  ))}
-                </div>
+      {/* Spin Phase Overlay */}
+      {game.status === 'spin_phase' && game.lastDrawnNumber !== null && (
+        <BingoNumberSpinner
+          targetNumber={game.lastDrawnNumber}
+          winnerName={spinWinnerName}
+          onComplete={handleSpinComplete}
+        />
+      )}
 
-                <button className="skip-skill-btn" onClick={onSkipSkill}>
-                  Bỏ Qua
-                </button>
-              </>
-            ) : (
-              /* Target selection for debuff skills */
-              <div className="target-selection">
-                <h4>
-                  <Target size={20} />
-                  Chọn Đối Thủ
-                </h4>
-                <p>
-                  Sử dụng: {BINGO_SKILLS[selectedSkill].emoji} {BINGO_SKILLS[selectedSkill].name}
-                </p>
-
-                <div className="targets-grid">
-                  {opponents.map(player => (
-                    <button
-                      key={player.odinhId}
-                      className={`target-card ${selectedTarget === player.odinhId ? 'selected' : ''}`}
-                      onClick={() => handleTargetSelect(player.odinhId)}
-                    >
-                      <span className="target-avatar">{player.avatar}</span>
-                      <span className="target-name">{player.displayName}</span>
-                      <span className="target-stats">
-                        ✓{player.markedCount} | 🏆{player.completedRows}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-
-                <button
-                  className="cancel-skill-btn"
-                  onClick={() => setSelectedSkill(null)}
-                >
-                  <X size={16} />
-                  Hủy
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+      {/* Skill Phase Overlay */}
+      {game.status === 'skill_phase' && currentPlayer?.hasSkillAvailable && (
+        <BingoSkillPicker
+          currentPlayer={currentPlayer}
+          opponents={opponents}
+          onUseSkill={onUseSkill}
+          onSkipSkill={onSkipSkill}
+        />
       )}
     </div>
   );

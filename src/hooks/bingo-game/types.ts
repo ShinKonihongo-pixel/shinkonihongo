@@ -1,5 +1,7 @@
 // Bingo Game Hook Types
 
+import type { Flashcard } from '../../types/flashcard';
+
 export interface UseBingoGameProps {
   currentUser: {
     id: string;
@@ -7,6 +9,7 @@ export interface UseBingoGameProps {
     avatar: string;
     role?: string;
   };
+  flashcards: Flashcard[];
 }
 
 export interface BingoGameState {

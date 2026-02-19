@@ -8,13 +8,14 @@ import type {
   BingoGameSettings,
   CreateBingoGameData,
 } from '../../types/bingo-game';
+import type { Flashcard } from '../../types/flashcard';
 import {
   generateBingoRows,
   generateNumberPool,
   DEFAULT_BINGO_SETTINGS,
 } from '../../types/bingo-game';
 import { generateBots } from '../../types/game-hub';
-import { generateGameCode, generateId, BOT_FIRST_JOIN_DELAY, BOT_SECOND_JOIN_DELAY } from './utils';
+import { generateGameCode, generateId, BOT_FIRST_JOIN_DELAY, BOT_SECOND_JOIN_DELAY, convertFlashcardsToBingoQuestions } from './utils';
 import type { UseBingoGameProps, BingoGameState, BingoGameRefs } from './types';
 import { createGameRoom } from '../../services/game-rooms';
 
@@ -23,7 +24,8 @@ export function useGameCreate(
   setState: React.Dispatch<React.SetStateAction<BingoGameState>>,
   refs: BingoGameRefs,
   currentUser: UseBingoGameProps['currentUser'],
-  setRoomId: (id: string | null) => void
+  setRoomId: (id: string | null) => void,
+  flashcards: Flashcard[]
 ) {
   const { botTimerRef, botTimer2Ref } = refs;
 
@@ -36,7 +38,25 @@ export function useGameCreate(
         ...DEFAULT_BINGO_SETTINGS,
         maxPlayers: data.maxPlayers,
         skillsEnabled: data.skillsEnabled,
+        timePerQuestion: data.timePerQuestion,
+        jlptLevel: data.jlptLevel,
+        selectedLessons: data.selectedLessons,
       };
+
+      // Filter flashcards by jlptLevel and optional lessons
+      let filteredCards = flashcards.filter(c => c.jlptLevel === data.jlptLevel);
+      if (data.selectedLessons.length > 0) {
+        filteredCards = filteredCards.filter(c => data.selectedLessons.includes(c.lessonId));
+      }
+
+      // Generate questions (max 50 or available)
+      const questionCount = Math.min(50, filteredCards.length);
+      const questions = convertFlashcardsToBingoQuestions(
+        filteredCards,
+        flashcards,
+        questionCount,
+        data.timePerQuestion
+      );
 
       const playerRows = generateBingoRows(
         settings.rowsPerPlayer,
@@ -59,6 +79,8 @@ export function useGameCreate(
         luckTurnsLeft: 0,
         hasSkillAvailable: false,
         hasFiftyFifty: false,
+        correctAnswers: 0,
+        totalAnswers: 0,
       };
 
       const gameData: Omit<BingoGame, 'id'> = {
@@ -74,6 +96,10 @@ export function useGameCreate(
         currentDrawerId: null,
         lastDrawnNumber: null,
         winnerId: null,
+        questions,
+        currentQuestionIndex: -1,
+        currentQuestionAnswers: {},
+        correctAnswerPlayerId: null,
         createdAt: new Date().toISOString(),
       };
 
@@ -123,6 +149,8 @@ export function useGameCreate(
               luckTurnsLeft: 0,
               hasSkillAvailable: false,
               hasFiftyFifty: false,
+              correctAnswers: 0,
+              totalAnswers: 0,
               isBot: true,
             };
           });
@@ -146,7 +174,7 @@ export function useGameCreate(
     } finally {
       setState(prev => ({ ...prev, loading: false }));
     }
-  }, [currentUser, setGame, setState, setRoomId, botTimerRef, botTimer2Ref]);
+  }, [currentUser, flashcards, setGame, setState, setRoomId, botTimerRef, botTimer2Ref]);
 
   return { createGame };
 }

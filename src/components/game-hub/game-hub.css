@@ -2920,172 +2920,258 @@
   transform: translateY(0);
 }
 
-/* Games Grid — edge-to-edge */
+/* Games Grid */
 .wr-games-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 0.5rem;
-  padding: 0.25rem 0.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(265px, 1fr));
+  gap: 0.75rem;
+  padding: 0.5rem;
 }
 
-/* Room Card — compact pro design using site theme */
+/* ── Room Card — premium glass with game accent ── */
 .wr-room-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  --card-accent: #4a7a9e;
+  --card-gradient: linear-gradient(135deg, #4a7a9e, #6ba3c7);
+  position: relative;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--card-accent) 6%, rgba(15, 15, 30, 0.95)),
+    rgba(15, 15, 30, 0.92)
+  );
+  border: 1px solid color-mix(in srgb, var(--card-accent) 18%, rgba(255, 255, 255, 0.06));
+  border-left: 3px solid var(--card-accent);
+  border-radius: 12px;
   overflow: hidden;
-  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: wrCardIn 0.35s ease both;
 }
+
+@keyframes wrCardIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.wr-room-card:nth-child(2) { animation-delay: 0.04s; }
+.wr-room-card:nth-child(3) { animation-delay: 0.08s; }
+.wr-room-card:nth-child(4) { animation-delay: 0.12s; }
+.wr-room-card:nth-child(5) { animation-delay: 0.16s; }
+.wr-room-card:nth-child(6) { animation-delay: 0.20s; }
+.wr-room-card:nth-child(7) { animation-delay: 0.24s; }
+.wr-room-card:nth-child(8) { animation-delay: 0.28s; }
+.wr-room-card:nth-child(n+9) { animation-delay: 0.30s; }
 
 .wr-room-card:hover {
-  border-color: var(--jp-ai-light);
-  background: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 16px rgba(26, 58, 84, 0.3);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--card-accent) 10%, rgba(15, 15, 30, 0.95)),
+    rgba(15, 15, 30, 0.9)
+  );
+  border-color: color-mix(in srgb, var(--card-accent) 45%, transparent);
+  border-left-color: var(--card-accent);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    0 0 20px color-mix(in srgb, var(--card-accent) 12%, transparent);
+  transform: translateY(-3px);
 }
 
 .wr-room-card.full {
-  opacity: 0.5;
+  opacity: 0.4;
+  filter: grayscale(0.3);
+}
+.wr-room-card.full:hover {
+  transform: none;
+  box-shadow: none;
 }
 
-/* Room Type Badge — inline compact */
-.wr-room-type {
+/* Card Top — game tag + time */
+.wr-card-top {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.5rem 0.75rem;
-  color: white;
-  font-weight: 600;
-  font-size: 0.8rem;
+  justify-content: space-between;
+  padding: 0.55rem 0.7rem 0.3rem;
 }
 
-.wr-type-icon {
-  width: 22px;
-  height: 22px;
+.wr-game-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: color-mix(in srgb, var(--card-accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--card-accent) 22%, transparent);
+  padding: 0.18rem 0.5rem;
+  border-radius: 5px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--card-accent);
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+.wr-tag-icon {
+  width: 15px;
+  height: 15px;
   object-fit: contain;
 }
 
-.wr-type-emoji {
-  font-size: 1.1rem;
+.wr-tag-emoji {
+  font-size: 0.8rem;
+  line-height: 1;
 }
 
-.wr-type-name {
+.wr-time {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.32);
+}
+
+/* Room Code — the hero/identity element */
+.wr-code-block {
+  text-align: center;
+  padding: 0.3rem 0.7rem 0.45rem;
+}
+
+.wr-code-text {
+  font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: white;
+  text-shadow: 0 0 20px color-mix(in srgb, var(--card-accent) 30%, transparent);
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px dashed color-mix(in srgb, var(--card-accent) 30%, rgba(255, 255, 255, 0.12));
+  padding: 0.3rem 0.8rem;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+/* Card Body — host + capacity */
+.wr-card-body {
+  padding: 0.2rem 0.7rem 0.45rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
   flex: 1;
 }
 
-.wr-room-code {
-  font-family: 'SF Mono', 'Fira Code', monospace;
-  font-size: 1.3rem;
-  font-weight: 800;
-  background: rgba(0, 0, 0, 0.25);
-  padding: 0.35rem 0.75rem;
-  border-radius: 8px;
-  letter-spacing: 0.15em;
-  text-align: center;
-  color: #fff;
-  border: 1px dashed rgba(255,255,255,0.2);
-}
-
-/* Room Info — tighter */
-.wr-room-info {
-  padding: 0.5rem 0.75rem 0.6rem;
-}
-
-.wr-room-host {
+.wr-host {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  margin-bottom: 0.4rem;
 }
 
 .wr-host-avatar {
-  font-size: 1.25rem;
-  width: 28px;
-  height: 28px;
+  font-size: 1.1rem;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.wr-host-avatar-img {
-  width: 28px;
-  height: 28px;
+.wr-host-img {
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   object-fit: cover;
+  border: 1.5px solid color-mix(in srgb, var(--card-accent) 45%, transparent);
 }
 
 .wr-host-name {
-  color: white;
+  color: rgba(255, 255, 255, 0.85);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.wr-room-meta {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.wr-meta-item {
+/* Capacity bar */
+.wr-capacity {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.78rem;
+  gap: 0.5rem;
 }
 
-/* Join Button — compact */
+.wr-capacity-track {
+  flex: 1;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.wr-capacity-fill {
+  height: 100%;
+  background: var(--card-accent);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.wr-capacity-fill.high {
+  background: #ef4444;
+}
+
+.wr-capacity-label {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.42);
+  white-space: nowrap;
+}
+
+/* Card Actions */
+.wr-card-actions {
+  display: flex;
+  margin-top: auto;
+}
+
 .wr-join-btn {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  width: 100%;
-  padding: 0.6rem;
+  gap: 0.35rem;
+  padding: 0.55rem;
   border: none;
+  background: var(--card-accent);
   color: white;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
+  border-radius: 0 0 0 9px;
 }
 
 .wr-join-btn:hover:not(:disabled) {
-  filter: brightness(1.1);
+  filter: brightness(1.15);
 }
 
 .wr-join-btn:disabled {
-  background: rgba(255, 255, 255, 0.06) !important;
-  color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: rgba(255, 255, 255, 0.22);
   cursor: not-allowed;
 }
 
-/* Admin room actions */
-.wr-room-actions {
-  display: flex;
-  gap: 0.5rem;
-  align-items: stretch;
-}
-
-.wr-room-actions .wr-join-btn {
-  flex: 1;
-  border-radius: 0 0 0 12px;
-}
-
-.wr-admin-delete-btn {
+.wr-delete-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 0.875rem;
-  background: rgba(239, 68, 68, 0.15);
+  padding: 0 0.75rem;
+  background: rgba(239, 68, 68, 0.08);
   border: none;
-  color: #ef4444;
+  color: rgba(239, 68, 68, 0.6);
   cursor: pointer;
-  border-radius: 0 0 12px 0;
   transition: all 0.2s;
+  border-radius: 0 0 9px 0;
 }
 
-.wr-admin-delete-btn:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.3);
+.wr-delete-btn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
 }
 
 .wr-admin-delete-all {
@@ -3108,7 +3194,7 @@
   background: rgba(239, 68, 68, 0.25);
 }
 
-/* Responsive */
+/* Responsive — waiting room */
 @media (max-width: 768px) {
   .wr-header {
     padding: 0.75rem 0.5rem 0.5rem;
@@ -3136,8 +3222,24 @@
   }
 
   .wr-games-grid {
-    padding: 0.25rem 0.25rem;
-    gap: 0.4rem;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    padding: 0.25rem;
+    gap: 0.5rem;
+  }
+
+  .wr-code-text {
+    font-size: 1.15rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .wr-games-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .wr-room-card {
+    border-left-width: 4px;
   }
 }
 
@@ -8672,7 +8774,6 @@
   z-index: 1000;
   animation: rm-fade-in 0.3s ease;
   overscroll-behavior: contain;
-  touch-action: none;
 }
 
 @keyframes rm-fade-in {
@@ -8966,6 +9067,7 @@
   border: 2px solid var(--rm-border);
   border-radius: var(--rm-radius-full);
   font-size: 0.9rem;
+  touch-action: manipulation;
   font-weight: 500;
   color: var(--rm-text-muted);
   cursor: pointer;
@@ -9018,8 +9120,26 @@
   box-shadow: 0 0 15px color-mix(in srgb, var(--pill-color) 40%, transparent);
 }
 
+/* === Lesson Picker List === */
+.rm-lesson-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  max-height: 160px;
+  overflow-y: auto;
+  padding: 0.25rem 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.rm-lesson-list .rm-pill {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+}
+
 /* === Slider === */
 .rm-slider-wrap {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--rm-space-sm);
@@ -9152,6 +9272,7 @@
   cursor: pointer;
   transition: all var(--rm-transition-normal);
   flex-shrink: 0;
+  touch-action: manipulation;
 }
 
 .rm-toggle-btn::after {
@@ -9270,49 +9391,20 @@
   color: var(--rm-primary-light);
 }
 
-/* === Collapsible Rules === */
-.rm-rules-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--rm-space-sm);
-  width: 100%;
-  padding: var(--rm-space-sm) var(--rm-space-md);
-  background: transparent;
-  border: 1px dashed var(--rm-border);
-  border-radius: var(--rm-radius-md);
-  font-size: 0.85rem;
-  color: var(--rm-text-muted);
-  cursor: pointer;
-  transition: all var(--rm-transition-fast);
-}
-
-.rm-rules-toggle:hover {
-  border-color: var(--rm-primary);
-  color: var(--rm-primary-light);
-  background: var(--rm-bg-hover);
-}
-
-.rm-rules-toggle svg {
-  transition: transform var(--rm-transition-fast);
-}
-
-.rm-rules-toggle.open svg {
-  transform: rotate(180deg);
-}
-
+/* === Rules Section === */
 .rm-rules {
-  margin-top: var(--rm-space-md);
   padding: var(--rm-space-md);
-  background: var(--rm-bg-input);
-  border-radius: var(--rm-radius-md);
-  animation: rm-fade-in 0.3s ease;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(236, 72, 153, 0.06));
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: var(--rm-radius-lg);
 }
 
 .rm-rules-title {
-  margin: 0 0 var(--rm-space-sm);
-  font-size: 0.85rem;
-  font-weight: 600;
+  margin: 0 0 0.625rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   color: var(--rm-primary-light);
 }
 
@@ -9320,23 +9412,56 @@
   margin: 0;
   padding: 0;
   list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .rm-rules-list li {
-  padding: 0.375rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
   font-size: 0.85rem;
   color: var(--rm-text-muted);
   line-height: 1.4;
 }
 
+.rm-rules-bullet {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  flex-shrink: 0;
+}
+
 /* === Modal Footer === */
 .rm-footer {
   display: flex;
-  align-items: center;
-  gap: var(--rm-space-md);
+  flex-direction: column;
+  gap: var(--rm-space-sm);
   padding: var(--rm-space-lg);
   background: var(--rm-bg-glass);
   border-top: 1px solid var(--rm-border);
+}
+
+.rm-footer-warning {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #f59e0b;
+  padding: 0.375rem 0.75rem;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: var(--rm-radius-sm);
+}
+
+.rm-footer-warning strong {
+  font-weight: 700;
+}
+
+.rm-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--rm-space-md);
 }
 
 .rm-footer-info {
@@ -9361,6 +9486,7 @@
   cursor: pointer;
   transition: all var(--rm-transition-fast);
   white-space: nowrap;
+  touch-action: manipulation;
 }
 
 .rm-btn:hover:not(:disabled) {
@@ -9862,6 +9988,9 @@
 
   .rm-footer {
     padding: var(--rm-space-md);
+  }
+
+  .rm-footer-actions {
     flex-direction: column;
   }
 
@@ -9887,5 +10016,187 @@
     padding: 0.5rem 0.75rem;
     font-size: 0.85rem;
   }
+}
+
+/* ============ GAME MODE SELECTOR — CARD STYLE ============ */
+.rm-mode-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.rm-mode-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.85rem 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+  color: rgba(255, 255, 255, 0.5);
+  overflow: hidden;
+}
+
+/* Subtle shimmer on hover */
+.rm-mode-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(255, 255, 255, 0.03) 50%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.rm-mode-card:hover::before {
+  opacity: 1;
+}
+
+.rm-mode-card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Active state — glowing accent border + filled background */
+.rm-mode-card.active {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(236, 72, 153, 0.06) 100%);
+  border-color: rgba(139, 92, 246, 0.45);
+  color: rgba(255, 255, 255, 0.95);
+  box-shadow:
+    0 0 0 1px rgba(139, 92, 246, 0.1),
+    0 2px 12px rgba(139, 92, 246, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Icon container */
+.rm-mode-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+  transition: all 0.25s;
+}
+.rm-mode-card.active .rm-mode-card-icon {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.15));
+  border-color: rgba(139, 92, 246, 0.3);
+  color: #c084fc;
+}
+
+/* Text content */
+.rm-mode-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+  min-width: 0;
+}
+.rm-mode-card-label {
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.2;
+  transition: color 0.25s;
+}
+.rm-mode-card.active .rm-mode-card-label {
+  color: #fff;
+}
+.rm-mode-card-desc {
+  font-size: 0.72rem;
+  line-height: 1.3;
+  opacity: 0.6;
+}
+.rm-mode-card.active .rm-mode-card-desc {
+  opacity: 0.75;
+}
+
+/* Checkmark */
+.rm-mode-card-check {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: #a78bfa;
+}
+
+/* Team config panel — slides in below */
+.rm-team-config {
+  margin-top: 0.75rem;
+  padding: 0.75rem 0.65rem 0.25rem;
+  background: rgba(139, 92, 246, 0.04);
+  border: 1px solid rgba(139, 92, 246, 0.1);
+  border-radius: 10px;
+  animation: rm-team-slide-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes rm-team-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 200px;
+  }
+}
+
+/* Compact sliders inside team config */
+.rm-team-config .rm-field {
+  margin-bottom: 0.4rem;
+}
+.rm-team-config .rm-label {
+  font-size: 0.8rem;
+}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 400px) {
+  .rm-mode-cards {
+    gap: 0.5rem;
+  }
+  .rm-mode-card {
+    padding: 0.7rem 0.6rem;
+    gap: 0.5rem;
+  }
+  .rm-mode-card-icon {
+    width: 34px;
+    height: 34px;
+  }
+  .rm-mode-card-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+  .rm-mode-card-label {
+    font-size: 0.82rem;
+  }
+  .rm-mode-card-desc {
+    font-size: 0.68rem;
+  }
+}
+
+/* ============ SLIDER FREE-MAX MARKER ============ */
+/* Visual marker showing free-tier limit on slider */
+.rm-slider-free-max {
+  position: absolute;
+  top: 2px;
+  width: 2px;
+  height: 16px;
+  background: #7C3AED;
+  border-radius: 1px;
+  opacity: 0.6;
+  pointer-events: none;
+  transform: translateX(-1px);
+}
+.rm-slider-free-label {
+  position: absolute;
+  font-size: 0.65rem;
+  color: #7C3AED;
+  transform: translateX(-50%);
+  white-space: nowrap;
 }
 

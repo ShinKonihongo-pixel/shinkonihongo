@@ -40,34 +40,50 @@ export interface WaitingRoomGame {
   status: 'waiting' | 'starting';
 }
 
-// Bot names for auto-fill
-export const BOT_NAMES = [
-  'Sakura', 'Yuki', 'Hana', 'Ryu', 'Kenji', 'Akira', 'Mei', 'Kaito',
-  'Sora', 'Haruki', 'Aoi', 'Rin', 'Taro', 'Yuma', 'Hinata', 'Kota',
-  'Miku', 'Ren', 'Nana', 'Daiki', 'Emi', 'Takeshi', 'Momo', 'Shin',
-  'Ayumi', 'Koji', 'Yui', 'Masa', 'Kira', 'Ken', 'Saki', 'Riko'
+// Bot intelligence levels (affects answer accuracy during gameplay)
+export type BotIntelligence = 'weak' | 'average' | 'smart' | 'genius';
+
+// Realistic Japanese first + last name combinations
+const BOT_LAST_NAMES = [
+  '田中', '佐藤', '鈴木', '高橋', '渡辺', '伊藤', '山本', '中村', '小林', '加藤',
+  '吉田', '山田', '松本', '井上', '木村', '林', '清水', '山口', '池田', '橋本',
+  '阿部', '石川', '前田', '藤田', '小川', '岡田', '後藤', '村上', '長谷川', '近藤',
+];
+const BOT_FIRST_NAMES = [
+  'さくら', 'ゆき', 'はな', 'りゅう', 'けんじ', 'あきら', 'めい', 'かいと',
+  'そら', 'はるき', 'あおい', 'りん', 'たろう', 'ゆうま', 'ひなた', 'こうた',
+  'みく', 'れん', 'なな', 'だいき', 'えみ', 'たけし', 'もも', 'しん',
+  'あゆみ', 'こうじ', 'ゆい', 'まさ', 'けん', 'さき', 'りこ', 'ゆうと',
+  'はると', 'みなと', 'いつき', 'あかり', 'ほのか', 'ここな', 'みさき', 'かなた',
 ];
 
-// Bot avatars
-export const BOT_AVATARS = ['🤖', '🎭', '🎪', '🎨', '🎯', '🎲', '🎮', '🕹️', '👾', '🦊', '🐱', '🐼'];
+// Human-like image avatars for bots (no emoji)
+import { ILLUSTRATED_AVATARS, CUSTOM_AVATARS } from '../utils/avatar-icons';
+const BOT_IMAGE_AVATARS = [...ILLUSTRATED_AVATARS, ...CUSTOM_AVATARS];
 
-// Generate random bot
-export function generateBot(): { name: string; avatar: string } {
-  const name = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
-  const avatar = BOT_AVATARS[Math.floor(Math.random() * BOT_AVATARS.length)];
-  const suffix = Math.floor(Math.random() * 100);
-  return { name: `${name}${suffix}`, avatar };
+// Generate random bot with human-like appearance
+export function generateBot(): { name: string; avatar: string; intelligence: BotIntelligence } {
+  const lastName = BOT_LAST_NAMES[Math.floor(Math.random() * BOT_LAST_NAMES.length)];
+  const firstName = BOT_FIRST_NAMES[Math.floor(Math.random() * BOT_FIRST_NAMES.length)];
+  const avatar = BOT_IMAGE_AVATARS[Math.floor(Math.random() * BOT_IMAGE_AVATARS.length)];
+  // Random intelligence distribution: 20% weak, 35% average, 30% smart, 15% genius
+  const roll = Math.random();
+  const intelligence: BotIntelligence = roll < 0.2 ? 'weak' : roll < 0.55 ? 'average' : roll < 0.85 ? 'smart' : 'genius';
+  return { name: `${lastName} ${firstName}`, avatar, intelligence };
 }
 
 // Generate multiple unique bots
-export function generateBots(count: number): Array<{ name: string; avatar: string }> {
-  const bots: Array<{ name: string; avatar: string }> = [];
+export function generateBots(count: number): Array<{ name: string; avatar: string; intelligence: BotIntelligence }> {
+  const bots: Array<{ name: string; avatar: string; intelligence: BotIntelligence }> = [];
   const usedNames = new Set<string>();
+  const usedAvatars = new Set<string>();
 
   while (bots.length < count) {
     const bot = generateBot();
-    if (!usedNames.has(bot.name)) {
+    // Ensure unique name AND avatar
+    if (!usedNames.has(bot.name) && !usedAvatars.has(bot.avatar)) {
       usedNames.add(bot.name);
+      usedAvatars.add(bot.avatar);
       bots.push(bot);
     }
   }

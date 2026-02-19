@@ -200,6 +200,8 @@ export const WordMatchPage: React.FC<WordMatchPageProps> = ({
         return <WordMatchGuide onClose={() => setView('menu')} />;
 
       case 'setup':
+        // Skip setup modal if auto-creating from initialRoomConfig
+        if (initialRoomConfig) break;
         return (
           <WordMatchSetup
             onCreateGame={handleCreateGame}

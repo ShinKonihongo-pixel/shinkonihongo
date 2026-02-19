@@ -727,6 +727,7 @@ function AppContent() {
             initialGame={initialGameType}
             initialJoinCode={initialGameJoinCode}
             onCollapseSidebar={() => setSidebarCollapsed(true)}
+            onExpandSidebar={() => setSidebarCollapsed(false)}
             onSaveGameSession={addGameSession}
           />
         )}

@@ -1,19 +1,17 @@
-// Golden Bell Page - Main page for the elimination quiz game
-// Orchestrates all Golden Bell components based on game state
+// Golden Bell Page — manages game state and renders lobby/play/results
+// Entry: always via initialRoomConfig (create) or initialJoinCode (join)
+// No intermediate menu — goes directly to lobby
 
 import { useState, useEffect, useRef } from 'react';
 import { useGoldenBell } from '../../hooks/golden-bell';
-import { GoldenBellMenu } from '../golden-bell/golden-bell-menu';
-import { GoldenBellSetup } from '../golden-bell/golden-bell-setup';
 import { GoldenBellLobby } from '../golden-bell/golden-bell-lobby';
 import { GoldenBellPlay } from '../golden-bell/golden-bell-play';
 import { GoldenBellResultsView } from '../golden-bell/golden-bell-results';
-import type { CreateGoldenBellData, GoldenBellGame, QuestionCategory } from '../../types/golden-bell';
+import type { QuestionCategory, GoldenBellGameMode } from '../../types/golden-bell';
 import type { Flashcard, JLPTLevel } from '../../types/flashcard';
 import type { GameSession } from '../../types/user';
 import '../golden-bell/golden-bell.css';
 
-// Simple user interface for props
 interface GoldenBellUser {
   id: string;
   displayName?: string;
@@ -21,17 +19,15 @@ interface GoldenBellUser {
   role?: string;
 }
 
-// Page view states
-type PageView = 'menu' | 'setup' | 'lobby' | 'play' | 'results';
+type PageView = 'lobby' | 'play' | 'results';
 
 interface GoldenBellPageProps {
   currentUser: GoldenBellUser;
   flashcards: Flashcard[];
   initialJoinCode?: string;
-  // XP tracking
   onSaveGameSession?: (data: Omit<GameSession, 'id' | 'userId'>) => void;
-  // Auto-create room from unified setup
   initialRoomConfig?: Record<string, unknown>;
+  onGoHome?: () => void;
 }
 
 export function GoldenBellPage({
@@ -40,9 +36,11 @@ export function GoldenBellPage({
   initialJoinCode,
   onSaveGameSession,
   initialRoomConfig,
+  onGoHome,
 }: GoldenBellPageProps) {
-  const [view, setView] = useState<PageView>('menu');
+  const [view, setView] = useState<PageView>('lobby');
   const gameSessionSaved = useRef(false);
+  const createOnceRef = useRef(false);
 
   const {
     game,
@@ -64,11 +62,18 @@ export function GoldenBellPage({
     nextQuestion,
     resetGame,
     setError,
+    joinTeam,
+    shuffleTeams,
+    getEnabledSkills,
+    assignRandomSkill,
+    useSkill,
+    completeSkillPhase,
   } = useGoldenBell({
     currentUser: {
       id: currentUser.id,
       displayName: currentUser.displayName || 'Player',
       avatar: currentUser.avatar || '🔔',
+      role: currentUser.role,
     },
     flashcards,
   });
@@ -77,17 +82,18 @@ export function GoldenBellPage({
   useEffect(() => {
     if (initialJoinCode && !game) {
       joinGame(initialJoinCode).catch(() => {
-        setError('Khong the tham gia phong voi ma nay');
+        setError('Không thể tham gia phòng với mã này');
       });
     }
   }, [initialJoinCode, game, joinGame, setError]);
 
-  // Auto-create room from unified setup
+  // Auto-create room from Game Hub unified setup (guarded against StrictMode double-fire)
   useEffect(() => {
-    if (initialRoomConfig && !game) {
+    if (initialRoomConfig && !game && !createOnceRef.current) {
+      createOnceRef.current = true;
       const cfg = initialRoomConfig;
       createGame({
-        title: (cfg.title as string) || 'Rung Chuong Vang',
+        title: (cfg.title as string) || 'Rung Chuông Vàng',
         jlptLevel: (cfg.jlptLevel as JLPTLevel) || 'N5',
         contentSource: 'flashcard',
         questionCount: (cfg.totalRounds as number) || 20,
@@ -95,6 +101,10 @@ export function GoldenBellPage({
         maxPlayers: (cfg.maxPlayers as number) || 20,
         categories: (cfg.categories as QuestionCategory[]) || ['vocabulary', 'kanji'],
         difficultyProgression: (cfg.difficultyProgression as boolean) ?? true,
+        gameMode: (cfg.gameMode as GoldenBellGameMode) || 'solo',
+        teamCount: (cfg.teamCount as number) || undefined,
+        maxPlayersPerTeam: (cfg.maxPlayersPerTeam as number) || undefined,
+        skillsEnabled: true, // Skills always enabled (special questions)
       });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -103,14 +113,10 @@ export function GoldenBellPage({
   useEffect(() => {
     if (!game) {
       if (gameResults) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setView('results');
-      } else if (view === 'lobby' || view === 'play') {
-        setView('menu');
       }
       return;
     }
-
     switch (game.status) {
       case 'waiting':
         setView('lobby');
@@ -118,6 +124,7 @@ export function GoldenBellPage({
       case 'starting':
       case 'question':
       case 'answering':
+      case 'skill_phase':
       case 'revealing':
         setView('play');
         break;
@@ -125,14 +132,12 @@ export function GoldenBellPage({
         setView('results');
         break;
     }
-  }, [game, gameResults, view]);
+  }, [game, gameResults]);
 
-  // Save game session when game finishes (for XP tracking)
+  // Save game session when game finishes (XP tracking)
   useEffect(() => {
     if (game?.status === 'finished' && !gameSessionSaved.current && onSaveGameSession && gameResults) {
       gameSessionSaved.current = true;
-
-      // Find current player's result from rankings
       const myResult = gameResults.rankings.find(p => p.odinhId === currentUser.id);
       if (myResult) {
         onSaveGameSession({
@@ -140,72 +145,24 @@ export function GoldenBellPage({
           gameTitle: 'Golden Bell',
           rank: myResult.rank,
           totalPlayers: gameResults.totalPlayers,
-          score: myResult.correctAnswers * 100, // Score based on correct answers
+          score: myResult.correctAnswers * 100,
           correctAnswers: myResult.correctAnswers,
           totalQuestions: gameResults.totalQuestions,
         });
       }
     }
-
-    // Reset flag when game changes (new game)
     if (!game || game.status !== 'finished') {
       gameSessionSaved.current = false;
     }
   }, [game, gameResults, currentUser.id, onSaveGameSession]);
 
-  // Handle create game from menu
-  const handleCreateGame = () => {
-    setView('setup');
-  };
-
-  // Handle join game from menu
-  const handleJoinGame = async (code: string) => {
-    try {
-      await joinGame(code);
-    } catch {
-      // Error handled in hook
-    }
-  };
-
-  // Handle room selection
-  const handleSelectRoom = async (room: GoldenBellGame) => {
-    try {
-      await joinGame(room.code);
-    } catch {
-      // Error handled in hook
-    }
-  };
-
-  // Handle game creation
-  const handleGameCreation = async (data: CreateGoldenBellData) => {
-    try {
-      await createGame(data);
-    } catch {
-      // Error handled in hook
-    }
-  };
-
-  // Handle back from setup
-  const handleBackFromSetup = () => {
-    setView('menu');
-  };
-
-  // Handle leave game
   const handleLeaveGame = () => {
     leaveGame();
-    setView('menu');
+    onGoHome?.();
   };
 
-  // Handle play again
   const handlePlayAgain = () => {
     resetGame();
-    setView('menu');
-  };
-
-  // Handle go home
-  const handleGoHome = () => {
-    resetGame();
-    setView('menu');
   };
 
   return (
@@ -218,23 +175,12 @@ export function GoldenBellPage({
         </div>
       )}
 
-      {/* Menu View */}
-      {view === 'menu' && (
-        <GoldenBellMenu
-          availableRooms={[]}
-          onCreateGame={handleCreateGame}
-          onJoinGame={handleJoinGame}
-          onSelectRoom={handleSelectRoom}
-        />
-      )}
-
-      {/* Setup View */}
-      {view === 'setup' && (
-        <GoldenBellSetup
-          onCreateGame={handleGameCreation}
-          onBack={handleBackFromSetup}
-          loading={loading}
-        />
+      {/* Loading state while creating/joining */}
+      {!game && loading && (
+        <div className="game-loading-fallback">
+          <div className="loading-spinner" />
+          <p>Đang tạo phòng...</p>
+        </div>
       )}
 
       {/* Lobby View */}
@@ -246,6 +192,8 @@ export function GoldenBellPage({
           onStart={startGame}
           onLeave={handleLeaveGame}
           onKickPlayer={kickPlayer}
+          onJoinTeam={joinTeam}
+          onShuffleTeams={shuffleTeams}
         />
       )}
 
@@ -262,6 +210,10 @@ export function GoldenBellPage({
           onRevealAnswer={revealAnswer}
           onNextQuestion={nextQuestion}
           onLeave={handleLeaveGame}
+          onUseSkill={useSkill}
+          onAssignRandomSkill={assignRandomSkill}
+          onCompleteSkillPhase={completeSkillPhase}
+          enabledSkills={getEnabledSkills()}
         />
       )}
 
@@ -271,16 +223,8 @@ export function GoldenBellPage({
           results={gameResults}
           currentPlayerId={currentUser.id}
           onPlayAgain={handlePlayAgain}
-          onGoHome={handleGoHome}
+          onGoHome={() => onGoHome?.()}
         />
-      )}
-
-      {/* Loading Overlay */}
-      {loading && (
-        <div className="golden-bell-loading-overlay">
-          <div className="loading-spinner bell-spinner" />
-          <span>Đang xử lý...</span>
-        </div>
       )}
     </div>
   );

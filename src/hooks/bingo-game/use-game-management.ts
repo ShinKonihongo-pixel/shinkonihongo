@@ -69,6 +69,8 @@ export function useGameManagement(
         luckTurnsLeft: 0,
         hasSkillAvailable: false,
         hasFiftyFifty: false,
+        correctAnswers: 0,
+        totalAnswers: 0,
       };
 
       const updatedPlayers = { ...players, [currentUser.id]: player };

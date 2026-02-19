@@ -197,6 +197,8 @@ export const KanjiBattlePage: React.FC<KanjiBattlePageProps> = ({
         return <KanjiBattleGuide onClose={() => setView('menu')} />;
 
       case 'setup':
+        // Skip setup modal if auto-creating from initialRoomConfig
+        if (initialRoomConfig) break;
         return (
           <KanjiBattleSetup
             onCreateGame={handleCreateGame}

@@ -4,13 +4,15 @@ import {
   Clock,
   HelpCircle,
   Layers,
+  BookOpen,
 } from 'lucide-react';
-import type { JLPTLevel } from '../../../types/flashcard';
+import type { JLPTLevel, Lesson } from '../../../types/flashcard';
 import type { GameSetupConfig } from './types';
 import { JLPT_LEVELS } from './types';
 import { SliderInput } from './slider-input';
 import { SelectButtons } from './select-buttons';
 import { ToggleSwitch } from './toggle-switch';
+import { GameModeSection } from './game-mode-section';
 
 interface FormFieldsProps {
   config: GameSetupConfig;
@@ -20,6 +22,9 @@ interface FormFieldsProps {
   setJlptLevel: (value: JLPTLevel) => void;
   selectedCategories: (string | number)[];
   setSelectedCategories: (value: (string | number)[]) => void;
+  selectedLessons?: string[];
+  setSelectedLessons?: (value: string[]) => void;
+  getLessonsByLevel?: (level: JLPTLevel) => Lesson[];
   maxPlayers: number;
   setMaxPlayers: (value: number) => void;
   totalRounds: number;
@@ -29,6 +34,13 @@ interface FormFieldsProps {
   toggleStates: Record<string, boolean>;
   handleToggle: (id: string, enabled: boolean) => void;
   gameInfoName: string;
+  gameMode: string;
+  setGameMode: (value: string) => void;
+  teamCount: number;
+  setTeamCount: (value: number) => void;
+  maxPlayersPerTeam: number;
+  setMaxPlayersPerTeam: (value: number) => void;
+  userRole?: string;
 }
 
 export function FormFields({
@@ -39,6 +51,9 @@ export function FormFields({
   setJlptLevel,
   selectedCategories,
   setSelectedCategories,
+  selectedLessons = [],
+  setSelectedLessons,
+  getLessonsByLevel,
   maxPlayers,
   setMaxPlayers,
   totalRounds,
@@ -48,7 +63,26 @@ export function FormFields({
   toggleStates,
   handleToggle,
   gameInfoName,
+  gameMode,
+  setGameMode,
+  teamCount,
+  setTeamCount,
+  maxPlayersPerTeam,
+  setMaxPlayersPerTeam,
+  userRole,
 }: FormFieldsProps) {
+  const lessons = config.showLessonPicker && getLessonsByLevel
+    ? getLessonsByLevel(jlptLevel)
+    : [];
+
+  const toggleLesson = (lessonId: string) => {
+    if (!setSelectedLessons) return;
+    setSelectedLessons(
+      selectedLessons.includes(lessonId)
+        ? selectedLessons.filter(id => id !== lessonId)
+        : [...selectedLessons, lessonId]
+    );
+  };
   return (
     <>
       {config.showTitle !== false && (
@@ -68,6 +102,20 @@ export function FormFields({
         </div>
       )}
 
+      {/* Game Mode Selector — only renders for configs with showGameMode */}
+      {config.showGameMode && config.gameModeOptions && (
+        <GameModeSection
+          config={config}
+          gameMode={gameMode}
+          setGameMode={setGameMode}
+          teamCount={teamCount}
+          setTeamCount={setTeamCount}
+          maxPlayersPerTeam={maxPlayersPerTeam}
+          setMaxPlayersPerTeam={setMaxPlayersPerTeam}
+          userRole={userRole}
+        />
+      )}
+
       {config.showJLPTLevel && (
         <div className="rm-field">
           <label className="rm-label">
@@ -83,6 +131,27 @@ export function FormFields({
             onChange={(sel) => setJlptLevel(sel[0] as JLPTLevel)}
             size="medium"
           />
+        </div>
+      )}
+
+      {config.showLessonPicker && getLessonsByLevel && lessons.length > 0 && (
+        <div className="rm-field">
+          <label className="rm-label">
+            <BookOpen size={16} />
+            <span>Chọn bài học {selectedLessons.length > 0 ? `(${selectedLessons.length})` : '(Tất cả)'}</span>
+          </label>
+          <div className="rm-lesson-list">
+            {lessons.map(lesson => (
+              <button
+                key={lesson.id}
+                type="button"
+                className={`rm-pill ${selectedLessons.includes(lesson.id) ? 'active' : ''}`}
+                onClick={() => toggleLesson(lesson.id)}
+              >
+                {lesson.name}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

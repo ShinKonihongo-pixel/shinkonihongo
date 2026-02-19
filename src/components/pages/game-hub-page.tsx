@@ -2,7 +2,7 @@
 // Manages game selection and routes to appropriate game pages
 // Uses lazy loading for game pages to improve initial load performance
 
-import { useState, useCallback, lazy, Suspense } from 'react';
+import { useState, useCallback, lazy, Suspense, Component, type ReactNode, type ErrorInfo } from 'react';
 import type { GameType } from '../../types/game-hub';
 import type { CurrentUser, GameSession } from '../../types/user';
 import type { Flashcard, JLPTLevel, Lesson } from '../../types/flashcard';
@@ -26,6 +26,62 @@ import { GameCreate } from '../quiz-game/game-create';
 import { KanjiBattleSetup } from '../kanji-battle/kanji-battle-setup';
 import { FloatingMusicPlayer } from '../game-hub/floating-music-player';
 import '../game-hub/game-hub.css';
+
+// Modal-specific error boundary that captures and displays the error without crashing the page
+class ModalErrorBoundary extends Component<
+  { children: ReactNode; onClose: () => void; gameKey: string },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: ReactNode; onClose: () => void; gameKey: string }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('[ModalErrorBoundary]', error.message, error.stack, errorInfo.componentStack);
+  }
+  componentDidUpdate(prevProps: { gameKey: string }) {
+    if (prevProps.gameKey !== this.props.gameKey && this.state.hasError) {
+      this.setState({ hasError: false, error: null });
+    }
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="rm-overlay" onClick={this.props.onClose}>
+          <div className="rm-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
+            <div style={{ padding: '2rem', textAlign: 'center' }}>
+              <h3 style={{ margin: '0 0 0.75rem', color: '#f87171' }}>Lỗi hiển thị modal</h3>
+              <p style={{ margin: '0 0 0.5rem', color: '#94A3B8', fontSize: '0.875rem' }}>
+                {this.state.error?.message || 'Lỗi không xác định'}
+              </p>
+              <pre style={{
+                margin: '0 0 1rem', padding: '0.5rem', borderRadius: '6px',
+                background: 'rgba(0,0,0,0.3)', color: '#fca5a5', fontSize: '0.7rem',
+                textAlign: 'left', overflow: 'auto', maxHeight: '120px', whiteSpace: 'pre-wrap',
+              }}>
+                {this.state.error?.stack?.split('\n').slice(0, 5).join('\n')}
+              </pre>
+              <button
+                onClick={this.props.onClose}
+                style={{
+                  padding: '0.625rem 1.5rem', borderRadius: '0.5rem', border: 'none',
+                  background: 'linear-gradient(135deg, #7C3AED, #A78BFA)',
+                  color: 'white', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600,
+                }}
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // Lazy load game pages for code splitting
 const QuizGamePage = lazy(() => import('./quiz-game-page').then(m => ({ default: m.QuizGamePage })));
@@ -60,8 +116,9 @@ interface GameHubPageProps {
   // Initial game selection (from URL params)
   initialGame?: GameType | null;
   initialJoinCode?: string | null;
-  // Collapse sidebar when entering game
+  // Collapse/expand sidebar when entering/leaving game
   onCollapseSidebar?: () => void;
+  onExpandSidebar?: () => void;
   // Save game session for XP tracking
   onSaveGameSession?: (data: Omit<GameSession, 'id' | 'userId'>) => void;
 }
@@ -78,6 +135,7 @@ export function GameHubPage({
   initialGame,
   initialJoinCode,
   onCollapseSidebar,
+  onExpandSidebar,
   onSaveGameSession,
 }: GameHubPageProps) {
   const [selectedGame, setSelectedGame] = useState<GameType | null>(initialGame || null);
@@ -109,7 +167,8 @@ export function GameHubPage({
     setJoinCode(null);
     setPendingRoomConfig(null);
     setReturnToWaitingRoom(false);
-  }, []);
+    onExpandSidebar?.();
+  }, [onExpandSidebar]);
 
   // Return to waiting room (after leaving a game)
   const handleBackToWaitingRoom = useCallback(() => {
@@ -117,7 +176,8 @@ export function GameHubPage({
     setJoinCode(null);
     setPendingRoomConfig(null);
     setReturnToWaitingRoom(true);
-  }, []);
+    onExpandSidebar?.();
+  }, [onExpandSidebar]);
 
   // Close setup modal
   const closeSetupModal = useCallback(() => {
@@ -162,6 +222,10 @@ export function GameHubPage({
             config={GOLDEN_BELL_SETUP_CONFIG}
             onCreateRoom={handleStandardRoomCreate('golden-bell')}
             onBack={closeSetupModal}
+            userRole={currentUser?.role}
+            getAvailableQuestionCount={(level) =>
+              flashcards.filter(c => c.jlptLevel === level).length
+            }
           />
         );
       case 'picture-guess':
@@ -180,6 +244,10 @@ export function GameHubPage({
             config={BINGO_SETUP_CONFIG}
             onCreateRoom={handleStandardRoomCreate('bingo')}
             onBack={closeSetupModal}
+            getAvailableQuestionCount={(level) =>
+              flashcards.filter(c => c.jlptLevel === level).length
+            }
+            getLessonsByLevel={getLessonsByLevel}
           />
         );
       case 'word-match':
@@ -260,7 +328,9 @@ export function GameHubPage({
           userRole={currentUser?.role}
           initialView={returnToWaitingRoom ? 'waiting-room' : 'games'}
         />
-        {renderSetupModal()}
+        <ModalErrorBoundary gameKey={setupModalGame ?? ''} onClose={closeSetupModal}>
+          {renderSetupModal()}
+        </ModalErrorBoundary>
       </div>
     );
   }
@@ -301,6 +371,7 @@ export function GameHubPage({
           initialJoinCode={joinCode || undefined}
           onSaveGameSession={onSaveGameSession}
           initialRoomConfig={pendingRoomConfig?.gameType === 'golden-bell' ? pendingRoomConfig.data : undefined}
+          onGoHome={handleBackToWaitingRoom}
         />
       )}
 
@@ -321,10 +392,11 @@ export function GameHubPage({
             avatar: currentUser.avatar || '🎱',
             role: currentUser.role,
           }}
+          flashcards={flashcards}
           initialJoinCode={joinCode || undefined}
-          initialView={joinCode ? 'menu' : 'setup'}
           onSaveGameSession={onSaveGameSession}
           initialRoomConfig={pendingRoomConfig?.gameType === 'bingo' ? pendingRoomConfig.data : undefined}
+          onGoHome={handleBackToWaitingRoom}
         />
       )}
 

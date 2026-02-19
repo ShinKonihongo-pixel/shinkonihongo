@@ -45,11 +45,42 @@ export function useGameState({ currentUserId }: UseGameStateProps) {
       totalAnswers: 0,
       streak: 0,
       isBot: true,
+      botIntelligence: bot.intelligence,
+      skills: [],
     }),
-    transformAfterJoin: (game) => ({
-      ...game,
-      alivePlayers: Object.keys(game.players).length,
-    }),
+    transformAfterJoin: (game) => {
+      const updated = {
+        ...game,
+        alivePlayers: Object.keys(game.players).length,
+      };
+      // Auto-assign bots to teams in team mode
+      if ((updated as any).teams) {
+        const teams = { ...(updated as any).teams } as Record<string, any>;
+        const teamIds = Object.keys(teams);
+        // Find newly added bot (player without teamId)
+        Object.entries(updated.players).forEach(([pid, player]: [string, any]) => {
+          if (player.isBot && !player.teamId && teamIds.length > 0) {
+            // Find smallest team
+            let smallestId = teamIds[0];
+            let smallestCount = Infinity;
+            teamIds.forEach(tid => {
+              if ((teams[tid].members?.length || 0) < smallestCount) {
+                smallestCount = teams[tid].members?.length || 0;
+                smallestId = tid;
+              }
+            });
+            teams[smallestId] = {
+              ...teams[smallestId],
+              members: [...(teams[smallestId].members || []), pid],
+              aliveCount: (teams[smallestId].aliveCount || 0) + 1,
+            };
+            (updated.players[pid] as any).teamId = smallestId;
+          }
+        });
+        (updated as any).teams = teams;
+      }
+      return updated;
+    },
   });
 
   // Firestore subscription - updates local state from remote changes
@@ -114,6 +145,14 @@ export function useGameState({ currentUserId }: UseGameStateProps) {
     return Object.values(game.players).filter(p => p.status === 'alive').length;
   }, [game]);
 
+  // Clear local state without triggering Firestore room deletion
+  // Used when non-host leaves — they only remove themselves from the player list
+  const clearLocalGameState = useCallback(() => {
+    setGameLocal(null);
+    roomIdRef.current = null;
+    setRoomId(null);
+  }, []);
+
   // Cleanup timers on unmount
   useEffect(() => {
     const timer = timerRef.current;
@@ -132,5 +171,6 @@ export function useGameState({ currentUserId }: UseGameStateProps) {
     sortedPlayers, aliveCount,
     timerRef,
     scheduleBotJoin, clearBotTimers,
+    clearLocalGameState,
   };
 }

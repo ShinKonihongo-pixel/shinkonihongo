@@ -314,156 +314,271 @@
   cursor: not-allowed;
 }
 
-/* Golden Bell Lobby */
-.golden-bell-lobby {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 1rem;
+/* ============ GOLDEN BELL TEAM LOBBY ============ */
+
+.gb-team-lobby .gb-lobby-header {
+  flex-shrink: 0;
 }
 
-.golden-bell-lobby .lobby-header {
+/* Header right: code + QR toggle stacked */
+.gb-team-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* Compact QR toggle for team header */
+.gb-team-qr-toggle {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 1rem;
-  border-radius: 16px;
+  gap: 0.25rem;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  color: rgba(255,255,255,0.7);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.gb-team-qr-toggle:hover {
+  background: rgba(255,255,255,0.14);
 }
 
-.golden-bell-lobby .lobby-icon {
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(135deg, var(--gb-primary), var(--gb-primary-dark));
+/* QR row below header title row */
+.gb-team-qr-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.25rem 1rem 0;
+}
+
+/* Team columns container — scrollable horizontally on small screens */
+.gb-team-columns {
+  flex: 1;
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  align-items: stretch;
+  position: relative;
+  z-index: 1;
+}
+.gb-team-columns::-webkit-scrollbar { height: 4px; }
+.gb-team-columns::-webkit-scrollbar-track { background: transparent; }
+.gb-team-columns::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+
+/* Individual team column */
+.gb-team-column {
+  flex: 1;
+  min-width: 140px;
+  max-width: 220px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255,255,255,0.05);
+  border: 2px solid rgba(255,255,255,0.1);
+  border-top: 3px solid var(--team-color, #888);
   border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.gb-team-column.my-team {
+  border-color: var(--team-color, #f4c430);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--team-color, #f4c430) 30%, transparent);
+}
+
+/* Column header */
+.gb-team-column-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.75rem;
+  background: color-mix(in srgb, var(--team-color, #888) 18%, transparent);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.gb-team-emoji { font-size: 1.1rem; }
+.gb-team-name { font-weight: 700; font-size: 0.85rem; flex: 1; }
+.gb-team-count { font-size: 0.75rem; color: rgba(255,255,255,0.6); }
+
+/* Members list */
+.gb-team-members {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.5rem 0.6rem;
+  overflow-y: auto;
+  max-height: 300px;
+}
+.gb-team-members::-webkit-scrollbar { width: 3px; }
+.gb-team-members::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+
+/* Member row */
+.gb-team-member {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.4rem;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.04);
+  transition: background 0.15s;
+}
+.gb-team-member.me {
+  background: color-mix(in srgb, var(--team-color, #f4c430) 20%, rgba(255,255,255,0.06));
+  outline: 1px solid color-mix(in srgb, var(--team-color, #f4c430) 50%, transparent);
+}
+.gb-team-member.empty {
+  opacity: 0.35;
+}
+
+.gb-team-member-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.golden-bell-lobby .lobby-icon svg {
-  color: #1a1a2e;
-}
-
-.golden-bell-lobby .lobby-info h2 {
-  margin-bottom: 0.25rem;
-}
-
-.golden-bell-lobby .lobby-meta {
-  display: flex;
-  gap: 0.5rem;
-  color: var(--gb-text-muted);
   font-size: 0.9rem;
+  background: rgba(255,255,255,0.1);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.gb-team-member-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.gb-team-member-name {
+  font-size: 0.78rem;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.golden-bell-lobby .lobby-categories {
+.gb-team-host-badge,
+.gb-team-bot-badge {
+  font-size: 0.6rem;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.gb-team-host-badge {
+  background: rgba(244, 196, 48, 0.25);
+  color: #f4c430;
+}
+.gb-team-bot-badge {
+  background: rgba(139, 92, 246, 0.25);
+  color: #a78bfa;
+}
+
+/* Action buttons at column bottom */
+.gb-team-join-btn {
+  margin: 0.5rem 0.6rem;
+  padding: 0.45rem;
+  border: none;
+  border-radius: 7px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  opacity: 0.9;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.gb-team-join-btn:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+.gb-team-join-btn:active {
+  transform: translateY(0);
+}
+
+.gb-team-current-badge {
+  margin: 0.5rem 0.6rem;
+  padding: 0.4rem;
+  border-radius: 7px;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--team-color, #f4c430);
+  background: color-mix(in srgb, var(--team-color, #f4c430) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--team-color, #f4c430) 40%, transparent);
+}
+
+.gb-team-full-badge {
+  margin: 0.5rem 0.6rem;
+  padding: 0.4rem;
+  border-radius: 7px;
+  text-align: center;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Footer for team mode */
+.gb-team-footer-row {
   display: flex;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  justify-content: center;
   flex-wrap: wrap;
 }
 
-.golden-bell-lobby .category-tag {
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
+.gb-team-shuffle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.1rem;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 10px;
   color: #fff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+.gb-team-shuffle-btn:hover {
+  background: rgba(255,255,255,0.16);
+  transform: translateY(-1px);
+}
+.gb-team-shuffle-btn:active { transform: translateY(0); }
+
+/* Mobile: stack columns vertically when very narrow */
+@media (max-width: 480px) {
+  .gb-team-columns {
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+    align-items: stretch;
+  }
+  .gb-team-column {
+    min-width: unset;
+    max-width: unset;
+    flex: none;
+  }
+  .gb-team-members {
+    max-height: 160px;
+  }
+  .gb-team-footer-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .gb-team-shuffle-btn,
+  .gb-team-footer-row .gb-lobby-start-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
-.golden-bell-code {
-  text-align: center;
-  background: rgba(244, 196, 48, 0.1);
-  border: 2px solid var(--gb-primary);
-  border-radius: 16px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-}
 
-.golden-bell-code .code-value {
-  font-size: 2.5rem;
-  font-weight: 700;
-  letter-spacing: 0.5rem;
-  color: var(--gb-primary);
-}
-
-/* Golden Bell Players Grid */
-.golden-bell-players {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 0.75rem;
-}
-
-.golden-bell-players .player-card {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 1rem;
-  text-align: center;
-  border: 2px solid transparent;
-  transition: all 0.2s ease;
-}
-
-.golden-bell-players .player-card.current {
-  border-color: var(--gb-primary);
-  background: rgba(244, 196, 48, 0.1);
-}
-
-.golden-bell-players .player-card.host {
-  border-color: var(--gb-primary-light);
-}
-
-.golden-bell-players .player-card .player-avatar {
-  font-size: 2rem;
-  display: block;
-  margin-bottom: 0.5rem;
-}
-
-.golden-bell-players .player-card .player-status.alive {
-  color: var(--gb-success);
-  font-size: 0.8rem;
-}
-
-/* Lobby Rules */
-.lobby-rules {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 1rem;
-  margin: 1.5rem 0;
-}
-
-.lobby-rules h3 {
-  margin-bottom: 0.75rem;
-  color: var(--gb-primary);
-}
-
-.lobby-rules ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.lobby-rules li {
-  padding: 0.5rem 0;
-  padding-left: 1.5rem;
-  position: relative;
-  color: var(--gb-text-muted);
-}
-
-.lobby-rules li::before {
-  content: '•';
-  position: absolute;
-  left: 0;
-  color: var(--gb-primary);
-}
-
-/* Golden Bell Start Button */
-.golden-bell-start {
-  background: linear-gradient(135deg, var(--gb-primary), var(--gb-primary-dark)) !important;
-  color: #1a1a2e !important;
-}
-
-.golden-bell-start:hover:not(:disabled) {
-  box-shadow: 0 8px 24px rgba(244, 196, 48, 0.4);
-}
+/* GOLDEN BELL LOBBY CSS removed — now uses shared premium-lobby.css via PremiumLobbyShell */
 
 /* Golden Bell Play */
 .golden-bell-play {
@@ -1610,5 +1725,701 @@
   .spectator-options {
     grid-template-columns: 1fr;
   }
+}
+
+/* ============ SKILL SYSTEM ============ */
+
+/* Skill Phase */
+.gb-skill-phase {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  text-align: center;
+}
+.gb-skill-phase-header {
+  margin-bottom: 2rem;
+  color: #ffd700;
+}
+.gb-skill-phase-header h2 {
+  font-size: 1.8rem;
+  margin: 0.5rem 0;
+  background: linear-gradient(135deg, #ffd700, #f4c430);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.gb-skill-phase-header p {
+  color: rgba(255,255,255,0.5);
+  font-size: 0.9rem;
+}
+.gb-skill-phase-wheel {
+  margin: 1rem 0 2rem;
+}
+.gb-skill-phase-done,
+.gb-skill-phase-spectator {
+  color: rgba(255,255,255,0.6);
+  font-size: 0.95rem;
+  padding: 1.5rem;
+  background: rgba(255,255,255,0.04);
+  border-radius: 12px;
+  margin: 1rem 0;
+}
+
+/* Spin Wheel */
+.gb-spin-wheel-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+.gb-spin-pointer {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.5rem;
+  color: #ffd700;
+  z-index: 10;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+.gb-spin-wheel {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  border: 4px solid rgba(255,255,255,0.15);
+  overflow: hidden;
+  box-shadow: 0 0 30px rgba(244,196,48,0.3), inset 0 0 20px rgba(0,0,0,0.3);
+}
+.gb-spin-segment {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+.gb-spin-segment-fill {
+  width: 100%;
+  height: 100%;
+  opacity: 0.85;
+}
+.gb-spin-segment-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.gb-spin-emoji {
+  font-size: 1.5rem;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+}
+.gb-spin-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border: 3px solid #ffd700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  z-index: 5;
+  box-shadow: 0 0 15px rgba(244,196,48,0.4);
+}
+.gb-spin-btn {
+  padding: 0.75rem 2.5rem;
+  background: linear-gradient(135deg, #f4c430, #daa520);
+  border: none;
+  border-radius: 12px;
+  color: #1a1a2e;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(244,196,48,0.4);
+}
+.gb-spin-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(244,196,48,0.5);
+}
+.gb-spin-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Skill Result Card */
+.gb-skill-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.25rem 2rem;
+  background: linear-gradient(135deg, rgba(244,196,48,0.15), rgba(139,92,246,0.1));
+  border: 2px solid rgba(244,196,48,0.3);
+  border-radius: 16px;
+  animation: gbSkillReveal 0.5s ease;
+}
+@keyframes gbSkillReveal {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+.gb-skill-result-emoji {
+  font-size: 2.5rem;
+}
+.gb-skill-result-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffd700;
+}
+.gb-skill-result-desc {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.6);
+}
+
+/* Skill Inventory Bar */
+.gb-skill-inventory {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(255,255,255,0.05);
+  border-radius: 12px;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.gb-skill-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.6);
+  font-size: 0.8rem;
+  cursor: default;
+  transition: all 0.2s;
+}
+.gb-skill-item.usable {
+  border-color: rgba(244,196,48,0.3);
+  color: #ffd700;
+  cursor: pointer;
+}
+.gb-skill-item.usable:hover {
+  background: rgba(244,196,48,0.12);
+  border-color: rgba(244,196,48,0.5);
+}
+.gb-skill-emoji {
+  font-size: 1rem;
+}
+.gb-skill-name {
+  font-weight: 500;
+}
+
+/* 50/50 Hidden Option */
+.gb-fifty-fifty-hidden {
+  opacity: 0.15 !important;
+  pointer-events: none;
+  transform: scale(0.95) !important;
+  filter: grayscale(1);
+}
+
+/* Shield Badge */
+.gb-shield-badge {
+  font-size: 0.7rem;
+  margin-left: 0.25rem;
+}
+
+/* ============ TEAM LOBBY ============ */
+.gb-team-lobby .gb-team-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.gb-team-qr-row {
+  display: flex;
+  justify-content: center;
+  padding: 0.75rem 0;
+}
+.gb-team-columns {
+  flex: 1;
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  z-index: 1;
+  min-height: 0;
+}
+.gb-team-columns::-webkit-scrollbar { height: 4px; }
+.gb-team-columns::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+
+.gb-team-column {
+  flex: 1;
+  min-width: 160px;
+  max-width: 240px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+.gb-team-column.my-team {
+  border-color: var(--team-color, rgba(255,255,255,0.2));
+  background: rgba(255,255,255,0.06);
+  box-shadow: 0 0 20px rgba(var(--team-color), 0.15);
+}
+.gb-team-column-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--team-color, #fff) 15%, transparent), transparent);
+  border-bottom: 2px solid var(--team-color, rgba(255,255,255,0.1));
+}
+.gb-team-emoji {
+  font-size: 1.25rem;
+}
+.gb-team-name {
+  flex: 1;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--team-color, #fff);
+}
+.gb-team-count {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.08);
+  padding: 0.15rem 0.5rem;
+  border-radius: 100px;
+}
+.gb-team-members {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.75rem;
+  overflow-y: auto;
+  min-height: 100px;
+}
+.gb-team-member {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+.gb-team-member.me {
+  background: rgba(244,196,48,0.1);
+  border: 1px solid rgba(244,196,48,0.2);
+}
+.gb-team-member.empty {
+  opacity: 0.3;
+}
+.gb-team-member-avatar {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.08);
+  border-radius: 50%;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.gb-team-member-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.gb-team-member-name {
+  flex: 1;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gb-team-host-badge {
+  font-size: 0.55rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 0.1rem 0.35rem;
+  background: #ffd700;
+  color: #1a1a2e;
+  border-radius: 4px;
+}
+.gb-team-bot-badge {
+  font-size: 0.55rem;
+  font-weight: 600;
+  padding: 0.1rem 0.35rem;
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.4);
+  border-radius: 4px;
+}
+.gb-team-join-btn {
+  margin: 0.5rem 0.75rem 0.75rem;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+.gb-team-join-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.15);
+}
+.gb-team-current-badge,
+.gb-team-full-badge {
+  text-align: center;
+  padding: 0.4rem;
+  margin: 0.5rem 0.75rem 0.75rem;
+  font-size: 0.75rem;
+  border-radius: 8px;
+}
+.gb-team-current-badge {
+  color: #ffd700;
+  background: rgba(244,196,48,0.1);
+  border: 1px solid rgba(244,196,48,0.2);
+}
+.gb-team-full-badge {
+  color: rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.04);
+}
+.gb-team-footer-row {
+  display: flex;
+  gap: 0.75rem;
+}
+.gb-team-shuffle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.75rem 1.25rem;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  color: rgba(255,255,255,0.8);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.gb-team-shuffle-btn:hover {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+}
+
+/* ============ TEAM RESULTS ============ */
+.gb-team-results {
+  margin-bottom: 2rem;
+}
+.gb-team-results-title {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffd700;
+  margin-bottom: 1rem;
+}
+.gb-team-podium {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.gb-team-podium-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  border: 2px solid var(--team-color, rgba(255,255,255,0.1));
+  border-radius: 16px;
+  min-width: 140px;
+  transition: all 0.3s;
+  animation: gbTeamResult 0.5s ease forwards;
+  opacity: 0;
+}
+.gb-team-podium-item:nth-child(1) { animation-delay: 0.2s; }
+.gb-team-podium-item:nth-child(2) { animation-delay: 0.4s; }
+.gb-team-podium-item:nth-child(3) { animation-delay: 0.6s; }
+@keyframes gbTeamResult {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.gb-team-podium-item.rank-1 {
+  background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,215,0,0.05));
+  border-color: #ffd700;
+  box-shadow: 0 0 25px rgba(255,215,0,0.2);
+}
+.gb-team-podium-rank {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--team-color, #fff);
+}
+.gb-team-podium-emoji {
+  font-size: 2rem;
+}
+.gb-team-podium-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--team-color, rgba(255,255,255,0.9));
+}
+.gb-team-podium-stats {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.6);
+}
+.gb-team-podium-mvp {
+  font-size: 0.75rem;
+  color: rgba(244,196,48,0.7);
+  margin-top: 0.25rem;
+}
+
+/* ============ SKILL SETTINGS ============ */
+.gb-skill-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background: rgba(255,255,255,0.04);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 0.75rem;
+}
+.gb-skill-toggle-row:hover {
+  background: rgba(255,255,255,0.07);
+}
+.gb-skill-toggle-info {
+  display: flex;
+  flex-direction: column;
+}
+.gb-skill-toggle-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.9);
+}
+.gb-skill-toggle-desc {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.4);
+}
+.gb-toggle-on {
+  color: #22c55e;
+}
+.gb-toggle-off {
+  color: rgba(255,255,255,0.25);
+}
+.gb-skill-interval {
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.gb-skill-interval label {
+  display: block;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 0.5rem;
+}
+.gb-skill-interval-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.gb-skill-interval-row input[type="range"] {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 3px;
+  -webkit-appearance: none;
+}
+.gb-skill-interval-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  background: #ffd700;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.gb-skill-interval-value {
+  font-weight: 600;
+  color: #ffd700;
+  font-size: 0.9rem;
+  min-width: 50px;
+}
+.gb-skill-group {
+  margin-bottom: 0.75rem;
+}
+.gb-skill-group h4 {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.4);
+  margin: 0 0 0.5rem;
+  padding-left: 0.25rem;
+}
+.gb-skill-item-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 0.25rem;
+}
+.gb-skill-item-row:hover {
+  background: rgba(255,255,255,0.04);
+}
+.gb-skill-item-row.active {
+  background: rgba(244,196,48,0.06);
+}
+.gb-skill-item-emoji {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+.gb-skill-item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.gb-skill-item-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.85);
+}
+.gb-skill-item-desc {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.4);
+}
+.gb-skill-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 2px solid rgba(255,255,255,0.15);
+  flex-shrink: 0;
+  transition: all 0.2s;
+  position: relative;
+}
+.gb-skill-check.checked {
+  background: #ffd700;
+  border-color: #ffd700;
+}
+.gb-skill-check.checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #1a1a2e;
+}
+
+/* ============ RESPONSIVE: TEAM LOBBY ============ */
+@media (max-width: 768px) {
+  .gb-team-columns {
+    flex-direction: column;
+    overflow-x: visible;
+    overflow-y: auto;
+  }
+  .gb-team-column {
+    max-width: 100%;
+    min-width: auto;
+  }
+  .gb-team-footer-row {
+    flex-direction: column;
+  }
+  .gb-team-podium {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .gb-spin-wheel {
+    width: 180px;
+    height: 180px;
+  }
+  .gb-skill-inventory {
+    gap: 0.35rem;
+  }
+  .gb-skill-item {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.7rem;
+  }
+}
+
+/* ============ SPECIAL SKILL QUESTION ============ */
+
+.question-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.question-badges .question-category {
+  margin-bottom: 0;
+}
+
+.question-special-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: 25px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: specialPulse 2s ease-in-out infinite;
+}
+
+@keyframes specialPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(245, 158, 11, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.6); }
+}
+
+.gb-special-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+  padding: 0.75rem 1.25rem;
+  margin: 1rem 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(249, 115, 22, 0.15));
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
