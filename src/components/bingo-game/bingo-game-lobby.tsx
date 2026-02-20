@@ -41,7 +41,6 @@ export function BingoGameLobby({
   onKickPlayer,
 }: BingoGameLobbyProps) {
   const [qrVisible, setQrVisible] = useState(true);
-  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [kickTarget, setKickTarget] = useState<string | null>(null);
 
   const { hostPlayer, normalizedPlayers, playerCount, fillPercent } = useMemo(() => {
@@ -162,21 +161,8 @@ export function BingoGameLobby({
         rightContent={rightContent}
         footerContent={footerContent}
         accent={BINGO_ACCENT}
-        onLeave={() => setShowLeaveConfirm(true)}
+        onLeave={onLeaveGame}
         qrHidden={!qrVisible}
-      />
-
-      {/* Leave confirmation modal */}
-      <ConfirmModal
-        isOpen={showLeaveConfirm}
-        title="Rời khỏi phòng?"
-        message={isHost
-          ? 'Bạn là host. Nếu bạn rời đi, phòng sẽ bị huỷ và tất cả người chơi sẽ bị đuổi ra.'
-          : 'Bạn có chắc muốn rời khỏi phòng chơi này?'}
-        confirmText="Rời phòng"
-        cancelText="Ở lại"
-        onConfirm={() => { setShowLeaveConfirm(false); onLeaveGame(); }}
-        onCancel={() => setShowLeaveConfirm(false)}
       />
 
       {/* Kick confirmation modal */}

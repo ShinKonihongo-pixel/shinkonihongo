@@ -40,6 +40,7 @@ export const PictureGuessPage: React.FC<PictureGuessPageProps> = ({
   const [notification, setNotification] = useState<{ message: string; type: 'info' | 'warning' } | null>(null);
   const gameSessionSaved = useRef(false);
   const createOnceRef = useRef(false);
+  const leavingRef = useRef(false);
 
   useEffect(() => {
     if (notification) {
@@ -66,6 +67,7 @@ export const PictureGuessPage: React.FC<PictureGuessPageProps> = ({
     currentPlayer,
     currentPuzzle,
     sortedPlayers,
+    error,
   } = usePictureGuess({ currentUser, flashcards });
 
   // Auto-create room from unified setup (Game Hub modal) — guarded against StrictMode double-fire
@@ -102,6 +104,7 @@ export const PictureGuessPage: React.FC<PictureGuessPageProps> = ({
   }, [startGame]);
 
   const handleLeaveGame = useCallback(() => {
+    leavingRef.current = true;
     leaveGame();
     onClose();
   }, [leaveGame, onClose]);
@@ -160,8 +163,20 @@ export const PictureGuessPage: React.FC<PictureGuessPageProps> = ({
     }
   }, [game, gameResults, currentUser.id, onSaveGameSession]);
 
-  // Loading state — game is being created/joined
-  if (!game && (loading || initialRoomConfig || initialJoinCode)) {
+  // Error state — creation/join failed
+  if (!game && error) {
+    return (
+      <div className="picture-guess-page">
+        <div className="game-loading-fallback">
+          <p style={{ color: '#ef4444' }}>{error}</p>
+          <button onClick={onClose} style={{ padding: '0.5rem 1.5rem', borderRadius: '8px', background: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer' }}>Quay lại</button>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading state — game is being created/joined (skip if user is leaving)
+  if (!game && !leavingRef.current && (loading || initialRoomConfig || initialJoinCode)) {
     return (
       <div className="picture-guess-page">
         <div className="game-loading-fallback">

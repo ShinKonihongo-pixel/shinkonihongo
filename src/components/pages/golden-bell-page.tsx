@@ -41,6 +41,7 @@ export function GoldenBellPage({
   const [view, setView] = useState<PageView>('lobby');
   const gameSessionSaved = useRef(false);
   const createOnceRef = useRef(false);
+  const leavingRef = useRef(false);
 
   const {
     game,
@@ -157,6 +158,7 @@ export function GoldenBellPage({
   }, [game, gameResults, currentUser.id, onSaveGameSession]);
 
   const handleLeaveGame = () => {
+    leavingRef.current = true;
     leaveGame();
     onGoHome?.();
   };

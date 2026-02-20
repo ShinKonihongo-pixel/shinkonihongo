@@ -3,7 +3,7 @@
 
 import { useMemo } from 'react';
 import { isImageAvatar } from '../../../utils/avatar-icons';
-import { getVipNameClasses, getVipBadge, isVipRole } from '../../../utils/vip-styling';
+import { getVipNameClasses, getVipNameStyle, getVipBadge, isVipRole } from '../../../utils/vip-styling';
 
 interface LobbyHostCardProps {
   displayName: string;
@@ -18,6 +18,7 @@ export function LobbyHostCard({ displayName, avatar, role }: LobbyHostCardProps)
       ? getVipNameClasses(role, 'pl-lobby-host-name')
       : 'pl-lobby-host-name';
   }, [role]);
+  const nameStyle = useMemo(() => getVipNameStyle(role), [role]);
 
   return (
     <div className="pl-lobby-host-card">
@@ -28,7 +29,7 @@ export function LobbyHostCard({ displayName, avatar, role }: LobbyHostCardProps)
       </div>
       <div className="pl-lobby-host-info">
         <div className="pl-lobby-host-name-row">
-          <span className={nameClass} title={displayName}>
+          <span className={nameClass} style={nameStyle} title={displayName}>
             {vipBadge && <span className="vip-badge">{vipBadge}</span>}
             {displayName}
           </span>

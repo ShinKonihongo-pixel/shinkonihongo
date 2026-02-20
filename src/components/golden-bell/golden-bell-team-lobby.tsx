@@ -8,8 +8,6 @@ import { Users, Clock, HelpCircle, Copy, Check, Share2, LogOut, Bell, Layers, Sh
 import type { GoldenBellGame } from '../../types/golden-bell';
 import { GB_TEAM_COLORS } from '../../types/golden-bell';
 import { isImageAvatar } from '../../utils/avatar-icons';
-import { ConfirmModal } from '../ui/confirm-modal';
-
 // Share2 imported but only used if we add share in future — suppress lint by referencing it
 void Share2;
 
@@ -45,7 +43,6 @@ export function GoldenBellTeamLobby({
 }: GoldenBellTeamLobbyProps) {
   const [copied, setCopied] = useState(false);
   const [qrVisible, setQrVisible] = useState(false);
-  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const teams = useMemo(() => {
@@ -77,11 +74,6 @@ export function GoldenBellTeamLobby({
     copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
   }, [game.code]);
 
-  const handleLeaveConfirm = useCallback(() => {
-    setShowLeaveConfirm(false);
-    onLeave();
-  }, [onLeave]);
-
   return createPortal(
     <div className="gb-lobby gb-team-lobby">
       {/* Animated background */}
@@ -97,7 +89,7 @@ export function GoldenBellTeamLobby({
         <div className="gb-lobby-title-row">
           <button
             className="gb-lobby-leave-btn"
-            onClick={() => setShowLeaveConfirm(true)}
+            onClick={onLeave}
             title="Roi phong"
           >
             <LogOut size={16} />
@@ -260,18 +252,6 @@ export function GoldenBellTeamLobby({
         )}
       </footer>
 
-      {/* Leave confirmation */}
-      <ConfirmModal
-        isOpen={showLeaveConfirm}
-        title="Roi khoi phong?"
-        message={isHost
-          ? 'Ban la host. Neu ban roi di, phong se bi huy.'
-          : 'Ban co chac muon roi khoi phong?'}
-        confirmText="Roi phong"
-        cancelText="O lai"
-        onConfirm={handleLeaveConfirm}
-        onCancel={() => setShowLeaveConfirm(false)}
-      />
     </div>,
     document.body,
   );

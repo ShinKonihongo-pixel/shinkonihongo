@@ -51,7 +51,6 @@ export function GameLobby({
 }: GameLobbyProps) {
   const [copied, setCopied] = useState(false);
   const [qrVisible, setQrVisible] = useState(true);
-  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [kickTarget, setKickTarget] = useState<string | null>(null);
   const [hostMsg, setHostMsg] = useState(game.hostMessage || '');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -124,11 +123,6 @@ export function GameLobby({
     setKickTarget(null);
   }, [kickTarget, onKickPlayer]);
   const handleStart = useCallback(async () => { await onStartGame(); }, [onStartGame]);
-  const handleLeaveConfirm = useCallback(async () => {
-    setShowLeaveConfirm(false);
-    await onLeaveGame();
-  }, [onLeaveGame]);
-
   // Debounced host message (500ms)
   const handleHostMessage = useCallback((value: string) => {
     const trimmed = value.slice(0, 50);
@@ -151,7 +145,7 @@ export function GameLobby({
       {/* Header */}
       <header className="qz-lobby-header">
         <div className="qz-lobby-title-row">
-          <button className="qz-lobby-leave-btn" onClick={() => setShowLeaveConfirm(true)} title="Rời phòng">
+          <button className="qz-lobby-leave-btn" onClick={onLeaveGame} title="Rời phòng">
             <LogOut size={16} />
           </button>
           <div className="qz-lobby-title-text">
@@ -303,19 +297,6 @@ export function GameLobby({
           <div className="qz-lobby-waiting-msg">Đang chờ host bắt đầu...</div>
         )}
       </footer>
-
-      {/* Leave confirmation modal */}
-      <ConfirmModal
-        isOpen={showLeaveConfirm}
-        title="Rời khỏi phòng?"
-        message={isHost
-          ? 'Bạn là host. Nếu bạn rời đi, phòng sẽ bị huỷ và tất cả người chơi sẽ bị đuổi ra.'
-          : 'Bạn có chắc muốn rời khỏi phòng chơi này?'}
-        confirmText="Rời phòng"
-        cancelText="Ở lại"
-        onConfirm={handleLeaveConfirm}
-        onCancel={() => setShowLeaveConfirm(false)}
-      />
 
       {/* Kick confirmation modal */}
       <ConfirmModal

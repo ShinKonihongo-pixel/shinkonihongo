@@ -1,7 +1,6 @@
 // Word Scramble Lobby — Premium full-screen lobby using shared PremiumLobbyShell
-// Indigo accent for word-scrambling theme, with VIP name glow and avatar border effects
+// Indigo accent for word-scrambling theme
 
-import { useState, useMemo, useCallback } from 'react';
 import { Shuffle, Clock, Hash, Target, Bot } from 'lucide-react';
 import type { WordScrambleMultiplayerGame } from '../pages/word-scramble/word-scramble-types';
 import {
@@ -10,11 +9,10 @@ import {
   LobbyJoinSection,
   LobbyPlayersPanel,
   LobbyStartFooter,
-  normalizePlayer,
+  LobbyConfirmModals,
 } from '../shared/game-lobby';
-import { ConfirmModal } from '../ui/confirm-modal';
+import { useLobbyState } from '../../hooks/shared/use-lobby-state';
 
-// Word Scramble accent: indigo
 const WORD_SCRAMBLE_ACCENT = {
   accent: '#6366F1',
   accentDark: '#4F46E5',
@@ -31,91 +29,38 @@ interface WordScrambleLobbyProps {
 }
 
 export function WordScrambleLobby({
-  game,
-  currentPlayerId,
-  onStartGame,
-  onAddBot,
-  onLeave,
-  onKickPlayer,
+  game, currentPlayerId, onStartGame, onAddBot, onLeave, onKickPlayer,
 }: WordScrambleLobbyProps) {
-  const [qrVisible, setQrVisible] = useState(true);
-  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
-  const [kickTarget, setKickTarget] = useState<string | null>(null);
+  const lobby = useLobbyState(
+    {
+      players: game.players,
+      hostId: game.hostId,
+      currentPlayerId,
+      maxPlayers: game.settings.maxPlayers,
+      minPlayers: game.settings.minPlayers,
+      code: game.code,
+      onKickPlayer,
+    },
+    { gameSlug: 'word-scramble' },
+  );
 
-  const isHost = game.hostId === currentPlayerId;
-
-  const { hostPlayer, normalizedPlayers, playerCount, fillPercent } = useMemo(() => {
-    const list = Object.values(game.players);
-    return {
-      hostPlayer: list.find(p => p.odinhId === game.hostId),
-      normalizedPlayers: list.map(p =>
-        normalizePlayer({
-          ...p,
-          odinhId: p.odinhId,
-          isHost: p.odinhId === game.hostId,
-          isBot: (p as any).isBot,
-          role: p.role,
-        })
-      ),
-      playerCount: list.length,
-      fillPercent: Math.min(100, (list.length / game.settings.maxPlayers) * 100),
-    };
-  }, [game.players, game.settings.maxPlayers, game.hostId]);
-
-  const canStart = playerCount >= game.settings.minPlayers;
-  const joinUrl = `${window.location.origin}?game=word-scramble&join=${game.code}`;
-
-  const handleKick = useCallback((id: string) => setKickTarget(id), []);
-  const handleKickConfirm = useCallback(() => {
-    if (!kickTarget || !onKickPlayer) return;
-    onKickPlayer(kickTarget);
-    setKickTarget(null);
-  }, [kickTarget, onKickPlayer]);
-
-  // Meta tags
   const metaTags = (
     <>
-      <span className="pl-lobby-tag">
-        <Hash size={13} />
-        {game.settings.totalQuestions} câu
-      </span>
-      <span className="pl-lobby-tag">
-        <Clock size={13} />
-        {game.settings.timePerQuestion}s/câu
-      </span>
-      <span className="pl-lobby-tag">
-        <Target size={13} />
-        {game.settings.jlptLevel}
-      </span>
-      <span className="pl-lobby-tag pl-lobby-tag-live">
-        <span className="pl-lobby-live-dot" />
-        Live
-      </span>
+      <span className="pl-lobby-tag"><Hash size={13} />{game.settings.totalQuestions} câu</span>
+      <span className="pl-lobby-tag"><Clock size={13} />{game.settings.timePerQuestion}s/câu</span>
+      <span className="pl-lobby-tag"><Target size={13} />{game.settings.jlptLevel}</span>
+      <span className="pl-lobby-tag pl-lobby-tag-live"><span className="pl-lobby-live-dot" />Live</span>
     </>
   );
 
-  // Left column: host card, QR/join, add bot, rules
   const leftContent = (
     <>
-      {hostPlayer && (
-        <LobbyHostCard
-          displayName={hostPlayer.displayName}
-          avatar={hostPlayer.avatar}
-          role={(hostPlayer as any).role}
-        />
+      {lobby.hostPlayer && (
+        <LobbyHostCard displayName={lobby.hostPlayer.displayName} avatar={lobby.hostPlayer.avatar} role={(lobby.hostPlayer as any).role} />
       )}
-      <LobbyJoinSection
-        code={game.code}
-        joinUrl={joinUrl}
-        shareText={`Tham gia Sắp Xếp Từ: ${game.title}`}
-        qrVisible={qrVisible}
-        onToggleQr={() => setQrVisible(v => !v)}
-      />
-      {isHost && playerCount < game.settings.maxPlayers && (
-        <button className="pl-lobby-add-bot-btn" onClick={onAddBot}>
-          <Bot size={16} />
-          Thêm Bot
-        </button>
+      <LobbyJoinSection code={game.code} joinUrl={lobby.joinUrl} shareText={`Tham gia Sắp Xếp Từ: ${game.title}`} qrVisible={lobby.qrVisible} onToggleQr={() => lobby.setQrVisible(v => !v)} />
+      {lobby.isHost && lobby.playerCount < game.settings.maxPlayers && (
+        <button className="pl-lobby-add-bot-btn" onClick={onAddBot}><Bot size={16} />Thêm Bot</button>
       )}
       <div className="pl-lobby-rules">
         <h4>Luật chơi</h4>
@@ -129,67 +74,26 @@ export function WordScrambleLobby({
     </>
   );
 
-  // Right column: players panel
   const rightContent = (
-    <LobbyPlayersPanel
-      players={normalizedPlayers}
-      hostId={game.hostId}
-      currentPlayerId={currentPlayerId}
-      maxPlayers={game.settings.maxPlayers}
-      playerCount={playerCount}
-      fillPercent={fillPercent}
-      minPlayers={game.settings.minPlayers}
-      onKickPlayer={handleKick}
-    />
+    <LobbyPlayersPanel players={lobby.normalizedPlayers} hostId={game.hostId} currentPlayerId={currentPlayerId} maxPlayers={game.settings.maxPlayers} playerCount={lobby.playerCount} fillPercent={lobby.fillPercent} minPlayers={game.settings.minPlayers} onKickPlayer={lobby.handleKick} />
   );
 
-  // Footer
   const footerContent = (
-    <LobbyStartFooter
-      isHost={isHost}
-      canStart={canStart}
-      onStart={onStartGame}
-      startIcon={<Shuffle size={20} />}
-      startLabel="Bắt Đầu Sắp Xếp"
-      disabledLabel={`Cần ${game.settings.minPlayers} người chơi`}
-    />
+    <LobbyStartFooter isHost={lobby.isHost} canStart={lobby.canStart} onStart={onStartGame} startIcon={<Shuffle size={20} />} startLabel="Bắt Đầu Sắp Xếp" disabledLabel={`Cần ${game.settings.minPlayers} người chơi`} />
   );
 
   return (
     <>
-      <PremiumLobbyShell
-        title={game.title}
-        metaTags={metaTags}
-        leftContent={leftContent}
-        rightContent={rightContent}
-        footerContent={footerContent}
-        accent={WORD_SCRAMBLE_ACCENT}
-        onLeave={() => setShowLeaveConfirm(true)}
-        qrHidden={!qrVisible}
-      />
-
-      <ConfirmModal
-        isOpen={showLeaveConfirm}
-        title="Rời khỏi phòng?"
-        message={
-          isHost
-            ? 'Bạn là host. Nếu bạn rời đi, phòng sẽ bị huỷ và tất cả người chơi sẽ bị đuổi ra.'
-            : 'Bạn có chắc muốn rời khỏi phòng chơi này?'
-        }
-        confirmText="Rời phòng"
-        cancelText="Ở lại"
-        onConfirm={() => { setShowLeaveConfirm(false); onLeave(); }}
-        onCancel={() => setShowLeaveConfirm(false)}
-      />
-
-      <ConfirmModal
-        isOpen={!!kickTarget}
-        title="Kick người chơi?"
-        message={`Bạn có chắc muốn kick "${normalizedPlayers.find(p => p.id === kickTarget)?.displayName || ''}" khỏi phòng?`}
-        confirmText="Kick"
-        cancelText="Huỷ"
-        onConfirm={handleKickConfirm}
-        onCancel={() => setKickTarget(null)}
+      <PremiumLobbyShell title={game.title} metaTags={metaTags} leftContent={leftContent} rightContent={rightContent} footerContent={footerContent} accent={WORD_SCRAMBLE_ACCENT} onLeave={onLeave} qrHidden={!lobby.qrVisible} />
+      <LobbyConfirmModals
+        isHost={lobby.isHost}
+        showLeaveConfirm={false}
+        kickTarget={lobby.kickTarget}
+        normalizedPlayers={lobby.normalizedPlayers}
+        onLeaveConfirm={onLeave}
+        onLeaveCancel={lobby.closeLeaveConfirm}
+        onKickConfirm={lobby.handleKickConfirm}
+        onKickCancel={lobby.closeKickConfirm}
       />
     </>
   );

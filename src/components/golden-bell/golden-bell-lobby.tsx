@@ -1,8 +1,6 @@
 // Golden Bell Lobby — Premium full-screen lobby using shared PremiumLobbyShell
-// Thin wrapper: provides Golden Bell-specific accent color, meta tags, rules, and settings
 // Routes to GoldenBellTeamLobby when in team mode
 
-import { useState, useMemo, useCallback } from 'react';
 import { Bell, Clock, HelpCircle, Layers } from 'lucide-react';
 import type { GoldenBellGame } from '../../types/golden-bell';
 import { CATEGORY_INFO } from '../../types/golden-bell';
@@ -12,12 +10,11 @@ import {
   LobbyJoinSection,
   LobbyPlayersPanel,
   LobbyStartFooter,
-  normalizePlayer,
+  LobbyConfirmModals,
 } from '../shared/game-lobby';
-import { ConfirmModal } from '../ui/confirm-modal';
+import { useLobbyState } from '../../hooks/shared/use-lobby-state';
 import { GoldenBellTeamLobby } from './golden-bell-team-lobby';
 
-// Golden Bell accent: gold/amber
 const GB_ACCENT = {
   accent: '#f4c430',
   accentDark: '#d4a420',
@@ -36,15 +33,23 @@ interface GoldenBellLobbyProps {
 }
 
 export function GoldenBellLobby({
-  game,
-  isHost,
-  currentPlayerId,
-  onStart,
-  onLeave,
-  onKickPlayer,
-  onJoinTeam,
-  onShuffleTeams,
+  game, isHost, currentPlayerId, onStart, onLeave,
+  onKickPlayer, onJoinTeam, onShuffleTeams,
 }: GoldenBellLobbyProps) {
+  // Call hooks unconditionally (before any early return)
+  const lobby = useLobbyState(
+    {
+      players: game.players,
+      hostId: game.hostId,
+      currentPlayerId,
+      maxPlayers: game.settings.maxPlayers,
+      minPlayers: game.settings.minPlayers,
+      code: game.code,
+      onKickPlayer,
+    },
+    { gameSlug: 'golden-bell' },
+  );
+
   // Route to team lobby when in team mode
   if (game.settings.gameMode === 'team' && game.teams && onJoinTeam && onShuffleTeams) {
     return (
@@ -60,76 +65,26 @@ export function GoldenBellLobby({
     );
   }
 
-  const [qrVisible, setQrVisible] = useState(true);
-  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
-  const [kickTarget, setKickTarget] = useState<string | null>(null);
-
-  const { hostPlayer, normalizedPlayers, playerCount, fillPercent } = useMemo(() => {
-    const list = Object.values(game.players);
-    return {
-      hostPlayer: list.find(p => p.odinhId === game.hostId),
-      normalizedPlayers: list.map(p => normalizePlayer({
-        ...p, odinhId: p.odinhId, isHost: p.odinhId === game.hostId,
-      })),
-      playerCount: list.length,
-      fillPercent: Math.min(100, (list.length / game.settings.maxPlayers) * 100),
-    };
-  }, [game.players, game.settings.maxPlayers, game.hostId]);
-
-  const canStart = playerCount >= game.settings.minPlayers;
-  const joinUrl = `${window.location.origin}?game=golden-bell&join=${game.code}`;
-
-  const handleKick = useCallback((id: string) => setKickTarget(id), []);
-  const handleKickConfirm = useCallback(() => {
-    if (!kickTarget || !onKickPlayer) return;
-    onKickPlayer(kickTarget);
-    setKickTarget(null);
-  }, [kickTarget, onKickPlayer]);
-
-  // Meta tags
   const metaTags = (
     <>
-      <span className="pl-lobby-tag">
-        <Layers size={13} />
-        {game.settings.jlptLevel}
-      </span>
-      <span className="pl-lobby-tag">
-        <HelpCircle size={13} />
-        {game.settings.questionCount} câu
-      </span>
-      <span className="pl-lobby-tag">
-        <Clock size={13} />
-        {game.settings.timePerQuestion}s
-      </span>
+      <span className="pl-lobby-tag"><Layers size={13} />{game.settings.jlptLevel}</span>
+      <span className="pl-lobby-tag"><HelpCircle size={13} />{game.settings.questionCount} câu</span>
+      <span className="pl-lobby-tag"><Clock size={13} />{game.settings.timePerQuestion}s</span>
       {game.settings.categories.map(cat => (
         <span key={cat} className="pl-lobby-tag pl-lobby-tag-accent">
           {CATEGORY_INFO[cat].emoji} {CATEGORY_INFO[cat].name}
         </span>
       ))}
-      <span className="pl-lobby-tag pl-lobby-tag-live">
-        <span className="pl-lobby-live-dot" />
-        Live
-      </span>
+      <span className="pl-lobby-tag pl-lobby-tag-live"><span className="pl-lobby-live-dot" />Live</span>
     </>
   );
 
-  // Left column: host card, QR/join, rules
   const leftContent = (
     <>
-      {hostPlayer && (
-        <LobbyHostCard
-          displayName={hostPlayer.displayName}
-          avatar={hostPlayer.avatar}
-          role={(hostPlayer as any).role}
-        />
+      {lobby.hostPlayer && (
+        <LobbyHostCard displayName={lobby.hostPlayer.displayName} avatar={lobby.hostPlayer.avatar} role={(lobby.hostPlayer as any).role} />
       )}
-      <LobbyJoinSection
-        code={game.code}
-        joinUrl={joinUrl}
-        shareText={`Tham gia Rung Chuông Vàng: ${game.title}`}
-        qrVisible={qrVisible}
-        onToggleQr={() => setQrVisible(v => !v)}
-      />
+      <LobbyJoinSection code={game.code} joinUrl={lobby.joinUrl} shareText={`Tham gia Rung Chuông Vàng: ${game.title}`} qrVisible={lobby.qrVisible} onToggleQr={() => lobby.setQrVisible(v => !v)} />
       <div className="pl-lobby-rules">
         <h4>Luật chơi</h4>
         <ul>
@@ -142,68 +97,26 @@ export function GoldenBellLobby({
     </>
   );
 
-  // Right column: players panel
   const rightContent = (
-    <LobbyPlayersPanel
-      players={normalizedPlayers}
-      hostId={game.hostId}
-      currentPlayerId={currentPlayerId}
-      maxPlayers={game.settings.maxPlayers}
-      playerCount={playerCount}
-      fillPercent={fillPercent}
-      minPlayers={game.settings.minPlayers}
-      onKickPlayer={handleKick}
-    />
+    <LobbyPlayersPanel players={lobby.normalizedPlayers} hostId={game.hostId} currentPlayerId={currentPlayerId} maxPlayers={game.settings.maxPlayers} playerCount={lobby.playerCount} fillPercent={lobby.fillPercent} minPlayers={game.settings.minPlayers} onKickPlayer={lobby.handleKick} />
   );
 
-  // Footer
   const footerContent = (
-    <LobbyStartFooter
-      isHost={isHost}
-      canStart={canStart}
-      loading={false}
-      onStart={onStart}
-      startIcon={<Bell size={20} />}
-      startLabel="Bắt Đầu Game"
-      disabledLabel={`Cần ${game.settings.minPlayers} người chơi`}
-    />
+    <LobbyStartFooter isHost={isHost} canStart={lobby.canStart} loading={false} onStart={onStart} startIcon={<Bell size={20} />} startLabel="Bắt Đầu Game" disabledLabel={`Cần ${game.settings.minPlayers} người chơi`} />
   );
 
   return (
     <>
-      <PremiumLobbyShell
-        title={game.title}
-        metaTags={metaTags}
-        leftContent={leftContent}
-        rightContent={rightContent}
-        footerContent={footerContent}
-        accent={GB_ACCENT}
-        onLeave={() => setShowLeaveConfirm(true)}
-        qrHidden={!qrVisible}
-      />
-
-      {/* Leave confirmation modal */}
-      <ConfirmModal
-        isOpen={showLeaveConfirm}
-        title="Rời khỏi phòng?"
-        message={isHost
-          ? 'Bạn là host. Nếu bạn rời đi, phòng sẽ bị huỷ và tất cả người chơi sẽ bị đuổi ra.'
-          : 'Bạn có chắc muốn rời khỏi phòng chơi này?'}
-        confirmText="Rời phòng"
-        cancelText="Ở lại"
-        onConfirm={() => { setShowLeaveConfirm(false); onLeave(); }}
-        onCancel={() => setShowLeaveConfirm(false)}
-      />
-
-      {/* Kick confirmation modal */}
-      <ConfirmModal
-        isOpen={!!kickTarget}
-        title="Kick người chơi?"
-        message={`Bạn có chắc muốn kick "${normalizedPlayers.find(p => p.id === kickTarget)?.displayName || ''}" khỏi phòng?`}
-        confirmText="Kick"
-        cancelText="Huỷ"
-        onConfirm={handleKickConfirm}
-        onCancel={() => setKickTarget(null)}
+      <PremiumLobbyShell title={game.title} metaTags={metaTags} leftContent={leftContent} rightContent={rightContent} footerContent={footerContent} accent={GB_ACCENT} onLeave={onLeave} qrHidden={!lobby.qrVisible} />
+      <LobbyConfirmModals
+        isHost={isHost}
+        showLeaveConfirm={false}
+        kickTarget={lobby.kickTarget}
+        normalizedPlayers={lobby.normalizedPlayers}
+        onLeaveConfirm={onLeave}
+        onLeaveCancel={lobby.closeLeaveConfirm}
+        onKickConfirm={lobby.handleKickConfirm}
+        onKickCancel={lobby.closeKickConfirm}
       />
     </>
   );

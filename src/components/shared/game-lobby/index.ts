@@ -14,3 +14,4 @@ export { LobbyHostCard } from './lobby-host-card';
 export { LobbyJoinSection } from './lobby-join-section';
 export { LobbyPlayersPanel } from './lobby-players-panel';
 export { LobbyStartFooter } from './lobby-start-footer';
+export { LobbyConfirmModals } from './lobby-confirm-modals';

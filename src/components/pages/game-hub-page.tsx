@@ -347,7 +347,7 @@ export function GameHubPage({
           currentUserAvatar={currentUser.avatar}
           flashcards={flashcards}
           jlptQuestions={jlptQuestions}
-          onGoHome={handleBackToWaitingRoom}
+          onGoHome={handleBackToHub}
           initialJoinCode={joinCode}
           onJoinCodeUsed={() => setJoinCode(null)}
           settings={settings}
@@ -371,7 +371,7 @@ export function GameHubPage({
           initialJoinCode={joinCode || undefined}
           onSaveGameSession={onSaveGameSession}
           initialRoomConfig={pendingRoomConfig?.gameType === 'golden-bell' ? pendingRoomConfig.data : undefined}
-          onGoHome={handleBackToWaitingRoom}
+          onGoHome={handleBackToHub}
         />
       )}
 
@@ -403,7 +403,7 @@ export function GameHubPage({
           initialJoinCode={joinCode || undefined}
           onSaveGameSession={onSaveGameSession}
           initialRoomConfig={pendingRoomConfig?.gameType === 'bingo' ? pendingRoomConfig.data : undefined}
-          onGoHome={handleBackToWaitingRoom}
+          onGoHome={handleBackToHub}
         />
       )}
 

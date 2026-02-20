@@ -1,7 +1,6 @@
 // Word Match Lobby — Premium full-screen lobby using shared PremiumLobbyShell
-// Teal/cyan accent for word-linking theme, with VIP name glow and avatar border effects
+// Teal/cyan accent for word-linking theme
 
-import { useState, useMemo, useCallback } from 'react';
 import { Link, Clock, Hash, RotateCw, Bot } from 'lucide-react';
 import type { WordMatchGame } from '../../types/word-match';
 import {
@@ -10,11 +9,10 @@ import {
   LobbyJoinSection,
   LobbyPlayersPanel,
   LobbyStartFooter,
-  normalizePlayer,
+  LobbyConfirmModals,
 } from '../shared/game-lobby';
-import { ConfirmModal } from '../ui/confirm-modal';
+import { useLobbyState } from '../../hooks/shared/use-lobby-state';
 
-// Word Match accent: teal/cyan
 const WORD_MATCH_ACCENT = {
   accent: '#14B8A6',
   accentDark: '#0D9488',
@@ -31,90 +29,39 @@ interface WordMatchLobbyProps {
 }
 
 export const WordMatchLobby: React.FC<WordMatchLobbyProps> = ({
-  game,
-  currentPlayerId,
-  onStartGame,
-  onAddBot,
-  onLeave,
-  onKickPlayer,
+  game, currentPlayerId, onStartGame, onAddBot, onLeave, onKickPlayer,
 }) => {
-  const [qrVisible, setQrVisible] = useState(true);
-  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
-  const [kickTarget, setKickTarget] = useState<string | null>(null);
+  const lobby = useLobbyState(
+    {
+      players: game.players,
+      hostId: game.hostId,
+      currentPlayerId,
+      maxPlayers: game.settings.maxPlayers,
+      minPlayers: game.settings.minPlayers,
+      code: game.code,
+      onKickPlayer,
+    },
+    { gameSlug: 'word-match' },
+  );
 
-  const isHost = game.hostId === currentPlayerId;
-
-  const { hostPlayer, normalizedPlayers, playerCount, fillPercent } = useMemo(() => {
-    const list = Object.values(game.players);
-    return {
-      hostPlayer: list.find(p => p.odinhId === game.hostId),
-      normalizedPlayers: list.map(p => normalizePlayer({
-        ...p, odinhId: p.odinhId, isHost: p.odinhId === game.hostId, isBot: (p as any).isBot,
-      })),
-      playerCount: list.length,
-      fillPercent: Math.min(100, (list.length / game.settings.maxPlayers) * 100),
-    };
-  }, [game.players, game.settings.maxPlayers, game.hostId]);
-
-  const canStart = playerCount >= game.settings.minPlayers;
-  const joinUrl = `${window.location.origin}?game=word-match&join=${game.code}`;
-
-  const handleKick = useCallback((id: string) => setKickTarget(id), []);
-  const handleKickConfirm = useCallback(() => {
-    if (!kickTarget || !onKickPlayer) return;
-    onKickPlayer(kickTarget);
-    setKickTarget(null);
-  }, [kickTarget, onKickPlayer]);
-
-  // Meta tags
   const metaTags = (
     <>
-      <span className="pl-lobby-tag">
-        <Hash size={13} />
-        {game.settings.totalRounds} câu
-      </span>
-      <span className="pl-lobby-tag">
-        <Clock size={13} />
-        {game.settings.timePerRound}s/câu
-      </span>
-      <span className="pl-lobby-tag">
-        <Link size={13} />
-        {game.settings.pairsPerRound} cặp/câu
-      </span>
-      <span className="pl-lobby-tag pl-lobby-tag-accent">
-        <RotateCw size={13} />
-        Vòng quay mỗi {game.settings.specialInterval} câu
-      </span>
-      <span className="pl-lobby-tag pl-lobby-tag-live">
-        <span className="pl-lobby-live-dot" />
-        Live
-      </span>
+      <span className="pl-lobby-tag"><Hash size={13} />{game.settings.totalRounds} câu</span>
+      <span className="pl-lobby-tag"><Clock size={13} />{game.settings.timePerRound}s/câu</span>
+      <span className="pl-lobby-tag"><Link size={13} />{game.settings.pairsPerRound} cặp/câu</span>
+      <span className="pl-lobby-tag pl-lobby-tag-accent"><RotateCw size={13} />Vòng quay mỗi {game.settings.specialInterval} câu</span>
+      <span className="pl-lobby-tag pl-lobby-tag-live"><span className="pl-lobby-live-dot" />Live</span>
     </>
   );
 
-  // Left column: host card, QR/join, add bot, rules
   const leftContent = (
     <>
-      {hostPlayer && (
-        <LobbyHostCard
-          displayName={hostPlayer.displayName}
-          avatar={hostPlayer.avatar}
-          role={(hostPlayer as any).role}
-        />
+      {lobby.hostPlayer && (
+        <LobbyHostCard displayName={lobby.hostPlayer.displayName} avatar={lobby.hostPlayer.avatar} role={(lobby.hostPlayer as any).role} />
       )}
-      <LobbyJoinSection
-        code={game.code}
-        joinUrl={joinUrl}
-        shareText={`Tham gia Nối Từ Thách Đấu: ${game.title}`}
-        qrVisible={qrVisible}
-        onToggleQr={() => setQrVisible(v => !v)}
-      />
-      {/* Add Bot button for host */}
-      {isHost && playerCount < game.settings.maxPlayers && (
-        <button className="pl-lobby-add-bot-btn" onClick={onAddBot}>
-          <Bot size={16} />
-          Thêm Bot
-        </button>
+      <LobbyJoinSection code={game.code} joinUrl={lobby.joinUrl} shareText={`Tham gia Nối Từ Thách Đấu: ${game.title}`} qrVisible={lobby.qrVisible} onToggleQr={() => lobby.setQrVisible(v => !v)} />
+      {lobby.isHost && lobby.playerCount < game.settings.maxPlayers && (
+        <button className="pl-lobby-add-bot-btn" onClick={onAddBot}><Bot size={16} />Thêm Bot</button>
       )}
       <div className="pl-lobby-rules">
         <h4>Luật chơi</h4>
@@ -129,67 +76,26 @@ export const WordMatchLobby: React.FC<WordMatchLobbyProps> = ({
     </>
   );
 
-  // Right column: players panel
   const rightContent = (
-    <LobbyPlayersPanel
-      players={normalizedPlayers}
-      hostId={game.hostId}
-      currentPlayerId={currentPlayerId}
-      maxPlayers={game.settings.maxPlayers}
-      playerCount={playerCount}
-      fillPercent={fillPercent}
-      minPlayers={game.settings.minPlayers}
-      onKickPlayer={handleKick}
-    />
+    <LobbyPlayersPanel players={lobby.normalizedPlayers} hostId={game.hostId} currentPlayerId={currentPlayerId} maxPlayers={game.settings.maxPlayers} playerCount={lobby.playerCount} fillPercent={lobby.fillPercent} minPlayers={game.settings.minPlayers} onKickPlayer={lobby.handleKick} />
   );
 
-  // Footer
   const footerContent = (
-    <LobbyStartFooter
-      isHost={isHost}
-      canStart={canStart}
-      onStart={onStartGame}
-      startIcon={<Link size={20} />}
-      startLabel="Bắt Đầu Nối Từ"
-      disabledLabel={`Cần ${game.settings.minPlayers} người chơi`}
-    />
+    <LobbyStartFooter isHost={lobby.isHost} canStart={lobby.canStart} onStart={onStartGame} startIcon={<Link size={20} />} startLabel="Bắt Đầu Nối Từ" disabledLabel={`Cần ${game.settings.minPlayers} người chơi`} />
   );
 
   return (
     <>
-      <PremiumLobbyShell
-        title={game.title}
-        metaTags={metaTags}
-        leftContent={leftContent}
-        rightContent={rightContent}
-        footerContent={footerContent}
-        accent={WORD_MATCH_ACCENT}
-        onLeave={() => setShowLeaveConfirm(true)}
-        qrHidden={!qrVisible}
-      />
-
-      {/* Leave confirmation modal */}
-      <ConfirmModal
-        isOpen={showLeaveConfirm}
-        title="Rời khỏi phòng?"
-        message={isHost
-          ? 'Bạn là host. Nếu bạn rời đi, phòng sẽ bị huỷ và tất cả người chơi sẽ bị đuổi ra.'
-          : 'Bạn có chắc muốn rời khỏi phòng chơi này?'}
-        confirmText="Rời phòng"
-        cancelText="Ở lại"
-        onConfirm={() => { setShowLeaveConfirm(false); onLeave(); }}
-        onCancel={() => setShowLeaveConfirm(false)}
-      />
-
-      {/* Kick confirmation modal */}
-      <ConfirmModal
-        isOpen={!!kickTarget}
-        title="Kick người chơi?"
-        message={`Bạn có chắc muốn kick "${normalizedPlayers.find(p => p.id === kickTarget)?.displayName || ''}" khỏi phòng?`}
-        confirmText="Kick"
-        cancelText="Huỷ"
-        onConfirm={handleKickConfirm}
-        onCancel={() => setKickTarget(null)}
+      <PremiumLobbyShell title={game.title} metaTags={metaTags} leftContent={leftContent} rightContent={rightContent} footerContent={footerContent} accent={WORD_MATCH_ACCENT} onLeave={onLeave} qrHidden={!lobby.qrVisible} />
+      <LobbyConfirmModals
+        isHost={lobby.isHost}
+        showLeaveConfirm={false}
+        kickTarget={lobby.kickTarget}
+        normalizedPlayers={lobby.normalizedPlayers}
+        onLeaveConfirm={onLeave}
+        onLeaveCancel={lobby.closeLeaveConfirm}
+        onKickConfirm={lobby.handleKickConfirm}
+        onKickCancel={lobby.closeKickConfirm}
       />
     </>
   );

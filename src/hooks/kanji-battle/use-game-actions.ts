@@ -1,19 +1,14 @@
-// Basic game actions (join, leave, kick, start, reset)
-// Join uses Firestore to find and subscribe to remote rooms
+// Kanji Battle game actions — thin wrapper around shared useGameRoomActions
 
 import { useCallback } from 'react';
 import type { KanjiBattleGame, KanjiBattlePlayer, KanjiBattleResults } from '../../types/kanji-battle';
-import { findRoomByCode, updateGameRoom } from '../../services/game-rooms';
+import type { GameUser, SetGame } from '../shared/game-types';
+import { useGameRoomActions } from '../shared/use-game-room-actions';
 
 interface UseGameActionsProps {
-  currentUser: {
-    id: string;
-    displayName: string;
-    avatar: string;
-    role?: string;
-  };
+  currentUser: GameUser;
   game: KanjiBattleGame | null;
-  setGame: (game: KanjiBattleGame | null | ((prev: KanjiBattleGame | null) => KanjiBattleGame | null)) => void;
+  setGame: SetGame<KanjiBattleGame>;
   setGameResults: (results: KanjiBattleResults | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -26,54 +21,32 @@ interface UseGameActionsProps {
 }
 
 export function useGameActions({
-  currentUser,
-  game,
-  setGame,
-  setGameResults,
-  setLoading,
-  setError,
-  setRoomId,
-  isHost,
-  botTimerRef,
-  clearTimers,
-  startNextRound,
-  deleteCurrentRoom,
+  currentUser, game, setGame, setGameResults,
+  setLoading, setError, setRoomId,
+  isHost, botTimerRef, clearTimers, startNextRound, deleteCurrentRoom,
 }: UseGameActionsProps) {
-  // Join existing game via Firestore
-  const joinGame = useCallback(async (code: string) => {
-    setLoading(true);
-    setError(null);
+  const clearBotTimers = useCallback(() => {
+    if (botTimerRef.current) clearTimeout(botTimerRef.current);
+  }, [botTimerRef]);
 
-    try {
-      const room = await findRoomByCode(code);
-
-      if (!room || room.gameType !== 'kanji-battle') {
-        throw new Error('Không tìm thấy phòng Kanji Battle với mã này');
-      }
-
-      const roomData = room.data as unknown as KanjiBattleGame;
-
-      if (roomData.status !== 'waiting') {
-        throw new Error('Trò chơi đã bắt đầu');
-      }
-
-      const players = roomData.players || {};
-      if (Object.keys(players).length >= (roomData.settings?.maxPlayers || 20)) {
-        throw new Error('Phòng đã đầy');
-      }
-
-      // Already in the game? Just subscribe
-      if (players[currentUser.id]) {
-        setRoomId(room.id);
-        return;
-      }
-
-      // Add player to the room via Firestore
-      const player: KanjiBattlePlayer = {
-        odinhId: currentUser.id,
-        displayName: currentUser.displayName,
-        avatar: currentUser.avatar,
-        role: currentUser.role,
+  const { joinGame, leaveGame, kickPlayer, startGame, resetGame } = useGameRoomActions<
+    KanjiBattleGame,
+    KanjiBattlePlayer,
+    KanjiBattleResults
+  >(
+    {
+      game, currentUser, setGame, setGameResults,
+      setLoading, setError, setRoomId,
+      isHost, clearBotTimers, deleteCurrentRoom,
+    },
+    {
+      gameType: 'kanji-battle',
+      gameName: 'Kanji Battle',
+      createJoinPlayer: (user, roomData) => ({
+        odinhId: user.id,
+        displayName: user.displayName,
+        avatar: user.avatar,
+        role: user.role,
         score: 0,
         correctAnswers: 0,
         wrongAnswers: 0,
@@ -87,62 +60,11 @@ export function useGameActions({
         isSlowed: false,
         slowedTurns: 0,
         streak: 0,
-      };
-
-      const updatedPlayers = { ...players, [currentUser.id]: player };
-      await updateGameRoom(room.id, { players: updatedPlayers });
-
-      // Subscribe to the room (subscription in use-game-state will update local state)
-      setRoomId(room.id);
-      setGameResults(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không thể tham gia phòng');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [currentUser, setRoomId, setGameResults, setLoading, setError]);
-
-  // Leave game — delete Firestore room directly (not via state updater)
-  // because onClose() may unmount the component before React processes the updater
-  const leaveGame = useCallback(() => {
-    if (!game) return;
-    clearTimers();
-    deleteCurrentRoom(); // Direct Firestore deletion (sets roomIdRef to null)
-    setGame(() => null); // Local cleanup only (roomIdRef is null, so wrapper skips delete)
-  }, [game, clearTimers, deleteCurrentRoom, setGame]);
-
-  // Kick player (host only)
-  const kickPlayer = useCallback((playerId: string) => {
-    if (!game || !isHost || playerId === currentUser.id) return;
-
-    setGame(prev => {
-      if (!prev) return null;
-      const { [playerId]: _removed, ...remainingPlayers } = prev.players;
-      return { ...prev, players: remainingPlayers };
-    });
-  }, [game, currentUser, isHost, setGame]);
-
-  // Start game (host only)
-  const startGame = useCallback(async () => {
-    if (!game || !isHost) return;
-    const playerCount = Object.keys(game.players).length;
-    if (playerCount < game.settings.minPlayers) {
-      setError(`Cần ít nhất ${game.settings.minPlayers} người chơi`);
-      return;
-    }
-    if (botTimerRef.current) clearTimeout(botTimerRef.current);
-    setGame(prev => prev ? { ...prev, status: 'starting', startedAt: new Date().toISOString() } : null);
-    setTimeout(() => { startNextRound(); }, 3000);
-  }, [game, isHost, setError, botTimerRef, setGame, startNextRound]);
-
-  // Reset game — direct Firestore deletion for same reason as leaveGame
-  const resetGame = useCallback(() => {
-    clearTimers();
-    deleteCurrentRoom();
-    setGame(() => null);
-    setGameResults(null);
-  }, [clearTimers, deleteCurrentRoom, setGame, setGameResults]);
+      }),
+      onAfterStart: startNextRound,
+      clearTimersFn: clearTimers,
+    },
+  );
 
   return { joinGame, leaveGame, kickPlayer, startGame, resetGame };
 }

@@ -30,7 +30,7 @@ export function useGoldenBell({ currentUser, flashcards = [] }: UseGoldenBellPro
     isHost, currentPlayer, currentQuestion,
     sortedPlayers, aliveCount,
     scheduleBotJoin, clearBotTimers,
-    clearLocalGameState,
+    deleteCurrentRoom, clearLocalGameState,
   } = useGameState({ currentUserId: currentUser.id });
 
   // Game creation (writes to Firestore)
@@ -63,6 +63,7 @@ export function useGoldenBell({ currentUser, flashcards = [] }: UseGoldenBellPro
     setRoomId,
     isHost,
     clearBotTimers,
+    deleteCurrentRoom,
     clearLocalGameState,
   });
 
