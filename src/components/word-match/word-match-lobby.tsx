@@ -1,8 +1,25 @@
-// Word Match Lobby - Waiting room for players
-import React, { useState } from 'react';
+// Word Match Lobby — Premium full-screen lobby using shared PremiumLobbyShell
+// Teal/cyan accent for word-linking theme, with VIP name glow and avatar border effects
+
+import { useState, useMemo, useCallback } from 'react';
+import { Link, Clock, Hash, RotateCw, Bot } from 'lucide-react';
 import type { WordMatchGame } from '../../types/word-match';
-import { GameCodeDisplay, PlayerListGrid, LobbyActionBar, normalizePlayer } from '../shared/game-lobby';
+import {
+  PremiumLobbyShell,
+  LobbyHostCard,
+  LobbyJoinSection,
+  LobbyPlayersPanel,
+  LobbyStartFooter,
+  normalizePlayer,
+} from '../shared/game-lobby';
 import { ConfirmModal } from '../ui/confirm-modal';
+
+// Word Match accent: teal/cyan
+const WORD_MATCH_ACCENT = {
+  accent: '#14B8A6',
+  accentDark: '#0D9488',
+  accentRgb: '20, 184, 166',
+};
 
 interface WordMatchLobbyProps {
   game: WordMatchGame;
@@ -21,108 +38,159 @@ export const WordMatchLobby: React.FC<WordMatchLobbyProps> = ({
   onLeave,
   onKickPlayer,
 }) => {
-  const [copied, setCopied] = useState(false);
+  const [qrVisible, setQrVisible] = useState(true);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
-  const isHost = game.hostId === currentPlayerId;
-  const players = Object.values(game.players);
-  const normalizedPlayers = players.map(p => normalizePlayer({ ...p, odinhId: p.odinhId, isHost: p.odinhId === game.hostId, isBot: p.isBot }));
-  const canStart = players.length >= game.settings.minPlayers;
+  const [kickTarget, setKickTarget] = useState<string | null>(null);
 
-  const copyCode = async () => {
-    try {
-      await navigator.clipboard.writeText(game.code);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Fallback
-    }
-  };
+  const isHost = game.hostId === currentPlayerId;
+
+  const { hostPlayer, normalizedPlayers, playerCount, fillPercent } = useMemo(() => {
+    const list = Object.values(game.players);
+    return {
+      hostPlayer: list.find(p => p.odinhId === game.hostId),
+      normalizedPlayers: list.map(p => normalizePlayer({
+        ...p, odinhId: p.odinhId, isHost: p.odinhId === game.hostId, isBot: (p as any).isBot,
+      })),
+      playerCount: list.length,
+      fillPercent: Math.min(100, (list.length / game.settings.maxPlayers) * 100),
+    };
+  }, [game.players, game.settings.maxPlayers, game.hostId]);
+
+  const canStart = playerCount >= game.settings.minPlayers;
+  const joinUrl = `${window.location.origin}?game=word-match&join=${game.code}`;
+
+  const handleKick = useCallback((id: string) => setKickTarget(id), []);
+  const handleKickConfirm = useCallback(() => {
+    if (!kickTarget || !onKickPlayer) return;
+    onKickPlayer(kickTarget);
+    setKickTarget(null);
+  }, [kickTarget, onKickPlayer]);
+
+  // Meta tags
+  const metaTags = (
+    <>
+      <span className="pl-lobby-tag">
+        <Hash size={13} />
+        {game.settings.totalRounds} câu
+      </span>
+      <span className="pl-lobby-tag">
+        <Clock size={13} />
+        {game.settings.timePerRound}s/câu
+      </span>
+      <span className="pl-lobby-tag">
+        <Link size={13} />
+        {game.settings.pairsPerRound} cặp/câu
+      </span>
+      <span className="pl-lobby-tag pl-lobby-tag-accent">
+        <RotateCw size={13} />
+        Vòng quay mỗi {game.settings.specialInterval} câu
+      </span>
+      <span className="pl-lobby-tag pl-lobby-tag-live">
+        <span className="pl-lobby-live-dot" />
+        Live
+      </span>
+    </>
+  );
+
+  // Left column: host card, QR/join, add bot, rules
+  const leftContent = (
+    <>
+      {hostPlayer && (
+        <LobbyHostCard
+          displayName={hostPlayer.displayName}
+          avatar={hostPlayer.avatar}
+          role={(hostPlayer as any).role}
+        />
+      )}
+      <LobbyJoinSection
+        code={game.code}
+        joinUrl={joinUrl}
+        shareText={`Tham gia Nối Từ Thách Đấu: ${game.title}`}
+        qrVisible={qrVisible}
+        onToggleQr={() => setQrVisible(v => !v)}
+      />
+      {/* Add Bot button for host */}
+      {isHost && playerCount < game.settings.maxPlayers && (
+        <button className="pl-lobby-add-bot-btn" onClick={onAddBot}>
+          <Bot size={16} />
+          Thêm Bot
+        </button>
+      )}
+      <div className="pl-lobby-rules">
+        <h4>Luật chơi</h4>
+        <ul>
+          <li>Mỗi lượt xuất hiện {game.settings.pairsPerRound} cặp từ — nối từ trái với nghĩa phải</li>
+          <li>Nối đúng tất cả {game.settings.pairsPerRound} cặp = bonus điểm</li>
+          <li>Mỗi {game.settings.specialInterval} lượt: vòng quay hiệu ứng đặc biệt</li>
+          <li>Hiệu ứng: ⚔️ Thách đấu, 🔌 Ngắt kết nối, 🛡️ Lá chắn</li>
+          <li>Tổng {game.settings.totalRounds} câu — ai nhiều điểm nhất thắng!</li>
+        </ul>
+      </div>
+    </>
+  );
+
+  // Right column: players panel
+  const rightContent = (
+    <LobbyPlayersPanel
+      players={normalizedPlayers}
+      hostId={game.hostId}
+      currentPlayerId={currentPlayerId}
+      maxPlayers={game.settings.maxPlayers}
+      playerCount={playerCount}
+      fillPercent={fillPercent}
+      minPlayers={game.settings.minPlayers}
+      onKickPlayer={handleKick}
+    />
+  );
+
+  // Footer
+  const footerContent = (
+    <LobbyStartFooter
+      isHost={isHost}
+      canStart={canStart}
+      onStart={onStartGame}
+      startIcon={<Link size={20} />}
+      startLabel="Bắt Đầu Nối Từ"
+      disabledLabel={`Cần ${game.settings.minPlayers} người chơi`}
+    />
+  );
 
   return (
-    <div className="word-match-lobby">
-      <div className="word-match-lobby-header">
-        <button className="word-match-back-btn" onClick={() => setShowLeaveConfirm(true)}>
-          ← Rời phòng
-        </button>
-        <div className="room-info">
-          <h2>🔗 {game.title}</h2>
-          <GameCodeDisplay
-            code={game.code}
-            copied={copied}
-            onCopy={copyCode}
-            label="Mã phòng:"
-            className="room-code"
-          />
-        </div>
-      </div>
-
-      <div className="word-match-lobby-settings">
-        <div className="setting-item">
-          <span className="icon">📝</span>
-          <span>{game.settings.totalRounds} câu</span>
-        </div>
-        <div className="setting-item">
-          <span className="icon">⏱️</span>
-          <span>{game.settings.timePerRound}s/câu</span>
-        </div>
-        <div className="setting-item">
-          <span className="icon">🔗</span>
-          <span>5 cặp/câu</span>
-        </div>
-        <div className="setting-item">
-          <span className="icon">🎡</span>
-          <span>Vòng quay mỗi 5 câu</span>
-        </div>
-      </div>
-
-      <div className="word-match-lobby-players">
-        <div className="players-header">
-          <h3>👥 Người chơi ({players.length}/{game.settings.maxPlayers})</h3>
-          {isHost && players.length < game.settings.maxPlayers && (
-            <button className="word-match-btn secondary small" onClick={onAddBot}>
-              🤖 Thêm Bot
-            </button>
-          )}
-        </div>
-
-        <PlayerListGrid
-          players={normalizedPlayers}
-          hostId={game.hostId}
-          currentPlayerId={currentPlayerId}
-          maxPlayers={game.settings.maxPlayers}
-          onKickPlayer={onKickPlayer}
-          emptySlotLabel="Chờ người chơi..."
-          maxEmptySlots={game.settings.maxPlayers}
-          renderExtra={(player) => (
-            <>
-              {player.isBot && <span className="bot-badge">🤖</span>}
-            </>
-          )}
-        />
-      </div>
-
-      <LobbyActionBar
-        isHost={isHost}
-        canStart={canStart}
-        onStart={onStartGame}
-        onLeave={onLeave}
-        startLabel="🚀 Bắt Đầu"
-        disabledLabel={`Cần ít nhất ${game.settings.minPlayers} người`}
-        waitingLabel="Đợi chủ phòng bắt đầu..."
-        className="word-match-lobby-actions"
+    <>
+      <PremiumLobbyShell
+        title={game.title}
+        metaTags={metaTags}
+        leftContent={leftContent}
+        rightContent={rightContent}
+        footerContent={footerContent}
+        accent={WORD_MATCH_ACCENT}
+        onLeave={() => setShowLeaveConfirm(true)}
+        qrHidden={!qrVisible}
       />
 
+      {/* Leave confirmation modal */}
       <ConfirmModal
         isOpen={showLeaveConfirm}
         title="Rời khỏi phòng?"
         message={isHost
-          ? 'Bạn là host. Nếu bạn rời đi, phòng sẽ bị huỷ.'
-          : 'Bạn có chắc muốn rời khỏi phòng?'}
+          ? 'Bạn là host. Nếu bạn rời đi, phòng sẽ bị huỷ và tất cả người chơi sẽ bị đuổi ra.'
+          : 'Bạn có chắc muốn rời khỏi phòng chơi này?'}
         confirmText="Rời phòng"
         cancelText="Ở lại"
         onConfirm={() => { setShowLeaveConfirm(false); onLeave(); }}
         onCancel={() => setShowLeaveConfirm(false)}
       />
-    </div>
+
+      {/* Kick confirmation modal */}
+      <ConfirmModal
+        isOpen={!!kickTarget}
+        title="Kick người chơi?"
+        message={`Bạn có chắc muốn kick "${normalizedPlayers.find(p => p.id === kickTarget)?.displayName || ''}" khỏi phòng?`}
+        confirmText="Kick"
+        cancelText="Huỷ"
+        onConfirm={handleKickConfirm}
+        onCancel={() => setKickTarget(null)}
+      />
+    </>
   );
 };

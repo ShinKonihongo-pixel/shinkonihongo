@@ -58,3 +58,73 @@ export type PairVisualState = 'default' | 'selected' | 'matched' | 'wrong';
 
 // Shuffle array helper type
 export type ShuffleFunction = <T>(array: T[]) => T[];
+
+// ========== MULTIPLAYER TYPES ==========
+
+export type ImageWordGameStatus = 'waiting' | 'starting' | 'playing' | 'finished';
+
+export interface ImageWordMultiplayerPlayer {
+  odinhId: string;
+  displayName: string;
+  avatar: string;
+  role?: string;
+  score: number;
+  matchedPairs: string[];
+  wrongAttempts: number;
+  isComplete: boolean;
+  completionTime?: number; // ms from game start to completion
+  isBot?: boolean;
+}
+
+export interface ImageWordMultiplayerSettings {
+  maxPlayers: number;
+  minPlayers: number;
+  totalPairs: number; // number of pairs to match
+  timeLimit: number; // seconds for the whole game (0 = no limit)
+}
+
+export const DEFAULT_IMAGE_WORD_SETTINGS: ImageWordMultiplayerSettings = {
+  maxPlayers: 4,
+  minPlayers: 2,
+  totalPairs: 10,
+  timeLimit: 120,
+};
+
+export interface ImageWordMultiplayerGame {
+  id: string;
+  code: string;
+  hostId: string;
+  title: string;
+  settings: ImageWordMultiplayerSettings;
+  status: ImageWordGameStatus;
+  players: Record<string, ImageWordMultiplayerPlayer>;
+  pairs: ImageWordPair[]; // The pairs all players will match
+  shuffledPairsOrder: string[]; // Shared shuffle order for consistency
+  startedAt?: string;
+  createdAt: string;
+}
+
+export interface ImageWordMultiplayerResults {
+  gameId: string;
+  rankings: Array<{
+    odinhId: string;
+    displayName: string;
+    avatar: string;
+    role?: string;
+    rank: number;
+    score: number;
+    matchedPairs: number;
+    totalPairs: number;
+    wrongAttempts: number;
+    completionTime?: number;
+  }>;
+  totalPairs: number;
+  totalPlayers: number;
+}
+
+export interface CreateImageWordData {
+  title: string;
+  maxPlayers: number;
+  totalPairs: number;
+  timeLimit: number;
+}

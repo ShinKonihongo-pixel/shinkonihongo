@@ -1,7 +1,7 @@
 // Game creation logic
 // Handles game initialization - writes to Firestore for cross-device multiplayer
 
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import type {
   KanjiBattleGame,
   KanjiBattlePlayer,
@@ -38,7 +38,13 @@ export function useGameCreation({
   setRoomId,
   botTimerRef,
 }: UseGameCreationProps) {
+  // Guard against concurrent/double creation (StrictMode, async races)
+  const creatingRef = useRef(false);
+
   const createGame = useCallback(async (data: CreateKanjiBattleData) => {
+    if (creatingRef.current) return;
+    creatingRef.current = true;
+
     setLoading(true);
     setError(null);
 
@@ -150,6 +156,7 @@ export function useGameCreation({
 
       botTimerRef.current = setTimeout(() => addBots(2), 8000);
     } catch (err) {
+      creatingRef.current = false; // Allow retry on error
       setError(err instanceof Error ? err.message : 'Không thể tạo game');
     } finally {
       setLoading(false);

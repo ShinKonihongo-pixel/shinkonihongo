@@ -1,25 +1,20 @@
-// Main word match hook - orchestrates all modules
+// Main image-word hook - orchestrates all modules
 // Combines all sub-hooks and exports unified interface with Firestore sync
 
-import type { Flashcard } from '../../types/flashcard';
 import { useGameState } from './use-game-state';
 import { useGameCreation } from './use-game-creation';
 import { useGameActions } from './use-game-actions';
-import { useRoundLogic } from './use-round-logic';
-import { useEffects } from './use-effects';
-import { useGameFlow } from './use-game-flow';
 
-interface UseWordMatchProps {
+interface UseImageWordMultiplayerProps {
   currentUser: {
     id: string;
     displayName: string;
     avatar: string;
     role?: string;
   };
-  flashcards?: Flashcard[];
 }
 
-export function useWordMatch({ currentUser, flashcards = [] }: UseWordMatchProps) {
+export function useImageWordMultiplayer({ currentUser }: UseImageWordMultiplayerProps) {
   const {
     game, setGame,
     gameResults, setGameResults,
@@ -34,25 +29,15 @@ export function useWordMatch({ currentUser, flashcards = [] }: UseWordMatchProps
     deleteCurrentRoom,
   } = useGameState({ currentUserId: currentUser.id });
 
-  const { startNextRound, endRound, submitMatches } = useRoundLogic({
-    game, setGame, roundTimerRef, currentUser,
-  });
-
   const { createGame } = useGameCreation({
-    currentUser, flashcards, setGame, setGameResults, setLoading, setError, setRoomId, scheduleBotJoin,
+    currentUser, setGame, setGameResults, setLoading, setError, setRoomId, scheduleBotJoin,
   });
 
   const {
     joinGame, leaveGame, kickPlayer, startGame, addBot, resetGame,
   } = useGameActions({
     currentUser, game, setGame, setGameResults, setLoading, setError, setRoomId,
-    isHost, clearBotTimers, roundTimerRef, startNextRound, deleteCurrentRoom,
-  });
-
-  useEffects({ game, endRound });
-
-  const { continueGame, applyEffect } = useGameFlow({
-    game, isHost, sortedPlayers, setGame, setGameResults, startNextRound,
+    isHost, clearBotTimers, roundTimerRef, deleteCurrentRoom,
   });
 
   return {
@@ -70,9 +55,6 @@ export function useWordMatch({ currentUser, flashcards = [] }: UseWordMatchProps
     kickPlayer,
     startGame,
     addBot,
-    submitMatches,
-    applyEffect,
-    continueGame,
     resetGame,
     setError,
   };

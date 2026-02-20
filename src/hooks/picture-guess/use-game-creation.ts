@@ -1,7 +1,7 @@
 // Game creation logic for Picture Guess
 // Handles game initialization - writes to Firestore for cross-device multiplayer
 
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import type {
   PictureGuessGame,
   PictureGuessPlayer,
@@ -19,6 +19,7 @@ interface UseGameCreationProps {
     id: string;
     displayName: string;
     avatar: string;
+    role?: string;
   };
   flashcards: Flashcard[];
   setGame: (value: PictureGuessGame | null | ((prev: PictureGuessGame | null) => PictureGuessGame | null)) => void;
@@ -42,7 +43,13 @@ export function useGameCreation({
   setRoomId,
   scheduleBotJoin,
 }: UseGameCreationProps) {
+  // Guard against concurrent/double creation (StrictMode, async races)
+  const creatingRef = useRef(false);
+
   const createGame = useCallback(async (data: CreatePictureGuessData) => {
+    if (creatingRef.current) return;
+    creatingRef.current = true;
+
     setLoading(true);
     setError(null);
 
@@ -74,6 +81,7 @@ export function useGameCreation({
         odinhId: currentUser.id,
         displayName: currentUser.displayName,
         avatar: currentUser.avatar,
+        role: currentUser.role,
         score: 0,
         correctGuesses: 0,
         totalGuesses: 0,
@@ -108,6 +116,7 @@ export function useGameCreation({
       // Schedule bot auto-join
       scheduleBotJoin(setGame, data.maxPlayers);
     } catch (err) {
+      creatingRef.current = false; // Allow retry on error
       setError(err instanceof Error ? err.message : 'Không thể tạo trò chơi');
     } finally {
       setLoading(false);

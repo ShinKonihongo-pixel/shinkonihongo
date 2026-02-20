@@ -424,6 +424,20 @@ body:has(.pl-lobby) .nav.nav-open {
   color: #fff; transform: scale(1.15);
 }
 
+/* --- Add Bot button (used by games that support bots) --- */
+.pl-lobby-add-bot-btn {
+  display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+  width: 100%; padding: 0.55rem 0.75rem;
+  background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.15);
+  border-radius: 10px; color: rgba(255,255,255,0.55);
+  font-size: 0.78rem; font-weight: 600; cursor: pointer;
+  transition: all 0.25s ease;
+}
+.pl-lobby-add-bot-btn:hover {
+  background: rgba(var(--pl-accent-rgb),0.1); border-color: rgba(var(--pl-accent-rgb),0.35);
+  color: rgba(var(--pl-accent-rgb),0.9);
+}
+
 /* --- Mobile responsive — tablet --- */
 @media (max-width: 768px) {
   .pl-lobby-body { flex-direction: column; overflow-y: auto; -webkit-overflow-scrolling: touch; }

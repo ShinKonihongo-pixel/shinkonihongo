@@ -1,10 +1,9 @@
 // Kanji Battle Page - Main game page
+// Setup is handled by Game Hub's unified modal. This page only manages: lobby → play → results
 /* eslint-disable react-hooks/rules-of-hooks */
 // NOTE: React Compiler false positives - setState calls in useCallback are valid
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
-  KanjiBattleMenu,
-  KanjiBattleSetup,
   KanjiBattleLobby,
   KanjiBattlePlay,
   KanjiBattleResults,
@@ -14,7 +13,7 @@ import { useKanjiBattle } from '../../hooks/use-kanji-battle';
 import type { CreateKanjiBattleData, KanjiBattleSkillType, StrokeMatchResult } from '../../types/kanji-battle';
 import type { GameSession } from '../../types/user';
 
-type PageView = 'menu' | 'setup' | 'lobby' | 'play' | 'results' | 'guide';
+type PageView = 'lobby' | 'play' | 'results' | 'guide';
 
 interface KanjiBattlePageProps {
   onClose: () => void;
@@ -24,7 +23,7 @@ interface KanjiBattlePageProps {
     avatar: string;
     role?: string;
   };
-  initialView?: PageView;
+  initialView?: string;
   // XP tracking
   onSaveGameSession?: (data: Omit<GameSession, 'id' | 'userId'>) => void;
   initialRoomConfig?: Record<string, unknown>;
@@ -34,14 +33,14 @@ interface KanjiBattlePageProps {
 export const KanjiBattlePage: React.FC<KanjiBattlePageProps> = ({
   onClose,
   currentUser = { id: 'user-1', displayName: 'Player', avatar: '👤' },
-  initialView = 'menu',
   onSaveGameSession,
   initialRoomConfig,
   initialJoinCode,
 }) => {
-  const [view, setView] = useState<PageView>(initialView);
+  const [view, setView] = useState<PageView>('lobby');
   const [notification, setNotification] = useState<{ message: string; type: 'info' | 'warning' } | null>(null);
   const gameSessionSaved = useRef(false);
+  const createOnceRef = useRef(false);
 
   useEffect(() => {
     if (notification) {
@@ -53,6 +52,7 @@ export const KanjiBattlePage: React.FC<KanjiBattlePageProps> = ({
   const {
     game,
     gameResults,
+    loading,
     createGame,
     joinGame,
     leaveGame,
@@ -66,12 +66,13 @@ export const KanjiBattlePage: React.FC<KanjiBattlePageProps> = ({
     resetGame,
   } = useKanjiBattle({ currentUser });
 
-  // Auto-create room from unified setup
-  React.useEffect(() => {
-    if (initialRoomConfig && !game) {
+  // Auto-create room from unified setup (Game Hub modal) — guarded against StrictMode double-fire
+  useEffect(() => {
+    if (initialRoomConfig && !game && !createOnceRef.current) {
+      createOnceRef.current = true;
       const cfg = initialRoomConfig as unknown as CreateKanjiBattleData;
       createGame({
-        title: cfg.title || 'Dai Chien Kanji',
+        title: cfg.title || 'Đại Chiến Kanji',
         totalRounds: cfg.totalRounds || 15,
         timePerQuestion: cfg.timePerQuestion || 15,
         maxPlayers: cfg.maxPlayers || 10,
@@ -79,33 +80,16 @@ export const KanjiBattlePage: React.FC<KanjiBattlePageProps> = ({
         gameMode: cfg.gameMode || 'read',
         selectedLevels: cfg.selectedLevels || ['N5'],
       });
-      setView('lobby');
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-join game from WaitingRoom or QR code
-  React.useEffect(() => {
-    if (initialJoinCode && !game) {
-      joinGame(initialJoinCode);
-      setView('lobby');
+  // Auto-join game from QR code
+  useEffect(() => {
+    if (initialJoinCode && !game && !createOnceRef.current) {
+      createOnceRef.current = true;
+      joinGame(initialJoinCode).catch(() => {});
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleCreateGame = useCallback(
-    (data: CreateKanjiBattleData) => {
-      createGame(data);
-      setView('lobby');
-    },
-    [createGame]
-  );
-
-  const handleJoinGame = useCallback(
-    (code: string) => {
-      joinGame(code);
-      setNotification({ message: 'Chức năng tham gia phòng đang phát triển!', type: 'warning' });
-    },
-    [joinGame]
-  );
 
   const handleStartGame = useCallback(() => {
     startGame();
@@ -114,8 +98,8 @@ export const KanjiBattlePage: React.FC<KanjiBattlePageProps> = ({
 
   const handleLeaveGame = useCallback(() => {
     leaveGame();
-    setView('menu');
-  }, [leaveGame]);
+    onClose();
+  }, [leaveGame, onClose]);
 
   const handleSubmitAnswer = useCallback(
     (answer: string) => { submitAnswer(answer); },
@@ -140,8 +124,8 @@ export const KanjiBattlePage: React.FC<KanjiBattlePageProps> = ({
 
   const handlePlayAgain = useCallback(() => {
     resetGame();
-    setView('menu');
-  }, [resetGame]);
+    onClose();
+  }, [resetGame, onClose]);
 
   const handleExit = useCallback(() => {
     resetGame();
@@ -153,7 +137,7 @@ export const KanjiBattlePage: React.FC<KanjiBattlePageProps> = ({
   }, []);
 
   // Update view based on game status
-  React.useEffect(() => {
+  useEffect(() => {
     if (!game) return;
 
     if (game.status === 'finished' && gameResults) {
@@ -164,6 +148,8 @@ export const KanjiBattlePage: React.FC<KanjiBattlePageProps> = ({
       game.status === 'skill_phase'
     ) {
       setView('play');
+    } else if (game.status === 'waiting') {
+      setView('lobby');
     }
   }, [game, gameResults]);
 
@@ -191,74 +177,62 @@ export const KanjiBattlePage: React.FC<KanjiBattlePageProps> = ({
     }
   }, [game, gameResults, currentUser.id, onSaveGameSession]);
 
-  const renderContent = () => {
-    switch (view) {
-      case 'guide':
-        return <KanjiBattleGuide onClose={() => setView('menu')} />;
+  // Loading state — game is being created/joined
+  if (!game && (loading || initialRoomConfig || initialJoinCode)) {
+    return (
+      <div className="speed-quiz-page">
+        <div className="game-loading-fallback">
+          <div className="loading-spinner" />
+          <p>Đang tạo phòng...</p>
+        </div>
+      </div>
+    );
+  }
 
-      case 'setup':
-        // Skip setup modal if auto-creating from initialRoomConfig
-        if (initialRoomConfig) break;
-        return (
-          <KanjiBattleSetup
-            onCreateGame={handleCreateGame}
-            onBack={() => setView('menu')}
-          />
-        );
-
-      case 'lobby':
-        if (!game) { setView('menu'); return null; }
-        return (
-          <KanjiBattleLobby
-            game={game}
-            currentPlayerId={currentUser.id}
-            onStartGame={handleStartGame}
-            onAddBot={handleAddBot}
-            onLeave={handleLeaveGame}
-            onKickPlayer={kickPlayer}
-          />
-        );
-
-      case 'play':
-        if (!game) { setView('menu'); return null; }
-        return (
-          <KanjiBattlePlay
-            game={game}
-            currentPlayerId={currentUser.id}
-            onSubmitAnswer={handleSubmitAnswer}
-            onSubmitDrawing={handleSubmitDrawing}
-            onUseHint={handleUseHint}
-            onSelectSkill={handleSelectSkill}
-            onNextRound={handleNextRound}
-          />
-        );
-
-      case 'results':
-        if (!gameResults) { setView('menu'); return null; }
-        return (
-          <KanjiBattleResults
-            results={gameResults}
-            currentPlayerId={currentUser.id}
-            onPlayAgain={handlePlayAgain}
-            onExit={handleExit}
-          />
-        );
-
-      default:
-        return (
-          <KanjiBattleMenu
-            onCreateGame={() => setView('setup')}
-            onJoinGame={handleJoinGame}
-            onShowGuide={() => setView('guide')}
-            onClose={onClose}
-          />
-        );
-    }
-  };
+  // No game and no pending creation → go back to hub
+  if (!game && !loading) {
+    onClose();
+    return null;
+  }
 
   return (
     <div className="speed-quiz-page">
-      {renderContent()}
+      {view === 'guide' && (
+        <KanjiBattleGuide onClose={() => setView('lobby')} />
+      )}
+
+      {view === 'lobby' && game && (
+        <KanjiBattleLobby
+          game={game}
+          currentPlayerId={currentUser.id}
+          onStartGame={handleStartGame}
+          onAddBot={handleAddBot}
+          onLeave={handleLeaveGame}
+          onKickPlayer={kickPlayer}
+        />
+      )}
+
+      {view === 'play' && game && (
+        <KanjiBattlePlay
+          game={game}
+          currentPlayerId={currentUser.id}
+          onSubmitAnswer={handleSubmitAnswer}
+          onSubmitDrawing={handleSubmitDrawing}
+          onUseHint={handleUseHint}
+          onSelectSkill={handleSelectSkill}
+          onNextRound={handleNextRound}
+        />
+      )}
+
+      {view === 'results' && gameResults && (
+        <KanjiBattleResults
+          results={gameResults}
+          currentPlayerId={currentUser.id}
+          onPlayAgain={handlePlayAgain}
+          onExit={handleExit}
+        />
+      )}
+
       {notification && (
         <div className={`game-notification ${notification.type}`}>
           <span className="notification-icon">

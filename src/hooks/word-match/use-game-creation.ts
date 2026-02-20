@@ -1,7 +1,7 @@
 // Word match game creation
 // Handles game initialization - writes to Firestore for cross-device multiplayer
 
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import type {
   WordMatchGame,
   WordMatchPlayer,
@@ -44,7 +44,13 @@ export function useGameCreation({
   setRoomId,
   scheduleBotJoin,
 }: UseGameCreationProps) {
+  // Guard against concurrent/double creation (StrictMode, async races)
+  const creatingRef = useRef(false);
+
   const createGame = useCallback(async (data: CreateWordMatchData) => {
+    if (creatingRef.current) return;
+    creatingRef.current = true;
+
     setLoading(true);
     setError(null);
 
@@ -114,6 +120,7 @@ export function useGameCreation({
       // Schedule bot auto-join
       scheduleBotJoin(setGame, data.maxPlayers);
     } catch (err) {
+      creatingRef.current = false; // Allow retry on error
       setError(err instanceof Error ? err.message : 'Không thể tạo game');
     } finally {
       setLoading(false);

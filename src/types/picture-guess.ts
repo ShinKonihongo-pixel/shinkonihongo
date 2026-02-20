@@ -41,6 +41,7 @@ export interface PictureGuessPlayer {
   odinhId: string;
   displayName: string;
   avatar: string;
+  role?: string;
   score: number;
   correctGuesses: number;
   totalGuesses: number;

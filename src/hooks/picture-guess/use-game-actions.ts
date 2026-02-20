@@ -14,6 +14,7 @@ interface UseGameActionsProps {
     id: string;
     displayName: string;
     avatar: string;
+    role?: string;
   };
   game: PictureGuessGame | null;
   setGame: (updater: (prev: PictureGuessGame | null) => PictureGuessGame | null) => void;
@@ -23,6 +24,7 @@ interface UseGameActionsProps {
   setRoomId: (id: string | null) => void;
   isHost: boolean;
   clearBotTimers: () => void;
+  deleteCurrentRoom: () => void;
 }
 
 export function useGameActions({
@@ -35,6 +37,7 @@ export function useGameActions({
   setRoomId,
   isHost,
   clearBotTimers,
+  deleteCurrentRoom,
 }: UseGameActionsProps) {
   // Join existing game via Firestore
   const joinGame = useCallback(async (code: string) => {
@@ -70,6 +73,7 @@ export function useGameActions({
         odinhId: currentUser.id,
         displayName: currentUser.displayName,
         avatar: currentUser.avatar,
+        role: currentUser.role,
         score: 0,
         correctGuesses: 0,
         totalGuesses: 0,
@@ -94,12 +98,14 @@ export function useGameActions({
     }
   }, [currentUser, setRoomId, setGameResults, setLoading, setError]);
 
-  // Leave game
+  // Leave game — delete Firestore room directly (not via state updater)
+  // because onClose() may unmount the component before React processes the updater
   const leaveGame = useCallback(() => {
     if (!game) return;
     clearBotTimers();
-    setGame(() => null);
-  }, [game, clearBotTimers, setGame]);
+    deleteCurrentRoom(); // Direct Firestore deletion (sets roomIdRef to null)
+    setGame(() => null); // Local cleanup only (roomIdRef is null, so wrapper skips delete)
+  }, [game, clearBotTimers, deleteCurrentRoom, setGame]);
 
   // Start game (host only or single player)
   const startGame = useCallback(() => {
@@ -149,12 +155,14 @@ export function useGameActions({
     }, 3000);
   }, [game, isHost, clearBotTimers, setGame, setError]);
 
-  // Reset game
+  // Reset game — direct Firestore deletion for same reason as leaveGame
   const resetGame = useCallback(() => {
+    clearBotTimers();
+    deleteCurrentRoom();
     setGame(() => null);
     setGameResults(null);
     setError(null);
-  }, [setGame, setGameResults, setError]);
+  }, [clearBotTimers, deleteCurrentRoom, setGame, setGameResults, setError]);
 
   return {
     joinGame,

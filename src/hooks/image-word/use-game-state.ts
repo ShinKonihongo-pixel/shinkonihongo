@@ -1,8 +1,8 @@
-// Word match game state management
+// Image-Word game state management
 // Game state is synced to Firestore for cross-device multiplayer
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import type { WordMatchGame, WordMatchResults, WordMatchPlayer } from '../../types/word-match';
+import type { ImageWordMultiplayerGame, ImageWordMultiplayerResults, ImageWordMultiplayerPlayer } from '../../types/image-word';
 import { useBotAutoJoin } from '../shared/use-bot-auto-join';
 import {
   updateGameRoom,
@@ -16,8 +16,8 @@ interface UseGameStateProps {
 
 export function useGameState({ currentUserId }: UseGameStateProps) {
   // State
-  const [game, setGameLocal] = useState<WordMatchGame | null>(null);
-  const [gameResults, setGameResults] = useState<WordMatchResults | null>(null);
+  const [game, setGameLocal] = useState<ImageWordMultiplayerGame | null>(null);
+  const [gameResults, setGameResults] = useState<ImageWordMultiplayerResults | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,22 +30,15 @@ export function useGameState({ currentUserId }: UseGameStateProps) {
   const roundTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Bot auto-join hook
-  const { scheduleBotJoin, clearBotTimers } = useBotAutoJoin<WordMatchPlayer>({
+  const { scheduleBotJoin, clearBotTimers } = useBotAutoJoin<ImageWordMultiplayerPlayer>({
     createBotPlayer: (bot, botId) => ({
       odinhId: botId,
       displayName: bot.name,
       avatar: bot.avatar,
       score: 0,
-      correctPairs: 0,
-      perfectRounds: 0,
-      isDisconnected: false,
-      disconnectedTurns: 0,
-      hasShield: false,
-      shieldTurns: 0,
-      isChallenged: false,
-      currentMatches: [],
-      hasSubmitted: false,
-      streak: 0,
+      matchedPairs: [],
+      wrongAttempts: 0,
+      isComplete: false,
       isBot: true,
     }),
     schedules: [{ delay: 5000, count: 1 }],
@@ -63,7 +56,7 @@ export function useGameState({ currentUserId }: UseGameStateProps) {
   // Firestore subscription - updates local state from remote changes
   useEffect(() => {
     if (!roomId) return;
-    return subscribeToGameRoom<WordMatchGame>(roomId, (remoteGame) => {
+    return subscribeToGameRoom<ImageWordMultiplayerGame>(roomId, (remoteGame) => {
       if (!remoteGame) {
         setGameLocal(null);
         return;
@@ -74,7 +67,7 @@ export function useGameState({ currentUserId }: UseGameStateProps) {
 
   // setGame wrapper: updates local state AND syncs to Firestore
   const setGame = useCallback((
-    updater: ((prev: WordMatchGame | null) => WordMatchGame | null) | WordMatchGame | null
+    updater: ((prev: ImageWordMultiplayerGame | null) => ImageWordMultiplayerGame | null) | ImageWordMultiplayerGame | null
   ) => {
     setGameLocal(prev => {
       const newState = typeof updater === 'function' ? updater(prev) : updater;
@@ -83,7 +76,7 @@ export function useGameState({ currentUserId }: UseGameStateProps) {
         // Sync to Firestore (fire-and-forget)
         const { id: _id, ...data } = newState;
         updateGameRoom(roomIdRef.current, data as Record<string, unknown>).catch(err =>
-          console.error('Failed to sync word-match state:', err)
+          console.error('Failed to sync image-word state:', err)
         );
       } else if (!newState && roomIdRef.current) {
         // Game reset/ended - clean up Firestore room

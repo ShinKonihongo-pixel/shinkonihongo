@@ -1,9 +1,9 @@
-// Kanji Battle Lobby — Premium full-screen lobby using shared PremiumLobbyShell
-// Matches Bingo lobby quality with Kanji Battle-specific accent, rules, and bot support
+// Image Word Lobby — Premium full-screen lobby using shared PremiumLobbyShell
+// Green/emerald accent for image-matching theme, with VIP name glow and avatar border effects
 
 import { useState, useMemo, useCallback } from 'react';
-import { Swords, Clock, Sparkles, Layers, BookOpen, PenTool, Hash, Bot } from 'lucide-react';
-import type { KanjiBattleGame } from '../../types/kanji-battle';
+import { Image, Clock, Hash, Users, Bot } from 'lucide-react';
+import type { ImageWordMultiplayerGame } from '../../types/image-word';
 import {
   PremiumLobbyShell,
   LobbyHostCard,
@@ -14,15 +14,15 @@ import {
 } from '../shared/game-lobby';
 import { ConfirmModal } from '../ui/confirm-modal';
 
-// Kanji Battle accent: fiery red/crimson for battle theme
-const KANJI_BATTLE_ACCENT = {
-  accent: '#EF4444',
-  accentDark: '#B91C1C',
-  accentRgb: '239, 68, 68',
+// Image Word accent: green/emerald
+const IMAGE_WORD_ACCENT = {
+  accent: '#10B981',
+  accentDark: '#059669',
+  accentRgb: '16, 185, 129',
 };
 
-interface KanjiBattleLobbyProps {
-  game: KanjiBattleGame;
+interface ImageWordLobbyProps {
+  game: ImageWordMultiplayerGame;
   currentPlayerId: string;
   onStartGame: () => void;
   onAddBot: () => void;
@@ -30,14 +30,14 @@ interface KanjiBattleLobbyProps {
   onKickPlayer?: (playerId: string) => void;
 }
 
-export const KanjiBattleLobby: React.FC<KanjiBattleLobbyProps> = ({
+export function ImageWordLobby({
   game,
   currentPlayerId,
   onStartGame,
   onAddBot,
   onLeave,
   onKickPlayer,
-}) => {
+}: ImageWordLobbyProps) {
   const [qrVisible, setQrVisible] = useState(true);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [kickTarget, setKickTarget] = useState<string | null>(null);
@@ -48,16 +48,22 @@ export const KanjiBattleLobby: React.FC<KanjiBattleLobbyProps> = ({
     const list = Object.values(game.players);
     return {
       hostPlayer: list.find(p => p.odinhId === game.hostId),
-      normalizedPlayers: list.map(p => normalizePlayer({
-        ...p, odinhId: p.odinhId, isHost: p.odinhId === game.hostId, isBot: p.isBot,
-      })),
+      normalizedPlayers: list.map(p =>
+        normalizePlayer({
+          ...p,
+          odinhId: p.odinhId,
+          isHost: p.odinhId === game.hostId,
+          isBot: (p as any).isBot,
+          role: p.role,
+        })
+      ),
       playerCount: list.length,
       fillPercent: Math.min(100, (list.length / game.settings.maxPlayers) * 100),
     };
   }, [game.players, game.settings.maxPlayers, game.hostId]);
 
   const canStart = playerCount >= game.settings.minPlayers;
-  const joinUrl = `${window.location.origin}?game=kanji-battle&join=${game.code}`;
+  const joinUrl = `${window.location.origin}?game=image-word&join=${game.code}`;
 
   const handleKick = useCallback((id: string) => setKickTarget(id), []);
   const handleKickConfirm = useCallback(() => {
@@ -66,33 +72,23 @@ export const KanjiBattleLobby: React.FC<KanjiBattleLobbyProps> = ({
     setKickTarget(null);
   }, [kickTarget, onKickPlayer]);
 
-  // Meta tags — game settings displayed as pills
+  // Meta tags
   const metaTags = (
     <>
       <span className="pl-lobby-tag">
-        {game.settings.gameMode === 'read'
-          ? <><BookOpen size={13} /> Đọc Kanji</>
-          : <><PenTool size={13} /> Viết Kanji</>
-        }
-      </span>
-      <span className="pl-lobby-tag">
-        <Layers size={13} />
-        {game.settings.selectedLevels.join(', ')}
-      </span>
-      <span className="pl-lobby-tag">
         <Hash size={13} />
-        {game.settings.totalRounds} câu
+        {game.settings.totalPairs} cặp
       </span>
-      <span className="pl-lobby-tag">
-        <Clock size={13} />
-        {game.settings.timePerQuestion}s/câu
-      </span>
-      {game.settings.skillsEnabled && (
-        <span className="pl-lobby-tag pl-lobby-tag-accent">
-          <Sparkles size={13} />
-          Kỹ năng
+      {game.settings.timeLimit > 0 && (
+        <span className="pl-lobby-tag">
+          <Clock size={13} />
+          {game.settings.timeLimit}s
         </span>
       )}
+      <span className="pl-lobby-tag">
+        <Users size={13} />
+        Tối đa {game.settings.maxPlayers} người
+      </span>
       <span className="pl-lobby-tag pl-lobby-tag-live">
         <span className="pl-lobby-live-dot" />
         Live
@@ -113,7 +109,7 @@ export const KanjiBattleLobby: React.FC<KanjiBattleLobbyProps> = ({
       <LobbyJoinSection
         code={game.code}
         joinUrl={joinUrl}
-        shareText={`Tham gia Đại chiến Kanji: ${game.title}`}
+        shareText={`Tham gia Nối Hình - Từ: ${game.title}`}
         qrVisible={qrVisible}
         onToggleQr={() => setQrVisible(v => !v)}
       />
@@ -127,23 +123,10 @@ export const KanjiBattleLobby: React.FC<KanjiBattleLobbyProps> = ({
       <div className="pl-lobby-rules">
         <h4>Luật chơi</h4>
         <ul>
-          {game.settings.gameMode === 'read' ? (
-            <>
-              <li>Mỗi lượt xuất hiện 1 Kanji → nhập nghĩa / Hán Việt / On / Kun</li>
-              <li>Trả lời đúng & nhanh nhất → được nhiều điểm hơn</li>
-            </>
-          ) : (
-            <>
-              <li>Mỗi lượt xuất hiện nghĩa → vẽ Kanji đúng thứ tự nét</li>
-              <li>Chấm điểm theo độ chính xác nét viết</li>
-            </>
-          )}
-          <li>Trả lời sai bị trừ {game.settings.pointsPenalty} điểm</li>
-          <li>Mỗi người có {game.settings.hintsPerPlayer} lượt gợi ý</li>
-          {game.settings.skillsEnabled && (
-            <li>Mỗi {game.settings.skillInterval} lượt: người đúng nhận kỹ năng đặc biệt</li>
-          )}
-          <li>Tổng {game.settings.totalRounds} câu — ai nhiều điểm nhất thắng!</li>
+          <li>Nối hình ảnh bên trái với từ vựng tương ứng bên phải</li>
+          <li>Nối đúng = +100 điểm, nối sai = -10 điểm</li>
+          <li>Hoàn thành nhanh = bonus điểm thời gian</li>
+          <li>Ai hoàn thành tất cả các cặp nhanh nhất thắng!</li>
         </ul>
       </div>
     </>
@@ -163,14 +146,14 @@ export const KanjiBattleLobby: React.FC<KanjiBattleLobbyProps> = ({
     />
   );
 
-  // Footer: start button
+  // Footer
   const footerContent = (
     <LobbyStartFooter
       isHost={isHost}
       canStart={canStart}
       onStart={onStartGame}
-      startIcon={<Swords size={20} />}
-      startLabel="Bắt Đầu Đại Chiến"
+      startIcon={<Image size={20} />}
+      startLabel="Bắt Đầu Nối Hình"
       disabledLabel={`Cần ${game.settings.minPlayers} người chơi`}
     />
   );
@@ -183,7 +166,7 @@ export const KanjiBattleLobby: React.FC<KanjiBattleLobbyProps> = ({
         leftContent={leftContent}
         rightContent={rightContent}
         footerContent={footerContent}
-        accent={KANJI_BATTLE_ACCENT}
+        accent={IMAGE_WORD_ACCENT}
         onLeave={() => setShowLeaveConfirm(true)}
         qrHidden={!qrVisible}
       />
@@ -192,9 +175,11 @@ export const KanjiBattleLobby: React.FC<KanjiBattleLobbyProps> = ({
       <ConfirmModal
         isOpen={showLeaveConfirm}
         title="Rời khỏi phòng?"
-        message={isHost
-          ? 'Bạn là host. Nếu bạn rời đi, phòng sẽ bị huỷ và tất cả người chơi sẽ bị đuổi ra.'
-          : 'Bạn có chắc muốn rời khỏi phòng chơi này?'}
+        message={
+          isHost
+            ? 'Bạn là host. Nếu bạn rời đi, phòng sẽ bị huỷ và tất cả người chơi sẽ bị đuổi ra.'
+            : 'Bạn có chắc muốn rời khỏi phòng chơi này?'
+        }
         confirmText="Rời phòng"
         cancelText="Ở lại"
         onConfirm={() => { setShowLeaveConfirm(false); onLeave(); }}
@@ -213,4 +198,4 @@ export const KanjiBattleLobby: React.FC<KanjiBattleLobbyProps> = ({
       />
     </>
   );
-};
+}

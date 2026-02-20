@@ -1,42 +1,57 @@
-// Picture Guess Page - Main page orchestrating all game components
-// Manages view state and routes to appropriate game phase
-
-import { useState, useCallback, useEffect } from 'react';
-import { usePictureGuess } from '../../hooks/picture-guess';
-import { PictureGuessMenu } from '../picture-guess/picture-guess-menu';
-import { PictureGuessSetup } from '../picture-guess/picture-guess-setup';
+// Picture Guess Page - Main game page
+// Setup is handled by Game Hub's unified modal. This page only manages: lobby → play → results
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { PictureGuessLobby } from '../picture-guess/picture-guess-lobby';
 import { PictureGuessPlay } from '../picture-guess/picture-guess-play';
 import { PictureGuessResultsView } from '../picture-guess/picture-guess-results';
+import { usePictureGuess } from '../../hooks/picture-guess';
 import type { CreatePictureGuessData } from '../../types/picture-guess';
-import type { JLPTLevel } from '../../types/flashcard';
-import type { CurrentUser } from '../../types/user';
-import type { Flashcard } from '../../types/flashcard';
+import type { JLPTLevel, Flashcard } from '../../types/flashcard';
+import type { GameSession } from '../../types/user';
 import '../picture-guess/picture-guess.css';
 
-// View state for page routing
-type ViewState = 'menu' | 'setup-single' | 'setup-multi' | 'lobby' | 'playing' | 'results';
+type PageView = 'lobby' | 'play' | 'results';
 
 interface PictureGuessPageProps {
-  currentUser: CurrentUser | null;
-  flashcards: Flashcard[];
+  onClose: () => void;
+  currentUser?: {
+    id: string;
+    displayName: string;
+    avatar: string;
+    role?: string;
+  };
+  flashcards?: Flashcard[];
+  initialView?: string;
+  // XP tracking
+  onSaveGameSession?: (data: Omit<GameSession, 'id' | 'userId'>) => void;
   initialRoomConfig?: Record<string, unknown>;
   initialJoinCode?: string;
 }
 
-export function PictureGuessPage({ currentUser, flashcards, initialRoomConfig, initialJoinCode }: PictureGuessPageProps) {
-  const [view, setView] = useState<ViewState>('menu');
+export const PictureGuessPage: React.FC<PictureGuessPageProps> = ({
+  onClose,
+  currentUser = { id: 'user-1', displayName: 'Player', avatar: '👤' },
+  flashcards = [],
+  onSaveGameSession,
+  initialRoomConfig,
+  initialJoinCode,
+}) => {
+  const [view, setView] = useState<PageView>('lobby');
+  const [notification, setNotification] = useState<{ message: string; type: 'info' | 'warning' } | null>(null);
+  const gameSessionSaved = useRef(false);
+  const createOnceRef = useRef(false);
 
-  // Initialize hook with current user
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
   const {
     game,
     gameResults,
     loading,
-    error,
-    isHost,
-    currentPlayer,
-    currentPuzzle,
-    sortedPlayers,
     createGame,
     joinGame,
     leaveGame,
@@ -47,32 +62,19 @@ export function PictureGuessPage({ currentUser, flashcards, initialRoomConfig, i
     revealAnswer,
     nextPuzzle,
     resetGame,
-  } = usePictureGuess({
-    currentUser: currentUser ? {
-      id: currentUser.id,
-      displayName: currentUser.displayName || currentUser.username,
-      avatar: currentUser.avatar || '🎮',
-    } : {
-      id: 'guest',
-      displayName: 'Guest',
-      avatar: '👤',
-    },
-    flashcards,
-  });
+    isHost,
+    currentPlayer,
+    currentPuzzle,
+    sortedPlayers,
+  } = usePictureGuess({ currentUser, flashcards });
 
-  // Auto-join game from WaitingRoom or QR code
+  // Auto-create room from unified setup (Game Hub modal) — guarded against StrictMode double-fire
   useEffect(() => {
-    if (initialJoinCode && !game) {
-      joinGame(initialJoinCode).then(() => setView('lobby')).catch(() => {});
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Auto-create room from unified setup
-  useEffect(() => {
-    if (initialRoomConfig && !game) {
+    if (initialRoomConfig && !game && !createOnceRef.current) {
+      createOnceRef.current = true;
       const cfg = initialRoomConfig;
       createGame({
-        title: (cfg.title as string) || 'Duoi Hinh Bat Chu',
+        title: (cfg.title as string) || 'Đuổi Hình Bắt Chữ',
         mode: 'multiplayer',
         jlptLevel: (cfg.jlptLevel as JLPTLevel) || 'N5',
         contentSource: 'flashcard',
@@ -82,115 +84,113 @@ export function PictureGuessPage({ currentUser, flashcards, initialRoomConfig, i
         allowHints: (cfg.hints as boolean) ?? true,
         speedBonus: (cfg.speedBonus as boolean) ?? true,
         penaltyWrongAnswer: (cfg.penaltyWrongAnswer as boolean) ?? false,
-      }).then(() => setView('lobby'));
+      });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Handle creating a game
-  const handleCreate = useCallback(async (data: CreatePictureGuessData) => {
-    await createGame(data);
-    setView('lobby');
-  }, [createGame]);
-
-  // Handle joining a game
-  const handleJoin = useCallback(async (code: string) => {
-    try {
-      await joinGame(code);
-      setView('lobby');
-    } catch {
-      // Error is handled by hook
+  // Auto-join game from QR code
+  useEffect(() => {
+    if (initialJoinCode && !game && !createOnceRef.current) {
+      createOnceRef.current = true;
+      joinGame(initialJoinCode).catch(() => {});
     }
-  }, [joinGame]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Handle starting the game
-  const handleStart = useCallback(() => {
+  const handleStartGame = useCallback(() => {
     startGame();
-    setView('playing');
+    setView('play');
   }, [startGame]);
 
-  // Handle leaving the game
-  const handleLeave = useCallback(() => {
+  const handleLeaveGame = useCallback(() => {
     leaveGame();
-    setView('menu');
-  }, [leaveGame]);
+    onClose();
+  }, [leaveGame, onClose]);
 
-  // Handle play again
+  const handleAddBot = useCallback(() => {
+    setNotification({ message: 'Bot sẽ tự động được thêm sau vài giây!', type: 'info' });
+  }, []);
+
   const handlePlayAgain = useCallback(() => {
     resetGame();
-    setView('menu');
-  }, [resetGame]);
+    onClose();
+  }, [resetGame, onClose]);
 
-  // Determine current view based on game state
-  const getCurrentView = (): ViewState => {
-    if (gameResults) return 'results';
-    if (game) {
-      if (game.status === 'waiting') return 'lobby';
-      if (game.status !== 'finished') return 'playing';
-      return 'results';
+  const handleExit = useCallback(() => {
+    resetGame();
+    onClose();
+  }, [resetGame, onClose]);
+
+  // Update view based on game status
+  useEffect(() => {
+    if (!game) return;
+
+    if (game.status === 'finished' && gameResults) {
+      setView('results');
+    } else if (
+      game.status === 'starting' ||
+      game.status === 'showing' ||
+      game.status === 'guessing' ||
+      game.status === 'revealed'
+    ) {
+      setView('play');
+    } else if (game.status === 'waiting') {
+      setView('lobby');
     }
-    return view;
-  };
+  }, [game, gameResults]);
 
-  const currentView = getCurrentView();
+  // Save game session when game finishes
+  useEffect(() => {
+    if (game?.status === 'finished' && !gameSessionSaved.current && onSaveGameSession && gameResults) {
+      gameSessionSaved.current = true;
+      const myResult = gameResults.rankings.find(p => p.odinhId === currentUser.id);
+      if (myResult) {
+        onSaveGameSession({
+          date: new Date().toISOString().split('T')[0],
+          gameTitle: 'Đuổi Hình Bắt Chữ',
+          rank: myResult.rank,
+          totalPlayers: gameResults.rankings.length,
+          score: myResult.score,
+          correctAnswers: myResult.correctGuesses,
+          totalQuestions: gameResults.totalPuzzles,
+        });
+      }
+    }
+    if (!game || game.status !== 'finished') {
+      gameSessionSaved.current = false;
+    }
+  }, [game, gameResults, currentUser.id, onSaveGameSession]);
 
-  // No user logged in
-  if (!currentUser) {
+  // Loading state — game is being created/joined
+  if (!game && (loading || initialRoomConfig || initialJoinCode)) {
     return (
       <div className="picture-guess-page">
-        <div className="pg-login-prompt">
-          <h2>Vui lòng đăng nhập</h2>
-          <p>Bạn cần đăng nhập để chơi Đuổi Hình Bắt Chữ</p>
+        <div className="game-loading-fallback">
+          <div className="loading-spinner" />
+          <p>Đang tạo phòng...</p>
         </div>
       </div>
     );
   }
 
+  // No game and no pending creation → go back to hub
+  if (!game && !loading) {
+    onClose();
+    return null;
+  }
+
   return (
     <div className="picture-guess-page">
-      {/* Menu View */}
-      {currentView === 'menu' && (
-        <PictureGuessMenu
-          onStartSingle={() => setView('setup-single')}
-          onCreateMultiplayer={() => setView('setup-multi')}
-          onJoinGame={handleJoin}
-          loading={loading}
-          error={error}
-        />
-      )}
-
-      {/* Setup View - Single Player */}
-      {currentView === 'setup-single' && (
-        <PictureGuessSetup
-          mode="single"
-          onBack={() => setView('menu')}
-          onCreate={handleCreate}
-          loading={loading}
-        />
-      )}
-
-      {/* Setup View - Multiplayer */}
-      {currentView === 'setup-multi' && (
-        <PictureGuessSetup
-          mode="multiplayer"
-          onBack={() => setView('menu')}
-          onCreate={handleCreate}
-          loading={loading}
-        />
-      )}
-
-      {/* Lobby View */}
-      {currentView === 'lobby' && game && (
+      {view === 'lobby' && game && (
         <PictureGuessLobby
           game={game}
-          currentPlayer={currentPlayer}
-          isHost={isHost}
-          onStart={handleStart}
-          onLeave={handleLeave}
+          currentPlayerId={currentUser.id}
+          onStartGame={handleStartGame}
+          onAddBot={handleAddBot}
+          onLeave={handleLeaveGame}
         />
       )}
 
-      {/* Playing View */}
-      {currentView === 'playing' && game && (
+      {view === 'play' && game && (
         <PictureGuessPlay
           game={game}
           currentPlayer={currentPlayer}
@@ -202,19 +202,28 @@ export function PictureGuessPage({ currentUser, flashcards, initialRoomConfig, i
           onSubmitGuess={submitGuess}
           onRevealAnswer={revealAnswer}
           onNextPuzzle={nextPuzzle}
-          onLeave={handleLeave}
+          onLeave={handleLeaveGame}
         />
       )}
 
-      {/* Results View */}
-      {currentView === 'results' && gameResults && (
+      {view === 'results' && gameResults && (
         <PictureGuessResultsView
           results={gameResults}
           currentUserId={currentUser.id}
           onPlayAgain={handlePlayAgain}
-          onBackToMenu={handlePlayAgain}
+          onBackToMenu={handleExit}
         />
+      )}
+
+      {notification && (
+        <div className={`game-notification ${notification.type}`}>
+          <span className="notification-icon">
+            {notification.type === 'warning' ? '⚠️' : 'ℹ️'}
+          </span>
+          <span className="notification-text">{notification.message}</span>
+          <button className="notification-close" onClick={() => setNotification(null)}>✕</button>
+        </div>
       )}
     </div>
   );
-}
+};

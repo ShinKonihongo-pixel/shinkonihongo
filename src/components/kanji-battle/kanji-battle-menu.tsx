@@ -1,5 +1,9 @@
-// Kanji Battle Menu - Main entry point
-import React, { useState } from 'react';
+// Kanji Battle Menu — Premium dark entry point with animated background
+// Matches the PremiumLobbyShell aesthetic with battle-red accent
+
+import { useState } from 'react';
+import { Swords, Users, BookOpen, PenTool, Sparkles, X, ArrowRight, Keyboard } from 'lucide-react';
+import './kanji-battle-menu.css';
 
 interface KanjiBattleMenuProps {
   onCreateGame: () => void;
@@ -23,79 +27,117 @@ export const KanjiBattleMenu: React.FC<KanjiBattleMenuProps> = ({
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleJoin();
+  };
+
   return (
-    <div className="speed-quiz-menu">
-      <button className="speed-quiz-close-btn" onClick={onClose}>
-        ✕
+    <div className="kb-menu">
+      {/* Animated background */}
+      <div className="kb-menu-bg">
+        <div className="kb-menu-orb kb-menu-orb-1" />
+        <div className="kb-menu-orb kb-menu-orb-2" />
+        <div className="kb-menu-orb kb-menu-orb-3" />
+        <div className="kb-menu-grid" />
+      </div>
+
+      {/* Close button */}
+      <button className="kb-menu-close" onClick={onClose} title="Đóng">
+        <X size={18} />
       </button>
 
-      <div className="speed-quiz-menu-header">
-        <div className="speed-quiz-menu-icon">⚔️</div>
-        <h1>Đại Chiến Kanji</h1>
-        <p>Đọc hoặc viết kanji nhanh nhất để chiến thắng!</p>
-      </div>
-
-      <div className="speed-quiz-menu-actions">
-        <button className="speed-quiz-btn primary large" onClick={onCreateGame}>
-          <span className="btn-icon">🎮</span>
-          <span className="btn-text">Tạo Phòng</span>
-        </button>
-
-        {!showJoinInput ? (
-          <button
-            className="speed-quiz-btn secondary large"
-            onClick={() => setShowJoinInput(true)}
-          >
-            <span className="btn-icon">🚪</span>
-            <span className="btn-text">Vào Phòng</span>
-          </button>
-        ) : (
-          <div className="speed-quiz-join-input">
-            <input
-              type="text"
-              placeholder="Nhập mã phòng..."
-              value={joinCode}
-              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-              maxLength={6}
-              autoFocus
-            />
-            <button
-              className="speed-quiz-btn primary"
-              onClick={handleJoin}
-              disabled={joinCode.length !== 6}
-            >
-              Vào
-            </button>
-            <button
-              className="speed-quiz-btn secondary"
-              onClick={() => {
-                setShowJoinInput(false);
-                setJoinCode('');
-              }}
-            >
-              Hủy
-            </button>
+      {/* Content */}
+      <div className="kb-menu-content">
+        {/* Hero */}
+        <div className="kb-menu-hero">
+          <div className="kb-menu-icon-wrap">
+            <Swords size={48} strokeWidth={1.5} />
           </div>
-        )}
-
-        <button className="speed-quiz-btn outline large" onClick={onShowGuide}>
-          <span className="btn-icon">📖</span>
-          <span className="btn-text">Hướng Dẫn</span>
-        </button>
-      </div>
-
-      <div className="speed-quiz-menu-features">
-        <div className="feature">
-          <span className="feature-icon">📖</span>
-          <span>Đọc Kanji</span>
+          <h1 className="kb-menu-title">Đại Chiến Kanji</h1>
+          <p className="kb-menu-subtitle">Đọc hoặc viết kanji nhanh nhất để chiến thắng!</p>
         </div>
-        <div className="feature">
-          <span className="feature-icon">✍️</span>
-          <span>Viết Kanji</span>
+
+        {/* Action buttons */}
+        <div className="kb-menu-actions">
+          <button className="kb-menu-btn kb-menu-btn-primary" onClick={onCreateGame}>
+            <div className="kb-menu-btn-icon">
+              <Swords size={22} />
+            </div>
+            <div className="kb-menu-btn-text">
+              <span className="kb-menu-btn-label">Tạo Phòng</span>
+              <span className="kb-menu-btn-desc">Tạo phòng mới và mời bạn bè</span>
+            </div>
+            <ArrowRight size={18} className="kb-menu-btn-arrow" />
+          </button>
+
+          {!showJoinInput ? (
+            <button className="kb-menu-btn kb-menu-btn-secondary" onClick={() => setShowJoinInput(true)}>
+              <div className="kb-menu-btn-icon">
+                <Users size={22} />
+              </div>
+              <div className="kb-menu-btn-text">
+                <span className="kb-menu-btn-label">Vào Phòng</span>
+                <span className="kb-menu-btn-desc">Nhập mã phòng để tham gia</span>
+              </div>
+              <ArrowRight size={18} className="kb-menu-btn-arrow" />
+            </button>
+          ) : (
+            <div className="kb-menu-join-box">
+              <div className="kb-menu-join-header">
+                <Keyboard size={16} />
+                <span>Nhập mã phòng (6 ký tự)</span>
+              </div>
+              <div className="kb-menu-join-row">
+                <input
+                  type="text"
+                  className="kb-menu-join-input"
+                  placeholder="ABCDEF"
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                  onKeyDown={handleKeyDown}
+                  maxLength={6}
+                  autoFocus
+                />
+                <button
+                  className="kb-menu-join-go"
+                  onClick={handleJoin}
+                  disabled={joinCode.length !== 6}
+                >
+                  Vào
+                </button>
+              </div>
+              <button className="kb-menu-join-cancel" onClick={() => { setShowJoinInput(false); setJoinCode(''); }}>
+                Hủy
+              </button>
+            </div>
+          )}
+
+          <button className="kb-menu-btn kb-menu-btn-outline" onClick={onShowGuide}>
+            <div className="kb-menu-btn-icon">
+              <BookOpen size={22} />
+            </div>
+            <div className="kb-menu-btn-text">
+              <span className="kb-menu-btn-label">Hướng Dẫn</span>
+              <span className="kb-menu-btn-desc">Luật chơi và mẹo hay</span>
+            </div>
+            <ArrowRight size={18} className="kb-menu-btn-arrow" />
+          </button>
         </div>
-        <div className="feature">
-          <span className="feature-icon">✨</span>
-          <span>Kỹ năng đặc biệt</span>
+
+        {/* Feature chips */}
+        <div className="kb-menu-features">
+          <div className="kb-menu-chip">
+            <BookOpen size={14} />
+            <span>Đọc Kanji</span>
+          </div>
+          <div className="kb-menu-chip">
+            <PenTool size={14} />
+            <span>Viết Kanji</span>
+          </div>
+          <div className="kb-menu-chip kb-menu-chip-accent">
+            <Sparkles size={14} />
+            <span>Kỹ năng đặc biệt</span>
+          </div>
         </div>
       </div>
     </div>

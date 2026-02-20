@@ -1,214 +1,233 @@
 // Image-Word Game Page
-// Main page orchestrating game flow: menu → lesson select → play → results
-
-import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Image, Play, Settings, HelpCircle } from 'lucide-react';
-import { ImageWordLessonSelect, ImageWordGamePlay, ImageWordResults } from '../image-word';
-import { ImageWordManagementPage } from './image-word-management-page';
+// Setup is handled by Game Hub's unified modal. This page only manages: lobby → play → results
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { ImageWordGamePlay, ImageWordResults, ImageWordLobby } from '../image-word';
+import { useImageWordMultiplayer } from '../../hooks/image-word';
 import { useImageWordGame } from '../../hooks/use-image-word-game';
 import type { ImageWordLesson } from '../../types/image-word';
+import type { CreateImageWordData } from '../../types/image-word';
+import type { GameSession } from '../../types/user';
 
-type PageView = 'menu' | 'lessons' | 'play' | 'results' | 'management' | 'guide';
+type PageView = 'lobby' | 'play' | 'results';
 
 interface ImageWordPageProps {
   onClose: () => void;
-  initialView?: PageView;
+  currentUser?: {
+    id: string;
+    displayName: string;
+    avatar: string;
+    role?: string;
+  };
+  // XP tracking
+  onSaveGameSession?: (data: Omit<GameSession, 'id' | 'userId'>) => void;
   initialRoomConfig?: Record<string, unknown>;
+  initialJoinCode?: string;
 }
 
-export const ImageWordPage: React.FC<ImageWordPageProps> = ({ onClose, initialView = 'menu', initialRoomConfig: _initialRoomConfig }) => {
-  const [view, setView] = useState<PageView>(initialView);
+export const ImageWordPage: React.FC<ImageWordPageProps> = ({
+  onClose,
+  currentUser = { id: 'user-1', displayName: 'Player', avatar: '👤' },
+  onSaveGameSession,
+  initialRoomConfig,
+  initialJoinCode,
+}) => {
+  const [view, setView] = useState<PageView>('lobby');
+  const [notification, setNotification] = useState<{ message: string; type: 'info' | 'warning' } | null>(null);
+  const gameSessionSaved = useRef(false);
+  const createOnceRef = useRef(false);
+  const gameStartedRef = useRef(false);
 
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
+  // Multiplayer lobby/room management
   const {
-    lessons,
+    game,
+    gameResults: multiResults,
+    loading,
+    createGame,
+    joinGame,
+    leaveGame,
+    kickPlayer,
+    startGame,
+    addBot,
+    resetGame,
+    isHost,
+  } = useImageWordMultiplayer({ currentUser });
+
+  // Single-player gameplay engine (used within multiplayer room)
+  const {
     gameState,
     gameResult,
     wrongAnimation,
-    loadLessons,
-    startGame,
+    startGame: startLocalGame,
     selectImage,
     selectWord,
-    resetGame,
+    resetGame: resetLocalGame,
   } = useImageWordGame();
 
-  // Load lessons on mount
+  // Auto-create room from unified setup (Game Hub modal) — guarded against StrictMode double-fire
   useEffect(() => {
-    loadLessons();
-  }, [loadLessons]);
-
-  // Reload lessons when returning from management
-  useEffect(() => {
-    if (view === 'lessons') {
-      loadLessons();
+    if (initialRoomConfig && !game && !createOnceRef.current) {
+      createOnceRef.current = true;
+      const cfg = initialRoomConfig;
+      createGame({
+        title: (cfg.title as string) || 'Nối Hình - Từ',
+        maxPlayers: (cfg.maxPlayers as number) || 4,
+        totalPairs: (cfg.totalRounds as number) || 10,
+        timeLimit: (cfg.timePerQuestion as number) || 120,
+      });
     }
-  }, [view, loadLessons]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Handle lesson selection
-  const handleSelectLesson = useCallback((lesson: ImageWordLesson) => {
-    startGame(lesson);
+  // Auto-join game from QR code
+  useEffect(() => {
+    if (initialJoinCode && !game && !createOnceRef.current) {
+      createOnceRef.current = true;
+      joinGame(initialJoinCode).catch(() => {});
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Bridge: when multiplayer game starts playing, create local game from room's pairs
+  useEffect(() => {
+    if (game?.status === 'playing' && !gameStartedRef.current && game.pairs.length > 0) {
+      gameStartedRef.current = true;
+      const fakelesson: ImageWordLesson = {
+        id: game.id,
+        name: game.title,
+        pairs: game.pairs,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+      startLocalGame(fakelesson);
+    }
+    if (!game || game.status === 'waiting') {
+      gameStartedRef.current = false;
+    }
+  }, [game, startLocalGame]);
+
+  const handleStartGame = useCallback(() => {
+    startGame();
     setView('play');
   }, [startGame]);
 
-  // Handle play again (same lesson)
+  const handleLeaveGame = useCallback(() => {
+    leaveGame();
+    resetLocalGame();
+    onClose();
+  }, [leaveGame, resetLocalGame, onClose]);
+
+  const handleAddBot = useCallback(() => {
+    addBot();
+    setNotification({ message: 'Bot đã được thêm!', type: 'info' });
+  }, [addBot]);
+
   const handlePlayAgain = useCallback(() => {
-    if (gameResult && lessons.length > 0) {
-      const lesson = lessons.find(l => l.id === gameResult.lessonId);
-      if (lesson) {
-        startGame(lesson);
-        setView('play');
-        return;
-      }
-    }
+    resetLocalGame();
     resetGame();
-    setView('lessons');
-  }, [gameResult, lessons, startGame, resetGame]);
+    onClose();
+  }, [resetLocalGame, resetGame, onClose]);
 
-  // Handle back from game/results
-  const handleBackToLessons = useCallback(() => {
+  const handleExit = useCallback(() => {
+    resetLocalGame();
     resetGame();
-    setView('lessons');
-  }, [resetGame]);
+    onClose();
+  }, [resetLocalGame, resetGame, onClose]);
 
-  // Watch for game completion
+  // Update view based on game status
   useEffect(() => {
-    if (gameState?.isComplete && gameResult) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!game) return;
+
+    if (game.status === 'finished' || (gameState?.isComplete && gameResult)) {
       setView('results');
+    } else if (game.status === 'starting' || game.status === 'playing') {
+      setView('play');
+    } else if (game.status === 'waiting') {
+      setView('lobby');
     }
-  }, [gameState?.isComplete, gameResult]);
+  }, [game, gameState?.isComplete, gameResult]);
 
-  // Render based on view
-  const renderContent = () => {
-    switch (view) {
-      case 'guide':
-        return (
-          <div className="image-word-guide">
-            <div className="guide-header">
-              <button className="btn-back" onClick={() => setView('menu')}>
-                <ArrowLeft size={20} />
-                Quay Lại
-              </button>
-              <h2>Hướng Dẫn Chơi</h2>
-            </div>
-            <div className="guide-content">
-              <div className="guide-section">
-                <h3>🎯 Mục Tiêu</h3>
-                <p>Nối đúng hình ảnh với từ vựng tương ứng càng nhanh càng tốt.</p>
-              </div>
-              <div className="guide-section">
-                <h3>🎮 Cách Chơi</h3>
-                <ol>
-                  <li>Chọn một bài học có sẵn hoặc tạo bài mới trong phần Quản Lý</li>
-                  <li>Nhấn vào hình ảnh bên trái, sau đó nhấn vào từ tương ứng bên phải</li>
-                  <li>Nếu nối đúng, cặp sẽ chuyển màu xanh và biến mất</li>
-                  <li>Nếu nối sai, cặp sẽ rung đỏ và bạn mất điểm</li>
-                  <li>Hoàn thành tất cả các cặp để xem kết quả</li>
-                </ol>
-              </div>
-              <div className="guide-section">
-                <h3>⭐ Tính Điểm</h3>
-                <ul>
-                  <li>+100 điểm mỗi cặp nối đúng</li>
-                  <li>-10 điểm mỗi lần nối sai</li>
-                  <li>Bonus thời gian nếu hoàn thành dưới 1 phút</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'management':
-        return (
-          <ImageWordManagementPage onBack={() => setView('menu')} />
-        );
-
-      case 'lessons':
-        return (
-          <ImageWordLessonSelect
-            lessons={lessons}
-            onSelectLesson={handleSelectLesson}
-            onBack={() => setView('menu')}
-            onManage={() => setView('management')}
-          />
-        );
-
-      case 'play':
-        if (!gameState) {
-          setView('lessons');
-          return null;
-        }
-        return (
-          <ImageWordGamePlay
-            gameState={gameState}
-            wrongAnimation={wrongAnimation}
-            onSelectImage={selectImage}
-            onSelectWord={selectWord}
-            onBack={handleBackToLessons}
-          />
-        );
-
-      case 'results':
-        if (!gameResult) {
-          setView('lessons');
-          return null;
-        }
-        return (
-          <ImageWordResults
-            result={gameResult}
-            onPlayAgain={handlePlayAgain}
-            onBack={handleBackToLessons}
-          />
-        );
-
-      default: // menu
-        return (
-          <div className="image-word-menu">
-            <div className="menu-header">
-              <button className="btn-back" onClick={onClose}>
-                <ArrowLeft size={20} />
-              </button>
-              <div className="menu-title">
-                <span className="menu-icon">🖼️</span>
-                <h1>Nối Hình - Từ</h1>
-              </div>
-            </div>
-
-            <div className="menu-description">
-              <p>Nối hình ảnh với từ vựng tiếng Nhật tương ứng</p>
-              <span className="lesson-count">{lessons.length} bài học có sẵn</span>
-            </div>
-
-            <div className="menu-actions">
-              <button
-                className="menu-btn primary"
-                onClick={() => setView('lessons')}
-                disabled={lessons.length === 0}
-              >
-                <Play size={24} />
-                Chơi Ngay
-              </button>
-
-              <button className="menu-btn secondary" onClick={() => setView('management')}>
-                <Settings size={20} />
-                Quản Lý Bài Học
-              </button>
-
-              <button className="menu-btn tertiary" onClick={() => setView('guide')}>
-                <HelpCircle size={20} />
-                Hướng Dẫn
-              </button>
-            </div>
-
-            {lessons.length === 0 && (
-              <div className="menu-notice">
-                <Image size={20} />
-                <span>Tạo bài học đầu tiên trong phần Quản Lý để bắt đầu chơi</span>
-              </div>
-            )}
-          </div>
-        );
+  // Save game session when game finishes
+  useEffect(() => {
+    if (gameResult && !gameSessionSaved.current && onSaveGameSession) {
+      gameSessionSaved.current = true;
+      onSaveGameSession({
+        date: new Date().toISOString().split('T')[0],
+        gameTitle: 'Nối Hình - Từ',
+        rank: 1,
+        totalPlayers: game ? Object.keys(game.players).length : 1,
+        score: gameResult.score,
+        correctAnswers: gameResult.correctMatches,
+        totalQuestions: gameResult.totalPairs,
+      });
     }
-  };
+    if (!gameResult) {
+      gameSessionSaved.current = false;
+    }
+  }, [gameResult, game, onSaveGameSession]);
 
-  return <div className="image-word-page">{renderContent()}</div>;
+  // Loading state — game is being created/joined
+  if (!game && (loading || initialRoomConfig || initialJoinCode)) {
+    return (
+      <div className="image-word-page">
+        <div className="game-loading-fallback">
+          <div className="loading-spinner" />
+          <p>Đang tạo phòng...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // No game and no pending creation → go back to hub
+  if (!game && !loading) {
+    onClose();
+    return null;
+  }
+
+  return (
+    <div className="image-word-page">
+      {view === 'lobby' && game && (
+        <ImageWordLobby
+          game={game}
+          currentPlayerId={currentUser.id}
+          onStartGame={handleStartGame}
+          onAddBot={handleAddBot}
+          onLeave={handleLeaveGame}
+          onKickPlayer={kickPlayer}
+        />
+      )}
+
+      {view === 'play' && gameState && (
+        <ImageWordGamePlay
+          gameState={gameState}
+          wrongAnimation={wrongAnimation}
+          onSelectImage={selectImage}
+          onSelectWord={selectWord}
+          onBack={handleLeaveGame}
+        />
+      )}
+
+      {view === 'results' && gameResult && (
+        <ImageWordResults
+          result={gameResult}
+          onPlayAgain={handlePlayAgain}
+          onBack={handleExit}
+        />
+      )}
+
+      {notification && (
+        <div className={`game-notification ${notification.type}`}>
+          <span className="notification-icon">
+            {notification.type === 'warning' ? '⚠️' : 'ℹ️'}
+          </span>
+          <span className="notification-text">{notification.message}</span>
+          <button className="notification-close" onClick={() => setNotification(null)}>✕</button>
+        </div>
+      )}
+    </div>
+  );
 };

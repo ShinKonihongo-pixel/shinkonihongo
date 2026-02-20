@@ -1,29 +1,27 @@
-// Word match game actions - join, leave, kick, start, add bot, reset
-// Join uses Firestore to find and subscribe to remote rooms
+// Word Scramble game actions - join, leave, kick, start, add bot, reset
 
 import { useCallback } from 'react';
-import type { WordMatchGame, WordMatchPlayer, WordMatchResults } from '../../types/word-match';
+import type { WordScrambleMultiplayerGame, WordScrambleMultiplayerPlayer, WordScrambleMultiplayerResults } from '../../components/pages/word-scramble/word-scramble-types';
 import { generateBots } from '../../types/game-hub';
 import { generateId } from '../../lib/game-utils';
 import { findRoomByCode, updateGameRoom } from '../../services/game-rooms';
 
 interface UseGameActionsProps {
-  game: WordMatchGame | null;
+  game: WordScrambleMultiplayerGame | null;
   currentUser: {
     id: string;
     displayName: string;
     avatar: string;
     role?: string;
   };
-  setGame: (game: WordMatchGame | null | ((prev: WordMatchGame | null) => WordMatchGame | null)) => void;
-  setGameResults: (results: WordMatchResults | null) => void;
+  setGame: (game: WordScrambleMultiplayerGame | null | ((prev: WordScrambleMultiplayerGame | null) => WordScrambleMultiplayerGame | null)) => void;
+  setGameResults: (results: WordScrambleMultiplayerResults | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setRoomId: (id: string | null) => void;
   isHost: boolean;
   clearBotTimers: () => void;
   roundTimerRef: React.MutableRefObject<NodeJS.Timeout | null>;
-  startNextRound: () => void;
   deleteCurrentRoom: () => void;
 }
 
@@ -38,7 +36,6 @@ export function useGameActions({
   isHost,
   clearBotTimers,
   roundTimerRef,
-  startNextRound,
   deleteCurrentRoom,
 }: UseGameActionsProps) {
   // Join game via Firestore
@@ -49,11 +46,11 @@ export function useGameActions({
     try {
       const room = await findRoomByCode(code);
 
-      if (!room || room.gameType !== 'word-match') {
-        throw new Error('Không tìm thấy phòng Word Match với mã này');
+      if (!room || room.gameType !== 'word-scramble') {
+        throw new Error('Không tìm thấy phòng Sắp Xếp Từ với mã này');
       }
 
-      const roomData = room.data as unknown as WordMatchGame;
+      const roomData = room.data as unknown as WordScrambleMultiplayerGame;
 
       if (roomData.status !== 'waiting') {
         throw new Error('Trò chơi đã bắt đầu');
@@ -64,37 +61,26 @@ export function useGameActions({
         throw new Error('Phòng đã đầy');
       }
 
-      // Already in the game? Just subscribe
       if (players[currentUser.id]) {
         setRoomId(room.id);
         return;
       }
 
-      // Add player to the room via Firestore
-      const player: WordMatchPlayer = {
+      const player: WordScrambleMultiplayerPlayer = {
         odinhId: currentUser.id,
         displayName: currentUser.displayName,
         avatar: currentUser.avatar,
         role: currentUser.role,
         score: 0,
-        correctPairs: 0,
-        perfectRounds: 0,
-        isDisconnected: false,
-        disconnectedTurns: 0,
-        hasShield: false,
-        shieldTurns: 0,
-        isChallenged: false,
-        currentMatches: [],
-        hasSubmitted: false,
+        correctAnswers: 0,
+        wrongAnswers: 0,
         streak: 0,
+        maxStreak: 0,
       };
 
       const updatedPlayers = { ...players, [currentUser.id]: player };
-      await updateGameRoom(room.id, {
-        players: updatedPlayers,
-      });
+      await updateGameRoom(room.id, { players: updatedPlayers });
 
-      // Subscribe to the room (subscription in use-game-state will update local state)
       setRoomId(room.id);
       setGameResults(null);
     } catch (err) {
@@ -105,14 +91,13 @@ export function useGameActions({
     }
   }, [currentUser, setRoomId, setGameResults, setLoading, setError]);
 
-  // Leave game — delete Firestore room directly (not via state updater)
-  // because onClose() may unmount the component before React processes the updater
+  // Leave game — delete Firestore room directly
   const leaveGame = useCallback(() => {
     if (!game) return;
     clearBotTimers();
     if (roundTimerRef.current) clearTimeout(roundTimerRef.current);
-    deleteCurrentRoom(); // Direct Firestore deletion (sets roomIdRef to null)
-    setGame(() => null); // Local cleanup only (roomIdRef is null, so wrapper skips delete)
+    deleteCurrentRoom();
+    setGame(() => null);
   }, [game, clearBotTimers, roundTimerRef, deleteCurrentRoom, setGame]);
 
   // Kick player (host only)
@@ -140,13 +125,12 @@ export function useGameActions({
 
     setGame(prev => prev ? { ...prev, status: 'starting', startedAt: new Date().toISOString() } : null);
 
-    // Start first round after countdown
     setTimeout(() => {
-      startNextRound();
+      setGame(prev => prev ? { ...prev, status: 'playing' } : null);
     }, 3000);
-  }, [game, isHost, setError, clearBotTimers, setGame, startNextRound]);
+  }, [game, isHost, setError, clearBotTimers, setGame]);
 
-  // Add bot manually (for "Add Bot" button)
+  // Add bot manually
   const addBot = useCallback(() => {
     setGame(prev => {
       if (!prev || prev.status !== 'waiting') return prev;
@@ -164,16 +148,10 @@ export function useGameActions({
         displayName: bot.name,
         avatar: bot.avatar,
         score: 0,
-        correctPairs: 0,
-        perfectRounds: 0,
-        isDisconnected: false,
-        disconnectedTurns: 0,
-        hasShield: false,
-        shieldTurns: 0,
-        isChallenged: false,
-        currentMatches: [],
-        hasSubmitted: false,
+        correctAnswers: 0,
+        wrongAnswers: 0,
         streak: 0,
+        maxStreak: 0,
         isBot: true,
       };
 
@@ -181,7 +159,7 @@ export function useGameActions({
     });
   }, [setGame]);
 
-  // Reset game — direct Firestore deletion for same reason as leaveGame
+  // Reset game
   const resetGame = useCallback(() => {
     clearBotTimers();
     if (roundTimerRef.current) clearTimeout(roundTimerRef.current);

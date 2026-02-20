@@ -22,6 +22,7 @@ interface UseGameActionsProps {
   botTimerRef: React.MutableRefObject<NodeJS.Timeout | null>;
   clearTimers: () => void;
   startNextRound: () => void;
+  deleteCurrentRoom: () => void;
 }
 
 export function useGameActions({
@@ -36,6 +37,7 @@ export function useGameActions({
   botTimerRef,
   clearTimers,
   startNextRound,
+  deleteCurrentRoom,
 }: UseGameActionsProps) {
   // Join existing game via Firestore
   const joinGame = useCallback(async (code: string) => {
@@ -101,12 +103,14 @@ export function useGameActions({
     }
   }, [currentUser, setRoomId, setGameResults, setLoading, setError]);
 
-  // Leave game
+  // Leave game — delete Firestore room directly (not via state updater)
+  // because onClose() may unmount the component before React processes the updater
   const leaveGame = useCallback(() => {
     if (!game) return;
     clearTimers();
-    setGame(() => null);
-  }, [game, clearTimers, setGame]);
+    deleteCurrentRoom(); // Direct Firestore deletion (sets roomIdRef to null)
+    setGame(() => null); // Local cleanup only (roomIdRef is null, so wrapper skips delete)
+  }, [game, clearTimers, deleteCurrentRoom, setGame]);
 
   // Kick player (host only)
   const kickPlayer = useCallback((playerId: string) => {
@@ -132,12 +136,13 @@ export function useGameActions({
     setTimeout(() => { startNextRound(); }, 3000);
   }, [game, isHost, setError, botTimerRef, setGame, startNextRound]);
 
-  // Reset game
+  // Reset game — direct Firestore deletion for same reason as leaveGame
   const resetGame = useCallback(() => {
     clearTimers();
+    deleteCurrentRoom();
     setGame(() => null);
     setGameResults(null);
-  }, [clearTimers, setGame, setGameResults]);
+  }, [clearTimers, deleteCurrentRoom, setGame, setGameResults]);
 
   return { joinGame, leaveGame, kickPlayer, startGame, resetGame };
 }

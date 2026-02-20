@@ -1,29 +1,28 @@
-// Word match game actions - join, leave, kick, start, add bot, reset
+// Image-Word game actions - join, leave, kick, start, add bot, reset
 // Join uses Firestore to find and subscribe to remote rooms
 
 import { useCallback } from 'react';
-import type { WordMatchGame, WordMatchPlayer, WordMatchResults } from '../../types/word-match';
+import type { ImageWordMultiplayerGame, ImageWordMultiplayerPlayer, ImageWordMultiplayerResults } from '../../types/image-word';
 import { generateBots } from '../../types/game-hub';
 import { generateId } from '../../lib/game-utils';
 import { findRoomByCode, updateGameRoom } from '../../services/game-rooms';
 
 interface UseGameActionsProps {
-  game: WordMatchGame | null;
+  game: ImageWordMultiplayerGame | null;
   currentUser: {
     id: string;
     displayName: string;
     avatar: string;
     role?: string;
   };
-  setGame: (game: WordMatchGame | null | ((prev: WordMatchGame | null) => WordMatchGame | null)) => void;
-  setGameResults: (results: WordMatchResults | null) => void;
+  setGame: (game: ImageWordMultiplayerGame | null | ((prev: ImageWordMultiplayerGame | null) => ImageWordMultiplayerGame | null)) => void;
+  setGameResults: (results: ImageWordMultiplayerResults | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setRoomId: (id: string | null) => void;
   isHost: boolean;
   clearBotTimers: () => void;
   roundTimerRef: React.MutableRefObject<NodeJS.Timeout | null>;
-  startNextRound: () => void;
   deleteCurrentRoom: () => void;
 }
 
@@ -38,7 +37,6 @@ export function useGameActions({
   isHost,
   clearBotTimers,
   roundTimerRef,
-  startNextRound,
   deleteCurrentRoom,
 }: UseGameActionsProps) {
   // Join game via Firestore
@@ -49,11 +47,11 @@ export function useGameActions({
     try {
       const room = await findRoomByCode(code);
 
-      if (!room || room.gameType !== 'word-match') {
-        throw new Error('Không tìm thấy phòng Word Match với mã này');
+      if (!room || room.gameType !== 'image-word') {
+        throw new Error('Không tìm thấy phòng Nối Hình - Từ với mã này');
       }
 
-      const roomData = room.data as unknown as WordMatchGame;
+      const roomData = room.data as unknown as ImageWordMultiplayerGame;
 
       if (roomData.status !== 'waiting') {
         throw new Error('Trò chơi đã bắt đầu');
@@ -71,22 +69,15 @@ export function useGameActions({
       }
 
       // Add player to the room via Firestore
-      const player: WordMatchPlayer = {
+      const player: ImageWordMultiplayerPlayer = {
         odinhId: currentUser.id,
         displayName: currentUser.displayName,
         avatar: currentUser.avatar,
         role: currentUser.role,
         score: 0,
-        correctPairs: 0,
-        perfectRounds: 0,
-        isDisconnected: false,
-        disconnectedTurns: 0,
-        hasShield: false,
-        shieldTurns: 0,
-        isChallenged: false,
-        currentMatches: [],
-        hasSubmitted: false,
-        streak: 0,
+        matchedPairs: [],
+        wrongAttempts: 0,
+        isComplete: false,
       };
 
       const updatedPlayers = { ...players, [currentUser.id]: player };
@@ -140,11 +131,11 @@ export function useGameActions({
 
     setGame(prev => prev ? { ...prev, status: 'starting', startedAt: new Date().toISOString() } : null);
 
-    // Start first round after countdown
+    // Transition to playing after countdown
     setTimeout(() => {
-      startNextRound();
+      setGame(prev => prev ? { ...prev, status: 'playing' } : null);
     }, 3000);
-  }, [game, isHost, setError, clearBotTimers, setGame, startNextRound]);
+  }, [game, isHost, setError, clearBotTimers, setGame]);
 
   // Add bot manually (for "Add Bot" button)
   const addBot = useCallback(() => {
@@ -164,16 +155,9 @@ export function useGameActions({
         displayName: bot.name,
         avatar: bot.avatar,
         score: 0,
-        correctPairs: 0,
-        perfectRounds: 0,
-        isDisconnected: false,
-        disconnectedTurns: 0,
-        hasShield: false,
-        shieldTurns: 0,
-        isChallenged: false,
-        currentMatches: [],
-        hasSubmitted: false,
-        streak: 0,
+        matchedPairs: [],
+        wrongAttempts: 0,
+        isComplete: false,
         isBot: true,
       };
 

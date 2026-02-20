@@ -1,8 +1,7 @@
 // Word Match Page - Main game page
+// Setup is handled by Game Hub's unified modal. This page only manages: lobby → play → results
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
-  WordMatchMenu,
-  WordMatchSetup,
   WordMatchLobby,
   WordMatchPlay,
   WordMatchResults,
@@ -14,7 +13,7 @@ import type { Flashcard } from '../../types/flashcard';
 import type { GameSession } from '../../types/user';
 import '../word-match/word-match.css';
 
-type PageView = 'menu' | 'setup' | 'lobby' | 'play' | 'results' | 'guide';
+type PageView = 'lobby' | 'play' | 'results' | 'guide';
 
 interface WordMatchPageProps {
   onClose: () => void;
@@ -25,7 +24,7 @@ interface WordMatchPageProps {
     role?: string;
   };
   flashcards?: Flashcard[];
-  initialView?: PageView;
+  initialView?: string;
   // XP tracking
   onSaveGameSession?: (data: Omit<GameSession, 'id' | 'userId'>) => void;
   initialRoomConfig?: Record<string, unknown>;
@@ -36,25 +35,26 @@ export const WordMatchPage: React.FC<WordMatchPageProps> = ({
   onClose,
   currentUser = { id: 'user-1', displayName: 'Player', avatar: '👤' },
   flashcards = [],
-  initialView = 'menu',
   onSaveGameSession,
   initialRoomConfig,
   initialJoinCode,
 }) => {
-  const [view, setView] = useState<PageView>(initialView);
+  const [view, setView] = useState<PageView>('lobby');
   const [notification, setNotification] = useState<{ message: string; type: 'info' | 'warning' } | null>(null);
   const gameSessionSaved = useRef(false);
+  const createOnceRef = useRef(false);
 
-  // Auto-hide notification after 3 seconds
   useEffect(() => {
     if (notification) {
       const timer = setTimeout(() => setNotification(null), 3000);
       return () => clearTimeout(timer);
     }
   }, [notification]);
+
   const {
     game,
     gameResults,
+    loading,
     createGame,
     joinGame,
     leaveGame,
@@ -67,93 +67,62 @@ export const WordMatchPage: React.FC<WordMatchPageProps> = ({
     resetGame,
   } = useWordMatch({ currentUser, flashcards });
 
-  // Auto-create room from unified setup
-  React.useEffect(() => {
-    if (initialRoomConfig && !game) {
-      const cfg = initialRoomConfig;
+  // Auto-create room from unified setup (Game Hub modal) — guarded against StrictMode double-fire
+  useEffect(() => {
+    if (initialRoomConfig && !game && !createOnceRef.current) {
+      createOnceRef.current = true;
+      const cfg = initialRoomConfig as unknown as CreateWordMatchData;
       createGame({
-        title: (cfg.title as string) || 'Noi Tu Thach Dau',
+        title: (cfg.title as string) || 'Nối Từ Thách Đấu',
         totalRounds: (cfg.totalRounds as number) || 10,
-        timePerRound: (cfg.timePerQuestion as number) || 60,
+        timePerRound: (cfg.timePerRound as number) || 60,
         maxPlayers: (cfg.maxPlayers as number) || 4,
       });
-      setView('lobby');
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-join game from WaitingRoom or QR code
-  React.useEffect(() => {
-    if (initialJoinCode && !game) {
+  // Auto-join game from QR code
+  useEffect(() => {
+    if (initialJoinCode && !game && !createOnceRef.current) {
+      createOnceRef.current = true;
       joinGame(initialJoinCode);
-      setView('lobby');
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Handle create game
-  const handleCreateGame = useCallback(
-    (data: CreateWordMatchData) => {
-      createGame(data);
-      setView('lobby');
-    },
-    [createGame]
-  );
-
-  // Handle join game
-  const handleJoinGame = useCallback(
-    (code: string) => {
-      joinGame(code);
-      setNotification({ message: 'Chức năng tham gia phòng đang phát triển!', type: 'warning' });
-    },
-    [joinGame]
-  );
-
-  // Handle start game
   const handleStartGame = useCallback(() => {
     startGame();
     setView('play');
   }, [startGame]);
 
-  // Handle leave game
   const handleLeaveGame = useCallback(() => {
     leaveGame();
-    setView('menu');
-  }, [leaveGame]);
+    onClose();
+  }, [leaveGame, onClose]);
 
-  // Handle submit matches
   const handleSubmitMatches = useCallback(
-    (matches: { leftId: string; rightId: string }[]) => {
-      submitMatches(matches);
-    },
+    (matches: { leftId: string; rightId: string }[]) => { submitMatches(matches); },
     [submitMatches]
   );
 
-  // Handle apply effect
   const handleApplyEffect = useCallback(
-    (effectType: WordMatchEffectType, targetId?: string) => {
-      applyEffect(effectType, targetId);
-    },
+    (effectType: WordMatchEffectType, targetId?: string) => { applyEffect(effectType, targetId); },
     [applyEffect]
   );
 
-  // Handle next round
-  const handleNextRound = useCallback(() => {
-    continueGame();
-  }, [continueGame]);
+  const handleNextRound = useCallback(() => { continueGame(); }, [continueGame]);
 
-  // Handle play again
   const handlePlayAgain = useCallback(() => {
     resetGame();
-    setView('menu');
-  }, [resetGame]);
+    onClose();
+  }, [resetGame, onClose]);
 
-  // Handle exit
   const handleExit = useCallback(() => {
     resetGame();
     onClose();
   }, [resetGame, onClose]);
 
   // Update view based on game status
-  React.useEffect(() => {
+  useEffect(() => {
     if (!game) return;
 
     if (game.status === 'finished' && gameResults) {
@@ -164,15 +133,15 @@ export const WordMatchPage: React.FC<WordMatchPageProps> = ({
       game.status === 'wheel_spin'
     ) {
       setView('play');
+    } else if (game.status === 'waiting') {
+      setView('lobby');
     }
   }, [game, gameResults]);
 
-  // Save game session when game finishes (for XP tracking)
+  // Save game session when game finishes
   useEffect(() => {
     if (game?.status === 'finished' && !gameSessionSaved.current && onSaveGameSession && gameResults) {
       gameSessionSaved.current = true;
-
-      // Find current player's result from rankings
       const myResult = gameResults.rankings.find(p => p.odinhId === currentUser.id);
       if (myResult) {
         onSaveGameSession({
@@ -186,102 +155,72 @@ export const WordMatchPage: React.FC<WordMatchPageProps> = ({
         });
       }
     }
-
-    // Reset flag when game changes (new game)
     if (!game || game.status !== 'finished') {
       gameSessionSaved.current = false;
     }
   }, [game, gameResults, currentUser.id, onSaveGameSession]);
 
-  // Render based on view
-  const renderContent = () => {
-    switch (view) {
-      case 'guide':
-        return <WordMatchGuide onClose={() => setView('menu')} />;
+  // Loading state — game is being created/joined
+  if (!game && (loading || initialRoomConfig || initialJoinCode)) {
+    return (
+      <div className="word-match-page">
+        <div className="game-loading-fallback">
+          <div className="loading-spinner" />
+          <p>Đang tạo phòng...</p>
+        </div>
+      </div>
+    );
+  }
 
-      case 'setup':
-        // Skip setup modal if auto-creating from initialRoomConfig
-        if (initialRoomConfig) break;
-        return (
-          <WordMatchSetup
-            onCreateGame={handleCreateGame}
-            onBack={() => setView('menu')}
-          />
-        );
-
-      case 'lobby':
-        if (!game) {
-          setView('menu');
-          return null;
-        }
-        return (
-          <WordMatchLobby
-            game={game}
-            currentPlayerId={currentUser.id}
-            onStartGame={handleStartGame}
-            onAddBot={addBot}
-            onLeave={handleLeaveGame}
-            onKickPlayer={kickPlayer}
-          />
-        );
-
-      case 'play':
-        if (!game) {
-          setView('menu');
-          return null;
-        }
-        return (
-          <WordMatchPlay
-            game={game}
-            currentPlayerId={currentUser.id}
-            onSubmitMatches={handleSubmitMatches}
-            onApplyEffect={handleApplyEffect}
-            onNextRound={handleNextRound}
-          />
-        );
-
-      case 'results':
-        if (!gameResults) {
-          setView('menu');
-          return null;
-        }
-        return (
-          <WordMatchResults
-            results={gameResults}
-            currentPlayerId={currentUser.id}
-            onPlayAgain={handlePlayAgain}
-            onExit={handleExit}
-          />
-        );
-
-      default:
-        return (
-          <WordMatchMenu
-            onCreateGame={() => setView('setup')}
-            onJoinGame={handleJoinGame}
-            onShowGuide={() => setView('guide')}
-            onClose={onClose}
-          />
-        );
-    }
-  };
+  // No game and no pending creation → go back to hub
+  if (!game && !loading) {
+    onClose();
+    return null;
+  }
 
   return (
     <div className="word-match-page">
-      {renderContent()}
-      {/* Inline notification toast */}
+      {view === 'guide' && (
+        <WordMatchGuide onClose={() => setView('lobby')} />
+      )}
+
+      {view === 'lobby' && game && (
+        <WordMatchLobby
+          game={game}
+          currentPlayerId={currentUser.id}
+          onStartGame={handleStartGame}
+          onAddBot={addBot}
+          onLeave={handleLeaveGame}
+          onKickPlayer={kickPlayer}
+        />
+      )}
+
+      {view === 'play' && game && (
+        <WordMatchPlay
+          game={game}
+          currentPlayerId={currentUser.id}
+          onSubmitMatches={handleSubmitMatches}
+          onApplyEffect={handleApplyEffect}
+          onNextRound={handleNextRound}
+        />
+      )}
+
+      {view === 'results' && gameResults && (
+        <WordMatchResults
+          results={gameResults}
+          currentPlayerId={currentUser.id}
+          onPlayAgain={handlePlayAgain}
+          onExit={handleExit}
+        />
+      )}
+
       {notification && (
         <div className={`game-notification ${notification.type}`}>
           <span className="notification-icon">
             {notification.type === 'warning' ? '⚠️' : 'ℹ️'}
           </span>
           <span className="notification-text">{notification.message}</span>
-          <button
-            className="notification-close"
-            onClick={() => setNotification(null)}
-          >
-            ✕
-          </button>
+          <button className="notification-close" onClick={() => setNotification(null)}>✕</button>
         </div>
       )}
     </div>

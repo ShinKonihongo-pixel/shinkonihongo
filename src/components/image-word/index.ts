@@ -3,3 +3,4 @@
 export { ImageWordLessonSelect } from './image-word-lesson-select';
 export { ImageWordGamePlay } from './image-word-game-play';
 export { ImageWordResults } from './image-word-results';
+export { ImageWordLobby } from './image-word-lobby';

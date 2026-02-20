@@ -12,6 +12,7 @@ interface UsePictureGuessProps {
     id: string;
     displayName: string;
     avatar: string;
+    role?: string;
   };
   flashcards?: Flashcard[];
 }
@@ -27,6 +28,7 @@ export function usePictureGuess({ currentUser, flashcards = [] }: UsePictureGues
     isHost, currentPlayer, currentPuzzle,
     sortedPlayers,
     scheduleBotJoin, clearBotTimers,
+    deleteCurrentRoom,
   } = useGameState({ currentUserId: currentUser.id });
 
   // Game creation (writes to Firestore)
@@ -54,6 +56,7 @@ export function usePictureGuess({ currentUser, flashcards = [] }: UsePictureGues
     setRoomId,
     isHost,
     clearBotTimers,
+    deleteCurrentRoom,
   });
 
   const {

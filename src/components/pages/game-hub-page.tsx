@@ -377,9 +377,16 @@ export function GameHubPage({
 
       {selectedGame === 'picture-guess' && (
         <PictureGuessPage
-          currentUser={currentUser}
+          onClose={handleBackToHub}
+          currentUser={{
+            id: currentUser.id,
+            displayName: currentUser.displayName || currentUser.username,
+            avatar: currentUser.avatar || '🖼️',
+            role: currentUser.role,
+          }}
           flashcards={flashcards}
           initialJoinCode={joinCode || undefined}
+          onSaveGameSession={onSaveGameSession}
           initialRoomConfig={pendingRoomConfig?.gameType === 'picture-guess' ? pendingRoomConfig.data : undefined}
         />
       )}
@@ -409,7 +416,6 @@ export function GameHubPage({
             avatar: currentUser.avatar || '⚔️',
             role: currentUser.role,
           }}
-          initialView={joinCode ? 'menu' : 'setup'}
           initialJoinCode={joinCode || undefined}
           onSaveGameSession={onSaveGameSession}
           initialRoomConfig={pendingRoomConfig?.gameType === 'kanji-battle' ? pendingRoomConfig.data : undefined}
@@ -426,7 +432,6 @@ export function GameHubPage({
             role: currentUser.role,
           }}
           flashcards={flashcards}
-          initialView={joinCode ? 'menu' : 'setup'}
           initialJoinCode={joinCode || undefined}
           onSaveGameSession={onSaveGameSession}
           initialRoomConfig={pendingRoomConfig?.gameType === 'word-match' ? pendingRoomConfig.data : undefined}
@@ -449,7 +454,14 @@ export function GameHubPage({
       {selectedGame === 'image-word' && (
         <ImageWordPage
           onClose={handleBackToHub}
-          initialView="lessons"
+          currentUser={{
+            id: currentUser.id,
+            displayName: currentUser.displayName || currentUser.username,
+            avatar: currentUser.avatar || '🖼️',
+            role: currentUser.role,
+          }}
+          initialJoinCode={joinCode || undefined}
+          onSaveGameSession={onSaveGameSession}
           initialRoomConfig={pendingRoomConfig?.gameType === 'image-word' ? pendingRoomConfig.data : undefined}
         />
       )}
@@ -462,8 +474,10 @@ export function GameHubPage({
             id: currentUser.id,
             displayName: currentUser.displayName || currentUser.username,
             avatar: currentUser.avatar || '🔀',
-            role: currentUser.role === 'super_admin' ? 'super_admin' : currentUser.role as 'user' | 'vip' | 'admin',
+            role: currentUser.role,
           }}
+          initialJoinCode={joinCode || undefined}
+          onSaveGameSession={onSaveGameSession}
           initialRoomConfig={pendingRoomConfig?.gameType === 'word-scramble' ? pendingRoomConfig.data : undefined}
         />
       )}

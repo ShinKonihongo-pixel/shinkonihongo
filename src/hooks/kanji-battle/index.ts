@@ -29,6 +29,7 @@ export function useKanjiBattle({ currentUser }: UseKanjiBattleProps) {
     sortedPlayers, isSkillPhase,
     botTimerRef, roundTimerRef,
     clearTimers,
+    deleteCurrentRoom,
   } = useGameState({ currentUserId: currentUser.id });
 
   const { scheduleBotAnswers } = useBotLogic({ game, setGame });
@@ -45,7 +46,7 @@ export function useKanjiBattle({ currentUser }: UseKanjiBattleProps) {
     joinGame, leaveGame, kickPlayer, startGame, resetGame,
   } = useGameActions({
     currentUser, game, setGame, setGameResults, setLoading, setError, setRoomId,
-    isHost, botTimerRef, clearTimers, startNextRound,
+    isHost, botTimerRef, clearTimers, startNextRound, deleteCurrentRoom,
   });
 
   const {

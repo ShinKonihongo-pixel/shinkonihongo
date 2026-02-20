@@ -81,6 +81,18 @@ export function useGameState({ currentUserId }: UseGameStateProps) {
     return game.currentRound > 0 && game.currentRound % game.settings.skillInterval === 0;
   }, [game]);
 
+  // Delete current Firestore room directly (sync, fire-and-forget)
+  // This must NOT rely on the setGame wrapper's state updater,
+  // because the component may unmount before the updater runs.
+  const deleteCurrentRoom = useCallback(() => {
+    const id = roomIdRef.current;
+    if (id) {
+      deleteGameRoom(id).catch(console.error);
+      roomIdRef.current = null;
+      setRoomId(null);
+    }
+  }, []);
+
   // Cleanup timers on unmount
   useEffect(() => {
     const botTimer = botTimerRef.current;
@@ -110,5 +122,6 @@ export function useGameState({ currentUserId }: UseGameStateProps) {
     sortedPlayers, isSkillPhase,
     botTimerRef, roundTimerRef, botAnswerTimerRef,
     clearTimers,
+    deleteCurrentRoom,
   };
 }

@@ -1,8 +1,8 @@
-// Word match game state management
+// Word Scramble game state management
 // Game state is synced to Firestore for cross-device multiplayer
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import type { WordMatchGame, WordMatchResults, WordMatchPlayer } from '../../types/word-match';
+import type { WordScrambleMultiplayerGame, WordScrambleMultiplayerResults, WordScrambleMultiplayerPlayer } from '../../components/pages/word-scramble/word-scramble-types';
 import { useBotAutoJoin } from '../shared/use-bot-auto-join';
 import {
   updateGameRoom,
@@ -15,43 +15,32 @@ interface UseGameStateProps {
 }
 
 export function useGameState({ currentUserId }: UseGameStateProps) {
-  // State
-  const [game, setGameLocal] = useState<WordMatchGame | null>(null);
-  const [gameResults, setGameResults] = useState<WordMatchResults | null>(null);
+  const [game, setGameLocal] = useState<WordScrambleMultiplayerGame | null>(null);
+  const [gameResults, setGameResults] = useState<WordScrambleMultiplayerResults | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Firestore room ID
   const [roomId, setRoomId] = useState<string | null>(null);
   const roomIdRef = useRef<string | null>(null);
   useEffect(() => { roomIdRef.current = roomId; }, [roomId]);
 
-  // Timers
   const roundTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Bot auto-join hook
-  const { scheduleBotJoin, clearBotTimers } = useBotAutoJoin<WordMatchPlayer>({
+  const { scheduleBotJoin, clearBotTimers } = useBotAutoJoin<WordScrambleMultiplayerPlayer>({
     createBotPlayer: (bot, botId) => ({
       odinhId: botId,
       displayName: bot.name,
       avatar: bot.avatar,
       score: 0,
-      correctPairs: 0,
-      perfectRounds: 0,
-      isDisconnected: false,
-      disconnectedTurns: 0,
-      hasShield: false,
-      shieldTurns: 0,
-      isChallenged: false,
-      currentMatches: [],
-      hasSubmitted: false,
+      correctAnswers: 0,
+      wrongAnswers: 0,
       streak: 0,
+      maxStreak: 0,
       isBot: true,
     }),
     schedules: [{ delay: 5000, count: 1 }],
   });
 
-  // Computed values
   const isHost = useMemo(() => game?.hostId === currentUserId, [game, currentUserId]);
   const currentPlayer = useMemo(() => game?.players[currentUserId], [game, currentUserId]);
 
@@ -60,10 +49,10 @@ export function useGameState({ currentUserId }: UseGameStateProps) {
     return Object.values(game.players).sort((a, b) => b.score - a.score);
   }, [game]);
 
-  // Firestore subscription - updates local state from remote changes
+  // Firestore subscription
   useEffect(() => {
     if (!roomId) return;
-    return subscribeToGameRoom<WordMatchGame>(roomId, (remoteGame) => {
+    return subscribeToGameRoom<WordScrambleMultiplayerGame>(roomId, (remoteGame) => {
       if (!remoteGame) {
         setGameLocal(null);
         return;
@@ -74,19 +63,17 @@ export function useGameState({ currentUserId }: UseGameStateProps) {
 
   // setGame wrapper: updates local state AND syncs to Firestore
   const setGame = useCallback((
-    updater: ((prev: WordMatchGame | null) => WordMatchGame | null) | WordMatchGame | null
+    updater: ((prev: WordScrambleMultiplayerGame | null) => WordScrambleMultiplayerGame | null) | WordScrambleMultiplayerGame | null
   ) => {
     setGameLocal(prev => {
       const newState = typeof updater === 'function' ? updater(prev) : updater;
 
       if (newState && roomIdRef.current) {
-        // Sync to Firestore (fire-and-forget)
         const { id: _id, ...data } = newState;
         updateGameRoom(roomIdRef.current, data as Record<string, unknown>).catch(err =>
-          console.error('Failed to sync word-match state:', err)
+          console.error('Failed to sync word-scramble state:', err)
         );
       } else if (!newState && roomIdRef.current) {
-        // Game reset/ended - clean up Firestore room
         deleteGameRoom(roomIdRef.current).catch(console.error);
         roomIdRef.current = null;
         setRoomId(null);
@@ -96,9 +83,7 @@ export function useGameState({ currentUserId }: UseGameStateProps) {
     });
   }, []);
 
-  // Delete current Firestore room directly (sync, fire-and-forget)
-  // This must NOT rely on the setGame wrapper's state updater,
-  // because the component may unmount before the updater runs.
+  // Delete current room directly (before unmount)
   const deleteCurrentRoom = useCallback(() => {
     const id = roomIdRef.current;
     if (id) {
@@ -108,7 +93,6 @@ export function useGameState({ currentUserId }: UseGameStateProps) {
     }
   }, []);
 
-  // Cleanup
   useEffect(() => {
     return () => {
       if (roundTimerRef.current) clearTimeout(roundTimerRef.current);
@@ -116,22 +100,15 @@ export function useGameState({ currentUserId }: UseGameStateProps) {
   }, []);
 
   return {
-    game,
-    setGame,
-    gameResults,
-    setGameResults,
-    loading,
-    setLoading,
-    error,
-    setError,
-    roomId,
-    setRoomId,
-    isHost,
-    currentPlayer,
+    game, setGame,
+    gameResults, setGameResults,
+    loading, setLoading,
+    error, setError,
+    roomId, setRoomId,
+    isHost, currentPlayer,
     sortedPlayers,
     roundTimerRef,
-    scheduleBotJoin,
-    clearBotTimers,
+    scheduleBotJoin, clearBotTimers,
     deleteCurrentRoom,
   };
 }
