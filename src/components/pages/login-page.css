@@ -1,0 +1,930 @@
+/* ===== Login Page — Premium E-Learning Design ===== */
+/* Design system: Emerald green, Inter font, cultural Japanese identity */
+/* Creative upgrade: animated gradients, floating shapes, glassmorphism++ */
+
+.lp {
+  display: flex;
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ================================================================
+   LEFT — BRAND SHOWCASE
+   ================================================================ */
+.lp-brand {
+  position: relative;
+  flex: 0 0 48%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Rich animated gradient base */
+.lp-brand-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(160deg, #022c22 0%, #064e3b 30%, #047857 60%, #059669 100%);
+  animation: lp-bg-shift 12s ease-in-out infinite alternate;
+}
+
+@keyframes lp-bg-shift {
+  0% { filter: hue-rotate(0deg) brightness(1); }
+  100% { filter: hue-rotate(5deg) brightness(1.05); }
+}
+
+/* Animated light orbs — more dynamic */
+.lp-brand-bg::before {
+  content: '';
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(52, 211, 153, 0.2), transparent 60%);
+  top: -18%;
+  right: -15%;
+  animation: lp-orb1 14s ease-in-out infinite;
+}
+
+.lp-brand-bg::after {
+  content: '';
+  position: absolute;
+  width: 450px;
+  height: 450px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.15), transparent 60%);
+  bottom: -12%;
+  left: -10%;
+  animation: lp-orb2 18s ease-in-out infinite;
+}
+
+@keyframes lp-orb1 {
+  0%, 100% { transform: scale(1) translate(0, 0); opacity: 0.8; }
+  33% { transform: scale(1.2) translate(15px, -20px); opacity: 1; }
+  66% { transform: scale(0.9) translate(-10px, 10px); opacity: 0.7; }
+}
+
+@keyframes lp-orb2 {
+  0%, 100% { transform: scale(1) translate(0, 0); opacity: 0.6; }
+  50% { transform: scale(1.25) translate(20px, -15px); opacity: 1; }
+}
+
+/* Seigaiha wave pattern overlay — Japanese cultural identity */
+.lp-brand-pattern {
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  background-image:
+    radial-gradient(circle at 100% 150%, transparent 24%, rgba(255,255,255,1) 25%, rgba(255,255,255,1) 28%, transparent 29%, transparent 36%, rgba(255,255,255,1) 36%, rgba(255,255,255,1) 40%, transparent 40%, transparent 100%),
+    radial-gradient(circle at 0% 150%, transparent 24%, rgba(255,255,255,1) 25%, rgba(255,255,255,1) 28%, transparent 29%, transparent 36%, rgba(255,255,255,1) 36%, rgba(255,255,255,1) 40%, transparent 40%, transparent 100%),
+    radial-gradient(circle at 50% 100%, transparent 10%, rgba(255,255,255,1) 11%, rgba(255,255,255,1) 23%, transparent 24%, transparent 30%, rgba(255,255,255,1) 31%, rgba(255,255,255,1) 43%, transparent 44%, transparent 100%),
+    radial-gradient(circle at 100% 50%, transparent 5%, rgba(255,255,255,1) 6%, rgba(255,255,255,1) 15%, transparent 16%, transparent 20%, rgba(255,255,255,1) 21%, rgba(255,255,255,1) 30%, transparent 31%, transparent 100%),
+    radial-gradient(circle at 0% 50%, transparent 5%, rgba(255,255,255,1) 6%, rgba(255,255,255,1) 15%, transparent 16%, transparent 20%, rgba(255,255,255,1) 21%, rgba(255,255,255,1) 30%, transparent 31%, transparent 100%);
+  background-size: 100px 50px;
+  pointer-events: none;
+}
+
+/* Floating geometric shapes — decorative */
+.lp-brand-shapes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.lp-shape {
+  position: absolute;
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}
+
+.lp-shape:nth-child(1) {
+  width: 60px;
+  height: 60px;
+  top: 12%;
+  left: 8%;
+  transform: rotate(15deg);
+  animation: lp-float 20s ease-in-out infinite;
+}
+
+.lp-shape:nth-child(2) {
+  width: 35px;
+  height: 35px;
+  bottom: 20%;
+  right: 12%;
+  border-radius: 50%;
+  transform: rotate(-10deg);
+  animation: lp-float 16s ease-in-out infinite reverse;
+}
+
+.lp-shape:nth-child(3) {
+  width: 45px;
+  height: 45px;
+  top: 60%;
+  left: 15%;
+  border-radius: 12px;
+  transform: rotate(30deg);
+  animation: lp-float 22s ease-in-out infinite 2s;
+}
+
+.lp-shape:nth-child(4) {
+  width: 25px;
+  height: 25px;
+  top: 25%;
+  right: 25%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.03);
+  animation: lp-float 18s ease-in-out infinite 4s;
+}
+
+@keyframes lp-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.5; }
+  25% { transform: translateY(-20px) rotate(5deg); opacity: 0.8; }
+  50% { transform: translateY(-10px) rotate(-3deg); opacity: 0.6; }
+  75% { transform: translateY(-25px) rotate(8deg); opacity: 0.9; }
+}
+
+/* Animated edge glow between panels */
+.lp-brand::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(110, 231, 183, 0.6) 20%,
+    rgba(52, 211, 153, 0.8) 50%,
+    rgba(110, 231, 183, 0.6) 80%,
+    transparent 100%
+  );
+  z-index: 5;
+  animation: lp-edge-glow 4s ease-in-out infinite alternate;
+}
+
+@keyframes lp-edge-glow {
+  0% { opacity: 0.3; filter: blur(1px); }
+  100% { opacity: 0.7; filter: blur(2px); }
+}
+
+/* Content */
+.lp-brand-content {
+  position: relative;
+  z-index: 1;
+  padding: 3rem 3.5rem;
+  max-width: 460px;
+}
+
+/* Logo — glass card with kanji */
+.lp-brand-logo {
+  width: 76px;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 1.75rem;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 0 60px rgba(52, 211, 153, 0.1);
+  position: relative;
+  animation: lp-logo-pulse 6s ease-in-out infinite;
+}
+
+@keyframes lp-logo-pulse {
+  0%, 100% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 0 40px rgba(52, 211, 153, 0.05); }
+  50% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 0 60px rgba(52, 211, 153, 0.15); }
+}
+
+.lp-brand-logo span {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Title with inline Japanese */
+.lp-brand-title {
+  font-size: 2.75rem;
+  font-weight: 800;
+  color: white;
+  margin: 0 0 0.75rem;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.lp-brand-title-jp {
+  display: inline-block;
+  margin-left: 0.5rem;
+  font-size: 0.45em;
+  font-weight: 600;
+  color: rgba(167, 243, 208, 0.85);
+  vertical-align: middle;
+  letter-spacing: 0.04em;
+}
+
+.lp-brand-desc {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.75);
+  margin: 0 0 2rem;
+  line-height: 1.7;
+  font-weight: 400;
+}
+
+/* Stats row — social proof with numbers */
+.lp-stats {
+  display: flex;
+  gap: 1.75rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.lp-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.lp-stat-num {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #6ee7b7;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.lp-stat-label {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 0.15rem;
+  font-weight: 500;
+}
+
+/* Feature cards — glass cards with icons */
+.lp-feature-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.lp-fcard {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.85rem 1.1rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.lp-fcard:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateX(6px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.lp-fcard-icon {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.2), rgba(16, 185, 129, 0.1));
+  color: #6ee7b7;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.lp-fcard-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: white;
+  line-height: 1.3;
+}
+
+.lp-fcard-sub {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 0.15rem;
+}
+
+/* Watermark */
+.lp-brand-watermark {
+  position: absolute;
+  bottom: 2rem;
+  right: 2rem;
+  font-size: 8rem;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.025);
+  letter-spacing: 0.03em;
+  pointer-events: none;
+  user-select: none;
+  line-height: 1;
+}
+
+/* ================================================================
+   RIGHT — FORM PANEL
+   ================================================================ */
+.lp-form-panel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 3rem;
+  background: #ffffff;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle dual decorations on form panel */
+.lp-form-panel::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(5, 150, 105, 0.04), transparent 70%);
+  pointer-events: none;
+  border-radius: 50%;
+}
+
+.lp-form-panel::after {
+  content: '';
+  position: absolute;
+  bottom: -40px;
+  left: -40px;
+  width: 160px;
+  height: 160px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.03), transparent 70%);
+  pointer-events: none;
+  border-radius: 50%;
+}
+
+.lp-form-wrapper {
+  width: 100%;
+  max-width: 400px;
+  animation: lp-form-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes lp-form-enter {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobile logo — hidden on desktop */
+.lp-mobile-logo {
+  display: none;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 2.5rem;
+}
+
+.lp-mobile-logo-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #059669, #047857);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: white;
+  box-shadow: 0 4px 16px rgba(5, 150, 105, 0.3);
+}
+
+.lp-mobile-logo span {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #064e3b;
+  letter-spacing: -0.03em;
+}
+
+/* Form header */
+.lp-form-header {
+  margin-bottom: 2rem;
+}
+
+.lp-form-header h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.025em;
+}
+
+.lp-form-header p {
+  font-size: 1rem;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Form */
+.lp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Input groups */
+.lp-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.lp-input-group label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #374151;
+  letter-spacing: 0.01em;
+}
+
+.lp-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.lp-input-icon {
+  position: absolute;
+  left: 1rem;
+  color: #94a3b8;
+  pointer-events: none;
+  transition: color 0.2s;
+  flex-shrink: 0;
+}
+
+.lp-input-wrap input {
+  width: 100%;
+  padding: 0.9rem 1rem 0.9rem 2.85rem;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  color: #1e293b;
+  font-size: 1rem;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.25s ease;
+  box-sizing: border-box;
+}
+
+.lp-input-wrap input::placeholder {
+  color: #94a3b8;
+}
+
+.lp-input-wrap input:focus {
+  border-color: #10b981;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 3.5px rgba(16, 185, 129, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.lp-input-wrap:focus-within .lp-input-icon {
+  color: #059669;
+}
+
+/* Show/hide password */
+.lp-input-eye {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+
+.lp-input-eye:hover {
+  color: #64748b;
+  background: #f1f5f9;
+}
+
+/* Error */
+.lp-error {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 0.9rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  color: #dc2626;
+  font-size: 0.88rem;
+  font-weight: 500;
+  animation: lp-shake 0.35s ease;
+}
+
+.lp-error svg { flex-shrink: 0; }
+
+@keyframes lp-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-3px); }
+}
+
+/* Submit button — gradient style */
+.lp-submit {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.95rem 1.5rem;
+  margin-top: 0.5rem;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #059669 0%, #047857 50%, #065f46 100%);
+  background-size: 200% 200%;
+  color: white;
+  font-size: 1.05rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow:
+    0 2px 4px rgba(5, 150, 105, 0.15),
+    0 6px 20px rgba(5, 150, 105, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shimmer on submit button */
+.lp-submit::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+  transition: left 0.5s ease;
+}
+
+.lp-submit:hover::before {
+  left: 100%;
+}
+
+.lp-submit:hover {
+  background-position: 100% 100%;
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 12px rgba(5, 150, 105, 0.2),
+    0 10px 32px rgba(5, 150, 105, 0.15);
+}
+
+.lp-submit:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(5, 150, 105, 0.1);
+}
+
+.lp-submit svg {
+  transition: transform 0.25s;
+}
+
+.lp-submit:hover svg {
+  transform: translateX(4px);
+}
+
+/* Divider */
+.lp-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.lp-divider::before,
+.lp-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+.lp-divider span {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+}
+
+/* Toggle */
+.lp-toggle {
+  text-align: center;
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.lp-toggle-link {
+  background: none;
+  border: none;
+  color: #059669;
+  font-size: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 0.3rem;
+  transition: color 0.15s;
+  position: relative;
+}
+
+.lp-toggle-link::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #059669;
+  border-radius: 1px;
+  transition: width 0.25s ease;
+}
+
+.lp-toggle-link:hover {
+  color: #047857;
+}
+
+.lp-toggle-link:hover::after {
+  width: 100%;
+}
+
+/* Trust footer */
+.lp-trust {
+  margin-top: 2.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #f1f5f9;
+  text-align: center;
+  font-size: 0.82rem;
+  color: #9ca3af;
+  letter-spacing: 0.01em;
+}
+
+/* ================================================================
+   SUCCESS MODAL
+   ================================================================ */
+.lp-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
+  animation: lp-fade 0.2s ease-out;
+}
+
+@keyframes lp-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.lp-modal {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 22px;
+  padding: 2.75rem 2.25rem;
+  text-align: center;
+  max-width: 380px;
+  width: 100%;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.03);
+  animation: lp-modal-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes lp-modal-enter {
+  from { opacity: 0; transform: scale(0.95) translateY(12px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.lp-modal-icon {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  border: 2px solid #86efac;
+  color: #059669;
+}
+
+.lp-modal h3 {
+  color: #111827;
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+}
+
+.lp-modal p {
+  color: #6b7280;
+  font-size: 0.95rem;
+  margin: 0 0 1.5rem;
+  line-height: 1.6;
+}
+
+.lp-modal-btn {
+  width: 100%;
+  padding: 0.9rem 1.5rem;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.2);
+}
+
+.lp-modal-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(5, 150, 105, 0.3);
+}
+
+/* ================================================================
+   RESPONSIVE
+   ================================================================ */
+
+/* Tablet — stacked */
+@media (max-width: 900px) {
+  .lp {
+    flex-direction: column;
+  }
+
+  .lp-brand {
+    flex: none;
+    min-height: 300px;
+    padding: 2.5rem 2rem;
+  }
+
+  .lp-brand::after {
+    /* Edge glow becomes bottom */
+    right: 0;
+    left: 0;
+    top: auto;
+    bottom: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(110, 231, 183, 0.6) 20%,
+      rgba(52, 211, 153, 0.8) 50%,
+      rgba(110, 231, 183, 0.6) 80%,
+      transparent 100%
+    );
+  }
+
+  .lp-brand-content {
+    padding: 0;
+    max-width: 500px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .lp-brand-logo {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 1.25rem;
+    border-radius: 17px;
+  }
+
+  .lp-brand-logo span {
+    font-size: 1.8rem;
+  }
+
+  .lp-brand-title {
+    font-size: 1.85rem;
+  }
+
+  .lp-brand-desc {
+    margin-bottom: 1.25rem;
+    font-size: 1rem;
+  }
+
+  .lp-brand-desc br {
+    display: none;
+  }
+
+  .lp-stats {
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+  }
+
+  .lp-stat-num {
+    font-size: 1.25rem;
+  }
+
+  .lp-feature-cards {
+    flex-direction: row;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .lp-fcard {
+    flex: 0 1 auto;
+    padding: 0.65rem 0.9rem;
+    gap: 0.65rem;
+  }
+
+  .lp-fcard-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+  }
+
+  .lp-fcard-sub {
+    display: none;
+  }
+
+  .lp-brand-watermark,
+  .lp-brand-pattern,
+  .lp-brand-shapes {
+    display: none;
+  }
+}
+
+/* Mobile — form only */
+@media (max-width: 640px) {
+  .lp-brand {
+    display: none;
+  }
+
+  .lp-form-panel {
+    padding: 1.5rem 1.25rem;
+    align-items: flex-start;
+    padding-top: 8vh;
+  }
+
+  .lp-form-panel::before,
+  .lp-form-panel::after {
+    display: none;
+  }
+
+  .lp-mobile-logo {
+    display: flex;
+  }
+
+  .lp-form-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .lp-form-header p {
+    font-size: 0.92rem;
+  }
+
+  .lp-trust {
+    margin-top: 1.5rem;
+  }
+}
+
+/* Very small */
+@media (max-width: 380px) {
+  .lp-form-panel {
+    padding: 1.25rem 1rem;
+    padding-top: 5vh;
+  }
+
+  .lp-form-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .lp-input-wrap input {
+    padding: 0.8rem 0.85rem 0.8rem 2.6rem;
+    font-size: 0.92rem;
+  }
+}

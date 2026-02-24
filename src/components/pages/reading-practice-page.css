@@ -111,180 +111,280 @@
   font-size: 0.85rem;
 }
 
-/* ========== Folder List View ========== */
+/* ========== Folder List View (rv-folder = reading view folder) ========== */
 
-.folder-view {
+.rv-folder {
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
 }
 
-.folder-view-header {
+/* -- Header with accent glow -- */
+.rv-folder-header {
+  position: relative;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.rv-folder-header::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--rv-gradient);
+  box-shadow: 0 0 20px var(--rv-glow);
+}
+
+.rv-folder-header-glow {
+  position: absolute;
+  right: -50px;
+  top: -50px;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: var(--rv-gradient);
+  opacity: 0.04;
+  filter: blur(50px);
+  pointer-events: none;
+}
+
+.rv-folder-header-inner {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  position: relative;
+  z-index: 1;
+}
+
+.rv-back {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
   flex-shrink: 0;
 }
 
-.folder-view-title {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex: 1;
+.rv-back:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  transform: translateX(-2px);
 }
 
-.folder-view-title .title-text h1 {
+.rv-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 0.75rem;
+  border-radius: 12px;
+  font-weight: 900;
+  font-size: 1rem;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 15px -3px var(--rv-glow);
+}
+
+.rv-header-text h1 {
   margin: 0;
   font-size: 1.1rem;
   font-weight: 700;
   color: white;
+  letter-spacing: -0.01em;
 }
 
-.folder-view-title .title-text p {
-  margin: 0.1rem 0 0;
+.rv-header-text p {
+  margin: 0.15rem 0 0;
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.5);
 }
 
-.folder-view .lesson-grid {
+/* -- Grid -- */
+.rv-folder-grid {
   flex: 1;
   overflow-y: auto;
-  padding: 1rem;
+  padding: 1.25rem;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 0.65rem;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.75rem;
   align-content: start;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
 
-.folder-view .lesson-grid::-webkit-scrollbar {
-  width: 4px;
+.rv-folder-grid::-webkit-scrollbar {
+  width: 5px;
 }
 
-.folder-view .lesson-grid::-webkit-scrollbar-thumb {
+.rv-folder-grid::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
+  border-radius: 3px;
 }
 
-@keyframes folderCardAppear {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+/* -- Card -- */
+@keyframes rvCardAppear {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
-.folder-view .lesson-card {
+.rv-folder-card {
   position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.85rem;
-  padding: 0.85rem 1rem;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.25rem 0.75rem;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 14px;
+  border-radius: 16px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  animation: folderCardAppear 0.35s ease backwards;
-  animation-delay: var(--card-delay, 0s);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: rvCardAppear 0.3s ease-out var(--card-delay, 0s) both;
   overflow: hidden;
-  text-align: left;
+  text-align: center;
   color: white;
 }
 
-.folder-view .lesson-card:hover {
+.rv-folder-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.rv-folder-card:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 20px var(--level-glow, rgba(139, 92, 246, 0.15));
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px -10px rgba(0, 0, 0, 0.5);
 }
 
-.folder-view .lesson-number {
-  font-size: 1.3rem;
-  font-weight: 800;
-  background: var(--level-gradient, linear-gradient(135deg, #8b5cf6, #ec4899));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  min-width: 36px;
-  text-align: center;
+.rv-folder-card:hover::before {
+  opacity: 1;
 }
 
-.folder-view .lesson-content {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
+.rv-folder-card.has-content {
+  background: linear-gradient(135deg, rgba(var(--accent-rgb, 139, 92, 246), 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
-.folder-view .lesson-label {
-  font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.4);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 600;
+.rv-folder-card.has-content:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 8px 25px -10px rgba(0, 0, 0, 0.5),
+    0 0 15px var(--rv-glow, rgba(139, 92, 246, 0.1));
 }
 
-.folder-view .lesson-name {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.folder-view .lesson-meta {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
-}
-
-.folder-view .lesson-count {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.folder-view .lesson-count.active {
-  color: rgba(139, 92, 246, 0.8);
-}
-
-.folder-view .lesson-arrow {
-  color: rgba(255, 255, 255, 0.25);
-  transition: all 0.3s ease;
-}
-
-.folder-view .lesson-card:hover .lesson-arrow {
-  color: rgba(255, 255, 255, 0.6);
-  transform: translateX(3px);
-}
-
-.folder-view .lesson-indicator {
+/* Left accent bar for cards with content */
+.rv-card-accent {
   position: absolute;
   left: 0;
   top: 0;
   bottom: 0;
   width: 3px;
-  background: var(--level-gradient, linear-gradient(180deg, #8b5cf6, #ec4899));
+  background: var(--rv-gradient, linear-gradient(180deg, #8b5cf6, #ec4899));
   border-radius: 0 2px 2px 0;
+  box-shadow: 0 0 8px var(--rv-glow, rgba(139, 92, 246, 0.3));
 }
 
-.folder-view .lesson-shine {
+/* Big lesson number */
+.rv-card-num {
+  font-size: 1.5rem;
+  font-weight: 800;
+  background: var(--rv-gradient, linear-gradient(135deg, #8b5cf6, #ec4899));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+
+/* Info block */
+.rv-card-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.rv-card-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: white;
+  letter-spacing: -0.01em;
+}
+
+.rv-card-count {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.35);
+  font-weight: 500;
+}
+
+.rv-card-count.active {
+  color: rgba(139, 92, 246, 0.75);
+}
+
+.rv-card-count.active svg {
+  color: rgba(139, 92, 246, 0.6);
+}
+
+/* Hover shine */
+.rv-card-shine {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, transparent 50%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s;
   pointer-events: none;
 }
 
-.folder-view .lesson-card:hover .lesson-shine {
+.rv-folder-card:hover .rv-card-shine {
   opacity: 1;
+}
+
+/* -- Empty state -- */
+.rv-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  gap: 0.75rem;
+  padding: 3rem 2rem;
+}
+
+.rv-empty svg { opacity: 0.4; }
+
+.rv-empty h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.rv-empty p {
+  margin: 0;
+  font-size: 0.85rem;
 }
 
 /* ========== Passage List View ========== */
@@ -1492,15 +1592,67 @@
   .content-card::after {
     display: none;
   }
+
+  .rv-folder-grid {
+    grid-template-columns: repeat(4, 1fr);
+    padding: 1rem;
+  }
+}
+
+/* ========== Responsive: Small Tablet ========== */
+
+@media (max-width: 768px) {
+  .rv-folder-grid {
+    grid-template-columns: repeat(3, 1fr);
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .rv-folder-card {
+    padding: 1rem 0.5rem;
+  }
+
+  .rv-card-name {
+    font-size: 0.8rem;
+  }
 }
 
 /* ========== Responsive: Mobile ========== */
 
 @media (max-width: 640px) {
-  .folder-view .lesson-grid {
-    grid-template-columns: 1fr;
+  .rv-folder-grid {
+    grid-template-columns: repeat(3, 1fr);
+    padding: 0.5rem;
+    gap: 0.4rem;
+  }
+
+  .rv-folder-card {
+    padding: 0.85rem 0.4rem;
+    border-radius: 12px;
+  }
+
+  .rv-card-num {
+    font-size: 1.2rem;
+  }
+
+  .rv-card-name {
+    font-size: 0.75rem;
+  }
+
+  .rv-card-count {
+    font-size: 0.6rem;
+  }
+
+  .rv-folder-header {
     padding: 0.75rem;
-    gap: 0.5rem;
+  }
+
+  .rv-badge {
+    min-width: 34px;
+    height: 34px;
+    padding: 0 0.5rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
   }
 
   .passage-grid-premium {
@@ -1571,5 +1723,13 @@
 
   .completion-actions .btn {
     width: 100%;
+  }
+}
+
+/* ========== Responsive: Very Small ========== */
+
+@media (max-width: 400px) {
+  .rv-folder-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }

@@ -17,6 +17,17 @@
   50%      { box-shadow: 0 0 30px var(--level-glow, rgba(139,92,246,0.15)); }
 }
 
+/* ---- Page Container (self-contained, independent of audio-player-page.css) ---- */
+.listening-study-view-page {
+  min-height: calc(100vh - 60px);
+  max-height: calc(100vh - 60px);
+  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 /* ---- Vocabulary Mode Container ---- */
 .vocabulary-mode {
   flex: 1;

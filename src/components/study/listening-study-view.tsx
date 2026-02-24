@@ -231,7 +231,7 @@ export function ListeningStudyView({
   }, []);
 
   return (
-    <div className="listening-practice-page">
+    <div className="listening-study-view-page">
       <div className="vocabulary-mode">
         <div className="vocab-header">
           <button className="btn-back" onClick={onBack}>

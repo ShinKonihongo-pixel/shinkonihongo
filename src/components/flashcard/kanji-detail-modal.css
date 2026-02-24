@@ -381,7 +381,60 @@
     font-size: 0.85rem;
   }
 
-  /* Spin animation */
+  /* Radical chips row */
+  .kd-radicals {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .kd-radicals-label {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.45);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+  }
+
+  .kd-radicals-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+
+  .kd-radical-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 8px;
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    color: #c4b5fd;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .kd-radical-chip:hover {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: rgba(139, 92, 246, 0.4);
+    color: #e9d5ff;
+    transform: translateY(-1px);
+  }
+
+  .kd-radical-char {
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+
+  .kd-radical-name {
+    font-size: 0.75rem;
+    opacity: 0.7;
+  }
+
+  /* Spin animation (used by kanji detail modal) */
   .kd-spin {
     animation: kd-spin-anim 1s linear infinite;
   }

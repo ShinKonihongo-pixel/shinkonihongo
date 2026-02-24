@@ -126,6 +126,7 @@ export interface KanjiCharacterAnalysis {
   kunYomi: string[];       // e.g. ["た.べる", "く.う"]
   sinoVietnamese: string;  // e.g. "THỰC"
   mnemonic: string;        // Memory tip (Vietnamese)
+  radicals?: string[];     // Kangxi radical components (e.g. ["人", "口"])
   sampleWords: KanjiSampleWord[];
   createdAt: string;
 }

@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronRight, FolderOpen } from 'lucide-react';
+import { ArrowLeft, BookOpen, FolderOpen } from 'lucide-react';
 import type { JLPTLevel } from '../../../types/flashcard';
 import type { ReadingFolder } from '../../../types/reading';
 
@@ -20,30 +20,36 @@ export function FolderListView({
   onGoBack,
 }: FolderListViewProps) {
   return (
-    <div className="folder-view">
-      <div className="folder-view-header">
-        <button className="btn-back" onClick={onGoBack}>
-          <ArrowLeft size={20} />
-        </button>
-        <div className="folder-view-title">
-          <span className="level-badge" style={{ background: theme.gradient }}>
+    <div className="rv-folder">
+      {/* Header */}
+      <header className="rv-folder-header" style={{
+        '--rv-gradient': theme.gradient,
+        '--rv-glow': theme.glow,
+      } as React.CSSProperties}>
+        <div className="rv-folder-header-inner">
+          <button className="rv-back" onClick={onGoBack}>
+            <ArrowLeft size={18} />
+          </button>
+          <div className="rv-badge" style={{ background: theme.gradient }}>
             {selectedLevel}
-          </span>
-          <div className="title-text">
+          </div>
+          <div className="rv-header-text">
             <h1>Chọn bài học</h1>
             <p>{levelFolders.length} bài • Luyện đọc hiểu</p>
           </div>
         </div>
-      </div>
+        <div className="rv-folder-header-glow" />
+      </header>
 
+      {/* Grid */}
       {levelFolders.length === 0 ? (
-        <div className="empty-state">
+        <div className="rv-empty">
           <FolderOpen size={48} />
           <h3>Chưa có thư mục nào</h3>
           <p>Vui lòng thêm thư mục ở tab Quản Lí</p>
         </div>
       ) : (
-        <div className="lesson-grid">
+        <div className="rv-folder-grid">
           {levelFolders.map((folder, idx) => {
             const pCount = getPassageCount(folder.id);
             const lessonNum = folder.name.replace(/\D/g, '') || String(idx + 1);
@@ -51,27 +57,32 @@ export function FolderListView({
             return (
               <button
                 key={folder.id}
-                className={`lesson-card ${hasContent ? 'has-content' : ''}`}
+                className={`rv-folder-card ${hasContent ? 'has-content' : ''}`}
                 onClick={() => onSelectFolder(folder)}
                 style={{
                   '--card-delay': `${idx * 0.03}s`,
-                  '--level-gradient': theme.gradient,
-                  '--level-glow': theme.glow,
+                  '--rv-gradient': theme.gradient,
+                  '--rv-glow': theme.glow,
                 } as React.CSSProperties}
               >
-                <div className="lesson-number">{lessonNum}</div>
-                <div className="lesson-content">
-                  <span className="lesson-label">Bài</span>
-                  <span className="lesson-name">{folder.name}</span>
-                </div>
-                <div className="lesson-meta">
-                  <span className={`lesson-count ${hasContent ? 'active' : ''}`}>
-                    {pCount > 0 ? `${pCount} bài đọc` : 'Trống'}
+                {/* Left accent bar */}
+                {hasContent && <div className="rv-card-accent" />}
+
+                {/* Big number */}
+                <div className="rv-card-num">{lessonNum}</div>
+
+                {/* Info */}
+                <div className="rv-card-info">
+                  <span className="rv-card-name">{folder.name}</span>
+                  <span className={`rv-card-count ${hasContent ? 'active' : ''}`}>
+                    {hasContent ? (
+                      <><BookOpen size={12} /> {pCount} bài đọc</>
+                    ) : 'Trống'}
                   </span>
-                  <ChevronRight size={18} className="lesson-arrow" />
                 </div>
-                {hasContent && <div className="lesson-indicator" />}
-                <div className="lesson-shine" />
+
+                {/* Hover shine */}
+                <div className="rv-card-shine" />
               </button>
             );
           })}

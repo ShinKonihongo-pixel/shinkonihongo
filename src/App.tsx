@@ -73,6 +73,11 @@ function AppInner() {
   const { currentUser, isLoggedIn, login, register } = useUserData();
   const urlRouter = useUrlRouter();
 
+  // All hooks must be called before any early return (Rules of Hooks)
+  const isCenterApp = urlRouter.isCenterApp && !!urlRouter.centerSlug;
+  const centerSlug = urlRouter.isCenterApp ? urlRouter.centerSlug : null;
+  const centerData = useCenterData(centerSlug, currentUser?.id ?? null);
+
   // Center router - non-app center routes (landing, join) → CenterRouter
   if (urlRouter.centerSlug && !urlRouter.isCenterApp) {
     return (
@@ -95,11 +100,6 @@ function AppInner() {
       </div>
     );
   }
-
-  // Center app mode - loading/error/not-member states
-  const isCenterApp = urlRouter.isCenterApp && !!urlRouter.centerSlug;
-  const centerSlug = urlRouter.isCenterApp ? urlRouter.centerSlug : null;
-  const centerData = useCenterData(centerSlug, currentUser?.id ?? null);
 
   if (isCenterApp && centerData.loading) {
     return (

@@ -41,6 +41,7 @@ export const COLLECTIONS = {
   KANJI_CARDS: 'kanjiCards',
   KANJI_LESSONS: 'kanjiLessons',
   VOCABULARY_NOTEBOOKS: 'vocabularyNotebooks',
+  RADICAL_KANJI_CUSTOM: 'radicalKanjiCustom',
 } as const;
 
 // Shared utilities

@@ -4,9 +4,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Sparkles, RefreshCw, Plus, Trash2, ChevronDown, ChevronUp, Save } from 'lucide-react';
 import type { KanjiCharacterAnalysis, KanjiSampleWord } from '../../types/flashcard';
+import type { Radical } from '../../types/kanji';
 import { extractKanjiCharacters, generateKanjiCharacterAnalysis } from '../../services/kanji-analysis-ai-service';
 import { getMultipleKanjiAnalysis, saveMultipleKanjiAnalysis } from '../../services/firestore';
 import { kanjiAnalysisCache } from '../../hooks/use-kanji-analysis';
+import { getRadicalInfo } from '../../utils/radical-kanji-index';
+import { RadicalExplorerPanel } from './radical-explorer-panel';
 import './kanji-analysis-editor.css';
 
 const MIN_SAMPLE_WORDS = 3;
@@ -32,6 +35,7 @@ export function KanjiAnalysisEditor({ kanjiText }: KanjiAnalysisEditorProps) {
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(true);
   const [dirty, setDirty] = useState(false);
+  const [exploringRadical, setExploringRadical] = useState<Radical | null>(null);
 
   const characters = extractKanjiCharacters(kanjiText);
   const hasKanji = characters.length > 0;
@@ -177,6 +181,15 @@ export function KanjiAnalysisEditor({ kanjiText }: KanjiAnalysisEditorProps) {
   const missingChars = characters.filter(c => !analyzedChars.has(c));
 
   return (
+    <>
+    {/* Radical explorer as full modal overlay */}
+    {exploringRadical && (
+      <RadicalExplorerPanel
+        radical={exploringRadical}
+        onBack={() => setExploringRadical(null)}
+        asModal
+      />
+    )}
     <div className="kae-section">
       <div className="kae-header" onClick={() => setExpanded(!expanded)}>
         <div className="kae-header-left">
@@ -263,6 +276,44 @@ export function KanjiAnalysisEditor({ kanjiText }: KanjiAnalysisEditorProps) {
                   />
                 </div>
 
+                {/* Radicals — interactive chips + text editor */}
+                <div className="kae-field kae-field-full">
+                  <label>Bộ thủ</label>
+                  {(a.radicals && a.radicals.length > 0) && (
+                    <div className="kae-radical-chips">
+                      {a.radicals.map((r) => {
+                        const info = getRadicalInfo(r);
+                        // Always allow clicking — create synthetic Radical for unknown ones
+                        const radicalObj = info || {
+                          number: 0,
+                          character: r,
+                          strokeCount: 0,
+                          vietnameseName: r,
+                          meaning: '',
+                        };
+                        return (
+                          <button
+                            key={r}
+                            type="button"
+                            className="kae-radical-chip"
+                            onClick={() => setExploringRadical(radicalObj)}
+                            title={info ? `${info.vietnameseName} — ${info.meaning} (nhấn để xem Kanji liên quan)` : `${r} (nhấn để xem/thêm Kanji liên quan)`}
+                          >
+                            <span className="kae-radical-char">{r}</span>
+                            <span className="kae-radical-name">{info ? info.vietnameseName : '?'}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <input
+                    type="text"
+                    value={(a.radicals || []).join('、')}
+                    onChange={e => updateField(charIdx, 'radicals', e.target.value.split(/[、,]/).map(s => s.trim()).filter(Boolean))}
+                    placeholder="人、口、土"
+                  />
+                </div>
+
                 {/* Mnemonic */}
                 <div className="kae-field kae-field-full">
                   <label>Mẹo nhớ</label>
@@ -317,5 +368,6 @@ export function KanjiAnalysisEditor({ kanjiText }: KanjiAnalysisEditorProps) {
         </div>
       )}
     </div>
+    </>
   );
 }

@@ -7,10 +7,38 @@ import { useState, useEffect, useCallback } from 'react';
 import type { KanjiCharacterAnalysis } from '../types/flashcard';
 import { extractKanjiCharacters, generateKanjiCharacterAnalysis } from '../services/kanji-analysis-ai-service';
 import { getMultipleKanjiAnalysis, saveMultipleKanjiAnalysis } from '../services/firestore';
+import { getSeedRadicals } from '../utils/radical-kanji-index';
 
 // Shared in-memory cache — persists across modal open/close within the same session
 // Exported so kanji-analysis-editor can share the same cache instance
 export const kanjiAnalysisCache = new Map<string, KanjiCharacterAnalysis>();
+
+// Enrich analyses with seed radicals when:
+// 1. Analysis has no radicals at all
+// 2. Analysis has fewer radicals than static data (old incomplete data)
+function enrichWithSeedRadicals(analyses: KanjiCharacterAnalysis[]): {
+  enriched: KanjiCharacterAnalysis[];
+  updated: KanjiCharacterAnalysis[];
+} {
+  const enriched: KanjiCharacterAnalysis[] = [];
+  const updated: KanjiCharacterAnalysis[] = [];
+
+  for (const a of analyses) {
+    const seedR = getSeedRadicals(a.character);
+    const currentLen = a.radicals?.length || 0;
+    const seedLen = seedR?.length || 0;
+
+    // Upgrade if: no radicals, OR static data has MORE components (improved decomposition)
+    if (seedR && seedLen > currentLen) {
+      const patched = { ...a, radicals: seedR };
+      enriched.push(patched);
+      updated.push(patched);
+    } else {
+      enriched.push(a);
+    }
+  }
+  return { enriched, updated };
+}
 
 interface UseKanjiAnalysisOptions {
   readOnly?: boolean;
@@ -47,34 +75,47 @@ export function useKanjiAnalysis(kanjiText: string, options: UseKanjiAnalysisOpt
         }
       }
 
-      // All characters already cached → return immediately, no network calls
+      // All characters already cached → enrich if needed, return immediately
       if (notInCache.length === 0) {
-        fromCache.sort((a, b) => chars.indexOf(a.character) - chars.indexOf(b.character));
-        setAnalyses(fromCache);
+        const { enriched, updated } = enrichWithSeedRadicals(fromCache);
+        if (updated.length > 0) {
+          for (const a of updated) kanjiAnalysisCache.set(a.character, a);
+          saveMultipleKanjiAnalysis(updated).catch(e => console.error('Enrich save error:', e));
+        }
+        enriched.sort((a, b) => chars.indexOf(a.character) - chars.indexOf(b.character));
+        setAnalyses(enriched);
         return;
       }
 
       // 2. Fetch uncached characters from Firestore
       const fromFirestore = await getMultipleKanjiAnalysis(notInCache);
 
-      // Update cache with Firestore results
-      for (const a of fromFirestore) {
+      // Enrich Firestore results with seed radicals if missing
+      const { enriched: enrichedFirestore, updated: fsUpdated } = enrichWithSeedRadicals(fromFirestore);
+
+      // Update cache with enriched Firestore results
+      for (const a of enrichedFirestore) {
         kanjiAnalysisCache.set(a.character, a);
       }
 
+      // Silently persist enriched docs back to Firestore (fire-and-forget)
+      if (fsUpdated.length > 0) {
+        saveMultipleKanjiAnalysis(fsUpdated).catch(e => console.error('Enrich save error:', e));
+      }
+
       if (readOnly) {
-        const all = [...fromCache, ...fromFirestore];
+        const all = [...fromCache, ...enrichedFirestore];
         all.sort((a, b) => chars.indexOf(a.character) - chars.indexOf(b.character));
         setAnalyses(all);
       } else {
         // 3. Determine which characters are still missing
         const foundChars = new Set([
           ...fromCache.map((a) => a.character),
-          ...fromFirestore.map((a) => a.character),
+          ...enrichedFirestore.map((a) => a.character),
         ]);
         const missingChars = chars.filter((c) => !foundChars.has(c));
 
-        let allAnalyses = [...fromCache, ...fromFirestore];
+        let allAnalyses = [...fromCache, ...enrichedFirestore];
 
         if (missingChars.length > 0) {
           // 4. Generate via AI only for truly missing characters

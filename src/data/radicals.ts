@@ -235,6 +235,64 @@ export const KANGXI_RADICALS: Radical[] = [
   { number: 214, character: '龠', strokeCount: 17, vietnameseName: 'Dược', meaning: 'Flute' },
 ];
 
-// Quick lookup map by character
+// Common radical variant forms → parent radical number
+// These are abbreviated/positional forms used when a radical appears
+// at specific positions (left side, top, bottom) within a kanji
+export const RADICAL_VARIANT_ENTRIES: { character: string; parentNumber: number; vietnameseName: string; meaning: string }[] = [
+  { character: '亻', parentNumber: 9, vietnameseName: 'Nhân đứng', meaning: 'Person (left)' },
+  { character: '氵', parentNumber: 85, vietnameseName: 'Thủy (3 chấm)', meaning: 'Water (left)' },
+  { character: '扌', parentNumber: 64, vietnameseName: 'Thủ (bên trái)', meaning: 'Hand (left)' },
+  { character: '忄', parentNumber: 61, vietnameseName: 'Tâm đứng', meaning: 'Heart (left)' },
+  { character: '犭', parentNumber: 94, vietnameseName: 'Khuyển (bên trái)', meaning: 'Dog (left)' },
+  { character: '礻', parentNumber: 113, vietnameseName: 'Thị (bên trái)', meaning: 'Spirit (left)' },
+  { character: '衤', parentNumber: 145, vietnameseName: 'Y (bên trái)', meaning: 'Clothes (left)' },
+  { character: '飠', parentNumber: 184, vietnameseName: 'Thực (bên trái)', meaning: 'Eat (left)' },
+  { character: '刂', parentNumber: 18, vietnameseName: 'Đao (bên phải)', meaning: 'Knife (right)' },
+  { character: '灬', parentNumber: 86, vietnameseName: 'Hỏa (4 chấm)', meaning: 'Fire (bottom)' },
+  { character: '⺗', parentNumber: 61, vietnameseName: 'Tâm (dưới)', meaning: 'Heart (bottom)' },
+  { character: '辶', parentNumber: 162, vietnameseName: 'Sước (chạy)', meaning: 'Walk (bottom-left)' },
+  { character: '阝', parentNumber: 170, vietnameseName: 'Phụ/Ấp', meaning: 'Mound/City (side)' },
+  { character: '艹', parentNumber: 140, vietnameseName: 'Thảo (trên)', meaning: 'Grass (top)' },
+  { character: '⺮', parentNumber: 118, vietnameseName: 'Trúc (trên)', meaning: 'Bamboo (top)' },
+  { character: '罒', parentNumber: 122, vietnameseName: 'Võng (trên)', meaning: 'Net (top)' },
+  { character: '钅', parentNumber: 167, vietnameseName: 'Kim (bên trái)', meaning: 'Gold (left)' },
+  { character: '饣', parentNumber: 184, vietnameseName: 'Thực (giản thể)', meaning: 'Eat (simplified)' },
+  { character: '纟', parentNumber: 120, vietnameseName: 'Mịch (bên trái)', meaning: 'Silk (left)' },
+  { character: '龵', parentNumber: 64, vietnameseName: 'Thủ (trên)', meaning: 'Hand (top)' },
+  { character: '⺼', parentNumber: 130, vietnameseName: 'Nhục (bên trái)', meaning: 'Meat (left, looks like 月)' },
+  { character: '耂', parentNumber: 125, vietnameseName: 'Lão (trên)', meaning: 'Old (top)' },
+];
+
+// Maps variant character → base radical character
+export const VARIANT_TO_BASE: Record<string, string> = {};
+// Maps base radical character → list of its variant characters
+export const BASE_TO_VARIANTS: Record<string, string[]> = {};
+
+RADICAL_VARIANT_ENTRIES.forEach(v => {
+  const parent = KANGXI_RADICALS.find(r => r.number === v.parentNumber);
+  if (parent) {
+    VARIANT_TO_BASE[v.character] = parent.character;
+    if (!BASE_TO_VARIANTS[parent.character]) BASE_TO_VARIANTS[parent.character] = [];
+    BASE_TO_VARIANTS[parent.character].push(v.character);
+  }
+});
+
+// Quick lookup map by character (includes both base radicals and variants)
 export const RADICAL_MAP: Record<string, Radical> = {};
+
+// Register all 214 base radicals
 KANGXI_RADICALS.forEach(r => { RADICAL_MAP[r.character] = r; });
+
+// Register variant forms with descriptive names
+RADICAL_VARIANT_ENTRIES.forEach(v => {
+  const parent = KANGXI_RADICALS.find(r => r.number === v.parentNumber);
+  if (parent) {
+    RADICAL_MAP[v.character] = {
+      number: parent.number,
+      character: v.character,
+      strokeCount: parent.strokeCount,
+      vietnameseName: v.vietnameseName,
+      meaning: v.meaning,
+    };
+  }
+});

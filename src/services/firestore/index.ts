@@ -145,6 +145,13 @@ export {
   removeFlashcardFromNotebook,
 } from './vocabulary-notebook-service';
 
+// Radical-kanji custom mapping operations
+export {
+  loadAllRadicalKanjiCustom,
+  saveRadicalKanjiCustom,
+  getRadicalKanjiCustom,
+} from './radical-kanji-service';
+
 // Kanji card operations
 export {
   subscribeToKanjiCards,

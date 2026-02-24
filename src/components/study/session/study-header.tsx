@@ -5,7 +5,9 @@ import type { MemorizationStatus, DifficultyLevel, JLPTLevel, Flashcard } from '
 import type { NotebookHook } from '../level-lesson-selector/types';
 import { MEMORIZATION_OPTIONS, DIFFICULTY_OPTIONS, LEVEL_COLORS } from './constants';
 import { useAuth } from '../../../hooks/use-auth';
-import { getVocabularyNote } from '../../../services/firestore';
+import { getVocabularyNote, getMultipleKanjiAnalysis } from '../../../services/firestore';
+import { extractKanjiCharacters } from '../../../services/kanji-analysis-ai-service';
+import { kanjiAnalysisCache } from '../../../hooks/use-kanji-analysis';
 import { KanjiDetailModal } from '../../flashcard/kanji-detail-modal';
 import { VocabularyNotesModal } from '../../flashcard/vocabulary-notes-modal';
 import { NotebookAddPopover } from '../notebook';
@@ -54,6 +56,7 @@ export function StudyHeader({
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showNotebookPopover, setShowNotebookPopover] = useState(false);
   const [hasNote, setHasNote] = useState(false);
+  const [hasAnalysis, setHasAnalysis] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
 
   // Check if current card has a note
@@ -65,6 +68,33 @@ export function StudyHeader({
     }).catch(() => {});
     return () => { cancelled = true; };
   }, [currentUser, currentCard?.id]);
+
+  // Check if current card has kanji analysis data (cache or Firestore)
+  useEffect(() => {
+    if (!currentCard) { setHasAnalysis(false); return; }
+    const text = currentCard.kanji || currentCard.vocabulary;
+    const chars = extractKanjiCharacters(text);
+    if (chars.length === 0) { setHasAnalysis(false); return; }
+
+    // Check in-memory cache first
+    if (chars.every(c => kanjiAnalysisCache.has(c))) {
+      setHasAnalysis(true);
+      return;
+    }
+
+    // Fallback: check Firestore
+    let cancelled = false;
+    getMultipleKanjiAnalysis(chars).then(results => {
+      if (!cancelled) {
+        setHasAnalysis(results.length > 0);
+        // Warm up cache
+        for (const a of results) kanjiAnalysisCache.set(a.character, a);
+      }
+    }).catch(() => {
+      if (!cancelled) setHasAnalysis(false);
+    });
+    return () => { cancelled = true; };
+  }, [currentCard?.id]);
 
   // Check if current card is in any notebook
   const isInNotebook = !!(currentCard && notebookHook &&
@@ -132,8 +162,8 @@ export function StudyHeader({
           </div>
         )}
         <div className="header-actions">
-          {/* Detail & Notes buttons - same style as action buttons */}
-          {currentCard && (
+          {/* Detail button - only show if kanji analysis exists */}
+          {currentCard && hasAnalysis && (
             <button className="header-action-btn has-label" onClick={() => setShowDetail(true)} title="Chi tiết Kanji">
               <BookOpen size={16} />
               {!isMobile && <span className="btn-label">Chi tiết</span>}
