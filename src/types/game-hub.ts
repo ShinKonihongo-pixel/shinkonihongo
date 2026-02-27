@@ -1,7 +1,7 @@
 // Game Hub Types - Unified game center for all mini-games
 
 // Available games in the hub
-export type GameType = 'quiz' | 'golden-bell' | 'picture-guess' | 'bingo' | 'kanji-battle' | 'word-match' | 'ai-challenge' | 'image-word' | 'word-scramble';
+export type GameType = 'quiz' | 'golden-bell' | 'picture-guess' | 'bingo' | 'kanji-battle' | 'word-match' | 'ai-challenge' | 'image-word' | 'word-scramble' | 'kanji-drop';
 
 // Game info for display
 export interface GameInfo {
@@ -205,6 +205,19 @@ export const GAMES: Record<GameType, GameInfo> = {
     gradient: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)',
     playerRange: '1',
     features: ['Chọn bài học', 'Gợi ý thông minh', 'Điểm theo thời gian'],
+    difficulty: 'medium',
+    isNew: true,
+    category: 'puzzle',
+  },
+  'kanji-drop': {
+    id: 'kanji-drop',
+    name: 'Kanji Drop',
+    description: 'Xếp kanji vào hàng, gom nhóm và tiêu diệt!',
+    icon: '🀄',
+    color: '#8B5CF6',
+    gradient: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 50%, #C4B5FD 100%)',
+    playerRange: '1',
+    features: ['Nhiều màn chơi', 'Power-ups', 'Xếp hạng cấp độ'],
     difficulty: 'medium',
     isNew: true,
     category: 'puzzle',

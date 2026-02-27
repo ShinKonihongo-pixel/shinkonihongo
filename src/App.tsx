@@ -718,6 +718,7 @@ function AppContent() {
           <GameHubPage
             currentUser={currentUser}
             flashcards={cards}
+            kanjiCards={kanjiCards}
             jlptQuestions={jlptQuestions}
             getLessonsByLevel={filteredGetLessonsByLevel}
             getChildLessons={filteredGetChildLessons}

@@ -93,6 +93,7 @@ const WordMatchPage = lazy(() => import('./word-match-page').then(m => ({ defaul
 const AIChallengePage = lazy(() => import('./ai-challenge-page').then(m => ({ default: m.AIChallengePage })));
 const ImageWordPage = lazy(() => import('./image-word-page').then(m => ({ default: m.ImageWordPage })));
 const WordScramblePage = lazy(() => import('./word-scramble-page').then(m => ({ default: m.WordScramblePage })));
+const KanjiDropPage = lazy(() => import('./kanji-drop-page').then(m => ({ default: m.KanjiDropPage })));
 
 // Loading fallback component
 function GameLoadingFallback() {
@@ -107,6 +108,7 @@ function GameLoadingFallback() {
 interface GameHubPageProps {
   currentUser: CurrentUser | null;
   flashcards: Flashcard[];
+  kanjiCards?: import('../../types/kanji').KanjiCard[];
   jlptQuestions: JLPTQuestion[];
   getLessonsByLevel: (level: JLPTLevel) => Lesson[];
   getChildLessons: (parentId: string) => Lesson[];
@@ -126,6 +128,7 @@ interface GameHubPageProps {
 export function GameHubPage({
   currentUser,
   flashcards,
+  kanjiCards = [],
   jlptQuestions,
   getLessonsByLevel,
   getChildLessons,
@@ -479,6 +482,20 @@ export function GameHubPage({
           initialJoinCode={joinCode || undefined}
           onSaveGameSession={onSaveGameSession}
           initialRoomConfig={pendingRoomConfig?.gameType === 'word-scramble' ? pendingRoomConfig.data : undefined}
+        />
+      )}
+
+      {selectedGame === 'kanji-drop' && (
+        <KanjiDropPage
+          onClose={handleBackToHub}
+          kanjiCards={kanjiCards}
+          currentUser={{
+            id: currentUser.id,
+            displayName: currentUser.displayName || currentUser.username,
+            avatar: currentUser.avatar || '🀄',
+            role: currentUser.role,
+          }}
+          onSaveGameSession={onSaveGameSession}
         />
       )}
       </Suspense>
