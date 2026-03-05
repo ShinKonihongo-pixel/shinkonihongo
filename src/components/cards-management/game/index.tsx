@@ -17,6 +17,7 @@ import { DashboardView } from './dashboard-view';
 import { GlobalSettingsPanel } from './global-settings-panel';
 import { QuizGameSettingsPanel } from './quiz-game-settings-panel';
 import { AIChallengeSettingsPanel } from './ai-challenge-settings-panel';
+import { KanjiDropManager } from '../../kanji-drop/kanji-drop-manager';
 import { ALL_GAMES, type GameSection, type DashboardStats } from './game-tab-types';
 
 export function GameTab() {
@@ -143,6 +144,11 @@ export function GameTab() {
   // AI Challenge Settings
   if (activeSection === 'ai-challenge') {
     return <AIChallengeSettingsPanel onBack={() => setActiveSection('dashboard')} />;
+  }
+
+  // Kanji Drop Manager
+  if (activeSection === 'kanji-drop') {
+    return <KanjiDropManager onClose={() => setActiveSection('dashboard')} />;
   }
 
   return null;

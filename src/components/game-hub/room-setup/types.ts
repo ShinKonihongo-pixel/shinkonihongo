@@ -55,6 +55,7 @@ export interface GameSetupConfig {
   showTotalRounds?: boolean;
   roundsSlider?: SliderConfig;
   roundsLabel?: string;
+  roundsSuffix?: string;
   showJLPTLevel?: boolean;
   showLessonPicker?: boolean;
   showCategories?: boolean;

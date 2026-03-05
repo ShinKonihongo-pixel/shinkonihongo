@@ -1,4 +1,4 @@
-// Kanji Drop playing screen — game layout with pool, bottom row, power-ups
+// Kanji Drop playing screen — game layout with stacked pool, bottom row, power-ups
 
 import { Home, Trophy, Layers } from 'lucide-react';
 import type { GameState, PowerUpType } from './kanji-drop-types';
@@ -16,6 +16,8 @@ interface PlayingScreenProps {
 export function PlayingScreen({
   gameState, onPickTile, onUsePowerUp, onClose,
 }: PlayingScreenProps) {
+  const isCascading = gameState.clearingIndices.length > 0;
+
   return (
     <div className="kd-playing">
       {/* Header */}
@@ -36,11 +38,18 @@ export function PlayingScreen({
         </div>
       </div>
 
-      {/* Pool Grid */}
-      <PoolGrid tiles={gameState.pool} onPickTile={onPickTile} />
+      {/* Pool Grid (stacked cards) */}
+      <PoolGrid
+        tiles={gameState.pool}
+        onPickTile={onPickTile}
+        disabled={isCascading}
+      />
 
       {/* Bottom Row */}
-      <BottomRow slots={gameState.bottom} />
+      <BottomRow
+        slots={gameState.bottom}
+        clearingIndices={gameState.clearingIndices}
+      />
 
       {/* Power-ups */}
       <PowerUpBar powerUps={gameState.powerUps} onUsePowerUp={onUsePowerUp} />

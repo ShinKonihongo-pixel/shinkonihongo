@@ -204,7 +204,7 @@ export function FormFields({
           config={config.roundsSlider}
           label={config.roundsLabel || 'Số câu hỏi'}
           icon={<HelpCircle size={16} />}
-          suffix=" câu"
+          suffix={config.roundsSuffix || ' câu'}
         />
       )}
 

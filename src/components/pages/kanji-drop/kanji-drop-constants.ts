@@ -15,42 +15,38 @@ export const MIN_CLEAR_RUN = 3;
 export const DEFAULT_POWERUP_REWARD_REGULAR = 1;
 export const DEFAULT_POWERUP_REWARD_VIP = 2;
 
-// Level configurations (levels 1-20+)
-export const LEVEL_CONFIGS: LevelConfig[] = [
-  // Levels 1-3: 12 tiles, 4 kanji x3
-  { level: 1, totalTiles: 12, kanjiVariety: 4, multiplicities: [3, 3, 3, 3], lockedSlots: [8, 9], powerUpReward: 1 },
-  { level: 2, totalTiles: 12, kanjiVariety: 4, multiplicities: [3, 3, 3, 3], lockedSlots: [8, 9], powerUpReward: 1 },
-  { level: 3, totalTiles: 12, kanjiVariety: 4, multiplicities: [3, 3, 3, 3], lockedSlots: [8, 9], powerUpReward: 1 },
-  // Levels 4-8: 18 tiles, mixed multiplicities
-  { level: 4, totalTiles: 18, kanjiVariety: 5, multiplicities: [4, 4, 4, 3, 3], lockedSlots: [8, 9], powerUpReward: 1 },
-  { level: 5, totalTiles: 18, kanjiVariety: 5, multiplicities: [4, 4, 3, 4, 3], lockedSlots: [8, 9], powerUpReward: 1 },
-  { level: 6, totalTiles: 18, kanjiVariety: 6, multiplicities: [3, 3, 3, 3, 3, 3], lockedSlots: [8, 9], powerUpReward: 1 },
-  { level: 7, totalTiles: 18, kanjiVariety: 5, multiplicities: [4, 4, 4, 3, 3], lockedSlots: [8, 9], powerUpReward: 1 },
-  { level: 8, totalTiles: 18, kanjiVariety: 6, multiplicities: [3, 3, 3, 3, 3, 3], lockedSlots: [8, 9], powerUpReward: 1 },
-  // Levels 9-15: 24-30 tiles, occasional extra locks
-  { level: 9, totalTiles: 24, kanjiVariety: 7, multiplicities: [4, 4, 4, 3, 3, 3, 3], lockedSlots: [8, 9], powerUpReward: 1 },
-  { level: 10, totalTiles: 24, kanjiVariety: 8, multiplicities: [3, 3, 3, 3, 3, 3, 3, 3], lockedSlots: [7, 8, 9], powerUpReward: 1 },
-  { level: 11, totalTiles: 27, kanjiVariety: 9, multiplicities: [3, 3, 3, 3, 3, 3, 3, 3, 3], lockedSlots: [8, 9], powerUpReward: 1 },
-  { level: 12, totalTiles: 27, kanjiVariety: 8, multiplicities: [4, 4, 4, 3, 3, 3, 3, 3], lockedSlots: [7, 8, 9], powerUpReward: 1 },
-  { level: 13, totalTiles: 30, kanjiVariety: 9, multiplicities: [4, 4, 3, 3, 4, 3, 3, 3, 3], lockedSlots: [8, 9], powerUpReward: 1 },
-  { level: 14, totalTiles: 30, kanjiVariety: 10, multiplicities: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3], lockedSlots: [7, 8, 9], powerUpReward: 1 },
-  { level: 15, totalTiles: 30, kanjiVariety: 9, multiplicities: [4, 4, 4, 3, 3, 3, 3, 3, 3], lockedSlots: [8, 9], powerUpReward: 1 },
-  // Level 16+: 40+ tiles
-  { level: 16, totalTiles: 40, kanjiVariety: 12, multiplicities: [4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3], lockedSlots: [7, 8, 9], powerUpReward: 1 },
-  { level: 17, totalTiles: 40, kanjiVariety: 12, multiplicities: [4, 4, 3, 3, 4, 3, 3, 3, 3, 4, 3, 3], lockedSlots: [7, 8, 9], powerUpReward: 1 },
-  { level: 18, totalTiles: 42, kanjiVariety: 13, multiplicities: [4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], lockedSlots: [7, 8, 9], powerUpReward: 1 },
-  { level: 19, totalTiles: 45, kanjiVariety: 13, multiplicities: [4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 4, 3], lockedSlots: [7, 8, 9], powerUpReward: 1 },
-  { level: 20, totalTiles: 48, kanjiVariety: 14, multiplicities: [4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4], lockedSlots: [7, 8, 9], powerUpReward: 1 },
-];
+// Stacking card dimensions (px)
+export const STACK_CARD_W = 56;
+export const STACK_CARD_H = 72;
 
-// Get config for level (clamp to last defined level for 21+)
+// Base tile count for level 1, increment per level
+export const BASE_TILES = 30;
+export const TILES_PER_LEVEL = 15;
+export const MAX_TILES = 300;
+
+// Clearing animation delay (ms)
+export const CLEAR_DELAY_MS = 1000;
+
+// Generate level config: 30 tiles at level 1, +15 per level, cap 300
 export function getLevelConfig(level: number, isVip: boolean): LevelConfig {
-  const idx = Math.min(level - 1, LEVEL_CONFIGS.length - 1);
-  const base = LEVEL_CONFIGS[idx];
+  const rawTiles = BASE_TILES + (level - 1) * TILES_PER_LEVEL;
+  // Round to nearest multiple of 3 for solvability
+  const totalTiles = Math.round(Math.min(rawTiles, MAX_TILES) / 3) * 3;
+  const kanjiVariety = totalTiles / 3;
+  const multiplicities = Array(kanjiVariety).fill(3) as number[];
+
+  // Locked slots: progressively harder
+  let lockedSlots: number[];
+  if (level >= 20) lockedSlots = [6, 7, 8, 9];
+  else if (level >= 10) lockedSlots = [7, 8, 9];
+  else lockedSlots = [8, 9];
+
   return {
-    ...base,
     level,
-    lockedSlots: isVip ? [] : base.lockedSlots,
+    totalTiles,
+    kanjiVariety,
+    multiplicities,
+    lockedSlots: isVip ? [] : lockedSlots,
     powerUpReward: isVip ? DEFAULT_POWERUP_REWARD_VIP : DEFAULT_POWERUP_REWARD_REGULAR,
   };
 }

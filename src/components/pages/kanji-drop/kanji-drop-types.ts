@@ -2,6 +2,8 @@
 
 import type { JLPTLevel } from '../../../types/flashcard';
 
+export const MAX_LEVEL = 100;
+
 // --- Tile & Slot ---
 
 export interface PoolTile {
@@ -10,6 +12,12 @@ export interface PoolTile {
   kanjiId: string;      // reference to KanjiCard.id
   meaning: string;      // Vietnamese meaning (tooltip)
   selected: boolean;    // already picked from pool?
+  // Stacking position (Mahjong-style layout)
+  x: number;            // px offset from container left
+  y: number;            // px offset from container top
+  zIndex: number;       // stacking layer (higher = on top)
+  rotation: number;     // slight random rotation in degrees
+  blockedBy: string[];  // IDs of tiles overlapping from above
 }
 
 export interface BottomSlot {
@@ -69,6 +77,11 @@ export interface GameState {
   clearedCount: number;       // total tiles cleared
   isVip: boolean;
   selectedJlptLevels: JLPTLevel[];
+  clearingIndices: number[];  // bottom slot indices being cleared (for dissolve animation)
+  mode?: 'single' | 'multi';
+  levelStart?: number;        // multiplayer level range start
+  levelEnd?: number;          // multiplayer level range end
+  levelsCompleted?: number;   // total levels cleared (for multiplayer tracking)
 }
 
 // --- Setup Config ---
@@ -76,5 +89,6 @@ export interface GameState {
 export interface SetupConfig {
   selectedLevels: JLPTLevel[];
   startLevel: number;
+  selectedLessonIds: string[];  // filter kanji by specific lessons
 }
 

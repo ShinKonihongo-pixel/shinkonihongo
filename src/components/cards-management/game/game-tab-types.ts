@@ -2,7 +2,7 @@
 
 import type { GameType } from '../../../types/game-hub';
 
-export type GameSection = 'dashboard' | 'quiz' | 'picture-guess' | 'bingo' | 'kanji-battle' | 'word-match' | 'image-word' | 'ai-challenge' | 'global-settings';
+export type GameSection = 'dashboard' | 'quiz' | 'picture-guess' | 'bingo' | 'kanji-battle' | 'word-match' | 'image-word' | 'ai-challenge' | 'kanji-drop' | 'global-settings';
 
 // Game configuration with management capabilities
 export interface GameConfig {
@@ -134,6 +134,19 @@ export const ALL_GAMES: GameConfig[] = [
     hasManager: false,
     isNew: false,
     stats: { questions: null, played: 203, avgScore: 65 },
+  },
+  {
+    id: 'kanji-drop',
+    title: 'Kanji Drop',
+    shortTitle: 'Kanji Drop',
+    description: 'Xếp kanji vào hàng - gom nhóm tiêu diệt',
+    emoji: '🀄',
+    gradient: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
+    color: '#8B5CF6',
+    category: 'puzzle',
+    hasManager: true,
+    isNew: true,
+    stats: { questions: null, played: 0, avgScore: null },
   },
 ];
 

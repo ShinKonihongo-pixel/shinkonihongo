@@ -1,26 +1,42 @@
-// Kanji Drop setup screen — JLPT level selector, start level, VIP badge
+// Kanji Drop setup screen — JLPT level selector, lesson picker, start level, VIP badge
 
-import { Home, Play, Target, Star, Crown } from 'lucide-react';
+import { Home, Play, Target, Star, Crown, BookOpen } from 'lucide-react';
 import type { JLPTLevel } from '../../../types/flashcard';
 import type { SetupConfig } from './kanji-drop-types';
+
+interface LessonInfo {
+  id: string;
+  count: number;
+  jlptLevel: JLPTLevel;
+  name?: string;
+}
 
 interface SetupScreenProps {
   config: SetupConfig;
   availableKanjiCount: number;
   countByLevel: Record<string, number>;
+  kanjiLessons: LessonInfo[];
+  lessonNames?: Record<string, string>;
   isVip: boolean;
   onClose: () => void;
   onStart: () => void;
   onToggleLevel: (level: JLPTLevel) => void;
+  onToggleLesson: (lessonId: string) => void;
   onSetStartLevel: (level: number) => void;
 }
 
 const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 
 export function SetupScreen({
-  config, availableKanjiCount, countByLevel, isVip,
-  onClose, onStart, onToggleLevel, onSetStartLevel,
+  config, availableKanjiCount, countByLevel, kanjiLessons, lessonNames,
+  isVip, onClose, onStart, onToggleLevel, onToggleLesson, onSetStartLevel,
 }: SetupScreenProps) {
+  // Get display name for a lesson
+  const getLessonName = (lesson: LessonInfo, index: number): string => {
+    if (lessonNames && lessonNames[lesson.id]) return lessonNames[lesson.id];
+    return `Bài ${index + 1}`;
+  };
+
   return (
     <div className="kd-setup">
       <div className="kd-setup-card">
@@ -53,6 +69,34 @@ export function SetupScreen({
             </div>
           </div>
 
+          {/* Lesson Selection */}
+          {kanjiLessons.length > 0 && (
+            <div className="kd-section">
+              <div className="kd-section-header">
+                <BookOpen size={20} />
+                <h3>Chọn theo bài</h3>
+                {config.selectedLessonIds.length > 0 && (
+                  <span className="kd-selection-count">{config.selectedLessonIds.length} bài</span>
+                )}
+              </div>
+              <div className="kd-lessons">
+                {kanjiLessons.map((lesson, idx) => (
+                  <button
+                    key={lesson.id}
+                    className={`kd-lesson-chip ${config.selectedLessonIds.includes(lesson.id) ? 'selected' : ''}`}
+                    onClick={() => onToggleLesson(lesson.id)}
+                  >
+                    <span>{getLessonName(lesson, idx)}</span>
+                    <span className="kd-lesson-count">{lesson.count}</span>
+                  </button>
+                ))}
+              </div>
+              {config.selectedLessonIds.length === 0 && (
+                <p className="kd-lesson-hint">Không chọn = dùng tất cả bài</p>
+              )}
+            </div>
+          )}
+
           {/* Start Level */}
           <div className="kd-section">
             <div className="kd-section-header">
@@ -60,7 +104,7 @@ export function SetupScreen({
               <h3>Bắt đầu từ màn</h3>
             </div>
             <div className="kd-level-select">
-              {[1, 5, 10, 15].filter(l => l <= config.startLevel || l === 1).map(level => (
+              {[1, 5, 10, 15, 20].filter(l => l <= config.startLevel || l === 1).map(level => (
                 <button
                   key={level}
                   className={`kd-start-btn ${config.startLevel === level ? 'active' : ''}`}

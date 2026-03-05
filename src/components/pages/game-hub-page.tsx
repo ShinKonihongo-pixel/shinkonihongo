@@ -21,6 +21,7 @@ import {
   WORD_MATCH_SETUP_CONFIG,
   IMAGE_WORD_SETUP_CONFIG,
   WORD_SCRAMBLE_SETUP_CONFIG,
+  KANJI_DROP_SETUP_CONFIG,
 } from '../game-hub/room-setup/game-configs';
 import { GameCreate } from '../quiz-game/game-create';
 import { KanjiBattleSetup } from '../kanji-battle/kanji-battle-setup';
@@ -302,6 +303,19 @@ export function GameHubPage({
             onBack={closeSetupModal}
           />
         );
+      case 'kanji-drop':
+        return (
+          <GameRoomSetup
+            gameType="kanji-drop"
+            config={KANJI_DROP_SETUP_CONFIG}
+            onCreateRoom={handleStandardRoomCreate('kanji-drop')}
+            onBack={closeSetupModal}
+            getAvailableQuestionCount={(level) =>
+              kanjiCards.filter(c => c.jlptLevel === level).length
+            }
+            getLessonsByLevel={getLessonsByLevel}
+          />
+        );
       default:
         return null;
     }
@@ -496,6 +510,8 @@ export function GameHubPage({
             role: currentUser.role,
           }}
           onSaveGameSession={onSaveGameSession}
+          initialRoomConfig={pendingRoomConfig?.gameType === 'kanji-drop' ? pendingRoomConfig.data : undefined}
+          initialJoinCode={joinCode || undefined}
         />
       )}
       </Suspense>

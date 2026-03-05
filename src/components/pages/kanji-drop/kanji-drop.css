@@ -46,6 +46,15 @@
   margin-bottom: 0.75rem; color: #A78BFA;
 }
 .kd-section-header h3 { margin: 0; font-size: 0.9rem; font-weight: 600; }
+.kd-selection-count {
+  margin-left: auto;
+  font-size: 0.7rem;
+  background: rgba(139, 92, 246, 0.2);
+  color: #A78BFA;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-weight: 600;
+}
 
 /* Level chips */
 .kd-levels { display: flex; gap: 0.5rem; flex-wrap: wrap; }
@@ -69,6 +78,36 @@
   font-size: 0.7rem; opacity: 0.7;
   background: rgba(255,255,255,0.08);
   padding: 1px 6px; border-radius: 6px;
+}
+
+/* Lesson chips */
+.kd-lessons { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.kd-lesson-chip {
+  padding: 0.35rem 0.75rem; border-radius: 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #94A3B8; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 0.4rem;
+  font-size: 0.8rem;
+}
+.kd-lesson-chip:hover {
+  border-color: rgba(124, 58, 237, 0.3);
+  background: rgba(124, 58, 237, 0.08);
+}
+.kd-lesson-chip.selected {
+  background: rgba(124, 58, 237, 0.2);
+  border-color: #7C3AED; color: #A78BFA;
+}
+.kd-lesson-count {
+  font-size: 0.65rem; opacity: 0.6;
+  background: rgba(255,255,255,0.06);
+  padding: 1px 5px; border-radius: 5px;
+}
+.kd-lesson-hint {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  color: rgba(148, 163, 184, 0.6);
+  font-style: italic;
 }
 
 /* Start level buttons */
@@ -105,7 +144,7 @@
 
 /* === Playing Screen === */
 .kd-playing {
-  width: 100%; max-width: 600px;
+  width: 100%; max-width: 860px;
   display: flex; flex-direction: column; gap: 1rem;
 }
 .kd-game-header {
@@ -125,7 +164,7 @@
 .kd-score-display { color: #fbbf24; }
 .kd-moves-display { color: #94A3B8; font-size: 0.8rem; }
 
-/* === Pool Grid === */
+/* === Pool — Stacked Cards === */
 .kd-pool {
   background: rgba(15, 15, 35, 0.6);
   backdrop-filter: blur(12px);
@@ -137,32 +176,96 @@
   margin-bottom: 0.75rem; font-size: 0.875rem; color: #94A3B8;
 }
 .kd-pool-count { font-weight: 600; color: #A78BFA; }
-.kd-pool-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
-  gap: 8px;
+
+/* Stack wrapper — scrollable container (larger area for stacked cards) */
+.kd-stack-wrapper {
+  overflow: auto;
+  max-height: 62vh;
+  border-radius: 12px;
+  padding: 6px;
 }
-.kd-pool-tile {
-  aspect-ratio: 1;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(124, 58, 237, 0.1);
-  border: 1px solid rgba(124, 58, 237, 0.3);
+
+/* Stack container — holds absolute-positioned cards */
+.kd-stack-container {
+  position: relative;
+  margin: 0 auto;
+}
+
+/* --- Stacked Card (Professional Design) --- */
+.kd-stack-card {
+  position: absolute;
+  width: 56px;
+  height: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   border-radius: 10px;
-  cursor: pointer; transition: all 0.2s;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.3s ease;
+  /* Professional glassmorphism card */
+  background: linear-gradient(145deg, rgba(35, 20, 70, 0.95), rgba(55, 30, 100, 0.9));
+  border: 1.5px solid rgba(139, 92, 246, 0.25);
+  box-shadow:
+    0 2px 8px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    inset 0 -1px 0 rgba(0,0,0,0.2);
 }
-.kd-tile-char { font-size: 1.5rem; }
-.kd-pool-tile:hover:not(:disabled) {
-  background: rgba(124, 58, 237, 0.25);
-  border-color: #7C3AED;
-  transform: scale(1.05);
-  box-shadow: 0 0 12px rgba(124, 58, 237, 0.3);
+
+/* Free card — glowing, selectable */
+.kd-stack-card.free {
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow:
+    0 0 10px rgba(139, 92, 246, 0.3),
+    0 4px 16px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.12);
+  animation: kd-free-glow 2.5s ease-in-out infinite;
 }
-.kd-pool-tile.selected {
-  opacity: 0.15;
-  cursor: not-allowed;
-  transform: scale(0.9);
-  border-color: rgba(255,255,255,0.05);
-  background: rgba(255,255,255,0.02);
+.kd-stack-card.free:hover {
+  /* No z-index change — card stays in its layer so it can't pop above blockers */
+  box-shadow:
+    0 0 20px rgba(139, 92, 246, 0.5),
+    0 8px 24px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.15);
+  border-color: #8B5CF6;
+  filter: brightness(1.2);
+}
+.kd-stack-card.free:active {
+  filter: brightness(0.9);
+}
+
+/* Blocked card — dimmed, absorbs events to prevent click-through to cards below */
+.kd-stack-card.blocked {
+  opacity: 0.55;
+  filter: brightness(0.6) saturate(0.7);
+  cursor: default;
+  border-color: rgba(255,255,255,0.06);
+}
+
+/* Card text — WHITE (fix invisible black text) */
+.kd-card-char {
+  font-size: 1.5rem;
+  color: #FFFFFF;
+  font-weight: 700;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  line-height: 1;
+}
+.kd-card-meaning {
+  font-size: 0.45rem;
+  color: rgba(255,255,255,0.45);
+  margin-top: 2px;
+  max-width: 50px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  line-height: 1.1;
+}
+
+@keyframes kd-free-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(139, 92, 246, 0.25), 0 2px 8px rgba(0,0,0,0.4); }
+  50% { box-shadow: 0 0 18px rgba(139, 92, 246, 0.5), 0 0 30px rgba(139, 92, 246, 0.15), 0 4px 12px rgba(0,0,0,0.4); }
 }
 
 /* === Bottom Row === */
@@ -175,28 +278,49 @@
 .kd-bottom-label { color: #94A3B8; font-size: 0.75rem; margin-bottom: 0.5rem; }
 .kd-bottom-row {
   display: flex; gap: 4px;
-  overflow-x: auto;
+  overflow: hidden;
+  justify-content: center;
 }
 .kd-bottom-slot {
   width: 48px; height: 56px;
   flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 2px dashed rgba(255,255,255,0.12);
-  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
 }
 .kd-bottom-slot.locked {
   background: rgba(255, 255, 255, 0.03);
   border-color: rgba(255, 255, 255, 0.06);
 }
 .kd-lock-icon { color: rgba(255,255,255,0.15); }
+
+/* Filled slot — no animation to prevent scroll/jitter */
 .kd-bottom-slot.filled {
   border-style: solid;
   border-color: rgba(124, 58, 237, 0.4);
-  background: rgba(124, 58, 237, 0.15);
-  animation: kd-tile-drop 0.3s ease-out;
+  background: linear-gradient(145deg, rgba(35, 20, 70, 0.9), rgba(55, 30, 100, 0.85));
+  animation: kd-tile-appear 0.25s ease-out;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
 }
-.kd-slot-char { font-size: 1.25rem; font-weight: 600; }
+.kd-slot-char {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* Clearing slot — dissolve animation with 1s visibility */
+.kd-bottom-slot.clearing {
+  animation: kd-clearing-pulse 1s ease-in-out;
+  border-color: rgba(168, 85, 247, 0.8);
+  background: linear-gradient(145deg, rgba(139, 92, 246, 0.3), rgba(168, 85, 247, 0.2));
+  box-shadow: 0 0 16px rgba(139, 92, 246, 0.5), 0 0 32px rgba(139, 92, 246, 0.2);
+}
+.kd-bottom-slot.clearing .kd-slot-char {
+  animation: kd-char-shimmer 1s ease-in-out;
+}
 
 /* === Power-ups === */
 .kd-powerups {
@@ -344,20 +468,175 @@
   from { opacity: 0; transform: translateY(30px) scale(0.95); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
-@keyframes kd-tile-drop {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
+
+/* Tile appear: subtle scale-in, no translate to prevent scroll jitter */
+@keyframes kd-tile-appear {
+  0% { opacity: 0; transform: scale(0.5); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Clearing pulse: glow for 1s before dissolve */
+@keyframes kd-clearing-pulse {
+  0% { box-shadow: 0 0 8px rgba(139, 92, 246, 0.3); }
+  30% { box-shadow: 0 0 24px rgba(139, 92, 246, 0.7), 0 0 40px rgba(139, 92, 246, 0.3); }
+  60% { box-shadow: 0 0 24px rgba(168, 85, 247, 0.7), 0 0 40px rgba(168, 85, 247, 0.3); }
+  100% { box-shadow: 0 0 8px rgba(139, 92, 246, 0.3); }
+}
+
+/* Char shimmer during clearing */
+@keyframes kd-char-shimmer {
+  0% { color: #FFFFFF; transform: scale(1); }
+  30% { color: #C4B5FD; transform: scale(1.15); text-shadow: 0 0 12px rgba(139, 92, 246, 0.8); }
+  60% { color: #DDD6FE; transform: scale(1.1); }
+  100% { color: #FFFFFF; transform: scale(1); }
+}
+
+/* === Multiplayer Layout === */
+.kd-mp-layout {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+}
+.kd-mp-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  min-width: 0;
+}
+
+/* === Multiplayer Progress Sidebar === */
+.kd-mp-progress {
+  width: 240px;
+  flex-shrink: 0;
+  background: rgba(15, 15, 35, 0.9);
+  border-left: 1px solid rgba(255,255,255,0.08);
+  padding: 1rem;
+  overflow-y: auto;
+}
+.kd-mp-progress-title {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.85rem; font-weight: 600; color: #A78BFA;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.kd-mp-player {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 10px;
+  margin-bottom: 0.5rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+  transition: background 0.2s;
+}
+.kd-mp-player-me {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.2);
+}
+.kd-mp-player-done { opacity: 0.7; }
+.kd-mp-player-rank {
+  font-size: 0.7rem; font-weight: 700; color: #A78BFA;
+  width: 24px; text-align: center;
+}
+.kd-mp-player-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; background: rgba(255,255,255,0.05);
+  flex-shrink: 0;
+}
+.kd-mp-player-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.kd-mp-player-avatar span { font-size: 0.9rem; }
+.kd-mp-player-info { flex: 1; min-width: 0; }
+.kd-mp-player-name {
+  font-size: 0.75rem; font-weight: 600; color: #E2E8F0;
+  display: flex; align-items: center; gap: 0.25rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.kd-mp-me-tag {
+  font-size: 0.6rem; padding: 0.05rem 0.3rem;
+  background: rgba(139, 92, 246, 0.25); color: #A78BFA;
+  border-radius: 4px; font-weight: 600;
+}
+.kd-mp-done-icon { color: #34D399; }
+.kd-mp-player-bar {
+  height: 4px; background: rgba(255,255,255,0.08);
+  border-radius: 2px; margin: 0.25rem 0;
+  overflow: hidden;
+}
+.kd-mp-player-bar-fill {
+  height: 100%; border-radius: 2px;
+  background: linear-gradient(90deg, #8B5CF6, #A78BFA);
+  transition: width 0.3s ease;
+}
+.kd-mp-player-stats {
+  display: flex; justify-content: space-between;
+  font-size: 0.65rem; color: #94A3B8;
+}
+
+/* === Multiplayer Rankings === */
+.kd-mp-rankings {
+  margin: 1rem 0;
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+.kd-mp-rank-row {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(255,255,255,0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.kd-mp-rank-me {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.2);
+}
+.kd-mp-rank-winner {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(234, 179, 8, 0.1));
+  border-color: rgba(234, 179, 8, 0.3);
+}
+.kd-mp-rank-pos {
+  font-size: 0.9rem; font-weight: 700; color: #A78BFA;
+  width: 32px; text-align: center;
+}
+.kd-mp-rank-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  overflow: hidden; display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.05); flex-shrink: 0;
+}
+.kd-mp-rank-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.kd-mp-rank-avatar span { font-size: 1.1rem; }
+.kd-mp-rank-info { flex: 1; min-width: 0; }
+.kd-mp-rank-name {
+  font-size: 0.85rem; font-weight: 600; color: #E2E8F0;
+  display: flex; align-items: center; gap: 0.35rem;
+}
+.kd-mp-rank-stats {
+  display: flex; gap: 0.75rem;
+  font-size: 0.7rem; color: #94A3B8; margin-top: 0.2rem;
+}
+.kd-mp-rank-badge {
+  font-size: 0.65rem; padding: 0.15rem 0.5rem;
+  background: rgba(52, 211, 153, 0.2); color: #34D399;
+  border-radius: 6px; font-weight: 600; white-space: nowrap;
 }
 
 /* === Mobile Responsive === */
 @media (max-width: 640px) {
   .kd-page { padding: 0.5rem; align-items: flex-start; padding-top: 1rem; }
   .kd-setup-card, .kd-result-card { padding: 1.25rem; }
-  .kd-pool-grid {
-    grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
-    gap: 6px;
+
+  /* Smaller stacked cards on mobile */
+  .kd-stack-card {
+    width: 44px;
+    height: 56px;
   }
-  .kd-tile-char { font-size: 1.25rem; }
+  .kd-card-char { font-size: 1.2rem; }
+  .kd-card-meaning { display: none; }
+  .kd-stack-wrapper { max-height: 52vh; }
+
   .kd-bottom-slot { width: 40px; height: 48px; }
   .kd-slot-char { font-size: 1rem; }
   .kd-powerup-btn { padding: 0.4rem 0.75rem; font-size: 0.75rem; }
@@ -368,4 +647,14 @@
   .kd-setup-footer .kd-btn, .kd-result-actions .kd-btn {
     width: 100%; justify-content: center;
   }
+  /* Multiplayer: stack sidebar below main */
+  .kd-mp-layout { flex-direction: column; }
+  .kd-mp-progress {
+    width: 100%; border-left: none;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    display: flex; gap: 0.5rem; flex-wrap: wrap;
+    padding: 0.5rem;
+  }
+  .kd-mp-progress-title { width: 100%; margin-bottom: 0.25rem; }
+  .kd-mp-player { flex: 1; min-width: 140px; }
 }

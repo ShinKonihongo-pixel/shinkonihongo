@@ -8,3 +8,4 @@ export {
   IMAGE_WORD_SETUP_CONFIG,
   WORD_SCRAMBLE_SETUP_CONFIG,
 } from './game-configs-extra';
+export { KANJI_DROP_SETUP_CONFIG } from './game-configs-kanji-drop';
