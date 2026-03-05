@@ -2,6 +2,7 @@
 // Combines all sub-hooks and exports unified interface with Firestore sync
 
 import type { Flashcard } from '../../types/flashcard';
+import type { WordMatchPlayer } from '../../types/word-match';
 import { useGameState } from './use-game-state';
 import { useGameCreation } from './use-game-creation';
 import { useGameActions } from './use-game-actions';
@@ -52,7 +53,7 @@ export function useWordMatch({ currentUser, flashcards = [] }: UseWordMatchProps
   useEffects({ game, endRound });
 
   const { continueGame, applyEffect } = useGameFlow({
-    game, isHost, sortedPlayers, setGame, setGameResults, startNextRound,
+    game, isHost, sortedPlayers: sortedPlayers as WordMatchPlayer[], setGame, setGameResults, startNextRound,
   });
 
   return {

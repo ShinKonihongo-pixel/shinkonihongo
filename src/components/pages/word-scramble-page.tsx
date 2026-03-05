@@ -7,8 +7,6 @@ import type {
   Question,
   Player,
   PlayerRole,
-  GameState,
-  CreateWordScrambleData,
 } from './word-scramble/word-scramble-types';
 import { useWordScrambleMultiplayer } from '../../hooks/word-scramble';
 import { useWordScrambleGame } from './word-scramble/use-word-scramble-game';
@@ -68,7 +66,6 @@ export const WordScramblePage: React.FC<WordScramblePageProps> = ({
     startGame,
     addBot,
     resetGame,
-    isHost,
     error,
   } = useWordScrambleMultiplayer({ currentUser, flashcards });
 
@@ -125,10 +122,9 @@ export const WordScramblePage: React.FC<WordScramblePageProps> = ({
         word: {
           id: '',
           vocabulary: q.vocabulary,
-          reading: q.reading || '',
           meaning: q.meaning || '',
           jlptLevel: q.jlptLevel || 'N5',
-        } as Flashcard,
+        } as unknown as Flashcard,
         scrambledLetters: q.scrambledLetters,
         originalPositions: q.originalPositions,
       }));

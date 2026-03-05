@@ -3,7 +3,6 @@
 
 import { Trophy, Crown, Target, Users, Skull } from 'lucide-react';
 import type { GoldenBellResults } from '../../types/golden-bell';
-import type { GoldenBellTeamResult } from '../../types/golden-bell';
 import { GB_TEAM_COLORS } from '../../types/golden-bell';
 import { Podium, RankingsTable, ResultsActionBar, type BaseRankedPlayer } from '../shared/game-results';
 

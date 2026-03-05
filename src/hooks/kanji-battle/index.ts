@@ -7,6 +7,7 @@ import { useRoundLogic } from './use-round-logic';
 import { usePlayerActions } from './use-player-actions';
 import { useBotLogic } from './use-bot-logic';
 import { useGameFlow } from './use-game-flow';
+import type { KanjiBattlePlayer } from '../../types/kanji-battle';
 
 interface UseKanjiBattleProps {
   currentUser: {
@@ -52,11 +53,11 @@ export function useKanjiBattle({ currentUser }: UseKanjiBattleProps) {
   const {
     submitAnswer, submitDrawing, useHint, useSkill, skipSkill,
   } = usePlayerActions({
-    game, currentPlayer, currentUserId: currentUser.id, setGame,
+    game, currentPlayer: currentPlayer as KanjiBattlePlayer | undefined, currentUserId: currentUser.id, setGame,
   });
 
   const { continueGame } = useGameFlow({
-    game, isHost, sortedPlayers, setGameResults, startNextRound, endRound,
+    game, isHost, sortedPlayers: sortedPlayers as KanjiBattlePlayer[], setGameResults, startNextRound, endRound,
   });
 
   return {

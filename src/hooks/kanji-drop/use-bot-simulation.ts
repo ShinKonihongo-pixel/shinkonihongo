@@ -50,7 +50,7 @@ export function useBotSimulation({ game, setGame }: UseBotSimulationProps) {
 
     function scheduleBotLevel(
       botId: string,
-      bot: KanjiDropMultiplayerPlayer,
+      _bot: KanjiDropMultiplayerPlayer,
       profile: typeof BOT_PROFILES[keyof typeof BOT_PROFILES],
       levelStart: number,
       levelEnd: number,

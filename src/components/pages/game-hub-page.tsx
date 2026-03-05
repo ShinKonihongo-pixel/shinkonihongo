@@ -174,15 +174,6 @@ export function GameHubPage({
     onExpandSidebar?.();
   }, [onExpandSidebar]);
 
-  // Return to waiting room (after leaving a game)
-  const handleBackToWaitingRoom = useCallback(() => {
-    setSelectedGame(null);
-    setJoinCode(null);
-    setPendingRoomConfig(null);
-    setReturnToWaitingRoom(true);
-    onExpandSidebar?.();
-  }, [onExpandSidebar]);
-
   // Close setup modal
   const closeSetupModal = useCallback(() => {
     setSetupModalGame(null);

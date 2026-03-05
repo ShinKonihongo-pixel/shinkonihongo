@@ -9,7 +9,7 @@ import {
   subscribeToGameRoom,
 } from '../../services/game-rooms';
 
-interface UseGameRoomStateConfig<TGame extends BaseGame> {
+interface UseGameRoomStateConfig {
   /** Label for console error messages, e.g. 'image-word' */
   gameLabel: string;
   /** Optional custom sort for sortedPlayers. Default: descending by score */
@@ -21,7 +21,7 @@ export function useGameRoomState<
   TResults = unknown,
 >(
   currentUserId: string,
-  config: UseGameRoomStateConfig<TGame>,
+  config: UseGameRoomStateConfig,
 ) {
   const { gameLabel, sortPlayers } = config;
 

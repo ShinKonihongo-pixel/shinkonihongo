@@ -146,8 +146,9 @@ export function useGameRoomActions<
     if (!game || !isHost) return;
 
     const playerCount = Object.keys(game.players).length;
-    if (playerCount < game.settings.minPlayers) {
-      setError(`Cần ít nhất ${game.settings.minPlayers} người chơi`);
+    const minPlayers = game.settings.minPlayers ?? 2;
+    if (playerCount < minPlayers) {
+      setError(`Cần ít nhất ${minPlayers} người chơi`);
       return;
     }
 

@@ -2,6 +2,7 @@
 // Combines all sub-hooks and exports unified interface
 
 import type { Flashcard } from '../../types/flashcard';
+import type { GoldenBellPlayer } from '../../types/golden-bell';
 import { useGameState } from './use-game-state';
 import { useGameCreation } from './use-game-creation';
 import { useGameActions } from './use-game-actions';
@@ -74,7 +75,7 @@ export function useGoldenBell({ currentUser, flashcards = [] }: UseGoldenBellPro
     nextQuestion,
   } = useGameplay({
     game,
-    currentPlayer,
+    currentPlayer: currentPlayer as GoldenBellPlayer | undefined,
     currentQuestion,
     currentUser,
     setGame,

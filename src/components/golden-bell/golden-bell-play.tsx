@@ -181,7 +181,7 @@ export function GoldenBellPlay({
           <div className="gb-skill-phase-wheel">
             <SkillSpinWheel
               skills={enabledSkills}
-              onResult={(skill) => {
+              onResult={(_skill) => {
                 if (currentPlayer && onAssignRandomSkill) {
                   onAssignRandomSkill(currentPlayer.odinhId);
                 }

@@ -128,7 +128,7 @@ export function KanjiDropPage({
         score: gameState.score,
         clearedCount: gameState.clearedCount,
         levelsCompleted: gameState.levelsCompleted || 0,
-        finished: isAllDone,
+        finished: !!isAllDone,
       });
     }
   }, [gameState.level, gameState.score, gameState.clearedCount, gameState.levelsCompleted, gameState.phase, gameState.result, gameState.mode, gameState.levelEnd, isMultiplayerMode, mp]);

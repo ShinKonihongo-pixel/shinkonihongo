@@ -2,6 +2,7 @@
 // Combines all sub-hooks and exports unified interface
 
 import type { Flashcard } from '../../types/flashcard';
+import type { PictureGuessPlayer } from '../../types/picture-guess';
 import { useGameState } from './use-game-state';
 import { useGameCreation } from './use-game-creation';
 import { useGameActions } from './use-game-actions';
@@ -65,7 +66,7 @@ export function usePictureGuess({ currentUser, flashcards = [] }: UsePictureGues
     currentUser,
     game,
     currentPuzzle,
-    currentPlayer,
+    currentPlayer: currentPlayer as PictureGuessPlayer | undefined,
     setGame,
     setGameResults,
   });

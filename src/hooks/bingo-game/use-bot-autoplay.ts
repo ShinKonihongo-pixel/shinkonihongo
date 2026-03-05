@@ -1,7 +1,7 @@
 // Bot autoplay logic — question-based bingo
 
 import { useEffect } from 'react';
-import type { BingoGame, BingoPlayer, BingoPlayerResult, BingoResults, BingoSkillType } from '../../types/bingo-game';
+import type { BingoGame, BingoPlayerResult, BingoResults, BingoSkillType } from '../../types/bingo-game';
 import { BINGO_SKILLS } from '../../types/bingo-game';
 import type { BingoGameState, BingoGameRefs } from './types';
 

@@ -23,7 +23,7 @@ export interface BasePlayer {
 
 export interface BaseSettings {
   maxPlayers: number;
-  minPlayers: number;
+  minPlayers?: number;
 }
 
 export interface GameUser {

@@ -5,7 +5,7 @@ import { PictureGuessLobby } from '../picture-guess/picture-guess-lobby';
 import { PictureGuessPlay } from '../picture-guess/picture-guess-play';
 import { PictureGuessResultsView } from '../picture-guess/picture-guess-results';
 import { usePictureGuess } from '../../hooks/picture-guess';
-import type { CreatePictureGuessData } from '../../types/picture-guess';
+import type { PictureGuessPlayer } from '../../types/picture-guess';
 import type { JLPTLevel, Flashcard } from '../../types/flashcard';
 import type { GameSession } from '../../types/user';
 import '../picture-guess/picture-guess.css';
@@ -208,9 +208,9 @@ export const PictureGuessPage: React.FC<PictureGuessPageProps> = ({
       {view === 'play' && game && (
         <PictureGuessPlay
           game={game}
-          currentPlayer={currentPlayer}
+          currentPlayer={currentPlayer as PictureGuessPlayer | undefined}
           currentPuzzle={currentPuzzle}
-          sortedPlayers={sortedPlayers}
+          sortedPlayers={sortedPlayers as PictureGuessPlayer[]}
           isHost={isHost}
           onUseHint={useHint}
           getHintContent={getHintContent}

@@ -7,7 +7,7 @@ import { useGoldenBell } from '../../hooks/golden-bell';
 import { GoldenBellLobby } from '../golden-bell/golden-bell-lobby';
 import { GoldenBellPlay } from '../golden-bell/golden-bell-play';
 import { GoldenBellResultsView } from '../golden-bell/golden-bell-results';
-import type { QuestionCategory, GoldenBellGameMode } from '../../types/golden-bell';
+import type { QuestionCategory, GoldenBellGameMode, GoldenBellPlayer } from '../../types/golden-bell';
 import type { Flashcard, JLPTLevel } from '../../types/flashcard';
 import type { GameSession } from '../../types/user';
 import '../golden-bell/golden-bell.css';
@@ -203,9 +203,9 @@ export function GoldenBellPage({
       {view === 'play' && game && (
         <GoldenBellPlay
           game={game}
-          currentPlayer={currentPlayer}
+          currentPlayer={currentPlayer as GoldenBellPlayer | undefined}
           currentQuestion={currentQuestion}
-          sortedPlayers={sortedPlayers}
+          sortedPlayers={sortedPlayers as GoldenBellPlayer[]}
           aliveCount={aliveCount}
           isHost={isHost}
           onSubmitAnswer={submitAnswer}

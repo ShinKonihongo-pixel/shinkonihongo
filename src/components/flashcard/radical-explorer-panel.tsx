@@ -77,11 +77,6 @@ export function RadicalExplorerPanel({ radical, onBack, asModal = false, readOnl
     }
   }, [radical.character]);
 
-  const refresh = () => {
-    rebuildRadicalIndex();
-    setEntries(getKanjiByRadical(radical.character));
-  };
-
   const handleAdd = () => {
     const char = addKanji.trim();
     if (!char) return;

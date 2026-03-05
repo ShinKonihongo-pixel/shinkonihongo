@@ -22,6 +22,9 @@ export function BingoGameSetup({
       title: config.title,
       maxPlayers: config.maxPlayers,
       skillsEnabled: config.skillsEnabled ?? true,
+      timePerQuestion: config.timePerQuestion ?? 20,
+      jlptLevel: config.jlptLevel ?? 'N5',
+      selectedLessons: config.selectedLessons ?? [],
     });
   };
 

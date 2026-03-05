@@ -5,7 +5,6 @@ import { ImageWordGamePlay, ImageWordResults, ImageWordLobby } from '../image-wo
 import { useImageWordMultiplayer } from '../../hooks/image-word';
 import { useImageWordGame } from '../../hooks/use-image-word-game';
 import type { ImageWordLesson } from '../../types/image-word';
-import type { CreateImageWordData } from '../../types/image-word';
 import type { GameSession } from '../../types/user';
 
 type PageView = 'lobby' | 'play' | 'results';
@@ -48,7 +47,6 @@ export const ImageWordPage: React.FC<ImageWordPageProps> = ({
   // Multiplayer lobby/room management
   const {
     game,
-    gameResults: multiResults,
     loading,
     createGame,
     joinGame,
@@ -57,7 +55,6 @@ export const ImageWordPage: React.FC<ImageWordPageProps> = ({
     startGame,
     addBot,
     resetGame,
-    isHost,
     error,
   } = useImageWordMultiplayer({ currentUser });
 

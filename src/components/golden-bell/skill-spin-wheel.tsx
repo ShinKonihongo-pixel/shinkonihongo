@@ -22,7 +22,7 @@ export function SkillSpinWheel({ skills, onResult, isSpinning: externalSpinning,
   const [rotation, setRotation] = useState(0);
   const [result, setResult] = useState<GoldenBellSkill | null>(null);
   const wheelRef = useRef<HTMLDivElement>(null);
-  const resultTimerRef = useRef<NodeJS.Timeout>();
+  const resultTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const segmentAngle = 360 / skills.length;
 

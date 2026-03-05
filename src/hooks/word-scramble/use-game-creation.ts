@@ -78,7 +78,6 @@ export function useGameCreation({
         const { letters, positions } = scrambleWord(word);
         return {
           vocabulary: word,
-          reading: card.reading,
           meaning: card.meaning,
           jlptLevel: card.jlptLevel,
           scrambledLetters: letters,

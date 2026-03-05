@@ -30,7 +30,8 @@ interface UseGameCreationProps {
   flashcards: Flashcard[];
   scheduleBotJoin: (
     setGame: (updater: (prev: any) => any) => void,
-    maxPlayers: number
+    maxPlayers: number,
+    schedules?: Array<{ delay: number; count: number }>
   ) => void;
 }
 
