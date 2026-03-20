@@ -1,9 +1,20 @@
-// ELO rating calculation utilities
-// K-factor: 32 (standard casual competitive)
+// ELO rating calculation with dynamic K-factor
+// K scales with rating gap: bigger gap = bigger stakes
 // Floor: 100 (rating cannot drop below this)
 
-const K_FACTOR = 32;
+const BASE_K = 40;
+const MAX_K = 80;
 const RATING_FLOOR = 100;
+
+/**
+ * Dynamic K-factor: increases with rating gap so upsets are rewarded more.
+ * Gap 0 → K=40, Gap 400+ → K=80
+ */
+function getKFactor(ratingGap: number): number {
+  const absGap = Math.abs(ratingGap);
+  const scale = Math.min(absGap / 400, 1); // 0..1
+  return BASE_K + scale * (MAX_K - BASE_K);
+}
 
 /**
  * Calculate expected score for a player against an opponent.
@@ -24,7 +35,8 @@ export function calculateNewRating(
 ): number {
   const S = result === 'win' ? 1 : result === 'draw' ? 0.5 : 0;
   const E = calculateExpectedScore(myRating, opponentRating);
-  const newRating = Math.round(myRating + K_FACTOR * (S - E));
+  const K = getKFactor(opponentRating - myRating);
+  const newRating = Math.round(myRating + K * (S - E));
   return Math.max(RATING_FLOOR, newRating);
 }
 
