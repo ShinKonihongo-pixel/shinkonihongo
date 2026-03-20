@@ -13,11 +13,12 @@ import {
   deleteJLPTFolder as deleteFolder,
 } from '../services/firestore';
 
-export function useJLPTQuestions() {
+export function useJLPTQuestions(levelFilter?: string) {
   const [questions, setQuestions] = useState<JLPTQuestion[]>([]);
   const [folders, setFolders] = useState<JLPTFolder[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Subscribe to real-time updates, filtered by level when provided
   useEffect(() => {
     let questionsLoaded = false;
     let foldersLoaded = false;
@@ -26,7 +27,7 @@ export function useJLPTQuestions() {
       setQuestions(data);
       questionsLoaded = true;
       if (foldersLoaded) setLoading(false);
-    });
+    }, levelFilter);
 
     const unsubFolders = subscribeToJLPTFolders((data) => {
       setFolders(data);
@@ -38,7 +39,7 @@ export function useJLPTQuestions() {
       unsubQuestions();
       unsubFolders();
     };
-  }, []);
+  }, [levelFilter]);
 
   // Question functions
   const addJLPTQuestion = useCallback(async (data: JLPTQuestionFormData, createdBy?: string) => {

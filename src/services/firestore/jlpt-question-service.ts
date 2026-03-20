@@ -11,6 +11,8 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  query,
+  where,
   onSnapshot,
   db,
   type Unsubscribe,
@@ -21,8 +23,11 @@ export async function getAllJLPTQuestions(): Promise<JLPTQuestion[]> {
   return snapshot.docs.map(doc => mapDoc<JLPTQuestion>(doc));
 }
 
-export function subscribeToJLPTQuestions(callback: (questions: JLPTQuestion[]) => void): Unsubscribe {
-  return onSnapshot(collection(db, COLLECTIONS.JLPT_QUESTIONS), (snapshot) => {
+export function subscribeToJLPTQuestions(callback: (questions: JLPTQuestion[]) => void, levelFilter?: string): Unsubscribe {
+  const ref = levelFilter
+    ? query(collection(db, COLLECTIONS.JLPT_QUESTIONS), where('level', '==', levelFilter))
+    : collection(db, COLLECTIONS.JLPT_QUESTIONS);
+  return onSnapshot(ref, (snapshot) => {
     const questions = snapshot.docs.map(doc => mapDoc<JLPTQuestion>(doc));
     callback(questions);
   });

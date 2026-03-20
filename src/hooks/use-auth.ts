@@ -1,8 +1,9 @@
 // Hook for authentication with Firestore
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { User, CurrentUser, UserRole } from '../types/user';
 import * as firestoreService from '../services/firestore';
+import { authReady } from '../lib/firebase';
 
 const CURRENT_USER_KEY = 'flashcard-current-user';
 
@@ -30,26 +31,33 @@ export function useAuth() {
     return null;
   });
 
-  // Subscribe to real-time updates and ensure default super admin exists
+  // Wait for Firebase anonymous auth before subscribing to Firestore
+  const unsubRef = useRef<(() => void) | null>(null);
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
-    const unsubscribe = firestoreService.subscribeToUsers(async (usersData) => {
-      // Check if default super admin exists
-      const superAdminExists = usersData.some(u => u.username === 'superadmin');
-      if (!superAdminExists) {
-        // Create default super admin
-        try {
-          await firestoreService.addUser(DEFAULT_SUPER_ADMIN);
-        } catch (err) {
-          console.error('Error creating default super admin:', err);
+    let cancelled = false;
+
+    authReady.then(() => {
+      if (cancelled) return;
+      unsubRef.current = firestoreService.subscribeToUsers(async (usersData) => {
+        // Check if default super admin exists
+        const superAdminExists = usersData.some(u => u.username === 'superadmin');
+        if (!superAdminExists) {
+          try {
+            await firestoreService.addUser(DEFAULT_SUPER_ADMIN);
+          } catch (err) {
+            console.error('Error creating default super admin:', err);
+          }
         }
-      }
-      setUsers(usersData);
-      setLoading(false);
+        setUsers(usersData);
+        setLoading(false);
+      });
     });
 
-    return () => unsubscribe();
+    return () => {
+      cancelled = true;
+      unsubRef.current?.();
+    };
   }, []);
 
   // Save current user to localStorage
@@ -108,6 +116,8 @@ export function useAuth() {
     }
 
     try {
+      // Ensure Firebase auth is ready before writing to Firestore
+      await authReady;
       const newUserData: Omit<User, 'id'> = {
         username,
         password,

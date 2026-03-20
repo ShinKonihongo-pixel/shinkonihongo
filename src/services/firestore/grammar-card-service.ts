@@ -18,8 +18,11 @@ import {
   type Unsubscribe,
 } from './collections';
 
-export function subscribeToGrammarCards(callback: (cards: GrammarCard[]) => void): Unsubscribe {
-  return onSnapshot(collection(db, COLLECTIONS.GRAMMAR_CARDS), (snapshot) => {
+export function subscribeToGrammarCards(callback: (cards: GrammarCard[]) => void, levelFilter?: string): Unsubscribe {
+  const ref = levelFilter
+    ? query(collection(db, COLLECTIONS.GRAMMAR_CARDS), where('jlptLevel', '==', levelFilter))
+    : collection(db, COLLECTIONS.GRAMMAR_CARDS);
+  return onSnapshot(ref, (snapshot) => {
     const cards = snapshot.docs.map(doc => mapDoc<GrammarCard>(doc));
     callback(cards);
   });

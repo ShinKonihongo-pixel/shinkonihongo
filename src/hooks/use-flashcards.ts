@@ -5,22 +5,22 @@ import type { Flashcard, FlashcardFormData, JLPTLevel } from '../types/flashcard
 import * as firestoreService from '../services/firestore';
 import { extractKanjiCharacters, generateKanjiCharacterAnalysis } from '../services/kanji-analysis-ai-service';
 
-export function useFlashcards() {
+export function useFlashcards(levelFilter?: string) {
   const [cards, setCards] = useState<Flashcard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Subscribe to real-time updates
+  // Subscribe to real-time updates, filtered by level when provided
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     const unsubscribe = firestoreService.subscribeToFlashcards((flashcards) => {
       setCards(flashcards);
       setLoading(false);
-    });
+    }, levelFilter);
 
     return () => unsubscribe();
-  }, []);
+  }, [levelFilter]);
 
   // Add new flashcard
   const addCard = useCallback(async (data: FlashcardFormData, createdBy?: string) => {

@@ -4,22 +4,22 @@ import { useState, useCallback, useEffect } from 'react';
 import type { GrammarCard, GrammarCardFormData, JLPTLevel } from '../types/flashcard';
 import * as firestoreService from '../services/firestore';
 
-export function useGrammarCards() {
+export function useGrammarCards(levelFilter?: string) {
   const [grammarCards, setGrammarCards] = useState<GrammarCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Subscribe to real-time updates
+  // Subscribe to real-time updates, filtered by level when provided
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     const unsubscribe = firestoreService.subscribeToGrammarCards((cards) => {
       setGrammarCards(cards);
       setLoading(false);
-    });
+    }, levelFilter);
 
     return () => unsubscribe();
-  }, []);
+  }, [levelFilter]);
 
   // Add new grammar card
   const addGrammarCard = useCallback(async (data: GrammarCardFormData, createdBy?: string) => {

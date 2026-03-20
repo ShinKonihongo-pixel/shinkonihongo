@@ -14,11 +14,12 @@ import {
   deleteKaiwaFolder as deleteFolder,
 } from '../services/firestore';
 
-export function useKaiwaQuestions() {
+export function useKaiwaQuestions(levelFilter?: string) {
   const [questions, setQuestions] = useState<KaiwaDefaultQuestion[]>([]);
   const [folders, setFolders] = useState<KaiwaFolder[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Subscribe to real-time updates, filtered by level when provided
   useEffect(() => {
     let questionsLoaded = false;
     let foldersLoaded = false;
@@ -27,7 +28,7 @@ export function useKaiwaQuestions() {
       setQuestions(data);
       questionsLoaded = true;
       if (foldersLoaded) setLoading(false);
-    });
+    }, levelFilter);
 
     const unsubFolders = subscribeToKaiwaFolders((data) => {
       setFolders(data);
@@ -39,7 +40,7 @@ export function useKaiwaQuestions() {
       unsubQuestions();
       unsubFolders();
     };
-  }, []);
+  }, [levelFilter]);
 
   // Question functions
   const addKaiwaQuestion = useCallback(async (data: KaiwaQuestionFormData, createdBy?: string) => {

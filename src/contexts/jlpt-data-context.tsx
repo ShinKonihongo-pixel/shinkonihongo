@@ -62,10 +62,11 @@ const JLPTDataContext = createContext<JLPTDataContextValue | null>(null);
 interface JLPTDataProviderProps {
   children: ReactNode;
   currentUserId: string;
+  levelFilter?: string; // JLPT level filter — undefined = load all (admin mode)
 }
 
-export function JLPTDataProvider({ children, currentUserId }: JLPTDataProviderProps) {
-  // JLPT Questions hook
+export function JLPTDataProvider({ children, currentUserId, levelFilter }: JLPTDataProviderProps) {
+  // JLPT Questions hook — filtered by level for regular users
   const {
     questions: jlptQuestions,
     folders: jlptFolders,
@@ -77,9 +78,9 @@ export function JLPTDataProvider({ children, currentUserId }: JLPTDataProviderPr
     deleteJLPTFolder,
     getFoldersByLevelAndCategory,
     getQuestionsByFolder,
-  } = useJLPTQuestions();
+  } = useJLPTQuestions(levelFilter);
 
-  // Kaiwa Questions hook
+  // Kaiwa Questions hook — filtered by level for regular users
   const {
     questions: kaiwaQuestions,
     folders: kaiwaFolders,
@@ -92,7 +93,7 @@ export function JLPTDataProvider({ children, currentUserId }: JLPTDataProviderPr
     getFoldersByLevelAndTopic,
     getQuestionsByFolder: getQuestionsByKaiwaFolder,
     getQuestionsByLevelAndTopic,
-  } = useKaiwaQuestions();
+  } = useKaiwaQuestions(levelFilter);
 
   // Advanced Kaiwa Topics hook
   const {

@@ -10,13 +10,18 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  query,
+  where,
   onSnapshot,
   db,
   type Unsubscribe,
 } from './collections';
 
-export function subscribeToKaiwaQuestions(callback: (questions: KaiwaDefaultQuestion[]) => void): Unsubscribe {
-  return onSnapshot(collection(db, COLLECTIONS.KAIWA_QUESTIONS), (snapshot) => {
+export function subscribeToKaiwaQuestions(callback: (questions: KaiwaDefaultQuestion[]) => void, levelFilter?: string): Unsubscribe {
+  const ref = levelFilter
+    ? query(collection(db, COLLECTIONS.KAIWA_QUESTIONS), where('level', '==', levelFilter))
+    : collection(db, COLLECTIONS.KAIWA_QUESTIONS);
+  return onSnapshot(ref, (snapshot) => {
     const questions = snapshot.docs.map(doc => mapDoc<KaiwaDefaultQuestion>(doc));
     callback(questions);
   });

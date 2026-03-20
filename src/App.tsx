@@ -70,7 +70,7 @@ function App() {
 }
 
 function AppInner() {
-  const { currentUser, isLoggedIn, login, register } = useUserData();
+  const { currentUser, isLoggedIn, isAdmin, login, register } = useUserData();
   const urlRouter = useUrlRouter();
 
   // All hooks must be called before any early return (Rules of Hooks)
@@ -146,10 +146,13 @@ function AppInner() {
     );
   }
 
+  // Admin loads all data; regular users load only their JLPT level
+  const levelFilter = isAdmin ? undefined : currentUser?.jlptLevel;
+
   // Wrap in data providers
   return (
-    <FlashcardDataProvider>
-      <JLPTDataProvider currentUserId={currentUser?.id ?? ''}>
+    <FlashcardDataProvider levelFilter={levelFilter}>
+      <JLPTDataProvider currentUserId={currentUser?.id ?? ''} levelFilter={levelFilter}>
         <ReadingSettingsProvider>
           <ListeningSettingsProvider>
             <AppContentWrapper

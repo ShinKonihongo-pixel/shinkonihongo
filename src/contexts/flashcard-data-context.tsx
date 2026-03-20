@@ -63,17 +63,22 @@ interface FlashcardDataContextValue {
 
 const FlashcardDataContext = createContext<FlashcardDataContextValue | null>(null);
 
-export function FlashcardDataProvider({ children }: { children: ReactNode }) {
-  // Flashcards
+interface FlashcardDataProviderProps {
+  children: ReactNode;
+  levelFilter?: string; // JLPT level filter — undefined = load all (admin mode)
+}
+
+export function FlashcardDataProvider({ children, levelFilter }: FlashcardDataProviderProps) {
+  // Flashcards — filtered by JLPT level for regular users
   const {
     cards,
     addCard,
     updateCard,
     deleteCard,
     getStatsByLevel,
-  } = useFlashcards();
+  } = useFlashcards(levelFilter);
 
-  // Lessons (vocabulary)
+  // Lessons (vocabulary) — small collection, always load all
   const {
     lessons,
     addLesson,
@@ -86,20 +91,20 @@ export function FlashcardDataProvider({ children }: { children: ReactNode }) {
     reorderLessons,
   } = useLessons();
 
-  // Grammar cards
-  const { grammarCards, updateGrammarCard } = useGrammarCards();
+  // Grammar cards — filtered by JLPT level
+  const { grammarCards, updateGrammarCard } = useGrammarCards(levelFilter);
 
-  // Grammar lessons
+  // Grammar lessons — small collection, always load all
   const {
     lessons: grammarLessons,
     getParentLessonsByLevel: getGrammarLessonsByLevel,
     getChildLessons: getGrammarChildLessons,
   } = useGrammarLessons();
 
-  // Kanji cards
-  const { kanjiCards, updateKanjiCard } = useKanjiCards();
+  // Kanji cards — filtered by JLPT level
+  const { kanjiCards, updateKanjiCard } = useKanjiCards(levelFilter);
 
-  // Kanji lessons
+  // Kanji lessons — small collection, always load all
   const {
     lessons: kanjiLessons,
     getParentLessonsByLevel: getKanjiLessonsByLevel,

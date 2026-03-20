@@ -24,8 +24,11 @@ export async function getAllFlashcards(): Promise<Flashcard[]> {
   return snapshot.docs.map(doc => mapDoc<Flashcard>(doc));
 }
 
-export function subscribeToFlashcards(callback: (cards: Flashcard[]) => void): Unsubscribe {
-  return onSnapshot(collection(db, COLLECTIONS.FLASHCARDS), (snapshot) => {
+export function subscribeToFlashcards(callback: (cards: Flashcard[]) => void, levelFilter?: string): Unsubscribe {
+  const ref = levelFilter
+    ? query(collection(db, COLLECTIONS.FLASHCARDS), where('jlptLevel', '==', levelFilter))
+    : collection(db, COLLECTIONS.FLASHCARDS);
+  return onSnapshot(ref, (snapshot) => {
     const cards = snapshot.docs.map(doc => mapDoc<Flashcard>(doc));
     callback(cards);
   });

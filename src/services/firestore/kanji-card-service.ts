@@ -18,8 +18,11 @@ import {
   type Unsubscribe,
 } from './collections';
 
-export function subscribeToKanjiCards(callback: (cards: KanjiCard[]) => void): Unsubscribe {
-  return onSnapshot(collection(db, COLLECTIONS.KANJI_CARDS), (snapshot) => {
+export function subscribeToKanjiCards(callback: (cards: KanjiCard[]) => void, levelFilter?: string): Unsubscribe {
+  const ref = levelFilter
+    ? query(collection(db, COLLECTIONS.KANJI_CARDS), where('jlptLevel', '==', levelFilter))
+    : collection(db, COLLECTIONS.KANJI_CARDS);
+  return onSnapshot(ref, (snapshot) => {
     const cards = snapshot.docs.map(doc => mapDoc<KanjiCard>(doc));
     callback(cards);
   });

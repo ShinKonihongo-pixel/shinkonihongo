@@ -6,20 +6,21 @@ import type { JLPTLevel } from '../types/flashcard';
 import * as firestoreService from '../services/firestore';
 import { getKanjiSeedForLevel, getKanjiSeedCount } from '../data/kanji-seed';
 
-export function useKanjiCards() {
+export function useKanjiCards(levelFilter?: string) {
   const [kanjiCards, setKanjiCards] = useState<KanjiCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Subscribe to real-time updates, filtered by level when provided
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     const unsubscribe = firestoreService.subscribeToKanjiCards((cards) => {
       setKanjiCards(cards);
       setLoading(false);
-    });
+    }, levelFilter);
     return () => unsubscribe();
-  }, []);
+  }, [levelFilter]);
 
   const addKanjiCard = useCallback(async (data: KanjiCardFormData, createdBy?: string) => {
     try {
