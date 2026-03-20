@@ -1,10 +1,10 @@
 // Searchable radical picker popup for adding radicals to kanji analysis
 // Shows 214 Kangxi radicals + variants, grouped by stroke count
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Search, X } from 'lucide-react';
 import { KANGXI_RADICALS, RADICAL_VARIANT_ENTRIES } from '../../data/radicals';
-import type { Radical } from '../../types/kanji';
+
 import './radical-picker-popup.css';
 
 // Combine base radicals + variants into a single searchable list
@@ -83,17 +83,20 @@ export function RadicalPickerPopup({ onSelect, onClose, selectedRadicals = [] }:
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
 
-  const selectedSet = new Set(selectedRadicals);
+  const selectedSet = useMemo(() => new Set(selectedRadicals), [selectedRadicals]);
   const q = query.trim().toLowerCase();
 
-  // Filter items by search query
-  const filteredItems = q
-    ? ALL_ITEMS.filter(item =>
-        item.character.includes(q) ||
-        item.vietnameseName.toLowerCase().includes(q) ||
-        item.meaning.toLowerCase().includes(q)
-      )
-    : null; // null = show grouped view
+  // Filter items by search query — null means show grouped view
+  const filteredItems = useMemo(() =>
+    q
+      ? ALL_ITEMS.filter(item =>
+          item.character.includes(q) ||
+          item.vietnameseName.toLowerCase().includes(q) ||
+          item.meaning.toLowerCase().includes(q)
+        )
+      : null,
+    [q]
+  );
 
   return (
     <div className="rpk-popup" ref={popupRef}>

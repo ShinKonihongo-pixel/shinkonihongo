@@ -460,7 +460,8 @@
   gap: 1rem;
 }
 
-.kdc-equation.kdc-separated .kdc-radical-card {
+/* Note: inline drag transform takes priority; this only applies when not dragging */
+.kdc-equation.kdc-separated .kdc-radical-card:not(.kdc-dragging) {
   transform: scale(1.05);
 }
 
