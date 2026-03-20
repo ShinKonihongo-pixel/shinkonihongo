@@ -229,6 +229,12 @@ export async function updateGame(gameId: string, data: Partial<QuizGame>): Promi
   await updateDoc(docRef, data);
 }
 
+/** Field-level update using dot notation (e.g. 'players.abc.score': 100) */
+export async function updateGameFields(gameId: string, fields: Record<string, unknown>): Promise<void> {
+  const docRef = doc(db, COLLECTIONS.GAMES, gameId);
+  await updateDoc(docRef, fields);
+}
+
 export async function deleteGame(gameId: string): Promise<void> {
   const docRef = doc(db, COLLECTIONS.GAMES, gameId);
   await deleteDoc(docRef);

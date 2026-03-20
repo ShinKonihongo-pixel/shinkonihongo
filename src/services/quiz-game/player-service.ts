@@ -1,7 +1,7 @@
 // Player management for Quiz Game
 
 import type { QuizGame, GamePlayer } from '../../types/quiz-game';
-import { getGame, getGameByCode, updateGame, deleteGame } from './game-crud';
+import { getGame, getGameByCode, updateGame, updateGameFields, deleteGame } from './game-crud';
 
 export async function joinGame(
   gameCode: string,
@@ -47,8 +47,9 @@ export async function joinGame(
     joinedAt: new Date().toISOString(),
   };
 
-  await updateGame(game.id, {
-    players: { ...game.players, [playerId]: newPlayer },
+  // Field-level: only write the new player, not entire players object
+  await updateGameFields(game.id, {
+    [`players.${playerId}`]: newPlayer,
   });
 
   return { game: { ...game, players: { ...game.players, [playerId]: newPlayer } } };

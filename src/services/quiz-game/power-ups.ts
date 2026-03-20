@@ -1,6 +1,6 @@
 // Power-up management for Quiz Game
 
-import { getGame, updateGame } from './game-crud';
+import { getGame, updateGameFields } from './game-crud';
 
 export async function usePowerUp(
   gameId: string,
@@ -78,6 +78,12 @@ export async function usePowerUp(
       return false;
   }
 
-  await updateGame(gameId, { players: updatedPlayers });
+  // Field-level: only write affected players, not entire players object
+  const fields: Record<string, unknown> = {};
+  fields[`players.${playerId}`] = updatedPlayers[playerId];
+  if (targetPlayerId && updatedPlayers[targetPlayerId]) {
+    fields[`players.${targetPlayerId}`] = updatedPlayers[targetPlayerId];
+  }
+  await updateGameFields(gameId, fields);
   return true;
 }

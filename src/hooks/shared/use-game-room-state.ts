@@ -9,11 +9,15 @@ import {
   subscribeToGameRoom,
 } from '../../services/game-rooms';
 
+const DEFAULT_SYNC_DEBOUNCE_MS = 300;
+
 interface UseGameRoomStateConfig {
   /** Label for console error messages, e.g. 'image-word' */
   gameLabel: string;
   /** Optional custom sort for sortedPlayers. Default: descending by score */
   sortPlayers?: (players: BasePlayer[]) => BasePlayer[];
+  /** Debounce Firestore sync in ms. 0 = no debounce. Default: 300ms */
+  syncDebounceMs?: number;
 }
 
 export function useGameRoomState<
@@ -23,7 +27,7 @@ export function useGameRoomState<
   currentUserId: string,
   config: UseGameRoomStateConfig,
 ) {
-  const { gameLabel, sortPlayers } = config;
+  const { gameLabel, sortPlayers, syncDebounceMs = DEFAULT_SYNC_DEBOUNCE_MS } = config;
 
   // Core state
   const [game, setGameLocal] = useState<TGame | null>(null);
@@ -48,17 +52,34 @@ export function useGameRoomState<
     });
   }, [roomId]);
 
-  // setGame wrapper: updates local state AND syncs to Firestore
+  // Debounce timer for Firestore sync
+  const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // setGame wrapper: updates local state AND debounced sync to Firestore
   const setGame: SetGame<TGame> = useCallback((updater) => {
     setGameLocal(prev => {
       const newState = typeof updater === 'function' ? updater(prev) : updater;
 
       if (newState && roomIdRef.current) {
+        const rid = roomIdRef.current;
         const { id: _id, ...data } = newState;
-        updateGameRoom(roomIdRef.current, data as Record<string, unknown>).catch(err =>
-          console.error(`Failed to sync ${gameLabel} state:`, err)
-        );
+
+        if (syncDebounceMs > 0) {
+          // Debounced write — reduces Firestore writes during rapid state changes
+          if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+          syncTimerRef.current = setTimeout(() => {
+            updateGameRoom(rid, data as Record<string, unknown>).catch(err =>
+              console.error(`Failed to sync ${gameLabel} state:`, err)
+            );
+          }, syncDebounceMs);
+        } else {
+          // Immediate write (for time-critical games)
+          updateGameRoom(rid, data as Record<string, unknown>).catch(err =>
+            console.error(`Failed to sync ${gameLabel} state:`, err)
+          );
+        }
       } else if (!newState && roomIdRef.current) {
+        if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
         deleteGameRoom(roomIdRef.current).catch(console.error);
         roomIdRef.current = null;
         setRoomId(null);
@@ -66,10 +87,16 @@ export function useGameRoomState<
 
       return newState;
     });
-  }, [gameLabel]);
+  }, [gameLabel, syncDebounceMs]);
+
+  // Clean up debounce timer on unmount
+  useEffect(() => {
+    return () => { if (syncTimerRef.current) clearTimeout(syncTimerRef.current); };
+  }, []);
 
   // Delete current Firestore room directly (safe before unmount)
   const deleteCurrentRoom = useCallback(() => {
+    if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
     const id = roomIdRef.current;
     if (id) {
       deleteGameRoom(id).catch(console.error);
@@ -81,6 +108,7 @@ export function useGameRoomState<
   // Clear local state without triggering Firestore room deletion
   // Used when non-host leaves (removes self from players, keeps room alive)
   const clearLocalGameState = useCallback(() => {
+    if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
     setGameLocal(null);
     roomIdRef.current = null;
     setRoomId(null);

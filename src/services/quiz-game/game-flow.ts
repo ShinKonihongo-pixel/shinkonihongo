@@ -1,7 +1,7 @@
 // Game flow management for Quiz Game
 
 import type { GameStatus } from '../../types/quiz-game';
-import { getGame, updateGame } from './game-crud';
+import { getGame, updateGame, updateGameFields } from './game-crud';
 import { endGame } from './game-results';
 
 export async function startGame(gameId: string, hostId: string): Promise<boolean> {
@@ -42,15 +42,10 @@ export async function submitAnswer(
 
   const answerTime = Date.now() - (game.roundStartTime || Date.now());
 
-  await updateGame(gameId, {
-    players: {
-      ...game.players,
-      [playerId]: {
-        ...player,
-        currentAnswer: answerIndex,
-        answerTime,
-      },
-    },
+  // Field-level update: only write this player's answer, not entire players object
+  await updateGameFields(gameId, {
+    [`players.${playerId}.currentAnswer`]: answerIndex,
+    [`players.${playerId}.answerTime`]: answerTime,
   });
 }
 

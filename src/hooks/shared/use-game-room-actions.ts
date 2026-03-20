@@ -90,12 +90,12 @@ export function useGameRoomActions<
         return;
       }
 
-      // Add player to the room via Firestore
+      // Add player to the room via Firestore (field-level: only write new player)
       const player = createJoinPlayer(currentUser, roomData);
       const updatedPlayers = { ...players, [currentUser.id]: player } as Record<string, TPlayer>;
 
       const updateData: Record<string, unknown> = {
-        players: updatedPlayers,
+        [`players.${currentUser.id}`]: player,
         ...(getJoinUpdateData ? getJoinUpdateData(roomData, updatedPlayers) : {}),
       };
 

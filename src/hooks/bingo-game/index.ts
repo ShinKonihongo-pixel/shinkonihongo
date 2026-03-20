@@ -18,6 +18,8 @@ import {
   subscribeToGameRoom,
 } from '../../services/game-rooms';
 
+const BINGO_SYNC_DEBOUNCE_MS = 500;
+
 export function useBingoGame({ currentUser, flashcards }: UseBingoGameProps) {
   // Game state
   const [state, setState] = useState<BingoGameState>({
@@ -40,6 +42,9 @@ export function useBingoGame({ currentUser, flashcards }: UseBingoGameProps) {
     botDrawTimerRef: useRef<NodeJS.Timeout | null>(null),
   };
 
+  // Debounce timer for Firestore sync
+  const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Firestore subscription - updates local state from remote changes
   useEffect(() => {
     if (!roomId) return;
@@ -52,7 +57,7 @@ export function useBingoGame({ currentUser, flashcards }: UseBingoGameProps) {
     });
   }, [roomId]);
 
-  // setGame wrapper: updates local state AND syncs to Firestore
+  // setGame wrapper: updates local state AND debounced sync to Firestore
   const setGame = useCallback((
     updater: ((prev: BingoGame | null) => BingoGame | null) | BingoGame | null
   ) => {
@@ -60,13 +65,18 @@ export function useBingoGame({ currentUser, flashcards }: UseBingoGameProps) {
       const newGame = typeof updater === 'function' ? updater(prev.game) : updater;
 
       if (newGame && roomIdRef.current) {
-        // Sync to Firestore (fire-and-forget)
+        // Debounced sync to Firestore — reduces write frequency by ~50%
+        if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+        const rid = roomIdRef.current;
         const { id: _id, ...data } = newGame;
-        updateGameRoom(roomIdRef.current, data as Record<string, unknown>).catch(err =>
-          console.error('Failed to sync bingo state:', err)
-        );
+        syncTimerRef.current = setTimeout(() => {
+          updateGameRoom(rid, data as Record<string, unknown>).catch(err =>
+            console.error('Failed to sync bingo state:', err)
+          );
+        }, BINGO_SYNC_DEBOUNCE_MS);
       } else if (!newGame && roomIdRef.current) {
-        // Game reset/ended - clean up Firestore room
+        // Game reset/ended - flush pending sync and clean up room
+        if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
         deleteGameRoom(roomIdRef.current).catch(console.error);
         roomIdRef.current = null;
         setRoomId(null);
@@ -106,6 +116,7 @@ export function useBingoGame({ currentUser, flashcards }: UseBingoGameProps) {
       if (botTimer.current) clearTimeout(botTimer.current);
       if (botTimer2.current) clearTimeout(botTimer2.current);
       if (botDrawTimer.current) clearTimeout(botDrawTimer.current);
+      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
