@@ -1,7 +1,7 @@
 // Game Hub Types - Unified game center for all mini-games
 
 // Available games in the hub
-export type GameType = 'quiz' | 'golden-bell' | 'picture-guess' | 'bingo' | 'kanji-battle' | 'word-match' | 'ai-challenge' | 'image-word' | 'word-scramble' | 'kanji-drop';
+export type GameType = 'quiz' | 'golden-bell' | 'picture-guess' | 'bingo' | 'kanji-battle' | 'word-match' | 'ai-challenge' | 'image-word' | 'word-scramble' | 'kanji-drop' | 'quiz-battle';
 
 // Game info for display
 export interface GameInfo {
@@ -221,6 +221,19 @@ export const GAMES: Record<GameType, GameInfo> = {
     difficulty: 'medium',
     isNew: true,
     category: 'puzzle',
+  },
+  'quiz-battle': {
+    id: 'quiz-battle',
+    name: 'Đấu Trí',
+    description: 'Đối đầu 1v1, ai nhanh hơn thắng!',
+    icon: '⚔️',
+    color: '#ef4444',
+    gradient: 'linear-gradient(135deg, #ef4444 0%, #f59e0b 100%)',
+    playerRange: '2',
+    features: ['ELO Rating', '20 câu hỏi', 'Tốc độ = Điểm', 'Bảng xếp hạng'],
+    difficulty: 'medium',
+    isNew: true,
+    category: 'quiz',
   },
 };
 

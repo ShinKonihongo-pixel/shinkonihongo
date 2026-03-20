@@ -9,3 +9,4 @@ export {
   WORD_SCRAMBLE_SETUP_CONFIG,
 } from './game-configs-extra';
 export { KANJI_DROP_SETUP_CONFIG } from './game-configs-kanji-drop';
+export { QUIZ_BATTLE_SETUP_CONFIG } from './game-configs-quiz-battle';

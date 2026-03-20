@@ -22,6 +22,7 @@ import {
   IMAGE_WORD_SETUP_CONFIG,
   WORD_SCRAMBLE_SETUP_CONFIG,
   KANJI_DROP_SETUP_CONFIG,
+  QUIZ_BATTLE_SETUP_CONFIG,
 } from '../game-hub/room-setup/game-configs';
 import { GameCreate } from '../quiz-game/game-create';
 import { KanjiBattleSetup } from '../kanji-battle/kanji-battle-setup';
@@ -95,6 +96,7 @@ const AIChallengePage = lazy(() => import('./ai-challenge-page').then(m => ({ de
 const ImageWordPage = lazy(() => import('./image-word-page').then(m => ({ default: m.ImageWordPage })));
 const WordScramblePage = lazy(() => import('./word-scramble-page').then(m => ({ default: m.WordScramblePage })));
 const KanjiDropPage = lazy(() => import('./kanji-drop-page').then(m => ({ default: m.KanjiDropPage })));
+const QuizBattlePage = lazy(() => import('./quiz-battle-page').then(m => ({ default: m.QuizBattlePage })));
 
 // Loading fallback component
 function GameLoadingFallback() {
@@ -307,6 +309,15 @@ export function GameHubPage({
             getLessonsByLevel={getLessonsByLevel}
           />
         );
+      case 'quiz-battle':
+        return (
+          <GameRoomSetup
+            gameType="quiz-battle"
+            config={QUIZ_BATTLE_SETUP_CONFIG}
+            onCreateRoom={handleStandardRoomCreate('quiz-battle')}
+            onBack={closeSetupModal}
+          />
+        );
       default:
         return null;
     }
@@ -502,6 +513,23 @@ export function GameHubPage({
           }}
           onSaveGameSession={onSaveGameSession}
           initialRoomConfig={pendingRoomConfig?.gameType === 'kanji-drop' ? pendingRoomConfig.data : undefined}
+          initialJoinCode={joinCode || undefined}
+        />
+      )}
+
+      {selectedGame === 'quiz-battle' && (
+        <QuizBattlePage
+          onClose={handleBackToHub}
+          currentUser={{
+            id: currentUser.id,
+            displayName: currentUser.displayName || currentUser.username,
+            avatar: currentUser.avatar || '⚔️',
+            role: currentUser.role,
+            jlptLevel: currentUser.jlptLevel,
+          }}
+          jlptQuestions={jlptQuestions}
+          onSaveGameSession={onSaveGameSession}
+          initialRoomConfig={pendingRoomConfig?.gameType === 'quiz-battle' ? pendingRoomConfig.data : undefined}
           initialJoinCode={joinCode || undefined}
         />
       )}
