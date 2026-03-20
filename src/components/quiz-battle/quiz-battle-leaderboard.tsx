@@ -5,7 +5,7 @@ import type { JLPTLevel } from '../../types/jlpt-question';
 import { subscribeToLeaderboard } from '../../services/quiz-battle/quiz-battle-service';
 import type { QuizBattleRating } from '../pages/quiz-battle/quiz-battle-types';
 import { isImageAvatar } from '../../utils/avatar-icons';
-import './quiz-battle.css';
+import './quiz-battle-common.css';
 
 const LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 

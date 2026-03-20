@@ -1,15 +1,19 @@
-// Quiz Battle Playing Screen — 1v1 live question/answer with scoreboard
+// Quiz Battle Playing Screen — pro competitive HUD
 
 import { useState, useEffect, useRef } from 'react';
 import type { QuizBattleGame } from '../pages/quiz-battle/quiz-battle-types';
 import { isImageAvatar } from '../../utils/avatar-icons';
-import './quiz-battle.css';
+import './quiz-battle-common.css';
+import './quiz-battle-playing.css';
 
 interface QuizBattlePlayingProps {
   game: QuizBattleGame;
   currentPlayerId: string;
   onSubmitAnswer: (idx: number, timeMs: number) => void;
 }
+
+const OPTION_LABELS = ['A', 'B', 'C', 'D'];
+const OPTION_COLORS = ['#6366f1', '#ec4899', '#f59e0b', '#10b981'];
 
 export function QuizBattlePlaying({ game, currentPlayerId, onSubmitAnswer }: QuizBattlePlayingProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -19,7 +23,6 @@ export function QuizBattlePlaying({ game, currentPlayerId, onSubmitAnswer }: Qui
   const { currentRound, questions, players, status, roundStartTime, settings } = game;
   const question = questions[currentRound];
 
-  // Reset selection & record start time when question changes
   useEffect(() => {
     setSelectedAnswer(null);
     answerStartRef.current = roundStartTime ?? Date.now();
@@ -29,9 +32,9 @@ export function QuizBattlePlaying({ game, currentPlayerId, onSubmitAnswer }: Qui
   const mePlayer = players[currentPlayerId];
   const opponentPlayer = playerList.find(p => p.odinhId !== currentPlayerId);
 
-  // Detect score change for pop animation
   const [scorePopMe, setScorePopMe] = useState(false);
   const [scorePopOpp, setScorePopOpp] = useState(false);
+  const [revealResult, setRevealResult] = useState<'correct' | 'wrong' | null>(null);
 
   useEffect(() => {
     const prev = prevScoresRef.current;
@@ -53,6 +56,14 @@ export function QuizBattlePlaying({ game, currentPlayerId, onSubmitAnswer }: Qui
   const myAnswer = mePlayer?.currentAnswer ?? null;
   const hasAnswered = myAnswer !== null;
 
+  useEffect(() => {
+    if (isReveal && myAnswer !== null && question) {
+      setRevealResult(myAnswer === question.correctIndex ? 'correct' : 'wrong');
+      const t = setTimeout(() => setRevealResult(null), 1800);
+      return () => clearTimeout(t);
+    }
+  }, [isReveal, myAnswer, question?.correctIndex]);
+
   function handleSelect(idx: number) {
     if (hasAnswered || isReveal || selectedAnswer !== null) return;
     setSelectedAnswer(idx);
@@ -61,97 +72,135 @@ export function QuizBattlePlaying({ game, currentPlayerId, onSubmitAnswer }: Qui
   }
 
   function getOptionClass(idx: number) {
-    let cls = 'qb-option';
+    let cls = 'qb-opt';
     if (isReveal && question) {
-      if (idx === question.correctIndex) cls += ' qb-correct';
-      else if (idx === myAnswer && idx !== question.correctIndex) cls += ' qb-wrong';
+      if (idx === question.correctIndex) cls += ' qb-opt--correct';
+      else if (idx === myAnswer && idx !== question.correctIndex) cls += ' qb-opt--wrong';
+      else cls += ' qb-opt--dim';
     } else if (selectedAnswer === idx) {
-      cls += ' qb-selected';
+      cls += ' qb-opt--selected';
     }
     return cls;
   }
 
   const timerDuration = settings.timePerQuestion;
+  const oppAnswered = opponentPlayer?.currentAnswer !== null;
+  const meAnswered = hasAnswered || selectedAnswer !== null;
 
-  function renderAvatar(avatar: string, name: string) {
-    if (avatar && isImageAvatar(avatar)) return <img src={avatar} alt={name} />;
-    return <span>{avatar || name.charAt(0).toUpperCase()}</span>;
+  function renderAvatar(avatar: string, name: string, ring: string) {
+    const inner = (avatar && isImageAvatar(avatar))
+      ? <img src={avatar} alt={name} className="qb-hud-avatar-img" />
+      : <span className="qb-hud-avatar-emoji">{avatar || name.charAt(0).toUpperCase()}</span>;
+    return (
+      <div className="qb-hud-avatar-wrap" style={{ '--ring-color': ring } as React.CSSProperties}>
+        {inner}
+      </div>
+    );
   }
 
   if (!question) return null;
 
+  const oppRevealAnswer = isReveal && opponentPlayer?.currentAnswer !== null ? opponentPlayer!.currentAnswer! : null;
+  const oppCorrect = oppRevealAnswer !== null && question && oppRevealAnswer === question.correctIndex;
+
   return (
-    <div className="qb-playing">
-      {/* Scoreboard */}
-      <div className="qb-scoreboard">
-        {/* Opponent (left) */}
-        <div className="qb-scoreboard-player">
-          <div className="qb-scoreboard-avatar">
-            {opponentPlayer
-              ? renderAvatar(opponentPlayer.avatar, opponentPlayer.displayName)
-              : <span>?</span>}
-          </div>
-          <div className="qb-scoreboard-info">
-            <div className="qb-scoreboard-name">{opponentPlayer?.displayName ?? '...'}</div>
-            <div className={`qb-scoreboard-score${scorePopOpp ? ' qb-pop' : ''}`}>
+    <div className="qb-playing qb-playing--v2">
+
+      {/* ── HUD Scoreboard ── */}
+      <div className="qb-hud">
+
+        {/* Opponent panel */}
+        <div className="qb-hud-panel qb-hud-panel--opp">
+          {renderAvatar(opponentPlayer?.avatar ?? '', opponentPlayer?.displayName ?? '?', '#ef4444')}
+          <div className="qb-hud-info">
+            <span className="qb-hud-name">{opponentPlayer?.displayName ?? '...'}</span>
+            <span className={`qb-hud-score${scorePopOpp ? ' qb-pop' : ''}`}>
               {opponentPlayer?.score ?? 0}
-            </div>
+            </span>
+          </div>
+          <div className={`qb-hud-status ${oppAnswered ? 'qb-hud-status--done' : 'qb-hud-status--thinking'}`}>
+            {oppAnswered ? '✓' : '···'}
           </div>
         </div>
 
-        {/* Center */}
-        <div className="qb-scoreboard-center">
-          <div className="qb-round-label">Câu</div>
-          <div className="qb-round-num">{currentRound + 1}/{settings.totalRounds}</div>
+        {/* Center badge */}
+        <div className="qb-hud-center">
+          <div className="qb-vs-ring">
+            <span className="qb-vs-label">VS</span>
+          </div>
+          <div className="qb-round-badge">
+            <span className="qb-round-q">Q</span>
+            <span className="qb-round-num">{currentRound + 1}</span>
+            <span className="qb-round-total">/{settings.totalRounds}</span>
+          </div>
         </div>
 
-        {/* Me (right) */}
-        <div className="qb-scoreboard-player qb-me">
-          <div className="qb-scoreboard-avatar">
-            {mePlayer ? renderAvatar(mePlayer.avatar, mePlayer.displayName) : <span>?</span>}
+        {/* Me panel */}
+        <div className="qb-hud-panel qb-hud-panel--me">
+          <div className={`qb-hud-status ${meAnswered ? 'qb-hud-status--done' : 'qb-hud-status--thinking'}`}>
+            {meAnswered ? '✓' : '···'}
           </div>
-          <div className="qb-scoreboard-info">
-            <div className="qb-scoreboard-name">{mePlayer?.displayName ?? 'Bạn'}</div>
-            <div className={`qb-scoreboard-score${scorePopMe ? ' qb-pop' : ''}`}>
+          <div className="qb-hud-info qb-hud-info--right">
+            <span className="qb-hud-name">{mePlayer?.displayName ?? 'Bạn'}</span>
+            <span className={`qb-hud-score qb-hud-score--me${scorePopMe ? ' qb-pop' : ''}`}>
               {mePlayer?.score ?? 0}
-            </div>
+            </span>
           </div>
+          {renderAvatar(mePlayer?.avatar ?? '', mePlayer?.displayName ?? 'B', '#f59e0b')}
         </div>
       </div>
 
-      {/* Timer bar */}
-      <div className="qb-timer">
-        <div
-          className="qb-timer-fill"
-          key={`timer-${currentRound}`}
-          style={{ animationDuration: `${timerDuration}s` }}
-        />
+      {/* ── Timer ── */}
+      <div className="qb-timer-wrap">
+        <div className="qb-timer-track">
+          <div
+            className={`qb-timer-fill${timerDuration <= 5 ? ' qb-timer-fill--urgent' : ''}`}
+            key={`timer-${currentRound}`}
+            style={{ animationDuration: `${timerDuration}s` }}
+          />
+        </div>
+        <div className="qb-timer-glow" key={`glow-${currentRound}`} style={{ animationDuration: `${timerDuration}s` }} />
       </div>
 
-      {/* Question + Options */}
-      <div className="qb-question">
-        <div className="qb-question-card">
+      {/* ── Question Card ── */}
+      <div className="qb-question-wrap" key={`q-${currentRound}`}>
+        <div className="qb-question-card qb-question-card--v2">
+          <div className="qb-question-badge">Q.{currentRound + 1}</div>
           <p className="qb-question-text">{question.question}</p>
         </div>
 
-        <div className="qb-options">
+        {/* ── Options 2×2 grid ── */}
+        <div className="qb-opts-grid">
           {question.options.map((opt, idx) => (
             <button
               key={idx}
               className={getOptionClass(idx)}
               onClick={() => handleSelect(idx)}
               disabled={hasAnswered || isReveal}
+              style={{ '--opt-color': OPTION_COLORS[idx] } as React.CSSProperties}
             >
-              {opt}
+              <span className="qb-opt-label">{OPTION_LABELS[idx]}</span>
+              <span className="qb-opt-text">{opt}</span>
+              {isReveal && idx === question.correctIndex && <span className="qb-opt-icon">✓</span>}
+              {isReveal && idx === myAnswer && idx !== question.correctIndex && <span className="qb-opt-icon">✗</span>}
+              {!isReveal && selectedAnswer === idx && <span className="qb-opt-icon">🔒</span>}
             </button>
           ))}
         </div>
 
-        {isReveal && opponentPlayer && (
-          <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
-            {opponentPlayer.currentAnswer !== null
-              ? `${opponentPlayer.displayName} đã trả lời`
-              : `${opponentPlayer.displayName} chưa trả lời`}
+        {/* ── Reveal overlay ── */}
+        {revealResult && (
+          <div className={`qb-reveal-overlay qb-reveal-overlay--${revealResult}`}>
+            <span className="qb-reveal-icon">{revealResult === 'correct' ? '✓' : '✗'}</span>
+            <span className="qb-reveal-label">
+              {revealResult === 'correct' ? 'Đúng!' : 'Sai!'}
+            </span>
+            {oppRevealAnswer !== null && (
+              <span className="qb-reveal-opp">
+                {opponentPlayer?.displayName}: {OPTION_LABELS[oppRevealAnswer]}
+                {oppCorrect ? ' ✓' : ' ✗'}
+              </span>
+            )}
           </div>
         )}
       </div>

@@ -1,6 +1,6 @@
-// Quiz Battle Lobby — 1v1 competitive lobby with red/gold battle theme
+// Quiz Battle Lobby — dramatic 1v1 battle lobby
 
-import { Play, Swords, UserPlus } from 'lucide-react';
+import { Play, Swords, Shield, Zap } from 'lucide-react';
 import type { QuizBattleGame } from '../pages/quiz-battle/quiz-battle-types';
 import {
   PremiumLobbyShell,
@@ -11,7 +11,9 @@ import {
 } from '../shared/game-lobby';
 import { useLobbyState } from '../../hooks/shared/use-lobby-state';
 import { isImageAvatar } from '../../utils/avatar-icons';
-import './quiz-battle.css';
+import { calculateRatingChanges } from '../../utils/elo-rating';
+import './quiz-battle-common.css';
+import './quiz-battle-lobby.css';
 
 const QB_ACCENT = {
   accent: '#ef4444',
@@ -26,10 +28,22 @@ interface QuizBattleLobbyProps {
   onLeave: () => void;
 }
 
+function PlayerAvatar({ player, side }: { player: { avatar?: string; displayName: string } | null; side: 'host' | 'challenger' }) {
+  if (!player) return null;
+  return (
+    <div className={`qb-duel-avatar qb-duel-avatar-${side}`}>
+      {player.avatar && isImageAvatar(player.avatar)
+        ? <img src={player.avatar} alt={player.displayName} />
+        : <span>{player.avatar || player.displayName.charAt(0).toUpperCase()}</span>}
+    </div>
+  );
+}
+
 export function QuizBattleLobby({ game, currentPlayerId, onStart, onLeave }: QuizBattleLobbyProps) {
   const players = Object.values(game.players);
   const hostPlayer = players.find(p => p.odinhId === game.hostId);
   const challengerPlayer = players.find(p => p.odinhId !== game.hostId);
+  const bothPresent = !!(hostPlayer && challengerPlayer);
 
   const lobby = useLobbyState(
     {
@@ -42,6 +56,20 @@ export function QuizBattleLobby({ game, currentPlayerId, onStart, onLeave }: Qui
     },
     { gameSlug: 'quiz-battle' },
   );
+
+  // ELO preview when both players present
+  let eloPreview: { win: number; lose: number; diff: number } | null = null;
+  if (bothPresent && hostPlayer && challengerPlayer) {
+    const isHost = currentPlayerId === game.hostId;
+    const myRating = isHost ? hostPlayer.rating : challengerPlayer.rating;
+    const oppRating = isHost ? challengerPlayer.rating : hostPlayer.rating;
+    const changes = calculateRatingChanges(myRating, oppRating);
+    eloPreview = {
+      win: changes.winnerChange,
+      lose: changes.loserChange,
+      diff: Math.abs(myRating - oppRating),
+    };
+  }
 
   const metaTags = (
     <>
@@ -62,43 +90,54 @@ export function QuizBattleLobby({ game, currentPlayerId, onStart, onLeave }: Qui
         />
       )}
 
-      <div className="qb-lobby-players-row">
-        {/* Host card */}
-        <div className="qb-lobby-player-card qb-lobby-host">
-          <div className="qb-lobby-player-avatar">
-            {hostPlayer?.avatar && isImageAvatar(hostPlayer.avatar)
-              ? <img src={hostPlayer.avatar} alt={hostPlayer.displayName} />
-              : <span>{hostPlayer?.avatar || hostPlayer?.displayName.charAt(0).toUpperCase()}</span>}
+      {/* Dramatic VS arena */}
+      <div className={`qb-duel-arena${bothPresent ? ' qb-duel-arena-live' : ''}`}>
+        {/* Host side */}
+        <div className="qb-duel-side qb-duel-side-host">
+          <PlayerAvatar player={hostPlayer ?? null} side="host" />
+          <div className="qb-duel-name">{hostPlayer?.displayName ?? '...'}</div>
+          <div className="qb-duel-badges">
+            <span className="qb-duel-crown">👑 HOST</span>
+            {hostPlayer && <span className="qb-duel-elo qb-duel-elo-host">★ {hostPlayer.rating}</span>}
           </div>
-          <div className="qb-lobby-player-name">{hostPlayer?.displayName ?? '...'}</div>
-          {hostPlayer && (
-            <div className="qb-lobby-rating-badge">
-              ★ {hostPlayer.rating}
+        </div>
+
+        {/* Center VS */}
+        <div className={`qb-duel-vs${bothPresent ? ' qb-duel-vs-ignite' : ''}`}>
+          <span className="qb-duel-vs-text">VS</span>
+          {bothPresent && <span className="qb-duel-vs-fire">🔥</span>}
+        </div>
+
+        {/* Challenger side */}
+        <div className="qb-duel-side qb-duel-side-challenger">
+          {challengerPlayer ? (
+            <>
+              <PlayerAvatar player={challengerPlayer} side="challenger" />
+              <div className="qb-duel-name">{challengerPlayer.displayName}</div>
+              <div className="qb-duel-badges">
+                <span className="qb-duel-elo qb-duel-elo-challenger">★ {challengerPlayer.rating}</span>
+              </div>
+            </>
+          ) : (
+            <div className="qb-duel-waiting">
+              <div className="qb-duel-waiting-icon">⚔️</div>
+              <div className="qb-duel-waiting-text">Đang chờ đối thủ...</div>
             </div>
           )}
         </div>
-
-        {/* VS badge */}
-        <div className="qb-vs">VS</div>
-
-        {/* Challenger slot */}
-        {challengerPlayer ? (
-          <div className="qb-lobby-player-card">
-            <div className="qb-lobby-player-avatar">
-              {challengerPlayer.avatar && isImageAvatar(challengerPlayer.avatar)
-                ? <img src={challengerPlayer.avatar} alt={challengerPlayer.displayName} />
-                : <span>{challengerPlayer.avatar || challengerPlayer.displayName.charAt(0).toUpperCase()}</span>}
-            </div>
-            <div className="qb-lobby-player-name">{challengerPlayer.displayName}</div>
-            <div className="qb-lobby-rating-badge">★ {challengerPlayer.rating}</div>
-          </div>
-        ) : (
-          <div className="qb-lobby-challenger-slot">
-            <UserPlus size={28} />
-            <span>Đang chờ...</span>
-          </div>
-        )}
       </div>
+
+      {/* ELO preview — shown when both present */}
+      {eloPreview && (
+        <div className="qb-elo-preview">
+          <span className="qb-elo-diff">Chênh lệch: {eloPreview.diff} ELO</span>
+          <span className="qb-elo-reward">
+            <span className="qb-elo-win">Thắng: ~+{eloPreview.win}</span>
+            <span className="qb-elo-sep">|</span>
+            <span className="qb-elo-lose">Thua: ~{eloPreview.lose}</span>
+          </span>
+        </div>
+      )}
 
       <LobbyJoinSection
         code={game.code}
@@ -108,22 +147,23 @@ export function QuizBattleLobby({ game, currentPlayerId, onStart, onLeave }: Qui
         onToggleQr={() => lobby.setQrVisible(v => !v)}
       />
 
-      <div className="pl-lobby-rules">
-        <h4>Luật chơi</h4>
-        <ul>
-          <li>20 câu JLPT {game.jlptLevel} — trả lời nhanh = nhiều điểm</li>
-          <li>Mỗi câu có 15 giây, không thể thay đổi sau khi chọn</li>
-          <li>Thắng: +ELO, Thua: −ELO</li>
-        </ul>
+      {/* Rules */}
+      <div className="qb-rules-card">
+        <div className="qb-rules-title"><Swords size={14} /> Luật chiến đấu</div>
+        <div className="qb-rules-list">
+          <div className="qb-rule-item"><Zap size={12} className="qb-rule-icon-zap" />20 câu JLPT {game.jlptLevel} — trả lời nhanh = nhiều điểm hơn</div>
+          <div className="qb-rule-item"><Shield size={12} className="qb-rule-icon-shield" />Mỗi câu 15 giây, không đổi sau khi chọn</div>
+          <div className="qb-rule-item"><span className="qb-rule-icon-text">📈</span>Thắng: +ELO &nbsp;·&nbsp; Thua: −ELO</div>
+        </div>
       </div>
     </>
   );
 
   const rightContent = (
-    <div style={{ color: 'rgba(255,255,255,0.5)', textAlign: 'center', padding: '2rem' }}>
-      {players.length < 2
-        ? 'Chia sẻ mã phòng để đối thủ tham gia'
-        : 'Đã đủ 2 người — Host có thể bắt đầu!'}
+    <div className="qb-right-status">
+      {bothPresent
+        ? <><span className="qb-status-ready">⚡ Sẵn sàng chiến!</span><span className="qb-status-sub">Host có thể bắt đầu trận đấu</span></>
+        : <><span className="qb-status-wait">⏳ Chờ đối thủ...</span><span className="qb-status-sub">Chia sẻ mã phòng để đối thủ tham gia</span></>}
     </div>
   );
 
@@ -133,7 +173,7 @@ export function QuizBattleLobby({ game, currentPlayerId, onStart, onLeave }: Qui
       canStart={lobby.canStart}
       onStart={onStart}
       startIcon={<Play size={20} />}
-      startLabel="Bắt Đầu Đấu Trí"
+      startLabel="Bắt Đầu Đấu Trí 🔥"
       disabledLabel="Cần 2 người chơi"
     />
   );

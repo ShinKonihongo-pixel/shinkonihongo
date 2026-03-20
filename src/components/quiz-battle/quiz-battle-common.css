@@ -1,0 +1,118 @@
+/* Quiz Battle — shared styles, prefix: qb- */
+
+/* ─── Page shell ─────────────────────────────────────────────── */
+.qb-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+  color: #E2E8F0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+/* ─── VS badge ──────────────────────────────────────────────── */
+.qb-vs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ef4444, #f59e0b);
+  color: #fff;
+  font-weight: 900;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  animation: qb-pulse 2s ease-in-out infinite;
+}
+
+/* ─── Shared buttons ─────────────────────────────────────────── */
+.qb-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.qb-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+.qb-btn-primary { background: linear-gradient(135deg, #ef4444, #f59e0b); color: #fff; }
+.qb-btn-ghost { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.12); }
+
+/* ─── Leaderboard ────────────────────────────────────────────── */
+.qb-leaderboard { width: 100%; }
+
+.qb-leaderboard-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  background: rgba(255,255,255,0.04);
+  border-radius: 10px;
+  padding: 0.25rem;
+}
+
+.qb-leaderboard-tab {
+  flex: 1;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.qb-leaderboard-tab.qb-active { background: rgba(239,68,68,0.2); color: #ef4444; }
+.qb-leaderboard table { width: 100%; border-collapse: collapse; }
+.qb-leaderboard th { font-size: 0.7rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.5px; padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.qb-leaderboard td { padding: 0.6rem 0.75rem; font-size: 0.85rem; color: rgba(255,255,255,0.8); border-bottom: 1px solid rgba(255,255,255,0.04); }
+.qb-leaderboard tr.qb-me-row td { background: rgba(239,68,68,0.08); }
+
+.qb-rank-gold   { color: #f59e0b; font-size: 1.1rem; }
+.qb-rank-silver { color: #9ca3af; font-size: 1rem; }
+.qb-rank-bronze { color: #b45309; font-size: 1rem; }
+
+.qb-lb-player { display: flex; align-items: center; gap: 0.5rem; }
+
+.qb-lb-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.qb-lb-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.qb-empty-hint { text-align: center; padding: 2rem; color: rgba(255,255,255,0.35); font-size: 0.9rem; }
+
+/* ─── Shared animations ─────────────────────────────────────── */
+@keyframes qb-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(239,68,68,0.4); }
+  50%       { box-shadow: 0 0 30px rgba(239,68,68,0.7); }
+}
+
+@keyframes qb-score-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.4); color: #f59e0b; }
+  100% { transform: scale(1); }
+}
+
+@keyframes qb-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
