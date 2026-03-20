@@ -2,7 +2,7 @@
 // Loads existing analysis from cache/Firestore, generates via AI if missing, allows editing
 
 import { useState, useEffect, useCallback } from 'react';
-import { Sparkles, RefreshCw, Plus, Trash2, ChevronDown, ChevronUp, Save } from 'lucide-react';
+import { Sparkles, RefreshCw, Plus, Trash2, ChevronDown, ChevronUp, Save, X, Edit3 } from 'lucide-react';
 import type { KanjiCharacterAnalysis, KanjiSampleWord } from '../../types/flashcard';
 import type { Radical } from '../../types/kanji';
 import { extractKanjiCharacters, generateKanjiCharacterAnalysis } from '../../services/kanji-analysis-ai-service';
@@ -10,6 +10,7 @@ import { getMultipleKanjiAnalysis, saveMultipleKanjiAnalysis } from '../../servi
 import { kanjiAnalysisCache } from '../../hooks/use-kanji-analysis';
 import { getRadicalInfo } from '../../utils/radical-kanji-index';
 import { RadicalExplorerPanel } from './radical-explorer-panel';
+import { RadicalPickerPopup } from './radical-picker-popup';
 import './kanji-analysis-editor.css';
 
 const MIN_SAMPLE_WORDS = 3;
@@ -36,6 +37,8 @@ export function KanjiAnalysisEditor({ kanjiText }: KanjiAnalysisEditorProps) {
   const [expanded, setExpanded] = useState(true);
   const [dirty, setDirty] = useState(false);
   const [exploringRadical, setExploringRadical] = useState<Radical | null>(null);
+  const [pickerOpenFor, setPickerOpenFor] = useState<number | null>(null); // charIdx with open picker
+  const [textEditFor, setTextEditFor] = useState<number | null>(null); // charIdx with text input shown
 
   const characters = extractKanjiCharacters(kanjiText);
   const hasKanji = characters.length > 0;
@@ -276,42 +279,86 @@ export function KanjiAnalysisEditor({ kanjiText }: KanjiAnalysisEditorProps) {
                   />
                 </div>
 
-                {/* Radicals — interactive chips + text editor */}
-                <div className="kae-field kae-field-full">
+                {/* Radicals — interactive removable chips + picker */}
+                <div className="kae-field kae-field-full kae-radical-field">
                   <label>Bộ thủ</label>
-                  {(a.radicals && a.radicals.length > 0) && (
-                    <div className="kae-radical-chips">
-                      {a.radicals.map((r) => {
-                        const info = getRadicalInfo(r);
-                        // Always allow clicking — create synthetic Radical for unknown ones
-                        const radicalObj = info || {
-                          number: 0,
-                          character: r,
-                          strokeCount: 0,
-                          vietnameseName: r,
-                          meaning: '',
-                        };
-                        return (
+                  <div className="kae-radical-chips">
+                    {(a.radicals || []).map((r) => {
+                      const info = getRadicalInfo(r);
+                      const radicalObj: Radical = info || {
+                        number: 0,
+                        character: r,
+                        strokeCount: 0,
+                        vietnameseName: r,
+                        meaning: '',
+                      };
+                      return (
+                        <span key={r} className="kae-radical-chip">
                           <button
-                            key={r}
                             type="button"
-                            className="kae-radical-chip"
+                            className="kae-radical-chip-main"
                             onClick={() => setExploringRadical(radicalObj)}
                             title={info ? `${info.vietnameseName} — ${info.meaning} (nhấn để xem Kanji liên quan)` : `${r} (nhấn để xem/thêm Kanji liên quan)`}
                           >
                             <span className="kae-radical-char">{r}</span>
                             <span className="kae-radical-name">{info ? info.vietnameseName : '?'}</span>
                           </button>
-                        );
-                      })}
+                          <button
+                            type="button"
+                            className="kae-radical-chip-remove"
+                            onClick={() => {
+                              const newRadicals = (a.radicals || []).filter(x => x !== r);
+                              updateField(charIdx, 'radicals', newRadicals);
+                            }}
+                            title="Xóa bộ thủ này"
+                          >
+                            <X size={10} />
+                          </button>
+                        </span>
+                      );
+                    })}
+                    {/* Add radical button + picker */}
+                    <div className="kae-radical-add-wrapper">
+                      <button
+                        type="button"
+                        className="kae-radical-add-btn"
+                        onClick={() => setPickerOpenFor(pickerOpenFor === charIdx ? null : charIdx)}
+                        title="Thêm bộ thủ"
+                      >
+                        <Plus size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        className="kae-radical-text-toggle"
+                        onClick={() => setTextEditFor(textEditFor === charIdx ? null : charIdx)}
+                        title="Nhập thủ công"
+                      >
+                        <Edit3 size={11} />
+                      </button>
+                      {pickerOpenFor === charIdx && (
+                        <RadicalPickerPopup
+                          selectedRadicals={a.radicals || []}
+                          onSelect={(char) => {
+                            const current = a.radicals || [];
+                            if (!current.includes(char)) {
+                              updateField(charIdx, 'radicals', [...current, char]);
+                            }
+                          }}
+                          onClose={() => setPickerOpenFor(null)}
+                        />
+                      )}
                     </div>
+                  </div>
+                  {/* Manual text input — togglable */}
+                  {textEditFor === charIdx && (
+                    <input
+                      type="text"
+                      value={(a.radicals || []).join('、')}
+                      onChange={e => updateField(charIdx, 'radicals', e.target.value.split(/[、,]/).map(s => s.trim()).filter(Boolean))}
+                      placeholder="人、口、土"
+                      className="kae-radical-text-input"
+                    />
                   )}
-                  <input
-                    type="text"
-                    value={(a.radicals || []).join('、')}
-                    onChange={e => updateField(charIdx, 'radicals', e.target.value.split(/[、,]/).map(s => s.trim()).filter(Boolean))}
-                    placeholder="人、口、土"
-                  />
                 </div>
 
                 {/* Mnemonic */}

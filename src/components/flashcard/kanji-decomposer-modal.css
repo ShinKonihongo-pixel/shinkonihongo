@@ -1,0 +1,496 @@
+/* Kanji Radical Decomposer Modal — visual radical breakdown with drag & swap */
+
+.kdc-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: kdc-fade-in 0.2s ease;
+}
+
+@keyframes kdc-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.kdc-modal {
+  width: 90%;
+  max-width: 560px;
+  max-height: 90vh;
+  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: kdc-slide-up 0.3s ease;
+  touch-action: none;
+}
+
+@keyframes kdc-slide-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Header */
+.kdc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.kdc-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.kdc-header-icon {
+  color: #8b5cf6;
+}
+
+.kdc-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+}
+
+.kdc-header-actions {
+  display: flex;
+  gap: 0.375rem;
+}
+
+.kdc-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.kdc-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Body */
+.kdc-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Result kanji display */
+.kdc-result-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.kdc-result-char {
+  font-size: 4.5rem;
+  font-weight: 700;
+  font-family: 'Noto Serif JP', serif;
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1;
+  text-shadow: 0 0 40px rgba(139, 92, 246, 0.3);
+  transition: all 0.4s ease;
+}
+
+.kdc-result-char.kdc-result-unknown {
+  color: rgba(255, 255, 255, 0.2);
+  text-shadow: none;
+}
+
+.kdc-result-info {
+  text-align: center;
+}
+
+.kdc-result-label {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.kdc-result-new {
+  color: #8b5cf6;
+  font-weight: 500;
+}
+
+.kdc-result-unknown-label {
+  color: rgba(255, 255, 255, 0.3);
+  font-style: italic;
+}
+
+/* Equation: r1 + r2 = kanji */
+.kdc-equation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  min-height: 100px;
+}
+
+.kdc-eq-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.kdc-eq-plus {
+  font-size: 1.5rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.kdc-eq-equals {
+  font-size: 1.5rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.3);
+  margin: 0 0.25rem;
+}
+
+.kdc-eq-result {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border: 2px solid rgba(139, 92, 246, 0.3);
+  border-radius: 12px;
+  background: rgba(139, 92, 246, 0.08);
+}
+
+.kdc-eq-result-char {
+  font-size: 2rem;
+  font-weight: 700;
+  font-family: 'Noto Serif JP', serif;
+  color: rgba(255, 255, 255, 0.9);
+  transition: all 0.3s;
+}
+
+.kdc-eq-result-char.kdc-unknown {
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 1.5rem;
+}
+
+/* Radical cards (draggable) */
+.kdc-radical-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 80px;
+  min-height: 90px;
+  border: 2px solid;
+  border-radius: 14px;
+  user-select: none;
+  position: relative;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  overflow: hidden;
+}
+
+.kdc-radical-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.kdc-radical-card:active,
+.kdc-radical-card.kdc-dragging {
+  cursor: grabbing;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  transition: none;
+}
+
+.kdc-radical-card.kdc-swapping {
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.4);
+}
+
+/* Drag area inside radical card */
+.kdc-radical-drag-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  padding: 0.375rem 0.25rem;
+  gap: 2px;
+  flex: 1;
+}
+
+.kdc-radical-drag-area:active {
+  cursor: grabbing;
+}
+
+.kdc-radical-char {
+  font-size: 2rem;
+  font-weight: 700;
+  font-family: 'Noto Serif JP', serif;
+  line-height: 1;
+}
+
+.kdc-radical-name {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.2;
+  max-width: 70px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kdc-radical-meaning {
+  font-size: 0.58rem;
+  color: rgba(255, 255, 255, 0.35);
+  text-align: center;
+  line-height: 1;
+}
+
+/* Radical action buttons */
+.kdc-radical-actions {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: flex;
+  gap: 1px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.kdc-radical-card:hover .kdc-radical-actions {
+  opacity: 1;
+}
+
+.kdc-radical-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s;
+}
+
+.kdc-radical-action-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.kdc-radical-remove-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+/* Add radical button */
+.kdc-add-wrapper {
+  position: relative;
+}
+
+.kdc-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 2px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.kdc-add-btn:hover {
+  border-color: rgba(139, 92, 246, 0.4);
+  background: rgba(139, 92, 246, 0.08);
+  color: #8b5cf6;
+}
+
+/* Swap section */
+.kdc-swap-section {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 1rem;
+  animation: kdc-fade-in 0.2s ease;
+}
+
+.kdc-swap-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.kdc-swap-header strong {
+  color: #8b5cf6;
+  font-size: 1.1rem;
+}
+
+.kdc-swap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.5rem;
+}
+
+.kdc-swap-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: all 0.2s;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.kdc-swap-item:hover {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.3);
+  transform: translateY(-1px);
+}
+
+.kdc-swap-radical {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #ec4899;
+  font-family: 'Noto Serif JP', serif;
+  min-width: 20px;
+  text-align: center;
+}
+
+.kdc-swap-arrow {
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 0.8rem;
+}
+
+.kdc-swap-kanji {
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-family: 'Noto Serif JP', serif;
+  color: rgba(255, 255, 255, 0.95);
+  min-width: 24px;
+  text-align: center;
+}
+
+.kdc-swap-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.kdc-swap-hv {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #fbbf24;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kdc-swap-meaning {
+  font-size: 0.62rem;
+  color: rgba(255, 255, 255, 0.4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kdc-swap-empty,
+.kdc-empty-msg {
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 0.82rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+/* Hint text */
+.kdc-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.25);
+  text-align: center;
+  padding: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.kdc-hint svg {
+  vertical-align: middle;
+  opacity: 0.5;
+}
+
+/* Separated state - more spacing */
+.kdc-equation.kdc-separated {
+  gap: 1rem;
+}
+
+.kdc-equation.kdc-separated .kdc-radical-card {
+  transform: scale(1.05);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .kdc-modal {
+    width: 95%;
+    max-height: 95vh;
+    border-radius: 16px;
+  }
+
+  .kdc-result-char {
+    font-size: 3.5rem;
+  }
+
+  .kdc-radical-card {
+    width: 64px;
+    min-height: 74px;
+  }
+
+  .kdc-radical-char {
+    font-size: 1.6rem;
+  }
+
+  .kdc-equation {
+    gap: 0.375rem;
+    padding: 0.75rem;
+  }
+
+  .kdc-swap-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

@@ -2,9 +2,10 @@
 // Navigation: Level → Parent Lesson → Child Lesson → Cards
 
 import { useState, useRef, useCallback, useMemo } from 'react';
-import { Download, Upload, BookOpen, FolderOpen, FileText, ChevronRight, Plus, Trash2, Edit2, GripVertical, Search, X, AlertTriangle, Copy, ArrowRightLeft } from 'lucide-react';
+import { Download, Upload, BookOpen, FolderOpen, FileText, ChevronRight, Plus, Trash2, Edit2, GripVertical, Search, X, AlertTriangle, Copy, ArrowRightLeft, Puzzle } from 'lucide-react';
 import { KanjiCardForm } from '../flashcard/kanji-card-form';
 import { KanjiCardList } from '../flashcard/kanji-card-list';
+import { KanjiDecomposerModal } from '../flashcard/kanji-decomposer-modal';
 import { KanjiMoveModal } from './kanji-move-modal';
 import { LevelGrid } from './level-grid';
 import type { JLPTLevel } from './cards-management-types';
@@ -93,6 +94,7 @@ export function KanjiTab({
   const [movingCards, setMovingCards] = useState<KanjiCard[] | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFilter, setSearchFilter] = useState<'all' | 'duplicates' | 'no-mnemonic' | 'no-words'>('all');
+  const [decomposingCard, setDecomposingCard] = useState<KanjiCard | null>(null);
 
   // Search results across all kanji cards
   const searchResults = useMemo(() => {
@@ -448,7 +450,7 @@ export function KanjiTab({
             <div className="kanji-search-results-list">
               {searchResults.map(card => (
                 <div key={card.id} className="kanji-search-result-item" style={{ borderLeft: `3px solid ${LEVEL_COLORS[card.jlptLevel]}` }}>
-                  <span className="kanji-result-char">{card.character}</span>
+                  <span className="kanji-result-char" style={{ cursor: 'pointer' }} onClick={() => setDecomposingCard(card)} title="Phân tích bộ thủ">{card.character}</span>
                   <div className="kanji-result-info">
                     <div className="kanji-result-main">
                       <span className="kanji-result-hv">{card.sinoVietnamese}</span>
@@ -462,13 +464,16 @@ export function KanjiTab({
                       {kanjiCards.filter(c => c.character === card.character).length > 1 && <span className="kanji-result-tag danger">Trùng</span>}
                     </div>
                   </div>
-                  {isSuperAdmin && (
-                    <div className="kanji-result-actions">
-                      <button className="btn btn-icon btn-sm" title="Sửa" onClick={() => setEditingCard(card)}><Edit2 size={14} /></button>
-                      <button className="btn btn-icon btn-sm" title="Di chuyển" onClick={() => setMovingCards([card])}><ArrowRightLeft size={14} /></button>
-                      <button className="btn btn-icon btn-sm btn-danger" title="Xoá" onClick={() => { if (confirm(`Xóa "${card.character}"?`)) onDeleteKanjiCard(card.id); }}><Trash2 size={14} /></button>
-                    </div>
-                  )}
+                  <div className="kanji-result-actions">
+                    <button className="btn btn-icon btn-sm" title="Phân tích bộ thủ" onClick={() => setDecomposingCard(card)} style={{ color: '#8b5cf6' }}><Puzzle size={14} /></button>
+                    {isSuperAdmin && (
+                      <>
+                        <button className="btn btn-icon btn-sm" title="Sửa" onClick={() => setEditingCard(card)}><Edit2 size={14} /></button>
+                        <button className="btn btn-icon btn-sm" title="Di chuyển" onClick={() => setMovingCards([card])}><ArrowRightLeft size={14} /></button>
+                        <button className="btn btn-icon btn-sm btn-danger" title="Xoá" onClick={() => { if (confirm(`Xóa "${card.character}"?`)) onDeleteKanjiCard(card.id); }}><Trash2 size={14} /></button>
+                      </>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -589,6 +594,14 @@ export function KanjiTab({
             <KanjiCardForm onSubmit={handleUpdateCard} onCancel={() => setEditingCard(null)} initialData={editingCard} fixedLevel={editingCard.jlptLevel} fixedLessonId={editingCard.lessonId} />
           </div>
         </div>
+      )}
+
+      {/* Decomposer modal */}
+      {decomposingCard && (
+        <KanjiDecomposerModal
+          kanjiCard={decomposingCard}
+          onClose={() => setDecomposingCard(null)}
+        />
       )}
 
       {/* Move modal */}

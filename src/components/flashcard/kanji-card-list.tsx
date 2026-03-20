@@ -1,8 +1,9 @@
-// Kanji card list with expandable details
+// Kanji card list with expandable details + decomposer modal
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, Edit, Trash2, ArrowRightLeft } from 'lucide-react';
+import { ChevronDown, ChevronUp, Edit, Trash2, ArrowRightLeft, Puzzle } from 'lucide-react';
 import type { KanjiCard } from '../../types/kanji';
 import { LEVEL_COLORS } from '../../constants/themes';
+import { KanjiDecomposerModal } from './kanji-decomposer-modal';
 
 interface KanjiCardListProps {
   cards: KanjiCard[];
@@ -15,6 +16,7 @@ interface KanjiCardListProps {
 export function KanjiCardList({ cards, onEdit, onDelete, onMove, canEdit = false }: KanjiCardListProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [decomposingCard, setDecomposingCard] = useState<KanjiCard | null>(null);
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
@@ -55,12 +57,17 @@ export function KanjiCardList({ cards, onEdit, onDelete, onMove, canEdit = false
                 style={{ width: 16, height: 16, accentColor: '#8b5cf6', cursor: 'pointer', flexShrink: 0 }}
               />
             )}
-            <span style={{ fontSize: '1.8rem', fontFamily: 'serif', minWidth: '2.5rem', textAlign: 'center' }}>{card.character}</span>
+            <span
+              style={{ fontSize: '1.8rem', fontFamily: 'serif', minWidth: '2.5rem', textAlign: 'center', cursor: 'pointer' }}
+              onClick={(e) => { e.stopPropagation(); setDecomposingCard(card); }}
+              title="Phân tích bộ thủ"
+            >{card.character}</span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 600, color: '#fbbf24' }}>{card.sinoVietnamese}</div>
               <div style={{ fontSize: '0.85rem', color: '#999' }}>{card.meaning}</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <button className="btn btn-icon btn-sm" title="Phân tích bộ thủ" onClick={e => { e.stopPropagation(); setDecomposingCard(card); }} style={{ color: '#8b5cf6' }}><Puzzle size={14} /></button>
               {canEdit && onMove && <button className="btn btn-icon btn-sm" title="Chuyển bài" onClick={e => { e.stopPropagation(); onMove([card]); }}><ArrowRightLeft size={14} /></button>}
               {canEdit && onEdit && <button className="btn btn-icon btn-sm" onClick={e => { e.stopPropagation(); onEdit(card); }}><Edit size={14} /></button>}
               {canEdit && onDelete && <button className="btn btn-icon btn-sm btn-danger" onClick={e => { e.stopPropagation(); onDelete(card.id); }}><Trash2 size={14} /></button>}
@@ -84,6 +91,13 @@ export function KanjiCardList({ cards, onEdit, onDelete, onMove, canEdit = false
           )}
         </div>
       ))}
+      {/* Kanji Decomposer Modal */}
+      {decomposingCard && (
+        <KanjiDecomposerModal
+          kanjiCard={decomposingCard}
+          onClose={() => setDecomposingCard(null)}
+        />
+      )}
     </div>
   );
 }
