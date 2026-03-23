@@ -1,12 +1,16 @@
-// Pronunciation practice — speak Japanese sentences and get scored
-// Optimized: interim display, retry, history, better TTS, more sentences
+// Pronunciation practice — dual mode: Free dictation + Practice comparison
+// Supports Google Cloud STT (primary) + Web Speech API (fallback)
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Mic, MicOff, Volume2, SkipForward, RotateCcw, History, Trophy } from 'lucide-react';
+import {
+  Mic, MicOff, Volume2, SkipForward, RotateCcw, History, Trophy,
+  MessageSquare, Target, Loader2,
+} from 'lucide-react';
 import { useSpeechRecognition, scorePronunciation } from '../../hooks/use-speech-recognition';
+import type { RecognitionMode } from '../../hooks/use-speech-recognition';
 import './pronunciation-practice-page.css';
 
-// Practice sentences by level — expanded
+// Practice sentences by level
 const SENTENCES: Record<string, Array<{ jp: string; reading: string; meaning: string }>> = {
   N5: [
     { jp: 'おはようございます', reading: 'ohayou gozaimasu', meaning: 'Xin chào buổi sáng' },
@@ -53,24 +57,25 @@ const SENTENCES: Record<string, Array<{ jp: string; reading: string; meaning: st
   ],
 };
 
-interface ScoreEntry {
-  score: number;
-  sentence: string;
-  timestamp: number;
-}
+interface ScoreEntry { score: number; sentence: string; timestamp: number; }
 
-// Get Japanese TTS voice (prefer native Japanese voice)
-function getJapaneseVoice(): SpeechSynthesisVoice | null {
+// TTS helper
+function speakJapanese(text: string, rate: number = 0.8) {
+  speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'ja-JP';
+  utterance.rate = rate;
   const voices = speechSynthesis.getVoices();
-  // Prefer native Japanese voice
-  return voices.find(v => v.lang === 'ja-JP' && v.localService) ||
-         voices.find(v => v.lang === 'ja-JP') ||
-         voices.find(v => v.lang.startsWith('ja')) ||
-         null;
+  const jpVoice = voices.find(v => v.lang === 'ja-JP' && v.localService) ||
+                  voices.find(v => v.lang === 'ja-JP') ||
+                  voices.find(v => v.lang.startsWith('ja'));
+  if (jpVoice) utterance.voice = jpVoice;
+  speechSynthesis.speak(utterance);
 }
 
 export function PronunciationPracticePage() {
   const speech = useSpeechRecognition();
+  const [mode, setMode] = useState<RecognitionMode>('practice');
   const [level, setLevel] = useState<string>('N5');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [result, setResult] = useState<{ score: number; feedback: string; bestMatch: string } | null>(null);
@@ -78,27 +83,29 @@ export function PronunciationPracticePage() {
   const [bestScore, setBestScore] = useState(0);
   const [sessionScores, setSessionScores] = useState<ScoreEntry[]>([]);
   const [showHistory, setShowHistory] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [freeText, setFreeText] = useState(''); // Free mode accumulated text
   const hasScored = useRef(false);
 
   const sentences = SENTENCES[level] || SENTENCES.N5;
   const current = sentences[currentIndex % sentences.length];
 
-  // Auto-score when final transcript arrives (via useEffect, not render body)
+  // Auto-score in practice mode when transcript arrives
   useEffect(() => {
-    if (speech.transcript && !hasScored.current) {
+    if (!speech.transcript) return;
+
+    if (mode === 'practice' && !hasScored.current) {
       hasScored.current = true;
       const scored = scorePronunciation(current.jp, speech.transcript, speech.alternatives);
       setResult(scored);
       setAttempts(a => a + 1);
       if (scored.score > bestScore) setBestScore(scored.score);
-      setSessionScores(prev => [...prev, {
-        score: scored.score,
-        sentence: current.jp,
-        timestamp: Date.now(),
-      }]);
+      setSessionScores(prev => [...prev, { score: scored.score, sentence: current.jp, timestamp: Date.now() }]);
     }
-  }, [speech.transcript, speech.alternatives, current.jp, bestScore]);
+
+    if (mode === 'free') {
+      setFreeText(prev => prev + (prev ? '\n' : '') + speech.transcript);
+    }
+  }, [speech.transcript, speech.alternatives, current.jp, bestScore, mode]);
 
   const handleRecord = useCallback(() => {
     if (speech.isListening) {
@@ -118,31 +125,6 @@ export function PronunciationPracticePage() {
     speech.startListening('ja-JP');
   }, [speech]);
 
-  const handleListen = useCallback(() => {
-    speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(current.jp);
-    utterance.lang = 'ja-JP';
-    utterance.rate = 0.8;
-    const voice = getJapaneseVoice();
-    if (voice) utterance.voice = voice;
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    speechSynthesis.speak(utterance);
-  }, [current.jp]);
-
-  // Slower TTS for difficult sentences
-  const handleListenSlow = useCallback(() => {
-    speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(current.jp);
-    utterance.lang = 'ja-JP';
-    utterance.rate = 0.5;
-    const voice = getJapaneseVoice();
-    if (voice) utterance.voice = voice;
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    speechSynthesis.speak(utterance);
-  }, [current.jp]);
-
   const nextSentence = useCallback(() => {
     setCurrentIndex(i => i + 1);
     setResult(null);
@@ -152,17 +134,14 @@ export function PronunciationPracticePage() {
     speech.reset();
   }, [speech]);
 
-  const changeLevel = useCallback((l: string) => {
-    setLevel(l);
-    setCurrentIndex(0);
+  const changeMode = useCallback((m: RecognitionMode) => {
+    setMode(m);
     setResult(null);
-    setAttempts(0);
-    setBestScore(0);
+    setFreeText('');
     hasScored.current = false;
     speech.reset();
   }, [speech]);
 
-  // Session average
   const sessionAvg = sessionScores.length > 0
     ? Math.round(sessionScores.reduce((s, e) => s + e.score, 0) / sessionScores.length)
     : 0;
@@ -179,124 +158,209 @@ export function PronunciationPracticePage() {
   }
 
   const scoreClass = result ? (result.score >= 80 ? 'excellent' : result.score >= 50 ? 'good' : 'poor') : '';
+  const isWorking = speech.isListening || speech.isProcessing;
 
   return (
     <div className="pp">
       <div className="pp-header">
         <h1 className="pp-title">Luyện Phát Âm</h1>
-        <p className="pp-subtitle">Nghe → Nói → Kiểm tra phát âm</p>
+        <p className="pp-subtitle">
+          {speech.activeEngine === 'google' ? 'Google Cloud Speech-to-Text' : 'Web Speech API'}
+        </p>
       </div>
 
-      {/* Session stats bar */}
-      {sessionScores.length > 0 && (
-        <div className="pp-session-stats">
-          <span className="pp-stat">
-            <Trophy size={12} /> Trung bình: {sessionAvg}%
-          </span>
-          <span className="pp-stat">{sessionScores.length} câu đã luyện</span>
-          <button className="pp-history-btn" onClick={() => setShowHistory(!showHistory)}>
-            <History size={12} /> {showHistory ? 'Ẩn' : 'Lịch sử'}
-          </button>
-        </div>
-      )}
-
-      {/* History panel */}
-      {showHistory && sessionScores.length > 0 && (
-        <div className="pp-history">
-          {sessionScores.slice(-10).reverse().map((entry, i) => (
-            <div key={i} className="pp-history-item">
-              <span className={`pp-history-score ${entry.score >= 80 ? 'excellent' : entry.score >= 50 ? 'good' : 'poor'}`}>
-                {entry.score}%
-              </span>
-              <span className="pp-history-text">{entry.sentence}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Level selector */}
-      <div className="pp-levels">
-        {Object.keys(SENTENCES).map(l => (
-          <button
-            key={l}
-            className={`pp-level-btn ${level === l ? 'active' : ''}`}
-            onClick={() => changeLevel(l)}
-          >
-            {l} ({SENTENCES[l].length})
-          </button>
-        ))}
-      </div>
-
-      <div className="pp-card">
-        {/* Progress */}
-        <div className="pp-card-progress">
-          {currentIndex % sentences.length + 1} / {sentences.length}
-        </div>
-
-        {/* Sentence to practice */}
-        <div className="pp-sentence">{current.jp}</div>
-        <div className="pp-reading">{current.reading}</div>
-        <div className="pp-meaning">{current.meaning}</div>
-
-        {/* Listen buttons */}
-        <div className="pp-listen-row">
-          <button className={`pp-listen-btn ${isSpeaking ? 'speaking' : ''}`} onClick={handleListen}>
-            <Volume2 size={16} /> Nghe mẫu
-          </button>
-          <button className="pp-listen-btn pp-listen-slow" onClick={handleListenSlow}>
-            🐢 Chậm
-          </button>
-        </div>
-
-        {/* Interim transcript (real-time while speaking) */}
-        {speech.isListening && speech.interimTranscript && (
-          <div className="pp-interim">
-            {speech.interimTranscript}
-          </div>
-        )}
-
-        {/* Record button */}
+      {/* Mode selector */}
+      <div className="pp-mode-selector">
         <button
-          className={`pp-record-btn ${speech.isListening ? 'recording' : ''}`}
-          onClick={handleRecord}
+          className={`pp-mode-btn ${mode === 'practice' ? 'active' : ''}`}
+          onClick={() => changeMode('practice')}
         >
-          {speech.isListening ? <MicOff size={28} /> : <Mic size={28} />}
+          <Target size={14} /> Luyện tập
         </button>
-        <span className="pp-record-label">
-          {speech.isListening ? 'Đang nghe... Nhấn để dừng' : 'Nhấn để nói'}
-        </span>
+        <button
+          className={`pp-mode-btn ${mode === 'free' ? 'active' : ''}`}
+          onClick={() => changeMode('free')}
+        >
+          <MessageSquare size={14} /> Tự do
+        </button>
+      </div>
 
-        {/* Error */}
-        {speech.error && <div className="pp-error">{speech.error}</div>}
-
-        {/* Result */}
-        {result && (
-          <div className="pp-result">
-            <div className="pp-result-header">
-              <span className={`pp-score ${scoreClass}`}>{result.score}%</span>
-              <span className="pp-feedback">{result.feedback}</span>
+      {/* ========= PRACTICE MODE ========= */}
+      {mode === 'practice' && (
+        <>
+          {/* Session stats */}
+          {sessionScores.length > 0 && (
+            <div className="pp-session-stats">
+              <span className="pp-stat"><Trophy size={12} /> TB: {sessionAvg}%</span>
+              <span className="pp-stat">{sessionScores.length} câu</span>
+              <button className="pp-history-btn" onClick={() => setShowHistory(!showHistory)}>
+                <History size={12} /> {showHistory ? 'Ẩn' : 'Lịch sử'}
+              </button>
             </div>
-            {speech.confidence > 0 && (
-              <div className="pp-confidence">Độ tin cậy: {Math.round(speech.confidence * 100)}%</div>
-            )}
-            <div className="pp-spoken-label">Bạn nói:</div>
-            <div className="pp-spoken">{result.bestMatch}</div>
-            {attempts > 0 && <div className="pp-attempts">Lần thử: {attempts} | Điểm cao nhất: {bestScore}%</div>}
-          </div>
-        )}
+          )}
 
-        {/* Action buttons */}
-        <div className="pp-actions">
-          {result && (
-            <button className="pp-retry-btn" onClick={handleRetry}>
-              <RotateCcw size={14} /> Thử lại
+          {showHistory && sessionScores.length > 0 && (
+            <div className="pp-history">
+              {sessionScores.slice(-10).reverse().map((entry, i) => (
+                <div key={i} className="pp-history-item">
+                  <span className={`pp-history-score ${entry.score >= 80 ? 'excellent' : entry.score >= 50 ? 'good' : 'poor'}`}>
+                    {entry.score}%
+                  </span>
+                  <span className="pp-history-text">{entry.sentence}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Level selector */}
+          <div className="pp-levels">
+            {Object.keys(SENTENCES).map(l => (
+              <button
+                key={l}
+                className={`pp-level-btn ${level === l ? 'active' : ''}`}
+                onClick={() => { setLevel(l); setCurrentIndex(0); setResult(null); speech.reset(); hasScored.current = false; }}
+              >
+                {l} ({SENTENCES[l].length})
+              </button>
+            ))}
+          </div>
+
+          <div className="pp-card">
+            <div className="pp-card-progress">{currentIndex % sentences.length + 1} / {sentences.length}</div>
+            <div className="pp-sentence">{current.jp}</div>
+            <div className="pp-reading">{current.reading}</div>
+            <div className="pp-meaning">{current.meaning}</div>
+
+            <div className="pp-listen-row">
+              <button className="pp-listen-btn" onClick={() => speakJapanese(current.jp)}>
+                <Volume2 size={16} /> Nghe mẫu
+              </button>
+              <button className="pp-listen-btn pp-listen-slow" onClick={() => speakJapanese(current.jp, 0.5)}>
+                🐢 Chậm
+              </button>
+            </div>
+
+            {/* Interim / processing */}
+            {speech.isListening && speech.interimTranscript && (
+              <div className="pp-interim">{speech.interimTranscript}</div>
+            )}
+            {speech.isProcessing && (
+              <div className="pp-processing">
+                <Loader2 size={16} className="pp-spinner" /> Đang phân tích...
+              </div>
+            )}
+            {speech.isListening && speech.activeEngine === 'google' && (
+              <div className="pp-duration">🎙 {speech.recordingDuration}s</div>
+            )}
+
+            {/* Record button */}
+            <button
+              className={`pp-record-btn ${isWorking ? 'recording' : ''}`}
+              onClick={handleRecord}
+              disabled={speech.isProcessing}
+            >
+              {speech.isProcessing ? <Loader2 size={28} className="pp-spinner" /> :
+               isWorking ? <MicOff size={28} /> : <Mic size={28} />}
+            </button>
+            <span className="pp-record-label">
+              {speech.isProcessing ? 'Đang xử lý...' :
+               isWorking ? 'Đang nghe... Nhấn để dừng' : 'Nhấn để nói'}
+            </span>
+
+            {speech.error && <div className="pp-error">{speech.error}</div>}
+
+            {result && (
+              <div className="pp-result">
+                <div className="pp-result-header">
+                  <span className={`pp-score ${scoreClass}`}>{result.score}%</span>
+                  <span className="pp-feedback">{result.feedback}</span>
+                </div>
+                {speech.confidence > 0 && (
+                  <div className="pp-confidence">Độ tin cậy: {Math.round(speech.confidence * 100)}%</div>
+                )}
+                <div className="pp-spoken-label">Bạn nói:</div>
+                <div className="pp-spoken">{result.bestMatch}</div>
+                {attempts > 0 && <div className="pp-attempts">Lần thử: {attempts} | Cao nhất: {bestScore}%</div>}
+              </div>
+            )}
+
+            <div className="pp-actions">
+              {result && (
+                <button className="pp-retry-btn" onClick={handleRetry}>
+                  <RotateCcw size={14} /> Thử lại
+                </button>
+              )}
+              <button className="pp-next-btn" onClick={nextSentence}>
+                <SkipForward size={14} /> Câu tiếp
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ========= FREE MODE ========= */}
+      {mode === 'free' && (
+        <div className="pp-card">
+          <div className="pp-free-header">
+            <MessageSquare size={20} className="pp-free-icon" />
+            <div>
+              <div className="pp-free-title">Chế độ Tự do</div>
+              <div className="pp-free-desc">Nói bất kỳ điều gì bằng tiếng Nhật — hệ thống sẽ chuyển thành văn bản (Hiragana, Katakana, Kanji)</div>
+            </div>
+          </div>
+
+          {/* Interim / processing */}
+          {speech.isListening && speech.interimTranscript && (
+            <div className="pp-interim">{speech.interimTranscript}</div>
+          )}
+          {speech.isProcessing && (
+            <div className="pp-processing">
+              <Loader2 size={16} className="pp-spinner" /> Đang phân tích...
+            </div>
+          )}
+          {speech.isListening && speech.activeEngine === 'google' && (
+            <div className="pp-duration">🎙 {speech.recordingDuration}s</div>
+          )}
+
+          {/* Record button */}
+          <button
+            className={`pp-record-btn ${isWorking ? 'recording' : ''}`}
+            onClick={handleRecord}
+            disabled={speech.isProcessing}
+          >
+            {speech.isProcessing ? <Loader2 size={28} className="pp-spinner" /> :
+             isWorking ? <MicOff size={28} /> : <Mic size={28} />}
+          </button>
+          <span className="pp-record-label">
+            {speech.isProcessing ? 'Đang xử lý...' :
+             isWorking ? 'Đang nghe... Nhấn để dừng' : 'Nhấn để nói tiếng Nhật'}
+          </span>
+
+          {speech.error && <div className="pp-error">{speech.error}</div>}
+
+          {/* Transcription result */}
+          {freeText && (
+            <div className="pp-free-result">
+              <div className="pp-spoken-label">Kết quả nhận diện:</div>
+              <div className="pp-free-text">{freeText}</div>
+              {speech.confidence > 0 && (
+                <div className="pp-confidence">Độ tin cậy: {Math.round(speech.confidence * 100)}%</div>
+              )}
+              {/* Listen back button */}
+              <button className="pp-listen-btn" onClick={() => speakJapanese(freeText.split('\n').pop() || '', 0.8)} style={{ marginTop: '0.5rem' }}>
+                <Volume2 size={14} /> Nghe lại
+              </button>
+            </div>
+          )}
+
+          {/* Clear button */}
+          {freeText && (
+            <button className="pp-clear-btn" onClick={() => { setFreeText(''); speech.reset(); }}>
+              Xóa tất cả
             </button>
           )}
-          <button className="pp-next-btn" onClick={nextSentence}>
-            <SkipForward size={14} /> Câu tiếp
-          </button>
         </div>
-      </div>
+      )}
     </div>
   );
 }
