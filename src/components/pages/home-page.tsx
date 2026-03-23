@@ -5,6 +5,8 @@ import { useState, Suspense, lazy } from 'react';
 import type { JLPTLevel, Lesson, Flashcard } from '../../types/flashcard';
 import type { ProgressSummary } from '../../types/progress';
 import { DailyWordsTask } from '../home/daily-words-task';
+import { LearningPathWidget } from '../home/learning-path-widget';
+import { useLearningPath } from '../../hooks/use-learning-path';
 import { JLPT_LEVELS } from '../../constants/jlpt';
 import { LEVEL_COLORS } from '../../constants/themes';
 import {
@@ -77,6 +79,7 @@ interface HomePageProps {
   studySessions?: import('../../types/user').StudySession[];
   gameSessions?: import('../../types/user').GameSession[];
   jlptSessions?: import('../../types/user').JLPTSession[];
+  userJlptLevel?: string;
 }
 
 const ACTIVITIES = [
@@ -130,10 +133,13 @@ export function HomePage({
   studySessions = [],
   gameSessions = [],
   jlptSessions = [],
+  userJlptLevel,
 }: HomePageProps) {
   const totalCards = cards.length;
   const [expandedLevel, setExpandedLevel] = useState<JLPTLevel | null>(null);
   const [expandedParent, setExpandedParent] = useState<string | null>(null);
+
+  const learningPath = useLearningPath(userJlptLevel);
 
   const streak = progress?.streak;
   const levelProgress = progress?.levelProgress || [];
@@ -330,6 +336,23 @@ export function HomePage({
               onClaimBonus={missions.onClaimBonus}
             />
           </Suspense>
+        )}
+
+        {/* Learning Path */}
+        {learningPath.currentStep && onNavigate && (
+          <LearningPathWidget
+            level={learningPath.level}
+            currentStep={learningPath.currentStep}
+            currentStepIndex={learningPath.currentStepIndex}
+            totalSteps={learningPath.totalSteps}
+            completedCount={learningPath.completedCount}
+            progressPercent={learningPath.progressPercent}
+            onNavigate={onNavigate}
+            onComplete={learningPath.completeCurrentStep}
+            onSkip={learningPath.skipStep}
+            isStepCompleted={learningPath.isStepCompleted}
+            steps={learningPath.steps}
+          />
         )}
 
         {/* ===== SMART DASHBOARD — Continue + Suggestions ===== */}

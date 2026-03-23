@@ -29,6 +29,7 @@ import {
   BarChart3,
   Crown,
   Shield,
+  PenTool,
 } from 'lucide-react';
 import { useClassroomNotifications } from '../../hooks/use-classrooms';
 import { useFriendNotifications } from '../../hooks/use-friendships';
@@ -79,6 +80,7 @@ const learningItems: NavItem[] = [
   { page: 'reading', label: 'Đọc Hiểu', icon: <BookOpenCheck {...iconProps} /> },
   { page: 'listening', label: 'Nghe Hiểu', icon: <Headphones {...iconProps} /> },
   { page: 'exercises', label: 'Bài Tập', icon: <ClipboardList {...iconProps} /> },
+  { page: 'conjugation' as Page, label: 'Chia Động Từ', icon: <PenTool {...iconProps} /> },
 ];
 
 // Section 2: Management/Activity tabs

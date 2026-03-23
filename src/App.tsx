@@ -38,6 +38,7 @@ const CenterMembersPage = lazy(() => import('./components/pages/center-members-p
 const CenterDashboardPage = lazy(() => import('./components/pages/center-dashboard-page').then(m => ({ default: m.CenterDashboardPage })));
 const PricingPage = lazy(() => import('./components/pages/pricing-page').then(m => ({ default: m.PricingPage })));
 const RolePermissionsPage = lazy(() => import('./components/pages/role-permissions-page').then(m => ({ default: m.RolePermissionsPage })));
+const ConjugationTrainerPage = lazy(() => import('./components/pages/conjugation-trainer-page').then(m => ({ default: m.ConjugationTrainerPage })));
 const OnboardingTour = lazy(() => import('./components/onboarding/onboarding-tour').then(m => ({ default: m.OnboardingTour })));
 const AchievementToast = lazy(() => import('./components/achievements/achievement-toast').then(m => ({ default: m.AchievementToast })));
 const AchievementShowcase = lazy(() => import('./components/achievements/achievement-showcase').then(m => ({ default: m.AchievementShowcase })));
@@ -530,6 +531,7 @@ function AppContent() {
               onClaimBonus: achievementCtx.claimMissionBonus,
             } : undefined}
             onShowAchievements={achievementCtx?.openShowcase}
+            userJlptLevel={currentUser?.jlptLevel}
             onSpeak={(text) => {
               const utterance = new SpeechSynthesisUtterance(text);
               utterance.lang = 'ja-JP';
@@ -881,6 +883,10 @@ function AppContent() {
 
         {currentPage === 'permissions' && currentUser && currentUser.role === 'super_admin' && (
           <RolePermissionsPage />
+        )}
+
+        {currentPage === 'conjugation' && (
+          <ConjugationTrainerPage />
         )}
         </Suspense>
         </ErrorBoundary>
