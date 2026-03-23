@@ -1,9 +1,69 @@
-/* Pronunciation practice page */
+/* Pronunciation practice page — optimized */
 
 .pp { padding: 1.5rem 1rem; max-width: 600px; margin: 0 auto; }
-.pp-header { text-align: center; margin-bottom: 1.5rem; }
+.pp-header { text-align: center; margin-bottom: 1rem; }
 .pp-title { font-size: 1.3rem; font-weight: 700; color: rgba(255,255,255,0.95); }
 .pp-subtitle { font-size: 0.85rem; color: rgba(255,255,255,0.45); margin-top: 0.25rem; }
+
+/* Session stats bar */
+.pp-session-stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.4);
+}
+.pp-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.pp-history-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(139,92,246,0.1);
+  border: 1px solid rgba(139,92,246,0.2);
+  color: #c4b5fd;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+/* History panel */
+.pp-history {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 0.5rem;
+  margin-bottom: 0.75rem;
+  max-height: 150px;
+  overflow-y: auto;
+}
+.pp-history-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+.pp-history-score {
+  font-weight: 700;
+  min-width: 35px;
+}
+.pp-history-score.excellent { color: #22c55e; }
+.pp-history-score.good { color: #f59e0b; }
+.pp-history-score.poor { color: #ef4444; }
+.pp-history-text {
+  color: rgba(255,255,255,0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* Sentence card */
 .pp-card {
@@ -15,41 +75,72 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.6rem;
+}
+
+.pp-card-progress {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.25);
+  font-weight: 500;
 }
 
 .pp-sentence {
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   font-weight: 600;
   color: rgba(255,255,255,0.95);
   line-height: 1.5;
 }
 
 .pp-reading {
-  font-size: 0.9rem;
-  color: rgba(255,255,255,0.4);
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.35);
 }
 
 .pp-meaning {
-  font-size: 0.85rem;
-  color: rgba(255,255,255,0.5);
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.45);
 }
 
-/* Listen button */
+/* Listen buttons row */
+.pp-listen-row {
+  display: flex;
+  gap: 0.4rem;
+}
+
 .pp-listen-btn {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.4rem 0.8rem;
+  padding: 0.4rem 0.75rem;
   border-radius: 8px;
   background: rgba(6,182,212,0.1);
   border: 1px solid rgba(6,182,212,0.2);
   color: #06b6d4;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   cursor: pointer;
   transition: all 0.2s;
 }
 .pp-listen-btn:hover { background: rgba(6,182,212,0.2); }
+.pp-listen-btn.speaking { background: rgba(6,182,212,0.25); }
+.pp-listen-slow {
+  background: rgba(245,158,11,0.08);
+  border-color: rgba(245,158,11,0.2);
+  color: #f59e0b;
+}
+.pp-listen-slow:hover { background: rgba(245,158,11,0.15); }
+
+/* Interim transcript (real-time while speaking) */
+.pp-interim {
+  font-size: 1rem;
+  color: rgba(139,92,246,0.6);
+  font-style: italic;
+  min-height: 1.5em;
+  animation: pp-blink 1s infinite;
+}
+@keyframes pp-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
 
 /* Record button */
 .pp-record-btn {
@@ -64,7 +155,7 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
-  margin: 0.5rem 0;
+  margin: 0.25rem 0;
 }
 .pp-record-btn:hover { border-color: rgba(139,92,246,0.5); background: rgba(139,92,246,0.15); }
 .pp-record-btn.recording {
@@ -80,8 +171,16 @@
 }
 
 .pp-record-label {
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.35);
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.3);
+}
+
+.pp-error {
+  color: #f87171;
+  font-size: 0.78rem;
+  background: rgba(248,113,113,0.06);
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
 }
 
 /* Result */
@@ -97,7 +196,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
 .pp-score {
@@ -113,33 +212,63 @@
   color: rgba(255,255,255,0.6);
 }
 
+.pp-confidence {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.2);
+  margin-bottom: 0.3rem;
+}
+
 .pp-spoken {
   font-size: 1rem;
   color: rgba(255,255,255,0.7);
-  margin-top: 0.35rem;
+  margin-top: 0.25rem;
   padding: 0.4rem 0.6rem;
   background: rgba(255,255,255,0.03);
   border-radius: 8px;
 }
 
 .pp-spoken-label {
-  font-size: 0.7rem;
-  color: rgba(255,255,255,0.3);
-  margin-bottom: 0.15rem;
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.25);
 }
 
-/* Next button */
-.pp-next-btn {
-  padding: 0.5rem 1.25rem;
+.pp-attempts {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.3);
+  margin-top: 0.3rem;
+}
+
+/* Action buttons */
+.pp-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.pp-next-btn, .pp-retry-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1rem;
   border-radius: 8px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pp-next-btn {
   background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.1);
   color: rgba(255,255,255,0.7);
-  font-size: 0.85rem;
-  cursor: pointer;
-  margin-top: 0.5rem;
 }
 .pp-next-btn:hover { background: rgba(255,255,255,0.1); }
+
+.pp-retry-btn {
+  background: rgba(139,92,246,0.1);
+  border: 1px solid rgba(139,92,246,0.25);
+  color: #c4b5fd;
+}
+.pp-retry-btn:hover { background: rgba(139,92,246,0.2); }
 
 /* Unsupported message */
 .pp-unsupported {
@@ -149,22 +278,23 @@
   font-size: 0.9rem;
 }
 
-/* Difficulty selector */
+/* Level selector */
 .pp-levels {
   display: flex;
   gap: 0.4rem;
   justify-content: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 .pp-level-btn {
   padding: 0.3rem 0.6rem;
   border-radius: 6px;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 600;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
   color: rgba(255,255,255,0.5);
   cursor: pointer;
+  transition: all 0.2s;
 }
 .pp-level-btn.active {
   background: rgba(139,92,246,0.2);
