@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 import {
   Building2, Layers, GraduationCap, BookOpen, Users, UserPlus,
   Settings, Search, School, UserMinus, Calendar, ChevronRight,
-  Sparkles, Plus, TrendingUp, UserCheck, Clock,
+  Sparkles, Plus, TrendingUp, UserCheck, Clock, BarChart3,
 } from 'lucide-react';
 import { useCenter } from '../../contexts/center-context';
 import { DashboardLeaderboard } from '../dashboard/dashboard-leaderboard';
@@ -14,6 +14,8 @@ import { useCenterMembers, type CenterMemberInfo } from '../../hooks/use-center-
 import { getBranchStats } from '../../services/branch-firestore';
 import { CenterInviteManager } from '../center/center-invite-manager';
 import { CenterBrandingEditor } from '../center/center-branding-editor';
+import { CenterAnalyticsTab } from '../dashboard/center-analytics-tab';
+import { useCenterAnalytics } from '../../hooks/use-center-analytics';
 import { BRANCH_MEMBER_ROLE_LABELS, BRANCH_MEMBER_ROLE_COLORS } from '../../types/branch';
 import { CLASSROOM_LEVEL_LABELS, DAY_OF_WEEK_LABELS } from '../../types/classroom';
 import type { BranchStats } from '../../types/branch';
@@ -29,7 +31,7 @@ interface CenterDashboardPageProps {
   onNavigate?: (page: Page) => void;
 }
 
-type DashTab = 'overview' | 'classes' | 'students' | 'settings';
+type DashTab = 'overview' | 'analytics' | 'classes' | 'students' | 'settings';
 type ClassFilter = 'all' | ClassroomLevel;
 type MemberFilter = 'all' | 'student' | 'teacher' | 'admin';
 
@@ -87,6 +89,9 @@ export function CenterDashboardPage({ currentUser, users, onNavigate }: CenterDa
   const [removing, setRemoving] = useState<string | null>(null);
 
   useEffect(() => { getBranchStats(center.id).then(setStats); }, [center.id]);
+
+  // Analytics data
+  const analytics = useCenterAnalytics(center.id, members, classrooms);
 
   const roleLabel = (userRole && ROLE_LABELS[userRole]) || 'Thành viên';
 
@@ -179,6 +184,7 @@ export function CenterDashboardPage({ currentUser, users, onNavigate }: CenterDa
       <div className="cdash-tabs">
         {([
           { key: 'overview', icon: <TrendingUp size={14} />, label: 'Tổng quan' },
+          { key: 'analytics', icon: <BarChart3 size={14} />, label: 'Phân tích' },
           { key: 'classes', icon: <School size={14} />, label: 'Lớp học', badge: classrooms.length },
           { key: 'students', icon: <Users size={14} />, label: 'Thành viên', badge: members.length },
           ...(isAdmin ? [{ key: 'settings', icon: <Settings size={14} />, label: 'Cài đặt' }] : []),
@@ -342,6 +348,11 @@ export function CenterDashboardPage({ currentUser, users, onNavigate }: CenterDa
             {/* Quiz Battle Leaderboard */}
             <DashboardLeaderboard currentUserId={currentUser.id} />
           </>
+        )}
+
+        {/* ────── ANALYTICS TAB ────── */}
+        {activeTab === 'analytics' && (
+          <CenterAnalyticsTab analytics={analytics} totalStudents={studentCount} />
         )}
 
         {/* ────── CLASSES TAB ────── */}
