@@ -4,6 +4,7 @@ import type { KanjiCard, KanjiLesson } from '../../../types/kanji';
 import type { JLPTLevel } from '../../../types/flashcard';
 import type { KanjiStudySettings, MemorizationFilter } from './types';
 import { DEFAULT_KANJI_SETTINGS } from './types';
+import { preCacheCharacters } from '../../../services/hanzi-writer-cache';
 
 const STORAGE_KEY = 'kanji-study-settings';
 
@@ -73,6 +74,14 @@ export function useStudyState(
   }, [kanjiCards, selectedLevel, allSelectedLessonIds, memorizationFilter]);
 
   const displayCards = isShuffled ? shuffledCards : filteredCards;
+
+  // Pre-cache HanziWriter stroke data for all characters in current set
+  useEffect(() => {
+    if (displayCards.length > 0) {
+      const chars = displayCards.map(c => c.character);
+      preCacheCharacters(chars);
+    }
+  }, [displayCards]);
 
   // Reset index when card list shrinks below current position
   useEffect(() => {

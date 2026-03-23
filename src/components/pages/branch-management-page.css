@@ -1,0 +1,853 @@
+/* ================================================================
+   Branch Management — Dark Glassmorphism Premium Theme
+   Layout: full-width edge-to-edge, no side padding on mobile
+   ================================================================ */
+
+/* ========== PAGE CONTAINER — full bleed ========== */
+
+.branch-mgmt-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  background: #0a0a14;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.92);
+  position: relative;
+}
+
+/* Mesh gradient background */
+.branch-mgmt-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 20%, rgba(139, 92, 246, 0.1), transparent),
+    radial-gradient(ellipse 60% 60% at 80% 80%, rgba(236, 72, 153, 0.07), transparent),
+    linear-gradient(160deg, #0a0a14 0%, #12122a 50%, #1a1a3e 100%);
+  z-index: 0;
+}
+
+.branch-mgmt-page > * { position: relative; z-index: 1; }
+
+/* ========== LOADING ========== */
+
+.branch-mgmt-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 1rem;
+  background: #0a0a14;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ========== HEADER — edge-to-edge glass bar ========== */
+
+.branch-mgmt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 0.65rem 0.75rem;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shimmer accent top */
+.branch-mgmt-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #8b5cf6, #ec4899, transparent);
+  background-size: 200% 100%;
+  animation: bm-shimmer 4s ease-in-out infinite;
+}
+
+@keyframes bm-shimmer {
+  0%, 100% { background-position: 200% 0; }
+  50% { background-position: -200% 0; }
+}
+
+.branch-mgmt-header .header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.branch-mgmt-header .header-title .jp-icon {
+  font-size: 1rem;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+}
+
+.branch-mgmt-header .header-title h1 {
+  font-size: 1rem;
+  font-weight: 800;
+  margin: 0;
+  color: white;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Detail header extras */
+.branch-detail-header { gap: 0.5rem; }
+.branch-detail-header .header-title { flex-direction: column; align-items: flex-start; gap: 0.15rem; }
+
+/* ========== BUTTONS ========== */
+
+.branch-mgmt-page .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.7rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.branch-mgmt-page .btn-primary {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+  box-shadow: 0 3px 10px rgba(139, 92, 246, 0.25);
+}
+
+.branch-mgmt-page .btn-primary:hover {
+  box-shadow: 0 5px 16px rgba(139, 92, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+.branch-mgmt-page .btn-secondary {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.branch-mgmt-page .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.branch-mgmt-page .btn-back {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.35rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.branch-mgmt-page .btn-back:hover { background: rgba(255, 255, 255, 0.1); color: white; }
+
+.branch-mgmt-page .btn-danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.15);
+}
+.branch-mgmt-page .btn-danger:hover { background: rgba(239, 68, 68, 0.2); }
+
+.branch-mgmt-page .btn-warning {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.15);
+}
+
+.branch-mgmt-page .btn-success {
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.15);
+}
+
+.branch-mgmt-page .btn-sm { padding: 0.28rem 0.5rem; font-size: 0.7rem; }
+.branch-mgmt-page .btn-add { margin-left: auto; }
+
+/* ========== STATUS BADGES ========== */
+
+.branch-mgmt-page .status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.45rem;
+  border-radius: 20px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.branch-mgmt-page .status-active {
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+}
+
+.branch-mgmt-page .status-inactive {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+}
+
+/* ========== STATS BAR (list view summary) ========== */
+
+.branch-mgmt-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+}
+
+.branch-mgmt-stats .stat-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.branch-mgmt-stats .stat-icon { font-size: 1.1rem; }
+
+.branch-mgmt-stats .stat-info { display: flex; flex-direction: column; }
+
+.branch-mgmt-stats .stat-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: white;
+  line-height: 1.15;
+}
+
+.branch-mgmt-stats .stat-label {
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.branch-mgmt-stats .stat-success .stat-value { color: #4ade80; }
+.branch-mgmt-stats .stat-warning .stat-value { color: #fbbf24; }
+
+/* ========== BRANCH CARD LIST ========== */
+
+.branch-mgmt-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  overflow-y: auto;
+  flex: 1;
+  padding: 0 0.75rem 1rem;
+}
+
+.branch-mgmt-grid::-webkit-scrollbar { width: 3px; }
+.branch-mgmt-grid::-webkit-scrollbar-track { background: transparent; }
+.branch-mgmt-grid::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #8b5cf6, #ec4899);
+  border-radius: 4px;
+}
+
+/* ========== BRANCH CARD (bcard-*) ========== */
+
+.bcard {
+  position: relative;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  padding: 0.75rem 0.8rem 0.75rem 1rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  overflow: hidden;
+  animation: bcard-in 0.35s ease both;
+}
+
+.bcard:nth-child(1) { animation-delay: 0ms; }
+.bcard:nth-child(2) { animation-delay: 50ms; }
+.bcard:nth-child(3) { animation-delay: 100ms; }
+.bcard:nth-child(n+4) { animation-delay: 150ms; }
+
+@keyframes bcard-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.bcard:hover {
+  background: rgba(255, 255, 255, 0.055);
+  border-color: rgba(139, 92, 246, 0.2);
+  transform: translateX(3px);
+}
+
+/* Left accent bar */
+.bcard-accent {
+  position: absolute;
+  left: 0;
+  top: 12%;
+  bottom: 12%;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  transition: all 0.3s ease;
+}
+
+.bcard-accent.active {
+  background: linear-gradient(180deg, #4ade80, #22d3ee);
+}
+
+.bcard-accent.inactive {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.bcard:hover .bcard-accent { top: 5%; bottom: 5%; }
+
+/* Action buttons */
+.bcard-actions {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  display: flex;
+  gap: 0.25rem;
+  z-index: 2;
+}
+
+.bcard-action-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.bcard-action-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+}
+
+.bcard-action-danger:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+/* Header row */
+.bcard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.bcard-title-group { min-width: 0; }
+
+.bcard-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bcard-code {
+  display: inline-block;
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.3);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  letter-spacing: 0.04em;
+  margin-top: 0.1rem;
+}
+
+.bcard-status {
+  flex-shrink: 0;
+  padding: 0.15rem 0.5rem;
+  border-radius: 20px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.bcard-status.active {
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+}
+
+.bcard-status.inactive {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+}
+
+/* Detail rows (address, phone, email) */
+.bcard-detail {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 0.2rem;
+}
+
+.bcard-detail svg { flex-shrink: 0; opacity: 0.5; }
+
+/* Stats row */
+.bcard-stats {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.bcard-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.bcard-stat svg { opacity: 0.4; }
+
+.bcard-stat-val {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: white;
+}
+
+.bcard-stat-total {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.bcard-stat-label {
+  font-size: 0.58rem;
+  color: rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+/* ========== EMPTY STATE ========== */
+
+.branch-mgmt-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  gap: 0.5rem;
+}
+
+.branch-mgmt-empty .empty-icon { font-size: 2rem; opacity: 0.3; }
+
+.branch-mgmt-empty p {
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 0.85rem;
+  margin: 0;
+  font-weight: 500;
+}
+
+.branch-mgmt-empty .hint {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* ========== DETAIL VIEW — TABS ========== */
+
+.branch-mgmt-tabs {
+  display: flex;
+  gap: 0.2rem;
+  padding: 0.2rem 0.75rem;
+  background: rgba(0, 0, 0, 0.25);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.branch-mgmt-tabs::-webkit-scrollbar { display: none; }
+
+.branch-mgmt-tabs .tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.45rem 0.6rem;
+  border: none;
+  border-radius: 8px 8px 0 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.25s ease;
+  border-bottom: 2px solid transparent;
+}
+
+.branch-mgmt-tabs .tab-btn:hover {
+  color: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.branch-mgmt-tabs .tab-btn.active {
+  color: white;
+  border-bottom-color: #8b5cf6;
+  background: rgba(139, 92, 246, 0.08);
+}
+
+.branch-mgmt-tabs .tab-btn .tab-icon { font-size: 0.85rem; }
+
+/* ========== TAB CONTENT ========== */
+
+.branch-mgmt-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.5rem 0.75rem 1rem;
+}
+
+.branch-mgmt-content::-webkit-scrollbar { width: 3px; }
+.branch-mgmt-content::-webkit-scrollbar-track { background: transparent; }
+.branch-mgmt-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #8b5cf6, #ec4899);
+  border-radius: 4px;
+}
+
+/* ========== GLASS CARDS (inside tabs) ========== */
+
+.branch-mgmt-page .card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  padding: 0.75rem;
+  margin-bottom: 0.4rem;
+}
+
+.branch-mgmt-page .card h3 {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0 0 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.branch-mgmt-page .card .card-icon { font-size: 1rem; }
+
+/* ========== OVERVIEW TAB ========== */
+
+.tab-content-overview .overview-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.tab-content-overview .info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.tab-content-overview .info-row .label {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 500;
+}
+
+.tab-content-overview .info-row .value {
+  font-size: 0.76rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 600;
+}
+
+.tab-content-overview .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.3rem;
+}
+
+.tab-content-overview .stat-box {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 0.55rem;
+  text-align: center;
+}
+
+.tab-content-overview .stat-box .stat-number {
+  display: block;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: white;
+}
+
+.tab-content-overview .stat-box .stat-text {
+  display: block;
+  font-size: 0.58rem;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  margin-top: 0.1rem;
+}
+
+.tab-content-overview .stat-box.stat-active { border-color: rgba(34, 197, 94, 0.2); }
+.tab-content-overview .stat-box.stat-active .stat-number { color: #4ade80; }
+
+.tab-content-overview .monthly-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.tab-content-overview .monthly-label {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.tab-content-overview .monthly-value {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: white;
+}
+
+.tab-content-overview .monthly-value.approved { color: #4ade80; }
+.tab-content-overview .monthly-value.paid { color: #60a5fa; }
+
+/* ========== SUB-TABS (Teachers, Salaries) ========== */
+
+.branch-mgmt-page .sub-tabs {
+  display: flex;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  margin-bottom: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.branch-mgmt-page .sub-tabs::-webkit-scrollbar { display: none; }
+
+.branch-mgmt-page .sub-tab {
+  padding: 0.4rem 0.6rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.branch-mgmt-page .sub-tab:hover {
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.branch-mgmt-page .sub-tab.active {
+  background: rgba(139, 92, 246, 0.15);
+  color: #c4b5fd;
+}
+
+/* ========== SECTION HEADERS ========== */
+
+.branch-mgmt-page .section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.branch-mgmt-page .section-header h3 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+}
+
+/* ========== TABLES ========== */
+
+.branch-mgmt-page table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+
+.branch-mgmt-page thead th {
+  text-align: left;
+  padding: 0.5rem 0.5rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.branch-mgmt-page tbody td {
+  padding: 0.5rem 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.65);
+  vertical-align: middle;
+}
+
+.branch-mgmt-page tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.branch-mgmt-page .member-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.branch-mgmt-page .member-name .avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.12));
+  color: #c4b5fd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.branch-mgmt-page .member-name span { color: white; font-weight: 600; }
+.branch-mgmt-page td.email { color: rgba(255, 255, 255, 0.35); font-size: 0.68rem; }
+.branch-mgmt-page td.date { color: rgba(255, 255, 255, 0.3); font-size: 0.68rem; }
+
+/* Role badges */
+.branch-mgmt-page .role-badge {
+  display: inline-flex;
+  padding: 0.13rem 0.4rem;
+  border-radius: 6px;
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+
+.branch-mgmt-page .role-branch_admin { background: rgba(155, 89, 182, 0.15); color: #c084fc; }
+.branch-mgmt-page .role-main_teacher { background: rgba(52, 152, 219, 0.15); color: #60a5fa; }
+.branch-mgmt-page .role-part_time_teacher { background: rgba(243, 156, 18, 0.15); color: #fbbf24; }
+.branch-mgmt-page .role-assistant { background: rgba(26, 188, 156, 0.15); color: #2dd4bf; }
+.branch-mgmt-page .role-student { background: rgba(46, 204, 113, 0.15); color: #4ade80; }
+
+/* ========== SETTINGS TAB ========== */
+
+.tab-content-settings .settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.tab-content-settings .setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+}
+
+.tab-content-settings .setting-item.danger {
+  border-color: rgba(239, 68, 68, 0.12);
+  background: rgba(239, 68, 68, 0.03);
+}
+
+.tab-content-settings .setting-info strong {
+  display: block;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 700;
+}
+
+.tab-content-settings .setting-info p {
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.35);
+  margin: 0.15rem 0 0;
+}
+
+/* ========== FORM CONTROLS ========== */
+
+.branch-mgmt-page select {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 0.38rem 0.6rem;
+  font-size: 0.74rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.branch-mgmt-page select:focus { border-color: rgba(139, 92, 246, 0.4); }
+.branch-mgmt-page select option { background: #1a1a2e; color: white; }
+
+.branch-mgmt-page .add-staff-controls {
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+/* ========== LOADING/EMPTY ========== */
+
+.branch-mgmt-page .loading-state,
+.branch-mgmt-page .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 0.82rem;
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (min-width: 640px) {
+  .branch-mgmt-header { padding: 0.75rem 1.25rem; }
+  .branch-mgmt-stats { padding: 0.5rem 1.25rem; }
+  .branch-mgmt-grid { padding: 0 1.25rem 1rem; }
+  .branch-mgmt-tabs { padding: 0.2rem 1.25rem; }
+  .branch-mgmt-content { padding: 0.5rem 1.25rem 1rem; }
+
+  .tab-content-overview .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

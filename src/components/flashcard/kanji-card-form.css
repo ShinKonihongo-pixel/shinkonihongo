@@ -1,0 +1,47 @@
+/* Kanji card form — ensure text visible on light background */
+
+.grammar-card-form .form-group label {
+  color: #1C1C1C;
+}
+
+.grammar-card-form .form-group input,
+.grammar-card-form .form-group textarea,
+.grammar-card-form .form-group select {
+  color: #1C1C1C;
+  background: #fff;
+}
+
+.grammar-card-form .form-group input::placeholder,
+.grammar-card-form .form-group textarea::placeholder {
+  color: #9ca3af;
+}
+
+.grammar-card-form .form-header h3 {
+  color: #1C1C1C;
+}
+
+.grammar-card-form .btn.btn-icon {
+  color: #6b7280;
+}
+
+.grammar-card-form .btn.btn-icon:hover {
+  color: #374151;
+}
+
+.grammar-card-form .kanji-swap-btn {
+  color: #8b5cf6;
+}
+
+.grammar-card-form .kanji-auto-fill-btn {
+  background: #8b5cf6;
+  color: #fff;
+  border-color: #8b5cf6;
+}
+
+.grammar-card-form .kanji-auto-fill-btn:hover:not(:disabled) {
+  background: #7c3aed;
+}
+
+.grammar-card-form .kanji-auto-fill-btn:disabled {
+  opacity: 0.5;
+}

@@ -1,6 +1,7 @@
 // Kanji flashcard display component with HanziWriter stroke order animation
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import HanziWriter from 'hanzi-writer';
+import { cachedCharDataLoader } from '../../../services/hanzi-writer-cache';
 import type { KanjiCard, KanjiLesson } from '../../../types/kanji';
 import type { JLPTLevel } from '../../../types/flashcard';
 import type { KanjiStudySettings } from './types';
@@ -12,16 +13,20 @@ interface KanjiDisplayCardProps {
   settings: KanjiStudySettings;
   selectedLevel: JLPTLevel;
   lessons: KanjiLesson[];
+  allCards?: KanjiCard[];
   onFlip: () => void;
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
-  // Remove ref props - manage touch state locally
 }
 
 export function KanjiDisplayCard({
-  card, isFlipped, settings, selectedLevel, lessons,
+  card, isFlipped, settings, selectedLevel, lessons, allCards,
   onFlip, onSwipeLeft, onSwipeRight,
 }: KanjiDisplayCardProps) {
+  const [activeRadical, setActiveRadical] = useState<string | null>(null);
+
+  // Reset popover when card changes
+  useEffect(() => { setActiveRadical(null); }, [card.character]);
   const writerRef = useRef<HTMLDivElement>(null);
   const writerInstance = useRef<HanziWriter | null>(null);
   // Manage touch state locally to avoid ref mutation issues
@@ -37,6 +42,13 @@ export function KanjiDisplayCard({
     // Clear previous
     if (writerRef.current) writerRef.current.innerHTML = '';
 
+    // Fallback: show plain text when HanziWriter can't render the character
+    const showFallback = () => {
+      if (writerRef.current) {
+        writerRef.current.innerHTML = `<div style="font-size:${settings.frontFont.fontSize}px;color:${settings.frontFont.fontColor};font-family:'Noto Serif JP',serif;text-align:center;line-height:${writerSize}px;">${card.character}</div>`;
+      }
+    };
+
     try {
       const writer = HanziWriter.create(writerRef.current, card.character, {
         width: writerSize,
@@ -48,16 +60,17 @@ export function KanjiDisplayCard({
         strokeAnimationSpeed: 1.5,
         showOutline: true,
         outlineColor: 'rgba(255,255,255,0.1)',
+        // Cached loader — fetches once, stores in IndexedDB
+        charDataLoader: (char, onComplete) => {
+          cachedCharDataLoader(char, onComplete, showFallback);
+        },
       });
       writerInstance.current = writer;
       if (settings.autoPlayStroke) {
         writer.animateCharacter();
       }
     } catch {
-      // Character may not be in hanzi-writer database
-      if (writerRef.current) {
-        writerRef.current.innerHTML = `<div style="font-size:${settings.frontFont.fontSize}px;color:${settings.frontFont.fontColor};font-family:'Noto Serif JP',serif;text-align:center;line-height:${writerSize}px;">${card.character}</div>`;
-      }
+      showFallback();
     }
 
     return () => {
@@ -152,7 +165,20 @@ export function KanjiDisplayCard({
               {settings.backShow.radicals && card.radicals.length > 0 && (
                 <div className="radicals-section">
                   <span className="radicals-label">Bộ thủ</span>
-                  <div className="radicals-list">{card.radicals.map((r, i) => <span key={i} className="radical-chip">{r}</span>)}</div>
+                  <div className="radicals-list">
+                    {card.radicals.map((r, i) => (
+                      <span
+                        key={i}
+                        className={`radical-chip radical-chip-clickable ${activeRadical === r ? 'radical-chip-active' : ''}`}
+                        onClick={e => { e.stopPropagation(); setActiveRadical(activeRadical === r ? null : r); }}
+                      >
+                        {r}
+                      </span>
+                    ))}
+                  </div>
+                  {activeRadical && allCards && (
+                    <RadicalKanjiPopover radical={activeRadical} allCards={allCards} currentChar={card.character} onClose={() => setActiveRadical(null)} />
+                  )}
                 </div>
               )}
             </div>
@@ -170,6 +196,44 @@ export function KanjiDisplayCard({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Popover showing kanji cards that contain a given radical */
+function RadicalKanjiPopover({ radical, allCards, currentChar, onClose }: {
+  radical: string;
+  allCards: KanjiCard[];
+  currentChar: string;
+  onClose: () => void;
+}) {
+  const matches = useMemo(
+    () => allCards.filter(c => c.character !== currentChar && c.radicals.includes(radical)),
+    [allCards, radical, currentChar]
+  );
+
+  return (
+    <div className="radical-popover" onClick={e => e.stopPropagation()}>
+      <div className="radical-popover-header">
+        <span className="radical-popover-title">
+          <span className="radical-popover-char">{radical}</span>
+          <span>({matches.length} chữ)</span>
+        </span>
+        <button className="radical-popover-close" onClick={onClose}>×</button>
+      </div>
+      {matches.length > 0 ? (
+        <div className="radical-popover-grid">
+          {matches.map(c => (
+            <div key={c.id} className="radical-popover-item">
+              <span className="radical-popover-kanji">{c.character}</span>
+              <span className="radical-popover-hv">{c.sinoVietnamese}</span>
+              <span className="radical-popover-meaning">{c.meaning}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="radical-popover-empty">Không có chữ Kanji nào khác chứa bộ thủ này</div>
+      )}
     </div>
   );
 }

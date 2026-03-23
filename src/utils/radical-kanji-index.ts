@@ -56,58 +56,39 @@ function addToMap(
 
 function buildIndex(): Map<string, RadicalKanjiEntry[]> {
   const map = new Map<string, RadicalKanjiEntry[]>();
+  const hasRemoved = _removedEntries.size > 0;
 
   for (const [level, seeds] of SEEDS_BY_LEVEL) {
     for (const seed of seeds) {
-      const decomp = getDecomposition(seed.c);
-      const radicals = decomp
+      const radicals = getDecomposition(seed.c)
         || (seed.r ? seed.r.split(',').map(s => s.trim()).filter(Boolean) : []);
-
-      if (radicals.length === 0) continue;
+      if (!radicals.length) continue;
 
       const entry: RadicalKanjiEntry = {
-        character: seed.c,
-        sinoVietnamese: seed.hv,
-        meaning: seed.m,
-        jlptLevel: level,
+        character: seed.c, sinoVietnamese: seed.hv, meaning: seed.m, jlptLevel: level,
       };
-      for (const r of radicals) {
-        // Skip if user explicitly removed this entry
-        if (_removedEntries.get(r)?.has(seed.c)) continue;
 
-        // Register under the radical itself
+      for (const r of radicals) {
+        if (hasRemoved && _removedEntries.get(r)?.has(seed.c)) continue;
         addToMap(map, r, entry, seed.c);
 
-        // Also register under variant ↔ base forms for cross-referencing
-        // If r is a variant (e.g. 亻), also register under base (人)
+        // Cross-register variant ↔ base
         const base = VARIANT_TO_BASE[r];
-        if (base && !_removedEntries.get(base)?.has(seed.c)) {
-          addToMap(map, base, entry, seed.c);
-        }
-        // If r is a base (e.g. 人), also register under its variants (亻)
+        if (base) addToMap(map, base, entry, seed.c);
         const variants = BASE_TO_VARIANTS[r];
-        if (variants) {
-          for (const v of variants) {
-            if (!_removedEntries.get(v)?.has(seed.c)) {
-              addToMap(map, v, entry, seed.c);
-            }
-          }
-        }
+        if (variants) for (const v of variants) addToMap(map, v, entry, seed.c);
       }
     }
   }
 
-  // Merge custom entries (user-added)
+  // Merge custom entries
   for (const [radical, entries] of _customEntries) {
-    const existing = map.get(radical) || [];
-    const existingChars = new Set(existing.map(e => e.character));
-    for (const entry of entries) {
-      if (!existingChars.has(entry.character)) {
-        existing.push({ ...entry, isCustom: true });
-        existingChars.add(entry.character);
-      }
+    const list = map.get(radical) || [];
+    const chars = new Set(list.map(e => e.character));
+    for (const e of entries) {
+      if (!chars.has(e.character)) { list.push({ ...e, isCustom: true }); chars.add(e.character); }
     }
-    map.set(radical, existing);
+    map.set(radical, list);
   }
 
   return map;

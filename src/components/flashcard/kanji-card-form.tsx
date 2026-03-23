@@ -6,6 +6,7 @@ import type { JLPTLevel } from '../../types/flashcard';
 import { getSeedByCharacter } from '../../data/kanji-seed';
 import { JLPT_LEVELS_WITH_BT } from '../../constants/jlpt';
 import { LEVEL_COLORS } from '../../constants/themes';
+import './kanji-card-form.css';
 
 interface KanjiCardFormProps {
   onSubmit: (data: KanjiCardFormData) => void;

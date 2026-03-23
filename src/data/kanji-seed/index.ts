@@ -10,6 +10,7 @@ import { N3_KANJI } from './n3';
 import { N2_KANJI } from './n2';
 import { N1_KANJI } from './n1';
 import { BT_KANJI } from './bt';
+import { getDecomposition } from '../kanji-decomposition';
 
 // Map level to seed data
 const SEED_BY_LEVEL: Record<JLPTLevel, KanjiSeed[]> = {
@@ -22,7 +23,13 @@ const SEED_BY_LEVEL: Record<JLPTLevel, KanjiSeed[]> = {
 };
 
 // Convert compact seed to full KanjiCardFormData
+// Uses decomposition map for complete radical list, falls back to seed `r` field
 function seedToFormData(seed: KanjiSeed, level: JLPTLevel, lessonId: string): KanjiCardFormData {
+  const decomp = getDecomposition(seed.c);
+  const radicals = decomp && decomp.length > 0
+    ? decomp
+    : seed.r ? seed.r.split(',').map(s => s.trim()) : [];
+
   return {
     character: seed.c,
     onYomi: seed.on ? seed.on.split(',').map(s => s.trim()) : [],
@@ -31,7 +38,7 @@ function seedToFormData(seed: KanjiSeed, level: JLPTLevel, lessonId: string): Ka
     meaning: seed.m,
     mnemonic: seed.mn || '',
     strokeCount: seed.s,
-    radicals: seed.r ? seed.r.split(',').map(s => s.trim()) : [],
+    radicals,
     jlptLevel: level,
     lessonId,
     sampleWords: seed.w
@@ -114,6 +121,28 @@ export function getSeedByCharacter(character: string): {
   }
 
   return { mnemonic, sampleWords, extraWords };
+}
+
+/** Cached character → {hv, meaning} lookup (built once on first access) */
+let _seedInfoCache: Map<string, { hv: string; meaning: string }> | null = null;
+
+function getSeedInfoCache(): Map<string, { hv: string; meaning: string }> {
+  if (!_seedInfoCache) {
+    _seedInfoCache = new Map();
+    for (const seeds of Object.values(SEED_BY_LEVEL)) {
+      for (const seed of seeds) {
+        if (!_seedInfoCache.has(seed.c)) {
+          _seedInfoCache.set(seed.c, { hv: seed.hv, meaning: seed.m });
+        }
+      }
+    }
+  }
+  return _seedInfoCache;
+}
+
+/** Quick lookup: get Hán Việt reading + meaning for a character (O(1) after first call) */
+export function getSeedInfo(character: string): { hv: string; meaning: string } | null {
+  return getSeedInfoCache().get(character) || null;
 }
 
 export type { KanjiSeed };

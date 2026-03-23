@@ -24,6 +24,7 @@ import type { TeacherSchedule, TeacherScheduleFormData, Salary } from '../../typ
 import type { User } from '../../types/user';
 import { CenterBrandingEditor } from '../center/center-branding-editor';
 import { CenterInviteManager } from '../center/center-invite-manager';
+import './branch-management-page.css';
 
 interface BranchManagementPageProps {
   users: User[];

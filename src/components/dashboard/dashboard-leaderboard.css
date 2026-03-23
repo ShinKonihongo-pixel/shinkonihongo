@@ -1,0 +1,407 @@
+/* ================================================================
+   Dashboard Leaderboard — Top 10 Quiz Battle ELO by JLPT Level
+   Premium dark glassmorphism with gold/silver/bronze podium
+   ================================================================ */
+
+.dlb {
+  --dlb-gold: #fbbf24;
+  --dlb-gold-glow: rgba(251, 191, 36, 0.25);
+  --dlb-silver: #94a3b8;
+  --dlb-silver-glow: rgba(148, 163, 184, 0.2);
+  --dlb-bronze: #d97706;
+  --dlb-bronze-glow: rgba(217, 119, 6, 0.2);
+  --dlb-glass: rgba(255, 255, 255, 0.03);
+  --dlb-glass-border: rgba(255, 255, 255, 0.07);
+  --dlb-text: rgba(255, 255, 255, 0.92);
+  --dlb-text-2: rgba(255, 255, 255, 0.55);
+  --dlb-accent: #8b5cf6;
+  --dlb-accent-pink: #ec4899;
+}
+
+/* ── Section wrapper ── */
+.dlb-section {
+  margin-top: 0.25rem;
+}
+
+.dlb-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.dlb-section-header .dlb-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--dlb-accent), var(--dlb-accent-pink));
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.dlb-section-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--dlb-text);
+  letter-spacing: 0.02em;
+}
+
+/* ── Level tabs ── */
+.dlb-level-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  margin-bottom: 0.75rem;
+}
+
+.dlb-level-tab {
+  flex: 1;
+  padding: 6px 0;
+  border: none;
+  background: transparent;
+  color: var(--dlb-text-2);
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  letter-spacing: 0.03em;
+}
+
+.dlb-level-tab:hover {
+  color: var(--dlb-text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dlb-level-tab.active {
+  background: linear-gradient(135deg, var(--dlb-accent), var(--dlb-accent-pink));
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.35);
+}
+
+/* ── Podium top 3 ── */
+.dlb-podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 0.75rem;
+  padding: 0.75rem 0 0.25rem;
+}
+
+.dlb-podium-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+/* Rank 1 center, taller */
+.dlb-podium-item[data-rank="1"] { order: 2; }
+.dlb-podium-item[data-rank="2"] { order: 1; }
+.dlb-podium-item[data-rank="3"] { order: 3; }
+
+.dlb-podium-avatar {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.dlb-podium-item[data-rank="1"] .dlb-podium-avatar {
+  width: 56px;
+  height: 56px;
+  font-size: 1rem;
+  box-shadow: 0 0 20px var(--dlb-gold-glow), 0 0 40px rgba(251, 191, 36, 0.1);
+  border: 2.5px solid var(--dlb-gold);
+}
+
+.dlb-podium-item[data-rank="2"] .dlb-podium-avatar {
+  width: 46px;
+  height: 46px;
+  box-shadow: 0 0 14px var(--dlb-silver-glow);
+  border: 2px solid var(--dlb-silver);
+}
+
+.dlb-podium-item[data-rank="3"] .dlb-podium-avatar {
+  width: 46px;
+  height: 46px;
+  box-shadow: 0 0 14px var(--dlb-bronze-glow);
+  border: 2px solid var(--dlb-bronze);
+}
+
+.dlb-podium-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Crown / medal badge */
+.dlb-podium-badge {
+  position: absolute;
+  top: -8px;
+  font-size: 1rem;
+  line-height: 1;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4));
+  z-index: 2;
+}
+
+.dlb-podium-item[data-rank="1"] .dlb-podium-badge {
+  font-size: 1.2rem;
+  top: -12px;
+}
+
+.dlb-podium-name {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--dlb-text);
+  text-align: center;
+  max-width: 72px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dlb-podium-item[data-rank="1"] .dlb-podium-name {
+  font-size: 0.72rem;
+  color: var(--dlb-gold);
+}
+
+.dlb-podium-elo {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+}
+
+.dlb-podium-item[data-rank="1"] .dlb-podium-elo {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.15));
+  color: var(--dlb-gold);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.dlb-podium-item[data-rank="2"] .dlb-podium-elo {
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--dlb-silver);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.dlb-podium-item[data-rank="3"] .dlb-podium-elo {
+  background: rgba(217, 119, 6, 0.12);
+  color: var(--dlb-bronze);
+  border: 1px solid rgba(217, 119, 6, 0.2);
+}
+
+/* Pedestal bars under podium avatars */
+.dlb-podium-pedestal {
+  width: 60px;
+  border-radius: 6px 6px 0 0;
+  margin-top: 4px;
+}
+
+.dlb-podium-item[data-rank="1"] .dlb-podium-pedestal {
+  height: 48px;
+  width: 68px;
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.2) 0%, rgba(251, 191, 36, 0.05) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.15);
+  border-bottom: none;
+}
+
+.dlb-podium-item[data-rank="2"] .dlb-podium-pedestal {
+  height: 34px;
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0.15) 0%, rgba(148, 163, 184, 0.03) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-bottom: none;
+}
+
+.dlb-podium-item[data-rank="3"] .dlb-podium-pedestal {
+  height: 24px;
+  background: linear-gradient(180deg, rgba(217, 119, 6, 0.15) 0%, rgba(217, 119, 6, 0.03) 100%);
+  border: 1px solid rgba(217, 119, 6, 0.1);
+  border-bottom: none;
+}
+
+/* ── Rank list (4-10) ── */
+.dlb-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dlb-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  background: var(--dlb-glass);
+  border: 1px solid var(--dlb-glass-border);
+  transition: background 0.2s;
+}
+
+.dlb-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dlb-row.dlb-me {
+  background: rgba(139, 92, 246, 0.08);
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+.dlb-rank {
+  width: 22px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--dlb-text-2);
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.dlb-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  flex-shrink: 0;
+}
+
+.dlb-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dlb-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.dlb-name {
+  font-size: 0.73rem;
+  font-weight: 600;
+  color: var(--dlb-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dlb-stats {
+  font-size: 0.6rem;
+  color: var(--dlb-text-2);
+  margin-top: 1px;
+}
+
+.dlb-elo {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.dlb-winrate {
+  font-size: 0.6rem;
+  font-weight: 600;
+  flex-shrink: 0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.dlb-winrate.low {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--dlb-text-2);
+}
+
+/* ── Empty state ── */
+.dlb-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--dlb-text-2);
+  font-size: 0.75rem;
+}
+
+.dlb-empty-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.5;
+}
+
+/* ── Stagger animation ── */
+.dlb-podium-item {
+  animation: dlb-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.dlb-podium-item[data-rank="2"] { animation-delay: 0.05s; }
+.dlb-podium-item[data-rank="1"] { animation-delay: 0.15s; }
+.dlb-podium-item[data-rank="3"] { animation-delay: 0.1s; }
+
+.dlb-row {
+  animation: dlb-slide-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.dlb-row:nth-child(1) { animation-delay: 0.2s; }
+.dlb-row:nth-child(2) { animation-delay: 0.24s; }
+.dlb-row:nth-child(3) { animation-delay: 0.28s; }
+.dlb-row:nth-child(4) { animation-delay: 0.32s; }
+.dlb-row:nth-child(5) { animation-delay: 0.36s; }
+.dlb-row:nth-child(6) { animation-delay: 0.4s; }
+.dlb-row:nth-child(7) { animation-delay: 0.44s; }
+
+@keyframes dlb-rise {
+  from { opacity: 0; transform: translateY(16px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes dlb-slide-in {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Shimmer loading ── */
+.dlb-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0.5rem 0;
+}
+
+.dlb-shimmer {
+  height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.03) 25%,
+    rgba(255,255,255,0.06) 50%,
+    rgba(255,255,255,0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: dlb-shimmer-move 1.5s ease-in-out infinite;
+}
+
+@keyframes dlb-shimmer-move {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

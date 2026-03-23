@@ -1,380 +1,584 @@
-// Visual kanji radical decomposition modal
-// Shows kanji broken into colored radicals with drag-to-separate and radical swapping
-// Click a kanji in the card list → opens this modal
+// Kanji radical decomposition modal — shows radicals, swap suggestions, stroke preview
 
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { X, Plus, Shuffle, RotateCcw, Sparkles } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { X, Shuffle, RotateCcw, Sparkles, Save } from 'lucide-react';
+import HanziWriter from 'hanzi-writer';
 import type { KanjiCard } from '../../types/kanji';
 import { getRadicalInfo, getKanjiByRadical, getSeedRadicals } from '../../utils/radical-kanji-index';
 import { getDecomposition } from '../../data/kanji-decomposition';
-import { RadicalPickerPopup } from './radical-picker-popup';
+import { getSeedInfo, getSeedByCharacter } from '../../data/kanji-seed';
+import { RADICAL_MAP, BASE_TO_VARIANTS, VARIANT_TO_BASE } from '../../data/radicals';
+import { cachedCharDataLoader } from '../../services/hanzi-writer-cache';
 import './kanji-decomposer-modal.css';
 
-// Color palette for radicals — distinct, vibrant
-const RADICAL_COLORS = [
-  { bg: 'rgba(99, 102, 241, 0.15)', border: '#6366f1', text: '#4f46e5' },
-  { bg: 'rgba(236, 72, 153, 0.15)', border: '#ec4899', text: '#db2777' },
-  { bg: 'rgba(16, 185, 129, 0.15)', border: '#10b981', text: '#059669' },
-  { bg: 'rgba(245, 158, 11, 0.15)', border: '#f59e0b', text: '#d97706' },
-  { bg: 'rgba(59, 130, 246, 0.15)', border: '#3b82f6', text: '#2563eb' },
-  { bg: 'rgba(168, 85, 247, 0.15)', border: '#a855f7', text: '#9333ea' },
-  { bg: 'rgba(239, 68, 68, 0.15)', border: '#ef4444', text: '#dc2626' },
-  { bg: 'rgba(20, 184, 166, 0.15)', border: '#14b8a6', text: '#0d9488' },
-];
-
-interface DragState {
-  radicalIdx: number;
-  startX: number;
-  startY: number;
-  offsetX: number;
-  offsetY: number;
-}
-
-interface SwapSuggestion {
-  radical: string;
-  kanji: string;
-  sinoVietnamese: string;
-  meaning: string;
-}
-
-interface KanjiDecomposerModalProps {
-  kanjiCard: KanjiCard;
-  onClose: () => void;
-}
-
-/** Find kanji sharing other radicals but with a different one at swapIdx */
-function findRelatedKanji(currentRadicals: string[], swapIdx: number): SwapSuggestion[] {
-  const otherRadicals = currentRadicals.filter((_, i) => i !== swapIdx);
-  if (otherRadicals.length === 0) return [];
-
-  // Intersect kanji sets for all other radicals
-  const sets = otherRadicals.map(r => new Set(getKanjiByRadical(r).map(e => e.character)));
-  let intersection = sets[0];
-  for (let i = 1; i < sets.length; i++) {
-    const current = intersection;
-    const next = sets[i];
-    intersection = new Set<string>();
-    for (const c of current) {
-      if (next.has(c)) intersection.add(c);
+/** Get all variant forms for a radical character (including itself) */
+function getRadicalVariants(char: string): { character: string; name: string; meaning: string }[] {
+  // Find base character
+  const base = VARIANT_TO_BASE[char] || char;
+  const baseInfo = RADICAL_MAP[base];
+  if (!baseInfo) return [];
+  const results: { character: string; name: string; meaning: string }[] = [
+    { character: base, name: baseInfo.vietnameseName, meaning: baseInfo.meaning },
+  ];
+  const variants = BASE_TO_VARIANTS[base];
+  if (variants) {
+    for (const v of variants) {
+      const vi = RADICAL_MAP[v];
+      if (vi) results.push({ character: v, name: vi.vietnameseName, meaning: vi.meaning });
     }
   }
-
-  const swappedRadical = currentRadicals[swapIdx];
-  const results: SwapSuggestion[] = [];
-
-  for (const kanjiChar of intersection) {
-    if (results.length >= 12) break;
-    const decomp = getDecomposition(kanjiChar) || getSeedRadicals(kanjiChar);
-    if (!decomp) continue;
-
-    const differentRadicals = decomp.filter(r => !otherRadicals.includes(r) && r !== swappedRadical);
-    if (differentRadicals.length === 0) continue;
-
-    const r = differentRadicals[0];
-    const entry = getKanjiByRadical(r).find(e => e.character === kanjiChar);
-    if (entry) {
-      results.push({ radical: r, kanji: kanjiChar, sinoVietnamese: entry.sinoVietnamese, meaning: entry.meaning });
-    }
-  }
-
   return results;
 }
 
-/** Find kanji matching a given set of radicals using reverse index */
-function findKanjiForRadicals(radicals: string[]): string {
-  if (radicals.length === 0) return '?';
-
-  const sets = radicals.map(r => new Set(getKanjiByRadical(r).map(e => e.character)));
-  if (sets.length === 0) return '?';
-
-  // Intersect all sets
-  let candidates = sets[0];
-  for (let i = 1; i < sets.length; i++) {
-    const next = sets[i];
-    const filtered = new Set<string>();
-    for (const c of candidates) {
-      if (next.has(c)) filtered.add(c);
-    }
-    candidates = filtered;
+// Cached component info
+const _compInfoCache = new Map<string, { name: string; meaning: string }>();
+function getComponentInfo(char: string): { name: string; meaning: string } {
+  let r = _compInfoCache.get(char);
+  if (r) return r;
+  const rad = getRadicalInfo(char);
+  if (rad) { r = { name: rad.vietnameseName, meaning: rad.meaning }; }
+  else {
+    const seed = getSeedInfo(char);
+    r = seed ? { name: seed.hv, meaning: seed.meaning } : { name: char, meaning: '' };
   }
-
-  if (candidates.size === 0) return '?';
-
-  // Prefer exact decomposition match
-  for (const char of candidates) {
-    const d = getDecomposition(char) || getSeedRadicals(char);
-    if (d && d.length === radicals.length && radicals.every(r => d.includes(r))) {
-      return char;
-    }
-  }
-
-  return candidates.values().next().value || '?';
+  _compInfoCache.set(char, r);
+  return r;
 }
 
-export function KanjiDecomposerModal({ kanjiCard, onClose }: KanjiDecomposerModalProps) {
-  // Stable decomposition — computed once per kanji character
-  const decomposition = useMemo(() =>
-    getDecomposition(kanjiCard.character)
-    || getSeedRadicals(kanjiCard.character)
-    || kanjiCard.radicals
-    || [],
-    [kanjiCard.character, kanjiCard.radicals]
-  );
+const RADICAL_COLORS = [
+  { bg: 'rgba(99, 102, 241, 0.15)', border: '#6366f1', text: '#818cf8' },
+  { bg: 'rgba(236, 72, 153, 0.15)', border: '#ec4899', text: '#f472b6' },
+  { bg: 'rgba(16, 185, 129, 0.15)', border: '#10b981', text: '#34d399' },
+  { bg: 'rgba(245, 158, 11, 0.15)', border: '#f59e0b', text: '#fbbf24' },
+  { bg: 'rgba(59, 130, 246, 0.15)', border: '#3b82f6', text: '#60a5fa' },
+  { bg: 'rgba(168, 85, 247, 0.15)', border: '#a855f7', text: '#c084fc' },
+];
 
-  const [radicals, setRadicals] = useState<string[]>(decomposition);
-  const [separated, setSeparated] = useState(false);
+interface SwapSuggestion { radical: string; kanji: string; sinoVietnamese: string; meaning: string; }
+
+interface Props {
+  kanjiCard: KanjiCard;
+  onClose: () => void;
+  onSaveRadicals?: (radicals: string[]) => void;
+  onSaveMnemonic?: (mnemonic: string) => void;
+  onSaveSampleWords?: (sampleWords: KanjiCard['sampleWords']) => void;
+  /** Read-only mode: only show saved data from Firestore, no editing, no static fallback */
+  readOnly?: boolean;
+  /** All kanji cards from Firestore — used in readOnly mode to show kanji by radical */
+  allCards?: KanjiCard[];
+}
+
+// Cached char sets
+const _charSetCache = new Map<string, Set<string>>();
+function getCharSet(rad: string): Set<string> {
+  let s = _charSetCache.get(rad);
+  if (!s) { s = new Set(getKanjiByRadical(rad).map(e => e.character)); _charSetCache.set(rad, s); }
+  return s;
+}
+
+function intersectSets(rads: string[]): Set<string> {
+  if (!rads.length) return new Set();
+  const sets = rads.map(r => getCharSet(r)).sort((a, b) => a.size - b.size);
+  const result = new Set(sets[0]);
+  for (let i = 1; i < sets.length; i++) {
+    const next = sets[i];
+    for (const c of result) { if (!next.has(c)) result.delete(c); }
+    if (!result.size) break;
+  }
+  return result;
+}
+
+function findRelatedKanji(currentRads: string[], swapIdx: number): SwapSuggestion[] {
+  const others = currentRads.filter((_, i) => i !== swapIdx);
+  if (!others.length) return [];
+  const candidates = intersectSets(others);
+  const swapped = currentRads[swapIdx];
+  const otherSet = new Set(others);
+  const results: SwapSuggestion[] = [];
+  for (const k of candidates) {
+    if (results.length >= 12) break;
+    const d = getDecomposition(k) || getSeedRadicals(k);
+    if (!d) continue;
+    const diff = d.filter(r => !otherSet.has(r) && r !== swapped);
+    if (!diff.length) continue;
+    const entry = getKanjiByRadical(diff[0]).find(e => e.character === k);
+    if (entry) results.push({ radical: diff[0], kanji: k, sinoVietnamese: entry.sinoVietnamese, meaning: entry.meaning });
+  }
+  return results;
+}
+
+export function KanjiDecomposerModal({ kanjiCard, onClose, onSaveRadicals, onSaveMnemonic, onSaveSampleWords, readOnly, allCards }: Props) {
+  // In readOnly mode: only use data saved in Firestore (kanjiCard.radicals)
+  // In edit mode: use static decomposition as fallback
+  const decomposition = useMemo(() => {
+    if (readOnly) {
+      // Only show what admin has saved in Firestore
+      return kanjiCard.radicals?.length ? kanjiCard.radicals : [];
+    }
+    // Edit mode: Firestore data (admin-saved) takes priority over static KRADFILE
+    if (kanjiCard.radicals?.length) return kanjiCard.radicals;
+    return getDecomposition(kanjiCard.character) || getSeedRadicals(kanjiCard.character) || [];
+  }, [kanjiCard.character, kanjiCard.radicals, readOnly]);
+
+  const [radicals, setRadicals] = useState(decomposition);
   const [swapIdx, setSwapIdx] = useState<number | null>(null);
-  const [showPicker, setShowPicker] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [mnemonic, setMnemonic] = useState(kanjiCard.mnemonic || '');
+  const [editingMnemonic, setEditingMnemonic] = useState(false);
 
-  // Use ref for drag state to avoid re-creating pointer callbacks every frame
-  const dragRef = useRef<DragState | null>(null);
-  const [dragOffset, setDragOffset] = useState<{ idx: number; x: number; y: number } | null>(null);
+  // Sync radicals state when decomposition source changes (e.g. after save updates kanjiCard)
+  useEffect(() => { setRadicals(decomposition); }, [decomposition]);
+  useEffect(() => { setMnemonic(kanjiCard.mnemonic || ''); }, [kanjiCard.mnemonic]);
+  const [strokeChar, setStrokeChar] = useState<string | null>(null);
+  const [swapList, setSwapList] = useState<SwapSuggestion[]>([]);
+  const [addingKanji, setAddingKanji] = useState(false);
+  const [newInput, setNewInput] = useState('');
 
-  // Lock body scroll when modal is open
-  useEffect(() => {
-    const original = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = original; };
-  }, []);
-
-  // Close on Escape
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (showPicker) setShowPicker(false);
-        else onClose();
-      }
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [onClose, showPicker]);
-
-  // Memoize result kanji
-  const resultKanji = useMemo(() => findKanjiForRadicals(radicals), [radicals]);
-
-  // Memoize result kanji info for display
-  const resultInfo = useMemo(() => {
-    if (resultKanji === '?') return null;
-    if (resultKanji === kanjiCard.character) {
-      return { sinoVietnamese: kanjiCard.sinoVietnamese, meaning: kanjiCard.meaning, isNew: false };
-    }
-    // Look up from index
-    for (const r of radicals) {
-      const entry = getKanjiByRadical(r).find(e => e.character === resultKanji);
-      if (entry) return { sinoVietnamese: entry.sinoVietnamese, meaning: entry.meaning, isNew: true };
-    }
-    return null;
-  }, [resultKanji, radicals, kanjiCard.character, kanjiCard.sinoVietnamese, kanjiCard.meaning]);
-
-  // Memoize swap suggestions
-  const swapSuggestions = useMemo(
-    () => swapIdx !== null ? findRelatedKanji(radicals, swapIdx) : [],
-    [radicals, swapIdx]
+  const isDirty = useMemo(
+    () => radicals.length !== decomposition.length || radicals.some((r, i) => r !== decomposition[i]),
+    [radicals, decomposition]
   );
 
-  // Pointer handlers — stable callbacks using ref
-  const handlePointerDown = useCallback((e: React.PointerEvent, idx: number) => {
-    e.preventDefault();
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-    dragRef.current = { radicalIdx: idx, startX: e.clientX, startY: e.clientY, offsetX: 0, offsetY: 0 };
-    setDragOffset({ idx, x: 0, y: 0 });
-  }, []);
+  useEffect(() => { document.body.style.overflow = 'hidden'; return () => { document.body.style.overflow = ''; }; }, []);
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { if (strokeChar) setStrokeChar(null); else onClose(); } };
+    document.addEventListener('keydown', h);
+    return () => document.removeEventListener('keydown', h);
+  }, [onClose, strokeChar]);
 
-  const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    const drag = dragRef.current;
-    if (!drag) return;
-    const x = e.clientX - drag.startX;
-    const y = e.clientY - drag.startY;
-    drag.offsetX = x;
-    drag.offsetY = y;
-    setDragOffset({ idx: drag.radicalIdx, x, y });
-  }, []);
+  // Result kanji is always the current card's character — editing radicals only changes the decomposition, not the kanji
+  const resultKanji = kanjiCard.character;
+  const resultInfo = { hv: kanjiCard.sinoVietnamese, meaning: kanjiCard.meaning };
 
-  const handlePointerUp = useCallback(() => {
-    const drag = dragRef.current;
-    if (!drag) return;
-    const dist = Math.sqrt(drag.offsetX ** 2 + drag.offsetY ** 2);
-    if (dist > 40) setSeparated(true);
-    dragRef.current = null;
-    setDragOffset(null);
-  }, []);
+  // When swapIdx changes, compute new suggestions
+  useEffect(() => {
+    if (swapIdx !== null) {
+      setSwapList(findRelatedKanji(radicals, swapIdx));
+      setAddingKanji(false);
+      setNewInput('');
+    }
+  }, [swapIdx, radicals]);
 
-  const handleReset = () => {
-    setRadicals(decomposition);
-    setSeparated(false);
-    setSwapIdx(null);
+  const [editingRadIdx, setEditingRadIdx] = useState<number | null>(null);
+  const [editRadInput, setEditRadInput] = useState('');
+  const [addingRadical, setAddingRadical] = useState(false);
+  const [addRadInput, setAddRadInput] = useState('');
+  const dragIdx = useRef<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  // ReadOnly mode: selected radical to show kanji list
+  const [selectedRadical, setSelectedRadical] = useState<string | null>(null);
+  const radicalKanjiList = useMemo(() => {
+    if (!selectedRadical || !allCards) return [];
+    return allCards.filter(c => c.character !== kanjiCard.character && c.radicals.includes(selectedRadical));
+  }, [selectedRadical, allCards, kanjiCard.character]);
+
+  const handleReset = () => { setRadicals(decomposition); setSwapIdx(null); setEditingRadIdx(null); setAddingRadical(false); setAddRadInput(''); };
+  // Load correct decomposition from KRADFILE (ignores Firestore data)
+  const kradData = useMemo(() => getDecomposition(kanjiCard.character) || getSeedRadicals(kanjiCard.character) || [], [kanjiCard.character]);
+  const loadFromKrad = () => { setRadicals(kradData); setSwapIdx(null); setEditingRadIdx(null); };
+  const addRadical = (char: string) => {
+    if (!char.trim()) return;
+    setRadicals(prev => [...prev, char.trim()]);
+    setAddRadInput('');
+    setAddingRadical(false);
   };
-
-  const handleRemoveRadical = (idx: number) => {
+  const doSave = () => { onSaveRadicals?.(radicals); setSaved(true); setTimeout(() => setSaved(false), 2000); };
+  // Drag-and-drop reorder for swap list items
+  const handleSwapDragEnd = (toIdx: number) => {
+    if (dragIdx.current === null || dragIdx.current === toIdx) { dragIdx.current = null; setDragOverIdx(null); return; }
+    setSwapList(prev => {
+      const arr = [...prev];
+      const [moved] = arr.splice(dragIdx.current!, 1);
+      arr.splice(toIdx, 0, moved);
+      return arr;
+    });
+    dragIdx.current = null;
+    setDragOverIdx(null);
+  };
+  const removeRadical = (idx: number) => {
     setRadicals(prev => prev.filter((_, i) => i !== idx));
     if (swapIdx === idx) setSwapIdx(null);
     else if (swapIdx !== null && swapIdx > idx) setSwapIdx(swapIdx - 1);
+    setEditingRadIdx(null);
+  };
+  const replaceRadical = (idx: number, char: string) => {
+    if (!char.trim()) return;
+    setRadicals(prev => prev.map((r, i) => i === idx ? char.trim() : r));
+    setEditingRadIdx(null);
+    setEditRadInput('');
+  };
+  const removeFromList = (k: string) => setSwapList(prev => prev.filter(s => s.kanji !== k));
+  const addToList = (char: string) => {
+    if (!char.trim() || swapList.some(s => s.kanji === char)) return;
+    const info = getSeedInfo(char);
+    setSwapList(prev => [...prev, { radical: '', kanji: char, sinoVietnamese: info?.hv || '', meaning: info?.meaning || '' }]);
+    setNewInput('');
+    setAddingKanji(false);
   };
 
-  const handleAddRadical = (char: string) => {
-    if (!radicals.includes(char)) setRadicals(prev => [...prev, char]);
-    setShowPicker(false);
-  };
-
-  const handleSwapRadical = (idx: number, newRadical: string) => {
-    setRadicals(prev => prev.map((r, i) => i === idx ? newRadical : r));
-    setSwapIdx(null);
-    setSeparated(true);
-  };
+  // Get stroke info for preview — use current state for the main kanji, static data for others
+  const strokeInfo = useMemo(() => {
+    if (!strokeChar) return null;
+    if (strokeChar === kanjiCard.character) {
+      // Use current edited radicals and mnemonic
+      return { hv: kanjiCard.sinoVietnamese, meaning: kanjiCard.meaning, mnemonic: mnemonic, radicals: radicals };
+    }
+    const info = getSeedInfo(strokeChar);
+    const mn = getSeedByCharacter(strokeChar)?.mnemonic || '';
+    const rads = getDecomposition(strokeChar) || getSeedRadicals(strokeChar) || [];
+    return { hv: info?.hv || '', meaning: info?.meaning || '', mnemonic: mn, radicals: rads };
+  }, [strokeChar, kanjiCard, radicals, mnemonic]);
 
   return (
     <div className="kdc-overlay" onClick={onClose}>
-      <div
-        className="kdc-modal"
-        onClick={e => e.stopPropagation()}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-      >
-        {/* Header */}
+      <div className="kdc-modal" onClick={e => e.stopPropagation()}>
         <div className="kdc-header">
           <div className="kdc-header-left">
             <Sparkles size={18} className="kdc-header-icon" />
             <h3>Phân tích bộ thủ</h3>
           </div>
           <div className="kdc-header-actions">
-            <button className="kdc-icon-btn" onClick={handleReset} title="Đặt lại">
-              <RotateCcw size={16} />
-            </button>
-            <button className="kdc-icon-btn" onClick={onClose} title="Đóng">
-              <X size={18} />
-            </button>
+            {!readOnly && onSaveRadicals && isDirty && (
+              <button className="kdc-save-btn" onClick={doSave}>
+                <Save size={14} /> {saved ? 'Đã lưu' : 'Lưu'}
+              </button>
+            )}
+            {!readOnly && kradData.length > 0 && (
+              <button className="kdc-krad-btn" onClick={loadFromKrad} title="Tải bộ thủ từ KRADFILE (đúng cách viết)">KRAD</button>
+            )}
+            {!readOnly && <button className="kdc-icon-btn" onClick={handleReset} title="Đặt lại"><RotateCcw size={16} /></button>}
+            <button className="kdc-icon-btn" onClick={onClose} title="Đóng"><X size={18} /></button>
           </div>
         </div>
 
         <div className="kdc-body">
-          {/* Result kanji display */}
-          <div className="kdc-result-section">
-            <div className={`kdc-result-char ${resultKanji === '?' ? 'kdc-result-unknown' : ''}`}>
-              {resultKanji}
+          {/* ReadOnly empty state */}
+          {readOnly && !radicals.length && (
+            <div className="kdc-empty-readonly">
+              <div className="kdc-empty-char">{kanjiCard.character}</div>
+              <div className="kdc-empty-label">{kanjiCard.sinoVietnamese} — {kanjiCard.meaning}</div>
+              <div className="kdc-empty-msg">Chưa có thông tin phân tích bộ thủ</div>
             </div>
-            <div className="kdc-result-info">
-              {resultInfo && !resultInfo.isNew && (
-                <span className="kdc-result-label">{resultInfo.sinoVietnamese} — {resultInfo.meaning}</span>
-              )}
-              {resultInfo?.isNew && (
-                <span className="kdc-result-label kdc-result-new">{resultInfo.sinoVietnamese} — {resultInfo.meaning}</span>
-              )}
-              {resultKanji === '?' && (
-                <span className="kdc-result-label kdc-result-unknown-label">Không tìm thấy Kanji phù hợp</span>
-              )}
-            </div>
-          </div>
+          )}
 
-          {/* Radical equation */}
-          <div className={`kdc-equation ${separated ? 'kdc-separated' : ''}`}>
-            {radicals.length === 0 && (
-              <div className="kdc-empty-msg">Chưa có bộ thủ — bấm + để thêm</div>
-            )}
-            {radicals.map((r, idx) => {
-              const info = getRadicalInfo(r);
-              const color = RADICAL_COLORS[idx % RADICAL_COLORS.length];
-              const isDragging = dragOffset?.idx === idx;
-              const transform = isDragging
-                ? `translate(${dragOffset.x}px, ${dragOffset.y}px) scale(1.1)`
-                : undefined;
-
-              return (
-                <div key={`${r}-${idx}`} className="kdc-eq-item">
-                  {idx > 0 && <span className="kdc-eq-plus">+</span>}
-                  <div
-                    className={`kdc-radical-card ${isDragging ? 'kdc-dragging' : ''} ${swapIdx === idx ? 'kdc-swapping' : ''}`}
-                    style={{ background: color.bg, borderColor: color.border, transform, zIndex: isDragging ? 10 : 1 }}
-                  >
+          {/* Equation: radicals + = result */}
+          {radicals.length > 0 && (
+            <div className="kdc-main-equation">
+              {radicals.map((r, idx) => {
+                const ci = getComponentInfo(r);
+                const color = RADICAL_COLORS[idx % RADICAL_COLORS.length];
+                return (
+                  <div key={`${r}-${idx}`} className="kdc-eq-item">
+                    {idx > 0 && <span className="kdc-eq-plus">+</span>}
                     <div
-                      className="kdc-radical-drag-area"
-                      onPointerDown={e => handlePointerDown(e, idx)}
-                      title="Kéo để tách"
+                      className={`kdc-radical-card ${swapIdx === idx ? 'kdc-swapping' : ''} ${readOnly && !allCards ? 'kdc-readonly' : ''} ${readOnly && selectedRadical === r ? 'kdc-radical-selected' : ''}`}
+                      style={{ background: color.bg, borderColor: color.border }}
+                      onClick={readOnly
+                        ? (allCards ? () => setSelectedRadical(selectedRadical === r ? null : r) : undefined)
+                        : () => setSwapIdx(swapIdx === idx ? null : idx)
+                      }
                     >
-                      <span className="kdc-radical-char" style={{ color: color.text }}>{r}</span>
-                      <span className="kdc-radical-name">{info?.vietnameseName || '?'}</span>
-                      <span className="kdc-radical-meaning">{info?.meaning || ''}</span>
-                    </div>
-                    <div className="kdc-radical-actions">
-                      <button
-                        className="kdc-radical-action-btn"
-                        onClick={() => setSwapIdx(swapIdx === idx ? null : idx)}
-                        title="Thay bộ thủ"
-                        style={{ color: color.text }}
-                      >
-                        <Shuffle size={12} />
-                      </button>
-                      <button
-                        className="kdc-radical-action-btn kdc-radical-remove-btn"
-                        onClick={() => handleRemoveRadical(idx)}
-                        title="Xoá bộ thủ"
-                      >
-                        <X size={12} />
-                      </button>
+                      {/* Edit/delete buttons — only in edit mode */}
+                      {!readOnly && onSaveRadicals && (
+                        <div className="kdc-rad-actions">
+                          <button className="kdc-rad-action" title="Sửa" onClick={e => { e.stopPropagation(); setEditingRadIdx(idx); setEditRadInput(r); }}>✎</button>
+                          <button className="kdc-rad-action kdc-rad-delete" title="Xoá" onClick={e => { e.stopPropagation(); removeRadical(idx); }}>×</button>
+                        </div>
+                      )}
+                      {editingRadIdx === idx ? (
+                        <RadicalEditWithVariants
+                          value={editRadInput}
+                          onChange={setEditRadInput}
+                          onConfirm={(char) => replaceRadical(idx, char)}
+                          onCancel={() => { setEditingRadIdx(null); setEditRadInput(''); }}
+                        />
+                      ) : (
+                        <>
+                          <span className="kdc-radical-char" style={{ color: color.text }}>{r}</span>
+                          <span className="kdc-radical-name">{ci.name}</span>
+                          {ci.meaning && <span className="kdc-radical-meaning">{ci.meaning}</span>}
+                        </>
+                      )}
                     </div>
                   </div>
+                );
+              })}
+              {/* Add radical button — edit mode only */}
+              {!readOnly && onSaveRadicals && (
+                <div className="kdc-eq-item">
+                  <span className="kdc-eq-plus">+</span>
+                  {addingRadical ? (
+                    <RadicalAddWithVariants
+                      value={addRadInput}
+                      onChange={setAddRadInput}
+                      onConfirm={addRadical}
+                      onCancel={() => { setAddingRadical(false); setAddRadInput(''); }}
+                    />
+                  ) : (
+                    <button className="kdc-add-radical-btn" onClick={() => setAddingRadical(true)} title="Thêm bộ thủ">+</button>
+                  )}
                 </div>
-              );
-            })}
-            {radicals.length > 0 && (
-              <>
-                <span className="kdc-eq-equals">=</span>
-                <div className="kdc-eq-result">
-                  <span className={`kdc-eq-result-char ${resultKanji === '?' ? 'kdc-unknown' : ''}`}>
-                    {resultKanji}
-                  </span>
-                </div>
-              </>
-            )}
-            <div className="kdc-add-wrapper">
-              <button className="kdc-add-btn" onClick={() => setShowPicker(!showPicker)} title="Thêm bộ thủ">
-                <Plus size={16} />
-              </button>
-              {showPicker && (
-                <RadicalPickerPopup
-                  selectedRadicals={radicals}
-                  onSelect={handleAddRadical}
-                  onClose={() => setShowPicker(false)}
-                />
               )}
-            </div>
-          </div>
-
-          {/* Swap suggestions */}
-          {swapIdx !== null && (
-            <div className="kdc-swap-section">
-              <div className="kdc-swap-header">
-                <Shuffle size={14} />
-                <span>Thay <strong>{radicals[swapIdx]}</strong> bằng bộ thủ khác:</span>
+              {<span className="kdc-eq-equals">=</span>}
+              <div className="kdc-result-block" onClick={() => setStrokeChar(resultKanji)} style={{ cursor: 'pointer' }}>
+                <span className="kdc-result-kanji">{resultKanji}</span>
+                <span className="kdc-result-label">{resultInfo.hv} — {resultInfo.meaning}</span>
               </div>
-              {swapSuggestions.length > 0 ? (
-                <div className="kdc-swap-grid">
-                  {swapSuggestions.map((s, i) => (
-                    <button
-                      key={`${s.kanji}-${i}`}
-                      className="kdc-swap-item"
-                      onClick={() => handleSwapRadical(swapIdx, s.radical)}
-                      title={`${getRadicalInfo(s.radical)?.vietnameseName || s.radical} → ${s.kanji} (${s.sinoVietnamese})`}
-                    >
-                      <div className="kdc-swap-radical">{s.radical}</div>
-                      <div className="kdc-swap-arrow">→</div>
-                      <div className="kdc-swap-kanji">{s.kanji}</div>
-                      <div className="kdc-swap-info">
-                        <span className="kdc-swap-hv">{s.sinoVietnamese}</span>
-                        <span className="kdc-swap-meaning">{s.meaning}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="kdc-swap-empty">Không tìm thấy Kanji liên quan</div>
+            </div>
+          )}
+
+          {!readOnly && !radicals.length && (
+            <div className="kdc-empty-add-section">
+              <div className="kdc-empty-msg">Không có dữ liệu bộ thủ</div>
+              {onSaveRadicals && (
+                addingRadical ? (
+                  <div style={{ margin: '0.75rem auto' }}>
+                    <RadicalAddWithVariants
+                      value={addRadInput}
+                      onChange={setAddRadInput}
+                      onConfirm={addRadical}
+                      onCancel={() => { setAddingRadical(false); setAddRadInput(''); }}
+                    />
+                  </div>
+                ) : (
+                  <button className="kdc-add-radical-btn" onClick={() => setAddingRadical(true)} title="Thêm bộ thủ" style={{ margin: '0.75rem auto' }}>+</button>
+                )
               )}
             </div>
           )}
 
+          {/* Radical kanji list — readOnly mode, when a radical is selected */}
+          {readOnly && selectedRadical && allCards && (
+            <div className="kdc-radical-kanji-section">
+              <div className="kdc-radical-kanji-header">
+                <span className="kdc-radical-kanji-title">
+                  Kanji chứa <strong>{selectedRadical}</strong>
+                  <span className="kdc-radical-kanji-count">({radicalKanjiList.length})</span>
+                </span>
+                <button className="kdc-radical-kanji-close" onClick={() => setSelectedRadical(null)}>×</button>
+              </div>
+              {radicalKanjiList.length > 0 ? (
+                <div className="kdc-radical-kanji-grid">
+                  {radicalKanjiList.map(c => (
+                    <div key={c.id} className="kdc-radical-kanji-item" onClick={() => setStrokeChar(c.character)}>
+                      <span className="kdc-radical-kanji-char">{c.character}</span>
+                      <span className="kdc-radical-kanji-hv">{c.sinoVietnamese}</span>
+                      <span className="kdc-radical-kanji-meaning">{c.meaning}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="kdc-radical-kanji-empty">Không có chữ Kanji nào khác chứa bộ thủ này</div>
+              )}
+            </div>
+          )}
+
+          {/* Mnemonic — readOnly: show only if has content; edit mode: always show */}
+          {(readOnly ? mnemonic : (mnemonic || onSaveMnemonic)) && (
+            <div className="kdc-mnemonic">
+              <span className="kdc-mnemonic-icon">💡</span>
+              {!readOnly && editingMnemonic ? (
+                <div className="kdc-mnemonic-edit">
+                  <textarea className="kdc-mnemonic-input" value={mnemonic} onChange={e => setMnemonic(e.target.value)} placeholder="Nhập gợi ý cách nhớ..." rows={2} autoFocus />
+                  <div className="kdc-mnemonic-actions">
+                    <button className="kdc-mnemonic-save" onClick={() => { onSaveMnemonic?.(mnemonic); setEditingMnemonic(false); setSaved(true); setTimeout(() => setSaved(false), 2000); }}>Lưu</button>
+                    <button className="kdc-mnemonic-cancel" onClick={() => { setMnemonic(kanjiCard.mnemonic || ''); setEditingMnemonic(false); }}>Huỷ</button>
+                  </div>
+                </div>
+              ) : (
+                <span
+                  className={`kdc-mnemonic-text ${!readOnly && onSaveMnemonic ? 'kdc-mnemonic-clickable' : ''}`}
+                  onClick={!readOnly && onSaveMnemonic ? () => setEditingMnemonic(true) : undefined}
+                >
+                  {mnemonic || 'Bấm để thêm gợi ý cách nhớ...'}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Swap suggestions — only in edit mode */}
+          {!readOnly && swapIdx !== null && (
+            <div className="kdc-swap-section">
+              <div className="kdc-swap-header">
+                <Shuffle size={14} />
+                <span>Thay <strong>{radicals[swapIdx]}</strong> bằng:</span>
+              </div>
+              <div className="kdc-swap-grid">
+                {swapList.map((s, i) => (
+                  <div
+                    key={`${s.kanji}-${i}`}
+                    className={`kdc-swap-item ${dragOverIdx === i ? 'kdc-swap-drag-over' : ''}`}
+                    draggable
+                    onDragStart={e => { dragIdx.current = i; e.dataTransfer.effectAllowed = 'move'; }}
+                    onDragOver={e => { e.preventDefault(); setDragOverIdx(i); }}
+                    onDragLeave={() => { if (dragOverIdx === i) setDragOverIdx(null); }}
+                    onDrop={e => { e.preventDefault(); handleSwapDragEnd(i); }}
+                    onDragEnd={() => { dragIdx.current = null; setDragOverIdx(null); }}
+                    onClick={() => setStrokeChar(s.kanji)}
+                  >
+                    <span className="kdc-swap-kanji">{s.kanji}</span>
+                    <div className="kdc-swap-info">
+                      <span className="kdc-swap-hv">{s.sinoVietnamese}</span>
+                      <span className="kdc-swap-meaning">{s.meaning}</span>
+                    </div>
+                    {onSaveSampleWords && (
+                      <button className="kdc-swap-remove" onClick={e => { e.stopPropagation(); removeFromList(s.kanji); }}>×</button>
+                    )}
+                  </div>
+                ))}
+                {onSaveSampleWords && (
+                  <div className="kdc-swap-item kdc-swap-add-item" onClick={e => e.stopPropagation()}>
+                    {addingKanji ? (
+                      <div className="kdc-swap-add-form">
+                        <input className="kdc-swap-add-input" value={newInput} onChange={e => setNewInput(e.target.value)} placeholder="字" maxLength={1} autoFocus onKeyDown={e => { if (e.key === 'Escape') { setAddingKanji(false); setNewInput(''); } }} />
+                        <button className="kdc-swap-add-confirm" onClick={() => addToList(newInput)}>Thêm</button>
+                      </div>
+                    ) : (
+                      <button className="kdc-swap-add-btn" onClick={() => setAddingKanji(true)}>+</button>
+                    )}
+                  </div>
+                )}
+                {!swapList.length && !addingKanji && <div className="kdc-swap-empty">Không tìm thấy Kanji liên quan</div>}
+              </div>
+            </div>
+          )}
+
           <div className="kdc-hint">
-            Kéo bộ thủ để tách · Bấm <Shuffle size={11} /> để thay thế · Bấm <Plus size={11} /> để thêm
+            {readOnly
+              ? (radicals.length > 0 ? (allCards ? 'Bấm bộ thủ để xem Kanji liên quan · Bấm chữ Kanji để xem cách viết' : 'Bấm chữ Kanji để xem cách viết') : '')
+              : 'Bấm bộ thủ để xem gợi ý · Bấm chữ Kanji để xem cách viết'
+            }
           </div>
         </div>
+      </div>
+
+      {/* Stroke preview */}
+      {strokeChar && strokeInfo && (
+        <StrokePreview char={strokeChar} info={strokeInfo} onClose={() => setStrokeChar(null)} />
+      )}
+    </div>
+  );
+}
+
+/** Inline radical edit with variant picker */
+function RadicalEditWithVariants({ value, onChange, onConfirm, onCancel }: {
+  value: string; onChange: (v: string) => void; onConfirm: (char: string) => void; onCancel: () => void;
+}) {
+  const variants = useMemo(() => value ? getRadicalVariants(value) : [], [value]);
+  return (
+    <div className="kdc-rad-edit-form" onClick={e => e.stopPropagation()}>
+      <input
+        className="kdc-rad-edit-input"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        maxLength={1}
+        autoFocus
+        onKeyDown={e => { if (e.key === 'Escape') onCancel(); if (e.key === 'Enter') onConfirm(value); }}
+      />
+      {variants.length > 1 && (
+        <div className="kdc-variant-picker">
+          {variants.map(v => (
+            <button key={v.character} className={`kdc-variant-btn ${v.character === value ? 'kdc-variant-active' : ''}`} onClick={() => onConfirm(v.character)} title={v.name}>
+              <span className="kdc-variant-char">{v.character}</span>
+              <span className="kdc-variant-name">{v.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      {variants.length <= 1 && <button className="kdc-rad-edit-ok" onClick={() => onConfirm(value)}>OK</button>}
+    </div>
+  );
+}
+
+/** Add radical card with variant picker */
+function RadicalAddWithVariants({ value, onChange, onConfirm, onCancel }: {
+  value: string; onChange: (v: string) => void; onConfirm: (char: string) => void; onCancel: () => void;
+}) {
+  const variants = useMemo(() => value ? getRadicalVariants(value) : [], [value]);
+  return (
+    <div className="kdc-add-radical-card">
+      <input
+        className="kdc-add-radical-input"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        maxLength={1}
+        autoFocus
+        placeholder="字"
+        onKeyDown={e => {
+          if (e.key === 'Enter') onConfirm(value);
+          if (e.key === 'Escape') onCancel();
+        }}
+      />
+      {variants.length > 1 ? (
+        <div className="kdc-variant-picker">
+          {variants.map(v => (
+            <button key={v.character} className={`kdc-variant-btn ${v.character === value ? 'kdc-variant-active' : ''}`} onClick={() => onConfirm(v.character)} title={v.name}>
+              <span className="kdc-variant-char">{v.character}</span>
+              <span className="kdc-variant-name">{v.name}</span>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <button className="kdc-add-radical-ok" onClick={() => onConfirm(value)}>Thêm</button>
+      )}
+    </div>
+  );
+}
+
+/** Stroke preview overlay */
+function StrokePreview({ char, info, onClose }: {
+  char: string;
+  info: { hv: string; meaning: string; mnemonic: string; radicals: string[] };
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const writer = useRef<HanziWriter | null>(null);
+  const SIZE = 360;
+
+  useEffect(() => {
+    if (!ref.current) return;
+    ref.current.innerHTML = '';
+    try {
+      writer.current = HanziWriter.create(ref.current, char, {
+        width: SIZE, height: SIZE, padding: 12,
+        strokeColor: '#e2e8f0', radicalColor: '#e2e8f0',
+        showOutline: true, outlineColor: 'rgba(255,255,255,0.08)',
+        charDataLoader: (c, done) => cachedCharDataLoader(c, done, () => {
+          if (ref.current) ref.current.innerHTML = `<div style="font-size:10rem;color:#e2e8f0;font-family:'Noto Serif JP',serif;text-align:center;line-height:${SIZE}px">${c}</div>`;
+        }),
+      });
+    } catch {
+      if (ref.current) ref.current.innerHTML = `<div style="font-size:10rem;color:#e2e8f0;font-family:'Noto Serif JP',serif;text-align:center;line-height:${SIZE}px">${char}</div>`;
+    }
+    return () => { writer.current = null; };
+  }, [char]);
+
+  const play = () => { writer.current?.hideCharacter(); writer.current?.animateCharacter({ strokeAnimationSpeed: 20, delayBetweenStrokes: 30 }); };
+
+  return (
+    <div className="kdc-stroke-overlay" onClick={onClose}>
+      <div className="kdc-stroke-modal" onClick={e => e.stopPropagation()}>
+        <button className="kdc-stroke-close" onClick={onClose}><X size={18} /></button>
+        <div ref={ref} className="kdc-stroke-canvas" />
+        <div className="kdc-stroke-info">
+          <span className="kdc-stroke-hv">{info.hv}</span>
+          <span className="kdc-stroke-meaning">{info.meaning}</span>
+        </div>
+        <button className="kdc-stroke-replay" onClick={play}>▶ Xem cách viết</button>
+        {info.radicals.length > 0 && (
+          <div className="kdc-stroke-radicals">
+            {info.radicals.map((r, i) => {
+              const ci = getComponentInfo(r);
+              return (
+                <span key={`${r}-${i}`} className="kdc-stroke-radical-chip">
+                  <span className="kdc-stroke-radical-char">{r}</span>
+                  <span className="kdc-stroke-radical-name">{ci.name}</span>
+                </span>
+              );
+            })}
+          </div>
+        )}
+        {info.mnemonic && <div className="kdc-stroke-mnemonic">💡 {info.mnemonic}</div>}
       </div>
     </div>
   );

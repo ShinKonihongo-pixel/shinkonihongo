@@ -64,6 +64,7 @@ export function KanjiStudyPage({
       ) : (
         <StudyView
           displayCards={state.displayCards}
+          allCards={kanjiCards}
           currentIndex={state.currentIndex}
           isFlipped={state.isFlipped}
           isShuffled={state.isShuffled}
@@ -80,6 +81,7 @@ export function KanjiStudyPage({
           onOpenSettings={() => state.setShowSettingsModal(true)}
           onFilterChange={state.setMemorizationFilter}
           onToggleMemorization={handleToggleMemorization}
+          onUpdateCard={onUpdateKanjiCard}
         />
       )}
 

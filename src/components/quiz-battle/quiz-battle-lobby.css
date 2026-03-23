@@ -1,232 +1,347 @@
-/* Quiz Battle Lobby styles, prefix: qb- */
+/* Quiz Battle Lobby — centered 1v1 duel design */
 
-/* ─── Duel Arena ─────────────────────────────────────────────── */
-.qb-duel-arena {
+/* ─── Full-screen Lobby Container ─────────────────────────── */
+.qb-lobby {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
   display: flex;
-  align-items: stretch;
-  gap: 0;
-  margin: 1rem 0 0.5rem;
-  background: rgba(0,0,0,0.25);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 16px;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 1rem 1.5rem;
+  overflow-y: auto;
+  background: linear-gradient(135deg, #0a0a14 0%, #111128 50%, #0d1a2d 100%);
+  color: #fff;
+}
+
+/* ─── Animated Background ─────────────────────────────────── */
+.qb-lobby-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
   overflow: hidden;
-  transition: border-color 0.4s;
+  z-index: 0;
 }
 
-.qb-duel-arena-live {
-  border-color: rgba(239,68,68,0.35);
-  box-shadow: 0 0 24px rgba(239,68,68,0.12);
+.qb-lobby-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.15;
 }
 
-.qb-duel-side {
+.qb-lobby-orb-1 {
+  width: 400px; height: 400px;
+  background: #ef4444;
+  top: -100px; left: -80px;
+  animation: qb-orb-drift 12s ease-in-out infinite alternate;
+}
+
+.qb-lobby-orb-2 {
+  width: 350px; height: 350px;
+  background: #3b82f6;
+  bottom: -80px; right: -60px;
+  animation: qb-orb-drift 14s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes qb-orb-drift {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(30px, -30px); }
+}
+
+/* ─── Header ──────────────────────────────────────────────── */
+.qb-lobby-header {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  margin-bottom: 0.75rem;
+  width: 100%;
+  max-width: 480px;
+}
+
+.qb-lobby-leave {
+  position: absolute;
+  top: 0; left: 0;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.6);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.qb-lobby-leave:hover { background: rgba(239,68,68,0.2); color: #ef4444; border-color: rgba(239,68,68,0.4); }
+
+.qb-lobby-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(90deg, #ef4444, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.qb-lobby-tags {
+  display: flex;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.qb-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.qb-tag-live { color: #22c55e; border-color: rgba(34,197,94,0.3); }
+.qb-live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: qb-blink 1.4s ease-in-out infinite;
+}
+
+/* ─── Duel Arena (centered) ───────────────────────────────── */
+.qb-arena {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  width: 100%;
+  max-width: 480px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+  transition: border-color 0.4s, box-shadow 0.4s;
+}
+
+.qb-arena-live {
+  border-color: rgba(239,68,68,0.3);
+  box-shadow: 0 0 40px rgba(239,68,68,0.08), inset 0 0 30px rgba(239,68,68,0.03);
+}
+
+/* ─── Fighter Card ────────────────────────────────────────── */
+.qb-fighter {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1.25rem 0.75rem 1rem;
-  gap: 0.45rem;
-  animation: qb-card-enter 0.4s ease-out;
+  padding: 1.5rem 0.75rem 1.25rem;
+  gap: 0.5rem;
+  min-height: 180px;
+  justify-content: center;
 }
 
-.qb-duel-side-host       { background: rgba(239,68,68,0.06); }
-.qb-duel-side-challenger { background: rgba(59,130,246,0.06); }
+.qb-fighter-host       { background: rgba(239,68,68,0.04); }
+.qb-fighter-challenger { background: rgba(59,130,246,0.04); }
 
-.qb-duel-avatar {
-  width: 72px;
-  height: 72px;
+.qb-fighter-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.qb-fighter-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* ─── Avatar ──────────────────────────────────────────────── */
+.qb-avatar {
+  width: 76px;
+  height: 76px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
   overflow: hidden;
   flex-shrink: 0;
-  background: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.06);
+  font-size: 2rem;
+  transition: box-shadow 0.3s;
 }
 
-.qb-duel-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.qb-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-.qb-duel-avatar-host {
-  border: 3px solid rgba(239,68,68,0.6);
-  box-shadow: 0 0 16px rgba(239,68,68,0.35);
-}
-
-.qb-duel-avatar-challenger {
-  border: 3px solid rgba(59,130,246,0.6);
-  box-shadow: 0 0 16px rgba(59,130,246,0.35);
-}
-
-.qb-duel-name {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: rgba(255,255,255,0.9);
-  text-align: center;
-  max-width: 110px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.qb-duel-badges { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
-
-.qb-duel-crown {
-  font-size: 0.7rem;
+.qb-avatar-letter {
+  font-size: 1.8rem;
   font-weight: 800;
-  color: #f59e0b;
-  background: rgba(245,158,11,0.12);
-  border: 1px solid rgba(245,158,11,0.3);
-  border-radius: 999px;
+  color: rgba(255,255,255,0.7);
+}
+
+.qb-avatar-host {
+  border: 3px solid rgba(239,68,68,0.5);
+  box-shadow: 0 0 20px rgba(239,68,68,0.25);
+}
+
+.qb-avatar-challenger {
+  border: 3px solid rgba(59,130,246,0.5);
+  box-shadow: 0 0 20px rgba(59,130,246,0.25);
+}
+
+/* ─── Badges ──────────────────────────────────────────────── */
+.qb-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
   padding: 0.15rem 0.55rem;
+  border-radius: 999px;
   letter-spacing: 0.5px;
 }
 
-.qb-duel-elo {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  font-size: 0.78rem;
+.qb-badge-host {
+  color: #f59e0b;
+  background: rgba(245,158,11,0.12);
+  border: 1px solid rgba(245,158,11,0.25);
+}
+
+.qb-elo {
+  font-size: 0.75rem;
   font-weight: 700;
+  padding: 0.12rem 0.5rem;
   border-radius: 999px;
-  padding: 0.15rem 0.5rem;
 }
 
-.qb-duel-elo-host {
+.qb-elo-host {
   color: #ef4444;
-  background: rgba(239,68,68,0.12);
-  border: 1px solid rgba(239,68,68,0.25);
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.2);
 }
 
-.qb-duel-elo-challenger {
+.qb-elo-challenger {
   color: #60a5fa;
-  background: rgba(59,130,246,0.12);
-  border: 1px solid rgba(59,130,246,0.25);
+  background: rgba(59,130,246,0.1);
+  border: 1px solid rgba(59,130,246,0.2);
 }
 
-/* VS center column */
-.qb-duel-vs {
+/* ─── VS Divider ──────────────────────────────────────────── */
+.qb-vs {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 56px;
   flex-shrink: 0;
-  gap: 0.2rem;
-  background: rgba(0,0,0,0.2);
-  border-left: 1px solid rgba(255,255,255,0.06);
-  border-right: 1px solid rgba(255,255,255,0.06);
+  gap: 0.25rem;
+  background: rgba(0,0,0,0.25);
+  border-left: 1px solid rgba(255,255,255,0.05);
+  border-right: 1px solid rgba(255,255,255,0.05);
+  padding: 1rem 0;
 }
 
-.qb-duel-vs-text {
-  font-size: 1.1rem;
+.qb-vs-text {
+  font-size: 1.15rem;
   font-weight: 900;
   background: linear-gradient(135deg, #ef4444, #f59e0b);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: qb-pulse 2s ease-in-out infinite;
+  animation: qb-pulse 2.5s ease-in-out infinite;
 }
 
-.qb-duel-vs-ignite .qb-duel-vs-text {
-  filter: drop-shadow(0 0 6px rgba(239,68,68,0.8));
+.qb-vs-fire .qb-vs-text {
+  filter: drop-shadow(0 0 8px rgba(239,68,68,0.7));
   animation: qb-vs-ignite 1.5s ease-in-out infinite;
 }
 
-.qb-duel-vs-fire { font-size: 1.1rem; animation: qb-flicker 1s ease-in-out infinite; }
+.qb-vs-flame {
+  font-size: 1.2rem;
+  animation: qb-flicker 1s ease-in-out infinite;
+}
 
-/* Waiting slot */
-.qb-duel-waiting {
+/* ─── Waiting Slot ────────────────────────────────────────── */
+.qb-waiting-slot {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 0.6rem;
-  flex: 1;
-  padding: 1rem 0.75rem;
 }
 
-.qb-duel-waiting-icon { font-size: 1.8rem; opacity: 0.4; animation: qb-pulse 2s ease-in-out infinite; }
+.qb-waiting-ring {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 2px dashed rgba(59,130,246,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: rgba(59,130,246,0.4);
+  animation: qb-ring-pulse 2s ease-in-out infinite;
+}
 
-.qb-duel-waiting-text {
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.35);
-  text-align: center;
+.qb-waiting-label {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.3);
   animation: qb-blink 1.6s ease-in-out infinite;
 }
 
-/* ─── ELO preview bar ───────────────────────────────────────── */
-.qb-elo-preview {
+@keyframes qb-ring-pulse {
+  0%, 100% { border-color: rgba(59,130,246,0.25); transform: scale(1); }
+  50%       { border-color: rgba(59,130,246,0.45); transform: scale(1.03); }
+}
+
+/* ─── ELO Bar ─────────────────────────────────────────────── */
+.qb-elo-bar {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 0.85rem;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 10px;
-  margin-bottom: 0.5rem;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.qb-elo-diff {
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.45);
-  font-weight: 600;
-}
-
-.qb-elo-reward { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; font-weight: 700; }
-.qb-elo-win  { color: #22c55e; }
-.qb-elo-lose { color: #ef4444; }
-.qb-elo-sep  { color: rgba(255,255,255,0.2); }
-
-/* ─── Rules card ────────────────────────────────────────────── */
-.qb-rules-card {
+  width: 100%;
+  max-width: 480px;
+  padding: 0.45rem 0.85rem;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 12px;
-  padding: 0.85rem 1rem;
-  margin-top: 0.5rem;
-}
-
-.qb-rules-title {
-  display: flex;
-  align-items: center;
+  border-radius: 10px;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
   gap: 0.4rem;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: rgba(255,255,255,0.5);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 0.65rem;
 }
 
-.qb-rules-list { display: flex; flex-direction: column; gap: 0.45rem; }
+.qb-elo-diff   { font-size: 0.73rem; color: rgba(255,255,255,0.4); font-weight: 600; }
+.qb-elo-changes { display: flex; align-items: center; gap: 0.35rem; font-size: 0.76rem; font-weight: 700; }
+.qb-elo-win  { color: #22c55e; }
+.qb-elo-lose { color: #ef4444; }
+.qb-elo-sep  { color: rgba(255,255,255,0.15); }
 
-.qb-rule-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.82rem;
-  color: rgba(255,255,255,0.65);
-  line-height: 1.4;
-}
-
-.qb-rule-icon-zap    { color: #f59e0b; flex-shrink: 0; }
-.qb-rule-icon-shield { color: #60a5fa; flex-shrink: 0; }
-.qb-rule-icon-text   { font-size: 0.85rem; flex-shrink: 0; }
-
-/* ─── Right panel status ────────────────────────────────────── */
-.qb-right-status {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 2rem 1rem;
+/* ─── Status Line ─────────────────────────────────────────── */
+.qb-status {
+  position: relative;
+  z-index: 1;
   text-align: center;
+  margin-bottom: 0.5rem;
 }
 
 .qb-status-ready {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 800;
   background: linear-gradient(90deg, #ef4444, #f59e0b);
   -webkit-background-clip: text;
@@ -234,21 +349,97 @@
   background-clip: text;
 }
 
-.qb-status-wait { font-size: 1rem; font-weight: 700; color: rgba(255,255,255,0.5); }
-.qb-status-sub  { font-size: 0.8rem; color: rgba(255,255,255,0.3); }
+.qb-status-wait {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.4);
+}
 
-/* ─── Lobby animations ──────────────────────────────────────── */
-@keyframes qb-card-enter {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
+/* ─── Rules ────────────────────────────────────────────────── */
+.qb-rules {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem;
+  margin-top: 0.25rem;
+}
+
+.qb-rules-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.qb-rules-list { display: flex; flex-direction: column; gap: 0.35rem; }
+
+.qb-rule {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.35;
+}
+
+.qb-rule-zap    { color: #f59e0b; flex-shrink: 0; }
+.qb-rule-shield { color: #60a5fa; flex-shrink: 0; }
+.qb-rule-emoji  { font-size: 0.82rem; flex-shrink: 0; }
+
+/* ─── Footer ──────────────────────────────────────────────── */
+.qb-lobby-footer {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+  margin-top: 0.75rem;
+}
+
+/* ─── Join section override for centering ─────────────────── */
+.qb-lobby .pl-lobby-join {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+}
+
+/* ─── Animations ──────────────────────────────────────────── */
+@keyframes qb-pulse {
+  0%, 100% { opacity: 0.8; }
+  50%       { opacity: 1; }
 }
 
 @keyframes qb-vs-ignite {
   0%, 100% { filter: drop-shadow(0 0 4px rgba(239,68,68,0.6)); }
-  50%       { filter: drop-shadow(0 0 12px rgba(245,158,11,0.9)); }
+  50%       { filter: drop-shadow(0 0 14px rgba(245,158,11,0.9)); }
 }
 
 @keyframes qb-flicker {
   0%, 100% { transform: scale(1) rotate(-3deg); }
-  50%       { transform: scale(1.15) rotate(3deg); }
+  50%       { transform: scale(1.2) rotate(3deg); }
+}
+
+@keyframes qb-blink {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 1; }
+}
+
+/* ─── Responsive ──────────────────────────────────────────── */
+@media (max-width: 400px) {
+  .qb-arena { border-radius: 14px; }
+  .qb-fighter { padding: 1.25rem 0.5rem 1rem; min-height: 160px; }
+  .qb-avatar, .qb-waiting-ring { width: 64px; height: 64px; }
+  .qb-avatar-letter { font-size: 1.5rem; }
+  .qb-waiting-ring { font-size: 1.5rem; }
+  .qb-vs { width: 44px; }
+  .qb-vs-text { font-size: 1rem; }
 }
