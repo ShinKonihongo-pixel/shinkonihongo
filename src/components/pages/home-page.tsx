@@ -1,7 +1,7 @@
 // Homepage - Japanese Learning Dashboard with Authentic Japanese Aesthetic
 // Features: Immersive Japanese design, sakura motifs, traditional color palette
 
-import { useState } from 'react';
+import { useState, Suspense, lazy } from 'react';
 import type { JLPTLevel, Lesson, Flashcard } from '../../types/flashcard';
 import type { ProgressSummary } from '../../types/progress';
 import { DailyWordsTask } from '../home/daily-words-task';
@@ -24,6 +24,9 @@ import {
   ArrowRight,
   Sparkles,
 } from 'lucide-react';
+import { DashboardLeaderboard } from '../dashboard/dashboard-leaderboard';
+import { SmartDashboard } from '../home/smart-dashboard';
+const DailyMissionsWidget = lazy(() => import('../achievements/daily-missions-widget').then(m => ({ default: m.DailyMissionsWidget })));
 import '../home/home.css';
 
 export interface StudySelection {
@@ -62,6 +65,18 @@ interface HomePageProps {
   progress?: ProgressSummary;
   dailyWords?: DailyWordsProps;
   onSpeak?: (text: string) => void;
+  currentUserId?: string;
+  onShowTour?: () => void;
+  missions?: {
+    missions: import('../../types/achievements').DailyMission[];
+    allCompleted: boolean;
+    bonusClaimed: boolean;
+    onClaimBonus: () => void;
+  };
+  onShowAchievements?: () => void;
+  studySessions?: import('../../types/user').StudySession[];
+  gameSessions?: import('../../types/user').GameSession[];
+  jlptSessions?: import('../../types/user').JLPTSession[];
 }
 
 const ACTIVITIES = [
@@ -108,6 +123,13 @@ export function HomePage({
   progress,
   dailyWords,
   onSpeak,
+  currentUserId,
+  onShowTour,
+  missions,
+  onShowAchievements,
+  studySessions = [],
+  gameSessions = [],
+  jlptSessions = [],
 }: HomePageProps) {
   const totalCards = cards.length;
   const [expandedLevel, setExpandedLevel] = useState<JLPTLevel | null>(null);
@@ -298,6 +320,30 @@ export function HomePage({
           />
         )}
 
+        {/* Daily Missions Widget */}
+        {missions && missions.missions.length > 0 && (
+          <Suspense fallback={null}>
+            <DailyMissionsWidget
+              missions={missions.missions}
+              allCompleted={missions.allCompleted}
+              bonusClaimed={missions.bonusClaimed}
+              onClaimBonus={missions.onClaimBonus}
+            />
+          </Suspense>
+        )}
+
+        {/* ===== SMART DASHBOARD — Continue + Suggestions ===== */}
+        {onNavigate && (
+          <SmartDashboard
+            studySessions={studySessions}
+            gameSessions={gameSessions}
+            jlptSessions={jlptSessions}
+            levelProgress={levelProgress}
+            cardsDue={cardsDue}
+            onNavigate={onNavigate}
+          />
+        )}
+
         {/* ===== ACTIVITIES GRID ===== */}
         <section className="hp-section">
           <div className="hp-section-header">
@@ -326,7 +372,30 @@ export function HomePage({
               );
             })}
           </div>
+
+          {/* Action buttons */}
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+            {onShowAchievements && (
+              <button className="hp-tour-btn" onClick={onShowAchievements}>
+                <Trophy size={14} />
+                Thành tựu
+              </button>
+            )}
+            {onShowTour && (
+              <button className="hp-tour-btn" onClick={onShowTour}>
+                <Sparkles size={14} />
+                Hướng dẫn
+              </button>
+            )}
+          </div>
         </section>
+
+        {/* ===== QUIZ BATTLE LEADERBOARD ===== */}
+        {currentUserId && (
+          <section className="hp-section">
+            <DashboardLeaderboard currentUserId={currentUserId} />
+          </section>
+        )}
 
         {/* ===== JLPT LEVELS ===== */}
         <section className="hp-section">

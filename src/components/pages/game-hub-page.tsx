@@ -28,6 +28,9 @@ import { GameCreate } from '../quiz-game/game-create';
 import { KanjiBattleSetup } from '../kanji-battle/kanji-battle-setup';
 import { FloatingMusicPlayer } from '../game-hub/floating-music-player';
 import '../game-hub/game-hub.css';
+import '../game-hub/game-room-setup.css';
+import '../game-hub/race-game-v2.css';
+import '../game-hub/game-modals.css';
 
 // Modal-specific error boundary that captures and displays the error without crashing the page
 class ModalErrorBoundary extends Component<

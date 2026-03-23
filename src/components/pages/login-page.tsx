@@ -6,7 +6,7 @@ import { User, Lock, KeyRound, Check, AlertCircle, Eye, EyeOff, ArrowRight, Book
 import './login-page.css';
 
 interface LoginPageProps {
-  onLogin: (username: string, password: string) => { success: boolean; error?: string };
+  onLogin: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
   onRegister: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
 }
 
@@ -39,7 +39,7 @@ export function LoginPage({ onLogin, onRegister }: LoginPageProps) {
       }
       setShowSuccessModal(true);
     } else {
-      const result = onLogin(username, password);
+      const result = await onLogin(username, password);
       if (!result.success) {
         setError(result.error || 'Đăng nhập thất bại');
       }

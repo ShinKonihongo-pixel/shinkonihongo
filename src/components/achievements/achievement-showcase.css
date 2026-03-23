@@ -1,0 +1,204 @@
+/* Achievement showcase modal — grid display */
+
+.ach-showcase-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  animation: ach-fade-in 0.2s ease;
+}
+
+.ach-showcase-modal {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .ach-showcase-modal {
+    width: 560px;
+    max-height: 85vh;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+    height: auto;
+  }
+}
+
+.ach-showcase-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ach-showcase-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.ach-showcase-close {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ach-showcase-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Category filter tabs */
+.ach-showcase-filters {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.ach-showcase-filters::-webkit-scrollbar { display: none; }
+
+.ach-filter-btn {
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ach-filter-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.ach-filter-btn.active {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.4);
+  color: #c4b5fd;
+}
+
+/* Achievement grid */
+.ach-showcase-grid {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.5rem 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  align-content: start;
+}
+
+@media (min-width: 640px) {
+  .ach-showcase-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Achievement card */
+.ach-card {
+  padding: 1rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+  transition: all 0.2s;
+}
+.ach-card.locked {
+  opacity: 0.4;
+}
+.ach-card.unlocked {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.ach-card.gold-unlocked {
+  border-color: rgba(255, 215, 0, 0.3);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.08);
+}
+
+.ach-card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+.ach-card-icon.locked { background: rgba(255, 255, 255, 0.06); color: rgba(255, 255, 255, 0.3); }
+.ach-card-icon.bronze { background: linear-gradient(135deg, #cd7f32, #b8860b); }
+.ach-card-icon.silver { background: linear-gradient(135deg, #c0c0c0, #a8a8a8); }
+.ach-card-icon.gold { background: linear-gradient(135deg, #ffd700, #f0c000); }
+
+.ach-card-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.2;
+}
+
+.ach-card-jp {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Progress bar */
+.ach-card-progress {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.ach-card-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #8b5cf6, #ec4899);
+  transition: width 0.5s ease;
+}
+
+.ach-card-value {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* Tier dots */
+.ach-card-tiers {
+  display: flex;
+  gap: 4px;
+}
+.ach-tier-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+}
+.ach-tier-dot.earned { border: none; }
+.ach-tier-dot.earned.bronze { background: #cd7f32; }
+.ach-tier-dot.earned.silver { background: #c0c0c0; }
+.ach-tier-dot.earned.gold { background: #ffd700; box-shadow: 0 0 6px rgba(255, 215, 0, 0.5); }
+
+@keyframes ach-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

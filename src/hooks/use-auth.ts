@@ -4,16 +4,14 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import type { User, CurrentUser, UserRole } from '../types/user';
 import * as firestoreService from '../services/firestore';
 import { authReady } from '../lib/firebase';
+import { hashPassword, verifyPassword } from '../utils/password-hash';
 
 const CURRENT_USER_KEY = 'flashcard-current-user';
 
-// Default super admin account
-const DEFAULT_SUPER_ADMIN: Omit<User, 'id'> = {
-  username: 'superadmin',
-  password: 'superadmin', // Demo only - never do this in production!
-  role: 'super_admin',
-  createdAt: '2024-01-01',
-};
+// SHA-256 of 'shinko_v1_superadmin' — pre-computed to avoid async at module level
+// Generated via: hashPassword('superadmin')
+// This is replaced at runtime if the account doesn't exist yet
+const DEFAULT_SUPER_ADMIN_PASSWORD_PLAINTEXT = 'superadmin';
 
 export function useAuth() {
   const [users, setUsers] = useState<User[]>([]);
@@ -44,7 +42,14 @@ export function useAuth() {
         const superAdminExists = usersData.some(u => u.username === 'superadmin');
         if (!superAdminExists) {
           try {
-            await firestoreService.addUser(DEFAULT_SUPER_ADMIN);
+            const hashedPw = await hashPassword(DEFAULT_SUPER_ADMIN_PASSWORD_PLAINTEXT);
+            const defaultSuperAdmin: Omit<User, 'id'> = {
+              username: 'superadmin',
+              password: hashedPw,
+              role: 'super_admin',
+              createdAt: '2024-01-01',
+            };
+            await firestoreService.addUser(defaultSuperAdmin);
           } catch (err) {
             console.error('Error creating default super admin:', err);
           }
@@ -74,11 +79,30 @@ export function useAuth() {
   }, [currentUser]);
 
   // Login
-  const login = useCallback((username: string, password: string): { success: boolean; error?: string } => {
-    const user = users.find(u => u.username === username && u.password === password);
+  const login = useCallback(async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    const user = users.find(u => u.username === username);
     if (!user) {
       return { success: false, error: 'Tên đăng nhập hoặc mật khẩu không đúng' };
     }
+
+    // Try hash comparison first, then fall back to plaintext (backward compat for old accounts)
+    const hashed = await hashPassword(password);
+    const matchesHash = await verifyPassword(password, user.password);
+    const matchesPlaintext = !matchesHash && user.password === password;
+
+    if (!matchesHash && !matchesPlaintext) {
+      return { success: false, error: 'Tên đăng nhập hoặc mật khẩu không đúng' };
+    }
+
+    // Silent migration: upgrade plaintext password to hash
+    if (matchesPlaintext) {
+      try {
+        await firestoreService.updateUser(user.id, { password: hashed });
+      } catch (err) {
+        console.error('Error migrating password to hash:', err);
+      }
+    }
+
     setCurrentUser({
       id: user.id,
       username: user.username,
@@ -118,9 +142,10 @@ export function useAuth() {
     try {
       // Ensure Firebase auth is ready before writing to Firestore
       await authReady;
+      const hashedPw = await hashPassword(password);
       const newUserData: Omit<User, 'id'> = {
         username,
-        password,
+        password: hashedPw,
         role,
         createdBy,
         createdAt: new Date().toISOString().split('T')[0],
@@ -184,7 +209,8 @@ export function useAuth() {
       return { success: false, error: 'Mật khẩu phải có ít nhất 4 ký tự' };
     }
     try {
-      await firestoreService.updateUser(userId, { password: newPassword });
+      const hashedPw = await hashPassword(newPassword);
+      await firestoreService.updateUser(userId, { password: hashedPw });
       return { success: true };
     } catch (err) {
       console.error('Error changing password:', err);

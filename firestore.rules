@@ -1,0 +1,165 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: check if user is authenticated
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // Helper: check if user is the document owner
+    function isOwner(userId) {
+      return isAuth() && request.auth.uid == userId;
+    }
+
+    // Helper: get user role from users collection
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    // Helper: check admin roles (admin, super_admin)
+    function isAdmin() {
+      return isAuth() && getUserRole() in ['admin', 'super_admin'];
+    }
+
+    function isSuperAdmin() {
+      return isAuth() && getUserRole() == 'super_admin';
+    }
+
+    // Staff: director, branch_admin, admin, super_admin can read user sessions
+    function isStaff() {
+      return isAuth() && getUserRole() in ['admin', 'super_admin', 'director', 'branch_admin'];
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Content collections
+    match /flashcards/{docId} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+
+    match /grammarCards/{docId} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+
+    match /kanjiCards/{docId} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+
+    match /lessons/{docId} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+
+    match /grammarLessons/{docId} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+
+    match /kanjiLessons/{docId} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+
+    // JLPT content
+    match /jlptQuestions/{docId} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+
+    match /jlptFolders/{docId} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+
+    // Kaiwa content
+    match /kaiwaQuestions/{docId} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+
+    match /kaiwaFolders/{docId} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+
+    // User sessions — own data only; staff can read all
+    match /studySessions/{docId} {
+      allow read: if isAuth() && (resource.data.userId == request.auth.uid || isStaff());
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+
+    match /gameSessions/{docId} {
+      allow read: if isAuth() && (resource.data.userId == request.auth.uid || isStaff());
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+
+    match /jlptSessions/{docId} {
+      allow read: if isAuth() && (resource.data.userId == request.auth.uid || isStaff());
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+
+    // User achievements (doc ID == userId)
+    match /userAchievements/{userId} {
+      allow read: if isAuth();
+      allow write: if isOwner(userId);
+    }
+
+    // Custom topics — creator owns; all authenticated can read
+    match /customTopics/{docId} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow update, delete: if (isAuth() && resource.data.createdBy == request.auth.uid) || isAdmin();
+    }
+
+    match /customTopicFolders/{docId} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow update, delete: if (isAuth() && resource.data.createdBy == request.auth.uid) || isAdmin();
+    }
+
+    match /customTopicQuestions/{docId} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow update, delete: if (isAuth() && resource.data.createdBy == request.auth.uid) || isAdmin();
+    }
+
+    // User personal kanji analysis (scoped by userId field)
+    match /kanjiAnalysis/{docId} {
+      allow read, write: if (isAuth() && resource.data.userId == request.auth.uid) || isAdmin();
+    }
+
+    // Vocabulary notes and notebooks — any authenticated user (personal data)
+    match /vocabularyNotes/{docId} {
+      allow read, write: if isAuth();
+    }
+
+    match /vocabularyNotebooks/{docId} {
+      allow read, write: if isAuth();
+    }
+
+    // Radical kanji custom data — read for all auth; write for admin+
+    match /radicalKanjiCustom/{docId} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+
+    // Global settings — read for all auth; write for super_admin only
+    match /settings/{docId} {
+      allow read: if isAuth();
+      allow write: if isSuperAdmin();
+    }
+  }
+}

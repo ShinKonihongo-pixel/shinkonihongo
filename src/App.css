@@ -2905,3 +2905,15 @@ textarea:focus-visible {
   }
 }
 
+/* Sidebar mission progress badge */
+.sidebar-mission-badge {
+  font-size: 0.6rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  color: white;
+  padding: 1px 6px;
+  border-radius: 8px;
+  margin-left: auto;
+  line-height: 1.4;
+}
+

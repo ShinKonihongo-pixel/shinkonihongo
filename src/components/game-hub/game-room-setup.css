@@ -1,0 +1,566 @@
+/* ============================================================
+   game-room-setup.css
+   Unified Game Room Setup styles (.grs-* classes)
+   Extracted from game-hub.css — lines 1-560
+   ============================================================ */
+
+/* ============ UNIFIED GAME ROOM SETUP ============ */
+/* Professional, consistent room creation across all games */
+
+.grs {
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.grs-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1rem;
+  color: white;
+}
+
+.grs-back {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.grs-back:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateX(-2px);
+}
+
+.grs-header-info {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.grs-game-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  font-size: 1.5rem;
+}
+
+.grs-game-icon img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.grs-header-text h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.grs-game-name {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+/* Error */
+.grs-error {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem;
+  padding: 0.875rem 1rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  color: #dc2626;
+  font-size: 0.9rem;
+}
+
+/* Form */
+.grs-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.25rem 1rem 2rem;
+}
+
+/* Field Group */
+.grs-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.grs-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.grs-label svg {
+  color: var(--text-muted);
+}
+
+.grs-label strong {
+  color: var(--primary);
+}
+
+/* Input */
+.grs-input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: var(--card-bg);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  font-size: 1rem;
+  color: var(--text);
+  transition: all 0.2s;
+}
+
+.grs-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(227, 66, 52, 0.1);
+}
+
+/* Slider */
+.grs-slider-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.grs-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  position: relative;
+}
+
+.grs-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  background: var(--primary);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(227, 66, 52, 0.3);
+  transition: transform 0.2s;
+}
+
+.grs-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+.grs-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  background: var(--primary);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(227, 66, 52, 0.3);
+}
+
+.grs-slider-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding: 0 0.25rem;
+}
+
+/* Select Buttons */
+.grs-select-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.grs-select-buttons.small .grs-select-btn {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.grs-select-buttons.medium .grs-select-btn {
+  padding: 0.625rem 1rem;
+  font-size: 0.9rem;
+  min-width: 48px;
+}
+
+.grs-select-buttons.large .grs-select-btn {
+  padding: 0.75rem 1.25rem;
+  font-size: 1rem;
+}
+
+.grs-select-btn {
+  background: var(--card-bg);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.grs-select-btn:hover {
+  border-color: var(--primary);
+  background: var(--jp-sakura-light);
+}
+
+.grs-select-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+/* Toggle Section */
+.grs-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.grs-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.grs-toggle-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.grs-toggle-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--jp-sakura-light);
+  border-radius: 10px;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.grs-toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.grs-toggle-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.grs-toggle-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.grs-toggle-btn {
+  position: relative;
+  width: 52px;
+  height: 28px;
+  background: var(--border);
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.grs-toggle-btn.active {
+  background: var(--primary);
+}
+
+.grs-toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s;
+}
+
+.grs-toggle-btn.active .grs-toggle-knob {
+  left: 27px;
+}
+
+/* Advanced Toggle */
+.grs-advanced-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.grs-advanced-toggle:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.grs-advanced-toggle svg:last-child {
+  transition: transform 0.3s;
+}
+
+.grs-advanced-toggle svg:last-child.rotated {
+  transform: rotate(180deg);
+}
+
+/* Rules Preview */
+.grs-rules {
+  padding: 1rem;
+  background: var(--jp-sakura-light);
+  border-radius: 12px;
+  animation: fadeIn 0.3s ease;
+}
+
+.grs-rules h4 {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.grs-rules ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.grs-rules li {
+  padding: 0.375rem 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Preview Card */
+.grs-preview {
+  padding: 1rem;
+  background: var(--card-bg);
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  transition: all 0.3s;
+}
+
+.grs-preview-header {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  margin-bottom: 0.875rem;
+}
+
+.grs-preview-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-size: 1.25rem;
+}
+
+.grs-preview-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.grs-preview-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.grs-preview-game {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.grs-preview-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.grs-preview-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.625rem;
+  background: var(--bg);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.grs-preview-stat svg {
+  flex-shrink: 0;
+}
+
+.grs-preview-stat.highlight {
+  background: var(--jp-sakura-light);
+  color: var(--primary);
+}
+
+/* Submit Button */
+.grs-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  background: var(--primary);
+  border: none;
+  border-radius: 14px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: auto;
+}
+
+.grs-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.grs-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.grs-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+  .grs-header {
+    padding: 1rem;
+  }
+
+  .grs-game-icon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .grs-header-text h1 {
+    font-size: 1.1rem;
+  }
+
+  .grs-form {
+    padding: 1rem 0.875rem 1.5rem;
+    gap: 1rem;
+  }
+
+  .grs-select-buttons.medium .grs-select-btn {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.85rem;
+    min-width: 42px;
+  }
+
+  .grs-toggle-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .grs-submit {
+    padding: 0.875rem 1.25rem;
+    font-size: 1rem;
+  }
+}
+
+/* Dark Mode */
+[data-theme="dark"] .grs-input {
+  background: var(--card-bg);
+}
+
+[data-theme="dark"] .grs-select-btn {
+  background: var(--card-bg);
+}
+
+[data-theme="dark"] .grs-select-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .grs-preview {
+  background: var(--card-bg);
+}
+
+[data-theme="dark"] .grs-rules {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .grs-toggles {
+  background: var(--card-bg);
+}
+
+[data-theme="dark"] .grs-toggle-icon {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .grs-preview-stat {
+  background: rgba(255, 255, 255, 0.05);
+}
+

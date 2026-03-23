@@ -36,6 +36,13 @@ const ExercisePage = lazy(() => import('./components/pages/exercise/index.tsx').
 const KanjiStudyPage = lazy(() => import('./components/pages/kanji-study-page').then(m => ({ default: m.KanjiStudyPage })));
 const CenterMembersPage = lazy(() => import('./components/pages/center-members-page').then(m => ({ default: m.CenterMembersPage })));
 const CenterDashboardPage = lazy(() => import('./components/pages/center-dashboard-page').then(m => ({ default: m.CenterDashboardPage })));
+const PricingPage = lazy(() => import('./components/pages/pricing-page').then(m => ({ default: m.PricingPage })));
+const RolePermissionsPage = lazy(() => import('./components/pages/role-permissions-page').then(m => ({ default: m.RolePermissionsPage })));
+const OnboardingTour = lazy(() => import('./components/onboarding/onboarding-tour').then(m => ({ default: m.OnboardingTour })));
+const AchievementToast = lazy(() => import('./components/achievements/achievement-toast').then(m => ({ default: m.AchievementToast })));
+const AchievementShowcase = lazy(() => import('./components/achievements/achievement-showcase').then(m => ({ default: m.AchievementShowcase })));
+const CelebrationOverlay = lazy(() => import('./components/achievements/celebration-overlay').then(m => ({ default: m.CelebrationOverlay })));
+const DailyMissionsWidget = lazy(() => import('./components/achievements/daily-missions-widget').then(m => ({ default: m.DailyMissionsWidget })));
 
 import type { GameType } from './types/game-hub';
 import { useProgress } from './hooks/use-progress';
@@ -45,6 +52,7 @@ import { useDailyWords } from './hooks/use-daily-words';
 import { OfflineIndicator } from './components/common/offline-indicator';
 import { FloatingChatButton } from './components/common/floating-chat-button';
 import { FloatingChatPanel } from './components/common/floating-chat-panel';
+import { AiTutorPanel } from './components/common/ai-tutor-panel';
 import { JLPTLevelModal } from './components/common/jlpt-level-modal';
 import { ReadingSettingsProvider } from './contexts/reading-settings-context';
 import { ListeningSettingsProvider } from './contexts/listening-settings-context';
@@ -58,6 +66,7 @@ import { useCenterData } from './hooks/use-center-data';
 import { UserDataProvider, useUserData } from './contexts/user-data-context';
 import { FlashcardDataProvider, useFlashcardData } from './contexts/flashcard-data-context';
 import { JLPTDataProvider, useJLPTData } from './contexts/jlpt-data-context';
+import { AchievementProvider, useAchievementContextOptional } from './contexts/achievement-context';
 
 import './App.css';
 
@@ -153,14 +162,16 @@ function AppInner() {
   return (
     <FlashcardDataProvider levelFilter={levelFilter}>
       <JLPTDataProvider currentUserId={currentUser?.id ?? ''} levelFilter={levelFilter}>
-        <ReadingSettingsProvider>
-          <ListeningSettingsProvider>
-            <AppContentWrapper
-              isCenterApp={isCenterApp}
-              centerData={centerData}
-            />
-          </ListeningSettingsProvider>
-        </ReadingSettingsProvider>
+        <AchievementProvider>
+          <ReadingSettingsProvider>
+            <ListeningSettingsProvider>
+              <AppContentWrapper
+                isCenterApp={isCenterApp}
+                centerData={centerData}
+              />
+            </ListeningSettingsProvider>
+          </ReadingSettingsProvider>
+        </AchievementProvider>
       </JLPTDataProvider>
     </FlashcardDataProvider>
   );
@@ -187,10 +198,11 @@ function AppContentWrapper({ isCenterApp, centerData }: AppContentWrapperProps) 
 }
 
 function AppContent() {
-  // Use all 3 contexts
+  // Use all 3 contexts + achievement context
   const userData = useUserData();
   const flashcardData = useFlashcardData();
   const jlptData = useJLPTData();
+  const achievementCtx = useAchievementContextOptional();
 
   // Local navigation state
   const [currentPage, setCurrentPage] = useState<Page>('home');
@@ -201,6 +213,7 @@ function AppContent() {
   const [editingLectureFolderId, setEditingLectureFolderId] = useState<string | undefined>(undefined);
   const [editingLectureLevel, setEditingLectureLevel] = useState<JLPTLevel | undefined>(undefined);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isAiChatOpen, setIsAiChatOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Handle URL parameters for game join (QR code scanning)
@@ -353,6 +366,7 @@ function AppContent() {
   // JLPT level modal state - show if logged in but no level set
   const [showJlptLevelModal, setShowJlptLevelModal] = useState(false);
   const [jlptLevelSkipped, setJlptLevelSkipped] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Show JLPT level modal on first login - derived state sync
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -363,6 +377,16 @@ function AppContent() {
       setShowJlptLevelModal(false);
     }
   }, [currentUser, jlptLevelSkipped]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  // Show onboarding tour on first login (after JLPT modal dismissed)
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (currentUser && !showJlptLevelModal) {
+      const seen = localStorage.getItem('shinko_onboarding_seen');
+      if (!seen) setShowOnboarding(true);
+    }
+  }, [currentUser, showJlptLevelModal]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   // Reset to home page when user logs in (unless joining via QR code)
@@ -494,6 +518,18 @@ function AppContent() {
             userName={currentUser?.displayName || currentUser?.username}
             progress={progress}
             dailyWords={dailyWords}
+            currentUserId={currentUser?.id}
+            onShowTour={() => setShowOnboarding(true)}
+            studySessions={studySessions}
+            gameSessions={gameSessions}
+            jlptSessions={jlptSessions}
+            missions={achievementCtx ? {
+              missions: achievementCtx.missions,
+              allCompleted: achievementCtx.allMissionsCompleted,
+              bonusClaimed: achievementCtx.bonusXpClaimed,
+              onClaimBonus: achievementCtx.claimMissionBonus,
+            } : undefined}
+            onShowAchievements={achievementCtx?.openShowcase}
             onSpeak={(text) => {
               const utterance = new SpeechSynthesisUtterance(text);
               utterance.lang = 'ja-JP';
@@ -831,20 +867,54 @@ function AppContent() {
         )}
 
         {currentPage === 'center-dashboard' && currentUser && (
-          <CenterDashboardPage currentUser={currentUser} />
+          <CenterDashboardPage currentUser={currentUser} users={users} onNavigate={setCurrentPage} />
+        )}
+
+        {currentPage === 'pricing' && (
+          <PricingPage
+            isVip={canAccessLocked}
+            onUpgrade={() => {
+              setCurrentPage('settings');
+            }}
+          />
+        )}
+
+        {currentPage === 'permissions' && currentUser && currentUser.role === 'super_admin' && (
+          <RolePermissionsPage />
         )}
         </Suspense>
         </ErrorBoundary>
         </main>
       </div>
 
-      {/* Floating AI Chat Button and Panel - hidden on game-hub */}
+      {/* Floating Chat Buttons and Panels - hidden on game-hub */}
       {currentUser && currentPage !== 'game-hub' && (
         <>
+          {/* AI Tutor button (left of chat button) */}
+          <button
+            className="floating-ai-btn"
+            onClick={() => { setIsAiChatOpen(!isAiChatOpen); if (isChatOpen) setIsChatOpen(false); }}
+            title="AI Gia sư"
+            style={{
+              position: 'fixed', bottom: 20, right: 76, zIndex: 1000,
+              width: 46, height: 46, borderRadius: '50%',
+              background: isAiChatOpen ? 'linear-gradient(135deg, #8b5cf6, #ec4899)' : 'linear-gradient(135deg, #6d28d9, #9333ea)',
+              border: 'none', color: 'white', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 4px 16px rgba(139,92,246,0.3)',
+              fontSize: '1.2rem', transition: 'all 0.2s',
+            }}
+          >
+            🤖
+          </button>
+
+          {/* User chat button */}
           <FloatingChatButton
-            onClick={() => setIsChatOpen(!isChatOpen)}
+            onClick={() => { setIsChatOpen(!isChatOpen); if (isAiChatOpen) setIsAiChatOpen(false); }}
             isActive={isChatOpen}
           />
+
+          {/* User chat panel */}
           <ErrorBoundary fallback={null}>
             <FloatingChatPanel
               currentUser={currentUser}
@@ -852,7 +922,39 @@ function AppContent() {
               onClose={() => setIsChatOpen(false)}
             />
           </ErrorBoundary>
+
+          {/* AI Tutor panel */}
+          <ErrorBoundary fallback={null}>
+            <AiTutorPanel
+              isOpen={isAiChatOpen}
+              onClose={() => setIsAiChatOpen(false)}
+              userJlptLevel={currentUser.jlptLevel}
+            />
+          </ErrorBoundary>
         </>
+      )}
+
+      {/* Onboarding Tour - First-time user introduction */}
+      {showOnboarding && (
+        <Suspense fallback={null}>
+          <OnboardingTour onComplete={() => {
+            localStorage.setItem('shinko_onboarding_seen', 'true');
+            setShowOnboarding(false);
+          }} />
+        </Suspense>
+      )}
+
+      {/* Achievement system global UI */}
+      {achievementCtx && (
+        <Suspense fallback={null}>
+          <AchievementToast toast={achievementCtx.pendingToast} onDismiss={achievementCtx.dismissToast} />
+          <CelebrationOverlay reason={achievementCtx.celebration} onDismiss={achievementCtx.dismissCelebration} />
+          <AchievementShowcase
+            achievements={achievementCtx.achievements}
+            isOpen={achievementCtx.showShowcase}
+            onClose={achievementCtx.closeShowcase}
+          />
+        </Suspense>
       )}
 
       {/* JLPT Level Selection Modal - First login prompt */}

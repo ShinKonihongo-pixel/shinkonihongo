@@ -1,0 +1,96 @@
+/* Achievement unlock toast notification */
+
+.ach-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+  width: 320px;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, rgba(15, 15, 26, 0.95), rgba(26, 26, 46, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  animation: ach-toast-enter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.ach-toast.ach-toast-exit {
+  animation: ach-toast-leave 0.3s ease forwards;
+}
+
+.ach-toast-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: white;
+}
+.ach-toast-icon.bronze { background: linear-gradient(135deg, #cd7f32, #b8860b); }
+.ach-toast-icon.silver { background: linear-gradient(135deg, #c0c0c0, #a8a8a8); }
+.ach-toast-icon.gold { background: linear-gradient(135deg, #ffd700, #f0c000); box-shadow: 0 0 16px rgba(255, 215, 0, 0.3); }
+
+.ach-toast-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ach-toast-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 2px;
+}
+
+.ach-toast-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ach-toast-tier {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.ach-toast-tier.bronze { color: #cd7f32; }
+.ach-toast-tier.silver { color: #c0c0c0; }
+.ach-toast-tier.gold { color: #ffd700; }
+
+.ach-toast-xp {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #8b5cf6;
+  white-space: nowrap;
+}
+
+@keyframes ach-toast-enter {
+  from { opacity: 0; transform: translateX(100px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes ach-toast-leave {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(100px); }
+}
+
+@media (max-width: 640px) {
+  .ach-toast {
+    bottom: 16px;
+    right: 16px;
+    left: 16px;
+    width: auto;
+  }
+}

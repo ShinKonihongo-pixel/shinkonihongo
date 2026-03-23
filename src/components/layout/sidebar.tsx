@@ -27,11 +27,14 @@ import {
   ClipboardList,
   Users,
   BarChart3,
+  Crown,
+  Shield,
 } from 'lucide-react';
 import { useClassroomNotifications } from '../../hooks/use-classrooms';
 import { useFriendNotifications } from '../../hooks/use-friendships';
 import { useCenterOptional } from '../../contexts/center-context';
 import { BRANCH_MEMBER_ROLE_LABELS, BRANCH_MEMBER_ROLE_COLORS } from '../../types/branch';
+import { useAchievementContextOptional } from '../../contexts/achievement-context';
 
 interface DailyWordsNotification {
   enabled: boolean;
@@ -85,6 +88,8 @@ const managementItems: NavItem[] = [
   { page: 'jlpt', label: 'JLPT', icon: <Award {...iconProps} /> },
   { page: 'kaiwa', label: '会話', icon: <MessageCircle {...iconProps} />, roles: ['vip_user', 'admin', 'super_admin', 'director', 'branch_admin', 'main_teacher'] },
   { page: 'game-hub', label: 'Game', icon: <Gamepad2 {...iconProps} /> },
+  { page: 'pricing' as Page, label: 'Nâng cấp', icon: <Crown {...iconProps} /> },
+  { page: 'permissions' as Page, label: 'Phân quyền', icon: <Shield {...iconProps} />, roles: ['super_admin'] },
 ];
 
 // Center-specific learning items
@@ -128,6 +133,7 @@ export function Sidebar({
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
   const centerCtx = useCenterOptional();
+  const achievementCtx = useAchievementContextOptional();
 
   // Classroom notifications
   const { notifications: classroomNotifications, unreadCount: classroomUnread, markAsRead: markClassroomRead, markAllAsRead: markAllClassroomRead } = useClassroomNotifications(currentUser?.id || null);
@@ -185,6 +191,12 @@ export function Sidebar({
       >
         <span className="sidebar-nav-icon">{item.icon}</span>
         {!isCollapsed && <span className="sidebar-nav-label">{item.label}</span>}
+        {/* Daily mission progress badge on Home */}
+        {item.page === 'home' && achievementCtx && achievementCtx.missions.length > 0 && !achievementCtx.allMissionsCompleted && !isCollapsed && (
+          <span className="sidebar-mission-badge">
+            {achievementCtx.missions.filter(m => m.isCompleted).length}/{achievementCtx.missions.length}
+          </span>
+        )}
       </button>
     );
   };
