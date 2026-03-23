@@ -9,10 +9,10 @@ import { useSettings, useGlobalTheme, THEME_PRESETS } from './hooks/use-settings
 import { type Page } from './components/layout/header';
 import { Sidebar } from './components/layout/sidebar';
 import { LoginPage } from './components/pages/login-page';
-import { HomePage } from './components/pages/home-page';
 import { ErrorBoundary } from './components/common/error-boundary';
 
 // Lazy-loaded page components
+const HomePage = lazy(() => import('./components/pages/home-page').then(m => ({ default: m.HomePage })));
 const CardsPage = lazy(() => import('./components/pages/cards-page').then(m => ({ default: m.CardsPage })));
 const StudyPage = lazy(() => import('./components/pages/study-page').then(m => ({ default: m.StudyPage })));
 const SettingsPage = lazy(() => import('./components/pages/settings-page').then(m => ({ default: m.SettingsPage })));
@@ -45,6 +45,8 @@ const AchievementToast = lazy(() => import('./components/achievements/achievemen
 const AchievementShowcase = lazy(() => import('./components/achievements/achievement-showcase').then(m => ({ default: m.AchievementShowcase })));
 const CelebrationOverlay = lazy(() => import('./components/achievements/celebration-overlay').then(m => ({ default: m.CelebrationOverlay })));
 const DailyMissionsWidget = lazy(() => import('./components/achievements/daily-missions-widget').then(m => ({ default: m.DailyMissionsWidget })));
+const FloatingChatPanel = lazy(() => import('./components/common/floating-chat-panel').then(m => ({ default: m.FloatingChatPanel })));
+const AiTutorPanel = lazy(() => import('./components/common/ai-tutor-panel').then(m => ({ default: m.AiTutorPanel })));
 
 import type { GameType } from './types/game-hub';
 import { useProgress } from './hooks/use-progress';
@@ -53,8 +55,6 @@ import { useOffline } from './hooks/use-offline';
 import { useDailyWords } from './hooks/use-daily-words';
 import { OfflineIndicator } from './components/common/offline-indicator';
 import { FloatingChatButton } from './components/common/floating-chat-button';
-import { FloatingChatPanel } from './components/common/floating-chat-panel';
-import { AiTutorPanel } from './components/common/ai-tutor-panel';
 import { JLPTLevelModal } from './components/common/jlpt-level-modal';
 import { ReadingSettingsProvider } from './contexts/reading-settings-context';
 import { ListeningSettingsProvider } from './contexts/listening-settings-context';
@@ -927,20 +927,24 @@ function AppContent() {
 
           {/* User chat panel */}
           <ErrorBoundary fallback={null}>
-            <FloatingChatPanel
-              currentUser={currentUser}
-              isOpen={isChatOpen}
-              onClose={() => setIsChatOpen(false)}
-            />
+            <Suspense fallback={null}>
+              <FloatingChatPanel
+                currentUser={currentUser}
+                isOpen={isChatOpen}
+                onClose={() => setIsChatOpen(false)}
+              />
+            </Suspense>
           </ErrorBoundary>
 
           {/* AI Tutor panel */}
           <ErrorBoundary fallback={null}>
-            <AiTutorPanel
-              isOpen={isAiChatOpen}
-              onClose={() => setIsAiChatOpen(false)}
-              userJlptLevel={currentUser.jlptLevel}
-            />
+            <Suspense fallback={null}>
+              <AiTutorPanel
+                isOpen={isAiChatOpen}
+                onClose={() => setIsAiChatOpen(false)}
+                userJlptLevel={currentUser.jlptLevel}
+              />
+            </Suspense>
           </ErrorBoundary>
         </>
       )}
