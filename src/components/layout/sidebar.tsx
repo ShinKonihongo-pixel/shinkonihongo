@@ -30,6 +30,7 @@ import {
   Crown,
   Shield,
   PenTool,
+  Mic,
 } from 'lucide-react';
 import { useClassroomNotifications } from '../../hooks/use-classrooms';
 import { useFriendNotifications } from '../../hooks/use-friendships';
@@ -81,6 +82,7 @@ const learningItems: NavItem[] = [
   { page: 'listening', label: 'Nghe Hiểu', icon: <Headphones {...iconProps} /> },
   { page: 'exercises', label: 'Bài Tập', icon: <ClipboardList {...iconProps} /> },
   { page: 'conjugation' as Page, label: 'Chia Động Từ', icon: <PenTool {...iconProps} /> },
+  { page: 'pronunciation' as Page, label: 'Phát Âm', icon: <Mic {...iconProps} /> },
 ];
 
 // Section 2: Management/Activity tabs

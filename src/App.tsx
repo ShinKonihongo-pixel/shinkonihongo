@@ -39,6 +39,7 @@ const CenterDashboardPage = lazy(() => import('./components/pages/center-dashboa
 const PricingPage = lazy(() => import('./components/pages/pricing-page').then(m => ({ default: m.PricingPage })));
 const RolePermissionsPage = lazy(() => import('./components/pages/role-permissions-page').then(m => ({ default: m.RolePermissionsPage })));
 const ConjugationTrainerPage = lazy(() => import('./components/pages/conjugation-trainer-page').then(m => ({ default: m.ConjugationTrainerPage })));
+const PronunciationPracticePage = lazy(() => import('./components/pages/pronunciation-practice-page').then(m => ({ default: m.PronunciationPracticePage })));
 const OnboardingTour = lazy(() => import('./components/onboarding/onboarding-tour').then(m => ({ default: m.OnboardingTour })));
 const AchievementToast = lazy(() => import('./components/achievements/achievement-toast').then(m => ({ default: m.AchievementToast })));
 const AchievementShowcase = lazy(() => import('./components/achievements/achievement-showcase').then(m => ({ default: m.AchievementShowcase })));
@@ -887,6 +888,10 @@ function AppContent() {
 
         {currentPage === 'conjugation' && (
           <ConjugationTrainerPage />
+        )}
+
+        {currentPage === 'pronunciation' && (
+          <PronunciationPracticePage />
         )}
         </Suspense>
         </ErrorBoundary>

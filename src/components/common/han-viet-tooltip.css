@@ -1,0 +1,63 @@
+.hv-text { position: relative; }
+.hv-kanji {
+  cursor: help;
+  border-bottom: 1px dotted rgba(139, 92, 246, 0.4);
+  transition: color 0.2s;
+}
+.hv-kanji:hover { color: #8b5cf6; }
+
+.hv-tooltip {
+  position: fixed;
+  z-index: 9999;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  pointer-events: none;
+  animation: hv-fade 0.15s ease;
+}
+
+@keyframes hv-fade {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hv-tooltip-hv {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #c4b5fd;
+}
+.hv-tooltip-meaning {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+.hv-tooltip-examples {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* Inline mode (annotated) */
+.hv-inline { display: inline; }
+.hv-annotated {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 1px;
+}
+.hv-char { font-size: inherit; }
+.hv-reading {
+  font-size: 0.55em;
+  color: #8b5cf6;
+  font-weight: 600;
+  line-height: 1;
+}
