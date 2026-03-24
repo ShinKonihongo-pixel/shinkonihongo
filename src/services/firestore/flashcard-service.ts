@@ -14,7 +14,6 @@ import {
   deleteDoc,
   query,
   where,
-  orderBy,
   limit,
   onSnapshot,
   db,
@@ -29,7 +28,7 @@ export async function getAllFlashcards(): Promise<Flashcard[]> {
 export function subscribeToFlashcards(callback: (cards: Flashcard[]) => void, levelFilter?: string): Unsubscribe {
   const q = levelFilter
     ? query(collection(db, COLLECTIONS.FLASHCARDS), where('jlptLevel', '==', levelFilter))
-    : query(collection(db, COLLECTIONS.FLASHCARDS), orderBy('createdAt', 'desc'), limit(2000));
+    : query(collection(db, COLLECTIONS.FLASHCARDS), limit(2000));
   return onSnapshot(q, (snapshot) => {
     const cards = snapshot.docs.map(doc => mapDoc<Flashcard>(doc));
     callback(cards);

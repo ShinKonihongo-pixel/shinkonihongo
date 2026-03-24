@@ -81,7 +81,7 @@ export function JLPTPracticeView({
                   onClick={() => onSelectAnswer(index)}
                   disabled={showResult}
                 >
-                  <img src={ANSWER_OPTIONS[index].icon} alt={ANSWER_OPTIONS[index].label} className="answer-icon-img" loading="lazy" />
+                  <span className="option-label-badge" style={{ background: ANSWER_OPTIONS[index].color }}>{ANSWER_OPTIONS[index].label}</span>
                   <span className="answer-text">{answer.text}</span>
                   {showResult && answer.isCorrect && <CheckCircle size={20} className="correct-icon" />}
                   {showResult && selectedAnswer === index && !answer.isCorrect && <XCircle size={20} className="wrong-icon" />}

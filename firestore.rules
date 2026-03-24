@@ -70,6 +70,17 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Exercises — read for all auth; write for admin+
+    match /exercises/{docId} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+
+    // Game rooms — any authenticated user can create/join/update
+    match /game_rooms/{docId} {
+      allow read, write: if isAuth();
+    }
+
     // JLPT content
     match /jlptQuestions/{docId} {
       allow read: if isAuth();

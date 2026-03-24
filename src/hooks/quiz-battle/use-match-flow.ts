@@ -87,11 +87,47 @@ export function useMatchFlow({ game, isHost, currentUserId: _currentUserId, setG
     await updateGameRoom(g.id, { status: 'finished', finishedAt, results }).catch(console.error);
     setGame(prev => prev ? { ...prev, status: 'finished', finishedAt } : null);
     setGameResults(results);
-    await updateRatingAfterMatch(
-      winner?.odinhId ?? p1.odinhId, loser?.odinhId ?? p2.odinhId,
-      g.jlptLevel, eloChanges.winnerChange, eloChanges.loserChange, isDraw,
-    ).catch(console.error);
+    // Only update ratings if neither player is a bot
+    const hasBot = playerList.some(p => p.isBot);
+    if (!hasBot) {
+      await updateRatingAfterMatch(
+        winner?.odinhId ?? p1.odinhId, loser?.odinhId ?? p2.odinhId,
+        g.jlptLevel, eloChanges.winnerChange, eloChanges.loserChange, isDraw,
+      ).catch(console.error);
+    }
   }, [setGame, setGameResults]);
+
+  // Bot auto-answer: simulate AI answering with random delay (1-8s)
+  useEffect(() => {
+    if (!game || !isHost || game.status !== 'playing') return;
+    const question = game.questions[game.currentRound];
+    if (!question) return;
+
+    const botTimers: ReturnType<typeof setTimeout>[] = [];
+    for (const [id, player] of Object.entries(game.players)) {
+      if (!player.isBot || player.currentAnswer !== null) continue;
+      // Bot answers in 1-8s with 80-100% accuracy
+      const delay = 1000 + Math.floor(Math.random() * 7000);
+      const timer = setTimeout(() => {
+        setGame(prev => {
+          if (!prev || prev.status !== 'playing') return prev;
+          const bot = prev.players[id];
+          if (!bot || bot.currentAnswer !== null) return prev;
+          const isCorrect = Math.random() < 0.8 + Math.random() * 0.2;
+          const answer = isCorrect
+            ? question.correctIndex
+            : (question.correctIndex + 1 + Math.floor(Math.random() * 3)) % question.options.length;
+          const answerTime = delay;
+          return {
+            ...prev,
+            players: { ...prev.players, [id]: { ...bot, currentAnswer: answer, answerTime } },
+          };
+        });
+      }, delay);
+      botTimers.push(timer);
+    }
+    return () => botTimers.forEach(t => clearTimeout(t));
+  }, [game?.status, game?.currentRound, isHost, setGame]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const answerKey = Object.values(game?.players ?? {}).map(p => p.currentAnswer).join(',');
 

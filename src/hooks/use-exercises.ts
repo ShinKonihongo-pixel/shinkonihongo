@@ -21,6 +21,9 @@ export function useExercises() {
       })) as Exercise[];
       setExercises(data);
       setLoading(false);
+    }, (error) => {
+      console.error('Error loading exercises:', error);
+      setLoading(false);
     });
     return unsubscribe;
   }, []);

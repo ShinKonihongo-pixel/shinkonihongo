@@ -102,6 +102,7 @@ const regularSections: NavSection[] = [
       { page: 'exercises', label: 'Bài Tập', icon: <ClipboardList {...iconProps} /> },
       { page: 'conjugation' as Page, label: 'Chia Động Từ', icon: <PenTool {...iconProps} /> },
       { page: 'pronunciation' as Page, label: 'Phát Âm', icon: <Mic {...iconProps} /> },
+      { page: 'cards', label: 'Quản lý thẻ', icon: <LayoutGrid {...iconProps} />, roles: ['admin', 'super_admin'] },
     ],
   },
   {
@@ -134,7 +135,6 @@ const regularSections: NavSection[] = [
     roles: ['admin', 'super_admin', 'director', 'branch_admin', 'main_teacher'],
     items: [
       { page: 'branches', label: 'Chi nhánh', icon: <Building2 {...iconProps} />, roles: ['director', 'branch_admin', 'super_admin'] },
-      { page: 'cards', label: 'Quản lý thẻ', icon: <LayoutGrid {...iconProps} />, roles: ['admin', 'super_admin'] },
       { page: 'teachers', label: 'Quản lý GV', icon: <Users {...iconProps} />, roles: ['admin', 'super_admin', 'director', 'branch_admin'] },
       { page: 'salary', label: 'Lương', icon: <DollarSign {...iconProps} />, roles: ['admin', 'super_admin', 'director', 'branch_admin'] },
       { page: 'permissions', label: 'Phân quyền', icon: <Shield {...iconProps} />, roles: ['super_admin'] },
@@ -273,11 +273,10 @@ function SidebarSection({
         title={section.title}
       >
         <span className="sidebar-section-title">
-          <span className="sidebar-section-emoji">{section.emoji}</span>
           {section.title}
         </span>
         <ChevronDown
-          size={12}
+          size={14}
           className={`sidebar-section-chevron ${expanded ? 'expanded' : ''}`}
         />
       </button>

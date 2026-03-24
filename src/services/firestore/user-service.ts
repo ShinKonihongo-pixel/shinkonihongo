@@ -13,7 +13,6 @@ import {
   deleteDoc,
   query,
   where,
-  orderBy,
   limit,
   onSnapshot,
   setDoc,
@@ -29,7 +28,7 @@ export async function getAllUsers(): Promise<User[]> {
 }
 
 export function subscribeToUsers(callback: (users: User[]) => void, limitCount = 500): Unsubscribe {
-  const q = query(collection(db, COLLECTIONS.USERS), orderBy('createdAt', 'desc'), limit(limitCount));
+  const q = query(collection(db, COLLECTIONS.USERS), limit(limitCount));
   return onSnapshot(q, (snapshot) => {
     const users = snapshot.docs.map(doc => mapDoc<User>(doc));
     callback(users);

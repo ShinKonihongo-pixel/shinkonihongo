@@ -62,3 +62,18 @@ button:focus-visible {
     color: #747bff;
   }
 }
+
+/* Answer option label badge — replaces ABCD mascot icons globally */
+.option-label-badge,
+.exp-option-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}

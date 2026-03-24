@@ -77,7 +77,7 @@ export function QuizBattleLobby({ game, currentPlayerId, onStart, onLeave }: Qui
 
         {/* Header */}
         <header className="qb-lobby-header">
-          <button className="qb-lobby-leave" onClick={onLeave} title="Rời phòng">✕</button>
+          <button className="qb-lobby-leave" onClick={() => { console.log('Leave button clicked, showLeaveConfirm:', lobby.showLeaveConfirm); lobby.openLeaveConfirm(); }} title="Rời phòng">✕</button>
           <h1 className="qb-lobby-title">{game.title}</h1>
           <div className="qb-lobby-tags">
             <span className="qb-tag"><Swords size={12} /> 1v1</span>
@@ -179,7 +179,7 @@ export function QuizBattleLobby({ game, currentPlayerId, onStart, onLeave }: Qui
 
       <LobbyConfirmModals
         isHost={isHost}
-        showLeaveConfirm={false}
+        showLeaveConfirm={lobby.showLeaveConfirm}
         kickTarget={null}
         normalizedPlayers={lobby.normalizedPlayers}
         onLeaveConfirm={onLeave}

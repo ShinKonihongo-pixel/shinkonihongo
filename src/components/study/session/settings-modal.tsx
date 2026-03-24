@@ -8,8 +8,6 @@ import { ModalDisplaySection } from './modal-display-section';
 export function StudySettingsModal({
   filterMemorization,
   onFilterMemorizationChange,
-  filterDifficulty,
-  onFilterDifficultyChange,
   frontFontSize = 250,
   onFrontFontSizeChange,
   settings,
@@ -35,8 +33,6 @@ export function StudySettingsModal({
             <ModalFilterSection
               filterMemorization={filterMemorization}
               onFilterMemorizationChange={onFilterMemorizationChange}
-              filterDifficulty={filterDifficulty}
-              onFilterDifficultyChange={onFilterDifficultyChange}
             />
           )}
 

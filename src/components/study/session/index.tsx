@@ -16,12 +16,9 @@ export function StudySession({
   isFlipped,
   onFlip,
   onSetMemorization,
-  onSetDifficulty,
   onResetAll,
   filterMemorization,
   onFilterMemorizationChange,
-  filterDifficulty,
-  onFilterDifficultyChange,
   onShuffle,
   onResetOrder,
   isShuffled,
@@ -47,8 +44,6 @@ export function StudySession({
         <EmptyState
           filterMemorization={filterMemorization}
           onFilterMemorizationChange={onFilterMemorizationChange}
-          filterDifficulty={filterDifficulty}
-          onFilterDifficultyChange={onFilterDifficultyChange}
           onBack={onBack}
           onSettingsClick={() => setShowSettingsModal(true)}
         />
@@ -56,8 +51,6 @@ export function StudySession({
           <StudySettingsModal
             filterMemorization={filterMemorization}
             onFilterMemorizationChange={onFilterMemorizationChange}
-            filterDifficulty={filterDifficulty}
-            onFilterDifficultyChange={onFilterDifficultyChange}
             frontFontSize={frontFontSize}
             onFrontFontSizeChange={onFrontFontSizeChange}
             settings={settings}
@@ -76,8 +69,6 @@ export function StudySession({
         selectedLevel={selectedLevel}
         filterMemorization={filterMemorization}
         onFilterMemorizationChange={onFilterMemorizationChange}
-        filterDifficulty={filterDifficulty}
-        onFilterDifficultyChange={onFilterDifficultyChange}
         currentIndex={currentIndex}
         totalCards={totalCards}
         isShuffled={isShuffled}
@@ -108,7 +99,6 @@ export function StudySession({
       <ActionButtons
         currentCard={currentCard}
         onSetMemorization={onSetMemorization}
-        onSetDifficulty={onSetDifficulty}
         settings={settings}
         clickCount={clickCount}
         isMobile={isMobile}
@@ -118,8 +108,6 @@ export function StudySession({
         <StudySettingsModal
           filterMemorization={filterMemorization}
           onFilterMemorizationChange={onFilterMemorizationChange}
-          filterDifficulty={filterDifficulty}
-          onFilterDifficultyChange={onFilterDifficultyChange}
           frontFontSize={frontFontSize}
           onFrontFontSizeChange={onFrontFontSizeChange}
           settings={settings}

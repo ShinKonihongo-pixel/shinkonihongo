@@ -1,7 +1,9 @@
-// Answer reveal — premium animated results display
-import { Crown, LogOut, Flame, Eye } from 'lucide-react';
+// Answer reveal — animated results display
+import { useState } from 'react';
+import { Crown, ArrowLeft, Flame, Eye } from 'lucide-react';
 import type { GamePlayer, GameQuestion } from '../../../types/quiz-game';
 import { ANSWER_OPTIONS } from '../../../constants/answer-options';
+import { ConfirmModal } from '../../ui/confirm-modal';
 
 interface GameAnswerRevealProps {
   currentPlayer: GamePlayer | null;
@@ -28,6 +30,8 @@ export function GameAnswerReveal({
   isSpectator = false,
   onLeaveGame,
 }: GameAnswerRevealProps) {
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+
   const playersWithChanges: PlayerWithChanges[] = sortedPlayers.map(player => {
     const prevScore = prevScores[player.id] || 0;
     const scoreChange = player.score - prevScore;
@@ -37,11 +41,12 @@ export function GameAnswerReveal({
 
   const correctCount = playersWithChanges.filter(p => p.answeredCorrectly).length;
   const myResult = playersWithChanges.find(p => p.id === currentPlayer?.id);
+  const correctOption = ANSWER_OPTIONS[currentQuestion.correctIndex];
 
   return (
     <div className="game-fullscreen game-reveal-screen">
-      <button className="leave-game-btn floating" onClick={onLeaveGame} title="Rời game">
-        <LogOut size={18} /> Rời
+      <button className="leave-game-btn floating" onClick={() => setShowLeaveConfirm(true)} title="Rời game">
+        <ArrowLeft size={18} /> Rời
       </button>
 
       {/* Result header */}
@@ -72,14 +77,10 @@ export function GameAnswerReveal({
         )}
       </div>
 
-      {/* Correct answer display */}
+      {/* Correct answer display — color strip instead of icon */}
       <div className="correct-answer-card">
         <span className="correct-label">Đáp án đúng</span>
-        <span
-          className="correct-answer"
-          style={{ background: ANSWER_OPTIONS[currentQuestion.correctIndex].bg }}
-        >
-          <img src={ANSWER_OPTIONS[currentQuestion.correctIndex].icon} alt={ANSWER_OPTIONS[currentQuestion.correctIndex].label} className="correct-answer-icon" loading="lazy" />
+        <span className="correct-answer" style={{ background: correctOption.bg }}>
           {currentQuestion.options[currentQuestion.correctIndex]}
         </span>
         <div className="answer-stats-bar">
@@ -125,6 +126,16 @@ export function GameAnswerReveal({
         <div className="timer-fill" style={{ width: `${(revealTimer / 5) * 100}%` }} />
         <span className="timer-text">Tiếp tục sau {revealTimer}s</span>
       </div>
+
+      <ConfirmModal
+        isOpen={showLeaveConfirm}
+        title="Rời khỏi game?"
+        message="Bạn có chắc muốn rời khỏi game đang chơi?"
+        confirmText="Rời game"
+        cancelText="Ở lại"
+        onConfirm={onLeaveGame}
+        onCancel={() => setShowLeaveConfirm(false)}
+      />
     </div>
   );
 }

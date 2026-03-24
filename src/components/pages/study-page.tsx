@@ -2,7 +2,7 @@
 // Study session page - Vocabulary flashcard study with level/lesson selection
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import type { Flashcard, JLPTLevel, MemorizationStatus, DifficultyLevel, Lesson } from '../../types/flashcard';
+import type { Flashcard, JLPTLevel, MemorizationStatus, Lesson } from '../../types/flashcard';
 import type { AppSettings } from '../../hooks/use-settings';
 import type { StudySession as StudySessionType } from '../../types/user';
 import type { StudyMode } from '../study/level-lesson-selector/types';
@@ -41,7 +41,6 @@ export function StudyPage({
   const [selectedLevel, setSelectedLevel] = useState<JLPTLevel>('N5');
   const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>([]);
   const [filterMemorization, setFilterMemorization] = useState<MemorizationStatus | 'all'>('all');
-  const [filterDifficulty, setFilterDifficulty] = useState<DifficultyLevel | 'all'>('all');
   const [frontFontSize, setFrontFontSize] = useState<number>(settings.kanjiFontSize);
   const [notebookStudyCards, setNotebookStudyCards] = useState<Flashcard[]>([]);
   const sessionStartTime = useRef<number>(Date.now());
@@ -92,7 +91,6 @@ export function StudyPage({
     updateCard,
     filterLevel: selectedLevel, // Pass level for reference but cards already filtered
     filterMemorization,
-    filterDifficulty,
     autoAdvance: settings.autoAdvanceOnThirdClick,
     clicksToAdvance: settings.clicksToAdvance,
   });
@@ -211,12 +209,9 @@ export function StudyPage({
       isFlipped={isFlipped}
       onFlip={flipCard}
       onSetMemorization={setMemorizationStatus}
-      onSetDifficulty={setDifficultyLevel}
       onResetAll={resetAll}
       filterMemorization={filterMemorization}
       onFilterMemorizationChange={setFilterMemorization}
-      filterDifficulty={filterDifficulty}
-      onFilterDifficultyChange={setFilterDifficulty}
       onShuffle={shuffleCards}
       onResetOrder={resetOrder}
       isShuffled={isShuffled}

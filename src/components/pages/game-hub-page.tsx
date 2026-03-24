@@ -26,7 +26,6 @@ import {
 } from '../game-hub/room-setup/game-configs';
 import { GameCreate } from '../quiz-game/game-create';
 import { KanjiBattleSetup } from '../kanji-battle/kanji-battle-setup';
-import { FloatingMusicPlayer } from '../game-hub/floating-music-player';
 import '../game-hub/game-hub.css';
 import '../game-hub/game-room-setup.css';
 import '../game-hub/race-game-v2.css';
@@ -149,7 +148,6 @@ export function GameHubPage({
 }: GameHubPageProps) {
   const [selectedGame, setSelectedGame] = useState<GameType | null>(initialGame || null);
   const [joinCode, setJoinCode] = useState<string | null>(initialJoinCode || null);
-  const [showMusicPlayer, setShowMusicPlayer] = useState(true);
   const [setupModalGame, setSetupModalGame] = useState<GameType | null>(null);
   const [pendingRoomConfig, setPendingRoomConfig] = useState<{ gameType: GameType; data: Record<string, unknown> } | null>(null);
   const [returnToWaitingRoom, setReturnToWaitingRoom] = useState(false);
@@ -538,10 +536,6 @@ export function GameHubPage({
       )}
       </Suspense>
 
-      {/* Floating Music Player - Always available when playing games */}
-      {showMusicPlayer && (
-        <FloatingMusicPlayer onClose={() => setShowMusicPlayer(false)} />
-      )}
     </div>
   );
 }

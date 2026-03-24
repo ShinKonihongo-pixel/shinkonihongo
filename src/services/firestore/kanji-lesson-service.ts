@@ -13,7 +13,6 @@ import {
   deleteDoc,
   query,
   where,
-  orderBy,
   limit,
   onSnapshot,
   db,
@@ -26,7 +25,7 @@ export async function getAllKanjiLessons(): Promise<KanjiLesson[]> {
 }
 
 export function subscribeToKanjiLessons(callback: (lessons: KanjiLesson[]) => void): Unsubscribe {
-  const q = query(collection(db, COLLECTIONS.KANJI_LESSONS), orderBy('createdAt', 'desc'), limit(500));
+  const q = query(collection(db, COLLECTIONS.KANJI_LESSONS), limit(500));
   return onSnapshot(q, (snapshot) => {
     const lessons = snapshot.docs.map(doc => mapDoc<KanjiLesson>(doc));
     callback(lessons);

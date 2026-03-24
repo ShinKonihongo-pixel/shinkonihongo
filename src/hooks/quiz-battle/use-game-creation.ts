@@ -114,11 +114,11 @@ export function useGameCreation({
       setGame({ id: firestoreId, ...gameData });
       setGameResults(null);
     } catch (err) {
-      creatingRef.current = false;
+      creatingRef.current = false; // Allow retry on error
       setError(err instanceof Error ? err.message : 'Không thể tạo game');
     } finally {
-      creatingRef.current = false;
       setLoading(false);
+      // Note: creatingRef stays true after success to prevent double creation
     }
   }, [currentUser, setGame, setGameResults, setLoading, setError, setRoomId]);
 

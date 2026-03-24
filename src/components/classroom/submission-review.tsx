@@ -122,7 +122,7 @@ export function SubmissionReview({
                         key={oIdx}
                         className={`option-display ${isSelected ? 'selected' : ''} ${isCorrectOption ? 'correct' : ''}`}
                       >
-                        <img src={ANSWER_OPTIONS[oIdx].icon} alt={ANSWER_OPTIONS[oIdx].label} className="option-icon-img" loading="lazy" />
+                        <span className="option-label-badge" style={{ background: ANSWER_OPTIONS[oIdx].color }}>{ANSWER_OPTIONS[oIdx].label}</span>
                         <span className="option-text">{opt}</span>
                         {isCorrectOption && <span className="correct-badge">✓</span>}
                         {isSelected && !isCorrectOption && <span className="wrong-badge">✗</span>}

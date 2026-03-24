@@ -382,9 +382,9 @@ export function useGameSounds(): UseGameSoundsReturn {
     return allTracks.find(t => t.id === trackId) || null;
   }, [allTracks]);
 
-  // Start background music
+  // Start background music — disabled
   const startMusic = useCallback(() => {
-    if (!settings.musicEnabled || isMusicPlaying) return;
+    return;
 
     try {
       const track = findTrack(settings.musicTrack);

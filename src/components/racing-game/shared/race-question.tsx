@@ -157,7 +157,7 @@ export function RaceQuestion({
               onClick={() => handleAnswer(index)}
               disabled={isDisabled}
             >
-              <img src={answerOpt.icon} alt={answerOpt.label} className="option-icon-img" loading="lazy" />
+              <span className="option-label-badge" style={{ background: answerOpt.color }}>{answerOpt.label}</span>
               <span className="option-text">{option}</span>
               {isCorrect && (
                 <span className="result-icon correct">

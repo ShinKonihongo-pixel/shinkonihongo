@@ -13,7 +13,6 @@ import {
   deleteDoc,
   query,
   where,
-  orderBy,
   limit,
   onSnapshot,
   db,
@@ -23,7 +22,7 @@ import {
 export function subscribeToKanjiCards(callback: (cards: KanjiCard[]) => void, levelFilter?: string): Unsubscribe {
   const q = levelFilter
     ? query(collection(db, COLLECTIONS.KANJI_CARDS), where('jlptLevel', '==', levelFilter))
-    : query(collection(db, COLLECTIONS.KANJI_CARDS), orderBy('createdAt', 'desc'), limit(1000));
+    : query(collection(db, COLLECTIONS.KANJI_CARDS), limit(1000));
   return onSnapshot(q, (snapshot) => {
     const cards = snapshot.docs.map(doc => mapDoc<KanjiCard>(doc));
     callback(cards);

@@ -1,13 +1,11 @@
 // Empty state when no cards match filters
 import { ArrowLeft, Settings } from 'lucide-react';
-import type { MemorizationStatus, DifficultyLevel } from '../../../types/flashcard';
-import { MEMORIZATION_OPTIONS, DIFFICULTY_OPTIONS } from './constants';
+import type { MemorizationStatus } from '../../../types/flashcard';
+import { MEMORIZATION_OPTIONS } from './constants';
 
 interface EmptyStateProps {
   filterMemorization: MemorizationStatus | 'all';
   onFilterMemorizationChange: (status: MemorizationStatus | 'all') => void;
-  filterDifficulty: DifficultyLevel | 'all';
-  onFilterDifficultyChange: (level: DifficultyLevel | 'all') => void;
   onBack?: () => void;
   onSettingsClick: () => void;
 }
@@ -15,8 +13,6 @@ interface EmptyStateProps {
 export function EmptyState({
   filterMemorization,
   onFilterMemorizationChange,
-  filterDifficulty,
-  onFilterDifficultyChange,
   onBack,
   onSettingsClick,
 }: EmptyStateProps) {
@@ -34,18 +30,6 @@ export function EmptyState({
             className="empty-filter-select"
           >
             {MEMORIZATION_OPTIONS.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
-        <div className="empty-filter-group">
-          <label>Độ khó:</label>
-          <select
-            value={filterDifficulty}
-            onChange={(e) => onFilterDifficultyChange(e.target.value as typeof filterDifficulty)}
-            className="empty-filter-select"
-          >
-            {DIFFICULTY_OPTIONS.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>

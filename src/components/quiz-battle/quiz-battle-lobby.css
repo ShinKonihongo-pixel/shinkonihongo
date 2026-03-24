@@ -26,27 +26,19 @@
 .qb-lobby-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.15;
+  opacity: 0.08;
 }
 
 .qb-lobby-orb-1 {
   width: 400px; height: 400px;
   background: #ef4444;
   top: -100px; left: -80px;
-  animation: qb-orb-drift 12s ease-in-out infinite alternate;
 }
 
 .qb-lobby-orb-2 {
   width: 350px; height: 350px;
   background: #3b82f6;
   bottom: -80px; right: -60px;
-  animation: qb-orb-drift 14s ease-in-out infinite alternate-reverse;
-}
-
-@keyframes qb-orb-drift {
-  from { transform: translate(0, 0); }
-  to   { transform: translate(30px, -30px); }
 }
 
 /* ─── Header ──────────────────────────────────────────────── */

@@ -46,11 +46,24 @@ interface UseKanjiAnalysisOptions {
 
 export function useKanjiAnalysis(kanjiText: string, options: UseKanjiAnalysisOptions = {}) {
   const { readOnly = false } = options;
-  const [analyses, setAnalyses] = useState<KanjiCharacterAnalysis[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   const characters = extractKanjiCharacters(kanjiText);
+
+  // Sync cache check on mount — avoids loading flash when data is already cached
+  const initialCached = () => {
+    if (characters.length === 0) return { analyses: [] as KanjiCharacterAnalysis[], allCached: true };
+    const cached: KanjiCharacterAnalysis[] = [];
+    for (const c of characters) {
+      const hit = kanjiAnalysisCache.get(c);
+      if (hit) cached.push(hit);
+      else return { analyses: [], allCached: false };
+    }
+    return { analyses: cached, allCached: true };
+  };
+  const init = initialCached();
+
+  const [analyses, setAnalyses] = useState<KanjiCharacterAnalysis[]>(init.analyses);
+  const [loading, setLoading] = useState(!init.allCached && characters.length > 0);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchAndGenerate = useCallback(async (chars: string[]) => {
     if (chars.length === 0) {

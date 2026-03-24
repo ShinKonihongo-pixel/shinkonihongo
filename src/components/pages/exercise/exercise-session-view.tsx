@@ -172,7 +172,7 @@ export function ExerciseSessionView({
                       onClick={() => !showResult && onSetSelectedAnswer(idx)}
                       disabled={showResult}
                     >
-                      <img src={ANSWER_OPTIONS[idx].icon} alt={ANSWER_OPTIONS[idx].label} className="exp-option-mascot" loading="lazy" />
+                      <span className="exp-option-badge" style={{ background: ANSWER_OPTIONS[idx].color }}>{ANSWER_OPTIONS[idx].label}</span>
                       <span className="exp-option-text">{option}</span>
                       {showResult && idx === currentQ.correctIndex && <CheckCircle2 className="exp-result-icon correct" size={22} />}
                       {showResult && idx === selectedAnswer && idx !== currentQ.correctIndex && <XCircle className="exp-result-icon wrong" size={22} />}

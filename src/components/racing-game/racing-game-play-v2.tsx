@@ -375,7 +375,7 @@ export function RacingGamePlayV2({
               onClick={() => handleSelectAnswer(index)}
               disabled={hasSubmitted}
             >
-              <img src={ANSWER_OPTIONS[index].icon} alt={ANSWER_OPTIONS[index].label} className="option-icon-img" loading="lazy" />
+              <span className="option-label-badge" style={{ background: ANSWER_OPTIONS[index].color }}>{ANSWER_OPTIONS[index].label}</span>
               <span className="option-text">{option}</span>
               {isCorrect && <span className="option-mark correct">✓</span>}
               {isWrong && <span className="option-mark wrong">✗</span>}

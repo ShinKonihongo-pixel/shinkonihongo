@@ -1,7 +1,7 @@
 // Hook for managing study session with spaced repetition
 
 import { useState, useCallback, useMemo } from 'react';
-import type { Flashcard, StudyStats, JLPTLevel, MemorizationStatus, DifficultyLevel } from '../types/flashcard';
+import type { Flashcard, StudyStats, JLPTLevel, MemorizationStatus } from '../types/flashcard';
 import { getCardsForReview } from '../lib/spaced-repetition';
 import { shuffleArray } from '../lib/game-utils';
 
@@ -10,7 +10,6 @@ interface UseStudySessionProps {
   updateCard: (id: string, data: Partial<Flashcard>) => void;
   filterLevel?: JLPTLevel | 'all';
   filterMemorization?: MemorizationStatus | 'all';
-  filterDifficulty?: DifficultyLevel | 'all';
   autoAdvance?: boolean;
   clicksToAdvance?: number;
 }
@@ -20,7 +19,6 @@ export function useStudySession({
   updateCard,
   filterLevel = 'all',
   filterMemorization = 'all',
-  filterDifficulty = 'all',
   autoAdvance = true,
   clicksToAdvance = 3,
 }: UseStudySessionProps) {
@@ -48,13 +46,8 @@ export function useStudySession({
       filtered = filtered.filter(c => c.memorizationStatus === filterMemorization);
     }
 
-    // Filter by difficulty level
-    if (filterDifficulty !== 'all') {
-      filtered = filtered.filter(c => c.difficultyLevel === filterDifficulty);
-    }
-
     return getCardsForReview(filtered);
-  }, [cards, filterLevel, filterMemorization, filterDifficulty]);
+  }, [cards, filterLevel, filterMemorization]);
 
   // Apply shuffle order if active
   const dueCards = useMemo(() => {

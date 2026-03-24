@@ -12,7 +12,6 @@ import {
   deleteDoc,
   query,
   where,
-  orderBy,
   limit,
   onSnapshot,
   db,
@@ -22,7 +21,7 @@ import {
 export function subscribeToKaiwaQuestions(callback: (questions: KaiwaDefaultQuestion[]) => void, levelFilter?: string): Unsubscribe {
   const q = levelFilter
     ? query(collection(db, COLLECTIONS.KAIWA_QUESTIONS), where('level', '==', levelFilter))
-    : query(collection(db, COLLECTIONS.KAIWA_QUESTIONS), orderBy('createdAt', 'desc'), limit(2000));
+    : query(collection(db, COLLECTIONS.KAIWA_QUESTIONS), limit(2000));
   return onSnapshot(q, (snapshot) => {
     const questions = snapshot.docs.map(doc => mapDoc<KaiwaDefaultQuestion>(doc));
     callback(questions);

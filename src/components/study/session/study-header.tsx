@@ -1,13 +1,12 @@
 // Study session header with filters and controls
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Settings, BookOpen, PenLine, RotateCcw, BookmarkPlus } from 'lucide-react';
-import type { MemorizationStatus, DifficultyLevel, JLPTLevel, Flashcard } from '../../../types/flashcard';
+import type { MemorizationStatus, JLPTLevel, Flashcard } from '../../../types/flashcard';
 import type { NotebookHook } from '../level-lesson-selector/types';
-import { MEMORIZATION_OPTIONS, DIFFICULTY_OPTIONS, LEVEL_COLORS } from './constants';
+import { MEMORIZATION_OPTIONS, LEVEL_COLORS } from './constants';
 import { useAuth } from '../../../hooks/use-auth';
-import { getVocabularyNote, getMultipleKanjiAnalysis } from '../../../services/firestore';
+import { getVocabularyNote } from '../../../services/firestore';
 import { extractKanjiCharacters } from '../../../services/kanji-analysis-ai-service';
-import { kanjiAnalysisCache } from '../../../hooks/use-kanji-analysis';
 import { KanjiDetailModal } from '../../flashcard/kanji-detail-modal';
 import { VocabularyNotesModal } from '../../flashcard/vocabulary-notes-modal';
 import { NotebookAddPopover } from '../notebook';
@@ -17,8 +16,6 @@ interface StudyHeaderProps {
   selectedLevel?: JLPTLevel;
   filterMemorization: MemorizationStatus | 'all';
   onFilterMemorizationChange: (status: MemorizationStatus | 'all') => void;
-  filterDifficulty: DifficultyLevel | 'all';
-  onFilterDifficultyChange: (level: DifficultyLevel | 'all') => void;
   currentIndex: number;
   totalCards: number;
   isShuffled: boolean;
@@ -36,8 +33,6 @@ export function StudyHeader({
   selectedLevel,
   filterMemorization,
   onFilterMemorizationChange,
-  filterDifficulty,
-  onFilterDifficultyChange,
   currentIndex,
   totalCards,
   isShuffled,
@@ -69,31 +64,13 @@ export function StudyHeader({
     return () => { cancelled = true; };
   }, [currentUser, currentCard?.id]);
 
-  // Check if current card has kanji analysis data (cache or Firestore)
+  // Show detail button if card has kanji characters (cache check only, no Firestore)
+  // Modal itself handles fetching — no need to pre-check existence
   useEffect(() => {
     if (!currentCard) { setHasAnalysis(false); return; }
     const text = currentCard.kanji || currentCard.vocabulary;
     const chars = extractKanjiCharacters(text);
-    if (chars.length === 0) { setHasAnalysis(false); return; }
-
-    // Check in-memory cache first
-    if (chars.every(c => kanjiAnalysisCache.has(c))) {
-      setHasAnalysis(true);
-      return;
-    }
-
-    // Fallback: check Firestore
-    let cancelled = false;
-    getMultipleKanjiAnalysis(chars).then(results => {
-      if (!cancelled) {
-        setHasAnalysis(results.length > 0);
-        // Warm up cache
-        for (const a of results) kanjiAnalysisCache.set(a.character, a);
-      }
-    }).catch(() => {
-      if (!cancelled) setHasAnalysis(false);
-    });
-    return () => { cancelled = true; };
+    setHasAnalysis(chars.length > 0);
   }, [currentCard?.id]);
 
   // Check if current card is in any notebook
@@ -101,10 +78,7 @@ export function StudyHeader({
     notebookHook.notebooks.some(nb => nb.flashcardIds.includes(currentCard.id)));
 
   // Check if anything can be reset (shuffle or card changes)
-  const cardHasChanges = currentCard && (
-    currentCard.memorizationStatus !== 'unset' ||
-    (currentCard.originalDifficultyLevel && currentCard.difficultyLevel !== currentCard.originalDifficultyLevel)
-  );
+  const cardHasChanges = currentCard && currentCard.memorizationStatus !== 'unset';
   const hasAnythingToReset = isShuffled || cardHasChanges;
 
   return (
@@ -135,18 +109,6 @@ export function StudyHeader({
               className="filter-select"
             >
               {MEMORIZATION_OPTIONS.map(opt => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            <span className="filter-label">Độ khó:</span>
-            <select
-              value={filterDifficulty}
-              onChange={(e) => onFilterDifficultyChange(e.target.value as typeof filterDifficulty)}
-              className="filter-select"
-            >
-              {DIFFICULTY_OPTIONS.map(opt => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
