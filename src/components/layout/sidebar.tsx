@@ -147,6 +147,7 @@ const regularSections: NavSection[] = [
     defaultExpanded: true,
     items: [
       { page: 'progress', label: 'Tiến độ', icon: <TrendingUp {...iconProps} /> },
+      { page: 'analytics' as Page, label: 'Phân tích', icon: <BarChart3 {...iconProps} /> },
       { page: 'notifications', label: 'Thông báo', icon: <Bell {...iconProps} /> },
       { page: 'pricing', label: 'Nâng cấp', icon: <Crown {...iconProps} /> },
       { page: 'settings', label: 'Cài đặt', icon: <Settings {...iconProps} /> },

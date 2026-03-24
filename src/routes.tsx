@@ -32,6 +32,7 @@ export const ROUTES: Record<string, string> = {
   'permissions': '/admin/permissions',
   'conjugation': '/conjugation',
   'pronunciation': '/pronunciation',
+  'analytics': '/analytics',
 } as const;
 
 // Reverse map for URL → Page lookup
