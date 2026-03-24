@@ -2,6 +2,7 @@
 
 import { Target, Check, Sparkles } from 'lucide-react';
 import type { DailyMission } from '../../types/achievements';
+import { getMissionIcon } from '../../data/mission-templates';
 import './daily-missions-widget.css';
 
 interface DailyMissionsWidgetProps {
@@ -34,7 +35,7 @@ export function DailyMissionsWidget({
 
       <div className="dm-list">
         {missions.map(mission => {
-          const Icon = mission.icon;
+          const Icon = getMissionIcon(mission.type);
           const percent = Math.min((mission.progress / mission.target) * 100, 100);
 
           return (

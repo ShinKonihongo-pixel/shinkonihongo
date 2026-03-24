@@ -529,7 +529,7 @@ export function SlideEditorCanvas({ slide, onChange, onSave }: SlideEditorCanvas
             )}
             {element.type === 'image' && (
               element.content ? (
-                <img src={element.content} alt="" className="element-image" />
+                <img src={element.content} alt="" className="element-image" loading="lazy" />
               ) : (
                 <div className="element-placeholder">
                   <span>🖼</span>

@@ -1,5 +1,6 @@
 // Classroom List View - Grid of classroom cards with join functionality
 
+import { School, Plus } from 'lucide-react';
 import { ClassroomCard } from '../classroom/classroom-card';
 import type { ClassroomListViewProps } from './classroom-types';
 
@@ -41,8 +42,14 @@ export function ClassroomListView({
       {/* Classroom list */}
       {classrooms.length === 0 ? (
         <div className="empty-state">
-          <p>{isAdmin ? 'Bạn chưa tạo lớp học nào' : 'Bạn chưa tham gia lớp học nào'}</p>
-          {!isAdmin && <p className="hint">Nhập mã lớp để tham gia hoặc liên hệ giáo viên để được mời</p>}
+          <School size={52} strokeWidth={1.2} />
+          <h3>{isAdmin ? 'Chưa có lớp học nào' : 'Bạn chưa tham gia lớp học nào'}</h3>
+          <p>{isAdmin ? 'Tạo lớp học đầu tiên để bắt đầu giảng dạy' : 'Nhập mã lớp để tham gia hoặc liên hệ giáo viên để được mời'}</p>
+          {isAdmin && (
+            <button className="btn btn-primary" onClick={onCreateClick} style={{ marginTop: '1rem' }}>
+              <Plus size={16} /> Tạo lớp học
+            </button>
+          )}
         </div>
       ) : (
         <div className="classroom-grid">

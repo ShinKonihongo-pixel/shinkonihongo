@@ -506,7 +506,7 @@ export function CenterDashboardPage({ currentUser, users, onNavigate }: CenterDa
                   <div key={m.member.id} className="cdash-student-card">
                     <div className={`cdash-student-avatar ${getAvatarClass(m.member.role)}`}>
                       {m.avatar && isImageAvatar(m.avatar) ? (
-                        <img src={m.avatar} alt={m.displayName} />
+                        <img src={m.avatar} alt={m.displayName} loading="lazy" />
                       ) : (
                         <span>{m.avatar || m.displayName.charAt(0).toUpperCase()}</span>
                       )}

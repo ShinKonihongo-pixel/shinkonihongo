@@ -31,13 +31,19 @@ export function ConfirmModal({
 
   return createPortal(
     <div className="confirm-overlay" onClick={onCancel}>
-      <div className="confirm-dialog" onClick={e => e.stopPropagation()}>
+      <div
+        className="confirm-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-dialog-title"
+        onClick={e => e.stopPropagation()}
+      >
         <div className={`confirm-accent-bar ${isDanger ? 'danger' : 'info'}`} />
         <div className="confirm-body">
           <div className={`confirm-icon-circle ${isDanger ? 'danger' : 'info'}`}>
             {isDanger ? <AlertTriangle size={22} /> : <Info size={22} />}
           </div>
-          <h3 className="confirm-title">{title}</h3>
+          <h3 id="confirm-dialog-title" className="confirm-title">{title}</h3>
           <p className="confirm-message">{message}</p>
         </div>
         <div className="confirm-actions">

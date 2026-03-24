@@ -17,20 +17,26 @@ export function ResetCardModal({ isOpen, card, onConfirm, onCancel }: ResetCardM
 
   return (
     <div className="reset-modal-overlay" onClick={onCancel}>
-      <div className="reset-modal" onClick={e => e.stopPropagation()}>
+      <div
+        className="reset-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="reset-modal-title"
+        onClick={e => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="reset-modal-header">
           <div className="reset-modal-icon">
             <RotateCcw size={28} />
           </div>
-          <button className="reset-modal-close" onClick={onCancel}>
+          <button className="reset-modal-close" onClick={onCancel} aria-label="Đóng">
             <X size={20} />
           </button>
         </div>
 
         {/* Content */}
         <div className="reset-modal-content">
-          <h3 className="reset-modal-title">Reset thẻ về mặc định?</h3>
+          <h3 id="reset-modal-title" className="reset-modal-title">Reset thẻ về mặc định?</h3>
 
           <div className="reset-card-preview">
             <div className="reset-card-kanji">{card.kanji || card.vocabulary}</div>

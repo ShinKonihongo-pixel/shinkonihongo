@@ -26,7 +26,7 @@ export function GameAvatarPicker({ currentAvatar, playerName, onSelect }: GameAv
       <div className="avatar-preview" onClick={() => setShowPicker(!showPicker)}>
         <div className="avatar-display">
           {displayAvatar && isImageAvatar(displayAvatar) ? (
-            <img src={displayAvatar} alt="avatar" />
+            <img src={displayAvatar} alt="avatar" loading="lazy" />
           ) : displayAvatar ? (
             displayAvatar
           ) : (
@@ -51,7 +51,7 @@ export function GameAvatarPicker({ currentAvatar, playerName, onSelect }: GameAv
                     onClick={() => handleSelect(avatar)}
                   >
                     {isImageAvatar(avatar) ? (
-                      <img src={avatar} alt="avatar" />
+                      <img src={avatar} alt="avatar" loading="lazy" />
                     ) : (
                       avatar
                     )}

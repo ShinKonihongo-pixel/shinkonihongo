@@ -178,7 +178,7 @@ export function GameLobby({
             <div className="qz-lobby-host-card">
               <div className="qz-lobby-host-avatar">
                 {hostPlayer.avatar && isImageAvatar(hostPlayer.avatar)
-                  ? <img src={hostPlayer.avatar} alt={hostPlayer.name} />
+                  ? <img src={hostPlayer.avatar} alt={hostPlayer.name} loading="lazy" />
                   : (hostPlayer.avatar || hostPlayer.name.charAt(0).toUpperCase())}
               </div>
               <div className="qz-lobby-host-info">

@@ -1,8 +1,6 @@
 // PDF export utility for student reports
 // Generates comprehensive student report including grades, attendance, evaluations
 
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import type { User } from '../types/user';
 import type {
   Classroom,
@@ -94,7 +92,9 @@ function getAttendanceText(status: string): string {
   return labels[status] || status;
 }
 
-export function exportStudentReportPDF(data: StudentReportData): void {
+export async function exportStudentReportPDF(data: StudentReportData): Promise<void> {
+  const { jsPDF } = await import('jspdf');
+  const { default: autoTable } = await import('jspdf-autotable');
   const {
     user,
     classroom,
@@ -395,7 +395,7 @@ export function exportStudentReportPDF(data: StudentReportData): void {
 }
 
 // Export all students report for a classroom
-export function exportClassroomReportPDF(
+export async function exportClassroomReportPDF(
   classroom: Classroom,
   students: Array<{
     user: User;
@@ -403,7 +403,9 @@ export function exportClassroomReportPDF(
     attendance?: StudentAttendanceSummary;
   }>,
   evaluations: StudentEvaluation[]
-): void {
+): Promise<void> {
+  const { jsPDF } = await import('jspdf');
+  const { default: autoTable } = await import('jspdf-autotable');
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   let yPos = 20;

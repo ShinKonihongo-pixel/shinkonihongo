@@ -1,7 +1,6 @@
 // Section rendering functions (attendance, grades, evaluation)
 
 import type { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import type { StudentReportData } from '../../types/student-report';
 import { COLORS } from './constants';
 import { drawSectionHeader } from './components';
@@ -73,15 +72,16 @@ export function renderAttendanceSection(
   return yPos + 14;
 }
 
-export function renderGradesSection(
+export async function renderGradesSection(
   doc: jsPDF,
   data: StudentReportData,
   pageWidth: number,
   pageHeight: number,
   margin: number,
   yPos: number
-): number {
+): Promise<number> {
   if (!data.grades) return yPos;
+  const { default: autoTable } = await import('jspdf-autotable');
 
   // Check page break
   if (yPos > pageHeight - 80) {

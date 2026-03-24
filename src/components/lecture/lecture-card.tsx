@@ -30,7 +30,7 @@ export function LectureCard({
     <div className="lecture-card" onClick={onClick}>
       <div className="lecture-card-cover">
         {lecture.coverImage ? (
-          <img src={lecture.coverImage} alt={lecture.title} />
+          <img src={lecture.coverImage} alt={lecture.title} loading="lazy" />
         ) : (
           <div className="lecture-card-placeholder">
             <span>📚</span>

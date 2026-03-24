@@ -108,9 +108,43 @@ export function SalaryPage({ users }: SalaryPageProps) {
   }, []);
 
   // Handle export
-  const handleExport = useCallback((_format: 'csv' | 'pdf') => {
-    // TODO: Implement export
-  }, []);
+  const handleExport = useCallback((format: 'csv' | 'pdf') => {
+    if (format !== 'csv') return; // PDF not yet supported
+    if (salariesWithUsers.length === 0) return;
+
+    const period = selectedMonth;
+    const branchName = currentBranch?.name || '';
+
+    const headers = ['Giáo viên', 'Tháng', 'Chi nhánh', 'Số giờ', 'Đơn giá (VND/h)', 'Lương cơ bản', 'Thưởng', 'Khấu trừ', 'Tổng lương', 'Trạng thái'];
+    const rows = salariesWithUsers.map(s => {
+      const name = s.teacher?.displayName || s.teacher?.username || s.teacherId;
+      const statusLabel = s.status === 'paid' ? 'Đã thanh toán' : s.status === 'approved' ? 'Đã duyệt' : 'Nháp';
+      return [
+        name,
+        period,
+        branchName,
+        s.totalHours.toString(),
+        s.hourlyRate.toString(),
+        s.baseSalary.toString(),
+        s.bonus.toString(),
+        s.deduction.toString(),
+        s.totalAmount.toString(),
+        statusLabel,
+      ];
+    });
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `salary_${period}_${branchName || 'export'}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [salariesWithUsers, selectedMonth, currentBranch]);
 
   // Get salary with full details
   const getSalaryWithDetails = (salary: Salary) => {

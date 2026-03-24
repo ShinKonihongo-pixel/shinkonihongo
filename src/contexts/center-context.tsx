@@ -1,6 +1,6 @@
 // Center context - provides center data and branding to center-scoped pages
 
-import { createContext, useContext, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react';
 import type { Branch, BranchMemberRole, CenterBranding } from '../types/branch';
 import { DEFAULT_CENTER_BRANDING } from '../types/branch';
 
@@ -41,7 +41,7 @@ export function CenterProvider({ center, userRole, children }: CenterProviderPro
     };
   }, [branding]);
 
-  const value: CenterContextValue = {
+  const value = useMemo<CenterContextValue>(() => ({
     center,
     centerId: center.id,
     userRole,
@@ -49,7 +49,7 @@ export function CenterProvider({ center, userRole, children }: CenterProviderPro
     isTeacher: userRole === 'main_teacher' || userRole === 'part_time_teacher' || userRole === 'assistant',
     isStudent: userRole === 'student',
     branding,
-  };
+  }), [center, userRole, branding]);
 
   return (
     <CenterContext.Provider value={value}>

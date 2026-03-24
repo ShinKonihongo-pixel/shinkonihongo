@@ -10,7 +10,24 @@ import {
   ClipboardList,
   Award,
 } from 'lucide-react';
-import type { MissionTemplate } from '../types/achievements';
+import type { LucideIcon } from 'lucide-react';
+import type { MissionTemplate, MissionType } from '../types/achievements';
+
+// Lookup icon by mission type — avoids storing non-serializable components in state/localStorage
+const MISSION_ICON_MAP: Record<MissionType, LucideIcon> = {
+  study_words: BookOpen,
+  review_cards: Layers,
+  play_game: Gamepad2,
+  read_passage: BookOpenCheck,
+  grammar_study: FileText,
+  listening: Headphones,
+  kanji_study: ClipboardList,
+  jlpt_practice: Award,
+};
+
+export function getMissionIcon(type: MissionType): LucideIcon {
+  return MISSION_ICON_MAP[type] ?? BookOpen;
+}
 
 export const MISSION_TEMPLATES: MissionTemplate[] = [
   {

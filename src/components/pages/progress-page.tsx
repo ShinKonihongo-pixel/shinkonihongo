@@ -379,6 +379,17 @@ export function ProgressPage({ progress, stats, onStartStudy }: ProgressPageProp
             <h2>Hoạt động 2 tuần</h2>
             <span className="pp-section-jp">活動履歴</span>
           </div>
+          {dailyActivity.every(d => d.cardsStudied === 0 && d.jlptPracticed === 0 && d.gamesPlayed === 0) ? (
+            <div className="pp-empty-history">
+              <TrendingUp size={48} strokeWidth={1.2} style={{ color: 'rgba(139,92,246,0.5)' }} />
+              <h3>Chưa có lịch sử học tập</h3>
+              <p>Bắt đầu học và lịch sử hoạt động sẽ xuất hiện ở đây</p>
+              <button className="btn btn-primary" onClick={onStartStudy} style={{ marginTop: '1rem' }}>
+                Bắt đầu học ngay
+              </button>
+            </div>
+          ) : (
+          <>
           <div className="pp-activity-chart">
             {dailyActivity.map((day, i) => {
               const total = day.cardsStudied + day.jlptPracticed + day.gamesPlayed * 5;
@@ -416,6 +427,8 @@ export function ProgressPage({ progress, stats, onStartStudy }: ProgressPageProp
               Game
             </span>
           </div>
+          </>
+          )}
         </section>
 
         {/* Level Progress */}

@@ -1,5 +1,6 @@
 // Lectures view - Select Lecture in Folder
 
+import { BookOpen, Plus, Search } from 'lucide-react';
 import { LectureCard } from '../../lecture/lecture-card';
 import type { JLPTLevel } from '../../../types/flashcard';
 import type { Lecture, LectureFolder } from '../../../types/lecture';
@@ -69,7 +70,14 @@ export function LecturesView({
 
       {filteredLectures.length === 0 ? (
         <div className="empty-state">
-          <p>Chưa có bài giảng nào trong bài học này</p>
+          {searchQuery ? <Search size={48} strokeWidth={1.2} /> : <BookOpen size={48} strokeWidth={1.2} />}
+          <h3>{searchQuery ? 'Không tìm thấy bài giảng' : 'Chưa có bài giảng nào'}</h3>
+          <p>{searchQuery ? `Không có bài giảng nào khớp với "${searchQuery}"` : 'Bài giảng sẽ xuất hiện ở đây sau khi được tạo'}</p>
+          {isAdmin && !searchQuery && onNavigateToEditor && (
+            <button className="btn btn-primary" onClick={() => onNavigateToEditor()} style={{ marginTop: '1rem' }}>
+              <Plus size={16} /> Tạo bài giảng
+            </button>
+          )}
         </div>
       ) : (
         <div className="lecture-grid">

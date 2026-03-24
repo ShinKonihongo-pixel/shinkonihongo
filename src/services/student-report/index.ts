@@ -1,6 +1,5 @@
 // Main entry point for student report PDF generation
 
-import { jsPDF } from 'jspdf';
 import type { StudentReportConfig, StudentReportData } from '../../types/student-report';
 import { renderHeader } from './header';
 import { renderStudentInfo } from './student-info';
@@ -14,7 +13,8 @@ import { toASCII, formatDate } from './utils';
 export async function generateStudentReportPDF(
   data: StudentReportData,
   config: StudentReportConfig
-): Promise<jsPDF> {
+): Promise<import('jspdf').jsPDF> {
+  const { jsPDF } = await import('jspdf');
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -37,7 +37,7 @@ export async function generateStudentReportPDF(
 
   // Render grades section
   if (config.showGrades && data.grades) {
-    yPos = renderGradesSection(doc, data, pageWidth, pageHeight, margin, yPos);
+    yPos = await renderGradesSection(doc, data, pageWidth, pageHeight, margin, yPos);
   }
 
   // Render evaluation section

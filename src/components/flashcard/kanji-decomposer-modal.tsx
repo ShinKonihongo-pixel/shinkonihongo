@@ -165,11 +165,19 @@ export function KanjiDecomposerModal({ kanjiCard, onClose, onSaveRadicals, onSav
   const [addRadInput, setAddRadInput] = useState('');
   const dragIdx = useRef<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
-  // ReadOnly mode: selected radical to show kanji list
+  // ReadOnly mode: selected radical to show kanji list from allCards (Firestore)
+  // Uses saved radicals first, falls back to KRAD static decomposition
   const [selectedRadical, setSelectedRadical] = useState<string | null>(null);
   const radicalKanjiList = useMemo(() => {
     if (!selectedRadical || !allCards) return [];
-    return allCards.filter(c => c.character !== kanjiCard.character && c.radicals.includes(selectedRadical));
+    return allCards.filter(c => {
+      if (c.character === kanjiCard.character) return false;
+      // Check saved radicals from Firestore first
+      if (c.radicals?.length && c.radicals.includes(selectedRadical)) return true;
+      // Fallback: check KRAD static decomposition data
+      const staticRads = getDecomposition(c.character) || getSeedRadicals(c.character);
+      return staticRads ? staticRads.includes(selectedRadical) : false;
+    });
   }, [selectedRadical, allCards, kanjiCard.character]);
 
   const handleReset = () => { setRadicals(decomposition); setSwapIdx(null); setEditingRadIdx(null); setAddingRadical(false); setAddRadInput(''); };

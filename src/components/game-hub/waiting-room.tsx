@@ -226,7 +226,7 @@ export function WaitingRoom({ onJoinGame, onBack, onCreateRoom, filterGameType, 
                   <div className="wr-card-top">
                     <div className="wr-game-tag">
                       {gameInfo.iconImage ? (
-                        <img src={gameInfo.iconImage} alt="" className="wr-tag-icon" />
+                        <img src={gameInfo.iconImage} alt="" className="wr-tag-icon" loading="lazy" />
                       ) : (
                         <span className="wr-tag-emoji">{gameInfo.icon}</span>
                       )}
@@ -248,7 +248,7 @@ export function WaitingRoom({ onJoinGame, onBack, onCreateRoom, filterGameType, 
                     <div className="wr-host">
                       <span className="wr-host-avatar">
                         {isImageAvatar(game.hostAvatar)
-                          ? <img src={game.hostAvatar} alt="" className="wr-host-img" />
+                          ? <img src={game.hostAvatar} alt="" className="wr-host-img" loading="lazy" />
                           : game.hostAvatar}
                       </span>
                       <span className="wr-host-name">{game.hostName}</span>

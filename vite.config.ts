@@ -50,6 +50,30 @@ export default defineConfig({
               expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 },
             },
           },
+          {
+            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts',
+              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'cdn-cache',
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/.*\.firebasestorage\.googleapis\.com\/.*/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'firebase-storage',
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 7 },
+            },
+          },
         ],
       },
     }),
@@ -60,7 +84,16 @@ export default defineConfig({
     },
   },
   build: {
-    chunkSizeWarningLimit: 20000, // 20MB - suppress warnings
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-firebase': ['firebase/app', 'firebase/firestore', 'firebase/auth', 'firebase/storage'],
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-ui': ['lucide-react'],
+        },
+      },
+    },
   },
   test: {
     globals: true,

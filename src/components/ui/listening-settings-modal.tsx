@@ -46,6 +46,9 @@ export function ListeningSettingsModal({ isOpen, onClose }: ListeningSettingsMod
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="listening-settings-title"
         style={{
           width: '100%',
           maxWidth: '420px',
@@ -85,12 +88,13 @@ export function ListeningSettingsModal({ isOpen, onClose }: ListeningSettingsMod
             >
               <Headphones size={20} color="white" />
             </div>
-            <span style={{ color: 'white', fontSize: '1.1rem', fontWeight: 600 }}>
+            <span id="listening-settings-title" style={{ color: 'white', fontSize: '1.1rem', fontWeight: 600 }}>
               Cài đặt hiển thị
             </span>
           </div>
           <button
             onClick={onClose}
+            aria-label="Đóng"
             style={{
               width: '36px',
               height: '36px',

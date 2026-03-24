@@ -10,6 +10,8 @@ import { TeacherAddModal } from '../teacher/teacher-add-modal';
 import { TeacherSchedule, ScheduleModal } from '../teacher/teacher-schedule';
 import { TeachingLog, TeachingSessionModal } from '../teacher/teaching-log';
 import { BranchSelector } from '../branch/branch-selector';
+import { addUser } from '../../services/firestore/user-service';
+import { hashPassword } from '../../utils/password-hash';
 import type { BranchMember, BranchMemberRole } from '../../types/branch';
 import type { TeacherSchedule as TSchedule, TeacherScheduleFormData } from '../../types/teacher';
 import type { User } from '../../types/user';
@@ -81,7 +83,7 @@ export function TeacherManagementPage({ users }: TeacherManagementPageProps) {
 
   // Handle add teacher
   const handleAddTeacher = useCallback(async (
-    data: { userId?: string; newUser?: Partial<User> },
+    data: { userId?: string; newUser?: Partial<User> & { password?: string } },
     role: BranchMemberRole,
     salary?: { type: 'monthly' | 'hourly'; amount: number }
   ): Promise<boolean> => {
@@ -89,9 +91,27 @@ export function TeacherManagementPage({ users }: TeacherManagementPageProps) {
       const result = await addMember(data.userId, role, salary);
       return !!result;
     }
-    // TODO: Handle create new user case
+    // Create new user then add as branch member
+    if (data.newUser?.username && data.newUser?.password) {
+      try {
+        const hashedPw = await hashPassword(data.newUser.password);
+        const newUserDoc = await addUser({
+          username: data.newUser.username,
+          displayName: data.newUser.displayName || data.newUser.username,
+          password: hashedPw,
+          role,
+          createdBy: currentUser?.id,
+          createdAt: new Date().toISOString().split('T')[0],
+        });
+        const result = await addMember(newUserDoc.id, role, salary);
+        return !!result;
+      } catch (err) {
+        console.error('Error creating teacher:', err);
+        return false;
+      }
+    }
     return false;
-  }, [addMember]);
+  }, [addMember, currentUser?.id]);
 
   // Handle update teacher
   const handleUpdateTeacher = useCallback(async (
@@ -332,6 +352,15 @@ export function TeacherManagementPage({ users }: TeacherManagementPageProps) {
               } else if (userId) {
                 // Add existing user
                 await handleAddTeacher({ userId }, data.role, data.salary);
+              } else if (data.username && data.password) {
+                // Create new user then add as member
+                await handleAddTeacher({
+                  newUser: {
+                    username: data.username,
+                    displayName: data.displayName,
+                    password: data.password,
+                  },
+                }, data.role, data.salary);
               }
               setShowAddModal(false);
             }}

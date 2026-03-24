@@ -68,12 +68,12 @@ export function StudentDetailModal({
   const [exporting, setExporting] = useState(false);
 
   // Handle PDF export
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (!user || !classroom) return;
 
     setExporting(true);
     try {
-      exportStudentReportPDF({
+      await exportStudentReportPDF({
         user,
         classroom,
         studentGrade,

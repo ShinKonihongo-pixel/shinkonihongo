@@ -1,11 +1,8 @@
 // Furigana Service - Automatic furigana generation for Japanese text using kuroshiro
 // Converts kanji to include furigana readings automatically
 
-import Kuroshiro from 'kuroshiro';
-import KuromojiAnalyzer from 'kuroshiro-analyzer-kuromoji';
-
 // Singleton instance
-let kuroshiroInstance: Kuroshiro | null = null;
+let kuroshiroInstance: import('kuroshiro').default | null = null;
 let initPromise: Promise<void> | null = null;
 let isInitialized = false;
 let initError: Error | null = null;
@@ -22,6 +19,8 @@ async function initKuroshiro(): Promise<void> {
   initPromise = (async () => {
     try {
       console.log('[Furigana] Starting Kuroshiro initialization...');
+      const { default: Kuroshiro } = await import('kuroshiro');
+      const { default: KuromojiAnalyzer } = await import('kuroshiro-analyzer-kuromoji');
       kuroshiroInstance = new Kuroshiro();
 
       // Try multiple sources for dictionary (CDN first as they are more reliable)
@@ -80,13 +79,11 @@ export async function convertToFurigana(text: string): Promise<string> {
     }
 
     // Convert to HTML with furigana
-    console.log('[Furigana] Converting text, length:', text.length);
     const result = await kuroshiroInstance.convert(text, {
       mode: 'furigana',
       to: 'hiragana',
     });
 
-    console.log('[Furigana] Conversion complete, result has ruby:', result.includes('<ruby>'));
     return result;
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error);

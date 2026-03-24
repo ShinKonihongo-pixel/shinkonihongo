@@ -62,7 +62,23 @@ export function BranchSalariesTab({
           branch={branch}
           month={selectedMonth}
           onMonthChange={onMonthChange}
-          onExport={(_format) => { /* TODO: Implement export */ }}
+          onExport={(format) => {
+            if (format !== 'csv' || salaries.length === 0) return;
+            const headers = ['Giáo viên', 'Tháng', 'Chi nhánh', 'Số giờ', 'Đơn giá (VND/h)', 'Lương cơ bản', 'Thưởng', 'Khấu trừ', 'Tổng lương', 'Trạng thái'];
+            const rows = salaries.map(s => {
+              const name = s.teacher?.displayName || s.teacher?.username || s.teacherId;
+              const statusLabel = s.status === 'paid' ? 'Đã thanh toán' : s.status === 'approved' ? 'Đã duyệt' : 'Nháp';
+              return [name, selectedMonth, branch.name, s.totalHours.toString(), s.hourlyRate.toString(), s.baseSalary.toString(), s.bonus.toString(), s.deduction.toString(), s.totalAmount.toString(), statusLabel];
+            });
+            const csvContent = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `salary_${selectedMonth}_${branch.name}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+          }}
           loading={loading}
         />
       )}

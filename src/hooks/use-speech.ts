@@ -204,8 +204,6 @@ export function useSpeech(options: UseSpeechOptions = {}) {
     const isEdge = userAgent.includes('edg');
     const isSupported = isChrome || isEdge;
 
-    console.log('[Speech] Browser check:', { userAgent, isChrome, isEdge, isSupported, hasAPI: !!SpeechRecognitionAPI });
-
     if (SpeechRecognitionAPI && isSupported) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setRecognitionSupported(true);
@@ -215,18 +213,15 @@ export function useSpeech(options: UseSpeechOptions = {}) {
       recognition.interimResults = true;
 
       recognition.onstart = () => {
-        console.log('[Speech] Recognition started');
         setIsListening(true);
         setError(null);
       };
 
       recognition.onend = () => {
-        console.log('[Speech] Recognition ended');
         setIsListening(false);
       };
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
-        console.log('[Speech] Got result:', event.results);
         let interim = '';
         let final = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -237,7 +232,6 @@ export function useSpeech(options: UseSpeechOptions = {}) {
             interim += result[0].transcript;
           }
         }
-        console.log('[Speech] Final:', final, 'Interim:', interim);
         if (final) {
           setTranscript(prev => prev + final);
         }
@@ -316,7 +310,6 @@ export function useSpeech(options: UseSpeechOptions = {}) {
 
   // Start listening
   const startListening = useCallback(() => {
-    console.log('[Speech] startListening called, supported:', recognitionSupported, 'ref:', !!recognitionRef.current);
     if (!recognitionRef.current || !recognitionSupported) {
       setError('Trình duyệt không hỗ trợ nhận dạng giọng nói. Vui lòng dùng Chrome.');
       return;
@@ -326,7 +319,6 @@ export function useSpeech(options: UseSpeechOptions = {}) {
     setError(null);
     try {
       recognitionRef.current.start();
-      console.log('[Speech] Recognition start() called');
     } catch (e) {
       console.error('[Speech] Start error:', e);
       setError('Đang trong quá trình nhận dạng.');

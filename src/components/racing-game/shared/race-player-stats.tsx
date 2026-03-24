@@ -36,7 +36,7 @@ export function RacePlayerStats({
         <div className="player-identity">
           <span className="player-avatar">
             {player.avatar && isImageAvatar(player.avatar) ? (
-              <img src={player.avatar} alt={player.displayName} />
+              <img src={player.avatar} alt={player.displayName} loading="lazy" />
             ) : (
               player.avatar || player.displayName.charAt(0)
             )}

@@ -147,7 +147,7 @@ export function CenterMembersPage({ users }: CenterMembersPageProps) {
             <div key={m.member.id} className="center-member-card">
               <div className="center-member-avatar">
                 {m.avatar && isImageAvatar(m.avatar) ? (
-                  <img src={m.avatar} alt={m.displayName} />
+                  <img src={m.avatar} alt={m.displayName} loading="lazy" />
                 ) : (
                   <span>{m.avatar || m.displayName.charAt(0).toUpperCase()}</span>
                 )}

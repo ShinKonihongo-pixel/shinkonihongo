@@ -51,7 +51,6 @@ function generateMissions(date: string, userId: string): DailyMission[] {
       type: template.type,
       title: template.titleTemplate.replace('{target}', String(target)),
       description: template.descriptionVi,
-      icon: template.icon,
       target,
       progress: 0,
       xpReward: template.xpReward,

@@ -39,7 +39,7 @@ export function TeamCard({ team, players, isSelected, onSelect, compact }: TeamC
               <div key={player.odinhId} className="team-member">
                 <span className="member-avatar">
                   {player.avatar && isImageAvatar(player.avatar) ? (
-                    <img src={player.avatar} alt={player.displayName} />
+                    <img src={player.avatar} alt={player.displayName} loading="lazy" />
                   ) : (
                     player.avatar || player.displayName.charAt(0)
                   )}

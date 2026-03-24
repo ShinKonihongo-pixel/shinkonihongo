@@ -375,7 +375,7 @@ export function RacingGamePlayV2({
               onClick={() => handleSelectAnswer(index)}
               disabled={hasSubmitted}
             >
-              <img src={ANSWER_OPTIONS[index].icon} alt={ANSWER_OPTIONS[index].label} className="option-icon-img" />
+              <img src={ANSWER_OPTIONS[index].icon} alt={ANSWER_OPTIONS[index].label} className="option-icon-img" loading="lazy" />
               <span className="option-text">{option}</span>
               {isCorrect && <span className="option-mark correct">✓</span>}
               {isWrong && <span className="option-mark wrong">✗</span>}
@@ -469,7 +469,7 @@ export function RacingGamePlayV2({
           >
             <span className="target-avatar">
               {player.avatar && isImageAvatar(player.avatar) ? (
-                <img src={player.avatar} alt={player.displayName} />
+                <img src={player.avatar} alt={player.displayName} loading="lazy" />
               ) : (
                 player.vehicle.emoji
               )}

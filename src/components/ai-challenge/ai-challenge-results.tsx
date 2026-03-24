@@ -12,7 +12,7 @@ import { isImageAvatar } from '../../utils/avatar-icons';
 function renderAvatar(avatar: string | undefined, fallback: string = '👤') {
   if (!avatar) return fallback;
   if (isImageAvatar(avatar)) {
-    return <img src={avatar} alt="avatar" />;
+    return <img src={avatar} alt="avatar" loading="lazy" />;
   }
   return avatar;
 }

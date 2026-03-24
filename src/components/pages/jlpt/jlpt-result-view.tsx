@@ -314,7 +314,7 @@ export function JLPTResultView({
                         key={aIdx}
                         className={`review-answer ${answer.isCorrect ? 'correct' : ''} ${result?.selectedAnswer === aIdx && !answer.isCorrect ? 'selected-wrong' : ''}`}
                       >
-                        <img src={ANSWER_OPTIONS[aIdx].icon} alt={ANSWER_OPTIONS[aIdx].label} className="answer-icon-img" />
+                        <img src={ANSWER_OPTIONS[aIdx].icon} alt={ANSWER_OPTIONS[aIdx].label} className="answer-icon-img" loading="lazy" />
                         <span>{answer.text}</span>
                         {answer.isCorrect && <span className="correct-mark">✓</span>}
                         {result?.selectedAnswer === aIdx && !answer.isCorrect && <span className="wrong-mark">✗</span>}

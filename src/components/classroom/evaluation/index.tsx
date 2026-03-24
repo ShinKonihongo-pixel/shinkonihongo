@@ -133,13 +133,13 @@ export function EvaluationPanel({
     setSaving(false);
   };
 
-  const handleExportStudent = (userId: string) => {
+  const handleExportStudent = async (userId: string) => {
     const student = students.find(s => s.userId === userId);
     if (!student?.user || !classroom) return;
 
     setExporting(true);
     try {
-      exportStudentReportPDF({
+      await exportStudentReportPDF({
         user: student.user,
         classroom,
         studentGrade: getStudentGrade(userId),
@@ -156,12 +156,12 @@ export function EvaluationPanel({
     }
   };
 
-  const handleExportAll = () => {
+  const handleExportAll = async () => {
     if (!classroom) return;
 
     setExporting(true);
     try {
-      exportClassroomReportPDF(
+      await exportClassroomReportPDF(
         classroom,
         students.map(s => ({
           user: s.user!,

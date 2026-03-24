@@ -55,7 +55,7 @@ export const ImageWordLessonSelect: React.FC<ImageWordLessonSelectProps> = ({
             >
               <div className="lesson-thumbnail">
                 {lesson.pairs[0]?.imageUrl ? (
-                  <img src={lesson.pairs[0].imageUrl} alt="" />
+                  <img src={lesson.pairs[0].imageUrl} alt="" loading="lazy" />
                 ) : (
                   <Image size={40} />
                 )}

@@ -116,7 +116,7 @@ export const ImageWordGamePlay: React.FC<ImageWordGamePlayProps> = ({
                   onClick={() => onSelectImage(pair.id)}
                   disabled={matchedPairs.includes(pair.id)}
                 >
-                  <img src={pair.imageUrl} alt="" />
+                  <img src={pair.imageUrl} alt="" loading="lazy" />
                   {state === 'matched' && <span className="match-check">✓</span>}
                 </button>
               );

@@ -256,6 +256,7 @@ export function ReportSettingsModal({
                 <img
                   src={schoolLogo}
                   alt="School Logo"
+                  loading="lazy"
                   style={{ width: '80px', height: '80px', objectFit: 'contain', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '4px' }}
                 />
                 <button

@@ -89,7 +89,7 @@ export function QuizBattlePlaying({ game, currentPlayerId, onSubmitAnswer }: Qui
 
   function renderAvatar(avatar: string, name: string, ring: string) {
     const inner = (avatar && isImageAvatar(avatar))
-      ? <img src={avatar} alt={name} className="qb-hud-avatar-img" />
+      ? <img src={avatar} alt={name} className="qb-hud-avatar-img" loading="lazy" />
       : <span className="qb-hud-avatar-emoji">{avatar || name.charAt(0).toUpperCase()}</span>;
     return (
       <div className="qb-hud-avatar-wrap" style={{ '--ring-color': ring } as React.CSSProperties}>

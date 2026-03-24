@@ -23,7 +23,7 @@ export function RankingsTable({
 }: RankingsTableProps) {
   const renderAvatar = (avatar: string, displayName: string) => {
     if (isImageAvatar(avatar)) {
-      return <img src={avatar} alt={displayName} />;
+      return <img src={avatar} alt={displayName} loading="lazy" />;
     }
     return avatar;
   };

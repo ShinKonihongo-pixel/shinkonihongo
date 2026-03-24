@@ -146,7 +146,7 @@ export const ImageWordManagementPage: React.FC<ImageWordManagementPageProps> = (
                 {/* Thumbnail */}
                 <div className="iw-lesson-thumb">
                   {lesson.pairs[0]?.imageUrl ? (
-                    <img src={lesson.pairs[0].imageUrl} alt="" />
+                    <img src={lesson.pairs[0].imageUrl} alt="" loading="lazy" />
                   ) : (
                     <div className="iw-thumb-placeholder">
                       <ImageIcon size={32} />
@@ -220,7 +220,7 @@ export const ImageWordManagementPage: React.FC<ImageWordManagementPageProps> = (
             <div className="iw-preview-grid">
               {previewLesson.pairs.map((pair) => (
                 <div key={pair.id} className="iw-preview-item">
-                  <img src={pair.imageUrl} alt="" />
+                  <img src={pair.imageUrl} alt="" loading="lazy" />
                   <div className="iw-preview-word">
                     <span className="vocab">{pair.vocabulary}</span>
                     {pair.reading && <span className="reading">{pair.reading}</span>}
@@ -504,7 +504,7 @@ const PairEditor: React.FC<PairEditorProps> = ({
         />
         {pair.imageUrl ? (
           <div className="iw-image-thumb" onClick={() => fileInputRef.current?.click()}>
-            <img src={pair.imageUrl} alt="" />
+            <img src={pair.imageUrl} alt="" loading="lazy" />
             <div className="iw-image-hover">
               <Upload size={14} />
               <span>Đổi</span>

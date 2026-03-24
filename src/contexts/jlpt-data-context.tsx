@@ -1,8 +1,8 @@
-import { createContext, useContext, type ReactNode } from 'react';
-import { useJLPTQuestions } from '../hooks/use-jlpt-questions';
-import { useKaiwaQuestions } from '../hooks/use-kaiwa-questions';
-import { useKaiwaTopics } from '../hooks/use-kaiwa-topics';
-import { useCustomTopics } from '../hooks/use-custom-topics';
+// Backward-compatible composition of domain-specific sub-contexts.
+// Consumers using useJLPTData() continue to work unchanged.
+// New consumers can import granular hooks for isolated re-render trees.
+
+import { useMemo, type ReactNode } from 'react';
 import type { JLPTQuestion, JLPTQuestionFormData, JLPTFolder, JLPTLevel, QuestionCategory } from '../types/jlpt-question';
 import type { KaiwaDefaultQuestion, KaiwaQuestionFormData, KaiwaFolder } from '../types/kaiwa-question';
 import type { ConversationTopic } from '../types/kaiwa';
@@ -14,7 +14,16 @@ import type {
 } from '../types/kaiwa-advanced';
 import type { CustomTopic, CustomTopicQuestion } from '../types/custom-topic';
 
-interface JLPTDataContextValue {
+import { JLPTQuestionProvider, useJLPTQuestionData } from './jlpt-question-context';
+import { KaiwaDataProvider, useKaiwaDataContext } from './kaiwa-data-context';
+import { CustomTopicProvider, useCustomTopicData } from './custom-topic-context';
+
+// Re-export granular hooks for new consumers
+export { useJLPTQuestionData, useKaiwaDataContext, useCustomTopicData };
+
+// ─── Backward-compatible interface ───────────────────────────────────────────
+
+export interface JLPTDataContextValue {
   // JLPT Questions
   jlptQuestions: JLPTQuestion[];
   jlptFolders: JLPTFolder[];
@@ -57,118 +66,36 @@ interface JLPTDataContextValue {
   getCustomTopicQuestionsByTopic: (topicId: string) => CustomTopicQuestion[];
 }
 
-const JLPTDataContext = createContext<JLPTDataContextValue | null>(null);
+// ─── Provider ─────────────────────────────────────────────────────────────────
 
 interface JLPTDataProviderProps {
   children: ReactNode;
   currentUserId: string;
-  levelFilter?: string; // JLPT level filter — undefined = load all (admin mode)
+  levelFilter?: string;
 }
 
 export function JLPTDataProvider({ children, currentUserId, levelFilter }: JLPTDataProviderProps) {
-  // JLPT Questions hook — filtered by level for regular users
-  const {
-    questions: jlptQuestions,
-    folders: jlptFolders,
-    addJLPTQuestion,
-    updateJLPTQuestion,
-    deleteJLPTQuestion,
-    addJLPTFolder,
-    updateJLPTFolder,
-    deleteJLPTFolder,
-    getFoldersByLevelAndCategory,
-    getQuestionsByFolder,
-  } = useJLPTQuestions(levelFilter);
-
-  // Kaiwa Questions hook — filtered by level for regular users
-  const {
-    questions: kaiwaQuestions,
-    folders: kaiwaFolders,
-    addKaiwaQuestion,
-    updateKaiwaQuestion,
-    deleteKaiwaQuestion,
-    addKaiwaFolder,
-    updateKaiwaFolder,
-    deleteKaiwaFolder,
-    getFoldersByLevelAndTopic,
-    getQuestionsByFolder: getQuestionsByKaiwaFolder,
-    getQuestionsByLevelAndTopic,
-  } = useKaiwaQuestions(levelFilter);
-
-  // Advanced Kaiwa Topics hook
-  const {
-    topics: advancedKaiwaTopics,
-    questions: advancedKaiwaQuestions,
-    addTopic: addAdvancedKaiwaTopic,
-    updateTopic: updateAdvancedKaiwaTopic,
-    deleteTopic: deleteAdvancedKaiwaTopic,
-    addQuestion: addAdvancedKaiwaQuestion,
-    updateQuestion: updateAdvancedKaiwaQuestion,
-    deleteQuestion: deleteAdvancedKaiwaQuestion,
-    getQuestionsByTopic: getAdvancedKaiwaQuestionsByTopic,
-  } = useKaiwaTopics({ currentUserId });
-
-  // Custom Topics hook
-  const {
-    topics: customTopics,
-    questions: customTopicQuestions,
-    getQuestionsByTopic: getCustomTopicQuestionsByTopic,
-  } = useCustomTopics();
-
-  const value: JLPTDataContextValue = {
-    // JLPT Questions
-    jlptQuestions,
-    jlptFolders,
-    addJLPTQuestion,
-    updateJLPTQuestion,
-    deleteJLPTQuestion,
-    addJLPTFolder,
-    updateJLPTFolder,
-    deleteJLPTFolder,
-    getFoldersByLevelAndCategory,
-    getQuestionsByFolder,
-
-    // Kaiwa Questions
-    kaiwaQuestions,
-    kaiwaFolders,
-    addKaiwaQuestion,
-    updateKaiwaQuestion,
-    deleteKaiwaQuestion,
-    addKaiwaFolder,
-    updateKaiwaFolder,
-    deleteKaiwaFolder,
-    getFoldersByLevelAndTopic,
-    getQuestionsByKaiwaFolder,
-    getQuestionsByLevelAndTopic,
-
-    // Advanced Kaiwa Topics
-    advancedKaiwaTopics,
-    advancedKaiwaQuestions,
-    addAdvancedKaiwaTopic,
-    updateAdvancedKaiwaTopic,
-    deleteAdvancedKaiwaTopic,
-    addAdvancedKaiwaQuestion,
-    updateAdvancedKaiwaQuestion,
-    deleteAdvancedKaiwaQuestion,
-    getAdvancedKaiwaQuestionsByTopic,
-
-    // Custom Topics
-    customTopics,
-    customTopicQuestions,
-    getCustomTopicQuestionsByTopic,
-  };
-
   return (
-    <JLPTDataContext.Provider value={value}>
-      {children}
-    </JLPTDataContext.Provider>
+    <JLPTQuestionProvider levelFilter={levelFilter}>
+      <KaiwaDataProvider currentUserId={currentUserId} levelFilter={levelFilter}>
+        <CustomTopicProvider>
+          {children}
+        </CustomTopicProvider>
+      </KaiwaDataProvider>
+    </JLPTQuestionProvider>
   );
 }
 
-export function useJLPTData() {
-  const ctx = useContext(JLPTDataContext);
-  if (!ctx) {
-    throw new Error('useJLPTData must be used within JLPTDataProvider');
-  }
-  return ctx;
+// ─── Backward-compatible aggregate hook ───────────────────────────────────────
+
+export function useJLPTData(): JLPTDataContextValue {
+  const jlpt = useJLPTQuestionData();
+  const kaiwa = useKaiwaDataContext();
+  const custom = useCustomTopicData();
+
+  return useMemo(() => ({
+    ...jlpt,
+    ...kaiwa,
+    ...custom,
+  }), [jlpt, kaiwa, custom]);
 }

@@ -73,7 +73,7 @@ export function ProfileSection(props: ProfileSettingsProps) {
               }}
             >
               {(profileHandlers.selectedAvatar || currentUser.avatar) && isImageAvatar(profileHandlers.selectedAvatar || currentUser.avatar || '') ? (
-                <img src={profileHandlers.selectedAvatar || currentUser.avatar} alt="avatar" />
+                <img src={profileHandlers.selectedAvatar || currentUser.avatar} alt="avatar" loading="lazy" />
               ) : (
                 profileHandlers.selectedAvatar || currentUser.avatar || (currentUser.displayName || currentUser.username).charAt(0).toUpperCase()
               )}
@@ -135,7 +135,7 @@ export function ProfileSection(props: ProfileSettingsProps) {
                           onClick={() => profileHandlers.setSelectedAvatar(avatar)}
                         >
                           {isImageAvatar(avatar) ? (
-                            <img src={avatar} alt="avatar" />
+                            <img src={avatar} alt="avatar" loading="lazy" />
                           ) : (
                             avatar
                           )}

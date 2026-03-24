@@ -133,7 +133,7 @@ export function RacingGameLobby({
                 )}
                 <div className={getVipAvatarClasses(player.role, 'player-avatar')}>
                   {player.avatar && isImageAvatar(player.avatar) ? (
-                    <img src={player.avatar} alt={player.displayName} />
+                    <img src={player.avatar} alt={player.displayName} loading="lazy" />
                   ) : (
                     player.avatar || player.displayName.charAt(0).toUpperCase()
                   )}
@@ -203,7 +203,7 @@ export function RacingGameLobby({
                     {memberPlayers.map(p => (
                       <span key={p.odinhId} className="member-mini" title={p.displayName}>
                         {p.avatar && isImageAvatar(p.avatar) ? (
-                          <img src={p.avatar} alt={p.displayName} />
+                          <img src={p.avatar} alt={p.displayName} loading="lazy" />
                         ) : (
                           p.avatar || p.displayName.charAt(0)
                         )}

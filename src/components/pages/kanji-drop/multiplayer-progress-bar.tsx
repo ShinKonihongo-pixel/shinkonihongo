@@ -36,7 +36,7 @@ export function MultiplayerProgressBar({
             <div className="kd-mp-player-rank">#{idx + 1}</div>
             <div className="kd-mp-player-avatar">
               {player.avatar.startsWith('http') || player.avatar.startsWith('/') ? (
-                <img src={player.avatar} alt="" />
+                <img src={player.avatar} alt="" loading="lazy" />
               ) : (
                 <span>{player.avatar}</span>
               )}

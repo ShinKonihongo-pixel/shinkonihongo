@@ -1,7 +1,7 @@
 // PPTX Importer - Extract slides from PowerPoint files using JSZip
 // Rewritten for better compatibility with different PPTX formats
 
-import JSZip from 'jszip';
+import type JSZip from 'jszip';
 import type { SlideFormData, SlideElement, SlideLayout } from '../../types/lecture';
 import type {
   ImportResult,
@@ -258,8 +258,6 @@ function findSlideFiles(zip: JSZip): string[] {
     }
   });
 
-  console.log('Raw slide file paths found:', slideFiles);
-
   // Sort by slide number
   slideFiles.sort((a, b) => {
     const numA = parseInt(a.match(/slide(\d+)\.xml/)?.[1] || '0', 10);
@@ -295,22 +293,15 @@ export async function importPPTXFile(
     onProgress?.({ state: 'reading', percent: 10, currentStep: 'Đang đọc file...' });
 
     const arrayBuffer = await file.arrayBuffer();
+    const { default: JSZip } = await import('jszip');
     const zip = await JSZip.loadAsync(arrayBuffer);
-
-    // Debug: Log all files in ZIP
-    console.log('PPTX files found:');
-    zip.forEach((path) => {
-      console.log(' -', path);
-    });
 
     // Step 2: Extract media files
     onProgress?.({ state: 'parsing', percent: 20, currentStep: 'Đang trích xuất media...' });
     const mediaFiles = await extractMedia(zip);
-    console.log('Media files found:', mediaFiles.size);
 
     // Step 3: Find all slide files
     const slideFiles = findSlideFiles(zip);
-    console.log('Slide files found:', slideFiles.length, slideFiles);
 
     if (slideFiles.length === 0) {
       result.errors.push('Không tìm thấy slide nào trong file PPTX');
@@ -332,11 +323,8 @@ export async function importPPTXFile(
         continue;
       }
 
-      console.log(`Parsing slide ${i + 1}: ${slidePath}`);
-
       // Parse slide content
-      const parsed = parseSlideXml(slideXml);
-      console.log(`  Elements found: ${parsed.elements.length}`);
+      const parsed = await parseSlideXml(slideXml);
 
       // Get slide number from path
       const slideNum = slidePath.match(/slide(\d+)\.xml/)?.[1] || '1';
@@ -344,14 +332,13 @@ export async function importPPTXFile(
       // Get slide relationships
       const slideRelsPath = `ppt/slides/_rels/slide${slideNum}.xml.rels`;
       const slideRelsXml = await zip.file(slideRelsPath)?.async('string');
-      const slideRels = slideRelsXml ? parseRelationships(slideRelsXml) : new Map();
-      console.log(`  Relationships found: ${slideRels.size}`);
+      const slideRels = slideRelsXml ? await parseRelationships(slideRelsXml) : new Map();
 
       // Try to get notes
       const notesPath = `ppt/notesSlides/notesSlide${slideNum}.xml`;
       const notesXml = await zip.file(notesPath)?.async('string');
       if (notesXml) {
-        parsed.notes = parseNotesXml(notesXml);
+        parsed.notes = await parseNotesXml(notesXml);
       }
 
       parsedSlides.push({ parsed, slideRels });
@@ -363,7 +350,6 @@ export async function importPPTXFile(
       }
     }
 
-    console.log(`Total parsed slides: ${parsedSlides.length}`);
 
     // Step 5: Handle media - convert to base64 data URLs instead of uploading
     // This avoids Firebase Storage configuration issues and is faster
@@ -396,7 +382,6 @@ export async function importPPTXFile(
         });
       }
 
-      console.log(`Processed ${mediaDataUrls.size} media files as base64`);
     }
 
     // Step 6: Convert slides to SlideFormData
@@ -465,6 +450,7 @@ export async function previewPPTXFile(file: File): Promise<{
 
   try {
     const arrayBuffer = await file.arrayBuffer();
+    const { default: JSZip } = await import('jszip');
     const zip = await JSZip.loadAsync(arrayBuffer);
 
     // Count slides by iterating over all files
@@ -473,7 +459,6 @@ export async function previewPPTXFile(file: File): Promise<{
         preview.slideCount++;
       }
     });
-    console.log('Preview: slideCount =', preview.slideCount);
 
     // Check for media by iterating over all files
     let mediaCount = 0;

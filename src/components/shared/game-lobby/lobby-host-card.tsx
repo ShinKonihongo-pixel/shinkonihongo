@@ -24,7 +24,7 @@ export function LobbyHostCard({ displayName, avatar, role }: LobbyHostCardProps)
     <div className="pl-lobby-host-card">
       <div className="pl-lobby-host-avatar">
         {avatar && isImageAvatar(avatar)
-          ? <img src={avatar} alt={displayName} />
+          ? <img src={avatar} alt={displayName} loading="lazy" />
           : (avatar || displayName.charAt(0).toUpperCase())}
       </div>
       <div className="pl-lobby-host-info">

@@ -55,7 +55,7 @@ export function MultiplayerResultScreen({
                 </div>
                 <div className="kd-mp-rank-avatar">
                   {player.avatar.startsWith('http') || player.avatar.startsWith('/') ? (
-                    <img src={player.avatar} alt="" />
+                    <img src={player.avatar} alt="" loading="lazy" />
                   ) : (
                     <span>{player.avatar}</span>
                   )}

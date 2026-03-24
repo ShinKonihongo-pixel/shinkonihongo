@@ -15,7 +15,7 @@ export function RoomHeader({ gameInfo, onBack }: RoomHeaderProps) {
       </button>
       <div className="rm-header-icon" style={{ background: gameInfo.gradient }}>
         {gameInfo.iconImage ? (
-          <img src={gameInfo.iconImage} alt={gameInfo.name} />
+          <img src={gameInfo.iconImage} alt={gameInfo.name} loading="lazy" />
         ) : (
           <span>{gameInfo.icon}</span>
         )}

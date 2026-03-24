@@ -196,7 +196,8 @@ export function useCenterAnalytics(
     return classrooms.map(c => {
       // Get student IDs for this class (from classroom members)
       // Since we don't have classroom_members here, use all students as approximation
-      // TODO: when classroom_members are available, filter by class
+      // NOTE: classroom_members collection not yet available — all students used as approximation
+      // UI-level filter by classId is applied in CenterAnalyticsTab
       const classStudySessions = studySessions.filter(s => s.date >= sevenDaysAgo);
       const activeIds = new Set(classStudySessions.map((s: any) => s.userId));
       const totalMinutes = classStudySessions.reduce((sum: number, s: any) => sum + (s.duration || 0) / 60, 0);

@@ -28,7 +28,7 @@ function PlayerAvatar({ player, side }: { player: { avatar?: string; displayName
   return (
     <div className={`qb-avatar qb-avatar-${side}`}>
       {hasImage
-        ? <img src={player.avatar} alt={player.displayName || ''} />
+        ? <img src={player.avatar} alt={player.displayName || ''} loading="lazy" />
         : <span className="qb-avatar-letter">{player.avatar || initial}</span>}
     </div>
   );

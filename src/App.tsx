@@ -1,6 +1,8 @@
 // Main App component with authentication and page routing
 
 import { useState, useMemo, useEffect, useCallback, lazy, Suspense } from 'react';
+import { GlobalSearch } from './components/common/global-search';
+import { trackPageView, identifyUser, resetAnalytics } from './lib/analytics';
 
 // Dev: Load seed functions to window for console access
 import './scripts/seed-folders';
@@ -61,6 +63,8 @@ import { ListeningSettingsProvider } from './contexts/listening-settings-context
 import type { UserJLPTLevel } from './types/user';
 import { useUrlRouter } from './hooks/use-url-router';
 import { CenterRouter } from './components/center/center-router';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { ROUTES, URL_TO_PAGE } from './routes';
 import { CenterProvider } from './contexts/center-context';
 import { useCenterData } from './hooks/use-center-data';
 
@@ -217,14 +221,19 @@ function AppContent() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isAiChatOpen, setIsAiChatOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  // Handle URL parameters for game join (QR code scanning)
+  // React Router bridge — keeps URL and state in sync
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Handle URL parameters for game join (QR code scanning) — runs once on mount
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const joinCode = urlParams.get('join');
-    const racingCode = urlParams.get('racing');
-    const goldenBellCode = urlParams.get('golden-bell');
-    const pictureGuessCode = urlParams.get('picture-guess');
+    const params = new URLSearchParams(location.search);
+    const joinCode = params.get('join');
+    const racingCode = params.get('racing');
+    const goldenBellCode = params.get('golden-bell');
+    const pictureGuessCode = params.get('picture-guess');
 
     // Route all game join codes to Game Hub - intentional URL-based routing on mount
     /* eslint-disable react-hooks/set-state-in-effect */
@@ -232,26 +241,54 @@ function AppContent() {
       setInitialGameType('quiz');
       setInitialGameJoinCode(joinCode.toUpperCase());
       setCurrentPage('game-hub');
-      window.history.replaceState({}, '', window.location.pathname);
+      navigate(ROUTES['game-hub'], { replace: true });
     } else if (racingCode) {
       // Legacy racing links - redirect to quiz game
       setInitialGameType('quiz');
       setInitialGameJoinCode(racingCode.toUpperCase());
       setCurrentPage('game-hub');
-      window.history.replaceState({}, '', window.location.pathname);
+      navigate(ROUTES['game-hub'], { replace: true });
     } else if (goldenBellCode) {
       setInitialGameType('golden-bell');
       setInitialGameJoinCode(goldenBellCode.toUpperCase());
       setCurrentPage('game-hub');
-      window.history.replaceState({}, '', window.location.pathname);
+      navigate(ROUTES['game-hub'], { replace: true });
     } else if (pictureGuessCode) {
       setInitialGameType('picture-guess');
       setInitialGameJoinCode(pictureGuessCode.toUpperCase());
       setCurrentPage('game-hub');
-      window.history.replaceState({}, '', window.location.pathname);
+      navigate(ROUTES['game-hub'], { replace: true });
     }
     /* eslint-enable react-hooks/set-state-in-effect */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Bridge: URL → state (when user navigates via browser back/forward or deep link)
+  useEffect(() => {
+    // Don't interfere with center routes (handled by useUrlRouter)
+    if (location.pathname.startsWith('/center/')) return;
+    const page = URL_TO_PAGE[location.pathname];
+    if (page && page !== currentPage) {
+      setCurrentPage(page as Page);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
+  // Bridge: state → URL (when code calls setCurrentPage, update the URL)
+  useEffect(() => {
+    // Don't update URL for center routes
+    if (location.pathname.startsWith('/center/')) return;
+    const targetUrl = ROUTES[currentPage];
+    if (targetUrl && targetUrl !== location.pathname) {
+      navigate(targetUrl, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
+
+  // Analytics: track page views
+  useEffect(() => {
+    trackPageView(currentPage);
+  }, [currentPage]);
 
   // Destructure from contexts
   const {
@@ -402,6 +439,27 @@ function AppContent() {
   }, [currentUser, initialGameJoinCode]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
+  // Analytics: identify user on login, reset on logout
+  useEffect(() => {
+    if (currentUser) {
+      identifyUser(currentUser.id, { role: currentUser.role, jlptLevel: currentUser.jlptLevel });
+    } else {
+      resetAnalytics();
+    }
+  }, [currentUser]);
+
+  // Global search keyboard shortcut (Cmd+K / Ctrl+K)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(open => !open);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
   const { settings, updateSetting, resetSettings } = useSettings();
   const { theme, applyPreset, resetTheme } = useGlobalTheme();
 
@@ -467,6 +525,7 @@ function AppContent() {
 
   return (
     <div className={`app app-with-sidebar ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <a href="#main-content" className="skip-link">Chuyển đến nội dung chính</a>
       <Sidebar
         currentPage={currentPage}
         onNavigate={setCurrentPage}
@@ -493,7 +552,7 @@ function AppContent() {
           offlineCardCount={offline.offlineCardCount}
         />
 
-        <main className="main-content">
+        <main id="main-content" className="main-content">
         <ErrorBoundary>
         <Suspense fallback={<div className="app-loading-screen app-loading-inline"><div className="app-loading-content"><div className="app-loading-spinner" /><span className="app-loading-label">Đang tải...</span></div></div>}>
         {currentPage === 'home' && (
@@ -985,6 +1044,18 @@ function AppContent() {
           }}
         />
       )}
+
+      {/* Global Search (Cmd+K) */}
+      <GlobalSearch
+        cards={cards}
+        grammarCards={grammarCards}
+        kanjiCards={kanjiCards}
+        lessons={lessons}
+        readingPassages={readingPassages}
+        onNavigate={(page) => setCurrentPage(page as Page)}
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+      />
     </div>
   );
 }

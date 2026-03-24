@@ -1,6 +1,6 @@
 // Reading Settings Context - Global settings for furigana, font sizes across the app
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 
 export interface ReadingSettings {
   showFurigana: boolean;
@@ -54,54 +54,37 @@ export function ReadingSettingsProvider({ children }: { children: ReactNode }) {
     }
   }, [settings]);
 
-  const updateSettings = (updates: Partial<ReadingSettings>) => {
+  const updateSettings = useCallback((updates: Partial<ReadingSettings>) => {
     setSettings(prev => ({ ...prev, ...updates }));
-  };
+  }, []);
 
-  const toggleFurigana = () => {
+  const toggleFurigana = useCallback(() => {
     setSettings(prev => ({ ...prev, showFurigana: !prev.showFurigana }));
-  };
+  }, []);
 
-  const increaseFontSize = () => {
-    setSettings(prev => ({
-      ...prev,
-      fontSize: Math.min(2.5, prev.fontSize + 0.1),
-    }));
-  };
+  const increaseFontSize = useCallback(() => {
+    setSettings(prev => ({ ...prev, fontSize: Math.min(2.5, prev.fontSize + 0.1) }));
+  }, []);
 
-  const decreaseFontSize = () => {
-    setSettings(prev => ({
-      ...prev,
-      fontSize: Math.max(0.8, prev.fontSize - 0.1),
-    }));
-  };
+  const decreaseFontSize = useCallback(() => {
+    setSettings(prev => ({ ...prev, fontSize: Math.max(0.8, prev.fontSize - 0.1) }));
+  }, []);
 
-  const increaseFuriganaSize = () => {
-    setSettings(prev => ({
-      ...prev,
-      furiganaSize: Math.min(0.8, prev.furiganaSize + 0.05),
-    }));
-  };
+  const increaseFuriganaSize = useCallback(() => {
+    setSettings(prev => ({ ...prev, furiganaSize: Math.min(0.8, prev.furiganaSize + 0.05) }));
+  }, []);
 
-  const decreaseFuriganaSize = () => {
-    setSettings(prev => ({
-      ...prev,
-      furiganaSize: Math.max(0.3, prev.furiganaSize - 0.05),
-    }));
-  };
+  const decreaseFuriganaSize = useCallback(() => {
+    setSettings(prev => ({ ...prev, furiganaSize: Math.max(0.3, prev.furiganaSize - 0.05) }));
+  }, []);
+
+  const value = useMemo(() => ({
+    settings, updateSettings, toggleFurigana,
+    increaseFontSize, decreaseFontSize, increaseFuriganaSize, decreaseFuriganaSize,
+  }), [settings, updateSettings, toggleFurigana, increaseFontSize, decreaseFontSize, increaseFuriganaSize, decreaseFuriganaSize]);
 
   return (
-    <ReadingSettingsContext.Provider
-      value={{
-        settings,
-        updateSettings,
-        toggleFurigana,
-        increaseFontSize,
-        decreaseFontSize,
-        increaseFuriganaSize,
-        decreaseFuriganaSize,
-      }}
-    >
+    <ReadingSettingsContext.Provider value={value}>
       {children}
     </ReadingSettingsContext.Provider>
   );

@@ -1,6 +1,6 @@
 // Listening Settings Context - Global settings for listening practice across the app
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import type { JLPTLevel } from '../types/flashcard';
 
 export interface ListeningSettings {
@@ -86,104 +86,63 @@ export function ListeningSettingsProvider({ children }: { children: ReactNode })
     }
   }, [settings]);
 
-  const updateSettings = (updates: Partial<ListeningSettings>) => {
+  const updateSettings = useCallback((updates: Partial<ListeningSettings>) => {
     setSettings(prev => ({ ...prev, ...updates }));
-  };
+  }, []);
 
-  // Playback helpers
-  const increasePlaybackSpeed = () => {
-    setSettings(prev => ({
-      ...prev,
-      defaultPlaybackSpeed: Math.min(2, prev.defaultPlaybackSpeed + 0.25),
-    }));
-  };
-
-  const decreasePlaybackSpeed = () => {
-    setSettings(prev => ({
-      ...prev,
-      defaultPlaybackSpeed: Math.max(0.5, prev.defaultPlaybackSpeed - 0.25),
-    }));
-  };
-
-  const increaseRepeatCount = () => {
-    setSettings(prev => ({
-      ...prev,
-      defaultRepeatCount: Math.min(10, prev.defaultRepeatCount + 1),
-    }));
-  };
-
-  const decreaseRepeatCount = () => {
-    setSettings(prev => ({
-      ...prev,
-      defaultRepeatCount: Math.max(1, prev.defaultRepeatCount - 1),
-    }));
-  };
-
-  const increaseDelay = () => {
-    setSettings(prev => ({
-      ...prev,
-      delayBetweenWords: Math.min(10, prev.delayBetweenWords + 0.5),
-    }));
-  };
-
-  const decreaseDelay = () => {
-    setSettings(prev => ({
-      ...prev,
-      delayBetweenWords: Math.max(0.5, prev.delayBetweenWords - 0.5),
-    }));
-  };
-
-  const toggleAutoPlayNext = () => {
+  const increasePlaybackSpeed = useCallback(() => {
+    setSettings(prev => ({ ...prev, defaultPlaybackSpeed: Math.min(2, prev.defaultPlaybackSpeed + 0.25) }));
+  }, []);
+  const decreasePlaybackSpeed = useCallback(() => {
+    setSettings(prev => ({ ...prev, defaultPlaybackSpeed: Math.max(0.5, prev.defaultPlaybackSpeed - 0.25) }));
+  }, []);
+  const increaseRepeatCount = useCallback(() => {
+    setSettings(prev => ({ ...prev, defaultRepeatCount: Math.min(10, prev.defaultRepeatCount + 1) }));
+  }, []);
+  const decreaseRepeatCount = useCallback(() => {
+    setSettings(prev => ({ ...prev, defaultRepeatCount: Math.max(1, prev.defaultRepeatCount - 1) }));
+  }, []);
+  const increaseDelay = useCallback(() => {
+    setSettings(prev => ({ ...prev, delayBetweenWords: Math.min(10, prev.delayBetweenWords + 0.5) }));
+  }, []);
+  const decreaseDelay = useCallback(() => {
+    setSettings(prev => ({ ...prev, delayBetweenWords: Math.max(0.5, prev.delayBetweenWords - 0.5) }));
+  }, []);
+  const toggleAutoPlayNext = useCallback(() => {
     setSettings(prev => ({ ...prev, autoPlayNext: !prev.autoPlayNext }));
-  };
-
-  // Display helpers
-  const toggleShowVocabulary = () => {
+  }, []);
+  const toggleShowVocabulary = useCallback(() => {
     setSettings(prev => ({ ...prev, showVocabulary: !prev.showVocabulary }));
-  };
-
-  const toggleShowMeaning = () => {
+  }, []);
+  const toggleShowMeaning = useCallback(() => {
     setSettings(prev => ({ ...prev, showMeaning: !prev.showMeaning }));
-  };
-
-  const toggleShowKanji = () => {
+  }, []);
+  const toggleShowKanji = useCallback(() => {
     setSettings(prev => ({ ...prev, showKanji: !prev.showKanji }));
-  };
+  }, []);
+  const increaseVoiceRate = useCallback(() => {
+    setSettings(prev => ({ ...prev, voiceRate: Math.min(2, prev.voiceRate + 0.25) }));
+  }, []);
+  const decreaseVoiceRate = useCallback(() => {
+    setSettings(prev => ({ ...prev, voiceRate: Math.max(0.5, prev.voiceRate - 0.25) }));
+  }, []);
 
-  // Voice helpers
-  const increaseVoiceRate = () => {
-    setSettings(prev => ({
-      ...prev,
-      voiceRate: Math.min(2, prev.voiceRate + 0.25),
-    }));
-  };
-
-  const decreaseVoiceRate = () => {
-    setSettings(prev => ({
-      ...prev,
-      voiceRate: Math.max(0.5, prev.voiceRate - 0.25),
-    }));
-  };
+  const value = useMemo(() => ({
+    settings, updateSettings,
+    increasePlaybackSpeed, decreasePlaybackSpeed, increaseRepeatCount, decreaseRepeatCount,
+    increaseDelay, decreaseDelay, toggleAutoPlayNext,
+    toggleShowVocabulary, toggleShowMeaning, toggleShowKanji,
+    increaseVoiceRate, decreaseVoiceRate,
+  }), [
+    settings, updateSettings,
+    increasePlaybackSpeed, decreasePlaybackSpeed, increaseRepeatCount, decreaseRepeatCount,
+    increaseDelay, decreaseDelay, toggleAutoPlayNext,
+    toggleShowVocabulary, toggleShowMeaning, toggleShowKanji,
+    increaseVoiceRate, decreaseVoiceRate,
+  ]);
 
   return (
-    <ListeningSettingsContext.Provider
-      value={{
-        settings,
-        updateSettings,
-        increasePlaybackSpeed,
-        decreasePlaybackSpeed,
-        increaseRepeatCount,
-        decreaseRepeatCount,
-        increaseDelay,
-        decreaseDelay,
-        toggleAutoPlayNext,
-        toggleShowVocabulary,
-        toggleShowMeaning,
-        toggleShowKanji,
-        increaseVoiceRate,
-        decreaseVoiceRate,
-      }}
-    >
+    <ListeningSettingsContext.Provider value={value}>
       {children}
     </ListeningSettingsContext.Provider>
   );

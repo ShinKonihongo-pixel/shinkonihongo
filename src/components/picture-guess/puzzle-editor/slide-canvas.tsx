@@ -149,7 +149,7 @@ export function SlideCanvas({ elements, onElementsChange }: SlideCanvasProps) {
               onMouseDown={e => { e.stopPropagation(); handleDragStart(e, element.id); }}
             >
               {element.type === 'image' ? (
-                <img src={element.content} alt="Hint" draggable={false} />
+                <img src={element.content} alt="Hint" draggable={false} loading="lazy" />
               ) : (
                 <textarea
                   value={element.content}

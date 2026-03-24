@@ -418,10 +418,9 @@ export function ListeningAudioView({
           {typeLabel}
         </span>
         <h3>{allAudios.length} file</h3>
-        {/* TODO: Re-enable when Firebase Storage CORS is fixed */}
-        {/* <button className="add-btn" onClick={() => { setShowAddAudio(true); setShowTextToSpeech(false); }}>
+        <button className="add-btn" onClick={() => { setShowAddAudio(true); setShowTextToSpeech(false); }}>
           <Upload size={18} /> Tải file
-        </button> */}
+        </button>
         <button className="add-btn" onClick={() => { setShowTextToSpeech(true); setShowAddAudio(false); }} style={{ background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)' }}>
           <Type size={18} /> Tạo từ text
         </button>

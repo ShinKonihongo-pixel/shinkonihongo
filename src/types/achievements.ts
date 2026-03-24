@@ -68,7 +68,6 @@ export interface DailyMission {
   type: MissionType;
   title: string;
   description: string;
-  icon: LucideIcon;
   target: number;
   progress: number;
   xpReward: number;

@@ -124,7 +124,7 @@ export function GameQuestion({
                 opacity: 0.6,
               }}
             >
-              <img src={ANSWER_OPTIONS[index].icon} alt={ANSWER_OPTIONS[index].label} className="answer-icon" />
+              <img src={ANSWER_OPTIONS[index].icon} alt={ANSWER_OPTIONS[index].label} className="answer-icon" loading="lazy" />
               <span className="answer-text">{option}</span>
             </div>
           ))}
@@ -152,7 +152,7 @@ export function GameQuestion({
                 }}
                 disabled={hasAnswered}
               >
-                <img src={ANSWER_OPTIONS[index].icon} alt={ANSWER_OPTIONS[index].label} className="answer-icon" />
+                <img src={ANSWER_OPTIONS[index].icon} alt={ANSWER_OPTIONS[index].label} className="answer-icon" loading="lazy" />
                 <span className="answer-text">{option}</span>
               </button>
             );

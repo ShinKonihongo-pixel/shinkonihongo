@@ -136,11 +136,12 @@
   position: relative; overflow: hidden;
 }
 .kb-menu-btn-primary::after {
-  content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+  content: ''; position: absolute; top: 0; left: 0; width: 50%; height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
   animation: kbBtnShimmer 3s ease-in-out infinite;
+  will-change: transform;
 }
-@keyframes kbBtnShimmer { 0% { left: -100%; } 100% { left: 200%; } }
+@keyframes kbBtnShimmer { 0% { transform: translateX(-200%); } 100% { transform: translateX(400%); } }
 .kb-menu-btn-primary .kb-menu-btn-icon {
   background: rgba(255,255,255,0.15);
 }

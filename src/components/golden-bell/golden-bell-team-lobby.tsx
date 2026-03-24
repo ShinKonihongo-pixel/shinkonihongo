@@ -191,7 +191,7 @@ export function GoldenBellTeamLobby({
                     >
                       <div className="gb-team-member-avatar">
                         {player.avatar && isImageAvatar(player.avatar)
-                          ? <img src={player.avatar} alt={player.displayName} />
+                          ? <img src={player.avatar} alt={player.displayName} loading="lazy" />
                           : (player.avatar || '?')}
                       </div>
                       <span className="gb-team-member-name">{player.displayName}</span>

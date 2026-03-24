@@ -1,6 +1,6 @@
 // Left sidebar navigation component
 
-import { useState, useMemo, type ReactNode } from 'react';
+import { useState, useMemo, useCallback, useEffect, type ReactNode } from 'react';
 import type { CurrentUser } from '../../types/user';
 import type { Page } from './header';
 import { isImageAvatar } from '../../utils/avatar-icons';
@@ -14,6 +14,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   School,
   Bell,
   Building2,
@@ -31,6 +32,10 @@ import {
   Shield,
   PenTool,
   Mic,
+  TrendingUp,
+  MessageSquare,
+  GraduationCap,
+  DollarSign,
 } from 'lucide-react';
 import { useClassroomNotifications } from '../../hooks/use-classrooms';
 import { useFriendNotifications } from '../../hooks/use-friendships';
@@ -69,61 +74,224 @@ interface NavItem {
   roles?: string[]; // If specified, only show for these roles
 }
 
+interface NavSection {
+  id: string;
+  title: string;
+  emoji: string;
+  items: NavItem[];
+  defaultExpanded?: boolean;
+  roles?: string[]; // If specified, entire section only visible for these roles
+}
+
 const iconProps = { size: 20, strokeWidth: 1.75 };
 
-// Section 1: Learning tabs (includes admin management)
-const learningItems: NavItem[] = [
+// ── Regular (non-center) nav sections ──────────────────────────────────────
+const regularSections: NavSection[] = [
+  {
+    id: 'learning',
+    title: 'Học tập',
+    emoji: '📚',
+    defaultExpanded: true,
+    items: [
+      { page: 'home', label: 'Trang chủ', icon: <Home {...iconProps} /> },
+      { page: 'study', label: 'Từ Vựng', icon: <Layers {...iconProps} /> },
+      { page: 'grammar-study', label: 'Ngữ Pháp', icon: <FileText {...iconProps} /> },
+      { page: 'kanji-study', label: 'Hán Tự', icon: <BookOpen {...iconProps} /> },
+      { page: 'reading', label: 'Đọc Hiểu', icon: <BookOpenCheck {...iconProps} /> },
+      { page: 'listening', label: 'Nghe Hiểu', icon: <Headphones {...iconProps} /> },
+      { page: 'exercises', label: 'Bài Tập', icon: <ClipboardList {...iconProps} /> },
+      { page: 'conjugation' as Page, label: 'Chia Động Từ', icon: <PenTool {...iconProps} /> },
+      { page: 'pronunciation' as Page, label: 'Phát Âm', icon: <Mic {...iconProps} /> },
+    ],
+  },
+  {
+    id: 'games',
+    title: 'Trò chơi',
+    emoji: '🎮',
+    defaultExpanded: false,
+    items: [
+      { page: 'game-hub', label: 'Game Hub', icon: <Gamepad2 {...iconProps} /> },
+      { page: 'jlpt', label: 'JLPT Practice', icon: <Award {...iconProps} /> },
+    ],
+  },
+  {
+    id: 'communication',
+    title: 'Giao tiếp',
+    emoji: '💬',
+    defaultExpanded: false,
+    items: [
+      { page: 'kaiwa', label: 'Hội thoại', icon: <MessageCircle {...iconProps} />, roles: ['vip_user', 'admin', 'super_admin', 'director', 'branch_admin', 'main_teacher'] },
+      { page: 'classroom', label: 'Lớp Học', icon: <School {...iconProps} /> },
+      { page: 'lectures', label: 'Bài giảng', icon: <GraduationCap {...iconProps} /> },
+      { page: 'chat', label: 'Chat', icon: <MessageSquare {...iconProps} /> },
+    ],
+  },
+  {
+    id: 'management',
+    title: 'Quản lý',
+    emoji: '🏫',
+    defaultExpanded: false,
+    roles: ['admin', 'super_admin', 'director', 'branch_admin', 'main_teacher'],
+    items: [
+      { page: 'branches', label: 'Chi nhánh', icon: <Building2 {...iconProps} />, roles: ['director', 'branch_admin', 'super_admin'] },
+      { page: 'cards', label: 'Quản lý thẻ', icon: <LayoutGrid {...iconProps} />, roles: ['admin', 'super_admin'] },
+      { page: 'teachers', label: 'Quản lý GV', icon: <Users {...iconProps} />, roles: ['admin', 'super_admin', 'director', 'branch_admin'] },
+      { page: 'salary', label: 'Lương', icon: <DollarSign {...iconProps} />, roles: ['admin', 'super_admin', 'director', 'branch_admin'] },
+      { page: 'permissions', label: 'Phân quyền', icon: <Shield {...iconProps} />, roles: ['super_admin'] },
+    ],
+  },
+  {
+    id: 'personal',
+    title: 'Cá nhân',
+    emoji: '📊',
+    defaultExpanded: true,
+    items: [
+      { page: 'progress', label: 'Tiến độ', icon: <TrendingUp {...iconProps} /> },
+      { page: 'notifications', label: 'Thông báo', icon: <Bell {...iconProps} /> },
+      { page: 'pricing', label: 'Nâng cấp', icon: <Crown {...iconProps} /> },
+      { page: 'settings', label: 'Cài đặt', icon: <Settings {...iconProps} /> },
+    ],
+  },
+];
+
+// ── Center-mode sections ────────────────────────────────────────────────────
+const centerLearningSectionItems: NavItem[] = [
   { page: 'home', label: 'Trang chủ', icon: <Home {...iconProps} /> },
-  { page: 'cards', label: 'Quản lí', icon: <LayoutGrid {...iconProps} />, roles: ['admin', 'super_admin'] },
   { page: 'study', label: 'Từ Vựng', icon: <Layers {...iconProps} /> },
   { page: 'grammar-study', label: 'Ngữ Pháp', icon: <FileText {...iconProps} /> },
   { page: 'kanji-study', label: 'Hán Tự', icon: <BookOpen {...iconProps} /> },
   { page: 'reading', label: 'Đọc Hiểu', icon: <BookOpenCheck {...iconProps} /> },
   { page: 'listening', label: 'Nghe Hiểu', icon: <Headphones {...iconProps} /> },
   { page: 'exercises', label: 'Bài Tập', icon: <ClipboardList {...iconProps} /> },
-  { page: 'conjugation' as Page, label: 'Chia Động Từ', icon: <PenTool {...iconProps} /> },
-  { page: 'pronunciation' as Page, label: 'Phát Âm', icon: <Mic {...iconProps} /> },
 ];
 
-// Section 2: Management/Activity tabs
-const managementItems: NavItem[] = [
-  { page: 'branches', label: 'Trung tâm', icon: <Building2 {...iconProps} />, roles: ['director', 'branch_admin', 'super_admin'] },
-  { page: 'classroom', label: 'Lớp Học', icon: <School {...iconProps} /> },
-  { page: 'jlpt', label: 'JLPT', icon: <Award {...iconProps} /> },
-  { page: 'kaiwa', label: '会話', icon: <MessageCircle {...iconProps} />, roles: ['vip_user', 'admin', 'super_admin', 'director', 'branch_admin', 'main_teacher'] },
-  { page: 'game-hub', label: 'Game', icon: <Gamepad2 {...iconProps} /> },
-  { page: 'pricing' as Page, label: 'Nâng cấp', icon: <Crown {...iconProps} /> },
-  { page: 'permissions' as Page, label: 'Phân quyền', icon: <Shield {...iconProps} />, roles: ['super_admin'] },
-];
-
-// Center-specific learning items
-const centerLearningItems: NavItem[] = [
-  { page: 'home', label: 'Trang chủ', icon: <Home {...iconProps} /> },
-  { page: 'study', label: 'Từ Vựng', icon: <Layers {...iconProps} /> },
-  { page: 'grammar-study', label: 'Ngữ Pháp', icon: <FileText {...iconProps} /> },
-  { page: 'kanji-study', label: 'Hán Tự', icon: <BookOpen {...iconProps} /> },
-  { page: 'reading', label: 'Đọc Hiểu', icon: <BookOpenCheck {...iconProps} /> },
-  { page: 'listening', label: 'Nghe Hiểu', icon: <Headphones {...iconProps} /> },
-  { page: 'exercises', label: 'Bài Tập', icon: <ClipboardList {...iconProps} /> },
-];
-
-// Center-specific activity items
-const centerActivityItems: NavItem[] = [
+const centerActivitySectionItems: NavItem[] = [
   { page: 'classroom', label: 'Lớp Học', icon: <School {...iconProps} /> },
   { page: 'jlpt', label: 'JLPT', icon: <Award {...iconProps} /> },
   { page: 'game-hub', label: 'Game', icon: <Gamepad2 {...iconProps} /> },
   { page: 'center-members', label: 'Thành viên', icon: <Users {...iconProps} /> },
 ];
 
-// Center admin-only items
-const centerAdminItems: NavItem[] = [
+const centerAdminSectionItems: NavItem[] = [
   { page: 'center-dashboard', label: 'Dashboard TT', icon: <BarChart3 {...iconProps} /> },
-  { page: 'cards', label: 'Quản lí nội dung', icon: <LayoutGrid {...iconProps} /> },
+  { page: 'cards', label: 'Quản lý nội dung', icon: <LayoutGrid {...iconProps} /> },
 ];
 
-// No more role-specific items needed (moved to managementItems)
-const roleSpecificItems: NavItem[] = [];
+// Build center nav sections
+function buildCenterSections(isCenterAdmin: boolean): NavSection[] {
+  const sections: NavSection[] = [
+    {
+      id: 'learning',
+      title: 'Học tập',
+      emoji: '📚',
+      defaultExpanded: true,
+      items: centerLearningSectionItems,
+    },
+    {
+      id: 'activities',
+      title: 'Hoạt động',
+      emoji: '🎮',
+      defaultExpanded: true,
+      items: centerActivitySectionItems,
+    },
+  ];
+  if (isCenterAdmin) {
+    sections.push({
+      id: 'centerAdmin',
+      title: 'Quản lý TT',
+      emoji: '🏫',
+      defaultExpanded: false,
+      items: centerAdminSectionItems,
+    });
+  }
+  return sections;
+}
 
+// ── localStorage helpers ────────────────────────────────────────────────────
+const LS_KEY = 'sidebar-sections-state';
+
+function loadSectionState(): Record<string, boolean> {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveSectionState(state: Record<string, boolean>) {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+  } catch {
+    // ignore
+  }
+}
+
+// ── SidebarSection sub-component ───────────────────────────────────────────
+interface SidebarSectionProps {
+  section: NavSection;
+  currentPage: Page;
+  isCollapsed: boolean; // sidebar icon-only mode
+  canAccess: (item: NavItem) => boolean;
+  renderNavItem: (item: NavItem) => ReactNode;
+  expanded: boolean;
+  onToggle: () => void;
+}
+
+function SidebarSection({
+  section,
+  currentPage,
+  isCollapsed,
+  canAccess,
+  renderNavItem,
+  expanded,
+  onToggle,
+}: SidebarSectionProps) {
+  const visibleItems = section.items.filter(canAccess);
+  if (visibleItems.length === 0) return null;
+
+  // Check if any item in section is currently active
+  const hasActiveItem = visibleItems.some(item => item.page === currentPage);
+
+  // In collapsed (icon-only) mode, show items without headers
+  if (isCollapsed) {
+    return (
+      <div className="sidebar-section sidebar-section--collapsed">
+        <div className="sidebar-nav-separator" />
+        {visibleItems.map(item => renderNavItem(item))}
+      </div>
+    );
+  }
+
+  return (
+    <div className={`sidebar-section ${hasActiveItem ? 'sidebar-section--has-active' : ''}`}>
+      <button
+        className="sidebar-section-header"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        title={section.title}
+      >
+        <span className="sidebar-section-title">
+          <span className="sidebar-section-emoji">{section.emoji}</span>
+          {section.title}
+        </span>
+        <ChevronDown
+          size={12}
+          className={`sidebar-section-chevron ${expanded ? 'expanded' : ''}`}
+        />
+      </button>
+
+      <div
+        className={`sidebar-section-content ${expanded ? 'expanded' : ''}`}
+        aria-hidden={!expanded}
+      >
+        {visibleItems.map(item => renderNavItem(item))}
+      </div>
+    </div>
+  );
+}
+
+// ── Main Sidebar component ──────────────────────────────────────────────────
 export function Sidebar({
   currentPage,
   onNavigate,
@@ -151,39 +319,67 @@ export function Sidebar({
   // Combined notifications
   const totalUnread = classroomUnread + friendUnread + (hasDailyWordsReminder ? 1 : 0);
 
+  // Determine nav sections based on center context
+  const navSections = useMemo(() => {
+    if (centerCtx) {
+      return buildCenterSections(centerCtx.isAdmin);
+    }
+    return regularSections;
+  }, [centerCtx]);
+
+  // Section expanded/collapsed state — initialized from localStorage + defaults
+  const [sectionExpanded, setSectionExpanded] = useState<Record<string, boolean>>(() => {
+    const saved = loadSectionState();
+    const result: Record<string, boolean> = {};
+    for (const section of navSections) {
+      result[section.id] = saved[section.id] ?? (section.defaultExpanded ?? false);
+    }
+    return result;
+  });
+
+  // When sidebar is collapsed (icon-only) or on mobile-open, we don't need section state
+  // Re-sync when navSections change (center vs regular)
+  useEffect(() => {
+    setSectionExpanded(prev => {
+      const saved = loadSectionState();
+      const result: Record<string, boolean> = {};
+      for (const section of navSections) {
+        result[section.id] = prev[section.id] ?? saved[section.id] ?? (section.defaultExpanded ?? false);
+      }
+      return result;
+    });
+  }, [navSections]);
+
+  const toggleSection = useCallback((sectionId: string) => {
+    setSectionExpanded(prev => {
+      const next = { ...prev, [sectionId]: !prev[sectionId] };
+      saveSectionState(next);
+      return next;
+    });
+  }, []);
+
   const handleNavigate = (page: Page) => {
     onNavigate(page);
     setMobileOpen(false);
   };
 
-  const canAccess = (item: NavItem): boolean => {
+  const canAccess = useCallback((item: NavItem): boolean => {
     if (!item.roles) return true;
     if (!currentUser) return false;
     return item.roles.includes(currentUser.role);
-  };
+  }, [currentUser]);
 
-  // Determine which nav items to show based on center context
-  const { section1Items, section2Items, section3Items } = useMemo(() => {
-    if (centerCtx) {
-      const isCenterAdmin = centerCtx.isAdmin;
-      return {
-        section1Items: centerLearningItems,
-        section2Items: centerActivityItems,
-        section3Items: isCenterAdmin ? centerAdminItems : [],
-      };
-    }
-    return {
-      section1Items: learningItems,
-      section2Items: managementItems,
-      section3Items: roleSpecificItems,
-    };
-  }, [centerCtx]);
+  const canAccessSection = useCallback((section: NavSection): boolean => {
+    if (!section.roles) return true;
+    if (!currentUser) return false;
+    return section.roles.some(r => currentUser.role === r);
+  }, [currentUser]);
 
   // Get avatar value for display
   const avatarValue = currentUser?.avatar;
   const isAvatarImage = avatarValue ? isImageAvatar(avatarValue) : false;
 
-  const renderNavItem = (item: NavItem) => {
+  const renderNavItem = useCallback((item: NavItem) => {
     // In center mode, skip role checks on user's app role (center role determines access)
     if (!centerCtx && !canAccess(item)) return null;
     return (
@@ -203,7 +399,8 @@ export function Sidebar({
         )}
       </button>
     );
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, isCollapsed, centerCtx, canAccess, achievementCtx]);
 
   return (
     <>
@@ -254,6 +451,7 @@ export function Sidebar({
                 className="sidebar-notification-btn"
                 onClick={() => { setShowNotifications(!showNotifications); setShowAvatarMenu(false); }}
                 title="Thông báo"
+                aria-label={`Thông báo${totalUnread > 0 ? `, ${totalUnread} chưa đọc` : ''}`}
               >
                 <Bell size={18} />
                 {totalUnread > 0 && (
@@ -268,6 +466,7 @@ export function Sidebar({
                 className={`sidebar-user-avatar ${isAvatarImage ? 'has-image' : ''}`}
                 onClick={() => { setShowAvatarMenu(!showAvatarMenu); setShowNotifications(false); }}
                 title={isCollapsed ? (currentUser.displayName || currentUser.username) : undefined}
+                aria-label={`Menu tài khoản của ${currentUser.displayName || currentUser.username}`}
                 style={isAvatarImage ? { backgroundImage: `url(${avatarValue})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
               >
                 {!isAvatarImage && (avatarValue || (currentUser.displayName || currentUser.username).charAt(0).toUpperCase())}
@@ -463,23 +662,24 @@ export function Sidebar({
           </div>
         )}
 
-        {/* Navigation - Section 1: Learning */}
+        {/* Navigation - grouped collapsible sections */}
         <nav className="sidebar-nav">
-          {section1Items.map(renderNavItem)}
-
-          {/* Separator between sections */}
-          <div className="sidebar-nav-separator" />
-
-          {/* Section 2: Activity/Management */}
-          {section2Items.map(renderNavItem)}
-
-          {/* Section 3: Admin/Role-specific items (if any) */}
-          {section3Items.length > 0 && section3Items.some(item => centerCtx ? true : canAccess(item)) && (
-            <>
-              <div className="sidebar-nav-separator" />
-              {section3Items.map(renderNavItem)}
-            </>
-          )}
+          {navSections.map(section => {
+            // Section-level role check (non-center mode only)
+            if (!centerCtx && !canAccessSection(section)) return null;
+            return (
+              <SidebarSection
+                key={section.id}
+                section={section}
+                currentPage={currentPage}
+                isCollapsed={isCollapsed}
+                canAccess={canAccess}
+                renderNavItem={renderNavItem}
+                expanded={sectionExpanded[section.id] ?? (section.defaultExpanded ?? false)}
+                onToggle={() => toggleSection(section.id)}
+              />
+            );
+          })}
         </nav>
 
       </aside>

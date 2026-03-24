@@ -1,6 +1,5 @@
 // PPTX Parser - Extract content from PowerPoint XML using fast-xml-parser
 
-import { XMLParser } from 'fast-xml-parser';
 import type { ParsedSlide, ParsedElement, ParsedTextStyle, ParsedBackground } from '../../types/pptx';
 import { SCHEME_COLORS } from './pptx-constants';
 
@@ -13,7 +12,14 @@ const parserOptions = {
   removeNSPrefix: true,
 };
 
-const parser = new XMLParser(parserOptions);
+let _parser: any = null;
+async function getParser() {
+  if (!_parser) {
+    const { XMLParser } = await import('fast-xml-parser');
+    _parser = new XMLParser(parserOptions);
+  }
+  return _parser;
+}
 
 // Ensure array format (PPTX XML can have single or multiple elements)
 function ensureArray<T>(value: T | T[] | undefined): T[] {
@@ -165,7 +171,6 @@ function parseShape(sp: unknown): ParsedElement | null {
     }
 
     if (fullText.trim()) {
-      console.log('Parsed text element:', fullText.substring(0, 50));
       return {
         type: 'text',
         content: fullText.trim(),
@@ -190,11 +195,8 @@ function parsePicture(pic: unknown): ParsedElement | null {
   const blipObj = blip && typeof blip === 'object' ? blip as Record<string, unknown> : undefined;
   const relId = blipObj?.['@_embed'] || blipObj?.['@_r:embed'];
   if (!relId) {
-    console.log('Picture without relId:', Object.keys(blipObj || {}));
     return null;
   }
-
-  console.log('Found picture with relId:', relId);
 
   // Get position (use defaults if not present)
   const xfrm = spPr && typeof spPr === 'object' ? (spPr as Record<string, unknown>).xfrm : undefined;
@@ -276,28 +278,23 @@ function parseAllShapes(container: unknown, elements: ParsedElement[]): void {
     parseAllShapes(grp, elements);
   }
 
-  // Parse content part (cxnSp - connector shapes, usually lines)
-  // We skip connectors for now as they're just lines
-  // const connectors = ensureArray(container.cxnSp);
+  // Parse content part (cxnSp - connector shapes, usually lines - skipped)
 }
 
 // Parse slide XML content
-export function parseSlideXml(slideXml: string): ParsedSlide {
+export async function parseSlideXml(slideXml: string): Promise<ParsedSlide> {
   const result: ParsedSlide = {
     elements: [],
   };
 
   try {
+    const parser = await getParser();
     const parsed = parser.parse(slideXml);
-    console.log('Parsed slide structure:', Object.keys(parsed));
-
     const sld = parsed.sld;
     if (!sld) {
       console.warn('No sld element found in parsed XML');
       return result;
     }
-
-    console.log('sld structure:', Object.keys(sld));
 
     // Parse background
     result.background = parseBackground(sld.cSld?.bg);
@@ -309,11 +306,8 @@ export function parseSlideXml(slideXml: string): ParsedSlide {
       return result;
     }
 
-    console.log('spTree structure:', Object.keys(spTree));
-
     // Parse all shapes recursively (including groups)
     parseAllShapes(spTree, result.elements);
-    console.log('Elements found:', result.elements.length);
 
     // Try to extract title from first text element
     const firstText = result.elements.find(e => e.type === 'text');
@@ -329,10 +323,11 @@ export function parseSlideXml(slideXml: string): ParsedSlide {
 }
 
 // Parse slide relationships to get media mappings
-export function parseRelationships(relsXml: string): Map<string, string> {
+export async function parseRelationships(relsXml: string): Promise<Map<string, string>> {
   const relMap = new Map<string, string>();
 
   try {
+    const parser = await getParser();
     const parsed = parser.parse(relsXml);
     const relationships = parsed.Relationships;
     if (!relationships) return relMap;
@@ -353,8 +348,9 @@ export function parseRelationships(relsXml: string): Map<string, string> {
 }
 
 // Parse slide notes
-export function parseNotesXml(notesXml: string): string {
+export async function parseNotesXml(notesXml: string): Promise<string> {
   try {
+    const parser = await getParser();
     const parsed = parser.parse(notesXml);
     const notes = parsed.notes;
     if (!notes) return '';
@@ -377,10 +373,11 @@ export function parseNotesXml(notesXml: string): string {
 }
 
 // Parse presentation.xml to get slide order
-export function parsePresentationXml(presentationXml: string): string[] {
+export async function parsePresentationXml(presentationXml: string): Promise<string[]> {
   const slideOrder: string[] = [];
 
   try {
+    const parser = await getParser();
     const parsed = parser.parse(presentationXml);
     const presentation = parsed.presentation;
     if (!presentation) return slideOrder;

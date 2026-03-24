@@ -57,7 +57,7 @@ export function DashboardLeaderboard({ currentUserId }: DashboardLeaderboardProp
   const rest = entries.slice(3, 10);
 
   function renderAvatar(avatar: string, name: string) {
-    if (avatar && isImageAvatar(avatar)) return <img src={avatar} alt={name} />;
+    if (avatar && isImageAvatar(avatar)) return <img src={avatar} alt={name} loading="lazy" />;
     return <span>{avatar || name.charAt(0).toUpperCase()}</span>;
   }
 

@@ -1,5 +1,6 @@
 // Folders view - Select Lesson/Folder
 
+import { FolderOpen } from 'lucide-react';
 import type { JLPTLevel } from '../../../types/flashcard';
 import type { LectureFolder } from '../../../types/lecture';
 import { LEVEL_CONFIG } from './constants';
@@ -46,6 +47,8 @@ export function FoldersView({
 
       {currentFolders.length === 0 ? (
         <div className="empty-state">
+          <FolderOpen size={52} strokeWidth={1.2} />
+          <h3>Chưa có bài học nào</h3>
           <p>Chưa có bài học nào cho cấp độ {selectedLevel}</p>
           {isAdmin && <p className="hint">Tạo bài học trong trang quản lý bài giảng</p>}
         </div>

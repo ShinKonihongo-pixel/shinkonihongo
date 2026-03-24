@@ -101,6 +101,7 @@ function ElementRenderer({ element, showFurigana = true }: ElementRendererProps)
           <img
             src={element.content}
             alt=""
+            loading="lazy"
             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
           />
         </div>

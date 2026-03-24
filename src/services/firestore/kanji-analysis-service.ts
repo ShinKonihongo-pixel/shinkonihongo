@@ -1,12 +1,17 @@
 // Firestore service for Kanji character analysis (per-character, reusable)
 
 import type { KanjiCharacterAnalysis } from '../../types/flashcard';
+import { documentId } from 'firebase/firestore';
 import {
   COLLECTIONS,
   doc,
   getDoc,
+  getDocs,
   setDoc,
   db,
+  collection,
+  query,
+  where,
 } from './collections';
 
 export async function getKanjiAnalysis(character: string): Promise<KanjiCharacterAnalysis | null> {
@@ -17,13 +22,24 @@ export async function getKanjiAnalysis(character: string): Promise<KanjiCharacte
 }
 
 export async function getMultipleKanjiAnalysis(characters: string[]): Promise<KanjiCharacterAnalysis[]> {
+  if (characters.length === 0) return [];
+
   const results: KanjiCharacterAnalysis[] = [];
-  // Firestore doesn't support batch get by arbitrary IDs in web SDK, so we fetch in parallel
-  const promises = characters.map(async (char) => {
-    const analysis = await getKanjiAnalysis(char);
-    if (analysis) results.push(analysis);
-  });
-  await Promise.all(promises);
+  // Firestore 'in' queries support max 30 items per batch
+  const batchSize = 30;
+
+  for (let i = 0; i < characters.length; i += batchSize) {
+    const batch = characters.slice(i, i + batchSize);
+    const q = query(
+      collection(db, COLLECTIONS.KANJI_ANALYSIS),
+      where(documentId(), 'in', batch)
+    );
+    const snapshot = await getDocs(q);
+    snapshot.forEach(doc => {
+      results.push({ id: doc.id, ...doc.data() } as KanjiCharacterAnalysis);
+    });
+  }
+
   return results;
 }
 

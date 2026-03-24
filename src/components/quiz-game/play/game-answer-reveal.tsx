@@ -79,7 +79,7 @@ export function GameAnswerReveal({
           className="correct-answer"
           style={{ background: ANSWER_OPTIONS[currentQuestion.correctIndex].bg }}
         >
-          <img src={ANSWER_OPTIONS[currentQuestion.correctIndex].icon} alt={ANSWER_OPTIONS[currentQuestion.correctIndex].label} className="correct-answer-icon" />
+          <img src={ANSWER_OPTIONS[currentQuestion.correctIndex].icon} alt={ANSWER_OPTIONS[currentQuestion.correctIndex].label} className="correct-answer-icon" loading="lazy" />
           {currentQuestion.options[currentQuestion.correctIndex]}
         </span>
         <div className="answer-stats-bar">

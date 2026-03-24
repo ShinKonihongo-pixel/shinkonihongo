@@ -1,5 +1,27 @@
 /* Japanese Flashcard App Styles - 和 (Wa) Design System */
 
+/* Skip navigation link for screen readers */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #8b5cf6;
+  color: white;
+  padding: 8px 16px;
+  z-index: 10000;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 0 0 8px 0;
+  transition: top 0.2s;
+}
+
+.skip-link:focus {
+  top: 0;
+  outline: 2px solid #ec4899;
+  outline-offset: 2px;
+}
+
 :root {
   /* ============ JAPANESE COLOR PALETTE (和) ============ */
 
@@ -2915,5 +2937,115 @@ textarea:focus-visible {
   border-radius: 8px;
   margin-left: auto;
   line-height: 1.4;
+}
+
+/* ── Collapsible Sidebar Sections ─────────────────────────────────────────── */
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Subtle left border indicator when section has active item */
+.sidebar-section--has-active > .sidebar-section-header {
+  color: var(--jp-shu);
+}
+
+/* Section header button */
+.sidebar-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 16px 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(0, 0, 0, 0.38);
+  transition: color 0.2s;
+  gap: 4px;
+}
+
+[data-theme="dark"] .sidebar-section-header {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.sidebar-section-header:hover {
+  color: var(--jp-shu);
+}
+
+[data-theme="dark"] .sidebar-section-header:hover {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.sidebar-section-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar-section-emoji {
+  font-size: 0.75rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* Chevron icon — rotates when expanded */
+.sidebar-section-chevron {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+  opacity: 0.6;
+}
+
+.sidebar-section-chevron.expanded {
+  transform: rotate(0deg);
+}
+
+/* Default (collapsed) — chevron points right */
+.sidebar-section-chevron:not(.expanded) {
+  transform: rotate(-90deg);
+}
+
+/* Animated content area */
+.sidebar-section-content {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-section-content.expanded {
+  /* Large enough to fit any section's items */
+  max-height: 600px;
+}
+
+/* Collapsed sidebar (icon-only) — no headers, thin separators */
+.sidebar-section--collapsed .sidebar-nav-separator {
+  margin: 6px var(--space-xs);
+}
+
+/* First section: no top separator */
+.sidebar-section:first-child .sidebar-nav-separator {
+  display: none;
+}
+
+/* Mobile: ensure sections are full-expanded when sidebar slides open */
+@media (max-width: 768px) {
+  .sidebar.mobile-open .sidebar-section-content,
+  .sidebar.collapsed.mobile-open .sidebar-section-content {
+    max-height: 600px !important;
+  }
+
+  .sidebar.mobile-open .sidebar-section-header,
+  .sidebar.collapsed.mobile-open .sidebar-section-header {
+    display: flex !important;
+  }
 }
 

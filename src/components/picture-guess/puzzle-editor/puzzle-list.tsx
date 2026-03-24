@@ -141,7 +141,7 @@ export function PuzzleList({
               )}
               <div className="pg-puzzle-hint-preview">
                 {puzzle.hintImages && puzzle.hintImages.length > 0 ? (
-                  <img src={puzzle.hintImages[0]} alt="Hint" className="pg-puzzle-thumb" />
+                  <img src={puzzle.hintImages[0]} alt="Hint" className="pg-puzzle-thumb" loading="lazy" />
                 ) : puzzle.hintText ? (
                   <span className="pg-puzzle-text-hint">{puzzle.hintText.slice(0, 20)}...</span>
                 ) : (

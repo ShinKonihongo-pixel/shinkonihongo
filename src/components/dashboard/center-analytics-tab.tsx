@@ -1,5 +1,6 @@
 // Center analytics tab — engagement metrics, trends, per-class performance, top students
 
+import { useState } from 'react';
 import {
   TrendingUp, Users, Clock, Gamepad2, Award, BarChart3, Trophy,
   Activity, Target, Zap,
@@ -42,6 +43,11 @@ function BarChart({ data, labelKey, valueKey, maxValue, color }: {
 
 export function CenterAnalyticsTab({ analytics, totalStudents }: CenterAnalyticsTabProps) {
   const { engagement, weeklyTrends, topStudents, classPerformance, loading } = analytics;
+  const [selectedClassId, setSelectedClassId] = useState<string>('all');
+
+  const filteredClassPerformance = selectedClassId === 'all'
+    ? classPerformance
+    : classPerformance.filter(cp => cp.classId === selectedClassId);
 
   if (loading) {
     return (
@@ -122,8 +128,28 @@ export function CenterAnalyticsTab({ analytics, totalStudents }: CenterAnalytics
       {/* ===== CLASS PERFORMANCE ===== */}
       {classPerformance.length > 0 && (
         <>
-          <div className="ca-section-title">
-            <Zap size={16} /> Hiệu suất lớp học
+          <div className="ca-section-title" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Zap size={16} /> Hiệu suất lớp học
+            </span>
+            <select
+              value={selectedClassId}
+              onChange={e => setSelectedClassId(e.target.value)}
+              style={{
+                padding: '4px 10px',
+                borderRadius: '6px',
+                border: '1px solid rgba(255,255,255,0.15)',
+                background: 'rgba(255,255,255,0.08)',
+                color: 'inherit',
+                fontSize: '13px',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="all">Tất cả lớp</option>
+              {classPerformance.map(cp => (
+                <option key={cp.classId} value={cp.classId}>{cp.className}</option>
+              ))}
+            </select>
           </div>
 
           <div className="ca-class-table">
@@ -133,7 +159,7 @@ export function CenterAnalyticsTab({ analytics, totalStudents }: CenterAnalytics
               <span className="ca-class-stat">Active</span>
               <span className="ca-class-stat">%</span>
             </div>
-            {classPerformance.map(cp => (
+            {filteredClassPerformance.map(cp => (
               <div key={cp.classId} className="ca-class-row">
                 <span className="ca-class-name">
                   <span className={`ca-level-dot ${cp.level}`} />
@@ -148,6 +174,11 @@ export function CenterAnalyticsTab({ analytics, totalStudents }: CenterAnalytics
                 </span>
               </div>
             ))}
+            {filteredClassPerformance.length === 0 && (
+              <div style={{ padding: '16px', textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>
+                Không có dữ liệu
+              </div>
+            )}
           </div>
         </>
       )}
@@ -167,7 +198,7 @@ export function CenterAnalyticsTab({ analytics, totalStudents }: CenterAnalytics
                 </span>
                 <div className="ca-top-avatar">
                   {student.avatar && isImageAvatar(student.avatar) ? (
-                    <img src={student.avatar} alt="" />
+                    <img src={student.avatar} alt="" loading="lazy" />
                   ) : (
                     <span>{student.displayName.charAt(0)}</span>
                   )}

@@ -46,7 +46,7 @@ export function PlayerListGrid({
           >
             <div className={getVipAvatarClasses(player.role, 'player-avatar')}>
               {player.avatar && isImageAvatar(player.avatar) ? (
-                <img src={player.avatar} alt={player.displayName} />
+                <img src={player.avatar} alt={player.displayName} loading="lazy" />
               ) : (
                 player.avatar || player.displayName.charAt(0).toUpperCase()
               )}

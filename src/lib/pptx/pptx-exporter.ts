@@ -1,6 +1,6 @@
 // PPTX Export - Convert slides to PowerPoint format using pptxgenjs
 
-import pptxgen from 'pptxgenjs';
+import type pptxgen from 'pptxgenjs';
 import type { Lecture, Slide, SlideElement } from '../../types/lecture';
 import type { PPTXExportOptions } from '../../types/pptx';
 import {
@@ -229,6 +229,7 @@ export async function exportLectureToPPTX(
   slides: Slide[],
   options: PPTXExportOptions = {}
 ): Promise<void> {
+  const { default: pptxgen } = await import('pptxgenjs');
   const pres = new pptxgen();
 
   // Set presentation metadata
@@ -256,6 +257,7 @@ export async function exportLectureToBlob(
   slides: Slide[],
   options: PPTXExportOptions = {}
 ): Promise<Blob> {
+  const { default: pptxgen } = await import('pptxgenjs');
   const pres = new pptxgen();
 
   pres.title = options.title || lecture.title;

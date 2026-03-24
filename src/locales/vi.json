@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "home": "Trang chủ",
+    "study": "Từ vựng",
+    "grammar": "Ngữ pháp",
+    "kanji": "Chữ Hán",
+    "reading": "Đọc hiểu",
+    "listening": "Nghe hiểu",
+    "exercises": "Bài tập",
+    "games": "Trò chơi",
+    "kaiwa": "Hội thoại",
+    "chat": "Chat",
+    "lectures": "Bài giảng",
+    "classroom": "Lớp học",
+    "progress": "Tiến độ",
+    "settings": "Cài đặt",
+    "notifications": "Thông báo",
+    "logout": "Đăng xuất"
+  },
+  "common": {
+    "loading": "Đang tải...",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "delete": "Xóa",
+    "edit": "Chỉnh sửa",
+    "add": "Thêm",
+    "search": "Tìm kiếm",
+    "close": "Đóng",
+    "confirm": "Xác nhận",
+    "back": "Quay lại",
+    "next": "Tiếp theo",
+    "previous": "Trước",
+    "noData": "Chưa có dữ liệu",
+    "error": "Đã xảy ra lỗi"
+  },
+  "auth": {
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "username": "Tên đăng nhập",
+    "password": "Mật khẩu"
+  },
+  "sections": {
+    "learning": "Học tập",
+    "games": "Trò chơi",
+    "communication": "Giao tiếp",
+    "management": "Quản lý",
+    "personal": "Cá nhân"
+  }
+}

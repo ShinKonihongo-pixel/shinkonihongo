@@ -166,7 +166,7 @@ export function TestTake({ test, submission, onSubmit, onCancel }: TestTakeProps
                     checked={answers[question.id] === idx}
                     onChange={() => handleAnswerChange(question.id, idx)}
                   />
-                  <img src={ANSWER_OPTIONS[idx].icon} alt={ANSWER_OPTIONS[idx].label} className="option-icon-img" />
+                  <img src={ANSWER_OPTIONS[idx].icon} alt={ANSWER_OPTIONS[idx].label} className="option-icon-img" loading="lazy" />
                   <span className="option-text">{opt}</span>
                 </label>
               ))}

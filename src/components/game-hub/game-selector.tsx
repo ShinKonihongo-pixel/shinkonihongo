@@ -207,7 +207,7 @@ function GameCardMinimal({ game, onCreateRoom, onJoinWaitingRoom, getDifficultyL
       {/* Icon Area */}
       <div className="card-icon-area" style={{ background: game.gradient }}>
         {game.iconImage ? (
-          <img src={game.iconImage} alt={game.name} className="game-icon-img" />
+          <img src={game.iconImage} alt={game.name} className="game-icon-img" loading="lazy" />
         ) : (
           <span className="game-icon-emoji">{game.icon}</span>
         )}

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { StudySession, GameSession, JLPTSession, UserStats } from '../types/user';
 import * as firestoreService from '../services/firestore';
+import { trackEvent } from '../lib/analytics';
 
 export function useUserHistory(userId: string | undefined) {
   const [studySessions, setStudySessions] = useState<StudySession[]>([]);
@@ -75,6 +76,11 @@ export function useUserHistory(userId: string | undefined) {
     try {
       const session = await firestoreService.addStudySession({ ...data, userId });
       setStudySessions(prev => [session, ...prev]);
+      trackEvent('study_session_complete', {
+        cardsStudied: data.cardsStudied,
+        duration: data.duration,
+        correctCount: data.correctCount,
+      });
     } catch (err) {
       console.error('Error adding study session:', err);
     }
@@ -86,6 +92,11 @@ export function useUserHistory(userId: string | undefined) {
     try {
       const session = await firestoreService.addGameSession({ ...data, userId });
       setGameSessions(prev => [session, ...prev]);
+      trackEvent('game_session_complete', {
+        gameType: data.gameTitle,
+        rank: data.rank,
+        playerCount: data.totalPlayers,
+      });
     } catch (err) {
       console.error('Error adding game session:', err);
     }
