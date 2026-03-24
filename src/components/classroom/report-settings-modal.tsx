@@ -73,13 +73,13 @@ export function ReportSettingsModal({
 
     // Check file size (max 100KB for base64)
     if (file.size > 100 * 1024) {
-      alert('Logo qua lon. Vui long chon anh nho hon 100KB.');
+      alert('Logo quá lớn. Vui lòng chọn ảnh nhỏ hơn 100KB.');
       return;
     }
 
     // Check file type
     if (!file.type.startsWith('image/')) {
-      alert('Vui long chon file anh (PNG, JPG, GIF).');
+      alert('Vui lòng chọn file ảnh (PNG, JPG, GIF).');
       return;
     }
 
@@ -129,13 +129,13 @@ export function ReportSettingsModal({
     } catch (error) {
       console.error('Error saving settings:', error);
       setIsSaving(false);
-      alert('Loi khi luu cai dat. Vui long thu lai.');
+      alert('Lỗi khi lưu cài đặt. Vui lòng thử lại.');
     }
   };
 
   // Reset to defaults
   const handleReset = () => {
-    if (confirm('Ban co chac muon khoi phuc cai dat mac dinh?')) {
+    if (confirm('Bạn có chắc muốn khôi phục cài đặt mặc định?')) {
       setSchoolName(DEFAULT_REPORT_CONFIG.schoolName);
       setSchoolAddress('');
       setSchoolPhone('');
@@ -162,7 +162,7 @@ export function ReportSettingsModal({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
           <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, fontSize: '1.25rem' }}>
             <Settings size={24} />
-            Cai dat bao cao
+            Cài đặt báo cáo
           </h2>
           <button className="btn-close" onClick={onClose}>
             <X size={20} />
@@ -173,31 +173,31 @@ export function ReportSettingsModal({
         <div style={{ marginBottom: '1.5rem' }}>
           <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', fontSize: '1rem', color: 'var(--jp-ai)' }}>
             <Building size={18} />
-            Thong tin truong
+            Thông tin trường
           </h3>
 
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.875rem', fontWeight: '500' }}>
-              Ten truong / Trung tam *
+              Tên trường / Trung tâm *
             </label>
             <input
               type="text"
               value={schoolName}
               onChange={e => setSchoolName(e.target.value)}
-              placeholder="Trung tam Nhat ngu ABC"
+              placeholder="Trung tâm Nhật ngữ ABC"
               style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' }}
             />
           </div>
 
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.875rem', fontWeight: '500' }}>
-              Dia chi
+              Địa chỉ
             </label>
             <input
               type="text"
               value={schoolAddress}
               onChange={e => setSchoolAddress(e.target.value)}
-              placeholder="123 Duong ABC, Quan XYZ, TP.HCM"
+              placeholder="123 Đường ABC, Quận XYZ, TP.HCM"
               style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' }}
             />
           </div>
@@ -205,7 +205,7 @@ export function ReportSettingsModal({
           <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
             <div style={{ flex: 1 }}>
               <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.875rem', fontWeight: '500' }}>
-                Dien thoai
+                Điện thoại
               </label>
               <input
                 type="tel"
@@ -231,13 +231,13 @@ export function ReportSettingsModal({
 
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.875rem', fontWeight: '500' }}>
-              Tieu de bao cao
+              Tiêu đề báo cáo
             </label>
             <input
               type="text"
               value={reportTitle}
               onChange={e => setReportTitle(e.target.value)}
-              placeholder="PHIEU DANH GIA HOC VIEN"
+              placeholder="PHIẾU ĐÁNH GIÁ HỌC VIÊN"
               style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' }}
             />
           </div>
@@ -247,7 +247,7 @@ export function ReportSettingsModal({
         <div style={{ marginBottom: '1.5rem' }}>
           <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', fontSize: '1rem', color: 'var(--jp-ai)' }}>
             <Image size={18} />
-            Logo truong
+            Logo trường
           </h3>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -311,7 +311,7 @@ export function ReportSettingsModal({
                 onClick={() => fileInputRef.current?.click()}
                 style={{ marginBottom: '0.5rem' }}
               >
-                {schoolLogo ? 'Doi logo' : 'Tai len logo'}
+                {schoolLogo ? 'Đổi logo' : 'Tải lên logo'}
               </button>
               <div style={{ fontSize: '0.75rem', color: 'var(--gray)' }}>
                 PNG, JPG - Toi da 100KB
@@ -325,7 +325,7 @@ export function ReportSettingsModal({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, fontSize: '1rem', color: 'var(--jp-ai)' }}>
               <Mail size={18} />
-              Cau hinh EmailJS
+              Cấu hình EmailJS
             </h3>
             <button
               className="btn btn-sm btn-secondary"
@@ -333,26 +333,26 @@ export function ReportSettingsModal({
               style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.5rem' }}
             >
               <HelpCircle size={14} />
-              Huong dan
+              Hướng dẫn
             </button>
           </div>
 
           {showHelp && (
             <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: 'var(--jp-washi-cool)', borderRadius: 'var(--radius-sm)', fontSize: '0.875rem' }}>
               <p style={{ marginBottom: '0.5rem' }}>
-                <strong>Buoc 1:</strong> Dang ky tai khoan tai{' '}
+                <strong>Bước 1:</strong> Đăng ký tài khoản tại{' '}
                 <a href="https://www.emailjs.com/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--jp-ai)' }}>
                   emailjs.com <ExternalLink size={12} style={{ verticalAlign: 'middle' }} />
                 </a>
               </p>
               <p style={{ marginBottom: '0.5rem' }}>
-                <strong>Buoc 2:</strong> Tao Email Service (chon Gmail, Outlook, v.v.)
+                <strong>Bước 2:</strong> Tạo Email Service (chọn Gmail, Outlook, v.v.)
               </p>
               <p style={{ marginBottom: '0.5rem' }}>
-                <strong>Buoc 3:</strong> Tao Email Template voi cac bien: to_email, to_name, from_name, school_name, report_period, message, pdf_url
+                <strong>Bước 3:</strong> Tạo Email Template với các biến: to_email, to_name, from_name, school_name, report_period, message, pdf_url
               </p>
               <p style={{ marginBottom: '0' }}>
-                <strong>Buoc 4:</strong> Copy Service ID, Template ID va Public Key vao day
+                <strong>Bước 4:</strong> Copy Service ID, Template ID và Public Key vào đây
               </p>
             </div>
           )}
@@ -405,11 +405,11 @@ export function ReportSettingsModal({
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
           >
             <RotateCcw size={16} />
-            Mac dinh
+            Mặc định
           </button>
           <div style={{ flex: 1 }} />
           <button className="btn btn-secondary" onClick={onClose}>
-            Huy
+            Hủy
           </button>
           <button
             className="btn btn-primary"
@@ -418,7 +418,7 @@ export function ReportSettingsModal({
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
           >
             <Save size={16} />
-            {isSaving ? 'Dang luu...' : 'Luu cai dat'}
+            {isSaving ? 'Đang lưu...' : 'Lưu cài đặt'}
           </button>
         </div>
       </div>

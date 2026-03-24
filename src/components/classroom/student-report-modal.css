@@ -1,4 +1,273 @@
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+/* ── Report Template Selector ─────────────────────────────────────────── */
+
+.report-template-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.report-template-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 6px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(255, 255, 255, 0.10);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.18s, box-shadow 0.18s, transform 0.15s;
+  text-align: center;
+}
+
+.report-template-card:hover {
+  border-color: rgba(6, 182, 212, 0.45);
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.08);
+  transform: translateY(-2px);
+}
+
+.report-template-card.active {
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.18);
+  background: rgba(6, 182, 212, 0.07);
+}
+
+/* Mini-preview area */
+.template-preview {
+  width: 100%;
+  height: 52px;
+  border-radius: 5px;
+  overflow: hidden;
+  position: relative;
+  background: rgba(255, 255, 255, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 4px 5px;
+  box-sizing: border-box;
+}
+
+/* Classic preview shapes */
+.classic-preview .tp-header {
+  height: 10px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #4361ee, #7289f5);
+  opacity: 0.8;
+}
+.classic-preview .tp-line {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.25);
+  width: 90%;
+}
+.classic-preview .tp-short {
+  width: 55%;
+}
+.classic-preview .tp-table {
+  flex: 1;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.10);
+  margin-top: 2px;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255,255,255,0.08) 0px,
+    rgba(255,255,255,0.08) 3px,
+    transparent 3px,
+    transparent 6px
+  );
+}
+
+/* Infographic preview shapes */
+.infographic-preview .tp-hero {
+  height: 14px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #8b5cf6, #ec4899);
+  opacity: 0.85;
+}
+.infographic-preview .tp-circles {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 2px 0;
+}
+.infographic-preview .tp-circles::before,
+.infographic-preview .tp-circles::after {
+  content: '';
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(34,197,94,0.5);
+}
+.infographic-preview .tp-circles::after {
+  background: rgba(245,158,11,0.5);
+  width: 9px;
+  height: 9px;
+}
+.infographic-preview .tp-badges {
+  display: flex;
+  gap: 3px;
+  margin-top: auto;
+}
+.infographic-preview .tp-badges::before,
+.infographic-preview .tp-badges::after {
+  content: '';
+  display: block;
+  height: 6px;
+  border-radius: 10px;
+  background: rgba(139,92,246,0.45);
+  flex: 1;
+}
+.infographic-preview .tp-badges::after {
+  background: rgba(6,182,212,0.45);
+}
+
+/* Academic preview shapes */
+.academic-preview .tp-title {
+  height: 8px;
+  border-radius: 2px;
+  background: rgba(30,58,95,0.6);
+  width: 70%;
+  align-self: center;
+  margin: 0 auto;
+}
+.academic-preview .tp-table-formal {
+  height: 9px;
+  border-radius: 1px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(52,152,219,0.35) 0px,
+    rgba(52,152,219,0.35) 1px,
+    transparent 1px,
+    transparent 20%
+  ),
+  repeating-linear-gradient(
+    0deg,
+    rgba(255,255,255,0.10) 0px,
+    rgba(255,255,255,0.10) 1px,
+    transparent 1px,
+    transparent 9px
+  );
+  border: 1px solid rgba(52,152,219,0.25);
+  margin-top: 1px;
+}
+.academic-preview .tp-sigs {
+  display: flex;
+  gap: 3px;
+  margin-top: auto;
+}
+.academic-preview .tp-sigs::before,
+.academic-preview .tp-sigs::after {
+  content: '';
+  display: block;
+  height: 3px;
+  border-radius: 1px;
+  border-bottom: 1.5px dotted rgba(127,140,141,0.6);
+  flex: 1;
+}
+
+/* Template label text */
+.template-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.88);
+  line-height: 1.2;
+}
+
+.template-desc {
+  font-size: 9.5px;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.2;
+}
+
+.report-template-card.active .template-name {
+  color: #06b6d4;
+}
+
+.report-template-card.active .template-desc {
+  color: rgba(6,182,212,0.7);
+}
+
+/* ── Custom Note Textarea ─────────────────────────────────────────────── */
+
+.report-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.report-note-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(255, 255, 255, 0.10);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 12.5px;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.18s;
+  box-sizing: border-box;
+}
+
+.report-note-input::placeholder {
+  color: rgba(255, 255, 255, 0.30);
+}
+
+.report-note-input:focus {
+  border-color: rgba(139, 92, 246, 0.55);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.10);
+}
+
+/* ── New action buttons ───────────────────────────────────────────────── */
+
+.report-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: background 0.18s, border-color 0.18s, opacity 0.18s;
+}
+
+.report-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.report-btn--preview {
+  background: rgba(6, 182, 212, 0.12);
+  border-color: rgba(6, 182, 212, 0.35);
+  color: #06b6d4;
+}
+
+.report-btn--preview:hover:not(:disabled) {
+  background: rgba(6, 182, 212, 0.22);
+  border-color: #06b6d4;
+}
+
+.report-btn--class-overview {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.35);
+  color: #8b5cf6;
+}
+
+.report-btn--class-overview:hover:not(:disabled) {
+  background: rgba(139, 92, 246, 0.22);
+  border-color: #8b5cf6;
+}

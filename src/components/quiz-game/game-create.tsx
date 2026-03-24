@@ -1,6 +1,6 @@
 // Game creation form component with unified Room Modal design system
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
   X,
   Gamepad2,
@@ -80,6 +80,7 @@ export function GameCreate({
   const [selectedDifficulty, setSelectedDifficulty] = useState<GameDifficultyLevel | null>(null);
   const [expandedLevel, setExpandedLevel] = useState<JLPTLevel | null>(null);
   const [upgradeHint, setUpgradeHint] = useState<string | null>(null);
+  const [lessonSearch, setLessonSearch] = useState('');
   const [hostMode, setHostMode] = useState<HostMode>('play');
   const isSuperAdmin = userRole === 'super_admin';
 
@@ -173,6 +174,36 @@ export function GameCreate({
     return map;
   }, [getLessonsByLevel, getChildLessons]);
 
+  // Lesson search: flat list when query active, null = grouped view
+  const filteredLessons = useMemo<Lesson[] | null>(() => {
+    if (!lessonSearch.trim()) return null;
+    const q = lessonSearch.toLowerCase();
+    const allLessons: Lesson[] = [];
+    JLPT_LEVELS.forEach(level => {
+      getLessonsByLevel(level).forEach(l => {
+        if (l.name.toLowerCase().includes(q)) allLessons.push(l);
+        getChildLessons(l.id).forEach(child => {
+          if (child.name.toLowerCase().includes(q)) allLessons.push(child);
+        });
+      });
+    });
+    return allLessons;
+  }, [lessonSearch, getLessonsByLevel, getChildLessons]);
+
+  // Card counts per JLPT level (for level headers)
+  const levelCardCount = useMemo(() => {
+    const counts: Record<string, number> = {};
+    JLPT_LEVELS.forEach(level => {
+      const lessonIds = new Set<string>();
+      getLessonsByLevel(level).forEach(l => {
+        lessonIds.add(l.id);
+        getChildLessons(l.id).forEach(child => lessonIds.add(child.id));
+      });
+      counts[level] = flashcards.filter(c => lessonIds.has(c.lessonId)).length;
+    });
+    return counts;
+  }, [flashcards, getLessonsByLevel, getChildLessons]);
+
   // Get selected lesson names
   const selectedLessonNames = useMemo(() => {
     return selectedLessons.map(id => allLessonsMap.get(id) || id).slice(0, 5);
@@ -233,6 +264,18 @@ export function GameCreate({
       setSelectedLessons(prev => [...new Set([...prev, ...allLessonIds])]);
     }
   };
+
+  const handleSelectAllLevels = useCallback(() => {
+    JLPT_LEVELS.forEach(level => {
+      const levelLessons = getLessonsByLevel(level);
+      const allLessonIds: string[] = [];
+      levelLessons.forEach(lesson => {
+        allLessonIds.push(lesson.id);
+        getChildLessons(lesson.id).forEach(child => allLessonIds.push(child.id));
+      });
+      setSelectedLessons(prev => [...new Set([...prev, ...allLessonIds])]);
+    });
+  }, [getLessonsByLevel, getChildLessons]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -349,6 +392,26 @@ export function GameCreate({
                 JLPT
               </button>
             </div>
+            {source === 'flashcards' && (
+              <div className="rm-quick-select">
+                <span className="rm-quick-label">Chọn nhanh:</span>
+                <button type="button" className="rm-quick-btn" onClick={() => handleSelectAllInLevel('N5')}>
+                  Tất cả N5
+                </button>
+                <button type="button" className="rm-quick-btn" onClick={() => handleSelectAllInLevel('N4')}>
+                  Tất cả N4
+                </button>
+                <button type="button" className="rm-quick-btn" onClick={() => handleSelectAllInLevel('N3')}>
+                  Tất cả N3
+                </button>
+                <button type="button" className="rm-quick-btn" onClick={handleSelectAllLevels}>
+                  Tất cả
+                </button>
+                <button type="button" className="rm-quick-btn" onClick={() => setSelectedLessons([])}>
+                  Bỏ chọn
+                </button>
+              </div>
+            )}
           </div>
 
           {source === 'flashcards' ? (
@@ -358,62 +421,110 @@ export function GameCreate({
                 <span>Chọn phạm vi câu hỏi</span>
               </label>
 
+              <input
+                type="text"
+                className="rm-input rm-lesson-search"
+                value={lessonSearch}
+                onChange={e => setLessonSearch(e.target.value)}
+                placeholder="🔍 Tìm bài học..."
+              />
+
               <div className="rm-lesson-selector">
-                {JLPT_LEVELS.map(level => {
-                  const levelLessons = getLessonsByLevel(level);
-                  const isExpanded = expandedLevel === level;
-
-                  if (levelLessons.length === 0) return null;
-
-                  // Check if all parent lessons in this level are selected
-                  const allSelected = levelLessons.length > 0 &&
-                    levelLessons.every(l => selectedLessons.includes(l.id));
-
-                  return (
-                    <div key={level} className={`rm-lesson-level ${isExpanded ? 'expanded' : ''}`}>
-                      <div
-                        className="rm-lesson-level-header"
-                        onClick={() => setExpandedLevel(isExpanded ? null : level)}
-                      >
-                        <ChevronRight size={16} className="rm-expand-icon" />
-                        <span className="rm-level-name">{level}</span>
-                        <button
-                          type="button"
-                          className={`rm-btn ${allSelected ? 'rm-btn-primary' : ''}`}
-                          style={{ padding: '0.375rem 0.75rem', fontSize: '0.8rem' }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSelectAllInLevel(level);
-                          }}
-                        >
-                          {allSelected ? (
-                            <>
-                              <Check size={14} />
-                              Đã chọn
-                            </>
-                          ) : 'Chọn tất cả'}
-                        </button>
-                      </div>
-
-                      {/* Only show parent lessons — selecting auto-includes children */}
-                      {isExpanded && (
-                        <div className="rm-lesson-grid">
-                          {levelLessons.map(lesson => (
-                            <label key={lesson.id} className="rm-checkbox-label">
-                              <input
-                                type="checkbox"
-                                checked={selectedLessons.includes(lesson.id)}
-                                onChange={() => handleToggleLesson(lesson.id)}
-                              />
-                              <span>{lesson.name}</span>
-                            </label>
-                          ))}
-                        </div>
-                      )}
+                {filteredLessons !== null ? (
+                  /* Flat search results */
+                  filteredLessons.length === 0 ? (
+                    <div style={{ padding: '0.75rem', color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', textAlign: 'center' }}>
+                      Không tìm thấy bài học nào
                     </div>
-                  );
-                })}
+                  ) : (
+                    <div className="rm-lesson-grid">
+                      {filteredLessons.map(lesson => (
+                        <label key={lesson.id} className="rm-checkbox-label">
+                          <input
+                            type="checkbox"
+                            checked={selectedLessons.includes(lesson.id)}
+                            onChange={() => handleToggleLesson(lesson.id)}
+                          />
+                          <span>{lesson.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )
+                ) : (
+                  /* Normal grouped view */
+                  JLPT_LEVELS.map(level => {
+                    const levelLessons = getLessonsByLevel(level);
+                    const isExpanded = expandedLevel === level;
+
+                    if (levelLessons.length === 0) return null;
+
+                    // Check if all parent lessons in this level are selected
+                    const allSelected = levelLessons.length > 0 &&
+                      levelLessons.every(l => selectedLessons.includes(l.id));
+
+                    return (
+                      <div key={level} className={`rm-lesson-level ${isExpanded ? 'expanded' : ''}`}>
+                        <div
+                          className="rm-lesson-level-header"
+                          onClick={() => setExpandedLevel(isExpanded ? null : level)}
+                        >
+                          <ChevronRight size={16} className="rm-expand-icon" />
+                          <span className="rm-level-name">{level}</span>
+                          <span className="rm-level-count">({levelCardCount[level] ?? 0} thẻ)</span>
+                          <button
+                            type="button"
+                            className={`rm-btn ${allSelected ? 'rm-btn-primary' : ''}`}
+                            style={{ padding: '0.375rem 0.75rem', fontSize: '0.8rem' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelectAllInLevel(level);
+                            }}
+                          >
+                            {allSelected ? (
+                              <>
+                                <Check size={14} />
+                                Đã chọn
+                              </>
+                            ) : 'Chọn tất cả'}
+                          </button>
+                        </div>
+
+                        {/* Only show parent lessons — selecting auto-includes children */}
+                        {isExpanded && (
+                          <div className="rm-lesson-grid">
+                            {levelLessons.map(lesson => (
+                              <label key={lesson.id} className="rm-checkbox-label">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedLessons.includes(lesson.id)}
+                                  onChange={() => handleToggleLesson(lesson.id)}
+                                />
+                                <span>{lesson.name}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
               </div>
+
+              {/* Selected summary strip */}
+              {selectedLessons.length > 0 && (
+                <div className="rm-selected-summary">
+                  <span className="rm-selected-count">{selectedLessons.length} bài học đã chọn</span>
+                  <span className="rm-selected-cards">{availableCards} thẻ</span>
+                  {selectedDifficulty && (
+                    <span
+                      className="rm-selected-diff"
+                      style={{ color: DIFFICULTY_OPTIONS.find(d => d.value === selectedDifficulty)?.color }}
+                    >
+                      {DIFFICULTY_OPTIONS.find(d => d.value === selectedDifficulty)?.label}
+                    </span>
+                  )}
+                </div>
+              )}
 
               {selectedLessons.length > 0 && availableCards < 4 && (
                 <div className="rm-error" style={{ marginTop: 'var(--rm-space-sm)' }}>
@@ -429,17 +540,21 @@ export function GameCreate({
                 <span>Chọn phạm vi câu hỏi</span>
               </label>
               <div className="rm-pills">
-                {JLPT_QUESTION_LEVELS.map(level => (
-                  <button
-                    key={level}
-                    type="button"
-                    className={`rm-pill ${selectedJLPTLevels.includes(level) ? 'active' : ''}`}
-                    onClick={() => handleToggleJLPTLevel(level)}
-                    data-level={level}
-                  >
-                    {level}
-                  </button>
-                ))}
+                {JLPT_QUESTION_LEVELS.map(level => {
+                  const count = jlptQuestions.filter(q => q.level === level).length;
+                  return (
+                    <button
+                      key={level}
+                      type="button"
+                      className={`rm-pill ${selectedJLPTLevels.includes(level) ? 'active' : ''}`}
+                      onClick={() => handleToggleJLPTLevel(level)}
+                      data-level={level}
+                    >
+                      {level}
+                      <span className="rm-pill-count">{count}</span>
+                    </button>
+                  );
+                })}
               </div>
               <span className="rm-filter-hint">Không chọn = tất cả cấp độ</span>
 
@@ -622,6 +737,26 @@ export function GameCreate({
 
         {/* Footer */}
         <footer className="rm-footer">
+          {/* Question pool indicator */}
+          {(() => {
+            const available = source === 'flashcards' ? availableCards : availableJLPTQuestions;
+            const ratio = totalRounds > 0 ? available / totalRounds : 0;
+            const fillClass = ratio >= 1.5 ? 'sufficient' : ratio >= 1 ? 'tight' : 'insufficient';
+            return (
+              <div className="rm-question-pool">
+                <div className="rm-pool-bar">
+                  <div
+                    className={`rm-pool-fill ${fillClass}`}
+                    style={{ width: `${Math.min(ratio * 100, 100)}%` }}
+                  />
+                </div>
+                <div className="rm-pool-info">
+                  <span className="rm-pool-count">{available} câu hỏi có sẵn</span>
+                  <span className="rm-pool-need">/ cần {totalRounds} câu</span>
+                </div>
+              </div>
+            );
+          })()}
           <button type="button" className="rm-btn rm-btn-ghost" onClick={onCancel}>
             Hủy
           </button>

@@ -2,6 +2,9 @@
 
 import type { StudentGrade, StudentAttendanceSummary, StudentEvaluation } from './classroom';
 
+// Report visual style
+export type ReportStyle = 'classic' | 'infographic' | 'academic';
+
 // Config for report generation
 export interface StudentReportConfig {
   schoolName: string;
@@ -14,6 +17,7 @@ export interface StudentReportConfig {
   showGrades: boolean;
   showEvaluation: boolean;
   showSignatures: boolean;
+  reportStyle: ReportStyle;
   // Email settings
   emailServiceId?: string;
   emailTemplateId?: string;
@@ -43,6 +47,12 @@ export interface StudentReportData {
   // Metadata
   generatedAt: string;
   generatedBy: string;
+  // Optional custom teacher note for this specific student
+  customNote?: string;
+  // Class comparison data
+  classAverage?: number;
+  classSize?: number;
+  studentRank?: number;
 }
 
 // Report metadata for storage
@@ -79,6 +89,7 @@ export const DEFAULT_REPORT_CONFIG: StudentReportConfig = {
   showGrades: true,
   showEvaluation: true,
   showSignatures: true,
+  reportStyle: 'classic',
 };
 
 // Local storage key for report settings

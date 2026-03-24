@@ -43,7 +43,6 @@ const RolePermissionsPage = lazy(() => import('./components/pages/role-permissio
 const ConjugationTrainerPage = lazy(() => import('./components/pages/conjugation-trainer-page').then(m => ({ default: m.ConjugationTrainerPage })));
 const PronunciationPracticePage = lazy(() => import('./components/pages/pronunciation-practice-page').then(m => ({ default: m.PronunciationPracticePage })));
 const AnalyticsDashboardPage = lazy(() => import('./components/pages/analytics-dashboard-page').then(m => ({ default: m.AnalyticsDashboardPage })));
-const OnboardingTour = lazy(() => import('./components/onboarding/onboarding-tour').then(m => ({ default: m.OnboardingTour })));
 const AchievementToast = lazy(() => import('./components/achievements/achievement-toast').then(m => ({ default: m.AchievementToast })));
 const AchievementShowcase = lazy(() => import('./components/achievements/achievement-showcase').then(m => ({ default: m.AchievementShowcase })));
 const CelebrationOverlay = lazy(() => import('./components/achievements/celebration-overlay').then(m => ({ default: m.CelebrationOverlay })));
@@ -406,7 +405,7 @@ function AppContent() {
   // JLPT level modal state - show if logged in but no level set
   const [showJlptLevelModal, setShowJlptLevelModal] = useState(false);
   const [jlptLevelSkipped, setJlptLevelSkipped] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+
 
   // Show JLPT level modal on first login - derived state sync
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -419,15 +418,6 @@ function AppContent() {
   }, [currentUser, jlptLevelSkipped]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  // Show onboarding tour on first login (after JLPT modal dismissed)
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (currentUser && !showJlptLevelModal) {
-      const seen = localStorage.getItem('shinko_onboarding_seen');
-      if (!seen) setShowOnboarding(true);
-    }
-  }, [currentUser, showJlptLevelModal]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Reset to home page when user logs in (unless joining via QR code)
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -1021,15 +1011,6 @@ function AppContent() {
         </>
       )}
 
-      {/* Onboarding Tour - First-time user introduction */}
-      {showOnboarding && (
-        <Suspense fallback={null}>
-          <OnboardingTour onComplete={() => {
-            localStorage.setItem('shinko_onboarding_seen', 'true');
-            setShowOnboarding(false);
-          }} />
-        </Suspense>
-      )}
 
       {/* Achievement system global UI */}
       {achievementCtx && (

@@ -60,7 +60,7 @@ export function StudentList({
   }, [evaluations]);
 
   if (students.length === 0) {
-    return <p className="empty-text">Chua co hoc vien trong lop</p>;
+    return <p className="empty-text">Chưa có học viên trong lớp</p>;
   }
 
   return (
@@ -86,15 +86,15 @@ export function StudentList({
                   <span className="student-name">
                     {user?.displayName || user?.username || 'Unknown'}
                   </span>
-                  <span className="evaluation-count">{userEvals.length} danh gia</span>
+                  <span className="evaluation-count">{userEvals.length} đánh giá</span>
                 </div>
               </div>
 
               <div className="student-stats-mini">
-                <span className="mini-stat" title="Diem TB">
+                <span className="mini-stat" title="Điểm TB">
                   {grade?.averagePercent?.toFixed(0) || 0}%
                 </span>
-                <span className="mini-stat" title="Chuyen can">
+                <span className="mini-stat" title="Chuyên cần">
                   {attendance?.attendanceRate?.toFixed(0) || 0}%
                 </span>
               </div>
@@ -103,7 +103,7 @@ export function StudentList({
                 {avgRating > 0 ? (
                   <RatingStars rating={Math.round(avgRating) as EvaluationRating} readonly />
                 ) : (
-                  <span className="no-rating">Chua danh gia</span>
+                  <span className="no-rating">Chưa đánh giá</span>
                 )}
                 {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
               </div>
@@ -115,19 +115,19 @@ export function StudentList({
                 <div className="student-stats-expanded">
                   <div className="stat-box">
                     <span className="stat-value-large">{grade?.averagePercent?.toFixed(1) || 0}%</span>
-                    <span className="stat-label">Diem TB</span>
+                    <span className="stat-label">Điểm TB</span>
                   </div>
                   <div className="stat-box">
                     <span className="stat-value-large">{(grade?.testsCompleted || 0) + (grade?.assignmentsCompleted || 0)}</span>
-                    <span className="stat-label">Bai nop</span>
+                    <span className="stat-label">Bài nộp</span>
                   </div>
                   <div className="stat-box">
                     <span className="stat-value-large">{attendance?.attendanceRate?.toFixed(0) || 0}%</span>
-                    <span className="stat-label">Chuyen can</span>
+                    <span className="stat-label">Chuyên cần</span>
                   </div>
                   <div className="stat-box">
                     <span className="stat-value-large">{attendance?.present || 0}/{attendance?.totalSessions || 0}</span>
-                    <span className="stat-label">Co mat</span>
+                    <span className="stat-label">Có mặt</span>
                   </div>
                 </div>
 
@@ -139,7 +139,7 @@ export function StudentList({
                     disabled={exporting || !hasClassroom}
                   >
                     <Download size={14} />
-                    Xuat PDF
+                    Xuất PDF
                   </button>
                   {userEvals.length > 0 && (
                     <button
@@ -148,7 +148,7 @@ export function StudentList({
                       disabled={sending}
                     >
                       <Send size={14} />
-                      Gui thong bao
+                      Gửi thông báo
                     </button>
                   )}
                   <button
@@ -156,13 +156,13 @@ export function StudentList({
                     onClick={() => onOpenForm(userId)}
                   >
                     <Plus size={14} />
-                    Them danh gia
+                    Thêm đánh giá
                   </button>
                 </div>
 
                 {/* Evaluations list */}
                 {userEvals.length === 0 ? (
-                  <p className="empty-text">Chua co danh gia</p>
+                  <p className="empty-text">Chưa có đánh giá</p>
                 ) : (
                   userEvals.map(evaluation => (
                     <EvaluationItem

@@ -2,6 +2,8 @@
 
 import { COLORS } from './constants';
 import type { Color } from './constants';
+import type { StudentReportData } from '../../types/student-report';
+import { DEFAULT_EVALUATION_CRITERIA } from '../../types/classroom';
 
 // Vietnamese character to ASCII conversion
 export function toASCII(str: string): string {
@@ -60,6 +62,41 @@ export function getPercentColor(percent: number): Color {
   if (percent >= 60) return COLORS.info;
   if (percent >= 40) return COLORS.warning;
   return COLORS.danger;
+}
+
+// Generate actionable recommendations based on student data
+export function generateRecommendations(data: StudentReportData): string[] {
+  const items: string[] = [];
+  const avg = data.grades?.averagePercent ?? 0;
+  const att = data.attendance?.attendanceRate ?? 100;
+
+  // Attendance recommendations
+  if (att < 70) items.push('Can tham du day du cac buoi hoc. Ty le chuyen can hien tai qua thap.');
+  else if (att < 85) items.push('Nen tang cuong ty le chuyen can de dat ket qua tot hon.');
+
+  // Grade recommendations
+  if (avg < 50) items.push('Can on tap lai kien thuc co ban va lam them bai tap.');
+  else if (avg < 70) items.push('Nen tap trung vao cac dang bai con yeu de nang cao diem so.');
+  else if (avg >= 85) items.push('Tiep tuc phat huy. Co the thu thach voi trinh do cao hon.');
+
+  // Evaluation-based recommendations
+  if (data.evaluation) {
+    const criteria = DEFAULT_EVALUATION_CRITERIA;
+    const weakest = [...criteria]
+      .map(c => ({ name: c.name, score: data.evaluation!.ratings[c.id] || 0, max: c.maxPoints }))
+      .sort((a, b) => (a.score / a.max) - (b.score / b.max));
+
+    if (weakest.length > 0 && (weakest[0].score / weakest[0].max) < 0.5) {
+      items.push(`Can tap trung cai thien: ${toASCII(weakest[0].name)}`);
+    }
+  }
+
+  // JLPT recommendation
+  if (avg >= 80 && att >= 85) items.push('San sang thu suc voi ky thi JLPT cap do tiep theo.');
+
+  if (items.length === 0) items.push('Tiep tuc duy tri tinh than hoc tap tot.');
+
+  return items;
 }
 
 // Get evaluation level

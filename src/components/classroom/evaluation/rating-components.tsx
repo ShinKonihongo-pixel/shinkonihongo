@@ -48,7 +48,7 @@ export function LevelSelector({ onSelect, currentPoints, maxPoints }: {
           className={`level-btn-mini ${currentLevel === level ? 'active' : ''}`}
           style={{ '--level-color': info.color } as React.CSSProperties}
           onClick={() => onSelect(level)}
-          title={`${info.pointRange[0]}-${info.pointRange[1]} diem`}
+          title={`${info.pointRange[0]}-${info.pointRange[1]} điểm`}
         >
           {info.label}
         </button>
@@ -82,17 +82,17 @@ export function StudentStats({ grade, attendance }: {
   return (
     <div className="student-stats-preview">
       <div className="stat-item">
-        <span className="stat-label">Diem TB:</span>
+        <span className="stat-label">Điểm TB:</span>
         <span className={`stat-value ${(grade?.averagePercent || 0) >= 50 ? 'good' : 'poor'}`}>
           {grade?.averagePercent?.toFixed(0) || 0}%
         </span>
       </div>
       <div className="stat-item">
-        <span className="stat-label">Bai nop:</span>
+        <span className="stat-label">Bài nộp:</span>
         <span className="stat-value">{(grade?.testsCompleted || 0) + (grade?.assignmentsCompleted || 0)}</span>
       </div>
       <div className="stat-item">
-        <span className="stat-label">Chuyen can:</span>
+        <span className="stat-label">Chuyên cần:</span>
         <span className={`stat-value ${(attendance?.attendanceRate || 0) >= 80 ? 'good' : 'poor'}`}>
           {attendance?.attendanceRate?.toFixed(0) || 0}%
         </span>

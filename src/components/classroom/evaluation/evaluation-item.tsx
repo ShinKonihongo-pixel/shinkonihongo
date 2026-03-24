@@ -42,13 +42,13 @@ export function EvaluationItem({
 
       {evaluation.strengths && (
         <div className="evaluation-section strengths">
-          <strong>Diem manh:</strong> {evaluation.strengths}
+          <strong>Điểm mạnh:</strong> {evaluation.strengths}
         </div>
       )}
 
       {evaluation.improvements && (
         <div className="evaluation-section improvements">
-          <strong>Can cai thien:</strong> {evaluation.improvements}
+          <strong>Cần cải thiện:</strong> {evaluation.improvements}
         </div>
       )}
 
@@ -86,7 +86,7 @@ export function EvaluationItem({
           className="btn btn-sm btn-icon success"
           onClick={() => onSendNotification(evaluation)}
           disabled={sending}
-          title="Gui thong bao"
+          title="Gửi thông báo"
         >
           <Send size={14} />
         </button>
@@ -96,32 +96,32 @@ export function EvaluationItem({
         <button
           className="btn btn-sm btn-icon"
           onClick={() => onEdit(evaluation)}
-          title="Chinh sua"
+          title="Chỉnh sửa"
         >
           <Edit2 size={14} />
         </button>
         {deleteConfirm === evaluation.id ? (
           <>
-            <span className="delete-confirm-text">Xac nhan xoa?</span>
+            <span className="delete-confirm-text">Xác nhận xóa?</span>
             <button
               className="btn btn-sm btn-danger"
               onClick={() => onDelete(evaluation.id)}
               disabled={saving}
             >
-              Xoa
+              Xóa
             </button>
             <button
               className="btn btn-sm btn-secondary"
               onClick={() => setDeleteConfirm(null)}
             >
-              Huy
+              Hủy
             </button>
           </>
         ) : (
           <button
             className="btn btn-sm btn-icon danger"
             onClick={() => setDeleteConfirm(evaluation.id)}
-            title="Xoa"
+            title="Xóa"
           >
             <Trash2 size={14} />
           </button>
@@ -130,7 +130,7 @@ export function EvaluationItem({
 
       <div className="evaluation-footer">
         <span className="evaluated-at">
-          Danh gia luc {new Date(evaluation.evaluatedAt).toLocaleString('vi-VN')}
+          Đánh giá lúc {new Date(evaluation.evaluatedAt).toLocaleString('vi-VN')}
         </span>
       </div>
     </div>

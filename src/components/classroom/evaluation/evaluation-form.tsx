@@ -88,7 +88,7 @@ export function EvaluationForm({
     <div className="evaluation-form-overlay">
       <form className="evaluation-form" onSubmit={onSubmit}>
         <div className="form-header-row">
-          <h4>{editingId ? 'Chinh sua danh gia' : 'Tao danh gia moi'}</h4>
+          <h4>{editingId ? 'Chỉnh sửa đánh giá' : 'Tạo đánh giá mới'}</h4>
           <button type="button" className="btn-close" onClick={onClose}>
             <X size={20} />
           </button>
@@ -96,7 +96,7 @@ export function EvaluationForm({
 
         {/* Student selector with stats */}
         <div className="form-group">
-          <label>Hoc vien <span className="required">*</span></label>
+          <label>Học viên <span className="required">*</span></label>
           <div className="student-select-row">
             <select
               value={formData.userId}
@@ -105,7 +105,7 @@ export function EvaluationForm({
               required
               disabled={!!editingId}
             >
-              <option value="">Chon hoc vien...</option>
+              <option value="">Chọn học viên...</option>
               {students.map(({ userId, user }) => (
                 <option key={userId} value={userId}>
                   {user?.displayName || user?.username || 'Unknown'}
@@ -117,10 +117,10 @@ export function EvaluationForm({
                 type="button"
                 className="btn btn-auto-fill"
                 onClick={() => onAutoFill(formData.userId)}
-                title="Tu dong dien dua tren diem so va chuyen can"
+                title="Tự động điền dựa trên điểm số và chuyên cần"
               >
                 <Zap size={16} />
-                Tu dong
+                Tự động
               </button>
             )}
           </div>
@@ -137,7 +137,7 @@ export function EvaluationForm({
         {/* Period */}
         <div className="form-row">
           <div className="form-group">
-            <label>Tu ngay</label>
+            <label>Từ ngày</label>
             <input
               type="date"
               value={formData.periodStart}
@@ -146,7 +146,7 @@ export function EvaluationForm({
             />
           </div>
           <div className="form-group">
-            <label>Den ngay</label>
+            <label>Đến ngày</label>
             <input
               type="date"
               value={formData.periodEnd}
@@ -158,7 +158,7 @@ export function EvaluationForm({
 
         {/* Quick apply all levels */}
         <div className="form-group">
-          <label>Danh gia nhanh tat ca tieu chi</label>
+          <label>Đánh giá nhanh tất cả tiêu chí</label>
           <div className="quick-level-buttons">
             {(Object.entries(EVALUATION_LEVEL_INFO) as [EvaluationLevel, typeof EVALUATION_LEVEL_INFO[EvaluationLevel]][]).map(([level, info]) => (
               <button
@@ -176,7 +176,7 @@ export function EvaluationForm({
 
         {/* Criteria ratings */}
         <div className="form-group">
-          <label>Danh gia chi tiet</label>
+          <label>Đánh giá chi tiết</label>
           <div className="criteria-list">
             {DEFAULT_EVALUATION_CRITERIA.map(criteria => {
               const currentPoints = formData.ratings[criteria.id] || 0;
@@ -232,7 +232,7 @@ export function EvaluationForm({
 
         {/* Overall rating */}
         <div className="form-group">
-          <label>Danh gia tong the <span className="required">*</span></label>
+          <label>Đánh giá tổng thể <span className="required">*</span></label>
           <RatingStars
             rating={formData.overallRating}
             onChange={rating => setFormData(prev => ({ ...prev, overallRating: rating }))}
@@ -242,14 +242,14 @@ export function EvaluationForm({
         {/* Strengths with suggestions */}
         <div className="form-group">
           <label>
-            Diem manh
+            Điểm mạnh
             <button
               type="button"
               className="btn-toggle-suggestions"
               onClick={() => setShowSuggestions(showSuggestions === 'strengths' ? null : 'strengths')}
             >
               <Lightbulb size={14} />
-              Goi y
+              Gợi ý
             </button>
           </label>
           {showSuggestions === 'strengths' && (
@@ -269,21 +269,21 @@ export function EvaluationForm({
             onChange={e => setFormData(prev => ({ ...prev, strengths: e.target.value }))}
             className="form-textarea"
             rows={2}
-            placeholder="Diem manh cua hoc vien..."
+            placeholder="Điểm mạnh của học viên..."
           />
         </div>
 
         {/* Improvements with suggestions */}
         <div className="form-group">
           <label>
-            Can cai thien
+            Cần cải thiện
             <button
               type="button"
               className="btn-toggle-suggestions"
               onClick={() => setShowSuggestions(showSuggestions === 'improvements' ? null : 'improvements')}
             >
               <Lightbulb size={14} />
-              Goi y
+              Gợi ý
             </button>
           </label>
           {showSuggestions === 'improvements' && (
@@ -303,21 +303,21 @@ export function EvaluationForm({
             onChange={e => setFormData(prev => ({ ...prev, improvements: e.target.value }))}
             className="form-textarea"
             rows={2}
-            placeholder="Nhung diem can cai thien..."
+            placeholder="Những điểm cần cải thiện..."
           />
         </div>
 
         {/* Comment */}
         <div className="form-group">
           <label>
-            Nhan xet <span className="required">*</span>
+            Nhận xét <span className="required">*</span>
             <button
               type="button"
               className="btn-toggle-suggestions"
               onClick={() => setShowSuggestions(showSuggestions === 'comment' ? null : 'comment')}
             >
               <Lightbulb size={14} />
-              Goi y
+              Gợi ý
             </button>
           </label>
           {showSuggestions === 'comment' && (
@@ -347,7 +347,7 @@ export function EvaluationForm({
             onChange={e => setFormData(prev => ({ ...prev, comment: e.target.value }))}
             className="form-textarea"
             rows={3}
-            placeholder="Nhan xet chung ve hoc vien..."
+            placeholder="Nhận xét chung về học viên..."
             required
           />
         </div>
@@ -360,14 +360,14 @@ export function EvaluationForm({
             onClick={onClose}
             disabled={saving}
           >
-            Huy
+            Hủy
           </button>
           <button
             type="submit"
             className="btn btn-primary"
             disabled={saving || !formData.userId || !formData.comment}
           >
-            {saving ? 'Dang luu...' : editingId ? 'Cap nhat' : 'Tao danh gia'}
+            {saving ? 'Đang lưu...' : editingId ? 'Cập nhật' : 'Tạo đánh giá'}
           </button>
         </div>
       </form>

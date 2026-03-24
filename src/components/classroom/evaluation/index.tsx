@@ -197,7 +197,7 @@ export function EvaluationPanel({
     try {
       const latestEvaluations = Array.from(latestEvaluationByUser.values());
       if (latestEvaluations.length === 0) {
-        alert('Chua co danh gia nao de gui');
+        alert('Chưa có đánh giá nào để gửi');
         return;
       }
       const sentCount = await sendBulkEvaluationNotifications(latestEvaluations);
@@ -211,14 +211,14 @@ export function EvaluationPanel({
   };
 
   if (loading) {
-    return <div className="evaluation-loading">Dang tai...</div>;
+    return <div className="evaluation-loading">Đang tải...</div>;
   }
 
   return (
     <div className="evaluation-panel">
       {/* Header with actions */}
       <div className="evaluation-header">
-        <h3>Danh gia hoc vien</h3>
+        <h3>Đánh giá học viên</h3>
         <div className="evaluation-actions-header">
           {classroom && (
             <>
@@ -226,23 +226,23 @@ export function EvaluationPanel({
                 className="btn btn-secondary"
                 onClick={handleExportAll}
                 disabled={exporting}
-                title="Xuat bao cao tong hop"
+                title="Xuất báo cáo tổng hợp"
               >
                 <FileText size={16} />
-                Xuat bao cao lop
+                Xuất báo cáo lớp
               </button>
               <button
                 className="btn btn-success"
                 onClick={handleSendAllNotifications}
                 disabled={sending || evaluations.length === 0}
-                title="Gui thong bao danh gia cho tat ca hoc vien"
+                title="Gửi thông báo đánh giá cho tất cả học viên"
               >
                 <Send size={16} />
-                {sending ? 'Dang gui...' : 'Gui tat ca'}
+                {sending ? 'Đang gửi...' : 'Gửi tất cả'}
               </button>
               {sendSuccess?.startsWith('all-') && (
                 <span className="send-success-badge">
-                  Da gui {sendSuccess.split('-')[1]} thong bao!
+                  Đã gửi {sendSuccess.split('-')[1]} thông báo!
                 </span>
               )}
             </>
@@ -252,7 +252,7 @@ export function EvaluationPanel({
             onClick={() => setShowForm(true)}
           >
             <Plus size={16} />
-            Tao danh gia
+            Tạo đánh giá
           </button>
         </div>
       </div>
