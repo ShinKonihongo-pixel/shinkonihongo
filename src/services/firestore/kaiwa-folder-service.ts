@@ -10,13 +10,17 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  query,
+  orderBy,
+  limit,
   onSnapshot,
   db,
   type Unsubscribe,
 } from './collections';
 
 export function subscribeToKaiwaFolders(callback: (folders: KaiwaFolder[]) => void): Unsubscribe {
-  return onSnapshot(collection(db, COLLECTIONS.KAIWA_FOLDERS), (snapshot) => {
+  const q = query(collection(db, COLLECTIONS.KAIWA_FOLDERS), orderBy('createdAt', 'desc'), limit(500));
+  return onSnapshot(q, (snapshot) => {
     const folders = snapshot.docs.map(doc => mapDoc<KaiwaFolder>(doc));
     callback(folders);
   });

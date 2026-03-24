@@ -12,6 +12,9 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  query,
+  orderBy,
+  limit,
   onSnapshot,
   db,
   type Unsubscribe,
@@ -23,7 +26,8 @@ export async function getAllLessons(): Promise<Lesson[]> {
 }
 
 export function subscribeToLessons(callback: (lessons: Lesson[]) => void): Unsubscribe {
-  return onSnapshot(collection(db, COLLECTIONS.LESSONS), (snapshot) => {
+  const q = query(collection(db, COLLECTIONS.LESSONS), orderBy('createdAt', 'desc'), limit(500));
+  return onSnapshot(q, (snapshot) => {
     const lessons = snapshot.docs.map(doc => mapDoc<Lesson>(doc));
     callback(lessons);
   });

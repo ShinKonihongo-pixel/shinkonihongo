@@ -9,8 +9,16 @@ import {
   addDoc,
   query,
   where,
+  orderBy,
+  limit,
   db,
 } from './collections';
+
+function getNinetyDaysAgoCutoff(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 90);
+  return d.toISOString();
+}
 
 // ============ STUDY SESSIONS ============
 
@@ -20,7 +28,14 @@ export async function addStudySession(data: Omit<StudySession, 'id'>): Promise<S
 }
 
 export async function getStudySessionsByUser(userId: string): Promise<StudySession[]> {
-  const q = query(collection(db, COLLECTIONS.STUDY_SESSIONS), where('userId', '==', userId));
+  const cutoff = getNinetyDaysAgoCutoff();
+  const q = query(
+    collection(db, COLLECTIONS.STUDY_SESSIONS),
+    where('userId', '==', userId),
+    where('date', '>=', cutoff),
+    orderBy('date', 'desc'),
+    limit(500)
+  );
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => mapDoc<StudySession>(doc));
 }
@@ -33,7 +48,14 @@ export async function addGameSession(data: Omit<GameSession, 'id'>): Promise<Gam
 }
 
 export async function getGameSessionsByUser(userId: string): Promise<GameSession[]> {
-  const q = query(collection(db, COLLECTIONS.GAME_SESSIONS), where('userId', '==', userId));
+  const cutoff = getNinetyDaysAgoCutoff();
+  const q = query(
+    collection(db, COLLECTIONS.GAME_SESSIONS),
+    where('userId', '==', userId),
+    where('date', '>=', cutoff),
+    orderBy('date', 'desc'),
+    limit(500)
+  );
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => mapDoc<GameSession>(doc));
 }
@@ -46,7 +68,14 @@ export async function addJLPTSession(data: Omit<JLPTSession, 'id'>): Promise<JLP
 }
 
 export async function getJLPTSessionsByUser(userId: string): Promise<JLPTSession[]> {
-  const q = query(collection(db, COLLECTIONS.JLPT_SESSIONS), where('userId', '==', userId));
+  const cutoff = getNinetyDaysAgoCutoff();
+  const q = query(
+    collection(db, COLLECTIONS.JLPT_SESSIONS),
+    where('userId', '==', userId),
+    where('date', '>=', cutoff),
+    orderBy('date', 'desc'),
+    limit(500)
+  );
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => mapDoc<JLPTSession>(doc));
 }

@@ -13,6 +13,8 @@ import {
   deleteDoc,
   query,
   where,
+  orderBy,
+  limit,
   onSnapshot,
   db,
   type Unsubscribe,
@@ -24,10 +26,10 @@ export async function getAllJLPTQuestions(): Promise<JLPTQuestion[]> {
 }
 
 export function subscribeToJLPTQuestions(callback: (questions: JLPTQuestion[]) => void, levelFilter?: string): Unsubscribe {
-  const ref = levelFilter
+  const q = levelFilter
     ? query(collection(db, COLLECTIONS.JLPT_QUESTIONS), where('level', '==', levelFilter))
-    : collection(db, COLLECTIONS.JLPT_QUESTIONS);
-  return onSnapshot(ref, (snapshot) => {
+    : query(collection(db, COLLECTIONS.JLPT_QUESTIONS), orderBy('createdAt', 'desc'), limit(2000));
+  return onSnapshot(q, (snapshot) => {
     const questions = snapshot.docs.map(doc => mapDoc<JLPTQuestion>(doc));
     callback(questions);
   });

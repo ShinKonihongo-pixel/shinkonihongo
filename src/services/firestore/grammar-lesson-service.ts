@@ -13,6 +13,8 @@ import {
   deleteDoc,
   query,
   where,
+  orderBy,
+  limit,
   onSnapshot,
   db,
   type Unsubscribe,
@@ -24,7 +26,8 @@ export async function getAllGrammarLessons(): Promise<GrammarLesson[]> {
 }
 
 export function subscribeToGrammarLessons(callback: (lessons: GrammarLesson[]) => void): Unsubscribe {
-  return onSnapshot(collection(db, COLLECTIONS.GRAMMAR_LESSONS), (snapshot) => {
+  const q = query(collection(db, COLLECTIONS.GRAMMAR_LESSONS), orderBy('createdAt', 'desc'), limit(500));
+  return onSnapshot(q, (snapshot) => {
     const lessons = snapshot.docs.map(doc => mapDoc<GrammarLesson>(doc));
     callback(lessons);
   });

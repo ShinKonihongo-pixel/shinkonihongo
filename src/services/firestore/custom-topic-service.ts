@@ -20,6 +20,8 @@ import {
   deleteDoc,
   query,
   where,
+  orderBy,
+  limit,
   onSnapshot,
   db,
   type Unsubscribe,
@@ -28,7 +30,8 @@ import {
 // ============ CUSTOM TOPICS ============
 
 export function subscribeToCustomTopics(callback: (topics: CustomTopic[]) => void): Unsubscribe {
-  return onSnapshot(collection(db, COLLECTIONS.CUSTOM_TOPICS), (snapshot) => {
+  const q = query(collection(db, COLLECTIONS.CUSTOM_TOPICS), orderBy('createdAt', 'desc'), limit(500));
+  return onSnapshot(q, (snapshot) => {
     const topics = snapshot.docs.map(doc => mapDoc<CustomTopic>(doc));
     callback(topics);
   });
@@ -71,7 +74,8 @@ export async function deleteCustomTopic(id: string): Promise<void> {
 // ============ CUSTOM TOPIC FOLDERS ============
 
 export function subscribeToCustomTopicFolders(callback: (folders: CustomTopicFolder[]) => void): Unsubscribe {
-  return onSnapshot(collection(db, COLLECTIONS.CUSTOM_TOPIC_FOLDERS), (snapshot) => {
+  const q = query(collection(db, COLLECTIONS.CUSTOM_TOPIC_FOLDERS), orderBy('createdAt', 'desc'), limit(500));
+  return onSnapshot(q, (snapshot) => {
     const folders = snapshot.docs.map(doc => mapDoc<CustomTopicFolder>(doc));
     callback(folders);
   });
@@ -115,7 +119,8 @@ export async function deleteCustomTopicFolder(id: string): Promise<void> {
 // ============ CUSTOM TOPIC QUESTIONS ============
 
 export function subscribeToCustomTopicQuestions(callback: (questions: CustomTopicQuestion[]) => void): Unsubscribe {
-  return onSnapshot(collection(db, COLLECTIONS.CUSTOM_TOPIC_QUESTIONS), (snapshot) => {
+  const q = query(collection(db, COLLECTIONS.CUSTOM_TOPIC_QUESTIONS), orderBy('createdAt', 'desc'), limit(500));
+  return onSnapshot(q, (snapshot) => {
     const questions = snapshot.docs.map(doc => mapDoc<CustomTopicQuestion>(doc));
     callback(questions);
   });

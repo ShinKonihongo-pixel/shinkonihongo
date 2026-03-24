@@ -13,16 +13,18 @@ import {
   deleteDoc,
   query,
   where,
+  orderBy,
+  limit,
   onSnapshot,
   db,
   type Unsubscribe,
 } from './collections';
 
 export function subscribeToKanjiCards(callback: (cards: KanjiCard[]) => void, levelFilter?: string): Unsubscribe {
-  const ref = levelFilter
+  const q = levelFilter
     ? query(collection(db, COLLECTIONS.KANJI_CARDS), where('jlptLevel', '==', levelFilter))
-    : collection(db, COLLECTIONS.KANJI_CARDS);
-  return onSnapshot(ref, (snapshot) => {
+    : query(collection(db, COLLECTIONS.KANJI_CARDS), orderBy('createdAt', 'desc'), limit(1000));
+  return onSnapshot(q, (snapshot) => {
     const cards = snapshot.docs.map(doc => mapDoc<KanjiCard>(doc));
     callback(cards);
   });
