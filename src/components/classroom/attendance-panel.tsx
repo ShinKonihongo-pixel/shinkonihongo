@@ -1,5 +1,6 @@
 // Attendance panel component for tracking student attendance
 
+import './evaluation-panel.css';
 import React, { useState, useMemo } from 'react';
 import type { User } from '../../types/user';
 import type {

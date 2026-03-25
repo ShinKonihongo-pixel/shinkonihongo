@@ -2,6 +2,7 @@
 // Manages state, navigation, and delegates rendering to sub-views
 
 import { useState, useMemo } from 'react';
+import './custom-topics-tab.css';
 import { ConfirmModal } from '../../ui/confirm-modal';
 import { DEFAULT_TOPIC_FORM, DEFAULT_QUESTION_FORM } from '../../../types/custom-topic';
 import { TopicsListView } from './topics-list-view';

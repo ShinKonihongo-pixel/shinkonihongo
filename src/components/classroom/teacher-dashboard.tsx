@@ -1,6 +1,7 @@
 // Teacher Dashboard - Comprehensive classroom management overview
 // Shows key metrics, alerts, recent activity, and quick actions
 
+import './teacher-dashboard.css';
 import React, { useMemo } from 'react';
 import type { User } from '../../types/user';
 import type {

@@ -9,6 +9,7 @@ import { ImportView } from './import-view';
 import { SettingsView } from './settings-view';
 import { CustomTopicsTab } from '../custom-topics/index';
 import { DEFAULT_SETTINGS, type KaiwaSubTab, type KaiwaPracticeSettings, type ImportResults } from './kaiwa-tab-types';
+import './kaiwa-tab.css';
 
 export function KaiwaTab({
   questions,
