@@ -7,15 +7,35 @@ import {
 import type { TestTemplate, ClassroomTest, TestType } from '../../types/classroom';
 import './assign-test-modal.css';
 
+/**
+ * AssignTestModal — allows a teacher to pick an existing test/assignment template
+ * from the school's shared bank and assign it to the current classroom.
+ *
+ * Flow:
+ *  1. Teacher browses (and optionally searches/filters) the template list.
+ *  2. Teacher selects a template — an options panel appears below the list.
+ *  3. Teacher configures publish toggle and (for assignments) a deadline.
+ *  4. Teacher confirms — `onAssign` is called; on success a brief success state
+ *     is shown before auto-closing via a 1.5 s timeout.
+ */
 interface AssignTestModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Full list of available templates from the bank (all types). */
   templates: TestTemplate[];
   onAssign: (templateId: string, options: { deadline?: string; isPublished: boolean }) => Promise<ClassroomTest | null>;
   classroomName?: string;
+  /** Pre-select a type filter when the modal is opened from a typed context. */
   filterType?: TestType | 'all';
 }
 
+/**
+ * Template selection + assignment flow component.
+ *
+ * Template selection and filter/search are kept in local state because they are
+ * purely ephemeral UI interactions — they don't need to reach the parent or
+ * any external store.
+ */
 export function AssignTestModal({
   isOpen,
   onClose,
@@ -26,6 +46,8 @@ export function AssignTestModal({
 }: AssignTestModalProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [deadline, setDeadline] = useState('');
+  // publishImmediately=true → students see the assignment right away;
+  // false → saved as a draft the teacher can publish later.
   const [publishImmediately, setPublishImmediately] = useState(true);
   const [assigning, setAssigning] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -33,13 +55,21 @@ export function AssignTestModal({
   const [activeFilter, setActiveFilter] = useState<TestType | 'all'>(filterType);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // ─── Filter + search logic ─────────────────────────────────────────────────
+  // Two independent filters applied in sequence:
+  //  1. Type filter  : 'all' passes everything; 'test' or 'assignment' narrows by type.
+  //  2. Search query : case-insensitive substring match on template title.
+  // Kept as a derived value (not state) so it stays in sync with both inputs
+  // without needing a separate useEffect.
   const filteredTemplates = templates
     .filter(t => activeFilter === 'all' || t.type === activeFilter)
     .filter(t => !searchQuery || t.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
+  // Pre-compute counts once for the filter tab badges
   const testCount = templates.filter(t => t.type === 'test').length;
   const assignCount = templates.filter(t => t.type === 'assignment').length;
 
+  /** Reset all transient UI state back to defaults. */
   const resetState = () => {
     setSelectedTemplate(null);
     setDeadline('');
@@ -47,24 +77,28 @@ export function AssignTestModal({
     setSuccessMessage(null);
     setError('');
     setSearchQuery('');
+    // Restore to the filterType prop so the modal opens in the caller's context
     setActiveFilter(filterType);
   };
 
-  // Reset state when modal opens
+  // Reset state when modal opens so previous session data is never shown
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (isOpen) resetState(); }, [isOpen]);
 
   const handleClose = () => { resetState(); onClose(); };
+
+  // ─── Assignment submission ─────────────────────────────────────────────────
 
   const handleAssign = async () => {
     if (!selectedTemplate) return;
     setAssigning(true);
     setError('');
     const result = await onAssign(selectedTemplate, {
-      deadline: deadline || undefined,
+      deadline: deadline || undefined, // omit deadline for tests (no deadline field shown)
       isPublished: publishImmediately,
     });
     if (result) {
+      // Show success banner then auto-close after 1.5 s — avoids an abrupt close
       const template = templates.find(t => t.id === selectedTemplate);
       setSuccessMessage(`Đã giao "${template?.title}" thành công!`);
       setTimeout(handleClose, 1500);
@@ -74,12 +108,14 @@ export function AssignTestModal({
     setAssigning(false);
   };
 
+  // Resolve the full template object for the selected id (used in options panel)
   const selected = templates.find(t => t.id === selectedTemplate);
 
   if (!isOpen) return null;
 
   return (
     <div className="atm-overlay" onClick={handleClose}>
+      {/* Stop propagation so clicking inside the modal doesn't close it */}
       <div className="atm-modal" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="atm-header">
@@ -89,13 +125,14 @@ export function AssignTestModal({
             </div>
             <div>
               <h2 className="atm-title">Giao bài từ ngân hàng</h2>
+              {/* Subtitle shows the target classroom name for confirmation context */}
               {classroomName && <p className="atm-subtitle">→ {classroomName}</p>}
             </div>
           </div>
           <button className="atm-close" onClick={handleClose} aria-label="Đóng"><X size={18} /></button>
         </div>
 
-        {/* Success state */}
+        {/* Success state — replaces the full modal body; auto-closes after timeout */}
         {successMessage ? (
           <div className="atm-success">
             <div className="atm-success-icon">
@@ -107,8 +144,10 @@ export function AssignTestModal({
           <>
             <div className="atm-body">
               {error && <div className="atm-error">{error}</div>}
-              {/* Search + filter bar */}
+
+              {/* Search + type filter bar */}
               <div className="atm-toolbar">
+                {/* Live search — filters by title substring as the teacher types */}
                 <div className="atm-search">
                   <Search size={15} />
                   <input
@@ -120,6 +159,7 @@ export function AssignTestModal({
                     aria-label="Tìm kiếm mẫu bài"
                   />
                 </div>
+                {/* Type filter tabs with live counts — switching resets selection */}
                 <div className="atm-filters">
                   {[
                     { key: 'all' as const, label: 'Tất cả', count: templates.length },
@@ -139,7 +179,7 @@ export function AssignTestModal({
                 </div>
               </div>
 
-              {/* Template list */}
+              {/* Template list — scrollable; shows filtered results */}
               <div className="atm-list">
                 {filteredTemplates.length === 0 ? (
                   <div className="atm-empty">
@@ -152,6 +192,7 @@ export function AssignTestModal({
                     const isSelected = selectedTemplate === template.id;
                     const isTestType = template.type === 'test';
                     return (
+                      // Clicking a card selects it and reveals the assignment options panel below
                       <div
                         key={template.id}
                         className={`atm-card ${isSelected ? 'selected' : ''}`}
@@ -183,6 +224,7 @@ export function AssignTestModal({
                               </span>
                             )}
                           </div>
+                          {/* Show up to 3 tags to keep the card compact */}
                           {template.tags && template.tags.length > 0 && (
                             <div className="atm-card-tags">
                               <Tag size={10} />
@@ -192,6 +234,7 @@ export function AssignTestModal({
                             </div>
                           )}
                         </div>
+                        {/* Checkmark badge — only visible when this card is selected */}
                         <div className={`atm-card-check ${isSelected ? 'visible' : ''}`}>
                           <Check size={16} />
                         </div>
@@ -201,7 +244,13 @@ export function AssignTestModal({
                 )}
               </div>
 
-              {/* Assignment options panel */}
+              {/* Assignment options panel — only appears after a template is selected.
+                  Two configurable options:
+                  1. Publish toggle: determines isPublished flag sent to onAssign.
+                     - ON  (Eye icon)  → visible to students immediately.
+                     - OFF (Zap icon)  → saved as draft; teacher publishes manually later.
+                  2. Deadline picker: only shown for 'assignment' type templates.
+                     Tests do not have deadlines (they use a time limit instead). */}
               {selected && (
                 <div className="atm-options">
                   <div className="atm-options-title">Tuỳ chọn giao bài</div>
@@ -216,10 +265,12 @@ export function AssignTestModal({
                         <span className="atm-toggle-thumb" />
                       </span>
                       <span className="atm-toggle-label">
+                        {/* Label changes dynamically to reflect current publish state */}
                         {publishImmediately ? <><Eye size={13} /> Xuất bản ngay</> : <><Zap size={13} /> Lưu nháp</>}
                       </span>
                     </label>
                   </div>
+                  {/* Deadline only applies to assignments — tests use a time limit */}
                   {selected.type === 'assignment' && (
                     <div className="atm-opt-row">
                       <label className="atm-opt-label"><CalendarClock size={13} /> Hạn nộp</label>
@@ -227,6 +278,7 @@ export function AssignTestModal({
                         type="datetime-local"
                         value={deadline}
                         onChange={e => setDeadline(e.target.value)}
+                        // Prevent selecting a past deadline
                         min={new Date().toISOString().slice(0, 16)}
                         className="atm-date-input"
                       />
@@ -239,6 +291,7 @@ export function AssignTestModal({
             {/* Footer */}
             <div className="atm-footer">
               <button className="atm-btn-cancel" onClick={handleClose} disabled={assigning}>Hủy</button>
+              {/* Assign button is disabled until a template is selected */}
               <button
                 className="atm-btn-assign"
                 onClick={handleAssign}

@@ -1,7 +1,25 @@
-// Game results — immersive final rankings with personal stats & celebration
+/**
+ * GameResults — the final screen shown once the game ends.
+ *
+ * Shows a celebration confetti animation, the winner highlight, an Olympic
+ * podium for top 3, a personal performance card, and a scrollable list for
+ * all remaining players.  Actions allow the host to start another game or
+ * navigate home.
+ */
 import { Trophy, Crown, Medal, Award, Home, RotateCcw, Flame, Target, Zap, BarChart3 } from 'lucide-react';
 import type { QuizGame, GameResults as GameResultsType } from '../../types/quiz-game';
 
+/**
+ * Props for GameResults.
+ *
+ * @prop game             - Completed game state (players, title, totalRounds).
+ * @prop gameResults      - Server-computed final stats (accuracy, streaks, etc.).
+ *                          May be null if the server summary hasn't arrived yet;
+ *                          the component falls back to live game.players data.
+ * @prop currentPlayerId  - ID of the local player, used to highlight their row.
+ * @prop onPlayAgain      - Callback to reset and start a new game with same settings.
+ * @prop onGoHome         - Callback to exit to the main lobby / home screen.
+ */
 interface GameResultsProps {
   game: QuizGame;
   gameResults: GameResultsType | null;
@@ -10,6 +28,11 @@ interface GameResultsProps {
   onGoHome: () => void;
 }
 
+/**
+ * Renders the immersive end-of-game results screen.
+ * Derives rankings directly from `game.players` so the UI is never blocked
+ * on the `gameResults` summary document.
+ */
 export function GameResults({
   game,
   gameResults,
@@ -23,18 +46,25 @@ export function GameResults({
   const top3 = players.slice(0, 3);
   const rest = players.slice(3);
 
-  // Pull rich stats from gameResults if available
+  // gameResults contains richer server-computed stats (accuracy %, longest streak).
+  // When it's available we show the full card; otherwise we fall back to the
+  // basic live-game fields (score, current streak) so the UI never stays empty.
   const myStats = gameResults?.rankings.find(r => r.playerId === currentPlayerId);
 
-  // Podium order: 2nd, 1st, 3rd
+  // Podium columns follow Olympic convention: [2nd, 1st, 3rd] left-to-right
+  // so the winner stands tallest in the visual centre.
   const podiumOrder = [top3[1], top3[0], top3[2]];
+  // CSS class controls column height; index aligns with podiumOrder, not actual rank.
   const podiumClasses = ['second', 'first', 'third'];
+  // Icon array indexed by actual rank (0=1st/Crown, 1=2nd/Medal, 2=3rd/Award)
   const podiumIcons = [Medal, Crown, Award];
   const podiumSizes = [22, 26, 20];
 
   return (
     <div className="game-fullscreen game-results-screen">
-      {/* Celebration particles (CSS-only) */}
+      {/* Confetti — 12 CSS-animated pieces; `--i` is a custom property used by the
+          CSS animation to stagger each piece's delay and trajectory randomly.
+          aria-hidden keeps it invisible to screen readers (purely decorative). */}
       <div className="results-confetti" aria-hidden="true">
         {Array.from({ length: 12 }).map((_, i) => (
           <span key={i} className="results-confetti-piece" style={{ '--i': i } as React.CSSProperties} />
@@ -61,10 +91,13 @@ export function GameResults({
       <div className="results-podium">
         {podiumOrder.map((player, displayIdx) => {
           if (!player) return null;
+          // Re-map display index back to actual rank so we pick the right icon/size/color.
+          // displayIdx is 0=2nd, 1=1st, 2=3rd because of the Olympic centre-peak layout.
           const actualRank = podiumClasses[displayIdx] === 'first' ? 0 : podiumClasses[displayIdx] === 'second' ? 1 : 2;
           const Icon = podiumIcons[actualRank];
           const iconSize = podiumSizes[actualRank];
           const isMe = player.id === currentPlayerId;
+          // Medal colours: gold (1st), silver (2nd), bronze (3rd)
           const medalColor = actualRank === 0 ? '#ffd700' : actualRank === 1 ? '#c0c0c0' : '#cd7f32';
 
           return (
@@ -84,7 +117,10 @@ export function GameResults({
         })}
       </div>
 
-      {/* Personal performance card */}
+      {/* Personal performance card — always derived from game.players for instant render.
+          When the server-computed `gameResults` doc is available, swap in richer stats
+          (accuracy %, correct/total counts, longest streak across the whole game).
+          The `top-three` class adds a gold-border highlight for podium finishers. */}
       {myPlayer && (
         <div className={`results-personal ${myRank <= 3 ? 'top-three' : ''}`}>
           <div className="results-personal-header">
@@ -93,12 +129,14 @@ export function GameResults({
             <span className="results-personal-rank">#{myRank}</span>
           </div>
           <div className="results-personal-grid">
+            {/* Score is always available from live game state */}
             <div className="results-personal-stat">
               <Trophy size={16} className="stat-icon gold" />
               <span className="results-personal-value">{myPlayer.score}</span>
               <span className="results-personal-label">Điểm</span>
             </div>
             {myStats ? (
+              // Full stat set from server-computed gameResults document
               <>
                 <div className="results-personal-stat">
                   <BarChart3 size={16} className="stat-icon green" />
@@ -117,6 +155,7 @@ export function GameResults({
                 </div>
               </>
             ) : (
+              // Fallback when gameResults hasn't arrived yet — show live streak only
               <>
                 <div className="results-personal-stat">
                   <Zap size={16} className="stat-icon purple" />

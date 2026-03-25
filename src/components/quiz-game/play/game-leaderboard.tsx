@@ -1,9 +1,24 @@
-// Leaderboard — premium podium with avatar initials, score changes, streak badges
+/**
+ * GameLeaderboard — mid-game standings screen shown between rounds.
+ *
+ * Displays a visual podium for the top 3 players, a scrollable list for
+ * everyone else, and a personalised rank callout for players outside the
+ * top 3. Auto-advances after `revealTimer` seconds.
+ */
 import { useState } from 'react';
 import { Trophy, Crown, Medal, Award, ArrowLeft, Flame, Target } from 'lucide-react';
 import type { QuizGame, GamePlayer } from '../../../types/quiz-game';
 import { ConfirmModal } from '../../ui/confirm-modal';
 
+/**
+ * Props for GameLeaderboard.
+ *
+ * @prop game           - Full game state; used for round progress display (currentRound / totalRounds).
+ * @prop currentPlayer  - The local player; null when the host is spectating.
+ * @prop sortedPlayers  - All players pre-sorted by score descending.
+ * @prop revealTimer    - Seconds remaining before the game moves to the next question.
+ * @prop onLeaveGame    - Async callback invoked after leave confirmation.
+ */
 interface GameLeaderboardProps {
   game: QuizGame;
   currentPlayer: GamePlayer | null;
@@ -12,9 +27,14 @@ interface GameLeaderboardProps {
   onLeaveGame: () => Promise<void>;
 }
 
+// Icon and size for each podium rank (index 0 = 1st, 1 = 2nd, 2 = 3rd)
 const PODIUM_ICONS = [Crown, Medal, Award];
 const PODIUM_SIZES = [26, 22, 20];
 
+/**
+ * Renders the between-round leaderboard with a classic Olympic podium layout.
+ * Players ranked 4th and below appear in a scrollable list below the podium.
+ */
 export function GameLeaderboard({
   game,
   currentPlayer,
@@ -27,8 +47,10 @@ export function GameLeaderboard({
   const rest = sortedPlayers.slice(3);
   const myRank = sortedPlayers.findIndex(p => p.id === currentPlayer?.id) + 1;
 
-  // Podium order: 2nd, 1st, 3rd
+  // Podium columns are ordered [2nd, 1st, 3rd] left-to-right so the winner
+  // stands tallest in the visual centre, matching the classic Olympic layout.
   const podiumOrder = [top3[1], top3[0], top3[2]];
+  // CSS class drives column height; index matches podiumOrder, not actual rank.
   const podiumClasses = ['second', 'first', 'third'];
 
   return (
@@ -57,20 +79,24 @@ export function GameLeaderboard({
 
           return (
             <div key={player.id} className={`gl-pod ${podiumClasses[displayIdx]} ${isMe ? 'is-me' : ''}`}>
+              {/* Medal icon sized relative to rank importance */}
               <Icon size={iconSize} />
               <div className="gl-pod-avatar">{player.name.charAt(0).toUpperCase()}</div>
               <span className="gl-pod-name">{player.name}</span>
               <span className="gl-pod-score">{player.score}</span>
+              {/* Only show streak badge when it's noteworthy (3+) */}
               {player.streak >= 3 && (
                 <span className="gl-pod-streak"><Flame size={12} />{player.streak}</span>
               )}
+              {/* Numeric rank label on the stand block for clarity */}
               <div className="gl-pod-stand">{actualRank + 1}</div>
             </div>
           );
         })}
       </div>
 
-      {/* My rank callout (if not top 3) */}
+      {/* My rank callout — only shown when the local player is outside the visible podium,
+          so they can still see their standing without scrolling through the full list */}
       {myRank > 3 && currentPlayer && (
         <div className="gl-my-rank">
           <Target size={14} />

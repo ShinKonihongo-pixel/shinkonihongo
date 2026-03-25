@@ -1,12 +1,12 @@
 // Types for multiplayer Quiz Game feature
 
-// Power-up types available in special rounds
+/** Power-up types a player can earn and use during special rounds. */
 export type PowerUpType =
-  | 'steal_points'      // Trừ điểm người chơi khác
-  | 'block_player'      // Cấm người chơi ở màn tiếp theo
-  | 'double_points'     // Nhân 2 điểm ở câu tiếp theo
-  | 'shield'            // Bảo vệ khỏi power-up của người khác
-  | 'time_freeze';      // Đóng băng thời gian cho mình
+  | 'steal_points'      // Deduct points from another player
+  | 'block_player'      // Prevent a player from answering the next question
+  | 'double_points'     // Double the points earned on the next correct answer
+  | 'shield'            // Negate the next incoming power-up from another player
+  | 'time_freeze';      // Pause the countdown timer for yourself on the next question
 
 export interface PowerUp {
   type: PowerUpType;
@@ -15,7 +15,7 @@ export interface PowerUp {
   icon: string;
 }
 
-// Available power-ups
+// Registry of all available power-ups shown in the power-up selection UI
 export const POWER_UPS: PowerUp[] = [
   { type: 'steal_points', name: 'Cướp điểm', description: 'Trừ 50 điểm của người chơi khác', icon: '💰' },
   { type: 'block_player', name: 'Phong tỏa', description: 'Cấm người chơi trả lời câu tiếp theo', icon: '🚫' },
@@ -24,81 +24,85 @@ export const POWER_UPS: PowerUp[] = [
   { type: 'time_freeze', name: 'Đóng băng', description: 'Thêm 5 giây cho câu tiếp theo', icon: '❄️' },
 ];
 
-// Player in a game
+/** Represents one participant in an active game session. */
 export interface GamePlayer {
   id: string;
   name: string;
-  avatar?: string; // Player avatar emoji/icon
-  role?: string; // User role for VIP styling
-  isSpectator?: boolean; // Theo dõi (không tham gia chơi)
+  avatar?: string;          // Emoji or icon chosen by the player
+  role?: string;            // User role (e.g. 'admin', 'vip') — used for lobby styling
+  isSpectator?: boolean;    // Host watching the game without competing
   score: number;
   isHost: boolean;
-  isBlocked: boolean;           // Bị block ở round hiện tại
-  hasDoublePoints: boolean;     // Có nhân 2 điểm không
-  hasShield: boolean;           // Có shield không
-  hasTimeFreeze: boolean;       // Có thêm thời gian không
-  currentAnswer: number | null; // Câu trả lời hiện tại (0-3)
-  answerTime: number | null;    // Thời gian trả lời (ms)
-  streak: number;               // Số câu đúng liên tiếp
+  isBlocked: boolean;       // True when a block_player power-up prevents answering this round
+  hasDoublePoints: boolean; // True when double_points power-up is active for the next round
+  hasShield: boolean;       // True when shield power-up will absorb the next incoming attack
+  hasTimeFreeze: boolean;   // True when time_freeze power-up gives extra time next round
+  currentAnswer: number | null; // Selected option index (0–3), null if unanswered
+  answerTime: number | null;    // Milliseconds elapsed from question display to answer submission
+  streak: number;           // Consecutive correct answers — feeds into streak bonus
   joinedAt: string;
 }
 
-// Question in a game round
+/** A single question shown during one round of the game. */
 export interface GameQuestion {
   id: string;
-  flashcardId: string;
-  question: string;             // Kanji hoặc vocabulary
-  correctAnswer: string;        // Đáp án đúng
-  options: string[];            // 4 lựa chọn (bao gồm đáp án đúng)
-  correctIndex: number;         // Index của đáp án đúng
-  timeLimit: number;            // Giây
-  isSpecialRound: boolean;      // Round đặc biệt (có power-up)
+  flashcardId: string;      // Source flashcard or JLPT question ID (used for result tracking)
+  question: string;         // The displayed question text (kanji, vocabulary, or JLPT sentence)
+  correctAnswer: string;    // The text of the correct answer option
+  options: string[];        // All 4 answer options in shuffled order
+  correctIndex: number;     // Index of correctAnswer within options[]
+  timeLimit: number;        // Seconds players have to answer
+  isSpecialRound: boolean;  // When true, players choose a power-up after the reveal
 }
 
-// Game status
+/**
+ * Lifecycle states of a game session.
+ * Flow: waiting → starting → (question → answer_reveal → [power_up →] [leaderboard →])* → finished
+ */
 export type GameStatus =
-  | 'waiting'       // Đang chờ người chơi
-  | 'starting'      // Đang đếm ngược bắt đầu
-  | 'question'      // Đang hiện câu hỏi
-  | 'answer_reveal' // Đang hiện đáp án
-  | 'power_up'      // Đang chọn power-up (special round)
-  | 'leaderboard'   // Đang hiện bảng xếp hạng
-  | 'finished';     // Kết thúc
+  | 'waiting'       // Lobby open, players joining
+  | 'starting'      // Countdown before first question
+  | 'question'      // Question is visible, timer running
+  | 'answer_reveal' // Correct answer displayed, scores updated
+  | 'power_up'      // Special round: players select a power-up to use
+  | 'leaderboard'   // Intermediate leaderboard displayed between rounds
+  | 'finished';     // Game over, final results visible
 
-// Main game session
+/** Full game session document stored in Firestore. */
 export interface QuizGame {
   id: string;
-  code: string;                 // 6-digit code để join
-  hostId: string;               // ID của host
+  code: string;                  // Short uppercase join code shown in the lobby (e.g. "AB12CD")
+  hostId: string;
   hostName: string;
   title: string;
   status: GameStatus;
-  players: Record<string, GamePlayer>;
+  players: Record<string, GamePlayer>; // Keyed by player ID for O(1) field updates in Firestore
   questions: GameQuestion[];
-  currentRound: number;         // 0-indexed
-  totalRounds: number;
-  timePerQuestion: number;      // Giây mặc định
-  roundStartTime: number | null; // Timestamp khi round bắt đầu
+  currentRound: number;          // 0-indexed; increments after each answer_reveal
+  totalRounds: number;           // Equals questions.length after creation
+  timePerQuestion: number;       // Default seconds per question (individual questions may override)
+  roundStartTime: number | null; // Unix ms timestamp set by host when a question begins
   createdAt: string;
   settings: GameSettings;
-  // Metadata for display
-  source?: GameQuestionSource;  // Nguồn câu hỏi
-  jlptLevels?: string[];        // Các level JLPT đã chọn
-  lessonNames?: string[];       // Tên các bài học đã chọn
-  hostMessage?: string;         // Custom host message shown in lobby (max 50 chars)
+  // Display metadata shown in the lobby — not used for game logic
+  source?: GameQuestionSource;
+  jlptLevels?: string[];         // Which JLPT levels were included (jlpt source only)
+  lessonNames?: string[];        // Human-readable lesson names (vocabulary/kanji source)
+  hostMessage?: string;          // Optional announcement pinned in the lobby (max 50 chars)
 }
 
+/** Tunable parameters that affect scoring and pacing, with safe defaults. */
 export interface GameSettings {
   minPlayers: number;
   maxPlayers: number;
-  showLeaderboardEvery: number; // Hiện bảng xếp hạng sau mỗi N câu
-  specialRoundEvery: number;    // Round đặc biệt sau mỗi N câu
-  basePoints: number;           // Điểm cơ bản cho câu đúng
-  streakBonus: number;          // Bonus cho streak
-  timeBonus: boolean;           // Có bonus theo thời gian không
+  showLeaderboardEvery: number; // Display the leaderboard after every N rounds
+  specialRoundEvery: number;    // Trigger a power-up round every N rounds
+  basePoints: number;           // Points awarded for a correct answer before bonuses
+  streakBonus: number;          // Extra points added per consecutive correct answer in a streak
+  timeBonus: boolean;           // When true, faster answers earn proportionally more points
 }
 
-// Default game settings
+// Default game settings used when the host does not override specific fields
 export const DEFAULT_GAME_SETTINGS: GameSettings = {
   minPlayers: 2,
   maxPlayers: 20,
@@ -109,62 +113,94 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   timeBonus: true,
 };
 
-// Source type for game questions
-// - vocabulary: flashcard → Vietnamese meaning answers
-// - kanji: kanji question → hiragana reading answers (similar distractors)
-// - flashcards: legacy alias for vocabulary
-// - jlpt: JLPT question bank
+/**
+ * Determines which question bank and answer format the game uses:
+ * - `vocabulary`: flashcard-based; question shows kanji/vocab, answers are Vietnamese meanings
+ * - `kanji`:      flashcard-based; question shows kanji only, answers are hiragana readings
+ *                 Distractors are chosen from similar-sounding readings to maximise difficulty.
+ * - `flashcards`: legacy alias for `vocabulary` (kept for backward compatibility)
+ * - `jlpt`:       draws from the JLPT question bank; uses pre-authored answer options
+ */
 export type GameQuestionSource = 'vocabulary' | 'kanji' | 'jlpt' | 'flashcards';
 
-// Content type for questions and answers
+/** What text is displayed as the question prompt. */
 export type GameQuestionContent = 'kanji' | 'vocabulary' | 'meaning';
+
+/**
+ * What text is used as answer options.
+ * `vocabulary_meaning` concatenates both fields (e.g. "さくら - cherry blossom")
+ * to make distractors harder to dismiss by meaning alone.
+ */
 export type GameAnswerContent = 'kanji' | 'vocabulary' | 'meaning' | 'vocabulary_meaning';
 
-// Difficulty levels for flashcard-based questions
+/** Card difficulty levels, mirroring the flashcard difficulty system. */
 export type GameDifficultyLevel = 'super_hard' | 'hard' | 'medium' | 'easy';
 
-// Difficulty mix config: % of each card difficulty for a game difficulty level
+/**
+ * Percentage breakdown of card difficulties for one game difficulty tier.
+ * Values are relative weights, not strict percentages — they are normalised in filterByDifficultyMix.
+ */
 export type DifficultyMixRow = { super_hard: number; hard: number; medium: number; easy: number };
+
+/** Maps each game difficulty tier to its card difficulty breakdown. */
 export type DifficultyMixConfig = Record<GameDifficultyLevel, DifficultyMixRow>;
 
-// Form data for creating a game
-export type HostMode = 'play' | 'spectate'; // Chơi cùng hoặc theo dõi
+/** Whether the host participates as a player or only observes. */
+export type HostMode = 'play' | 'spectate';
 
+/**
+ * Payload submitted by the host UI when creating a new game.
+ * Fields are source-specific: JLPT fields are ignored for flashcard sources and vice versa.
+ */
 export interface CreateGameData {
   title: string;
-  source: GameQuestionSource;   // Nguồn câu hỏi
-  hostMode?: HostMode;          // Super admin: chơi cùng hoặc theo dõi
-  lessonIds: string[];          // Lessons to pick questions from (flashcards)
-  lessonNames?: string[];       // Tên các bài học đã chọn (flashcards)
-  difficultyLevels?: GameDifficultyLevel[]; // Mức độ khó (flashcards)
-  difficultyMix?: DifficultyMixConfig;      // % mix config from settings
-  jlptLevels?: string[];        // JLPT levels to pick from (jlpt)
-  jlptCategories?: string[];    // JLPT categories to pick from (jlpt)
-  totalRounds: number;          // 20-50
-  timePerQuestion: number;      // 10-30 seconds
-  maxPlayers?: number;          // Max players (role-based limit)
-  questionContent?: GameQuestionContent;  // Nội dung câu hỏi (kanji/vocabulary/meaning)
-  answerContent?: GameAnswerContent;      // Nội dung đáp án
+  /** Which question bank to draw from — determines the entire question generation path. */
+  source: GameQuestionSource;
+  /** Controls whether the host competes or just watches. Only relevant for super-admin accounts. */
+  hostMode?: HostMode;
+  /** IDs of lessons whose flashcards will be used (vocabulary/kanji sources only). */
+  lessonIds: string[];
+  /** Human-readable lesson names stored on the game document for lobby display. */
+  lessonNames?: string[];
+  /** Selected difficulty tier(s); only the first element is used for mix calculations. */
+  difficultyLevels?: GameDifficultyLevel[];
+  /** Per-tier card difficulty ratios loaded from app settings. */
+  difficultyMix?: DifficultyMixConfig;
+  /** Which JLPT levels to include (jlpt source only). */
+  jlptLevels?: string[];
+  /** Which JLPT question categories to include (jlpt source only). */
+  jlptCategories?: string[];
+  /** Number of rounds (questions) in the game, typically 20–50. */
+  totalRounds: number;
+  /** Seconds allowed per question, typically 10–30. */
+  timePerQuestion: number;
+  /** Hard cap on players; enforced by role-based limits in the UI. */
+  maxPlayers?: number;
+  /** What to display as the question text (vocabulary/kanji sources). */
+  questionContent?: GameQuestionContent;
+  /** What to display as the answer options (vocabulary/kanji sources). */
+  answerContent?: GameAnswerContent;
+  /** Overrides for specific GameSettings fields; unset fields use defaults. */
   settings?: Partial<GameSettings>;
 }
 
-// Player answer submission
+/** A player's answer submission for one round. */
 export interface PlayerAnswer {
   playerId: string;
   questionIndex: number;
   answerIndex: number;
-  answerTime: number;           // ms từ khi câu hỏi hiện
+  answerTime: number; // Milliseconds from question display to submission
 }
 
-// Power-up usage
+/** Records how a power-up was used in a given round. */
 export interface PowerUpUsage {
-  usedBy: string;               // Player ID
+  usedBy: string;              // Player ID of the power-up activator
   type: PowerUpType;
-  targetPlayerId?: string;      // Cho steal_points và block_player
+  targetPlayerId?: string;     // Required for steal_points and block_player
   round: number;
 }
 
-// Game result for a player
+/** Final statistics for one player at the end of a game. */
 export interface PlayerResult {
   playerId: string;
   playerName: string;
@@ -177,7 +213,7 @@ export interface PlayerResult {
   powerUpsUsed: number;
 }
 
-// Full game results
+/** Aggregated results for the entire game, persisted after the game ends. */
 export interface GameResults {
   gameId: string;
   gameTitle: string;

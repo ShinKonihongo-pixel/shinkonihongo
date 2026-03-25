@@ -1,4 +1,15 @@
-// Game creation form component with unified Room Modal design system
+/**
+ * GameCreate — modal form for creating a new quiz-game room.
+ *
+ * Supports three question source modes:
+ *  - "vocabulary" : questions drawn from app flashcards (kanji → meaning)
+ *  - "kanji"      : questions drawn from app flashcards (kanji → hiragana reading)
+ *  - "jlpt"       : questions drawn from the JLPT question bank, filtered by N-level
+ *
+ * Vocabulary and kanji modes share the lesson-picker and difficulty-filter UI;
+ * JLPT mode replaces them with a level-pill selector (N5–N1).
+ * Role-based limits cap the maximum rounds and player count for non-VIP users.
+ */
 
 import { useState, useMemo, useCallback } from 'react';
 import {
@@ -22,6 +33,20 @@ import type { UserRole } from '../../types/user';
 import { useBodyScrollLock } from '../../hooks/use-body-scroll-lock';
 import { JLPT_LEVELS } from '../../constants/jlpt';
 
+/**
+ * Props for GameCreate.
+ *
+ * @prop flashcards         - Full flashcard pool; filtered by selected lessons at submit time.
+ * @prop jlptQuestions      - Full JLPT question bank; filtered by selected levels at submit time.
+ * @prop getLessonsByLevel  - Returns top-level lessons for a given JLPT level (e.g. "N5").
+ * @prop getChildLessons    - Returns sub-lessons under a parent lesson ID.
+ * @prop onCreateGame       - Called with the assembled CreateGameData when the form submits.
+ * @prop onCancel           - Called when the user dismisses the modal without creating.
+ * @prop loading            - True while the server is processing the create request.
+ * @prop error              - Server-side error message to display in the form, or null.
+ * @prop gameSettings       - App-level settings including quizDifficultyMix and gameQuestionContent.
+ * @prop userRole           - Determines round/player caps and whether host-mode picker is shown.
+ */
 interface GameCreateProps {
   flashcards: Flashcard[];
   jlptQuestions: JLPTQuestion[];
@@ -83,6 +108,9 @@ export function GameCreate({
   const [lessonSearch, setLessonSearch] = useState('');
   const [hostMode, setHostMode] = useState<HostMode>('play');
   const isSuperAdmin = userRole === 'super_admin';
+  // Both vocabulary and kanji modes pull from flashcards + lessons, so they share
+  // the lesson-picker, difficulty-filter, and card-count validation logic.
+  // JLPT mode has its own question bank and skips those UI sections entirely.
   const isFlashcardSource = source === 'vocabulary' || source === 'kanji';
 
   const maxRoundsLimit = getMaxRounds(userRole);
@@ -115,7 +143,11 @@ export function GameCreate({
     return counts;
   }, [lessonCards]);
 
-  // Check if a game difficulty level can be fulfilled based on mix config + totalRounds
+  // Each game difficulty level (easy/medium/hard/super_hard) has a mix config row that
+  // specifies what proportion of questions should come from each card-difficulty bucket.
+  // We validate upfront whether the selected lessons contain enough cards in each bucket
+  // to satisfy the mix for the requested number of rounds — disabled buttons prevent
+  // the user from choosing a difficulty that would produce an under-populated game.
   const mixConfig = gameSettings.quizDifficultyMix;
   const canFulfillDifficulty = useMemo(() => {
     const result: Record<GameDifficultyLevel, boolean> = { super_hard: false, hard: false, medium: false, easy: false };
@@ -125,11 +157,12 @@ export function GameCreate({
       const row = mixConfig[level];
       const rowTotal = row.super_hard + row.hard + row.medium + row.easy;
       if (rowTotal === 0) {
-        // No mix configured — need at least 4 cards total
+        // Mix not configured for this difficulty — fall back to a flat 4-card minimum
         result[level] = lessonCards.length >= 4;
         continue;
       }
-      // For each card difficulty in the mix, check if enough cards exist
+      // For each card-difficulty slot in the mix, compute how many cards are needed
+      // (proportion × totalRounds, rounded up) and verify we have enough.
       let canFulfill = true;
       for (const cardDiff of levels) {
         const pct = row[cardDiff] / rowTotal;
@@ -278,12 +311,29 @@ export function GameCreate({
     });
   }, [getLessonsByLevel, getChildLessons]);
 
+  /**
+   * Assembles and submits CreateGameData.  Routing differs by source:
+   *
+   * Flashcard sources (vocabulary / kanji):
+   *  - Guard: at least one lesson selected and ≥4 available cards.
+   *  - Cap totalRounds to availableCards so the generator never runs out of questions.
+   *  - questionContent / answerContent differ between vocabulary (kanji→meaning) and
+   *    kanji (kanji→hiragana reading) modes; the generator handles the distinction.
+   *
+   * JLPT source:
+   *  - Guard: ≥4 questions match the selected level filters.
+   *  - lessonIds is empty — the server filters by jlptLevels instead.
+   *  - timePerQuestion is omitted; JLPT questions have per-category time settings.
+   *
+   * hostMode is only forwarded for super_admin users (the field is ignored otherwise).
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (isFlashcardSource) {
       if (selectedLessons.length === 0) return;
       if (availableCards < 4) return;
+      // Cap rounds so the question generator always has enough unique cards
       const actualRounds = Math.min(totalRounds, availableCards);
       const defaultTitle = source === 'kanji' ? 'Đại Chiến Kanji' : 'Đại Chiến Từ Vựng';
       await onCreateGame({
@@ -297,20 +347,23 @@ export function GameCreate({
         totalRounds: actualRounds,
         timePerQuestion,
         maxPlayers,
-        // Vocabulary mode: question=kanji, answer=meaning (Vietnamese)
-        // Kanji mode: handled by generator (question=kanji, answer=hiragana)
+        // Vocabulary mode: show kanji as the question stem, Vietnamese meaning as the answer.
+        // Kanji mode: question is still kanji but the answer is the hiragana reading.
         questionContent: source === 'kanji' ? 'kanji' : gameSettings.gameQuestionContent,
         answerContent: source === 'kanji' ? 'vocabulary' : 'meaning',
         settings: { specialRoundEvery: 5 },
       });
     } else {
+      // JLPT source — uses the dedicated question bank, no lesson/flashcard data needed
       if (availableJLPTQuestions < 4) return;
+      // Cap rounds to the filtered question pool size
       const actualRounds = Math.min(totalRounds, availableJLPTQuestions);
       await onCreateGame({
         title: title || 'Đại Chiến JLPT',
         source: 'jlpt',
         hostMode: isSuperAdmin ? hostMode : undefined,
         lessonIds: [],
+        // Passing undefined means "all levels" — the server handles that default
         jlptLevels: selectedJLPTLevels.length > 0 ? selectedJLPTLevels : undefined,
         totalRounds: actualRounds,
         timePerQuestion,

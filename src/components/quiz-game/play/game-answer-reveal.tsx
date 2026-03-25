@@ -1,12 +1,34 @@
-// Answer reveal — premium animated result with answer distribution & score changes
+/**
+ * GameAnswerReveal — shown immediately after each question closes.
+ *
+ * Displays:
+ *  - Whether the current player answered correctly (or spectator view)
+ *  - The correct answer highlighted with its shape/color
+ *  - The player's own wrong answer for contrast (if they got it wrong)
+ *  - Per-option answer distribution bars across all players
+ *  - A mini-leaderboard sorted by score gain this round
+ *  - A countdown timer until the next phase (leaderboard or next question)
+ */
 import { useState } from 'react';
 import { Crown, ArrowLeft, Flame, CheckCircle, XCircle, Trophy, Clock } from 'lucide-react';
 import type { GamePlayer, GameQuestion } from '../../../types/quiz-game';
 import { ANSWER_OPTIONS } from '../../../constants/answer-options';
 import { ConfirmModal } from '../../ui/confirm-modal';
 
+// Geometric shapes paired 1-to-1 with the four answer slots (matches Kahoot-style UX)
 const ANSWER_SHAPES = ['▲', '◆', '●', '■'];
 
+/**
+ * Props for GameAnswerReveal.
+ *
+ * @prop currentPlayer  - The local player; null when the host is in spectate mode.
+ * @prop currentQuestion - Full question data including options and correctIndex.
+ * @prop sortedPlayers  - All players sorted by current score (desc) before this reveal.
+ * @prop prevScores     - Snapshot of scores from before this round, used to compute per-round gain.
+ * @prop revealTimer    - Countdown in seconds until the game advances to the next phase.
+ * @prop isSpectator    - When true, hides the personal correct/wrong result hero section.
+ * @prop onLeaveGame    - Async callback invoked after the user confirms they want to leave.
+ */
 interface GameAnswerRevealProps {
   currentPlayer: GamePlayer | null;
   currentQuestion: GameQuestion;
@@ -17,6 +39,10 @@ interface GameAnswerRevealProps {
   onLeaveGame: () => Promise<void>;
 }
 
+/**
+ * Renders the answer-reveal screen that appears after each question's timer expires.
+ * The background color shifts green/red based on whether the local player was correct.
+ */
 export function GameAnswerReveal({
   currentPlayer,
   currentQuestion,
@@ -28,6 +54,8 @@ export function GameAnswerReveal({
 }: GameAnswerRevealProps) {
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
+  // Annotate each player with their score change this round and whether they were correct,
+  // then sort by score change (highest gainer first) for the round mini-leaderboard.
   const playersWithChanges = sortedPlayers.map(player => {
     const prevScore = prevScores[player.id] || 0;
     return {
@@ -42,13 +70,15 @@ export function GameAnswerReveal({
   const isCorrect = myResult?.answeredCorrectly;
   const correctIdx = currentQuestion.correctIndex;
 
-  // Answer distribution — how many picked each option
+  // For each answer option, count how many players chose it and express as a percentage
+  // so the distribution bars scale proportionally regardless of player count.
   const distribution = currentQuestion.options.map((_, i) => {
     const count = sortedPlayers.filter(p => p.currentAnswer === i).length;
     return { count, pct: sortedPlayers.length > 0 ? (count / sortedPlayers.length) * 100 : 0 };
   });
 
-  // Player's wrong answer (if applicable)
+  // Only show the "you chose X" callout when the player actively picked a wrong answer;
+  // skip for spectators and for players who didn't answer (null/undefined).
   const myAnswerIdx = myResult?.currentAnswer;
   const showMyWrongAnswer = !isSpectator && !isCorrect && myAnswerIdx !== null && myAnswerIdx !== undefined;
 
@@ -97,7 +127,7 @@ export function GameAnswerReveal({
           <span>{currentQuestion.options[correctIdx]}</span>
         </div>
 
-        {/* Show player's wrong answer */}
+        {/* Show the option the player actually chose, so they can compare it against the correct one */}
         {showMyWrongAnswer && (
           <div className="gr-my-wrong">
             <span className="gr-my-wrong-label">Bạn chọn</span>
@@ -115,7 +145,7 @@ export function GameAnswerReveal({
         </div>
       </div>
 
-      {/* Answer distribution */}
+      {/* Answer distribution — one bar per option showing share of players who chose it */}
       <div className="gr-distribution">
         <div className="gr-dist-label">Phân bố câu trả lời</div>
         <div className="gr-dist-bars">
@@ -128,7 +158,9 @@ export function GameAnswerReveal({
                   <div
                     className="gr-dist-fill"
                     style={{
+                      // Clamp to 2% minimum so zero-vote options still render a sliver
                       width: `${Math.max(distribution[i].pct, 2)}%`,
+                      // Green for the correct option, muted for wrong ones
                       background: isCorrectOpt ? 'linear-gradient(90deg, #22c55e, #16a34a)' : 'rgba(255,255,255,0.12)',
                     }}
                   />
