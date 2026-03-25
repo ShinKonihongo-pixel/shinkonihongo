@@ -71,7 +71,7 @@ export function GameCreate({
 }: GameCreateProps) {
   useBodyScrollLock();
   const [title, setTitle] = useState('');
-  const [source, setSource] = useState<GameQuestionSource>('flashcards');
+  const [source, setSource] = useState<GameQuestionSource>('vocabulary');
   const [selectedLessons, setSelectedLessons] = useState<string[]>([]);
   const [selectedJLPTLevels, setSelectedJLPTLevels] = useState<string[]>([]);
   const [totalRounds, setTotalRounds] = useState(20);
@@ -83,6 +83,7 @@ export function GameCreate({
   const [lessonSearch, setLessonSearch] = useState('');
   const [hostMode, setHostMode] = useState<HostMode>('play');
   const isSuperAdmin = userRole === 'super_admin';
+  const isFlashcardSource = source === 'vocabulary' || source === 'kanji';
 
   const maxRoundsLimit = getMaxRounds(userRole);
   const maxPlayersLimit = getMaxPlayers(userRole);
@@ -280,13 +281,14 @@ export function GameCreate({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (source === 'flashcards') {
+    if (isFlashcardSource) {
       if (selectedLessons.length === 0) return;
       if (availableCards < 4) return;
       const actualRounds = Math.min(totalRounds, availableCards);
+      const defaultTitle = source === 'kanji' ? 'Đại Chiến Kanji' : 'Đại Chiến Từ Vựng';
       await onCreateGame({
-        title: title || 'Đại Chiến Tiếng Nhật',
-        source: 'flashcards',
+        title: title || defaultTitle,
+        source, // 'vocabulary' or 'kanji'
         hostMode: isSuperAdmin ? hostMode : undefined,
         lessonIds: selectedLessons,
         lessonNames: selectedLessonNames,
@@ -295,8 +297,10 @@ export function GameCreate({
         totalRounds: actualRounds,
         timePerQuestion,
         maxPlayers,
-        questionContent: gameSettings.gameQuestionContent,
-        answerContent: gameSettings.gameAnswerContent,
+        // Vocabulary mode: question=kanji, answer=meaning (Vietnamese)
+        // Kanji mode: handled by generator (question=kanji, answer=hiragana)
+        questionContent: source === 'kanji' ? 'kanji' : gameSettings.gameQuestionContent,
+        answerContent: source === 'kanji' ? 'vocabulary' : 'meaning',
         settings: { specialRoundEvery: 5 },
       });
     } else {
@@ -316,7 +320,7 @@ export function GameCreate({
     }
   };
 
-  const canSubmit = source === 'flashcards'
+  const canSubmit = isFlashcardSource
     ? selectedLessons.length > 0 && availableCards >= 4
     : availableJLPTQuestions >= 4;
 
@@ -366,7 +370,7 @@ export function GameCreate({
               className="rm-input"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder={source === 'flashcards' ? 'Đại Chiến Tiếng Nhật' : 'Đại Chiến JLPT'}
+              placeholder={source === 'kanji' ? 'Đại Chiến Kanji' : source === 'vocabulary' ? 'Đại Chiến Từ Vựng' : 'Đại Chiến JLPT'}
             />
           </div>
 
@@ -379,10 +383,17 @@ export function GameCreate({
             <div className="rm-pills">
               <button
                 type="button"
-                className={`rm-pill lg ${source === 'flashcards' ? 'active' : ''}`}
-                onClick={() => setSource('flashcards')}
+                className={`rm-pill lg ${source === 'vocabulary' ? 'active' : ''}`}
+                onClick={() => setSource('vocabulary')}
               >
                 Từ vựng
+              </button>
+              <button
+                type="button"
+                className={`rm-pill lg ${source === 'kanji' ? 'active' : ''}`}
+                onClick={() => setSource('kanji')}
+              >
+                Kanji
               </button>
               <button
                 type="button"
@@ -392,7 +403,7 @@ export function GameCreate({
                 JLPT
               </button>
             </div>
-            {source === 'flashcards' && (
+            {isFlashcardSource && (
               <div className="rm-quick-select">
                 <span className="rm-quick-label">Chọn nhanh:</span>
                 <button type="button" className="rm-quick-btn" onClick={() => handleSelectAllInLevel('N5')}>
@@ -414,7 +425,7 @@ export function GameCreate({
             )}
           </div>
 
-          {source === 'flashcards' ? (
+          {isFlashcardSource ? (
             <div className="rm-field">
               <label className="rm-label">
                 <Layers size={16} />
@@ -568,7 +579,7 @@ export function GameCreate({
           )}
 
           {/* Difficulty level — flashcards source only */}
-          {source === 'flashcards' && (
+          {isFlashcardSource && (
             <div className="rm-field">
               <label className="rm-label">
                 <Layers size={16} />
@@ -637,7 +648,7 @@ export function GameCreate({
           </div>
 
           {/* Time per question - only for flashcards source (JLPT uses per-category settings) */}
-          {source === 'flashcards' && (
+          {isFlashcardSource && (
             <div className="rm-field">
               <label className="rm-label">
                 <Clock size={16} />
@@ -739,7 +750,7 @@ export function GameCreate({
         <footer className="rm-footer">
           {/* Question pool indicator */}
           {(() => {
-            const available = source === 'flashcards' ? availableCards : availableJLPTQuestions;
+            const available = isFlashcardSource ? availableCards : availableJLPTQuestions;
             const ratio = totalRounds > 0 ? available / totalRounds : 0;
             const fillClass = ratio >= 1.5 ? 'sufficient' : ratio >= 1 ? 'tight' : 'insufficient';
             return (

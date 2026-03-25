@@ -1,9 +1,11 @@
-// Answer reveal — animated results display
+// Answer reveal — premium animated result with answer distribution & score changes
 import { useState } from 'react';
-import { Crown, ArrowLeft, Flame, Eye } from 'lucide-react';
+import { Crown, ArrowLeft, Flame, CheckCircle, XCircle, Trophy, Clock } from 'lucide-react';
 import type { GamePlayer, GameQuestion } from '../../../types/quiz-game';
 import { ANSWER_OPTIONS } from '../../../constants/answer-options';
 import { ConfirmModal } from '../../ui/confirm-modal';
+
+const ANSWER_SHAPES = ['▲', '◆', '●', '■'];
 
 interface GameAnswerRevealProps {
   currentPlayer: GamePlayer | null;
@@ -13,12 +15,6 @@ interface GameAnswerRevealProps {
   revealTimer: number;
   isSpectator?: boolean;
   onLeaveGame: () => Promise<void>;
-}
-
-interface PlayerWithChanges extends GamePlayer {
-  scoreChange: number;
-  answeredCorrectly: boolean;
-  prevScore: number;
 }
 
 export function GameAnswerReveal({
@@ -32,99 +28,145 @@ export function GameAnswerReveal({
 }: GameAnswerRevealProps) {
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
-  const playersWithChanges: PlayerWithChanges[] = sortedPlayers.map(player => {
+  const playersWithChanges = sortedPlayers.map(player => {
     const prevScore = prevScores[player.id] || 0;
-    const scoreChange = player.score - prevScore;
-    const answeredCorrectly = player.currentAnswer === currentQuestion.correctIndex;
-    return { ...player, scoreChange, answeredCorrectly, prevScore };
+    return {
+      ...player,
+      scoreChange: player.score - prevScore,
+      answeredCorrectly: player.currentAnswer === currentQuestion.correctIndex,
+    };
   }).sort((a, b) => b.scoreChange - a.scoreChange);
 
   const correctCount = playersWithChanges.filter(p => p.answeredCorrectly).length;
   const myResult = playersWithChanges.find(p => p.id === currentPlayer?.id);
-  const correctOption = ANSWER_OPTIONS[currentQuestion.correctIndex];
+  const isCorrect = myResult?.answeredCorrectly;
+  const correctIdx = currentQuestion.correctIndex;
+
+  // Answer distribution — how many picked each option
+  const distribution = currentQuestion.options.map((_, i) => {
+    const count = sortedPlayers.filter(p => p.currentAnswer === i).length;
+    return { count, pct: sortedPlayers.length > 0 ? (count / sortedPlayers.length) * 100 : 0 };
+  });
+
+  // Player's wrong answer (if applicable)
+  const myAnswerIdx = myResult?.currentAnswer;
+  const showMyWrongAnswer = !isSpectator && !isCorrect && myAnswerIdx !== null && myAnswerIdx !== undefined;
 
   return (
-    <div className="game-fullscreen game-reveal-screen">
-      <button className="leave-game-btn floating" onClick={() => setShowLeaveConfirm(true)} title="Rời game">
-        <ArrowLeft size={18} /> Rời
-      </button>
+    <div className={`game-fullscreen gr-screen ${isCorrect ? 'gr-correct' : 'gr-wrong'}`}>
+      {/* Nav */}
+      <div className="gr-nav">
+        <button className="gq-nav-btn" onClick={() => setShowLeaveConfirm(true)}>
+          <ArrowLeft size={18} />
+        </button>
+        <div className="gr-timer-pill">{revealTimer}s</div>
+      </div>
 
-      {/* Result header */}
-      <div className="reveal-header">
+      {/* Hero result */}
+      <div className="gr-hero">
         {isSpectator ? (
-          <div className="result-banner spectator">
-            <span className="result-icon"><Eye size={24} /></span>
-            <div className="result-info">
-              <span className="result-text">Đang theo dõi</span>
-              <span className="spectator-hint">{correctCount}/{sortedPlayers.length} trả lời đúng</span>
-            </div>
+          <div className="gr-hero-content">
+            <span className="gr-hero-icon">👁️</span>
+            <span className="gr-hero-label">Đang theo dõi</span>
           </div>
         ) : (
-          <div className={`result-banner ${myResult?.answeredCorrectly ? 'correct' : 'wrong'}`}>
-            <span className="result-icon">{myResult?.answeredCorrectly ? '🎉' : '😔'}</span>
-            <div className="result-info">
-              <span className="result-text">{myResult?.answeredCorrectly ? 'Chính xác!' : 'Sai rồi!'}</span>
-              {myResult?.answeredCorrectly && myResult.scoreChange > 0 && (
-                <span className="score-gained">+{myResult.scoreChange}</span>
-              )}
-              {myResult?.answeredCorrectly && (myResult.streak || 0) >= 3 && (
-                <span className="streak-gained">
-                  <Flame size={14} /> {myResult.streak} streak
-                </span>
-              )}
-            </div>
+          <div className="gr-hero-content">
+            {isCorrect
+              ? <CheckCircle size={52} className="gr-icon-correct" />
+              : <XCircle size={52} className="gr-icon-wrong" />
+            }
+            <span className="gr-hero-label">{isCorrect ? 'Chính xác!' : 'Sai rồi!'}</span>
+            {isCorrect && myResult!.scoreChange > 0 && (
+              <span className="gr-points">+{myResult!.scoreChange}</span>
+            )}
+            {isCorrect && myResult!.answerTime && (
+              <span className="gr-answer-time"><Clock size={12} /> {(myResult!.answerTime / 1000).toFixed(1)}s</span>
+            )}
+            {isCorrect && (myResult?.streak || 0) >= 3 && (
+              <span className="gr-streak"><Flame size={14} /> {myResult?.streak} liên tiếp</span>
+            )}
           </div>
         )}
       </div>
 
-      {/* Correct answer display — color strip instead of icon */}
-      <div className="correct-answer-card">
-        <span className="correct-label">Đáp án đúng</span>
-        <span className="correct-answer" style={{ background: correctOption.bg }}>
-          {currentQuestion.options[currentQuestion.correctIndex]}
-        </span>
-        <div className="answer-stats-bar">
-          <div className="answer-stats-fill" style={{ width: `${(correctCount / sortedPlayers.length) * 100}%` }} />
-          <span className="answer-stats">{correctCount}/{sortedPlayers.length} trả lời đúng</span>
+      {/* Correct answer card */}
+      <div className="gr-answer-card">
+        <div className="gr-answer-label">Đáp án đúng</div>
+        <div className="gr-answer-box" style={{ background: ANSWER_OPTIONS[correctIdx].bg }}>
+          <span className="gr-answer-shape">{ANSWER_SHAPES[correctIdx]}</span>
+          <span>{currentQuestion.options[correctIdx]}</span>
+        </div>
+
+        {/* Show player's wrong answer */}
+        {showMyWrongAnswer && (
+          <div className="gr-my-wrong">
+            <span className="gr-my-wrong-label">Bạn chọn</span>
+            <div className="gr-my-wrong-box">
+              <span className="gr-answer-shape">{ANSWER_SHAPES[myAnswerIdx]}</span>
+              <span>{currentQuestion.options[myAnswerIdx]}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Stats bar */}
+        <div className="gr-stats-bar">
+          <div className="gr-stats-fill" style={{ width: `${sortedPlayers.length > 0 ? (correctCount / sortedPlayers.length) * 100 : 0}%` }} />
+          <span className="gr-stats-text">{correctCount}/{sortedPlayers.length} đúng</span>
         </div>
       </div>
 
-      {/* Players results */}
-      <div className="reveal-players">
-        <h3>Kết quả</h3>
-        <div className="reveal-list">
-          {playersWithChanges.slice(0, 8).map((player, index) => {
-            const isMe = player.id === currentPlayer?.id;
+      {/* Answer distribution */}
+      <div className="gr-distribution">
+        <div className="gr-dist-label">Phân bố câu trả lời</div>
+        <div className="gr-dist-bars">
+          {currentQuestion.options.map((_opt, i) => {
+            const isCorrectOpt = i === correctIdx;
             return (
-              <div
-                key={player.id}
-                className={`reveal-item ${isMe ? 'is-me' : ''} ${player.answeredCorrectly ? 'correct' : 'wrong'}`}
-                style={{ animationDelay: `${index * 0.06}s` }}
-              >
-                <span className="reveal-rank">
-                  {index === 0 && player.scoreChange > 0 ? <Crown size={16} /> : `#${index + 1}`}
-                </span>
-                <span className="reveal-name">
-                  {player.name}
-                  {isMe && <span className="me-tag">Bạn</span>}
-                </span>
-                <span className="reveal-status">
-                  {player.answeredCorrectly ? '✓' : player.currentAnswer !== null ? '✗' : '—'}
-                </span>
-                <span className="reveal-score">
-                  {player.score}
-                  {player.scoreChange > 0 && <span className="change positive">+{player.scoreChange}</span>}
-                </span>
+              <div key={i} className={`gr-dist-row ${isCorrectOpt ? 'correct' : ''}`}>
+                <span className="gr-dist-shape" style={{ color: ANSWER_OPTIONS[i].color }}>{ANSWER_SHAPES[i]}</span>
+                <div className="gr-dist-track">
+                  <div
+                    className="gr-dist-fill"
+                    style={{
+                      width: `${Math.max(distribution[i].pct, 2)}%`,
+                      background: isCorrectOpt ? 'linear-gradient(90deg, #22c55e, #16a34a)' : 'rgba(255,255,255,0.12)',
+                    }}
+                  />
+                </div>
+                <span className="gr-dist-count">{distribution[i].count}</span>
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* Timer bar */}
-      <div className="reveal-timer-bar">
-        <div className="timer-fill" style={{ width: `${(revealTimer / 5) * 100}%` }} />
-        <span className="timer-text">Tiếp tục sau {revealTimer}s</span>
+      {/* Rankings */}
+      <div className="gr-ranks">
+        {playersWithChanges.slice(0, 6).map((p, i) => {
+          const isMe = p.id === currentPlayer?.id;
+          return (
+            <div key={p.id} className={`gr-rank-row ${isMe ? 'me' : ''} ${p.answeredCorrectly ? 'ok' : 'fail'}`}
+              style={{ animationDelay: `${i * 0.05}s` }}>
+              <span className="gr-rank-pos">
+                {i === 0 && p.scoreChange > 0 ? <Crown size={14} /> : `${i + 1}`}
+              </span>
+              <span className="gr-rank-avatar">{p.name.charAt(0).toUpperCase()}</span>
+              <span className="gr-rank-name">
+                {p.name}{isMe && <em>Bạn</em>}
+              </span>
+              <span className="gr-rank-check">{p.answeredCorrectly ? '✓' : p.currentAnswer !== null ? '✗' : '—'}</span>
+              <span className="gr-rank-score">
+                <Trophy size={12} />{p.score}
+                {p.scoreChange > 0 && <b>+{p.scoreChange}</b>}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Progress bar */}
+      <div className="gr-progress">
+        <div className="gr-progress-fill" style={{ width: `${(revealTimer / 5) * 100}%` }} />
       </div>
 
       <ConfirmModal

@@ -110,7 +110,11 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
 };
 
 // Source type for game questions
-export type GameQuestionSource = 'flashcards' | 'jlpt';
+// - vocabulary: flashcard → Vietnamese meaning answers
+// - kanji: kanji question → hiragana reading answers (similar distractors)
+// - flashcards: legacy alias for vocabulary
+// - jlpt: JLPT question bank
+export type GameQuestionSource = 'vocabulary' | 'kanji' | 'jlpt' | 'flashcards';
 
 // Content type for questions and answers
 export type GameQuestionContent = 'kanji' | 'vocabulary' | 'meaning';

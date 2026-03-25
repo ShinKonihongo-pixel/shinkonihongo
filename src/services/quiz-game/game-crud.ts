@@ -24,7 +24,7 @@ import type { Flashcard, DifficultyLevel } from '../../types/flashcard';
 import type { JLPTQuestion } from '../../types/jlpt-question';
 import { COLLECTIONS } from './constants';
 import { generateGameCode, shuffleArray } from './utils';
-import { generateQuestionsFromFlashcards, generateQuestionsFromJLPT } from './question-generator';
+import { generateQuestionsFromFlashcards, generateQuestionsFromJLPT, generateQuestionsForKanjiMode } from './question-generator';
 
 // Filter flashcards by difficulty mix percentages
 // Returns a shuffled pool of cards selected according to the mix ratios
@@ -126,29 +126,41 @@ export async function createGame(
       settings.specialRoundEvery
     );
   } else {
-    // Filter flashcards by selected lessons
+    // Vocabulary or Kanji mode — both use flashcards as source
     let lessonCards = flashcards.filter(card => data.lessonIds.includes(card.lessonId));
 
     if (lessonCards.length < 4) {
       throw new Error('Cần ít nhất 4 thẻ để tạo game');
     }
 
-    // Apply difficulty mix filtering when a difficulty level is selected
     const gameDifficulty = data.difficultyLevels?.[0];
     if (gameDifficulty && data.difficultyMix) {
       lessonCards = filterByDifficultyMix(lessonCards, gameDifficulty, data.difficultyMix, data.totalRounds);
     }
 
-    questions = generateQuestionsFromFlashcards(
-      lessonCards,
-      data.totalRounds,
-      data.timePerQuestion,
-      settings.specialRoundEvery,
-      data.questionContent || 'kanji',
-      data.answerContent || 'vocabulary_meaning',
-      gameDifficulty,
-      flashcards, // pass all flashcards for similar option generation
-    );
+    if (data.source === 'kanji') {
+      // Kanji mode: question=kanji, answers=hiragana readings (similar distractors)
+      questions = generateQuestionsForKanjiMode(
+        lessonCards,
+        data.totalRounds,
+        data.timePerQuestion,
+        settings.specialRoundEvery,
+        gameDifficulty,
+        flashcards,
+      );
+    } else {
+      // Vocabulary mode (or legacy 'flashcards'): question=kanji/vocab, answers=meaning
+      questions = generateQuestionsFromFlashcards(
+        lessonCards,
+        data.totalRounds,
+        data.timePerQuestion,
+        settings.specialRoundEvery,
+        data.questionContent || 'kanji',
+        data.answerContent || 'meaning',
+        gameDifficulty,
+        flashcards,
+      );
+    }
   }
 
   // Generate unique game code
@@ -199,7 +211,7 @@ export async function createGame(
     source: data.source,
     // Only include optional fields if they have values (Firestore doesn't accept undefined)
     ...(data.source === 'jlpt' && data.jlptLevels && data.jlptLevels.length > 0 && { jlptLevels: data.jlptLevels }),
-    ...(data.source === 'flashcards' && data.lessonNames && data.lessonNames.length > 0 && { lessonNames: data.lessonNames }),
+    ...((data.source === 'vocabulary' || data.source === 'kanji' || data.source === 'flashcards') && data.lessonNames && data.lessonNames.length > 0 && { lessonNames: data.lessonNames }),
   };
 
   const docRef = await addDoc(collection(db, COLLECTIONS.GAMES), game);

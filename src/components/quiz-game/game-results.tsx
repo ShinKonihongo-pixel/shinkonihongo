@@ -1,5 +1,5 @@
-// Game results — dark immersive final rankings
-import { Trophy, Crown, Medal, Award, Home, RotateCcw, Flame } from 'lucide-react';
+// Game results — immersive final rankings with personal stats & celebration
+import { Trophy, Crown, Medal, Award, Home, RotateCcw, Flame, Target, Zap, BarChart3 } from 'lucide-react';
 import type { QuizGame, GameResults as GameResultsType } from '../../types/quiz-game';
 
 interface GameResultsProps {
@@ -12,6 +12,7 @@ interface GameResultsProps {
 
 export function GameResults({
   game,
+  gameResults,
   currentPlayerId,
   onPlayAgain,
   onGoHome,
@@ -22,8 +23,24 @@ export function GameResults({
   const top3 = players.slice(0, 3);
   const rest = players.slice(3);
 
+  // Pull rich stats from gameResults if available
+  const myStats = gameResults?.rankings.find(r => r.playerId === currentPlayerId);
+
+  // Podium order: 2nd, 1st, 3rd
+  const podiumOrder = [top3[1], top3[0], top3[2]];
+  const podiumClasses = ['second', 'first', 'third'];
+  const podiumIcons = [Medal, Crown, Award];
+  const podiumSizes = [22, 26, 20];
+
   return (
     <div className="game-fullscreen game-results-screen">
+      {/* Celebration particles (CSS-only) */}
+      <div className="results-confetti" aria-hidden="true">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <span key={i} className="results-confetti-piece" style={{ '--i': i } as React.CSSProperties} />
+        ))}
+      </div>
+
       {/* Header */}
       <div className="results-screen-header">
         <Trophy size={36} className="results-trophy" />
@@ -42,45 +59,73 @@ export function GameResults({
 
       {/* Podium */}
       <div className="results-podium">
-        {top3[1] && (
-          <div className="results-podium-place second">
-            <div className="results-podium-player">
-              <Medal size={22} className="medal silver" />
-              <span className="results-podium-name">{top3[1].name}</span>
-              <span className="results-podium-score">{top3[1].score}</span>
+        {podiumOrder.map((player, displayIdx) => {
+          if (!player) return null;
+          const actualRank = podiumClasses[displayIdx] === 'first' ? 0 : podiumClasses[displayIdx] === 'second' ? 1 : 2;
+          const Icon = podiumIcons[actualRank];
+          const iconSize = podiumSizes[actualRank];
+          const isMe = player.id === currentPlayerId;
+          const medalColor = actualRank === 0 ? '#ffd700' : actualRank === 1 ? '#c0c0c0' : '#cd7f32';
+
+          return (
+            <div key={player.id} className={`results-podium-place ${podiumClasses[displayIdx]} ${isMe ? 'is-me' : ''}`}>
+              <div className="results-podium-player">
+                <Icon size={iconSize} style={{ color: medalColor }} />
+                <div className="results-podium-avatar">{player.name.charAt(0).toUpperCase()}</div>
+                <span className="results-podium-name">{player.name}</span>
+                <span className="results-podium-score">{player.score}</span>
+                {player.streak >= 3 && (
+                  <span className="streak-fire"><Flame size={14} /> {player.streak}</span>
+                )}
+              </div>
+              <div className="results-podium-stand">{actualRank + 1}</div>
             </div>
-            <div className="results-podium-stand">2</div>
-          </div>
-        )}
-        {top3[0] && (
-          <div className="results-podium-place first">
-            <div className="results-podium-player">
-              <Crown size={26} className="crown" />
-              <span className="results-podium-name">{top3[0].name}</span>
-              <span className="results-podium-score">{top3[0].score}</span>
-              {top3[0].streak >= 3 && (
-                <span className="streak-fire"><Flame size={14} /> {top3[0].streak}</span>
-              )}
-            </div>
-            <div className="results-podium-stand">1</div>
-          </div>
-        )}
-        {top3[2] && (
-          <div className="results-podium-place third">
-            <div className="results-podium-player">
-              <Award size={20} className="medal bronze" />
-              <span className="results-podium-name">{top3[2].name}</span>
-              <span className="results-podium-score">{top3[2].score}</span>
-            </div>
-            <div className="results-podium-stand">3</div>
-          </div>
-        )}
+          );
+        })}
       </div>
 
-      {/* My result if not top 3 */}
-      {myRank > 3 && myPlayer && (
-        <div className="results-my-rank">
-          Bạn đứng hạng <strong>#{myRank}</strong> với <strong>{myPlayer.score}</strong> điểm
+      {/* Personal performance card */}
+      {myPlayer && (
+        <div className={`results-personal ${myRank <= 3 ? 'top-three' : ''}`}>
+          <div className="results-personal-header">
+            <Target size={16} />
+            <span>Thành tích của bạn</span>
+            <span className="results-personal-rank">#{myRank}</span>
+          </div>
+          <div className="results-personal-grid">
+            <div className="results-personal-stat">
+              <Trophy size={16} className="stat-icon gold" />
+              <span className="results-personal-value">{myPlayer.score}</span>
+              <span className="results-personal-label">Điểm</span>
+            </div>
+            {myStats ? (
+              <>
+                <div className="results-personal-stat">
+                  <BarChart3 size={16} className="stat-icon green" />
+                  <span className="results-personal-value">{myStats.accuracy}%</span>
+                  <span className="results-personal-label">Chính xác</span>
+                </div>
+                <div className="results-personal-stat">
+                  <Zap size={16} className="stat-icon purple" />
+                  <span className="results-personal-value">{myStats.correctAnswers}/{myStats.totalAnswers}</span>
+                  <span className="results-personal-label">Đúng</span>
+                </div>
+                <div className="results-personal-stat">
+                  <Flame size={16} className="stat-icon orange" />
+                  <span className="results-personal-value">{myStats.longestStreak}</span>
+                  <span className="results-personal-label">Streak tốt nhất</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="results-personal-stat">
+                  <Zap size={16} className="stat-icon purple" />
+                  <span className="results-personal-value">{myPlayer.streak}</span>
+                  <span className="results-personal-label">Streak hiện tại</span>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       )}
 
@@ -93,6 +138,7 @@ export function GameResults({
               className={`results-rank-row ${player.id === currentPlayerId ? 'is-me' : ''}`}
             >
               <span className="results-rank-num">#{idx + 4}</span>
+              <span className="results-rank-avatar">{player.name.charAt(0).toUpperCase()}</span>
               <span className="results-rank-name">
                 {player.name}
                 {player.id === currentPlayerId && <span className="me-tag">Bạn</span>}
@@ -103,7 +149,7 @@ export function GameResults({
         </div>
       )}
 
-      {/* Stats */}
+      {/* Game stats summary */}
       <div className="results-stats">
         <div className="results-stat">
           <span className="results-stat-value">{game.totalRounds}</span>
@@ -113,6 +159,12 @@ export function GameResults({
           <span className="results-stat-value">{players.length}</span>
           <span className="results-stat-label">Người chơi</span>
         </div>
+        {players[0] && (
+          <div className="results-stat">
+            <span className="results-stat-value">{players[0].score}</span>
+            <span className="results-stat-label">Điểm cao nhất</span>
+          </div>
+        )}
       </div>
 
       {/* Actions */}

@@ -41,6 +41,7 @@ import {
 import { useExercises } from '../../hooks/use-exercises';
 import { useReading } from '../../hooks/use-reading';
 import { useListening } from '../../hooks/use-listening';
+import { RolePermissionsPage } from './role-permissions-page';
 import '../cards-management/cards-management.css';
 
 interface CardsPageProps {
@@ -251,6 +252,9 @@ export function CardsPage({
           <button className={`tab-btn ${activeTab === 'assignments' ? 'active' : ''}`} onClick={() => setActiveTab('assignments')}>Bài tập</button>
           <button className={`tab-btn ${activeTab === 'tests' ? 'active' : ''}`} onClick={() => setActiveTab('tests')}>Bài kiểm tra</button>
           <button className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>Tài khoản</button>
+          {isSuperAdmin && (
+            <button className={`tab-btn ${activeTab === 'permissions' ? 'active' : ''}`} onClick={() => setActiveTab('permissions')}>Phân quyền</button>
+          )}
         </div>
       </div>
 
@@ -504,6 +508,11 @@ export function CardsPage({
           onUpdateVipExpiration={onUpdateVipExpiration}
           onRegister={onRegister}
         />
+      )}
+
+      {/* Permissions Tab — super_admin only */}
+      {activeTab === 'permissions' && isSuperAdmin && (
+        <RolePermissionsPage />
       )}
     </div>
   );

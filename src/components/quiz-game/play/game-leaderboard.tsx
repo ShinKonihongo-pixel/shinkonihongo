@@ -1,6 +1,8 @@
-// Leaderboard — premium animated rankings
-import { Trophy, Crown, Medal, Award, LogOut, Flame } from 'lucide-react';
+// Leaderboard — premium podium with avatar initials, score changes, streak badges
+import { useState } from 'react';
+import { Trophy, Crown, Medal, Award, ArrowLeft, Flame, Target } from 'lucide-react';
 import type { QuizGame, GamePlayer } from '../../../types/quiz-game';
+import { ConfirmModal } from '../../ui/confirm-modal';
 
 interface GameLeaderboardProps {
   game: QuizGame;
@@ -10,6 +12,9 @@ interface GameLeaderboardProps {
   onLeaveGame: () => Promise<void>;
 }
 
+const PODIUM_ICONS = [Crown, Medal, Award];
+const PODIUM_SIZES = [26, 22, 20];
+
 export function GameLeaderboard({
   game,
   currentPlayer,
@@ -17,85 +22,98 @@ export function GameLeaderboard({
   revealTimer,
   onLeaveGame,
 }: GameLeaderboardProps) {
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const top3 = sortedPlayers.slice(0, 3);
   const rest = sortedPlayers.slice(3);
+  const myRank = sortedPlayers.findIndex(p => p.id === currentPlayer?.id) + 1;
+
+  // Podium order: 2nd, 1st, 3rd
+  const podiumOrder = [top3[1], top3[0], top3[2]];
+  const podiumClasses = ['second', 'first', 'third'];
 
   return (
-    <div className="game-fullscreen game-leaderboard-screen">
-      <button className="leave-game-btn floating" onClick={onLeaveGame} title="Rời game">
-        <LogOut size={18} /> Rời
-      </button>
+    <div className="game-fullscreen gl-screen">
+      <div className="gr-nav">
+        <button className="gq-nav-btn" onClick={() => setShowLeaveConfirm(true)}>
+          <ArrowLeft size={18} />
+        </button>
+        <div className="gr-timer-pill">{revealTimer}s</div>
+      </div>
 
-      <div className="leaderboard-header">
-        <Trophy size={32} className="trophy-icon" />
+      <div className="gl-header">
+        <Trophy size={28} className="gl-trophy" />
         <h2>Bảng Xếp Hạng</h2>
-        <p className="round-progress">
-          Sau câu {game.currentRound + 1}/{game.totalRounds}
-        </p>
+        <p>Sau câu {game.currentRound + 1}/{game.totalRounds}</p>
       </div>
 
-      {/* Podium */}
-      <div className="podium">
-        {top3[1] && (
-          <div className="podium-place second" style={{ animationDelay: '0.2s' }}>
-            <div className="podium-player">
-              <Medal size={24} className="medal silver" />
-              <span className="podium-name">{top3[1].name}</span>
-              <span className="podium-score">{top3[1].score}</span>
-            </div>
-            <div className="podium-stand">2</div>
-          </div>
-        )}
-        {top3[0] && (
-          <div className="podium-place first" style={{ animationDelay: '0.35s' }}>
-            <div className="podium-player">
-              <Crown size={28} className="crown" />
-              <span className="podium-name">{top3[0].name}</span>
-              <span className="podium-score">{top3[0].score}</span>
-              {top3[0].streak >= 3 && (
-                <span className="streak-fire"><Flame size={14} /> {top3[0].streak}</span>
+      {/* Podium with avatars */}
+      <div className="gl-podium">
+        {podiumOrder.map((player, displayIdx) => {
+          if (!player) return null;
+          const actualRank = podiumClasses[displayIdx] === 'first' ? 0 : podiumClasses[displayIdx] === 'second' ? 1 : 2;
+          const Icon = PODIUM_ICONS[actualRank];
+          const iconSize = PODIUM_SIZES[actualRank];
+          const isMe = player.id === currentPlayer?.id;
+
+          return (
+            <div key={player.id} className={`gl-pod ${podiumClasses[displayIdx]} ${isMe ? 'is-me' : ''}`}>
+              <Icon size={iconSize} />
+              <div className="gl-pod-avatar">{player.name.charAt(0).toUpperCase()}</div>
+              <span className="gl-pod-name">{player.name}</span>
+              <span className="gl-pod-score">{player.score}</span>
+              {player.streak >= 3 && (
+                <span className="gl-pod-streak"><Flame size={12} />{player.streak}</span>
               )}
+              <div className="gl-pod-stand">{actualRank + 1}</div>
             </div>
-            <div className="podium-stand">1</div>
-          </div>
-        )}
-        {top3[2] && (
-          <div className="podium-place third" style={{ animationDelay: '0.15s' }}>
-            <div className="podium-player">
-              <Award size={22} className="medal bronze" />
-              <span className="podium-name">{top3[2].name}</span>
-              <span className="podium-score">{top3[2].score}</span>
-            </div>
-            <div className="podium-stand">3</div>
-          </div>
-        )}
+          );
+        })}
       </div>
 
-      {/* Rest of players */}
-      {rest.length > 0 && (
-        <div className="leaderboard-rest">
-          {rest.map((player, index) => (
-            <div
-              key={player.id}
-              className={`leaderboard-row ${player.id === currentPlayer?.id ? 'is-me' : ''}`}
-              style={{ animationDelay: `${0.4 + index * 0.06}s` }}
-            >
-              <span className="row-rank">#{index + 4}</span>
-              <span className="row-name">
-                {player.name}
-                {player.id === currentPlayer?.id && <span className="me-tag">Bạn</span>}
-              </span>
-              <span className="row-score">{player.score}</span>
-            </div>
-          ))}
+      {/* My rank callout (if not top 3) */}
+      {myRank > 3 && currentPlayer && (
+        <div className="gl-my-rank">
+          <Target size={14} />
+          <span>Bạn đứng hạng <strong>#{myRank}</strong> với <strong>{currentPlayer.score}</strong> điểm</span>
         </div>
       )}
 
-      {/* Timer bar */}
-      <div className="reveal-timer-bar">
-        <div className="timer-fill" style={{ width: `${(revealTimer / 5) * 100}%` }} />
-        <span className="timer-text">Câu tiếp theo sau {revealTimer}s</span>
+      {/* Rest of players */}
+      {rest.length > 0 && (
+        <div className="gl-rest">
+          {rest.map((p, i) => {
+            const isMe = p.id === currentPlayer?.id;
+            return (
+              <div key={p.id} className={`gr-rank-row ${isMe ? 'me' : ''}`}
+                style={{ animationDelay: `${0.3 + i * 0.05}s` }}>
+                <span className="gr-rank-pos">#{i + 4}</span>
+                <span className="gr-rank-avatar">{p.name.charAt(0).toUpperCase()}</span>
+                <span className="gr-rank-name">
+                  {p.name}{isMe && <em>Bạn</em>}
+                </span>
+                {p.streak >= 2 && (
+                  <span className="gr-rank-streak"><Flame size={11} />{p.streak}</span>
+                )}
+                <span className="gr-rank-score"><Trophy size={12} />{p.score}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="gr-progress">
+        <div className="gr-progress-fill" style={{ width: `${(revealTimer / 5) * 100}%` }} />
       </div>
+
+      <ConfirmModal
+        isOpen={showLeaveConfirm}
+        title="Rời khỏi game?"
+        message="Bạn có chắc muốn rời khỏi game đang chơi?"
+        confirmText="Rời game"
+        cancelText="Ở lại"
+        onConfirm={onLeaveGame}
+        onCancel={() => setShowLeaveConfirm(false)}
+      />
     </div>
   );
 }

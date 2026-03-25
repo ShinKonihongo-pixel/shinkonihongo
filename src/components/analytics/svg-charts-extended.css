@@ -1,0 +1,137 @@
+/* Extended SVG chart — premium animation styles */
+
+/* ═══════ Waterfall ═══════ */
+@keyframes wfBarGrow {
+  from { transform: scaleY(0); opacity: 0; }
+  to   { transform: scaleY(1); opacity: 1; }
+}
+.wf-bar {
+  animation: wfBarGrow 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transform-box: fill-box;
+  transform-origin: bottom;
+}
+
+@keyframes wfValuePop {
+  from { opacity: 0; transform: translateY(4px) scale(0.8); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.wf-value-pill {
+  animation: wfValuePop 0.3s ease both;
+}
+
+@keyframes wfLineDraw {
+  from { stroke-dashoffset: 600; opacity: 0; }
+  to   { stroke-dashoffset: 0; opacity: 1; }
+}
+.wf-line {
+  stroke-dasharray: 600;
+  animation: wfLineDraw 1.5s ease 0.5s forwards;
+  opacity: 0;
+}
+
+/* ═══════ Heatmap ═══════ */
+@keyframes heatmapCell {
+  from { opacity: 0; transform: scale(0.7); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.heatmap-cell {
+  animation: heatmapCell 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* ═══════ Gauge ═══════ */
+@keyframes gaugeDraw {
+  from { stroke-dashoffset: var(--gauge-len, 340); }
+  to   { stroke-dashoffset: 0; }
+}
+.gauge-arc {
+  stroke-dasharray: var(--gauge-len, 340);
+  stroke-dashoffset: var(--gauge-len, 340);
+  animation: gaugeDraw 1.4s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
+}
+
+@keyframes gaugeDotPop {
+  from { opacity: 0; transform: scale(0); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.gauge-dot {
+  opacity: 0;
+  animation: gaugeDotPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 1.4s forwards;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes gaugeRingPulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.15); }
+}
+.gauge-dot-ring {
+  opacity: 0;
+  animation: gaugeDotPop 0.3s ease 1.4s forwards, gaugeRingPulse 2s ease-in-out 2s infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* ═══════ Bubble ═══════ */
+@keyframes bubblePop {
+  from { opacity: 0; transform: scale(0); }
+  60%  { transform: scale(1.08); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.bubble-circle {
+  animation: bubblePop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes bubbleLabelFade {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.bubble-label {
+  animation: bubbleLabelFade 0.3s ease both;
+}
+
+/* ═══════ Funnel ═══════ */
+@keyframes funnelSlide {
+  from { opacity: 0; transform: scaleX(0.2) scaleY(0.8); }
+  to   { opacity: 1; transform: scaleX(1) scaleY(1); }
+}
+.funnel-stage {
+  animation: funnelSlide 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes funnelDropoffPop {
+  from { opacity: 0; transform: scale(0.5); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.funnel-dropoff {
+  animation: funnelDropoffPop 0.3s ease both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* ═══════ Polar ═══════ */
+@keyframes polarGrow {
+  from { opacity: 0; transform: scale(0); }
+  60%  { transform: scale(1.05); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.polar-slice {
+  animation: polarGrow 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes polarBadgePop {
+  from { opacity: 0; transform: scale(0); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.polar-badge {
+  animation: polarBadgePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transform-box: fill-box;
+  transform-origin: center;
+}

@@ -278,6 +278,123 @@ export function generateQuestionsFromFlashcards(
   return ensureSpecialNotLast(questions);
 }
 
+// --- Kanji mode: hiragana-reading answers with confusingly similar distractors ---
+
+/** Pick hiragana distractors that share 1-2 characters with the correct reading */
+function pickSimilarHiraganaReadings(
+  correctReading: string,
+  allReadings: string[],
+  count: number,
+): string[] {
+  const unique = [...new Set(allReadings)].filter(r => r !== correctReading && r.length > 0);
+
+  // Score: prefer readings that share some characters but are not identical
+  const scored = unique.map(r => {
+    let score = 0;
+    // Shared characters (hiragana overlap → confusing)
+    const correctChars = correctReading.split('');
+    const rChars = new Set(r.split(''));
+    const sharedCount = correctChars.filter(c => rChars.has(c)).length;
+    score += sharedCount * 3;
+    // Similar length is more confusing
+    score += Math.max(0, 6 - Math.abs(correctReading.length - r.length) * 2);
+    // Same first char is very confusing
+    if (r[0] === correctReading[0]) score += 5;
+    // Same last char
+    if (r[r.length - 1] === correctReading[correctReading.length - 1]) score += 3;
+    return { text: r, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+
+  const result: string[] = [];
+  const used = new Set<string>([correctReading]);
+
+  for (const item of scored) {
+    if (result.length >= count) break;
+    if (!used.has(item.text)) {
+      result.push(item.text);
+      used.add(item.text);
+    }
+  }
+
+  // Fill remaining with random readings if not enough similar ones
+  while (result.length < count) {
+    const remaining = unique.filter(r => !used.has(r));
+    if (remaining.length === 0) break;
+    const pick = remaining[Math.floor(Math.random() * remaining.length)];
+    result.push(pick);
+    used.add(pick);
+  }
+
+  return result;
+}
+
+/** Generate questions for Kanji mode: question = kanji, answers = hiragana readings */
+export function generateQuestionsForKanjiMode(
+  flashcards: Flashcard[],
+  totalRounds: number,
+  timePerQuestion: number,
+  specialRoundEvery: number,
+  gameDifficulty?: GameDifficultyLevel,
+  allFlashcards?: Flashcard[],
+): GameQuestion[] {
+  // Only use cards that have kanji (non-empty kanji field different from vocabulary)
+  const kanjiCards = flashcards.filter(c => c.kanji && c.kanji.trim() && c.kanji !== c.vocabulary);
+
+  if (kanjiCards.length === 0) {
+    // Fallback: use all flashcards with vocabulary as question
+    return generateQuestionsFromFlashcards(
+      flashcards, totalRounds, timePerQuestion, specialRoundEvery,
+      'vocabulary', 'meaning', gameDifficulty, allFlashcards,
+    );
+  }
+
+  const shuffled = shuffleArray(kanjiCards);
+  const selectedCards = shuffled.slice(0, Math.min(totalRounds, shuffled.length));
+
+  // Build pool of all hiragana readings for distractor generation
+  const allPool = allFlashcards || flashcards;
+  const allReadings = allPool.map(c => c.vocabulary).filter(v => v && v.trim());
+
+  const usedIds = new Set<string>();
+
+  const questions = selectedCards
+    .filter(card => {
+      if (usedIds.has(card.id)) return false;
+      usedIds.add(card.id);
+      return true;
+    })
+    .map((card, index) => {
+      const questionText = card.kanji; // Show kanji as the question
+      const correctAnswer = card.vocabulary; // Hiragana reading is the answer
+
+      // Pick 3 confusingly similar hiragana readings
+      const wrongOptions = pickSimilarHiraganaReadings(
+        correctAnswer,
+        allReadings,
+        3,
+      );
+
+      const options = shuffleArray([correctAnswer, ...wrongOptions.slice(0, 3)]);
+      const correctIndex = options.indexOf(correctAnswer);
+      const isSpecialRound = (index + 1) % specialRoundEvery === 0;
+
+      return {
+        id: generateId(),
+        flashcardId: card.id,
+        question: questionText,
+        correctAnswer,
+        options,
+        correctIndex,
+        timeLimit: timePerQuestion,
+        isSpecialRound,
+      };
+    });
+
+  return ensureSpecialNotLast(questions);
+}
+
 // Generate questions from JLPT questions (unchanged logic, no difficulty mix)
 export function generateQuestionsFromJLPT(
   jlptQuestions: JLPTQuestion[],

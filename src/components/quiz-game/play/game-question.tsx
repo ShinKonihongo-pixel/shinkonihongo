@@ -1,15 +1,14 @@
-// Question and answers — clean modern game screen
-// Two-step answer: select (changeable) → press Submit to lock in
+// Question screen — premium Kahoot-style with color-block answers
 import { useState } from 'react';
-import { Send, ArrowLeft, Menu } from 'lucide-react';
+import { Send, ArrowLeft, Trophy, Flame, Users } from 'lucide-react';
 import type { QuizGame, GamePlayer, GameQuestion as GameQuestionType } from '../../../types/quiz-game';
 import { ConfirmModal } from '../../ui/confirm-modal';
 
-const ANSWER_COLORS = [
-  { bg: '#e74c3c', light: 'rgba(231,76,60,0.15)', border: 'rgba(231,76,60,0.4)' },
-  { bg: '#3498db', light: 'rgba(52,152,219,0.15)', border: 'rgba(52,152,219,0.4)' },
-  { bg: '#f39c12', light: 'rgba(243,156,18,0.15)', border: 'rgba(243,156,18,0.4)' },
-  { bg: '#2ecc71', light: 'rgba(46,204,113,0.15)', border: 'rgba(46,204,113,0.4)' },
+const ANSWER_STYLES = [
+  { bg: 'linear-gradient(135deg, #e74c3c, #c0392b)', emoji: '▲' },
+  { bg: 'linear-gradient(135deg, #3498db, #2471a3)', emoji: '◆' },
+  { bg: 'linear-gradient(135deg, #f39c12, #d68910)', emoji: '●' },
+  { bg: 'linear-gradient(135deg, #27ae60, #1e8449)', emoji: '■' },
 ];
 
 interface GameQuestionProps {
@@ -34,8 +33,8 @@ export function GameQuestion({
   isSpectator = false,
   onSubmitAnswer,
   onLeaveGame,
-  gameQuestionFontSize = 1.15,
-  gameAnswerFontSize = 0.95,
+  gameQuestionFontSize = 1.2,
+  gameAnswerFontSize = 1,
 }: GameQuestionProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -44,6 +43,7 @@ export function GameQuestion({
   const isBlocked = currentPlayer?.isBlocked;
   const answeredCount = sortedPlayers.filter(p => p.currentAnswer !== null).length;
   const timerProgress = (timeLeft / currentQuestion.timeLimit) * 100;
+  const streak = currentPlayer?.streak || 0;
 
   const handleSubmitAnswer = async () => {
     if (selectedAnswer === null || hasAnswered || submitting) return;
@@ -53,85 +53,75 @@ export function GameQuestion({
   };
 
   return (
-    <div className="game-fullscreen game-question-screen">
-      {/* Minimal header: back + round info */}
-      <div className="gq-header">
-        <button className="gq-back-btn" onClick={() => setShowLeaveConfirm(true)} title="Rời game">
-          <ArrowLeft size={20} />
+    <div className="game-fullscreen gq-screen">
+      {/* Top nav */}
+      <div className="gq-nav">
+        <button className="gq-nav-btn" onClick={() => setShowLeaveConfirm(true)}>
+          <ArrowLeft size={18} />
         </button>
-        <div className="gq-round-info">
-          <span className="gq-round">{game.currentRound + 1} / {game.totalRounds}</span>
-          <span className="gq-answered">{answeredCount}/{sortedPlayers.length} đã trả lời</span>
+        <div className="gq-nav-center">
+          <span className="gq-round-pill">Câu {game.currentRound + 1}/{game.totalRounds}</span>
         </div>
-        <button className="gq-menu-btn" title="Menu">
-          <Menu size={20} />
-        </button>
-      </div>
-
-      {/* Timer bar */}
-      <div className="gq-timer-bar">
-        <div
-          className={`gq-timer-fill ${timeLeft <= 5 ? 'warning' : ''}`}
-          style={{ width: `${timerProgress}%` }}
-        />
-        <span className="gq-timer-text">{timeLeft}s</span>
-      </div>
-
-      {/* Question card */}
-      <div className="gq-question-area">
-        <div className="gq-question-card" key={game.currentRound}>
-          <p className="gq-question-text" style={{ fontSize: `${gameQuestionFontSize}rem` }}>
-            {currentQuestion.question}
-          </p>
+        <div className="gq-nav-right">
+          {streak >= 2 && <span className="gq-streak"><Flame size={13} />{streak}</span>}
+          <span className="gq-score"><Trophy size={13} />{currentPlayer?.score || 0}</span>
         </div>
       </div>
 
-      {/* Answer grid */}
+      {/* Timer */}
+      <div className="gq-timer">
+        <div className={`gq-timer-track ${timeLeft <= 5 ? 'danger' : ''}`}>
+          <div className="gq-timer-bar" style={{ width: `${timerProgress}%` }} />
+        </div>
+        <span className={`gq-timer-num ${timeLeft <= 5 ? 'danger' : ''}`}>{timeLeft}</span>
+      </div>
+
+      {/* Question */}
+      <div className="gq-question-wrap">
+        <div className="gq-question" key={game.currentRound}>
+          <p style={{ fontSize: `${gameQuestionFontSize}rem` }}>{currentQuestion.question}</p>
+        </div>
+        <div className="gq-players-status">
+          <Users size={13} />
+          <span>{answeredCount}/{sortedPlayers.length}</span>
+        </div>
+      </div>
+
+      {/* Answers */}
       {isBlocked ? (
-        <div className="gq-blocked">
-          <p>Bạn bị phong tỏa câu này!</p>
-        </div>
+        <div className="gq-blocked"><p>Bạn bị phong tỏa câu này!</p></div>
       ) : (
-        <div className="gq-answers">
-          {currentQuestion.options.map((option, index) => {
-            const color = ANSWER_COLORS[index];
-            const isSelected = hasAnswered
-              ? currentPlayer?.currentAnswer === index
-              : selectedAnswer === index;
+        <div className="gq-grid">
+          {currentQuestion.options.map((option, i) => {
+            const style = ANSWER_STYLES[i];
+            const isSelected = hasAnswered ? currentPlayer?.currentAnswer === i : selectedAnswer === i;
             return (
               <button
-                key={index}
-                className={`gq-answer ${isSelected ? 'selected' : ''} ${hasAnswered ? 'locked' : ''}`}
-                onClick={() => !hasAnswered && !isSpectator && setSelectedAnswer(index)}
+                key={i}
+                className={`gq-opt ${isSelected ? 'sel' : ''} ${hasAnswered ? 'done' : ''}`}
+                onClick={() => !hasAnswered && !isSpectator && setSelectedAnswer(i)}
                 disabled={hasAnswered || isSpectator}
-                style={{
-                  '--ans-color': color.bg,
-                  '--ans-light': color.light,
-                  '--ans-border': color.border,
-                  fontSize: `${gameAnswerFontSize}rem`,
-                } as React.CSSProperties}
+                style={{ '--opt-bg': style.bg, fontSize: `${gameAnswerFontSize}rem` } as React.CSSProperties}
               >
-                <span className="gq-answer-indicator" />
-                <span className="gq-answer-text">{option}</span>
+                <span className="gq-opt-shape">{style.emoji}</span>
+                <span className="gq-opt-text">{option}</span>
               </button>
             );
           })}
         </div>
       )}
 
-      {/* Bottom: submit or status */}
-      <div className="gq-bottom">
-        {isSpectator ? (
-          <div className="gq-status">Đang theo dõi</div>
-        ) : hasAnswered ? (
-          <div className="gq-status gq-status-done">✓ Đã trả lời</div>
+      {/* Bottom action */}
+      <div className="gq-action">
+        {hasAnswered ? (
+          <div className="gq-done-pill">✓ Đã trả lời</div>
         ) : selectedAnswer !== null ? (
-          <button className="gq-submit-btn" onClick={handleSubmitAnswer} disabled={submitting}>
-            <Send size={18} />
-            <span>{submitting ? 'Đang gửi...' : 'Xác nhận'}</span>
+          <button className="gq-send" onClick={handleSubmitAnswer} disabled={submitting}>
+            <Send size={16} />
+            {submitting ? 'Gửi...' : 'Xác nhận'}
           </button>
         ) : (
-          <div className="gq-status">Chọn đáp án</div>
+          <div className="gq-hint">Chọn một đáp án</div>
         )}
       </div>
 
