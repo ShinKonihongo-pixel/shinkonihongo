@@ -19,7 +19,6 @@ import {
   Bell,
   Building2,
   BookOpen,
-  Flame,
   Headphones,
   FileText,
   BookOpenCheck,
@@ -42,6 +41,7 @@ import { useFriendNotifications } from '../../hooks/use-friendships';
 import { useCenterOptional } from '../../contexts/center-context';
 import { BRANCH_MEMBER_ROLE_LABELS, BRANCH_MEMBER_ROLE_COLORS } from '../../types/branch';
 import { useAchievementContextOptional } from '../../contexts/achievement-context';
+import { SidebarNotifications } from './sidebar-notifications';
 
 interface DailyWordsNotification {
   enabled: boolean;
@@ -518,146 +518,26 @@ export function Sidebar({
               </span>
             )}
 
-            {/* Notification dropdown */}
+            {/* Notification dropdown — extracted to sidebar-notifications.tsx */}
             {showNotifications && (
-          <div className="sidebar-notifications">
-            <div className="sidebar-notifications-header">
-              <span>Thông báo</span>
-              {totalUnread > 0 && (
-                <button
-                  className="btn btn-link btn-xs"
-                  onClick={() => {
-                    markAllClassroomRead();
-                    markAllFriendRead();
-                  }}
-                >
-                  Đọc tất cả
-                </button>
-              )}
-            </div>
-            <div className="sidebar-notifications-list">
-              {classroomNotifications.length === 0 && friendNotifications.length === 0 && !hasDailyWordsReminder ? (
-                <p className="empty-text">Không có thông báo</p>
-              ) : (
-                <>
-                  {/* Daily words notification */}
-                  {hasDailyWordsReminder && dailyWordsNotification && (
-                    <div
-                      className="sidebar-notification-item unread daily-words-notification"
-                      onClick={() => {
-                        dailyWordsNotification.onDismiss();
-                        dailyWordsNotification.onOpenModal();
-                        setShowNotifications(false);
-                      }}
-                    >
-                      <span className="notification-icon daily-words-icon">
-                        <BookOpen size={18} />
-                      </span>
-                      <div className="notification-content">
-                        <span className="notification-title">Nhiệm vụ học từ hôm nay</span>
-                        <span className="notification-progress">
-                          {dailyWordsNotification.progress.completed}/{dailyWordsNotification.progress.target} từ
-                          {dailyWordsNotification.streak > 0 && (
-                            <span className="streak-badge">
-                              <Flame size={12} /> {dailyWordsNotification.streak}
-                            </span>
-                          )}
-                        </span>
-                      </div>
-                      <div className="notification-progress-bar">
-                        <div
-                          className="notification-progress-fill"
-                          style={{ width: `${dailyWordsNotification.progress.percent}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                  {/* Friend notifications (badge received, friend requests, etc.) */}
-                  {friendNotifications.slice(0, 3).map(n => (
-                      <div
-                        key={n.id}
-                        className={`sidebar-notification-item ${n.isRead ? '' : 'unread'} ${n.type === 'badge_received' ? 'badge-notification' : ''}`}
-                        onClick={() => {
-                          if (!n.isRead) markFriendRead(n.id);
-                          // Navigate based on notification type
-                          if (n.type === 'badge_received') {
-                            onNavigate('notifications'); // Go to notifications page to see gift stats
-                          } else if (n.type === 'game_invitation') {
-                            onNavigate('quiz');
-                          } else {
-                            onNavigate('settings');
-                          }
-                          setShowNotifications(false);
-                        }}
-                      >
-                        <span className="notification-icon">
-                          {n.type === 'badge_received' && '🎁'}
-                          {n.type === 'friend_request' && '👋'}
-                          {n.type === 'friend_accepted' && '🤝'}
-                          {n.type === 'game_invitation' && '🎮'}
-                        </span>
-                        <div className="notification-content">
-                          <span className="notification-title">
-                            {n.fromUserName || 'Ai đó'} {n.message}
-                          </span>
-                          {n.type === 'badge_received' && (
-                            <span className="notification-subtitle">Nhận huy hiệu mới!</span>
-                          )}
-                        </div>
-                      </div>
-                  ))}
-                  {/* Classroom notifications */}
-                  {classroomNotifications.slice(0, 3).map(n => (
-                    <div
-                      key={n.id}
-                      className={`sidebar-notification-item ${n.isRead ? '' : 'unread'}`}
-                      onClick={() => {
-                        if (!n.isRead) markClassroomRead(n.id);
-                        // Navigate based on notification type
-                        if (n.type === 'test_assigned' || n.type === 'assignment_assigned' || n.type === 'submission_graded') {
-                          onNavigate('classroom');
-                        } else if (n.type === 'deadline_reminder') {
-                          onNavigate('classroom');
-                        } else if (n.type === 'class_invitation') {
-                          onNavigate('classroom');
-                        } else {
-                          onNavigate('notifications');
-                        }
-                        setShowNotifications(false);
-                      }}
-                    >
-                      <span className="notification-icon">
-                        {n.type === 'test_assigned' && '📝'}
-                        {n.type === 'assignment_assigned' && '📋'}
-                        {n.type === 'submission_graded' && '✅'}
-                        {n.type === 'deadline_reminder' && '⏰'}
-                        {n.type === 'class_invitation' && '🎓'}
-                        {n.type === 'announcement' && '📢'}
-                      </span>
-                      <div className="notification-content">
-                        <span className="notification-title">{n.title}</span>
-                        <span className="notification-message">{n.message}</span>
-                      </div>
-                    </div>
-                  ))}
-                </>
-              )}
-            </div>
-            {/* View all link */}
-            {(classroomNotifications.length > 0 || friendNotifications.length > 0) && (
-              <div className="sidebar-notifications-footer">
-                <button
-                  className="btn btn-link btn-sm"
-                  onClick={() => {
-                    onNavigate('notifications');
-                    setShowNotifications(false);
-                  }}
-                >
-                  Xem tất cả thông báo →
-                </button>
-              </div>
-            )}
-          </div>
+              <SidebarNotifications
+                classroomNotifications={classroomNotifications}
+                friendNotifications={friendNotifications}
+                dailyWordsNotification={dailyWordsNotification ? {
+                  progress: dailyWordsNotification.progress,
+                  streak: dailyWordsNotification.streak,
+                  onDismiss: dailyWordsNotification.onDismiss,
+                  onOpenModal: dailyWordsNotification.onOpenModal,
+                } : null}
+                hasDailyWordsReminder={hasDailyWordsReminder}
+                totalUnread={totalUnread}
+                onMarkAllClassroomRead={markAllClassroomRead}
+                onMarkAllFriendRead={markAllFriendRead}
+                onMarkClassroomRead={markClassroomRead}
+                onMarkFriendRead={markFriendRead}
+                onNavigate={onNavigate}
+                onClose={() => setShowNotifications(false)}
+              />
         )}
           </div>
         )}
