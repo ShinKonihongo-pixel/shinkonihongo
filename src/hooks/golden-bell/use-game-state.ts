@@ -57,11 +57,14 @@ export function useGameState({ currentUserId }: { currentUserId: string }) {
         alivePlayers: Object.keys(game.players).length,
       };
       // Auto-assign bots to teams in team mode
-      if ((updated as any).teams) {
-        const teams = { ...(updated as any).teams } as Record<string, any>;
+      // Cast to GoldenBellGame to access teams field (generic BaseGame doesn't have it)
+      const gbGame = updated as unknown as GoldenBellGame;
+      if (gbGame.teams) {
+        const teams = { ...gbGame.teams };
         const teamIds = Object.keys(teams);
-        Object.entries(updated.players).forEach(([pid, player]: [string, any]) => {
-          if (player.isBot && !player.teamId && teamIds.length > 0) {
+        Object.entries(updated.players).forEach(([pid, player]) => {
+          const gbPlayer = player as unknown as GoldenBellPlayer;
+          if (gbPlayer.isBot && !gbPlayer.teamId && teamIds.length > 0) {
             let smallestId = teamIds[0];
             let smallestCount = Infinity;
             teamIds.forEach(tid => {
@@ -75,10 +78,10 @@ export function useGameState({ currentUserId }: { currentUserId: string }) {
               members: [...(teams[smallestId].members || []), pid],
               aliveCount: (teams[smallestId].aliveCount || 0) + 1,
             };
-            (updated.players[pid] as any).teamId = smallestId;
+            (updated.players[pid] as unknown as GoldenBellPlayer).teamId = smallestId;
           }
         });
-        (updated as any).teams = teams;
+        (updated as unknown as GoldenBellGame).teams = teams;
       }
       return updated;
     },

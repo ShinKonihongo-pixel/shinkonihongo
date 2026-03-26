@@ -20,7 +20,7 @@ export interface RecognitionResult {
 // ========== Web Speech API fallback ==========
 
 function getWebSpeechRecognition(): typeof SpeechRecognition | null {
-  const w = window as any;
+  const w = window as unknown as Record<string, typeof SpeechRecognition | undefined>;
   return w.SpeechRecognition || w.webkitSpeechRecognition || null;
 }
 

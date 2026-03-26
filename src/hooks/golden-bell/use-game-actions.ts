@@ -121,7 +121,7 @@ export function useGameActions({
               members: [...(teams[smallestTeamId].members || []), newPlayerId],
               aliveCount: (teams[smallestTeamId].aliveCount || 0) + 1,
             };
-            (updatedPlayers[newPlayerId] as any).teamId = smallestTeamId;
+            (updatedPlayers[newPlayerId] as unknown as GoldenBellPlayer).teamId = smallestTeamId;
             extra.teams = teams;
           }
         }

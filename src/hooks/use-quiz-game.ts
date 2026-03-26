@@ -76,7 +76,7 @@ export function useQuizGame({ playerId, playerName, playerAvatar, playerRole }: 
     if (!question) return;
 
     for (const [pid, player] of Object.entries(game.players)) {
-      if (!(player as any).isBot || player.currentAnswer !== null) continue;
+      if (!player.isBot || player.currentAnswer !== null) continue;
 
       const delay = 1000 + Math.floor(Math.random() * 5000); // 1-6s
       const timer = setTimeout(async () => {

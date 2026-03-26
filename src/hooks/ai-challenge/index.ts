@@ -28,10 +28,13 @@ export interface UseAIChallengeProps {
   };
   flashcards: Flashcard[];
   aiSettings?: AIChallengeAppSettings;
-  currentLevel: string;
+  currentLevel: 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | 'BT' | 'all';
 }
 
 export function useAIChallenge({ currentUser, flashcards, aiSettings, currentLevel }: UseAIChallengeProps) {
+  // Default 'all' to 'N5' for game state/gameplay (they require a specific level)
+  const effectiveLevel = (currentLevel === 'all' ? 'N5' : currentLevel) as import('./utils').JLPTLevel;
+
   const {
     game,
     setGame,
@@ -46,7 +49,7 @@ export function useAIChallenge({ currentUser, flashcards, aiSettings, currentLev
     aiOpponent,
     checkAIUnlocked,
     aiOpponents,
-  } = useGameState({ currentUserId: currentUser.id, currentLevel: currentLevel as any });
+  } = useGameState({ currentUserId: currentUser.id, currentLevel: effectiveLevel });
 
   const { startGame } = useGameStart({
     flashcards,
@@ -63,7 +66,7 @@ export function useAIChallenge({ currentUser, flashcards, aiSettings, currentLev
     game,
     currentQuestion,
     aiSettings,
-    currentLevel: currentLevel as any,
+    currentLevel: effectiveLevel,
     progress,
     setGame,
     setResult,

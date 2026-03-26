@@ -43,7 +43,7 @@ export function useLobbyState(
           ...p,
           odinhId: p.odinhId,
           isHost: p.odinhId === hostId,
-          isBot: (p as any).isBot,
+          isBot: p.isBot,
           role: p.role,
         })
       ),

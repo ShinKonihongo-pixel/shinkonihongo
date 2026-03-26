@@ -122,7 +122,7 @@ export function useGameRoomState<
     if (!game) return [];
     const players = Object.values(game.players);
     if (sortPlayers) return sortPlayers(players as BasePlayer[]);
-    return players.sort((a, b) => ((b as any).score ?? 0) - ((a as any).score ?? 0));
+    return players.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
   }, [game, sortPlayers]);
 
   return {

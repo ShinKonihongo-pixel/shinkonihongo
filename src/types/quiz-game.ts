@@ -31,6 +31,7 @@ export interface GamePlayer {
   avatar?: string;          // Emoji or icon chosen by the player
   role?: string;            // User role (e.g. 'admin', 'vip') — used for lobby styling
   isSpectator?: boolean;    // Host watching the game without competing
+  isBot?: boolean;          // True for AI-controlled bot players
   score: number;
   isHost: boolean;
   isBlocked: boolean;       // True when a block_player power-up prevents answering this round
