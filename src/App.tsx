@@ -897,18 +897,9 @@ function AppContent() {
         <>
           {/* AI Tutor button (left of chat button) */}
           <button
-            className="floating-ai-btn"
+            className={`floating-ai-btn ${isAiChatOpen ? 'floating-ai-btn--active' : ''}`}
             onClick={() => { setIsAiChatOpen(!isAiChatOpen); if (isChatOpen) setIsChatOpen(false); }}
             title="AI Gia sư"
-            style={{
-              position: 'fixed', bottom: 20, right: 76, zIndex: 1000,
-              width: 46, height: 46, borderRadius: '50%',
-              background: isAiChatOpen ? 'linear-gradient(135deg, #8b5cf6, #ec4899)' : 'linear-gradient(135deg, #6d28d9, #9333ea)',
-              border: 'none', color: 'white', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 4px 16px rgba(139,92,246,0.3)',
-              fontSize: '1.2rem', transition: 'all 0.2s',
-            }}
           >
             🤖
           </button>

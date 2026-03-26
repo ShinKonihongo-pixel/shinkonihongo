@@ -177,6 +177,31 @@
   --glass-blur: blur(16px);
 }
 
+/* Floating AI Tutor button */
+.floating-ai-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 76px;
+  z-index: 1000;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6d28d9, #9333ea);
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
+  font-size: 1.2rem;
+  transition: all 0.2s;
+}
+
+.floating-ai-btn--active {
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;

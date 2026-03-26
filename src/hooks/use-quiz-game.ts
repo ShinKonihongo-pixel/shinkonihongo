@@ -93,7 +93,7 @@ export function useQuizGame({ playerId, playerName, playerAvatar, playerRole }: 
             [`players.${pid}.answerTime`]: delay,
           });
         } catch (err) {
-          console.error('Bot answer failed:', err);
+          handleError(err, { context: 'useQuizGame/botAnswer', silent: true });
         }
       }, delay);
       botAnswerTimersRef.current.push(timer);
@@ -379,7 +379,7 @@ export function useQuizGame({ playerId, playerName, playerAvatar, playerRole }: 
         // Write directly to Firestore — subscription picks it up
         await updateGameFields(gameId, { [`players.${botId}`]: botPlayer });
       } catch (err) {
-        console.error('Bot auto-join failed:', err);
+        handleError(err, { context: 'useQuizGame/botJoin', silent: true });
       }
     }, delay);
 

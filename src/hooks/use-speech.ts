@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { JapaneseVoice, JapaneseVoiceGender, PronunciationResult, PronunciationDiff } from '../types/kaiwa';
+import { handleError } from '../utils/error-handler';
 
 // Web Speech API type declarations
 interface SpeechRecognitionEvent extends Event {
@@ -239,7 +240,7 @@ export function useSpeech(options: UseSpeechOptions = {}) {
       };
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        console.error('[Speech] Error:', event.error);
+        handleError(event.error, { context: 'useSpeech/recognition', silent: true });
         setIsListening(false);
         switch (event.error) {
           case 'no-speech':
@@ -320,7 +321,7 @@ export function useSpeech(options: UseSpeechOptions = {}) {
     try {
       recognitionRef.current.start();
     } catch (e) {
-      console.error('[Speech] Start error:', e);
+      handleError(e, { context: 'useSpeech/start', silent: true });
       setError('Đang trong quá trình nhận dạng.');
     }
   }, [recognitionSupported]);

@@ -94,7 +94,7 @@ export function useKanjiAnalysis(kanjiText: string, options: UseKanjiAnalysisOpt
         const { enriched, updated } = enrichWithSeedRadicals(fromCache);
         if (updated.length > 0) {
           for (const a of updated) kanjiAnalysisCache.set(a.character, a);
-          saveMultipleKanjiAnalysis(updated).catch(e => console.error('Enrich save error:', e));
+          saveMultipleKanjiAnalysis(updated).catch(e => handleError(e, { context: 'useKanjiAnalysis/save', silent: true }));
         }
         enriched.sort((a, b) => chars.indexOf(a.character) - chars.indexOf(b.character));
         setAnalyses(enriched);
@@ -114,7 +114,7 @@ export function useKanjiAnalysis(kanjiText: string, options: UseKanjiAnalysisOpt
 
       // Silently persist enriched docs back to Firestore (fire-and-forget)
       if (fsUpdated.length > 0) {
-        saveMultipleKanjiAnalysis(fsUpdated).catch(e => console.error('Enrich save error:', e));
+        saveMultipleKanjiAnalysis(fsUpdated).catch(e => handleError(e, { context: 'useKanjiAnalysis/save', silent: true }));
       }
 
       if (readOnly) {
@@ -139,7 +139,7 @@ export function useKanjiAnalysis(kanjiText: string, options: UseKanjiAnalysisOpt
           try {
             await saveMultipleKanjiAnalysis(generated);
           } catch (saveErr) {
-            console.error('Failed to save kanji analysis:', saveErr);
+            handleError(saveErr, { context: 'useKanjiAnalysis/save', silent: true });
           }
 
           // Update in-memory cache so next open never calls AI again
@@ -154,7 +154,7 @@ export function useKanjiAnalysis(kanjiText: string, options: UseKanjiAnalysisOpt
         setAnalyses(allAnalyses);
       }
     } catch (err) {
-      console.error('useKanjiAnalysis error:', err);
+      handleError(err, { context: 'useKanjiAnalysis' });
       setError(err instanceof Error ? err.message : 'Lỗi khi tải phân tích Kanji');
     } finally {
       setLoading(false);
@@ -174,7 +174,7 @@ export function useKanjiAnalysis(kanjiText: string, options: UseKanjiAnalysisOpt
       try {
         await saveMultipleKanjiAnalysis(generated);
       } catch (saveErr) {
-        console.error('Failed to save kanji analysis:', saveErr);
+        handleError(saveErr, { context: 'useKanjiAnalysis/save', silent: true });
       }
       for (const a of generated) {
         kanjiAnalysisCache.set(a.character, a);

@@ -138,7 +138,7 @@ function parseDialogueResponse(responseText: string, topicId: SpeakingTopicId, l
       createdAt: new Date().toISOString(),
     };
   } catch {
-    console.error('Failed to parse dialogue response');
+    handleError('Parse failed', { context: 'useSpeakingPractice/parse', silent: true });
     return null;
   }
 }
@@ -218,7 +218,7 @@ function loadProgress(): SpeakingProgress {
     const saved = localStorage.getItem(PROGRESS_STORAGE_KEY);
     if (saved) return JSON.parse(saved);
   } catch {
-    console.error('Failed to load speaking progress');
+    handleError('Load failed', { context: 'useSpeakingPractice/loadProgress', silent: true });
   }
 
   // Default progress
@@ -239,7 +239,7 @@ function saveProgress(progress: SpeakingProgress): void {
   try {
     localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(progress));
   } catch {
-    console.error('Failed to save speaking progress');
+    handleError('Save failed', { context: 'useSpeakingPractice/saveProgress', silent: true });
   }
 }
 

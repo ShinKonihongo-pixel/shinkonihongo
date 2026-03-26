@@ -42,7 +42,7 @@ export function useFlashcards(levelFilter?: string) {
               await firestoreService.saveMultipleKanjiAnalysis(generated);
             }
           } catch (err) {
-            console.error('Background kanji analysis error:', err);
+            handleError(err, { context: 'useFlashcards/kanjiAnalysis', silent: true });
           }
         })();
       }

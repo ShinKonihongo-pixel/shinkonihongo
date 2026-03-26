@@ -141,7 +141,7 @@ export function useCenterAnalytics(
         setGameSessions(allGames);
         setJlptSessions(allJlpt);
       } catch (err) {
-        console.error('Center analytics fetch error:', err);
+        handleError(err, { context: 'useCenterAnalytics' });
       } finally {
         setLoading(false);
       }

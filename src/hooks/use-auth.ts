@@ -52,7 +52,7 @@ export function useAuth() {
             };
             await firestoreService.addUser(defaultSuperAdmin);
           } catch (err) {
-            console.error('Error creating default super admin:', err);
+            handleError(err, { context: 'useAuth/createDefaultAdmin', silent: true });
           }
         }
         setUsers(usersData);
