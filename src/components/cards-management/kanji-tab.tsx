@@ -33,22 +33,7 @@ type NavState =
   | { type: 'parent'; level: JLPTLevel; lessonId: string; lessonName: string }
   | { type: 'child'; level: JLPTLevel; parentId: string; parentName: string; lessonId: string; lessonName: string };
 
-function downloadAsJSON(data: unknown, filename: string) {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = filename; a.click();
-  URL.revokeObjectURL(url);
-}
-
-function readJSONFile(file: File): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(JSON.parse(reader.result as string));
-    reader.onerror = reject;
-    reader.readAsText(file);
-  });
-}
+import { downloadAsJSON, readJSONFileRaw, generateExportFilename } from '../../utils/data-export-import';
 
 interface KanjiTabProps {
   kanjiCards: KanjiCard[];
@@ -265,7 +250,7 @@ export function KanjiTab({
     if (!file || !onImportKanjiCard) return;
     setIsImporting(true);
     try {
-      const data = await readJSONFile(file) as { kanjiCards?: Omit<KanjiCard, 'id'>[] };
+      const data = await readJSONFileRaw(file) as { kanjiCards?: Omit<KanjiCard, 'id'>[] };
       let imported = 0;
       for (const card of data.kanjiCards || []) {
         await onImportKanjiCard(card);

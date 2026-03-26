@@ -25,25 +25,7 @@ type NavState =
   | { type: 'parent'; level: JLPTLevel; lessonId: string; lessonName: string }
   | { type: 'child'; level: JLPTLevel; parentId: string; parentName: string; lessonId: string; lessonName: string };
 
-// Export/Import utilities
-function downloadAsJSON(data: unknown, filename: string) {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function readJSONFile(file: File): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(JSON.parse(reader.result as string));
-    reader.onerror = reject;
-    reader.readAsText(file);
-  });
-}
+import { downloadAsJSON, readJSONFileRaw, generateExportFilename } from '../../utils/data-export-import';
 
 export function GrammarTab({
   grammarCards,
@@ -179,7 +161,7 @@ export function GrammarTab({
         grammarCards: grammarCards.map(({ id: _, ...rest }) => rest),
         grammarLessons: grammarLessons.map(({ id: _, ...rest }) => rest),
       };
-      downloadAsJSON(exportData, `grammar-export-${new Date().toISOString().split('T')[0]}.json`);
+      downloadAsJSON(exportData, generateExportFilename('grammar'));
     } catch (_err) {
       alert('Có lỗi khi xuất dữ liệu');
     }
@@ -193,7 +175,7 @@ export function GrammarTab({
 
     setIsImporting(true);
     try {
-      const data = await readJSONFile(file) as { type: string; grammarCards: unknown[] };
+      const data = await readJSONFileRaw(file) as { type: string; grammarCards: unknown[] };
       if (data.type !== 'grammar') throw new Error('File không hợp lệ');
       let count = 0;
       for (const card of data.grammarCards) {

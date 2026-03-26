@@ -10,38 +10,8 @@ import { ConfirmModal } from '../ui/confirm-modal';
 import { LevelGrid } from './level-grid';
 import type { VocabularyTabProps, FlashcardNavState, Flashcard, FlashcardFormData, Lesson, JLPTLevel } from './cards-management-types';
 import { seedN5Lessons, seedN4Lessons, fixLessonOrder } from '../../scripts/seed-n5-lessons';
+import { downloadAsJSON, readJSONFileRaw, generateExportFilename } from '../../utils/data-export-import';
 import './vocabulary-tab.css';
-// Simple export/import utilities
-function downloadAsJSON(data: unknown, filename: string) {
-  const json = JSON.stringify(data, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function readJSONFile(file: File): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        resolve(JSON.parse(reader.result as string));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    reader.onerror = reject;
-    reader.readAsText(file);
-  });
-}
-
-function generateExportFilename(prefix: string): string {
-  const date = new Date().toISOString().split('T')[0];
-  return `${prefix}-export-${date}.json`;
-}
 
 interface VocabularyExportData {
   version: string;
@@ -134,7 +104,7 @@ export function VocabularyTab({
     setImportStatus('Đang đọc file...');
 
     try {
-      const data = await readJSONFile(file) as VocabularyExportData;
+      const data = await readJSONFileRaw(file) as VocabularyExportData;
 
       if (!data.type || (data.type !== 'vocabulary' && data.type !== 'flashcards')) {
         throw new Error('File không phải là dữ liệu từ vựng hợp lệ');

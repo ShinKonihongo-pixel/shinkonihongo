@@ -93,7 +93,8 @@ export function exportJLPTData(
 
 // ============ DOWNLOAD HELPER ============
 
-export function downloadAsJSON(data: ExportData, filename: string): void {
+// Generic JSON download — works with any serializable data
+export function downloadAsJSON(data: unknown, filename: string): void {
   const jsonString = JSON.stringify(data, null, 2);
   const blob = new Blob([jsonString], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -109,6 +110,20 @@ export function downloadAsJSON(data: ExportData, filename: string): void {
 
 // ============ IMPORT HELPERS ============
 
+// Simple JSON file reader — no validation, returns raw parsed data
+export function readJSONFileRaw(file: File): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try { resolve(JSON.parse(reader.result as string)); }
+      catch { reject(new Error('File JSON không hợp lệ')); }
+    };
+    reader.onerror = () => reject(new Error('Lỗi đọc file'));
+    reader.readAsText(file);
+  });
+}
+
+// Validated JSON reader — requires version + type fields (for flashcard/JLPT exports)
 export function readJSONFile(file: File): Promise<ExportData> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -151,7 +166,7 @@ export function validateJLPTImport(data: unknown): data is JLPTExportData {
 }
 
 // Generate filename with timestamp
-export function generateExportFilename(type: 'flashcards' | 'jlpt'): string {
+export function generateExportFilename(prefix: string): string {
   const date = new Date().toISOString().split('T')[0];
-  return `${type}-export-${date}.json`;
+  return `${prefix}-export-${date}.json`;
 }
