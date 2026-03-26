@@ -13,6 +13,7 @@ import type {
 } from '../types/friendship';
 import type { User } from '../types/user';
 import * as friendshipService from '../services/friendship-firestore';
+import { handleError } from '../utils/error-handler';
 
 // ============ FRIENDSHIPS HOOK ============
 
@@ -102,7 +103,7 @@ export function useFriendships(userId: string | null, users: User[]) {
       await friendshipService.sendFriendRequest(userId, toUserId, message);
       return { success: true };
     } catch (err) {
-      console.error('Error sending friend request:', err);
+      handleError(err, { context: 'useFriendships' });
       return { success: false, error: 'Lỗi khi gửi lời mời' };
     }
   }, [userId]);
@@ -113,7 +114,7 @@ export function useFriendships(userId: string | null, users: User[]) {
       await friendshipService.respondToFriendRequest(requestId, accept);
       return true;
     } catch (err) {
-      console.error('Error responding to friend request:', err);
+      handleError(err, { context: 'useFriendships' });
       return false;
     }
   }, []);
@@ -124,7 +125,7 @@ export function useFriendships(userId: string | null, users: User[]) {
       await friendshipService.removeFriendship(friendshipId);
       return true;
     } catch (err) {
-      console.error('Error removing friend:', err);
+      handleError(err, { context: 'useFriendships' });
       return false;
     }
   }, []);
@@ -180,7 +181,7 @@ export function useGameInvitations(userId: string | null) {
       await friendshipService.sendGameInvitation(gameId, gameCode, gameTitle, userId, toUserId);
       return true;
     } catch (err) {
-      console.error('Error sending game invitation:', err);
+      handleError(err, { context: 'useFriendships' });
       return false;
     }
   }, [userId]);
@@ -190,7 +191,7 @@ export function useGameInvitations(userId: string | null) {
       await friendshipService.respondToGameInvitation(invitationId, accept);
       return true;
     } catch (err) {
-      console.error('Error responding to invitation:', err);
+      handleError(err, { context: 'useFriendships' });
       return false;
     }
   }, []);
@@ -270,7 +271,7 @@ export function useBadges(userId: string | null, users: User[]) {
       await friendshipService.sendBadgeGift(badgeType, userId, toUserId, fromUserName, message);
       return true;
     } catch (err) {
-      console.error('Error sending badge:', err);
+      handleError(err, { context: 'useFriendships' });
       return false;
     }
   }, [userId, users]);
@@ -311,7 +312,7 @@ export function useFriendNotifications(userId: string | null) {
       await friendshipService.markNotificationAsRead(notificationId);
       return true;
     } catch (err) {
-      console.error('Error marking notification as read:', err);
+      handleError(err, { context: 'useFriendships' });
       return false;
     }
   }, []);
@@ -322,7 +323,7 @@ export function useFriendNotifications(userId: string | null) {
       await friendshipService.markAllFriendNotificationsAsRead(userId);
       return true;
     } catch (err) {
-      console.error('Error marking all as read:', err);
+      handleError(err, { context: 'useFriendships' });
       return false;
     }
   }, [userId]);

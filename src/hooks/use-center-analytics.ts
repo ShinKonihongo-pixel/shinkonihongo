@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { collection, query, where, getDocs, db } from '../services/firestore/collections';
 import type { CenterMemberInfo } from './use-center-members';
 import type { Classroom } from '../types/classroom';
+import { handleError } from '../utils/error-handler';
 
 // ========== Types ==========
 

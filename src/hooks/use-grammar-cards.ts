@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { GrammarCard, GrammarCardFormData, JLPTLevel } from '../types/flashcard';
 import * as firestoreService from '../services/firestore';
+import { handleError } from '../utils/error-handler';
 
 export function useGrammarCards(levelFilter?: string) {
   const [grammarCards, setGrammarCards] = useState<GrammarCard[]>([]);
@@ -28,7 +29,7 @@ export function useGrammarCards(levelFilter?: string) {
       return newCard;
     } catch (err) {
       setError('Failed to add grammar card');
-      console.error('Error adding grammar card:', err);
+      handleError(err, { context: 'usegrammarUcards' });
       throw err;
     }
   }, []);
@@ -39,7 +40,7 @@ export function useGrammarCards(levelFilter?: string) {
       await firestoreService.updateGrammarCard(id, data);
     } catch (err) {
       setError('Failed to update grammar card');
-      console.error('Error updating grammar card:', err);
+      handleError(err, { context: 'usegrammarUcards' });
       throw err;
     }
   }, []);
@@ -50,7 +51,7 @@ export function useGrammarCards(levelFilter?: string) {
       await firestoreService.deleteGrammarCard(id);
     } catch (err) {
       setError('Failed to delete grammar card');
-      console.error('Error deleting grammar card:', err);
+      handleError(err, { context: 'usegrammarUcards' });
       throw err;
     }
   }, []);

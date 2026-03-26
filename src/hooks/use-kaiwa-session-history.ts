@@ -11,6 +11,7 @@ import type {
 } from '../types/kaiwa-session';
 import { KAIWA_ACHIEVEMENTS, DEFAULT_KAIWA_STATS } from '../types/kaiwa-session';
 import type { JLPTLevel, ConversationTopic, KaiwaMessage, KaiwaEvaluation } from '../types/kaiwa';
+import { handleError } from '../utils/error-handler';
 
 const STORAGE_KEY_SESSIONS = 'kaiwa-sessions';
 const STORAGE_KEY_STATS = 'kaiwa-stats';
@@ -213,7 +214,7 @@ export function useKaiwaSessionHistory() {
         setDailyRecords(JSON.parse(savedDaily));
       }
     } catch (error) {
-      console.error('Failed to load kaiwa session history:', error);
+      handleError(error, { context: 'usekaiwaUsessionUhistory' });
     }
     setLoading(false);
   }, []);

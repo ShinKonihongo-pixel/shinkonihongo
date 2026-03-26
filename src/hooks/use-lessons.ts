@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { Lesson, JLPTLevel } from '../types/flashcard';
 import * as firestoreService from '../services/firestore';
+import { handleError } from '../utils/error-handler';
 
 export function useLessons() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -43,7 +44,7 @@ export function useLessons() {
       const newLesson = await firestoreService.addLesson(newLessonData);
       return newLesson;
     } catch (err) {
-      console.error('Error adding lesson:', err);
+      handleError(err, { context: 'useLessons' });
       throw err;
     }
   }, [lessons]);
@@ -56,7 +57,7 @@ export function useLessons() {
     try {
       await firestoreService.updateLesson(id, { isLocked: !lesson.isLocked });
     } catch (err) {
-      console.error('Error toggling lock:', err);
+      handleError(err, { context: 'useLessons' });
       throw err;
     }
   }, [lessons]);
@@ -69,7 +70,7 @@ export function useLessons() {
     try {
       await firestoreService.updateLesson(id, { isHidden: !lesson.isHidden });
     } catch (err) {
-      console.error('Error toggling hide:', err);
+      handleError(err, { context: 'useLessons' });
       throw err;
     }
   }, [lessons]);
@@ -79,7 +80,7 @@ export function useLessons() {
     try {
       await firestoreService.updateLesson(id, { name });
     } catch (err) {
-      console.error('Error updating lesson:', err);
+      handleError(err, { context: 'useLessons' });
       throw err;
     }
   }, []);
@@ -89,7 +90,7 @@ export function useLessons() {
     try {
       await firestoreService.deleteLesson(id);
     } catch (err) {
-      console.error('Error deleting lesson:', err);
+      handleError(err, { context: 'useLessons' });
       throw err;
     }
   }, []);
@@ -119,7 +120,7 @@ export function useLessons() {
     try {
       await firestoreService.updateLesson(id, { order: newOrder });
     } catch (err) {
-      console.error('Error reordering lesson:', err);
+      handleError(err, { context: 'useLessons' });
       throw err;
     }
   }, []);
@@ -135,7 +136,7 @@ export function useLessons() {
         )
       );
     } catch (err) {
-      console.error('Error reordering lessons:', err);
+      handleError(err, { context: 'useLessons' });
       throw err;
     }
   }, []);

@@ -10,6 +10,7 @@ import type {
 import type { Flashcard } from '../types/flashcard';
 import type { JLPTQuestion } from '../types/jlpt-question';
 import * as gameService from '../services/quiz-game-firestore';
+import { handleError } from '../utils/error-handler';
 
 interface UseQuizGameOptions {
   playerId: string;
@@ -163,7 +164,7 @@ export function useQuizGame({ playerId, playerName, playerAvatar, playerRole }: 
       setGameResults(null);
       setError(null);
     } catch (err) {
-      console.error('Error leaving game:', err);
+      handleError(err, { context: 'useQuizGame' });
     } finally {
       leavingRef.current = false;
     }
@@ -197,7 +198,7 @@ export function useQuizGame({ playerId, playerName, playerAvatar, playerRole }: 
     try {
       await gameService.submitAnswer(game.id, playerId, answerIndex);
     } catch (err) {
-      console.error('Error submitting answer:', err);
+      handleError(err, { context: 'useQuizGame' });
     }
   }, [game, playerId]);
 
@@ -207,7 +208,7 @@ export function useQuizGame({ playerId, playerName, playerAvatar, playerRole }: 
     try {
       await gameService.revealAnswer(game.id, playerId);
     } catch (err) {
-      console.error('Error revealing answer:', err);
+      handleError(err, { context: 'useQuizGame' });
     }
   }, [game, playerId]);
 
@@ -217,7 +218,7 @@ export function useQuizGame({ playerId, playerName, playerAvatar, playerRole }: 
     try {
       await gameService.nextRound(game.id, playerId);
     } catch (err) {
-      console.error('Error going to next round:', err);
+      handleError(err, { context: 'useQuizGame' });
     }
   }, [game, playerId]);
 
@@ -227,7 +228,7 @@ export function useQuizGame({ playerId, playerName, playerAvatar, playerRole }: 
     try {
       await gameService.continueFromSpecial(game.id, playerId);
     } catch (err) {
-      console.error('Error continuing from power-up:', err);
+      handleError(err, { context: 'useQuizGame' });
     }
   }, [game, playerId]);
 
@@ -237,7 +238,7 @@ export function useQuizGame({ playerId, playerName, playerAvatar, playerRole }: 
     try {
       await gameService.continueFromLeaderboard(game.id, playerId);
     } catch (err) {
-      console.error('Error continuing from leaderboard:', err);
+      handleError(err, { context: 'useQuizGame' });
     }
   }, [game, playerId]);
 
@@ -250,7 +251,7 @@ export function useQuizGame({ playerId, playerName, playerAvatar, playerRole }: 
     try {
       return await gameService.usePowerUp(game.id, playerId, powerUpType, targetPlayerId);
     } catch (err) {
-      console.error('Error using power-up:', err);
+      handleError(err, { context: 'useQuizGame' });
       return false;
     }
   }, [game, playerId]);
@@ -261,7 +262,7 @@ export function useQuizGame({ playerId, playerName, playerAvatar, playerRole }: 
     try {
       await gameService.updateGame(game.id, { hostMessage: message });
     } catch (err) {
-      console.error('Error updating host message:', err);
+      handleError(err, { context: 'useQuizGame' });
     }
   }, [game]);
 
@@ -279,7 +280,7 @@ export function useQuizGame({ playerId, playerName, playerAvatar, playerRole }: 
       const rooms = await gameService.getAvailableRooms();
       setAvailableRooms(rooms);
     } catch (err) {
-      console.error('Error fetching rooms:', err);
+      handleError(err, { context: 'useQuizGame' });
     } finally {
       setLoadingRooms(false);
     }

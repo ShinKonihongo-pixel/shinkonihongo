@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { StudySession, GameSession, JLPTSession, UserStats } from '../types/user';
 import * as firestoreService from '../services/firestore';
 import { trackEvent } from '../lib/analytics';
+import { handleError } from '../utils/error-handler';
 
 export function useUserHistory(userId: string | undefined) {
   const [studySessions, setStudySessions] = useState<StudySession[]>([]);
@@ -33,7 +34,7 @@ export function useUserHistory(userId: string | undefined) {
         setGameSessions(game.sort((a, b) => b.date.localeCompare(a.date)));
         setJLPTSessions(jlpt.sort((a, b) => b.date.localeCompare(a.date)));
       } catch (err) {
-        console.error('Error fetching user history:', err);
+        handleError(err, { context: 'useuserUhistory' });
       } finally {
         setLoading(false);
       }
@@ -82,7 +83,7 @@ export function useUserHistory(userId: string | undefined) {
         correctCount: data.correctCount,
       });
     } catch (err) {
-      console.error('Error adding study session:', err);
+      handleError(err, { context: 'useuserUhistory' });
     }
   }, [userId]);
 
@@ -98,7 +99,7 @@ export function useUserHistory(userId: string | undefined) {
         playerCount: data.totalPlayers,
       });
     } catch (err) {
-      console.error('Error adding game session:', err);
+      handleError(err, { context: 'useuserUhistory' });
     }
   }, [userId]);
 
@@ -109,7 +110,7 @@ export function useUserHistory(userId: string | undefined) {
       const session = await firestoreService.addJLPTSession({ ...data, userId });
       setJLPTSessions(prev => [session, ...prev]);
     } catch (err) {
-      console.error('Error adding JLPT session:', err);
+      handleError(err, { context: 'useuserUhistory' });
     }
   }, [userId]);
 

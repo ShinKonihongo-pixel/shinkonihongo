@@ -5,6 +5,7 @@ import type { KanjiCard, KanjiCardFormData } from '../types/kanji';
 import type { JLPTLevel } from '../types/flashcard';
 import * as firestoreService from '../services/firestore';
 import { getKanjiSeedForLevel, getKanjiSeedCount } from '../data/kanji-seed';
+import { handleError } from '../utils/error-handler';
 
 export function useKanjiCards(levelFilter?: string) {
   const [kanjiCards, setKanjiCards] = useState<KanjiCard[]>([]);
@@ -27,7 +28,7 @@ export function useKanjiCards(levelFilter?: string) {
       return await firestoreService.addKanjiCard(data, createdBy);
     } catch (err) {
       setError('Failed to add kanji card');
-      console.error('Error adding kanji card:', err);
+      handleError(err, { context: 'usekanjiUcards' });
       throw err;
     }
   }, []);
@@ -37,7 +38,7 @@ export function useKanjiCards(levelFilter?: string) {
       await firestoreService.updateKanjiCard(id, data);
     } catch (err) {
       setError('Failed to update kanji card');
-      console.error('Error updating kanji card:', err);
+      handleError(err, { context: 'usekanjiUcards' });
       throw err;
     }
   }, []);
@@ -47,7 +48,7 @@ export function useKanjiCards(levelFilter?: string) {
       await firestoreService.deleteKanjiCard(id);
     } catch (err) {
       setError('Failed to delete kanji card');
-      console.error('Error deleting kanji card:', err);
+      handleError(err, { context: 'usekanjiUcards' });
       throw err;
     }
   }, []);

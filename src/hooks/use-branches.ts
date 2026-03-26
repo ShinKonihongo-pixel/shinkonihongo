@@ -11,6 +11,7 @@ import type {
 } from '../types/branch';
 import type { User } from '../types/user';
 import * as branchService from '../services/branch-firestore';
+import { handleError } from '../utils/error-handler';
 
 // ============ MAIN BRANCHES HOOK ============
 
@@ -49,7 +50,7 @@ export function useBranches(userId: string | null, isDirector: boolean) {
     try {
       return await branchService.createBranch(data, userId);
     } catch (err) {
-      console.error('Error creating branch:', err);
+      handleError(err, { context: 'useBranches' });
       return null;
     }
   }, [userId]);
@@ -59,7 +60,7 @@ export function useBranches(userId: string | null, isDirector: boolean) {
       await branchService.updateBranch(id, data);
       return true;
     } catch (err) {
-      console.error('Error updating branch:', err);
+      handleError(err, { context: 'useBranches' });
       return false;
     }
   }, []);
@@ -69,7 +70,7 @@ export function useBranches(userId: string | null, isDirector: boolean) {
       await branchService.deleteBranch(id);
       return true;
     } catch (err) {
-      console.error('Error deleting branch:', err);
+      handleError(err, { context: 'useBranches' });
       return false;
     }
   }, []);
@@ -136,7 +137,7 @@ export function useBranchMembers(branchId: string | null, users: User[]) {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Lỗi thêm thành viên';
       setError(message);
-      console.error('Error adding member:', err);
+      handleError(err, { context: 'useBranches' });
       return null;
     }
   }, [branchId]);
@@ -152,7 +153,7 @@ export function useBranchMembers(branchId: string | null, users: User[]) {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Lỗi cập nhật thành viên';
       setError(message);
-      console.error('Error updating member:', err);
+      handleError(err, { context: 'useBranches' });
       return false;
     }
   }, []);
@@ -165,7 +166,7 @@ export function useBranchMembers(branchId: string | null, users: User[]) {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Lỗi xóa thành viên';
       setError(message);
-      console.error('Error removing member:', err);
+      handleError(err, { context: 'useBranches' });
       return false;
     }
   }, []);
@@ -245,7 +246,7 @@ export function useBranchStats(branchId: string | null) {
       setStats(data);
       setLoading(false);
     }).catch((err) => {
-      console.error('Error fetching branch stats:', err);
+      handleError(err, { context: 'useBranches' });
       setLoading(false);
     });
   }, [branchId]);
@@ -257,7 +258,7 @@ export function useBranchStats(branchId: string | null) {
       const data = await branchService.getBranchStats(branchId);
       setStats(data);
     } catch (err) {
-      console.error('Error refreshing branch stats:', err);
+      handleError(err, { context: 'useBranches' });
     }
     setLoading(false);
   }, [branchId]);
@@ -405,7 +406,7 @@ export function useBranchAccess(userId: string | null, branchId: string | null) 
       setRole(userRole);
       setLoading(false);
     }).catch((err) => {
-      console.error('Error checking branch access:', err);
+      handleError(err, { context: 'useBranches' });
       setHasAccess(false);
       setRole(null);
       setLoading(false);

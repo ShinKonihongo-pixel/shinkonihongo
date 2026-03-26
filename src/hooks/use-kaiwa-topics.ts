@@ -3,6 +3,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import type {
+import { handleError } from '../utils/error-handler';
   KaiwaAdvancedTopic,
   KaiwaAdvancedQuestion,
   KaiwaAdvancedTopicFormData,
@@ -39,7 +40,7 @@ export function useKaiwaTopics({ currentUserId }: UseKaiwaTopicsOptions) {
         setQuestions(JSON.parse(savedQuestions));
       }
     } catch (error) {
-      console.error('Failed to load kaiwa topics:', error);
+      handleError(error, { context: 'usekaiwaUtopics' });
     }
     setLoading(false);
   }, []);

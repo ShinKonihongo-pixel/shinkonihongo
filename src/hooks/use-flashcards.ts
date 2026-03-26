@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import type { Flashcard, FlashcardFormData, JLPTLevel } from '../types/flashcard';
 import * as firestoreService from '../services/firestore';
 import { extractKanjiCharacters, generateKanjiCharacterAnalysis } from '../services/kanji-analysis-ai-service';
+import { handleError } from '../utils/error-handler';
 
 export function useFlashcards(levelFilter?: string) {
   const [cards, setCards] = useState<Flashcard[]>([]);
@@ -49,7 +50,7 @@ export function useFlashcards(levelFilter?: string) {
       return newCard;
     } catch (err) {
       setError('Failed to add flashcard');
-      console.error('Error adding flashcard:', err);
+      handleError(err, { context: 'useflashcards' });
       throw err;
     }
   }, []);
@@ -60,7 +61,7 @@ export function useFlashcards(levelFilter?: string) {
       await firestoreService.updateFlashcard(id, data);
     } catch (err) {
       setError('Failed to update flashcard');
-      console.error('Error updating flashcard:', err);
+      handleError(err, { context: 'useflashcards' });
       throw err;
     }
   }, []);
@@ -71,7 +72,7 @@ export function useFlashcards(levelFilter?: string) {
       await firestoreService.deleteFlashcard(id);
     } catch (err) {
       setError('Failed to delete flashcard');
-      console.error('Error deleting flashcard:', err);
+      handleError(err, { context: 'useflashcards' });
       throw err;
     }
   }, []);

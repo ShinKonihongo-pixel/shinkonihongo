@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Flashcard, Lesson } from '../types/flashcard';
 import {
+import { handleError } from '../utils/error-handler';
   saveFlashcardsOffline,
   loadFlashcardsOffline,
   saveLessonsOffline,
@@ -81,7 +82,7 @@ export function useOffline(cards: Flashcard[], lessons: Lesson[]) {
         offlineLessonCount: lessons.length,
       }));
     } catch (error) {
-      console.error('Failed to sync offline:', error);
+      handleError(error, { context: 'useoffline' });
       setState(prev => ({ ...prev, isSyncing: false }));
     }
   }, [cards, lessons, state.isSupported]);
@@ -117,7 +118,7 @@ export function useOffline(cards: Flashcard[], lessons: Lesson[]) {
         lessons: offlineLessons,
       };
     } catch (error) {
-      console.error('Failed to load offline data:', error);
+      handleError(error, { context: 'useoffline' });
       return null;
     }
   }, [state.isSupported]);
@@ -135,7 +136,7 @@ export function useOffline(cards: Flashcard[], lessons: Lesson[]) {
         offlineLessonCount: 0,
       }));
     } catch (error) {
-      console.error('Failed to clear offline data:', error);
+      handleError(error, { context: 'useoffline' });
     }
   }, [state.isSupported]);
 

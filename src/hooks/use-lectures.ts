@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { Lecture, LectureFormData, Slide, SlideFormData, LectureFolder } from '../types/lecture';
 import type { JLPTLevel } from '../types/flashcard';
 import * as lectureService from '../services/lecture-firestore';
+import { handleError } from '../utils/error-handler';
 
 export function useLectures(isAdmin: boolean = false) {
   const [lectures, setLectures] = useState<Lecture[]>([]);
@@ -44,7 +45,7 @@ export function useLectures(isAdmin: boolean = false) {
     try {
       return await lectureService.addLecture(data, authorId, authorName);
     } catch (err) {
-      console.error('Error creating lecture:', err);
+      handleError(err, { context: 'useLectures' });
       return null;
     }
   }, []);
@@ -58,7 +59,7 @@ export function useLectures(isAdmin: boolean = false) {
       await lectureService.updateLecture(id, data);
       return true;
     } catch (err) {
-      console.error('Error updating lecture:', err);
+      handleError(err, { context: 'useLectures' });
       return false;
     }
   }, []);
@@ -69,7 +70,7 @@ export function useLectures(isAdmin: boolean = false) {
       await lectureService.deleteLecture(id);
       return true;
     } catch (err) {
-      console.error('Error deleting lecture:', err);
+      handleError(err, { context: 'useLectures' });
       return false;
     }
   }, []);
@@ -83,7 +84,7 @@ export function useLectures(isAdmin: boolean = false) {
       await lectureService.updateLecture(id, { isHidden: !lecture.isHidden });
       return true;
     } catch (err) {
-      console.error('Error toggling hide:', err);
+      handleError(err, { context: 'useLectures' });
       return false;
     }
   }, [lectures]);
@@ -93,7 +94,7 @@ export function useLectures(isAdmin: boolean = false) {
     try {
       return await lectureService.getLectureById(id);
     } catch (err) {
-      console.error('Error getting lecture:', err);
+      handleError(err, { context: 'useLectures' });
       return null;
     }
   }, []);
@@ -107,7 +108,7 @@ export function useLectures(isAdmin: boolean = false) {
     try {
       return await lectureService.addLectureFolder(name, level, createdBy);
     } catch (err) {
-      console.error('Error adding folder:', err);
+      handleError(err, { context: 'useLectures' });
       return null;
     }
   }, []);
@@ -120,7 +121,7 @@ export function useLectures(isAdmin: boolean = false) {
       await lectureService.updateLectureFolder(id, data);
       return true;
     } catch (err) {
-      console.error('Error updating folder:', err);
+      handleError(err, { context: 'useLectures' });
       return false;
     }
   }, []);
@@ -130,7 +131,7 @@ export function useLectures(isAdmin: boolean = false) {
       await lectureService.deleteLectureFolder(id);
       return true;
     } catch (err) {
-      console.error('Error deleting folder:', err);
+      handleError(err, { context: 'useLectures' });
       return false;
     }
   }, []);
@@ -195,7 +196,7 @@ export function useSlides(lectureId: string | null) {
       const order = customOrder !== undefined ? customOrder : slides.length;
       return await lectureService.addSlide(lectureId, data, order);
     } catch (err) {
-      console.error('Error adding slide:', err);
+      handleError(err, { context: 'useLectures' });
       return null;
     }
   }, [lectureId, slides.length]);
@@ -209,7 +210,7 @@ export function useSlides(lectureId: string | null) {
       await lectureService.updateSlide(slideId, data);
       return true;
     } catch (err) {
-      console.error('Error updating slide:', err);
+      handleError(err, { context: 'useLectures' });
       return false;
     }
   }, []);
@@ -221,7 +222,7 @@ export function useSlides(lectureId: string | null) {
       await lectureService.deleteSlide(slideId, lectureId);
       return true;
     } catch (err) {
-      console.error('Error deleting slide:', err);
+      handleError(err, { context: 'useLectures' });
       return false;
     }
   }, [lectureId]);
@@ -234,7 +235,7 @@ export function useSlides(lectureId: string | null) {
       await lectureService.reorderSlides(orderedSlides);
       return true;
     } catch (err) {
-      console.error('Error reordering slides:', err);
+      handleError(err, { context: 'useLectures' });
       return false;
     }
   }, []);
@@ -261,7 +262,7 @@ export function useSlides(lectureId: string | null) {
       const order = slides.length;
       return await lectureService.addSlide(lectureId, newSlideData, order);
     } catch (err) {
-      console.error('Error duplicating slide:', err);
+      handleError(err, { context: 'useLectures' });
       return null;
     }
   }, [lectureId, slides]);
@@ -275,7 +276,7 @@ export function useSlides(lectureId: string | null) {
       }
       return true;
     } catch (err) {
-      console.error('Error deleting all slides:', err);
+      handleError(err, { context: 'useLectures' });
       return false;
     }
   }, [lectureId, slides]);
@@ -302,7 +303,7 @@ export function useLectureView(lectureId: string | null, userId: string | null) 
     try {
       await lectureService.recordLectureView(lectureId, userId, lastSlideViewed, completed);
     } catch (err) {
-      console.error('Error recording view:', err);
+      handleError(err, { context: 'useLectures' });
     }
   }, [lectureId, userId]);
 

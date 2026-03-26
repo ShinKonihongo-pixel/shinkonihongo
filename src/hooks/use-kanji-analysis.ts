@@ -8,6 +8,7 @@ import type { KanjiCharacterAnalysis } from '../types/flashcard';
 import { extractKanjiCharacters, generateKanjiCharacterAnalysis } from '../services/kanji-analysis-ai-service';
 import { getMultipleKanjiAnalysis, saveMultipleKanjiAnalysis } from '../services/firestore';
 import { getSeedRadicals } from '../utils/radical-kanji-index';
+import { handleError } from '../utils/error-handler';
 
 // Shared in-memory cache — persists across modal open/close within the same session
 // Exported so kanji-analysis-editor can share the same cache instance

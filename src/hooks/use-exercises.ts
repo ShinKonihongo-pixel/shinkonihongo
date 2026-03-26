@@ -8,6 +8,7 @@ import {
   updateExercise as updateExerciseService,
   deleteExercise as deleteExerciseService,
 } from '../services/firestore/exercise-service';
+import { handleError } from '../utils/error-handler';
 
 export function useExercises() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -26,7 +27,7 @@ export function useExercises() {
     try {
       return await addExerciseService(data, createdBy);
     } catch (error) {
-      console.error('Error adding exercise:', error);
+      handleError(error, { context: 'useexercises' });
       return null;
     }
   }, []);
@@ -36,7 +37,7 @@ export function useExercises() {
       await updateExerciseService(id, data);
       return true;
     } catch (error) {
-      console.error('Error updating exercise:', error);
+      handleError(error, { context: 'useexercises' });
       return false;
     }
   }, []);
@@ -46,7 +47,7 @@ export function useExercises() {
       await deleteExerciseService(id);
       return true;
     } catch (error) {
-      console.error('Error deleting exercise:', error);
+      handleError(error, { context: 'useexercises' });
       return false;
     }
   }, []);

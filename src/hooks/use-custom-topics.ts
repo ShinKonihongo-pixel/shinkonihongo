@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { CustomTopic, CustomTopicFolder, CustomTopicQuestion, CustomTopicFormData, CustomTopicQuestionFormData } from '../types/custom-topic';
 import type { JLPTLevel } from '../types/kaiwa';
 import {
+import { handleError } from '../utils/error-handler';
   subscribeToCustomTopics,
   addCustomTopic as addTopic,
   updateCustomTopic as updateTopic,
@@ -65,7 +66,7 @@ export function useCustomTopics() {
     try {
       return await addTopic(data, createdBy);
     } catch (error) {
-      console.error('Error adding custom topic:', error);
+      handleError(error, { context: 'useCustomTopics/add' });
       return null;
     }
   }, []);
@@ -75,7 +76,7 @@ export function useCustomTopics() {
       await updateTopic(id, data);
       return true;
     } catch (error) {
-      console.error('Error updating custom topic:', error);
+      handleError(error, { context: 'useCustomTopics/update' });
       return false;
     }
   }, []);
@@ -85,7 +86,7 @@ export function useCustomTopics() {
       await deleteTopic(id);
       return true;
     } catch (error) {
-      console.error('Error deleting custom topic:', error);
+      handleError(error, { context: 'useCustomTopics/delete' });
       return false;
     }
   }, []);
@@ -95,7 +96,7 @@ export function useCustomTopics() {
     try {
       return await addFolder(topicId, name, createdBy, level);
     } catch (error) {
-      console.error('Error adding custom topic folder:', error);
+      handleError(error, { context: 'useCustomTopics/addFolder' });
       return null;
     }
   }, []);
@@ -105,7 +106,7 @@ export function useCustomTopics() {
       await updateFolder(id, name);
       return true;
     } catch (error) {
-      console.error('Error updating custom topic folder:', error);
+      handleError(error, { context: 'useCustomTopics/updateFolder' });
       return false;
     }
   }, []);
@@ -115,7 +116,7 @@ export function useCustomTopics() {
       await deleteFolder(id);
       return true;
     } catch (error) {
-      console.error('Error deleting custom topic folder:', error);
+      handleError(error, { context: 'useCustomTopics/deleteFolder' });
       return false;
     }
   }, []);
@@ -125,7 +126,7 @@ export function useCustomTopics() {
     try {
       return await addQuestion(data, createdBy);
     } catch (error) {
-      console.error('Error adding custom topic question:', error);
+      handleError(error, { context: 'useCustomTopics/addQuestion' });
       return null;
     }
   }, []);
@@ -135,7 +136,7 @@ export function useCustomTopics() {
       await updateQuestion(id, data);
       return true;
     } catch (error) {
-      console.error('Error updating custom topic question:', error);
+      handleError(error, { context: 'useCustomTopics/updateQuestion' });
       return false;
     }
   }, []);
@@ -145,7 +146,7 @@ export function useCustomTopics() {
       await deleteQuestion(id);
       return true;
     } catch (error) {
-      console.error('Error deleting custom topic question:', error);
+      handleError(error, { context: 'useCustomTopics/deleteQuestion' });
       return false;
     }
   }, []);

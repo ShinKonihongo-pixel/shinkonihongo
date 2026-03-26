@@ -13,6 +13,7 @@ import type {
 } from '../types/speaking-practice';
 import { SPEAKING_TOPIC_PROMPTS, SPEAKING_LINES_PER_LEVEL, getSpeakingTopicById } from '../constants/speaking-topics';
 import { removeFurigana } from '../lib/furigana-utils';
+import { handleError } from '../utils/error-handler';
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL = 'llama-3.3-70b-versatile';

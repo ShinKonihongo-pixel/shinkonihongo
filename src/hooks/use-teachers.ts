@@ -14,6 +14,7 @@ import type {
 import type { User } from '../types/user';
 import * as teacherService from '../services/teacher-firestore';
 import * as salaryService from '../services/salary-firestore';
+import { handleError } from '../utils/error-handler';
 
 // ============ TEACHER SCHEDULES HOOK ============
 
@@ -53,7 +54,7 @@ export function useTeacherSchedules(branchId: string | null, teacherId?: string)
     try {
       return await teacherService.createTeacherSchedule(branchId, data);
     } catch (err) {
-      console.error('Error creating schedule:', err);
+      handleError(err, { context: 'useTeachers' });
       return null;
     }
   }, [branchId]);
@@ -66,7 +67,7 @@ export function useTeacherSchedules(branchId: string | null, teacherId?: string)
       await teacherService.updateTeacherSchedule(id, data);
       return true;
     } catch (err) {
-      console.error('Error updating schedule:', err);
+      handleError(err, { context: 'useTeachers' });
       return false;
     }
   }, []);
@@ -76,7 +77,7 @@ export function useTeacherSchedules(branchId: string | null, teacherId?: string)
       await teacherService.deleteTeacherSchedule(id);
       return true;
     } catch (err) {
-      console.error('Error deleting schedule:', err);
+      handleError(err, { context: 'useTeachers' });
       return false;
     }
   }, []);
@@ -165,7 +166,7 @@ export function useTeachingSessions(
     try {
       return await teacherService.createTeachingSession(branchId, teacherId, data, scheduleId);
     } catch (err) {
-      console.error('Error creating session:', err);
+      handleError(err, { context: 'useTeachers' });
       return null;
     }
   }, [branchId]);
@@ -178,7 +179,7 @@ export function useTeachingSessions(
       await teacherService.completeTeachingSession(sessionId, actualEndTime);
       return true;
     } catch (err) {
-      console.error('Error completing session:', err);
+      handleError(err, { context: 'useTeachers' });
       return false;
     }
   }, []);
@@ -191,7 +192,7 @@ export function useTeachingSessions(
       await teacherService.cancelTeachingSession(sessionId, note);
       return true;
     } catch (err) {
-      console.error('Error cancelling session:', err);
+      handleError(err, { context: 'useTeachers' });
       return false;
     }
   }, []);
@@ -204,7 +205,7 @@ export function useTeachingSessions(
       await teacherService.approveTeachingSession(sessionId, approvedBy);
       return true;
     } catch (err) {
-      console.error('Error approving session:', err);
+      handleError(err, { context: 'useTeachers' });
       return false;
     }
   }, []);
@@ -218,7 +219,7 @@ export function useTeachingSessions(
     try {
       return await teacherService.generateSessionsFromSchedule(branchId, startDate, endDate);
     } catch (err) {
-      console.error('Error generating sessions:', err);
+      handleError(err, { context: 'useTeachers' });
       return [];
     }
   }, [branchId]);
@@ -311,7 +312,7 @@ export function useSalaries(branchId: string | null, month: string, users?: User
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Lỗi tạo lương';
       setError(message);
-      console.error('Error creating salary:', err);
+      handleError(err, { context: 'useTeachers' });
       return null;
     }
   }, [branchId]);
@@ -327,7 +328,7 @@ export function useSalaries(branchId: string | null, month: string, users?: User
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Lỗi cập nhật lương';
       setError(message);
-      console.error('Error updating salary:', err);
+      handleError(err, { context: 'useTeachers' });
       return false;
     }
   }, []);
@@ -343,7 +344,7 @@ export function useSalaries(branchId: string | null, month: string, users?: User
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Lỗi duyệt lương';
       setError(message);
-      console.error('Error approving salary:', err);
+      handleError(err, { context: 'useTeachers' });
       return false;
     }
   }, []);
@@ -359,7 +360,7 @@ export function useSalaries(branchId: string | null, month: string, users?: User
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Lỗi đánh dấu đã trả';
       setError(message);
-      console.error('Error marking salary as paid:', err);
+      handleError(err, { context: 'useTeachers' });
       return false;
     }
   }, []);
@@ -371,7 +372,7 @@ export function useSalaries(branchId: string | null, month: string, users?: User
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Lỗi tính lại lương';
       setError(message);
-      console.error('Error recalculating salary:', err);
+      handleError(err, { context: 'useTeachers' });
       return null;
     }
   }, []);
@@ -387,7 +388,7 @@ export function useSalaries(branchId: string | null, month: string, users?: User
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Lỗi tạo lương hàng loạt';
       setError(message);
-      console.error('Error generating salaries:', err);
+      handleError(err, { context: 'useTeachers' });
       return [];
     }
   }, [branchId, month]);
@@ -505,7 +506,7 @@ export function useTeacherMonthlySummaries(
       setSummaries(data);
       setLoading(false);
     }).catch((err) => {
-      console.error('Error fetching teacher summaries:', err);
+      handleError(err, { context: 'useTeachers' });
       setLoading(false);
     });
   }, [branchId, month, teachers]);
