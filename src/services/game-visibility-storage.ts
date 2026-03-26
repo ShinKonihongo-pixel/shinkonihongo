@@ -2,6 +2,7 @@
 // Manages which games are hidden/visible in the game hub
 
 import type { GameType } from '../types/game-hub';
+import { handleError } from '../utils/error-handler';
 
 const STORAGE_KEY = 'game_visibility_settings';
 

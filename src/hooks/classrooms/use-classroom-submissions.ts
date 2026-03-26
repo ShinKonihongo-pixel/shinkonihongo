@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { ClassroomSubmission, SubmissionAnswer } from '../../types/classroom';
 import * as classroomService from '../../services/classroom-firestore';
+import { handleError } from '../../utils/error-handler';
 
 export function useClassroomSubmissions(testId: string | null, userId?: string) {
   const [submissions, setSubmissions] = useState<ClassroomSubmission[]>([]);
@@ -38,7 +39,7 @@ export function useClassroomSubmissions(testId: string | null, userId?: string) 
     try {
       return await classroomService.startSubmission(testId, classroomId, userId);
     } catch (err) {
-      console.error('Error starting submission:', err);
+      handleError(err, { context: 'useclassroomUsubmissions' });
       return null;
     }
   }, [testId]);
@@ -52,7 +53,7 @@ export function useClassroomSubmissions(testId: string | null, userId?: string) 
       await classroomService.submitAnswers(submissionId, answers, timeSpent);
       return true;
     } catch (err) {
-      console.error('Error submitting answers:', err);
+      handleError(err, { context: 'useclassroomUsubmissions' });
       return false;
     }
   }, []);
@@ -67,7 +68,7 @@ export function useClassroomSubmissions(testId: string | null, userId?: string) 
       await classroomService.gradeSubmission(submissionId, answers, feedback, gradedBy);
       return true;
     } catch (err) {
-      console.error('Error grading submission:', err);
+      handleError(err, { context: 'useclassroomUsubmissions' });
       return false;
     }
   }, []);

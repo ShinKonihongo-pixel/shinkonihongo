@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { ClassroomTest, TestFormData } from '../../types/classroom';
 import * as classroomService from '../../services/classroom-firestore';
+import { handleError } from '../../utils/error-handler';
 
 export function useClassroomTests(classroomId: string | null) {
   const [tests, setTests] = useState<ClassroomTest[]>([]);
@@ -35,7 +36,7 @@ export function useClassroomTests(classroomId: string | null) {
     try {
       return await classroomService.createTest(data, classroomId, createdBy);
     } catch (err) {
-      console.error('Error creating test:', err);
+      handleError(err, { context: 'useclassroomUtests' });
       return null;
     }
   }, [classroomId]);
@@ -45,7 +46,7 @@ export function useClassroomTests(classroomId: string | null) {
       await classroomService.updateTest(testId, data);
       return true;
     } catch (err) {
-      console.error('Error updating test:', err);
+      handleError(err, { context: 'useclassroomUtests' });
       return false;
     }
   }, []);
@@ -55,7 +56,7 @@ export function useClassroomTests(classroomId: string | null) {
       await classroomService.deleteTest(testId);
       return true;
     } catch (err) {
-      console.error('Error deleting test:', err);
+      handleError(err, { context: 'useclassroomUtests' });
       return false;
     }
   }, []);
@@ -66,7 +67,7 @@ export function useClassroomTests(classroomId: string | null) {
       await classroomService.publishTest(testId, classroomId);
       return true;
     } catch (err) {
-      console.error('Error publishing test:', err);
+      handleError(err, { context: 'useclassroomUtests' });
       return false;
     }
   }, [classroomId]);

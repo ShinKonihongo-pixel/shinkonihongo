@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { ClassroomNotification } from '../../types/classroom';
 import * as classroomService from '../../services/classroom-firestore';
+import { handleError } from '../../utils/error-handler';
 
 export function useClassroomNotifications(userId: string | null) {
   const [notifications, setNotifications] = useState<ClassroomNotification[]>([]);
@@ -30,7 +31,7 @@ export function useClassroomNotifications(userId: string | null) {
       await classroomService.markAsRead(notificationId);
       return true;
     } catch (err) {
-      console.error('Error marking notification as read:', err);
+      handleError(err, { context: 'useclassroomUnotifications' });
       return false;
     }
   }, []);
@@ -41,7 +42,7 @@ export function useClassroomNotifications(userId: string | null) {
       await classroomService.markAllAsRead(userId);
       return true;
     } catch (err) {
-      console.error('Error marking all notifications as read:', err);
+      handleError(err, { context: 'useclassroomUnotifications' });
       return false;
     }
   }, [userId]);

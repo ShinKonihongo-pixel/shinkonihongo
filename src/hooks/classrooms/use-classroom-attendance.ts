@@ -9,6 +9,7 @@ import type {
 } from '../../types/classroom';
 import type { User } from '../../types/user';
 import * as classroomService from '../../services/classroom-firestore';
+import { handleError } from '../../utils/error-handler';
 
 export function useClassroomAttendance(classroomId: string | null, users: User[]) {
   const [sessions, setSessions] = useState<AttendanceSession[]>([]);
@@ -62,7 +63,7 @@ export function useClassroomAttendance(classroomId: string | null, users: User[]
       setSelectedDate(sessionDate);
       return session;
     } catch (err) {
-      console.error('Error creating attendance session:', err);
+      handleError(err, { context: 'useclassroomUattendance' });
       return null;
     }
   }, [classroomId]);
@@ -78,7 +79,7 @@ export function useClassroomAttendance(classroomId: string | null, users: User[]
     try {
       return await classroomService.markAttendance(classroomId, selectedDate, userId, status, checkedBy, note);
     } catch (err) {
-      console.error('Error marking attendance:', err);
+      handleError(err, { context: 'useclassroomUattendance' });
       return null;
     }
   }, [classroomId, selectedDate]);
@@ -93,7 +94,7 @@ export function useClassroomAttendance(classroomId: string | null, users: User[]
       await classroomService.bulkMarkAttendance(classroomId, selectedDate, records, checkedBy);
       return true;
     } catch (err) {
-      console.error('Error bulk marking attendance:', err);
+      handleError(err, { context: 'useclassroomUattendance' });
       return false;
     }
   }, [classroomId, selectedDate]);

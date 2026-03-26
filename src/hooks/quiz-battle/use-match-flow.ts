@@ -9,6 +9,7 @@ import { updateGameRoom } from '../../services/game-rooms';
 import { calculateRatingChanges } from '../../utils/elo-rating';
 import { calculateQuestionScore } from '../../utils/quiz-battle-scoring';
 import { updateRatingAfterMatch } from '../../services/quiz-battle/quiz-battle-service';
+import { handleError } from '../../utils/error-handler';
 
 interface UseMatchFlowProps {
   game: QuizBattleGame | null;

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { ClassroomMember } from '../../types/classroom';
 import type { User } from '../../types/user';
 import * as classroomService from '../../services/classroom-firestore';
+import { handleError } from '../../utils/error-handler';
 
 export function useClassroomMembers(classroomId: string | null, users: User[]) {
   const [members, setMembers] = useState<ClassroomMember[]>([]);
@@ -42,7 +43,7 @@ export function useClassroomMembers(classroomId: string | null, users: User[]) {
     try {
       return await classroomService.addMember(classroomId, userId, 'student', invitedBy, 'direct');
     } catch (err) {
-      console.error('Error inviting user:', err);
+      handleError(err, { context: 'useclassroomUmembers' });
       return null;
     }
   }, [classroomId]);
@@ -53,7 +54,7 @@ export function useClassroomMembers(classroomId: string | null, users: User[]) {
       await classroomService.removeMember(memberId, classroomId);
       return true;
     } catch (err) {
-      console.error('Error removing member:', err);
+      handleError(err, { context: 'useclassroomUmembers' });
       return false;
     }
   }, [classroomId]);

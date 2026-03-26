@@ -4,6 +4,7 @@
 import type { KanjiCharacterAnalysis } from '../types/flashcard';
 import { getSeedRadicals } from '../utils/radical-kanji-index';
 import { RADICAL_MAP } from '../data/radicals';
+import { handleError } from '../utils/error-handler';
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL = 'llama-3.3-70b-versatile';

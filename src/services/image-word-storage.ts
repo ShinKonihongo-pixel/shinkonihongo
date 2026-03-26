@@ -2,6 +2,7 @@
 // Manages lessons persistence in localStorage
 
 import type { ImageWordLesson, ImageWordPair } from '../types/image-word';
+import { handleError } from '../utils/error-handler';
 
 const STORAGE_KEY = 'image-word-lessons';
 
@@ -17,7 +18,7 @@ export function getImageWordLessons(): ImageWordLesson[] {
     if (!data) return [];
     return JSON.parse(data) as ImageWordLesson[];
   } catch (error) {
-    console.error('Failed to load image-word lessons:', error);
+    handleError(error, { context: 'imageUwordUstorage', silent: true });
     return [];
   }
 }
@@ -65,7 +66,7 @@ export function deleteImageWordLesson(id: string): boolean {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
     return true;
   } catch (error) {
-    console.error('Failed to delete lesson:', error);
+    handleError(error, { context: 'imageUwordUstorage', silent: true });
     return false;
   }
 }
@@ -110,7 +111,7 @@ export function importImageWordLessons(data: ImageWordLesson[]): number {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
     return imported;
   } catch (error) {
-    console.error('Failed to import lessons:', error);
+    handleError(error, { context: 'imageUwordUstorage', silent: true });
     return 0;
   }
 }

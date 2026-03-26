@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { TestTemplate, TestFolder, ClassroomTest } from '../../types/classroom';
 import * as classroomService from '../../services/classroom-firestore';
+import { handleError } from '../../utils/error-handler';
 
 export function useTestTemplates() {
   const [templates, setTemplates] = useState<TestTemplate[]>([]);
@@ -36,7 +37,7 @@ export function useTestTemplates() {
     try {
       return await classroomService.createTestFolder(name, level, type, createdBy);
     } catch (error) {
-      console.error('Error creating test folder:', error);
+      handleError(error, { context: 'usetestUtemplates' });
       return null;
     }
   }, []);
@@ -50,7 +51,7 @@ export function useTestTemplates() {
       await classroomService.updateTestFolder(folderId, data);
       return true;
     } catch (error) {
-      console.error('Error updating test folder:', error);
+      handleError(error, { context: 'usetestUtemplates' });
       return false;
     }
   }, []);
@@ -61,7 +62,7 @@ export function useTestTemplates() {
       await classroomService.deleteTestFolder(folderId);
       return true;
     } catch (error) {
-      console.error('Error deleting test folder:', error);
+      handleError(error, { context: 'usetestUtemplates' });
       return false;
     }
   }, []);
@@ -74,7 +75,7 @@ export function useTestTemplates() {
     try {
       return await classroomService.createTestTemplate(data, createdBy);
     } catch (error) {
-      console.error('Error creating test template:', error);
+      handleError(error, { context: 'usetestUtemplates' });
       return null;
     }
   }, []);
@@ -88,7 +89,7 @@ export function useTestTemplates() {
       await classroomService.updateTestTemplate(templateId, data);
       return true;
     } catch (error) {
-      console.error('Error updating test template:', error);
+      handleError(error, { context: 'usetestUtemplates' });
       return false;
     }
   }, []);
@@ -99,7 +100,7 @@ export function useTestTemplates() {
       await classroomService.deleteTestTemplate(templateId);
       return true;
     } catch (error) {
-      console.error('Error deleting test template:', error);
+      handleError(error, { context: 'usetestUtemplates' });
       return false;
     }
   }, []);
@@ -114,7 +115,7 @@ export function useTestTemplates() {
     try {
       return await classroomService.assignTestToClassroom(templateId, classroomId, createdBy, options);
     } catch (error) {
-      console.error('Error assigning test to classroom:', error);
+      handleError(error, { context: 'usetestUtemplates' });
       return null;
     }
   }, []);

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { StudentEvaluation, EvaluationFormData } from '../../types/classroom';
 import type { User } from '../../types/user';
 import * as classroomService from '../../services/classroom-firestore';
+import { handleError } from '../../utils/error-handler';
 
 export function useStudentEvaluations(classroomId: string | null, users: User[]) {
   const [evaluations, setEvaluations] = useState<StudentEvaluation[]>([]);
@@ -38,7 +39,7 @@ export function useStudentEvaluations(classroomId: string | null, users: User[])
     try {
       return await classroomService.createEvaluation(classroomId, data, evaluatorId);
     } catch (err) {
-      console.error('Error creating evaluation:', err);
+      handleError(err, { context: 'usestudentUevaluations' });
       return null;
     }
   }, [classroomId]);
@@ -52,7 +53,7 @@ export function useStudentEvaluations(classroomId: string | null, users: User[])
       await classroomService.updateEvaluation(evaluationId, data);
       return true;
     } catch (err) {
-      console.error('Error updating evaluation:', err);
+      handleError(err, { context: 'usestudentUevaluations' });
       return false;
     }
   }, []);
@@ -63,7 +64,7 @@ export function useStudentEvaluations(classroomId: string | null, users: User[])
       await classroomService.deleteEvaluation(evaluationId);
       return true;
     } catch (err) {
-      console.error('Error deleting evaluation:', err);
+      handleError(err, { context: 'usestudentUevaluations' });
       return false;
     }
   }, []);

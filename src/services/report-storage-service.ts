@@ -5,6 +5,7 @@ import { ref, uploadBytes, getDownloadURL, listAll, deleteObject } from 'firebas
 import { collection, addDoc, getDocs, query, where, deleteDoc, doc } from 'firebase/firestore';
 import { storage, db } from '../lib/firebase';
 import type { ReportMetadata } from '../types/student-report';
+import { handleError } from '../utils/error-handler';
 
 // Collection name for report metadata
 const REPORTS_COLLECTION = 'student_reports';
@@ -115,7 +116,7 @@ export async function deleteReport(report: ReportMetadata): Promise<void> {
   try {
     await deleteObject(storageRef);
   } catch (error) {
-    console.error('Error deleting report file:', error);
+    handleError(error, { context: 'reportUstorageUservice', silent: true });
     // Continue to delete metadata even if file deletion fails
   }
 

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Classroom, ClassroomFormData, ClassroomLevel } from '../../types/classroom';
 import * as classroomService from '../../services/classroom-firestore';
+import { handleError } from '../../utils/error-handler';
 
 export function useClassrooms(userId: string | null, isAdmin: boolean, branchId?: string | null) {
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
@@ -47,7 +48,7 @@ export function useClassrooms(userId: string | null, isAdmin: boolean, branchId?
       const formData = branchId ? { ...data, branchId } : data;
       return await classroomService.createClassroom(formData, userId);
     } catch (err) {
-      console.error('Error creating classroom:', err);
+      handleError(err, { context: 'useclassrooms' });
       return null;
     }
   }, [userId, branchId]);
@@ -57,7 +58,7 @@ export function useClassrooms(userId: string | null, isAdmin: boolean, branchId?
       await classroomService.updateClassroom(id, data);
       return true;
     } catch (err) {
-      console.error('Error updating classroom:', err);
+      handleError(err, { context: 'useclassrooms' });
       return false;
     }
   }, []);
@@ -67,7 +68,7 @@ export function useClassrooms(userId: string | null, isAdmin: boolean, branchId?
       await classroomService.deleteClassroom(id);
       return true;
     } catch (err) {
-      console.error('Error deleting classroom:', err);
+      handleError(err, { context: 'useclassrooms' });
       return false;
     }
   }, []);
@@ -83,7 +84,7 @@ export function useClassrooms(userId: string | null, isAdmin: boolean, branchId?
       }
       return await classroomService.joinByCode(code, userId, classroomService.getClassroomByCode);
     } catch (err) {
-      console.error('Error joining classroom:', err);
+      handleError(err, { context: 'useclassrooms' });
       return { success: false, error: 'Lỗi khi tham gia lớp học' };
     }
   }, [userId, branchId]);
