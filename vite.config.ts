@@ -91,6 +91,16 @@ export default defineConfig({
           'vendor-firebase': ['firebase/app', 'firebase/firestore', 'firebase/auth', 'firebase/storage'],
           'vendor-react': ['react', 'react-dom'],
           'vendor-ui': ['lucide-react'],
+          // Kanji data separated for independent caching (rarely changes)
+          'kanji-data': [
+            'src/data/kanji-seed/n5',
+            'src/data/kanji-seed/n4',
+            'src/data/kanji-seed/n3',
+            'src/data/kanji-seed/n2',
+            'src/data/kanji-seed/n1',
+            'src/data/kanji-seed/bt',
+            'src/data/krad-decomposition',
+          ],
         },
       },
     },
