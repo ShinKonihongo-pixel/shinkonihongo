@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { User, CurrentUser, UserRole } from '../types/user';
 import * as firestoreService from '../services/firestore';
+import { handleError } from '../utils/error-handler';
 import { authReady } from '../lib/firebase';
 import { hashPassword, verifyPassword } from '../utils/password-hash';
 
@@ -99,7 +100,7 @@ export function useAuth() {
       try {
         await firestoreService.updateUser(user.id, { password: hashed });
       } catch (err) {
-        console.error('Error migrating password to hash:', err);
+        handleError(err, { context: 'useAuth/passwordMigration', silent: true });
       }
     }
 
@@ -153,8 +154,8 @@ export function useAuth() {
       await firestoreService.addUser(newUserData);
       return { success: true };
     } catch (err) {
-      console.error('Error registering user:', err);
-      return { success: false, error: 'Đăng ký thất bại' };
+      const msg = handleError(err, { context: 'useAuth/register' });
+      return { success: false, error: msg };
     }
   }, [users]);
 
@@ -179,7 +180,7 @@ export function useAuth() {
     try {
       await firestoreService.updateUser(userId, { role });
     } catch (err) {
-      console.error('Error updating user role:', err);
+      handleError(err, { context: 'useAuth/updateRole' });
     }
   }, [users, currentUser]);
 
@@ -199,7 +200,7 @@ export function useAuth() {
     try {
       await firestoreService.deleteUser(userId);
     } catch (err) {
-      console.error('Error deleting user:', err);
+      handleError(err, { context: 'useAuth/deleteUser' });
     }
   }, [users, currentUser]);
 
@@ -213,8 +214,8 @@ export function useAuth() {
       await firestoreService.updateUser(userId, { password: hashedPw });
       return { success: true };
     } catch (err) {
-      console.error('Error changing password:', err);
-      return { success: false, error: 'Đổi mật khẩu thất bại' };
+      const msg = handleError(err, { context: 'useAuth/changePassword', userMessage: 'Đổi mật khẩu thất bại' });
+      return { success: false, error: msg };
     }
   }, []);
 
@@ -231,8 +232,8 @@ export function useAuth() {
       }
       return { success: true };
     } catch (err) {
-      console.error('Error updating display name:', err);
-      return { success: false, error: 'Cập nhật tên thất bại' };
+      const msg = handleError(err, { context: 'useAuth/updateDisplayName', userMessage: 'Cập nhật tên thất bại' });
+      return { success: false, error: msg };
     }
   }, [currentUser]);
 
@@ -246,8 +247,8 @@ export function useAuth() {
       }
       return { success: true };
     } catch (err) {
-      console.error('Error updating avatar:', err);
-      return { success: false, error: 'Cập nhật avatar thất bại' };
+      const msg = handleError(err, { context: 'useAuth/updateAvatar', userMessage: 'Cập nhật avatar thất bại' });
+      return { success: false, error: msg };
     }
   }, [currentUser]);
 
@@ -261,8 +262,8 @@ export function useAuth() {
       }
       return { success: true };
     } catch (err) {
-      console.error('Error updating profile background:', err);
-      return { success: false, error: 'Cập nhật background thất bại' };
+      const msg = handleError(err, { context: 'useAuth/updateProfileBackground', userMessage: 'Cập nhật background thất bại' });
+      return { success: false, error: msg };
     }
   }, [currentUser]);
 
@@ -276,8 +277,8 @@ export function useAuth() {
       }
       return { success: true };
     } catch (err) {
-      console.error('Error updating JLPT level:', err);
-      return { success: false, error: 'Cập nhật cấp độ thất bại' };
+      const msg = handleError(err, { context: 'useAuth/updateJlptLevel', userMessage: 'Cập nhật cấp độ thất bại' });
+      return { success: false, error: msg };
     }
   }, [currentUser]);
 
@@ -286,7 +287,7 @@ export function useAuth() {
     try {
       await firestoreService.updateUser(userId, { vipExpirationDate: expirationDate || undefined });
     } catch (err) {
-      console.error('Error updating VIP expiration:', err);
+      handleError(err, { context: 'useAuth/updateVipExpiration' });
     }
   }, []);
 
@@ -307,7 +308,7 @@ export function useAuth() {
               await firestoreService.updateUser(user.id, { role: 'user' });
               console.log(`VIP expired for user ${user.username}, converted to regular user`);
             } catch (err) {
-              console.error('Error converting expired VIP:', err);
+              handleError(err, { context: 'useAuth/expireVip', silent: true });
             }
           }
         }

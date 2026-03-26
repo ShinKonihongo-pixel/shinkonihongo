@@ -12,6 +12,7 @@ import { type Page } from './components/layout/header';
 import { Sidebar } from './components/layout/sidebar';
 import { LoginPage } from './components/pages/login-page';
 import { ErrorBoundary } from './components/common/error-boundary';
+import { LoadingIndicator } from './components/ui/loading-indicator';
 
 // Lazy-loaded page components
 const HomePage = lazy(() => import('./components/pages/home-page').then(m => ({ default: m.HomePage })));
@@ -119,12 +120,7 @@ function AppInner() {
 
   if (isCenterApp && centerData.loading) {
     return (
-      <div className="app-loading-screen">
-        <div className="app-loading-content">
-          <div className="app-loading-spinner" />
-          <span className="app-loading-label">Đang tải trung tâm...</span>
-        </div>
-      </div>
+      <LoadingIndicator fullScreen label="Đang tải trung tâm..." />
     );
   }
 
@@ -546,7 +542,7 @@ function AppContent() {
 
         <main id="main-content" className="main-content">
         <ErrorBoundary>
-        <Suspense fallback={<div className="app-loading-screen app-loading-inline"><div className="app-loading-content"><div className="app-loading-spinner" /><span className="app-loading-label">Đang tải...</span></div></div>}>
+        <Suspense fallback={<LoadingIndicator inline label="Đang tải..." />}>
         {currentPage === 'home' && (
           <HomePage
             statsByLevel={statsByLevel}
