@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useEffect, useCallback, lazy, Suspense } from 'react';
 import { GlobalSearch } from './components/common/global-search';
-import { trackPageView, identifyUser, resetAnalytics } from './lib/analytics';
+import { identifyUser, resetAnalytics } from './lib/analytics';
+import { useAppNavigation } from './hooks/use-app-navigation';
 
 // Dev: Load seed functions to window for console access
 import './scripts/seed-folders';
@@ -65,8 +66,7 @@ import type { UserJLPTLevel } from './types/user';
 import { canAccessPage } from './utils/role-permissions';
 import { useUrlRouter } from './hooks/use-url-router';
 import { CenterRouter } from './components/center/center-router';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { ROUTES, URL_TO_PAGE } from './routes';
+// react-router-dom + routes now used in use-app-navigation.ts
 import { CenterProvider } from './contexts/center-context';
 import { useCenterData } from './hooks/use-center-data';
 
@@ -207,85 +207,20 @@ function AppContent() {
   const jlptData = useJLPTData();
   const achievementCtx = useAchievementContextOptional();
 
-  // Local navigation state
-  const [currentPage, setCurrentPage] = useState<Page>('home');
+  // Navigation state + URL bridge (extracted from App.tsx)
+  // setInitialFilterLevel is unused state kept for backward-compat callbacks
   const [, setInitialFilterLevel] = useState<JLPTLevel | 'all'>('all');
-  const [initialGameType, setInitialGameType] = useState<GameType | null>(null);
-  const [initialGameJoinCode, setInitialGameJoinCode] = useState<string | null>(null);
-  const [editingLectureId, setEditingLectureId] = useState<string | undefined>(undefined);
-  const [editingLectureFolderId, setEditingLectureFolderId] = useState<string | undefined>(undefined);
-  const [editingLectureLevel, setEditingLectureLevel] = useState<JLPTLevel | undefined>(undefined);
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [isAiChatOpen, setIsAiChatOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-
-  // React Router bridge — keeps URL and state in sync
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  // Handle URL parameters for game join (QR code scanning) — runs once on mount
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const joinCode = params.get('join');
-    const racingCode = params.get('racing');
-    const goldenBellCode = params.get('golden-bell');
-    const pictureGuessCode = params.get('picture-guess');
-
-    // Route all game join codes to Game Hub - intentional URL-based routing on mount
-    /* eslint-disable react-hooks/set-state-in-effect */
-    if (joinCode) {
-      setInitialGameType('quiz');
-      setInitialGameJoinCode(joinCode.toUpperCase());
-      setCurrentPage('game-hub');
-      navigate(ROUTES['game-hub'], { replace: true });
-    } else if (racingCode) {
-      // Legacy racing links - redirect to quiz game
-      setInitialGameType('quiz');
-      setInitialGameJoinCode(racingCode.toUpperCase());
-      setCurrentPage('game-hub');
-      navigate(ROUTES['game-hub'], { replace: true });
-    } else if (goldenBellCode) {
-      setInitialGameType('golden-bell');
-      setInitialGameJoinCode(goldenBellCode.toUpperCase());
-      setCurrentPage('game-hub');
-      navigate(ROUTES['game-hub'], { replace: true });
-    } else if (pictureGuessCode) {
-      setInitialGameType('picture-guess');
-      setInitialGameJoinCode(pictureGuessCode.toUpperCase());
-      setCurrentPage('game-hub');
-      navigate(ROUTES['game-hub'], { replace: true });
-    }
-    /* eslint-enable react-hooks/set-state-in-effect */
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Bridge: URL → state (when user navigates via browser back/forward or deep link)
-  useEffect(() => {
-    // Don't interfere with center routes (handled by useUrlRouter)
-    if (location.pathname.startsWith('/center/')) return;
-    const page = URL_TO_PAGE[location.pathname];
-    if (page && page !== currentPage) {
-      setCurrentPage(page as Page);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
-
-  // Bridge: state → URL (when code calls setCurrentPage, update the URL)
-  useEffect(() => {
-    // Don't update URL for center routes
-    if (location.pathname.startsWith('/center/')) return;
-    const targetUrl = ROUTES[currentPage];
-    if (targetUrl && targetUrl !== location.pathname) {
-      navigate(targetUrl, { replace: true });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage]);
-
-  // Analytics: track page views
-  useEffect(() => {
-    trackPageView(currentPage);
-  }, [currentPage]);
+  const {
+    currentPage, setCurrentPage,
+    initialGameType, initialGameJoinCode,
+    editingLectureId, setEditingLectureId,
+    editingLectureFolderId, setEditingLectureFolderId,
+    editingLectureLevel, setEditingLectureLevel,
+    isChatOpen, setIsChatOpen,
+    isAiChatOpen, setIsAiChatOpen,
+    sidebarCollapsed, setSidebarCollapsed,
+    isSearchOpen, setIsSearchOpen,
+  } = useAppNavigation();
 
   // Destructure from contexts
   const {
