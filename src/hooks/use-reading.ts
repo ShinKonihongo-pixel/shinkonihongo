@@ -1,13 +1,19 @@
 // Hook for reading comprehension CRUD operations
 
 import { useState, useCallback, useEffect } from 'react';
-import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { db } from '../lib/firebase';
 import type { ReadingPassage, ReadingPassageFormData, ReadingFolder } from '../types/reading';
 import type { JLPTLevel } from '../types/flashcard';
-
-const PASSAGES_COLLECTION = 'readingPassages';
-const FOLDERS_COLLECTION = 'readingFolders';
+import {
+  subscribeToPassages,
+  subscribeToReadingFolders,
+  addPassage as addPassageService,
+  updatePassage as updatePassageService,
+  deletePassage as deletePassageService,
+  addReadingFolder,
+  updateReadingFolder as updateReadingFolderService,
+  deleteReadingFolder,
+  deletePassagesByFolder,
+} from '../services/firestore/reading-service';
 
 export function useReading() {
   const [passages, setPassages] = useState<ReadingPassage[]>([]);
@@ -16,12 +22,7 @@ export function useReading() {
 
   // Subscribe to passages
   useEffect(() => {
-    const q = query(collection(db, PASSAGES_COLLECTION), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as ReadingPassage[];
+    const unsubscribe = subscribeToPassages((data) => {
       setPassages(data);
       setLoading(false);
     });
@@ -30,12 +31,7 @@ export function useReading() {
 
   // Subscribe to folders
   useEffect(() => {
-    const q = query(collection(db, FOLDERS_COLLECTION), orderBy('order', 'asc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as ReadingFolder[];
+    const unsubscribe = subscribeToReadingFolders((data) => {
       setFolders(data);
     });
     return () => unsubscribe();
@@ -43,73 +39,35 @@ export function useReading() {
 
   // Add passage
   const addPassage = useCallback(async (data: ReadingPassageFormData, createdBy?: string): Promise<ReadingPassage> => {
-    const questions = data.questions.map((q, idx) => ({
-      ...q,
-      id: `q_${Date.now()}_${idx}`,
-    }));
-
-    const docRef = await addDoc(collection(db, PASSAGES_COLLECTION), {
-      ...data,
-      questions,
-      createdAt: new Date().toISOString(),
-      createdBy,
-    });
-
-    return {
-      id: docRef.id,
-      ...data,
-      questions,
-      createdAt: new Date().toISOString(),
-      createdBy,
-    };
+    return addPassageService(data, createdBy);
   }, []);
 
   // Update passage
   const updatePassage = useCallback(async (id: string, data: Partial<ReadingPassage>) => {
-    await updateDoc(doc(db, PASSAGES_COLLECTION, id), data);
+    await updatePassageService(id, data);
   }, []);
 
   // Delete passage
   const deletePassage = useCallback(async (id: string) => {
-    await deleteDoc(doc(db, PASSAGES_COLLECTION, id));
+    await deletePassageService(id);
   }, []);
 
-  // Add folder
+  // Add folder (order auto-incremented per level)
   const addFolder = useCallback(async (name: string, jlptLevel: JLPTLevel, createdBy?: string): Promise<ReadingFolder> => {
     const levelFolders = folders.filter(f => f.jlptLevel === jlptLevel);
     const maxOrder = levelFolders.length > 0 ? Math.max(...levelFolders.map(f => f.order)) : 0;
-
-    const docRef = await addDoc(collection(db, FOLDERS_COLLECTION), {
-      name,
-      jlptLevel,
-      order: maxOrder + 1,
-      createdAt: new Date().toISOString(),
-      createdBy,
-    });
-
-    return {
-      id: docRef.id,
-      name,
-      jlptLevel,
-      order: maxOrder + 1,
-      createdAt: new Date().toISOString(),
-      createdBy,
-    };
+    return addReadingFolder(name, jlptLevel, maxOrder + 1, createdBy);
   }, [folders]);
 
   // Update folder
   const updateFolder = useCallback(async (id: string, data: Partial<ReadingFolder>) => {
-    await updateDoc(doc(db, FOLDERS_COLLECTION, id), data);
+    await updateReadingFolderService(id, data);
   }, []);
 
-  // Delete folder
+  // Delete folder and cascade-delete its passages
   const deleteFolder = useCallback(async (id: string) => {
-    await deleteDoc(doc(db, FOLDERS_COLLECTION, id));
-    // Also delete all passages in this folder
-    const passagesInFolder = passages.filter(p => p.folderId === id);
-    for (const passage of passagesInFolder) {
-      await deleteDoc(doc(db, PASSAGES_COLLECTION, passage.id));
-    }
+    await deletePassagesByFolder(id, passages);
+    await deleteReadingFolder(id);
   }, [passages]);
 
   // Get folders by level

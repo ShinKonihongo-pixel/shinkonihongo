@@ -171,3 +171,38 @@ export {
   deleteKanjiLesson,
   getKanjiLessonChildren,
 } from './kanji-lesson-service';
+
+// Exercise operations
+export {
+  subscribeToExercises,
+  addExercise,
+  updateExercise,
+  deleteExercise,
+} from './exercise-service';
+
+// Reading comprehension operations
+export {
+  subscribeToPassages,
+  subscribeToReadingFolders,
+  addPassage,
+  updatePassage,
+  deletePassage,
+  addReadingFolder,
+  updateReadingFolder,
+  deleteReadingFolder,
+  deletePassagesByFolder,
+} from './reading-service';
+
+// Listening comprehension operations
+export {
+  subscribeToListeningAudios,
+  subscribeToListeningFolders,
+  addListeningAudio,
+  addTextAudio,
+  updateListeningAudio,
+  deleteListeningAudio,
+  addListeningFolder,
+  updateListeningFolder,
+  deleteListeningFolder,
+  getAudioDuration,
+} from './listening-service';

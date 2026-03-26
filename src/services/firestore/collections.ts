@@ -44,6 +44,11 @@ export const COLLECTIONS = {
   KANJI_LESSONS: 'kanjiLessons',
   VOCABULARY_NOTEBOOKS: 'vocabularyNotebooks',
   RADICAL_KANJI_CUSTOM: 'radicalKanjiCustom',
+  EXERCISES: 'exercises',
+  READING_PASSAGES: 'readingPassages',
+  READING_FOLDERS: 'readingFolders',
+  LISTENING_AUDIOS: 'listeningAudios',
+  LISTENING_FOLDERS: 'listeningFolders',
 } as const;
 
 // Shared utilities

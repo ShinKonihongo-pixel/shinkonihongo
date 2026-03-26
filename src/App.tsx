@@ -61,6 +61,7 @@ import { JLPTLevelModal } from './components/common/jlpt-level-modal';
 import { ReadingSettingsProvider } from './contexts/reading-settings-context';
 import { ListeningSettingsProvider } from './contexts/listening-settings-context';
 import type { UserJLPTLevel } from './types/user';
+import { canAccessPage } from './utils/role-permissions';
 import { useUrlRouter } from './hooks/use-url-router';
 import { CenterRouter } from './components/center/center-router';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -592,7 +593,7 @@ function AppContent() {
           />
         )}
 
-        {currentPage === 'cards' && isAdmin && currentUser && (
+        {currentPage === 'cards' && currentUser && canAccessPage('cards', currentUser.role) && (
           <CardsPage
             cards={cards}
             onAddCard={addCard}
@@ -862,7 +863,7 @@ function AppContent() {
           />
         )}
 
-        {currentPage === 'lecture-editor' && isAdmin && (
+        {currentPage === 'lecture-editor' && currentUser && canAccessPage('lecture-editor', currentUser.role) && (
           <LectureEditorPage
             lectureId={editingLectureId}
             initialFolderId={editingLectureFolderId}
@@ -884,19 +885,19 @@ function AppContent() {
           <ClassroomPage users={users} />
         )}
 
-        {currentPage === 'branches' && currentUser && (currentUser.role === 'director' || currentUser.role === 'branch_admin' || currentUser.role === 'super_admin') && (
+        {currentPage === 'branches' && currentUser && canAccessPage('branches', currentUser.role) && (
           <BranchManagementPage users={users} />
         )}
 
-        {currentPage === 'teachers' && currentUser && (currentUser.role === 'director' || currentUser.role === 'branch_admin' || currentUser.role === 'super_admin') && (
+        {currentPage === 'teachers' && currentUser && canAccessPage('teachers', currentUser.role) && (
           <TeacherManagementPage users={users} />
         )}
 
-        {currentPage === 'salary' && currentUser && (currentUser.role === 'director' || currentUser.role === 'branch_admin' || currentUser.role === 'super_admin') && (
+        {currentPage === 'salary' && currentUser && canAccessPage('salary', currentUser.role) && (
           <SalaryPage users={users} />
         )}
 
-        {currentPage === 'my-teaching' && currentUser && (currentUser.role === 'main_teacher' || currentUser.role === 'part_time_teacher' || currentUser.role === 'assistant') && (
+        {currentPage === 'my-teaching' && currentUser && canAccessPage('my-teaching', currentUser.role) && (
           <MyTeachingPage />
         )}
 
@@ -932,7 +933,7 @@ function AppContent() {
           />
         )}
 
-        {currentPage === 'permissions' && currentUser && currentUser.role === 'super_admin' && (
+        {currentPage === 'permissions' && currentUser && canAccessPage('permissions', currentUser.role) && (
           <RolePermissionsPage />
         )}
 

@@ -1,11 +1,13 @@
 // Hook for managing exercises - CRUD operations with Firestore
 
 import { useState, useEffect, useCallback } from 'react';
-import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { db } from '../lib/firebase';
 import type { Exercise, ExerciseFormData } from '../types/exercise';
-
-const COLLECTION = 'exercises';
+import {
+  subscribeToExercises,
+  addExercise as addExerciseService,
+  updateExercise as updateExerciseService,
+  deleteExercise as deleteExerciseService,
+} from '../services/firestore/exercise-service';
 
 export function useExercises() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -13,31 +15,16 @@ export function useExercises() {
 
   // Subscribe to exercises
   useEffect(() => {
-    const q = query(collection(db, COLLECTION), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Exercise[];
+    const unsubscribe = subscribeToExercises((data) => {
       setExercises(data);
       setLoading(false);
-    }, (error) => {
-      console.error('Error loading exercises:', error);
-      setLoading(false);
     });
-    return unsubscribe;
+    return () => unsubscribe();
   }, []);
 
   const addExercise = useCallback(async (data: ExerciseFormData, createdBy: string): Promise<Exercise | null> => {
     try {
-      const newExercise = {
-        ...data,
-        createdBy,
-        createdAt: new Date().toISOString(),
-        isPublished: false,
-      };
-      const docRef = await addDoc(collection(db, COLLECTION), newExercise);
-      return { id: docRef.id, ...newExercise };
+      return await addExerciseService(data, createdBy);
     } catch (error) {
       console.error('Error adding exercise:', error);
       return null;
@@ -46,7 +33,7 @@ export function useExercises() {
 
   const updateExercise = useCallback(async (id: string, data: Partial<Exercise>): Promise<boolean> => {
     try {
-      await updateDoc(doc(db, COLLECTION, id), data);
+      await updateExerciseService(id, data);
       return true;
     } catch (error) {
       console.error('Error updating exercise:', error);
@@ -56,7 +43,7 @@ export function useExercises() {
 
   const deleteExercise = useCallback(async (id: string): Promise<boolean> => {
     try {
-      await deleteDoc(doc(db, COLLECTION, id));
+      await deleteExerciseService(id);
       return true;
     } catch (error) {
       console.error('Error deleting exercise:', error);

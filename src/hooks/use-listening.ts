@@ -1,17 +1,25 @@
 // Hook for listening comprehension CRUD operations
 // Manages listening lessons organized by JLPT level, lesson number, and lesson type
-// Uses Firebase Storage for audio files (online, accessible from all devices)
+// Audio files are stored in Firebase Storage; metadata lives in Firestore
 
 import { useState, useCallback, useEffect } from 'react';
-import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { db, storage } from '../lib/firebase';
-import type { ListeningAudio, ListeningFolder, ListeningLessonType, KaiwaLine, TtsMode } from '../types/listening';
+import type { ListeningAudio, ListeningFolder, KaiwaLine, TtsMode } from '../types/listening';
+import { normalizeLessonType, type ListeningLessonType } from '../types/listening';
 import type { JLPTLevel } from '../types/flashcard';
+import {
+  subscribeToListeningAudios,
+  subscribeToListeningFolders,
+  addListeningAudio as addListeningAudioService,
+  addTextAudio as addTextAudioService,
+  updateListeningAudio as updateListeningAudioService,
+  deleteListeningAudio as deleteListeningAudioService,
+  addListeningFolder as addListeningFolderService,
+  updateListeningFolder as updateListeningFolderService,
+  deleteListeningFolder as deleteListeningFolderService,
+} from '../services/firestore/listening-service';
 
-const AUDIOS_COLLECTION = 'listeningAudios';
-const FOLDERS_COLLECTION = 'listeningFolders';
-
+// Re-export for backward compat (consumers import from this hook)
+export { normalizeLessonType };
 export type { ListeningLessonType };
 
 export const LISTENING_LESSON_TYPES: { value: ListeningLessonType; label: string }[] = [
@@ -22,19 +30,6 @@ export const LISTENING_LESSON_TYPES: { value: ListeningLessonType; label: string
   { value: 'reibun', label: '例文' },
   { value: 'other', label: 'その他' },
 ];
-
-// Backward compat: map old lesson types to new ones
-export function normalizeLessonType(type?: string): ListeningLessonType {
-  const map: Record<string, ListeningLessonType> = {
-    vocabulary: 'practice',
-    grammar: 'practice',
-    conversation: 'conversation',
-    general: 'other',
-    bunpou: 'bunpou',
-    reibun: 'reibun',
-  };
-  return map[type || ''] || (type as ListeningLessonType) || 'other';
-}
 
 // Pre-defined lesson ranges per level
 export const LISTENING_LESSONS: Record<string, { start: number; end: number }> = {
@@ -49,32 +44,16 @@ export function useListening() {
 
   // Subscribe to audios
   useEffect(() => {
-    const q = query(collection(db, AUDIOS_COLLECTION), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt ? new Date(doc.data().createdAt) : new Date(),
-      })) as ListeningAudio[];
+    const unsubscribe = subscribeToListeningAudios((data) => {
       setAudios(data);
       setLoading(false);
     });
     return () => unsubscribe();
   }, []);
 
-  // Subscribe to folders (with normalization)
+  // Subscribe to folders
   useEffect(() => {
-    const q = query(collection(db, FOLDERS_COLLECTION), orderBy('createdAt', 'asc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => {
-        const raw = doc.data();
-        return {
-          id: doc.id,
-          ...raw,
-          lessonType: normalizeLessonType(raw.lessonType),
-          createdAt: raw.createdAt ? new Date(raw.createdAt) : new Date(),
-        };
-      }) as ListeningFolder[];
+    const unsubscribe = subscribeToListeningFolders((data) => {
       setFolders(data);
     });
     return () => unsubscribe();
@@ -86,33 +65,7 @@ export function useListening() {
     file: File,
     createdBy: string
   ): Promise<ListeningAudio> => {
-    // Upload audio file to Firebase Storage
-    const fileName = `listening/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-    const storageRef = ref(storage, fileName);
-    await uploadBytes(storageRef, file);
-    const audioUrl = await getDownloadURL(storageRef);
-
-    // Get audio duration
-    const duration = await getAudioDuration(file);
-
-    // Save metadata to Firestore
-    const docRef = await addDoc(collection(db, AUDIOS_COLLECTION), {
-      ...data,
-      audioUrl,
-      storagePath: fileName, // Store path for deletion
-      duration,
-      createdAt: new Date().toISOString(),
-      createdBy,
-    });
-
-    return {
-      id: docRef.id,
-      ...data,
-      audioUrl,
-      duration,
-      createdAt: new Date(),
-      createdBy,
-    };
+    return addListeningAudioService(data, file, createdBy);
   }, []);
 
   // Add text-based audio entry (TTS, no file upload). Supports single text or kaiwa mode.
@@ -124,67 +77,23 @@ export function useListening() {
     },
     createdBy: string
   ): Promise<ListeningAudio> => {
-    const docData: Record<string, unknown> = {
-      title: data.title,
-      description: data.description,
-      textContent: data.textContent,
-      isTextToSpeech: true,
-      ttsMode: data.ttsMode || 'single',
-      audioUrl: '',
-      duration: 0,
-      jlptLevel: data.jlptLevel,
-      folderId: data.folderId,
-      createdAt: new Date().toISOString(),
-      createdBy,
-    };
-    if (data.kaiwaLines && data.kaiwaLines.length > 0) {
-      docData.kaiwaLines = data.kaiwaLines;
-    }
-    const docRef = await addDoc(collection(db, AUDIOS_COLLECTION), docData);
-
-    return {
-      id: docRef.id,
-      title: data.title,
-      description: data.description,
-      textContent: data.textContent,
-      isTextToSpeech: true,
-      ttsMode: data.ttsMode || 'single',
-      kaiwaLines: data.kaiwaLines,
-      audioUrl: '',
-      duration: 0,
-      jlptLevel: data.jlptLevel,
-      folderId: data.folderId,
-      createdAt: new Date(),
-      createdBy,
-    };
+    return addTextAudioService(data, createdBy);
   }, []);
 
   // Update audio
   const updateAudio = useCallback(async (id: string, data: Partial<ListeningAudio>) => {
-    await updateDoc(doc(db, AUDIOS_COLLECTION, id), data);
+    await updateListeningAudioService(id, data);
   }, []);
 
-  // Delete audio (removes from Firebase Storage)
+  // Delete audio (removes from Firebase Storage if applicable)
   const deleteAudio = useCallback(async (id: string) => {
     const audio = audios.find(a => a.id === id);
-    if (audio) {
-      // Delete from Firebase Storage
-      const storagePath = (audio as ListeningAudio & { storagePath?: string }).storagePath;
-      if (storagePath) {
-        try {
-          const storageRef = ref(storage, storagePath);
-          await deleteObject(storageRef);
-        } catch {
-          // Ignore error if file doesn't exist
-        }
-      }
-    }
-    await deleteDoc(doc(db, AUDIOS_COLLECTION, id));
+    const storagePath = audio?.storagePath;
+    await deleteListeningAudioService(id, storagePath);
   }, [audios]);
 
   // Get playable audio URL (directly from Firebase Storage URL)
   const getAudioUrl = useCallback(async (audio: ListeningAudio): Promise<string | null> => {
-    // Firebase Storage URLs are directly playable
     return audio.audioUrl || null;
   }, []);
 
@@ -196,42 +105,21 @@ export function useListening() {
     lessonNumber: number | undefined,
     createdBy: string
   ): Promise<ListeningFolder> => {
-    const docData: Record<string, unknown> = {
-      name,
-      jlptLevel,
-      lessonType,
-      createdAt: new Date().toISOString(),
-      createdBy,
-    };
-    if (lessonNumber !== undefined) {
-      docData.lessonNumber = lessonNumber;
-    }
-    const docRef = await addDoc(collection(db, FOLDERS_COLLECTION), docData);
-
-    return {
-      id: docRef.id,
-      name,
-      jlptLevel,
-      lessonType,
-      lessonNumber,
-      createdAt: new Date(),
-      createdBy,
-    };
+    return addListeningFolderService(name, jlptLevel, lessonType, lessonNumber, createdBy);
   }, []);
 
   // Update folder
   const updateFolder = useCallback(async (id: string, data: Partial<ListeningFolder>) => {
-    await updateDoc(doc(db, FOLDERS_COLLECTION, id), data);
+    await updateListeningFolderService(id, data);
   }, []);
 
-  // Delete folder and its audios
+  // Delete folder and all its audios
   const deleteFolder = useCallback(async (id: string) => {
-    // Delete all audios in this folder
     const audiosInFolder = audios.filter(a => a.folderId === id);
     for (const audio of audiosInFolder) {
       await deleteAudio(audio.id);
     }
-    await deleteDoc(doc(db, FOLDERS_COLLECTION, id));
+    await deleteListeningFolderService(id);
   }, [audios, deleteAudio]);
 
   // Get folders by level
@@ -289,18 +177,4 @@ export function useListening() {
     getCountByLevel,
     getAudioUrl,
   };
-}
-
-// Helper to get audio duration
-function getAudioDuration(file: File): Promise<number> {
-  return new Promise((resolve) => {
-    const audio = new Audio();
-    audio.onloadedmetadata = () => {
-      resolve(audio.duration);
-    };
-    audio.onerror = () => {
-      resolve(0);
-    };
-    audio.src = URL.createObjectURL(file);
-  });
 }

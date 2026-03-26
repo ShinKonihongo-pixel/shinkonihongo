@@ -4,6 +4,19 @@ import type { JLPTLevel } from './flashcard';
 
 export type ListeningLessonType = 'practice' | 'conversation' | 'reading' | 'other' | 'bunpou' | 'reibun';
 
+// Backward compat: map old lesson type strings to current ListeningLessonType values
+export function normalizeLessonType(type?: string): ListeningLessonType {
+  const map: Record<string, ListeningLessonType> = {
+    vocabulary: 'practice',
+    grammar: 'practice',
+    conversation: 'conversation',
+    general: 'other',
+    bunpou: 'bunpou',
+    reibun: 'reibun',
+  };
+  return map[type || ''] || (type as ListeningLessonType) || 'other';
+}
+
 export interface ListeningFolder {
   id: string;
   name: string;
@@ -45,6 +58,7 @@ export interface ListeningAudio {
   isTextToSpeech?: boolean; // true if this entry uses browser TTS instead of audio file
   ttsMode?: TtsMode; // 'single' (default) or 'kaiwa' (conversation)
   kaiwaLines?: KaiwaLine[]; // Conversation lines for kaiwa mode
+  storagePath?: string; // Firebase Storage path for audio file deletion
   createdAt: Date;
   createdBy: string;
 }
