@@ -2,8 +2,15 @@
 // Features: Immersive Japanese design, sakura motifs, traditional color palette
 
 import { useState, Suspense, lazy } from 'react';
-import type { JLPTLevel, Lesson, Flashcard } from '../../types/flashcard';
-import type { ProgressSummary } from '../../types/progress';
+import type { JLPTLevel } from '../../types/flashcard';
+import { useUserData } from '../../contexts/user-data-context';
+import { useFlashcardData } from '../../contexts/flashcard-data-context';
+import { useSettings } from '../../hooks/settings/use-app-settings';
+import { useProgress } from '../../hooks/use-progress';
+import { useDailyWords } from '../../hooks/use-daily-words';
+import { useNavigation } from '../../contexts/navigation-context';
+import { useAchievementContextOptional } from '../../contexts/achievement-context';
+import type { Page } from '../layout/header';
 import { DailyWordsTask } from '../home/daily-words-task';
 import { LearningPathWidget } from '../home/learning-path-widget';
 import { useLearningPath } from '../../hooks/use-learning-path';
@@ -53,34 +60,6 @@ interface DailyWordsProps {
   closeModal: () => void;
 }
 
-interface HomePageProps {
-  statsByLevel: Record<JLPTLevel, number>;
-  cards: Flashcard[];
-  onStartStudy: () => void;
-  onStudyByLevel: (level: JLPTLevel) => void;
-  onCustomStudy: (selection: StudySelection) => void;
-  getLessonsByLevel: (level: JLPTLevel) => Lesson[];
-  getChildLessons: (parentId: string) => Lesson[];
-  canAccessLocked?: boolean;
-  onNavigate?: (page: string) => void;
-  userName?: string;
-  progress?: ProgressSummary;
-  dailyWords?: DailyWordsProps;
-  onSpeak?: (text: string) => void;
-  currentUserId?: string;
-  onShowTour?: () => void;
-  missions?: {
-    missions: import('../../types/achievements').DailyMission[];
-    allCompleted: boolean;
-    bonusClaimed: boolean;
-    onClaimBonus: () => void;
-  };
-  onShowAchievements?: () => void;
-  studySessions?: import('../../types/user').StudySession[];
-  gameSessions?: import('../../types/user').GameSession[];
-  jlptSessions?: import('../../types/user').JLPTSession[];
-  userJlptLevel?: string;
-}
 
 const ACTIVITIES = [
   { id: 'study', icon: BookOpen, label: 'Từ vựng', desc: '単語', color: '#3b82f6' },
@@ -113,28 +92,44 @@ const getTodayQuote = () => {
   return MOTIVATIONAL_QUOTES[dayOfYear % MOTIVATIONAL_QUOTES.length];
 };
 
-export function HomePage({
-  statsByLevel,
-  cards,
-  onStartStudy,
-  onStudyByLevel,
-  getLessonsByLevel,
-  getChildLessons,
-  canAccessLocked = false,
-  onNavigate,
-  userName,
-  progress,
-  dailyWords,
-  onSpeak,
-  currentUserId,
-  onShowTour,
-  missions,
-  onShowAchievements,
-  studySessions = [],
-  gameSessions = [],
-  jlptSessions = [],
-  userJlptLevel,
-}: HomePageProps) {
+export function HomePage() {
+  const { currentUser, canAccessLocked: canAccessLockedRaw, studySessions: studySessionsRaw, gameSessions: gameSessionsRaw, jlptSessions: jlptSessionsRaw, userStats } = useUserData();
+  const canAccessLocked = canAccessLockedRaw ?? false;
+  const studySessions = studySessionsRaw ?? [];
+  const gameSessions = gameSessionsRaw ?? [];
+  const jlptSessions = jlptSessionsRaw ?? [];
+  const { cards, getStatsByLevel, getLessonsByLevel, getChildLessons } = useFlashcardData();
+  const { settings } = useSettings();
+  const { setCurrentPage } = useNavigation();
+  const achievementCtx = useAchievementContextOptional();
+
+  const userName = currentUser?.displayName || currentUser?.username;
+  const currentUserId = currentUser?.id;
+  const userJlptLevel = currentUser?.jlptLevel;
+
+  const statsByLevel = getStatsByLevel();
+
+  const progress = useProgress(
+    studySessions, gameSessions, jlptSessions, userStats, cards,
+    settings.weeklyCardsTarget || 50, settings.weeklyMinutesTarget || 60
+  );
+
+  const dailyWords = useDailyWords({
+    allCards: cards,
+    targetCount: settings.dailyWordsTarget,
+    enabled: settings.dailyWordsEnabled,
+    userJlptLevel: currentUser?.jlptLevel,
+  });
+
+  const missions = achievementCtx
+    ? { missions: achievementCtx.missions, allCompleted: achievementCtx.allMissionsCompleted, bonusClaimed: achievementCtx.bonusXpClaimed, onClaimBonus: achievementCtx.claimMissionBonus }
+    : undefined;
+  const onShowAchievements = achievementCtx?.openShowcase;
+
+  const onNavigate = (page: string) => setCurrentPage(page as Page);
+  const onStartStudy = () => setCurrentPage('study');
+  const onStudyByLevel = (_level: JLPTLevel) => setCurrentPage('study');
+  const onSpeak = (text: string) => { const u = new SpeechSynthesisUtterance(text); u.lang = 'ja-JP'; u.rate = 0.9; speechSynthesis.speak(u); };
   const totalCards = cards.length;
   const [expandedLevel, setExpandedLevel] = useState<JLPTLevel | null>(null);
   const [expandedParent, setExpandedParent] = useState<string | null>(null);

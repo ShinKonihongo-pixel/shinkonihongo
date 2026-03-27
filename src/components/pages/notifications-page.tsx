@@ -1,8 +1,7 @@
 // Notifications management page - view all notifications, gift statistics, and settings
 
 import { useState, useMemo } from 'react';
-import type { ClassroomNotification } from '../../types/classroom';
-import type { FriendNotification } from '../../types/friendship';
+import { useNavigate } from 'react-router-dom';
 import {
   Bell,
   Gift,
@@ -13,7 +12,7 @@ import {
   Users,
   ChevronRight,
 } from 'lucide-react';
-import type { Page } from '../layout/header';
+import { useUserData } from '../../contexts/user-data-context';
 
 // Combined notification type for display
 interface CombinedNotification {
@@ -36,28 +35,19 @@ interface NotificationSettings {
   reminderHoursBefore: number;
 }
 
-interface NotificationsPageProps {
-  classroomNotifications: ClassroomNotification[];
-  friendNotifications: FriendNotification[];
-  onMarkClassroomRead: (id: string) => Promise<boolean>;
-  onMarkAllClassroomRead: () => Promise<boolean>;
-  onMarkFriendRead: (id: string) => Promise<boolean>;
-  onMarkAllFriendRead: () => Promise<boolean>;
-  onNavigate: (page: Page) => void;
-}
-
 type TabType = 'all' | 'classroom' | 'gifts' | 'settings';
 type FilterType = 'all' | 'unread' | 'read';
 
-export function NotificationsPage({
-  classroomNotifications,
-  friendNotifications,
-  onMarkClassroomRead,
-  onMarkAllClassroomRead,
-  onMarkFriendRead,
-  onMarkAllFriendRead,
-  onNavigate,
-}: NotificationsPageProps) {
+export function NotificationsPage() {
+  const {
+    classroomNotifications,
+    friendNotifications,
+    markClassroomRead,
+    markAllClassroomRead,
+    markFriendRead,
+    markAllFriendRead,
+  } = useUserData();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [filter, setFilter] = useState<FilterType>('all');
   const [settings, setSettings] = useState<NotificationSettings>(() => {
@@ -149,9 +139,9 @@ export function NotificationsPage({
     // Mark as read
     if (!notification.isRead) {
       if (notification.source === 'classroom') {
-        await onMarkClassroomRead(notification.id);
+        await markClassroomRead(notification.id);
       } else {
-        await onMarkFriendRead(notification.id);
+        await markFriendRead(notification.id);
       }
     }
 
@@ -162,10 +152,10 @@ export function NotificationsPage({
       case 'submission_graded':
       case 'deadline_reminder':
       case 'class_invitation':
-        onNavigate('classroom');
+        navigate('/classroom');
         break;
       case 'game_invitation':
-        onNavigate('quiz');
+        navigate('/games');
         break;
       case 'badge_received':
         // Stay on this page, show gifts tab
@@ -179,8 +169,8 @@ export function NotificationsPage({
   // Handle mark all as read
   const handleMarkAllRead = async () => {
     await Promise.all([
-      onMarkAllClassroomRead(),
-      onMarkAllFriendRead(),
+      markAllClassroomRead(),
+      markAllFriendRead(),
     ]);
   };
 

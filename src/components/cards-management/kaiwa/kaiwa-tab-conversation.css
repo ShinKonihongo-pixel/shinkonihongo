@@ -1,0 +1,349 @@
+/*
+ * kaiwa-tab-conversation.css
+ * Conversation header toolbar and font-size control widget.
+ * Covers .kaiwa-header, .kaiwa-header-left/center/right,
+ * .kaiwa-stats, .kaiwa-badge, .kaiwa-info, .kaiwa-end-btn,
+ * header control buttons (slow/furigana/restart/send-mode),
+ * .kaiwa-fontsize-control, .kaiwa-eval-btn, and .kaiwa-send-mode-btn.
+ */
+
+/* Kaiwa Conversation Header - Premium Toolbar */
+.kaiwa-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1.25rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 253, 250, 0.95) 100%);
+  border-radius: 16px;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  border: 1px solid rgba(13, 148, 136, 0.12);
+  box-shadow:
+    0 2px 8px rgba(13, 148, 136, 0.04),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  position: relative;
+}
+
+.kaiwa-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20px;
+  right: 20px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #0D9488, #2DD4BF, #0D9488, transparent);
+  opacity: 0.4;
+  border-radius: 0 0 2px 2px;
+}
+
+.kaiwa-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.kaiwa-header-center {
+  display: flex;
+  align-items: center;
+}
+
+.kaiwa-stats {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.kaiwa-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--kaiwa-text);
+  padding: 0.375rem 0.625rem;
+  background: var(--white);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(13, 148, 136, 0.08);
+  transition: all var(--transition-fast);
+}
+
+.kaiwa-stat:hover {
+  box-shadow: 0 2px 6px rgba(13, 148, 136, 0.12);
+}
+
+.kaiwa-stat.saved {
+  color: var(--kaiwa-accent);
+  background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%);
+  border: 1px solid rgba(234, 88, 12, 0.2);
+}
+
+.kaiwa-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.kaiwa-end-btn {
+  margin-left: 0.5rem;
+}
+
+.kaiwa-end-btn:active {
+  transform: scale(0.93);
+}
+
+.kaiwa-header h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--kaiwa-primary-dark);
+}
+
+.kaiwa-info {
+  display: flex;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+}
+
+.kaiwa-badge {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #0F766E;
+  box-shadow: 0 1px 3px rgba(13, 148, 136, 0.08);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(13, 148, 136, 0.1);
+}
+
+.kaiwa-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(13, 148, 136, 0.15);
+  border-color: rgba(13, 148, 136, 0.2);
+}
+
+.kaiwa-badge.topic {
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.12) 0%, rgba(45, 212, 191, 0.08) 100%);
+  color: #0F766E;
+  border-color: rgba(13, 148, 136, 0.2);
+}
+
+.kaiwa-badge.role {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(167, 139, 250, 0.08) 100%);
+  color: #7C3AED;
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+.kaiwa-badge.topic.advanced,
+.kaiwa-badge.topic.custom {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(251, 191, 36, 0.08) 100%);
+  color: #B45309;
+  border-width: 2px;
+}
+
+/* Kaiwa Badge for Role */
+.kaiwa-badge.role {
+  background: var(--success);
+  color: var(--white);
+}
+
+/* Header control buttons - Premium Pill Style */
+.kaiwa-slow-btn,
+.kaiwa-furigana-btn,
+.kaiwa-restart-btn,
+.kaiwa-send-mode-btn,
+.kaiwa-fontsize-control {
+  opacity: 0.85;
+  transition: opacity 0.2s ease;
+}
+
+.kaiwa-slow-btn:hover,
+.kaiwa-furigana-btn:hover,
+.kaiwa-restart-btn:hover,
+.kaiwa-send-mode-btn:hover,
+.kaiwa-fontsize-control:hover {
+  opacity: 1;
+}
+
+.kaiwa-slow-btn,
+.kaiwa-furigana-btn,
+.kaiwa-restart-btn,
+.kaiwa-send-mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid rgba(13, 148, 136, 0.12);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #475569;
+  box-shadow: 0 1px 2px rgba(13, 148, 136, 0.04);
+}
+
+.kaiwa-slow-btn:hover,
+.kaiwa-furigana-btn:hover,
+.kaiwa-restart-btn:hover,
+.kaiwa-send-mode-btn:hover {
+  border-color: rgba(13, 148, 136, 0.25);
+  background: rgba(13, 148, 136, 0.06);
+  color: #0F766E;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(13, 148, 136, 0.1);
+}
+
+.kaiwa-slow-btn:active,
+.kaiwa-furigana-btn:active,
+.kaiwa-restart-btn:active,
+.kaiwa-send-mode-btn:active {
+  transform: scale(0.93);
+  box-shadow: none;
+}
+
+.kaiwa-slow-btn.active {
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  border-color: #F59E0B;
+  color: #92400E;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25), 0 0 12px rgba(245, 158, 11, 0.1);
+}
+
+.kaiwa-furigana-btn.active {
+  background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
+  border-color: #3B82F6;
+  color: #1D4ED8;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25), 0 0 12px rgba(59, 130, 246, 0.1);
+}
+
+.kaiwa-send-mode-btn.active {
+  background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+  border-color: var(--kaiwa-primary);
+  color: var(--kaiwa-primary-dark);
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.25), 0 0 12px rgba(13, 148, 136, 0.1);
+}
+
+/* Kaiwa Send Mode Button (legacy / default variant) */
+.kaiwa-send-mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--gray-light);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  cursor: default;
+  font-size: 0.8rem;
+  color: var(--gray);
+}
+
+.kaiwa-send-mode-btn.active {
+  border-color: var(--warning);
+  background: var(--warning);
+  color: var(--white);
+}
+
+/* Font size control */
+.kaiwa-fontsize-control {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--white);
+  border: 1px solid var(--gray-light);
+  border-radius: 20px;
+  padding: 0.2rem 0.4rem;
+}
+
+.kaiwa-fontsize-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gray-dark);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kaiwa-fontsize-btn:hover {
+  background: var(--light);
+  color: var(--primary);
+}
+
+.kaiwa-fontsize-btn:active {
+  transform: scale(0.88);
+}
+
+.kaiwa-fontsize-value {
+  font-size: 0.75rem;
+  color: var(--gray-dark);
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Kaiwa Evaluation Button - Premium Award Theme */
+.kaiwa-eval-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.45rem 0.875rem;
+  padding-left: 0.75rem;
+  margin-left: 0.375rem;
+  border-left: 1px solid rgba(13, 148, 136, 0.15);
+  opacity: 1;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 20px;
+  background: linear-gradient(145deg, rgba(254, 243, 199, 0.9) 0%, rgba(253, 230, 138, 0.7) 100%);
+  color: #92400E;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 4px rgba(245, 158, 11, 0.1);
+}
+
+.kaiwa-eval-btn:hover:not(:disabled) {
+  background: linear-gradient(145deg, #F59E0B 0%, #FBBF24 100%);
+  color: white;
+  border-color: transparent;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.kaiwa-eval-btn:active:not(:disabled) {
+  transform: scale(0.93);
+  box-shadow: 0 1px 4px rgba(245, 158, 11, 0.2);
+}
+
+.kaiwa-eval-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Dark mode for font size control */
+.dark-mode .kaiwa-fontsize-control {
+  background: var(--dark);
+  border-color: var(--border);
+}
+
+.dark-mode .kaiwa-fontsize-btn {
+  color: var(--gray-light);
+}
+
+.dark-mode .kaiwa-fontsize-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--primary-light);
+}
+
+.dark-mode .kaiwa-fontsize-value {
+  color: var(--gray-light);
+}

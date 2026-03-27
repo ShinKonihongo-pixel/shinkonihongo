@@ -41,6 +41,7 @@ export interface GamePlayer {
   currentAnswer: number | null; // Selected option index (0–3), null if unanswered
   answerTime: number | null;    // Milliseconds elapsed from question display to answer submission
   streak: number;           // Consecutive correct answers — feeds into streak bonus
+  correctAnswers: number;   // Total correct answers across all rounds
   joinedAt: string;
 }
 

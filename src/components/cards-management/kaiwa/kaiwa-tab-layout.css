@@ -1,0 +1,66 @@
+/*
+ * kaiwa-tab-layout.css
+ * Container and page-level layout for the Kaiwa conversation tab.
+ * Covers .kaiwa-page pseudo-elements, .kaiwa-container, and the
+ * animated background gradients / floating orbs.
+ */
+
+.kaiwa-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 500px;
+  background: radial-gradient(ellipse 80% 60% at 20% -10%, rgba(13, 148, 136, 0.1) 0%, transparent 60%),
+              radial-gradient(ellipse 60% 50% at 85% 5%, rgba(45, 212, 191, 0.08) 0%, transparent 55%),
+              radial-gradient(ellipse 50% 40% at 50% 15%, rgba(20, 184, 166, 0.06) 0%, transparent 50%);
+  pointer-events: none;
+  animation: kaiwa-bg-shift 12s ease-in-out infinite alternate;
+}
+
+@keyframes kaiwa-bg-shift {
+  0% { opacity: 0.8; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1.05); }
+}
+
+/* Floating decorative orbs */
+.kaiwa-page::after {
+  content: '';
+  position: absolute;
+  top: 60px;
+  right: -40px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(13, 148, 136, 0.04) 0%, transparent 70%);
+  pointer-events: none;
+  animation: kaiwa-orb-float 8s ease-in-out infinite alternate;
+}
+
+@keyframes kaiwa-orb-float {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-20px, 20px) scale(1.1); }
+}
+
+.kaiwa-page > .kaiwa-container {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  border: none;
+  border-bottom: 1px solid rgba(13, 148, 136, 0.08);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.kaiwa-page > .kaiwa-container:hover {
+  box-shadow: none;
+}

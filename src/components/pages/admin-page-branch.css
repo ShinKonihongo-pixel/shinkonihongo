@@ -1,0 +1,1188 @@
+/*
+ * admin-page-branch.css
+ *
+ * Branch management, teacher management, and salary management pages.
+ * Covers:
+ *   - .branch-page / .teacher-page / .salary-page / .my-teaching-page — shared page wrappers
+ *   - .page-header / .page-tabs — tab navigation
+ *   - .page-content / .card — content containers
+ *   - .members-table / .staff-table — data tables
+ *   - .status-badge / .role-badge — status and role indicators
+ *   - .branch-selector / .schedule-grid / .teaching-log — scheduling UI
+ *   - .salary-table / .salary-status — salary records
+ *   - .summary-cards — overview stat cards
+ *   - .branch-mgmt-* — unified branch management page (Japanese-themed)
+ *   - .sub-tabs / .filter-bar — secondary navigation and filters
+ *   - Overview, staff, and settings tab content (.tab-content-*)
+ *   - Salary slips view (.salary-slips-view)
+ *   - Loading and empty states
+ *   - Responsive adjustments for management pages
+ */
+
+/* ==================== BRANCH MANAGEMENT STYLES ==================== */
+
+/* Shared page styles for branch, teacher, salary pages */
+.branch-page,
+.teacher-page,
+.salary-page,
+.my-teaching-page {
+  padding: var(--space-lg);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  color: var(--dark);
+}
+
+.page-tabs {
+  display: flex;
+  gap: var(--space-xs);
+  border-bottom: 2px solid var(--border);
+  margin-bottom: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.page-tabs .tab-btn {
+  padding: var(--space-sm) var(--space-md);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-size-md);
+  color: var(--gray-dark);
+  position: relative;
+  transition: color var(--transition-fast);
+}
+
+.page-tabs .tab-btn:hover {
+  color: var(--primary);
+}
+
+.page-tabs .tab-btn.active {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.page-tabs .tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--primary);
+}
+
+.page-content {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Card component */
+.card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.card h3 {
+  margin: 0 0 var(--space-md);
+  font-size: var(--font-size-lg);
+  color: var(--dark);
+}
+
+.card h4 {
+  margin: 0 0 var(--space-sm);
+  font-size: var(--font-size-md);
+  color: var(--gray-dark);
+}
+
+/* Info list */
+.info-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Section header */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  color: var(--dark);
+}
+
+/* Status badges */
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge.status-active {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.status-badge.status-inactive {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.status-badge.status-pending {
+  background: var(--warning-light);
+  color: var(--warning);
+}
+
+/* Role badges for new roles */
+.role-badge.director {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.role-badge.branch-admin {
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  color: white;
+}
+
+.role-badge.teacher {
+  background: linear-gradient(135deg, #27ae60 0%, #219a52 100%);
+  color: white;
+}
+
+.role-badge.assistant {
+  background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+  color: white;
+}
+
+/* Settings section */
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md) 0;
+}
+
+.setting-item strong {
+  color: var(--dark);
+}
+
+.setting-item p {
+  margin: 0;
+}
+
+/* Members table */
+.members-table {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.members-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.members-table th,
+.members-table td {
+  text-align: left;
+  padding: var(--space-sm) var(--space-md);
+}
+
+.members-table th {
+  background: var(--light);
+  font-weight: 600;
+  color: var(--gray-dark);
+  font-size: var(--font-size-sm);
+}
+
+.members-table tr:not(:last-child) td {
+  border-bottom: 1px solid var(--border);
+}
+
+.members-table tr:hover td {
+  background: var(--light);
+}
+
+/* Branch selector */
+.branch-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.branch-selector select {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--white);
+  font-size: var(--font-size-sm);
+  min-width: 180px;
+}
+
+/* Teacher schedule grid */
+.schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-xs);
+  margin-top: var(--space-md);
+}
+
+.schedule-day {
+  background: var(--light);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+  min-height: 100px;
+}
+
+.schedule-day-header {
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  color: var(--gray-dark);
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-xs);
+}
+
+.schedule-slot {
+  background: var(--primary);
+  color: white;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  margin-bottom: var(--space-xs);
+}
+
+/* Teaching log */
+.teaching-log {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.session-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md);
+  background: var(--light);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+}
+
+.session-item:hover {
+  background: var(--border);
+}
+
+.session-status {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+.session-status.completed {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.session-status.scheduled {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.session-status.cancelled {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.session-status.absent {
+  background: var(--warning-light);
+  color: var(--warning);
+}
+
+/* Salary calculator styles */
+.salary-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.salary-table th,
+.salary-table td {
+  padding: var(--space-sm) var(--space-md);
+  text-align: left;
+}
+
+.salary-table th {
+  background: var(--light);
+  font-weight: 600;
+  color: var(--gray-dark);
+  font-size: var(--font-size-sm);
+}
+
+.salary-table tr:not(:last-child) td {
+  border-bottom: 1px solid var(--border);
+}
+
+.salary-status {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+.salary-status.draft {
+  background: #f5f5f5;
+  color: var(--gray);
+}
+
+.salary-status.approved {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.salary-status.paid {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+/* Summary cards grid */
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.summary-card {
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+
+.summary-card.highlight {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: white;
+}
+
+.summary-card-value {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+}
+
+.summary-card-label {
+  font-size: var(--font-size-xs);
+  opacity: 0.8;
+}
+
+/* Responsive adjustments for management pages */
+@media (max-width: 768px) {
+  .branch-page,
+  .teacher-page,
+  .salary-page,
+  .my-teaching-page {
+    padding: var(--space-md);
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .page-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    padding-bottom: var(--space-xs);
+  }
+
+  .page-tabs .tab-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .schedule-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .members-table {
+    font-size: var(--font-size-sm);
+  }
+
+  .setting-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+}
+
+/* ==================== UNIFIED BRANCH MANAGEMENT STYLES ==================== */
+
+/* Main container */
+.branch-mgmt-page {
+  padding: var(--space-lg);
+  max-width: 1600px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--jp-washi);
+}
+
+/* Loading state */
+.branch-mgmt-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: var(--space-md);
+  color: var(--jp-sumi-medium);
+}
+
+.branch-mgmt-loading .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--jp-sakura-light);
+  border-top-color: var(--jp-shu);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Header */
+.branch-mgmt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-xl);
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.branch-mgmt-header .header-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.branch-mgmt-header .jp-icon {
+  font-family: var(--font-jp-display);
+  font-size: 2rem;
+  color: var(--jp-shu);
+  background: var(--jp-sakura-light);
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+}
+
+.branch-mgmt-header h1 {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+  color: var(--jp-sumi);
+  font-weight: 600;
+}
+
+.branch-detail-header h1 {
+  font-size: var(--font-size-xl);
+}
+
+.branch-detail-header .status-badge {
+  margin-left: var(--space-sm);
+}
+
+/* Stats cards - list view */
+.branch-mgmt-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.branch-mgmt-stats .stat-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border-left: 4px solid var(--jp-ai);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.branch-mgmt-stats .stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.branch-mgmt-stats .stat-card.stat-success {
+  border-left-color: var(--jp-matcha);
+}
+
+.branch-mgmt-stats .stat-card.stat-warning {
+  border-left-color: var(--jp-kitsune);
+}
+
+.branch-mgmt-stats .stat-icon {
+  font-size: 1.5rem;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--jp-washi);
+  border-radius: var(--radius-md);
+}
+
+.branch-mgmt-stats .stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.branch-mgmt-stats .stat-value {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--jp-sumi);
+  line-height: 1;
+}
+
+.branch-mgmt-stats .stat-label {
+  font-size: var(--font-size-sm);
+  color: var(--jp-sumi-medium);
+  margin-top: 4px;
+}
+
+/* Empty state */
+.branch-mgmt-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2xl) var(--space-lg);
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.branch-mgmt-empty .empty-icon {
+  font-size: 4rem;
+  margin-bottom: var(--space-md);
+  opacity: 0.5;
+}
+
+.branch-mgmt-empty p {
+  color: var(--jp-sumi-medium);
+  margin: 0;
+}
+
+.branch-mgmt-empty .hint {
+  font-size: var(--font-size-sm);
+  margin-top: var(--space-xs);
+  opacity: 0.7;
+}
+
+/* Branch grid */
+.branch-mgmt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--space-lg);
+}
+
+/* Main tabs */
+.branch-mgmt-tabs {
+  display: flex;
+  gap: var(--space-xs);
+  background: var(--white);
+  padding: var(--space-xs);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+}
+
+.branch-mgmt-tabs .tab-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--font-size-md);
+  color: var(--jp-sumi-medium);
+  transition: all var(--transition-fast);
+  font-weight: 500;
+}
+
+.branch-mgmt-tabs .tab-btn:hover {
+  background: var(--jp-washi);
+  color: var(--jp-sumi);
+}
+
+.branch-mgmt-tabs .tab-btn.active {
+  background: var(--jp-shu);
+  color: white;
+}
+
+.branch-mgmt-tabs .tab-btn .tab-icon {
+  font-size: 1.1rem;
+}
+
+/* Content area */
+.branch-mgmt-content {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  min-height: 400px;
+}
+
+/* Sub-tabs */
+.sub-tabs {
+  display: flex;
+  gap: var(--space-xs);
+  border-bottom: 2px solid var(--border);
+  margin-bottom: var(--space-lg);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.sub-tab {
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--jp-sumi-medium);
+  position: relative;
+  transition: color var(--transition-fast);
+  font-weight: 500;
+}
+
+.sub-tab:hover {
+  color: var(--jp-shu);
+}
+
+.sub-tab.active {
+  color: var(--jp-shu);
+}
+
+.sub-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--jp-shu);
+}
+
+.sub-tabs .btn-add {
+  margin-left: auto;
+}
+
+/* Filter bar */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  padding: var(--space-md);
+  background: var(--jp-washi);
+  border-radius: var(--radius-md);
+}
+
+.filter-bar label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--jp-sumi-medium);
+}
+
+.filter-bar select {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  font-size: var(--font-size-sm);
+  min-width: 200px;
+}
+
+/* Overview tab - cards grid */
+.tab-content-overview .overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-lg);
+}
+
+.tab-content-overview .card {
+  background: var(--jp-washi-warm);
+  border: 1px solid var(--border);
+  margin-bottom: 0;
+}
+
+.tab-content-overview .card h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--jp-ai);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.tab-content-overview .card h3 .card-icon {
+  font-size: 1.2rem;
+}
+
+.tab-content-overview .card-monthly {
+  grid-column: 1 / -1;
+}
+
+/* Info rows */
+.tab-content-overview .info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab-content-overview .info-row:last-child {
+  border-bottom: none;
+}
+
+.tab-content-overview .info-row .label {
+  color: var(--jp-sumi-medium);
+  font-size: var(--font-size-sm);
+}
+
+.tab-content-overview .info-row .value {
+  font-weight: 500;
+  color: var(--jp-sumi);
+}
+
+/* Stats grid */
+.tab-content-overview .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+}
+
+.tab-content-overview .stat-box {
+  padding: var(--space-md);
+  background: var(--white);
+  border-radius: var(--radius-md);
+  text-align: center;
+  border: 1px solid var(--border);
+}
+
+.tab-content-overview .stat-box.stat-active {
+  border-color: var(--jp-matcha);
+  background: var(--jp-matcha-light);
+}
+
+.tab-content-overview .stat-number {
+  display: block;
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--jp-ai);
+  line-height: 1;
+}
+
+.tab-content-overview .stat-box.stat-active .stat-number {
+  color: var(--jp-matcha-dark);
+}
+
+.tab-content-overview .stat-text {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--jp-sumi-medium);
+  margin-top: 4px;
+}
+
+/* Monthly stats */
+.tab-content-overview .monthly-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+}
+
+.tab-content-overview .monthly-item {
+  padding: var(--space-md);
+  background: var(--white);
+  border-radius: var(--radius-md);
+  text-align: center;
+  border: 1px solid var(--border);
+}
+
+.tab-content-overview .monthly-label {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--jp-sumi-medium);
+  margin-bottom: 4px;
+}
+
+.tab-content-overview .monthly-value {
+  display: block;
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--jp-sumi);
+}
+
+.tab-content-overview .monthly-value.approved {
+  color: var(--jp-ai);
+}
+
+.tab-content-overview .monthly-value.paid {
+  color: var(--jp-matcha);
+}
+
+/* Staff tab */
+.tab-content-staff .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.tab-content-staff .section-header h3 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  color: var(--jp-sumi);
+}
+
+.tab-content-staff .add-staff-controls {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.tab-content-staff .add-staff-controls select {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  min-width: 200px;
+}
+
+/* Staff table */
+.staff-table {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.staff-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.staff-table th,
+.staff-table td {
+  padding: var(--space-md);
+  text-align: left;
+}
+
+.staff-table th {
+  background: var(--jp-washi);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  color: var(--jp-sumi-medium);
+  border-bottom: 2px solid var(--border);
+}
+
+.staff-table tr:not(:last-child) td {
+  border-bottom: 1px solid var(--border);
+}
+
+.staff-table tr:hover td {
+  background: var(--jp-washi);
+}
+
+.staff-table .member-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.staff-table .avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--gradient-ai);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+}
+
+.staff-table .email {
+  color: var(--jp-sumi-medium);
+  font-size: var(--font-size-sm);
+}
+
+.staff-table .date {
+  font-size: var(--font-size-sm);
+  color: var(--jp-sumi-medium);
+}
+
+/* Role badges */
+.role-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+.role-badge.role-branch_admin {
+  background: linear-gradient(135deg, var(--jp-ai) 0%, var(--jp-ai-light) 100%);
+  color: white;
+}
+
+.role-badge.role-main_teacher {
+  background: linear-gradient(135deg, var(--jp-shu) 0%, var(--jp-shu-light) 100%);
+  color: white;
+}
+
+.role-badge.role-part_time_teacher {
+  background: linear-gradient(135deg, var(--jp-matcha) 0%, var(--jp-matcha-light) 100%);
+  color: white;
+}
+
+.role-badge.role-assistant {
+  background: var(--jp-kitsune-light);
+  color: var(--jp-sumi);
+}
+
+/* Settings tab */
+.tab-content-settings .card {
+  background: var(--jp-washi-warm);
+  border: 1px solid var(--border);
+}
+
+.tab-content-settings .card h3 {
+  color: var(--jp-ai);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.tab-content-settings .settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.tab-content-settings .setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md);
+  background: var(--white);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.tab-content-settings .setting-item.danger {
+  border-color: var(--danger-light);
+  background: #fff8f8;
+}
+
+.tab-content-settings .setting-info strong {
+  display: block;
+  color: var(--jp-sumi);
+  margin-bottom: 4px;
+}
+
+.tab-content-settings .setting-item.danger .setting-info strong {
+  color: var(--danger);
+}
+
+.tab-content-settings .setting-info p {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--jp-sumi-medium);
+}
+
+/* Salary slips view */
+.salary-slips-view .slips-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.salary-slips-view .slips-header h3 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  color: var(--jp-sumi);
+}
+
+.salary-slips-view .slips-header input[type="month"] {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+}
+
+.salary-slips-view .slips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--space-lg);
+}
+
+.salary-slips-view .slip-card {
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+}
+
+.salary-slips-view .slip-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Loading and empty states */
+.loading-state,
+.empty-state {
+  padding: var(--space-2xl);
+  text-align: center;
+  color: var(--jp-sumi-medium);
+}
+
+.empty-state .hint {
+  font-size: var(--font-size-sm);
+  margin-top: var(--space-xs);
+  opacity: 0.7;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .tab-content-overview .overview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tab-content-overview .monthly-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .branch-mgmt-page {
+    padding: var(--space-md);
+  }
+
+  .branch-mgmt-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .branch-mgmt-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: var(--space-xs);
+  }
+
+  .branch-mgmt-tabs .tab-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .branch-mgmt-content {
+    padding: var(--space-md);
+  }
+
+  .sub-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: var(--space-xs);
+  }
+
+  .sub-tab {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .sub-tabs .btn-add {
+    margin-left: var(--space-md);
+  }
+
+  .filter-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filter-bar select {
+    width: 100%;
+  }
+
+  .tab-content-overview .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tab-content-staff .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  .tab-content-staff .add-staff-controls {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .tab-content-staff .add-staff-controls select {
+    width: 100%;
+  }
+
+  .tab-content-settings .setting-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  .tab-content-settings .setting-item button {
+    width: 100%;
+  }
+
+  .salary-slips-view .slips-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+}

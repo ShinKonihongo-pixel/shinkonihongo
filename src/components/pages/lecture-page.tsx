@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLectures, useSlides, useLectureView } from '../../hooks/use-lectures';
 import { useAuth } from '../../hooks/use-auth';
+import { useNavigation } from '../../contexts/navigation-context';
 import type { Lecture, LectureFolder } from '../../types/lecture';
 import type { JLPTLevel } from '../../types/flashcard';
 import { LevelsView } from './lecture/levels-view';
@@ -13,11 +14,18 @@ import { PresentationMode } from './lecture/presentation-mode';
 import { ViewMode } from './lecture/view-mode';
 import { useKeyboardNavigation } from './lecture/use-keyboard-navigation';
 import { saveProgress, loadProgress, clearProgress, loadNotes, saveNotes } from './lecture/utils';
-import type { LecturePageProps, ViewMode as ViewModeType } from './lecture/types';
+import type { ViewMode as ViewModeType } from './lecture/types';
 
-export function LecturePage({ onNavigateToEditor }: LecturePageProps) {
+export function LecturePage() {
   const { currentUser, isAdmin } = useAuth();
   const { lectures, lectureFolders, loading, getFoldersByLevel, getLecturesByFolder } = useLectures(isAdmin);
+  const nav = useNavigation();
+  const onNavigateToEditor = (lectureId?: string) => {
+    nav.setEditingLectureId(lectureId);
+    nav.setEditingLectureFolderId(undefined);
+    nav.setEditingLectureLevel(undefined);
+    nav.setCurrentPage('lecture-editor');
+  };
 
   // Navigation state
   const [viewMode, setViewMode] = useState<ViewModeType>('levels');

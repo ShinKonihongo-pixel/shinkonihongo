@@ -1,0 +1,421 @@
+/*
+ * kaiwa-tab-responsive-global.css
+ * General application-level responsive rules that were co-located in
+ * the original kaiwa-tab.css but apply to shared/global classes
+ * (sidebar, header, nav, flashcard, study session, filter controls, etc.).
+ * These are preserved here to avoid breaking page-level layouts.
+ */
+
+/* Responsive - Tablet */
+@media (max-width: 768px) {
+  /* Sidebar mobile styles */
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-mobile-toggle {
+    display: flex;
+  }
+
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
+
+  .sidebar-collapse-btn {
+    display: none;
+  }
+
+  .app-with-sidebar .main-wrapper {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .app-with-sidebar.sidebar-collapsed .main-wrapper {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .header {
+    padding: 0.5rem;
+  }
+
+  .header-top {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .hamburger-btn {
+    display: block;
+  }
+
+  .nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--white);
+    flex-direction: column;
+    padding: 1rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    gap: 0.5rem;
+    z-index: 99;
+  }
+
+  .nav.nav-open {
+    display: flex;
+  }
+
+  .header .nav-btn {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    justify-content: flex-start;
+  }
+
+  /* Show user section at top of mobile menu */
+  .nav-user-section {
+    display: flex;
+    flex-direction: column;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .nav-user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* Logout button below user info */
+  .nav-user-section .nav-logout-btn {
+    display: flex;
+    padding: 0.5rem 0.75rem;
+    color: var(--danger) !important;
+    font-size: 0.9rem;
+  }
+
+  /* Hide desktop user info on mobile */
+  .desktop-user-info {
+    display: none;
+  }
+
+  .home-page {
+    padding: var(--space-md);
+  }
+
+  .jlpt-bar-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .jlpt-bar-label {
+    width: 100%;
+  }
+
+  .lesson-tree-item {
+    padding: 0.75rem;
+  }
+
+  /* Flashcard font scaling - iPad/Tablet */
+  .kanji {
+    font-size: 180px;
+  }
+
+  .vocabulary {
+    font-size: 1.6rem;
+  }
+
+  .sino-vietnamese {
+    font-size: 1.8rem;
+  }
+
+  .meaning {
+    font-size: 1.3rem;
+  }
+
+  .flashcard {
+    height: 45vh;
+    min-height: 280px;
+    max-height: calc(100vh - 200px);
+  }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 600px) {
+  .header-title {
+    font-size: 1.25rem;
+  }
+
+  .main-content {
+    padding: 0.75rem;
+    margin: 8px;
+    margin-left: 8px;
+    border-radius: 12px;
+  }
+
+  .flashcard {
+    height: 55vh;
+    min-height: 280px;
+    max-height: calc(100vh - 140px);
+  }
+
+  .kanji {
+    font-size: 120px;
+  }
+
+  .vocabulary {
+    font-size: 1.4rem;
+  }
+
+  .sino-vietnamese {
+    font-size: 1.5rem;
+  }
+
+  .meaning {
+    font-size: 1.1rem;
+  }
+
+  .example {
+    font-size: 0.85rem;
+  }
+
+  .rating-btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+    min-height: 48px;
+  }
+
+  .btn {
+    min-height: 35px;
+    padding: 0.75rem 1rem;
+  }
+
+  .btn-large {
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  .home-page {
+    padding: var(--space-sm);
+  }
+
+  .welcome-section h2 {
+    font-size: 1.35rem;
+  }
+
+  .study-controls {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .filter-group {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .filter-group select {
+    width: 100%;
+  }
+
+  /* Study session responsive - Premium Dark Theme */
+  .study-session {
+    padding: 0;
+  }
+
+  .study-header {
+    margin-bottom: 0;
+  }
+
+  /* Mobile study header adjustments */
+  .filter-bar-inline {
+    padding: 0.5rem 0.75rem;
+    gap: 0.35rem;
+  }
+
+  .filter-bar-inline .filter-btn {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.85rem;
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .progress-info-header {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .settings-btn-study {
+    padding: 0.3rem 0.5rem;
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .filter-separator {
+    display: none;
+  }
+
+  .action-buttons-inline {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+  }
+
+  .action-group {
+    justify-content: center;
+    flex-wrap: nowrap;
+    gap: 0.25rem;
+  }
+
+  .action-group > span:first-child {
+    font-size: 0.7rem;
+  }
+
+  .action-separator {
+    display: none;
+  }
+
+  .progress-info-right {
+    position: static;
+    transform: none;
+    justify-content: center;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .memo-btn, .diff-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+  }
+
+  .speak-btn {
+    font-size: 1.2rem;
+    padding: 0.4rem 0.6rem;
+  }
+
+  .card-nav-btn {
+    padding: 0.35rem 0.5rem;
+    font-size: 1.2rem;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .card-navigation {
+    gap: 1rem;
+  }
+
+  .study-card-area {
+    padding: 0.1rem 0.35rem;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .flashcard {
+    height: calc(100vh - 220px);
+    max-height: calc(100vh - 220px);
+  }
+
+  .swipe-hint {
+    font-size: 0.7rem;
+    margin-top: 0.1rem;
+  }
+}
+
+/* Responsive - Small Mobile */
+@media (max-width: 380px) {
+  .header-title {
+    font-size: 1.1rem;
+  }
+
+  .kanji {
+    font-size: 80px;
+  }
+
+  .vocabulary {
+    font-size: 1.2rem;
+  }
+
+  .sino-vietnamese {
+    font-size: 1.3rem;
+  }
+
+  .meaning {
+    font-size: 1rem;
+  }
+
+  .example {
+    font-size: 0.75rem;
+  }
+
+  .flashcard {
+    height: calc(100vh - 230px);
+    min-height: 250px;
+    max-height: calc(100vh - 230px);
+  }
+
+  .rating-buttons {
+    flex-wrap: wrap;
+  }
+
+  .rating-btn {
+    flex: 1 1 45%;
+    min-width: 80px;
+  }
+
+  /* Extra small study session */
+  .study-session {
+    padding: 0;
+  }
+
+  .filter-bar-inline span.filter-label {
+    display: none;
+  }
+
+  .filter-btn {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.7rem;
+  }
+
+  .action-group > span:first-child {
+    display: none;
+  }
+
+  .memo-btn, .diff-btn {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.7rem;
+  }
+
+  .progress-info-right {
+    font-size: 0.8rem;
+    padding: 0.35rem 0.65rem;
+  }
+
+  .study-card-area {
+    padding: 0.1rem 0.35rem;
+  }
+
+  .card-nav-btn {
+    padding: 0.25rem 0.4rem;
+    font-size: 1rem;
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .action-buttons-inline {
+    padding: 0.4rem 0;
+  }
+}

@@ -3,6 +3,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { useAuth } from '../../hooks/use-auth';
+import { useUserData } from '../../contexts/user-data-context';
 import { useBranches, useBranchMembers, useBranchStats, useCurrentBranch } from '../../hooks/use-branches';
 import { useTeacherSchedules, useTeachingSessions, useSalaries } from '../../hooks/use-teachers';
 import { useClassrooms } from '../../hooks/use-classrooms';
@@ -26,11 +27,8 @@ import { CenterBrandingEditor } from '../center/center-branding-editor';
 import { CenterInviteManager } from '../center/center-invite-manager';
 import './branch-management-page.css';
 
-interface BranchManagementPageProps {
-  users: User[];
-}
-
-export function BranchManagementPage({ users }: BranchManagementPageProps) {
+export function BranchManagementPage() {
+  const { users } = useUserData();
   const { currentUser } = useAuth();
   const isDirector = currentUser?.role === 'director' || currentUser?.role === 'super_admin';
   const isBranchAdmin = currentUser?.role === 'branch_admin' || isDirector;

@@ -21,15 +21,11 @@ import { CLASSROOM_LEVEL_LABELS, DAY_OF_WEEK_LABELS } from '../../types/classroo
 import type { BranchStats } from '../../types/branch';
 import type { Classroom, ClassroomLevel } from '../../types/classroom';
 import type { User } from '../../types/user';
-import type { Page } from '../layout/header';
 import { isImageAvatar } from '../../utils/avatar-icons';
+import { useAuth } from '../../hooks/use-auth';
+import { useUserData } from '../../contexts/user-data-context';
+import { useNavigation } from '../../contexts/navigation-context';
 import './center-dashboard-page.css';
-
-interface CenterDashboardPageProps {
-  currentUser: { id: string; role: string };
-  users: User[];
-  onNavigate?: (page: Page) => void;
-}
 
 type DashTab = 'overview' | 'analytics' | 'classes' | 'students' | 'settings';
 type ClassFilter = 'all' | ClassroomLevel;
@@ -72,13 +68,16 @@ function ActivityRing({ value, max, label, gradientId }: {
   );
 }
 
-export function CenterDashboardPage({ currentUser, users, onNavigate }: CenterDashboardPageProps) {
+export function CenterDashboardPage() {
+  const { currentUser } = useAuth();
+  const { users } = useUserData();
+  const { setCurrentPage: onNavigate } = useNavigation();
   const { center, isAdmin, branding, userRole } = useCenter();
   const [stats, setStats] = useState<BranchStats | null>(null);
   const [activeTab, setActiveTab] = useState<DashTab>('overview');
 
   // Data hooks
-  const { classrooms, loading: classLoading } = useClassrooms(currentUser.id, isAdmin, center.id);
+  const { classrooms, loading: classLoading } = useClassrooms(currentUser?.id || null, isAdmin, center.id);
   const { members, loading: membersLoading, removeMember } = useCenterMembers(center.id, users);
 
   // Search & filter state
@@ -280,24 +279,20 @@ export function CenterDashboardPage({ currentUser, users, onNavigate }: CenterDa
                 <Users size={18} />
                 <span>Thành viên</span>
               </button>
-              {onNavigate && (
-                <button className="cdash-quick-action" onClick={() => onNavigate('classroom')}>
-                  <GraduationCap size={18} />
-                  <span>Quản lí lớp</span>
-                </button>
-              )}
+              <button className="cdash-quick-action" onClick={() => onNavigate('classroom')}>
+                <GraduationCap size={18} />
+                <span>Quản lí lớp</span>
+              </button>
               {isAdmin && (
                 <button className="cdash-quick-action" onClick={() => setActiveTab('settings')}>
                   <UserPlus size={18} />
                   <span>Mời học viên</span>
                 </button>
               )}
-              {onNavigate && (
-                <button className="cdash-quick-action" onClick={() => onNavigate('study')}>
-                  <BookOpen size={18} />
-                  <span>Học tập</span>
-                </button>
-              )}
+              <button className="cdash-quick-action" onClick={() => onNavigate('study')}>
+                <BookOpen size={18} />
+                <span>Học tập</span>
+              </button>
               {isAdmin && (
                 <button className="cdash-quick-action" onClick={() => setActiveTab('settings')}>
                   <Settings size={18} />
@@ -316,7 +311,7 @@ export function CenterDashboardPage({ currentUser, users, onNavigate }: CenterDa
                   key={c.id}
                   className="cdash-class-card"
                   data-level={c.level}
-                  onClick={() => onNavigate?.('classroom')}
+                  onClick={() => onNavigate('classroom')}
                 >
                   <div className={`cdash-class-icon ${c.level}`}>
                     <School size={17} />
@@ -346,7 +341,7 @@ export function CenterDashboardPage({ currentUser, users, onNavigate }: CenterDa
             <div className="cdash-divider" />
 
             {/* Quiz Battle Leaderboard */}
-            <DashboardLeaderboard currentUserId={currentUser.id} />
+            <DashboardLeaderboard currentUserId={currentUser?.id || ''} />
           </>
         )}
 
@@ -367,7 +362,7 @@ export function CenterDashboardPage({ currentUser, users, onNavigate }: CenterDa
                   placeholder="Tìm lớp theo tên hoặc mã..."
                 />
               </div>
-              {isAdmin && onNavigate && (
+              {isAdmin && (
                 <button className="cdash-btn-add" onClick={() => onNavigate('classroom')}>
                   <Plus size={14} /> Tạo lớp
                 </button>
@@ -409,7 +404,7 @@ export function CenterDashboardPage({ currentUser, users, onNavigate }: CenterDa
                     key={c.id}
                     className="cdash-class-card"
                     data-level={c.level}
-                    onClick={() => onNavigate?.('classroom')}
+                    onClick={() => onNavigate('classroom')}
                   >
                     <div className={`cdash-class-icon ${c.level}`}>
                       <School size={17} />
@@ -555,7 +550,7 @@ export function CenterDashboardPage({ currentUser, users, onNavigate }: CenterDa
               <CenterInviteManager
                 branchId={center.id}
                 centerSlug={center.slug || ''}
-                currentUserId={currentUser.id}
+                currentUserId={currentUser?.id || ''}
               />
             </div>
 

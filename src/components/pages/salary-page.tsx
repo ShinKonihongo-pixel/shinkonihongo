@@ -10,14 +10,12 @@ import { SalaryReport } from '../salary/salary-report';
 import { BranchSelector } from '../branch/branch-selector';
 import type { Salary } from '../../types/teacher';
 import type { User } from '../../types/user';
+import { useUserData } from '../../contexts/user-data-context';
 
 type ViewMode = 'calculator' | 'report' | 'slips';
 
-interface SalaryPageProps {
-  users: User[];
-}
-
-export function SalaryPage({ users }: SalaryPageProps) {
+export function SalaryPage() {
+  const { users } = useUserData();
   const { currentUser } = useAuth();
   const isBranchAdmin = currentUser?.role === 'branch_admin' || currentUser?.role === 'director' || currentUser?.role === 'super_admin';
 

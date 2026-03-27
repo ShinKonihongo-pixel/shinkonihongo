@@ -4,14 +4,15 @@
 
 import { useState, useCallback, lazy, Suspense, Component, type ReactNode, type ErrorInfo } from 'react';
 import type { GameType } from '../../types/game-hub';
-import type { CurrentUser, GameSession } from '../../types/user';
-import type { Flashcard, JLPTLevel, Lesson } from '../../types/flashcard';
-import type { JLPTQuestion } from '../../types/jlpt-question';
-import type { AppSettings } from '../../hooks/use-settings';
-import type { FriendWithUser } from '../../types/friendship';
 import type { GameRoomConfig } from '../game-hub/room-setup/types';
 import type { CreateGameData } from '../../types/quiz-game';
 import type { CreateKanjiBattleData } from '../../types/kanji-battle';
+import { useUserData } from '../../contexts/user-data-context';
+import { useFlashcardData } from '../../contexts/flashcard-data-context';
+import { useJLPTData } from '../../contexts/jlpt-data-context';
+import { useSettings } from '../../hooks/settings/use-app-settings';
+import { useLessonFiltering } from '../../hooks/use-lesson-filtering';
+import { useNavigation } from '../../contexts/navigation-context';
 import { GameSelector } from '../game-hub/game-selector';
 import { GameRoomSetup } from '../game-hub/room-setup/game-room-setup';
 import {
@@ -26,7 +27,10 @@ import {
 } from '../game-hub/room-setup/game-configs';
 import { GameCreate } from '../quiz-game/game-create';
 import { KanjiBattleSetup } from '../kanji-battle/kanji-battle-setup';
-import '../game-hub/game-hub.css';
+import '../game-hub/game-hub-notifications.css';
+import '../game-hub/game-hub-leaderboard.css';
+import '../game-hub/game-hub-layout.css';
+import '../game-hub/game-hub-game-cards.css';
 import '../game-hub/game-room-setup.css';
 import '../game-hub/race-game-v2.css';
 import '../game-hub/game-modals.css';
@@ -110,42 +114,15 @@ function GameLoadingFallback() {
   );
 }
 
-interface GameHubPageProps {
-  currentUser: CurrentUser | null;
-  flashcards: Flashcard[];
-  kanjiCards?: import('../../types/kanji').KanjiCard[];
-  jlptQuestions: JLPTQuestion[];
-  getLessonsByLevel: (level: JLPTLevel) => Lesson[];
-  getChildLessons: (parentId: string) => Lesson[];
-  settings: AppSettings;
-  friends?: FriendWithUser[];
-  onInviteFriend?: (gameId: string, gameCode: string, gameTitle: string, friendId: string) => Promise<boolean>;
-  // Initial game selection (from URL params)
-  initialGame?: GameType | null;
-  initialJoinCode?: string | null;
-  // Collapse/expand sidebar when entering/leaving game
-  onCollapseSidebar?: () => void;
-  onExpandSidebar?: () => void;
-  // Save game session for XP tracking
-  onSaveGameSession?: (data: Omit<GameSession, 'id' | 'userId'>) => void;
-}
-
-export function GameHubPage({
-  currentUser,
-  flashcards,
-  kanjiCards = [],
-  jlptQuestions,
-  getLessonsByLevel,
-  getChildLessons,
-  settings,
-  friends = [],
-  onInviteFriend,
-  initialGame,
-  initialJoinCode,
-  onCollapseSidebar,
-  onExpandSidebar,
-  onSaveGameSession,
-}: GameHubPageProps) {
+export function GameHubPage() {
+  const { currentUser, friendsWithUsers: friends, sendGameInvitation: onInviteFriend, addGameSession: onSaveGameSession } = useUserData();
+  const { cards: flashcards, kanjiCards = [] } = useFlashcardData();
+  const { jlptQuestions } = useJLPTData();
+  const { settings } = useSettings();
+  const { filteredGetLessonsByLevel: getLessonsByLevel, filteredGetChildLessons: getChildLessons } = useLessonFiltering();
+  const { initialGameType: initialGame, initialGameJoinCode: initialJoinCode, setSidebarCollapsed } = useNavigation();
+  const onCollapseSidebar = () => setSidebarCollapsed(true);
+  const onExpandSidebar = () => setSidebarCollapsed(false);
   const [selectedGame, setSelectedGame] = useState<GameType | null>(initialGame || null);
   const [joinCode, setJoinCode] = useState<string | null>(initialJoinCode || null);
   const [setupModalGame, setSetupModalGame] = useState<GameType | null>(null);

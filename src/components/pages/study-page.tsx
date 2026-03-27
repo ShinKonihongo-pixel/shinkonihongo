@@ -4,39 +4,30 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import type { Flashcard, JLPTLevel, MemorizationStatus, Lesson } from '../../types/flashcard';
 import type { AppSettings } from '../../hooks/use-settings';
-import type { StudySession as StudySessionType } from '../../types/user';
 import type { StudyMode } from '../study/level-lesson-selector/types';
 import { useStudySession } from '../../hooks/use-study-session';
 import { useAuth } from '../../hooks/use-auth';
 import { useVocabularyNotebooks } from '../../hooks/use-vocabulary-notebooks';
+import { useNavigate } from 'react-router-dom';
+import { useFlashcardData } from '../../contexts/flashcard-data-context';
+import { useLessonFiltering } from '../../hooks/use-lesson-filtering';
+import { useSettings } from '../../hooks/settings/use-app-settings';
+import { useUserData } from '../../contexts/user-data-context';
 import { StudySession } from '../study/study-session';
 import { StudyResult } from '../study/study-result';
 import { LevelLessonSelector } from '../study/level-lesson-selector';
 import { ListeningStudyView } from '../study/listening-study-view';
 
-interface StudyPageProps {
-  cards: Flashcard[];
-  getLessonsByLevel: (level: JLPTLevel) => Lesson[];
-  getChildLessons: (parentId: string) => Lesson[];
-  updateCard: (id: string, data: Partial<Flashcard>) => void;
-  onGoHome: () => void;
-  settings: AppSettings;
-  onUpdateSetting?: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
-  onSaveStudySession?: (data: Omit<StudySessionType, 'id' | 'userId'>) => void;
-}
-
 type ViewMode = 'select' | 'study' | 'result' | 'listening' | 'notebook-study';
 
-export function StudyPage({
-  cards,
-  getLessonsByLevel,
-  getChildLessons,
-  updateCard,
-  onGoHome,
-  settings,
-  onUpdateSetting,
-  onSaveStudySession,
-}: StudyPageProps) {
+export function StudyPage() {
+  const navigate = useNavigate();
+  const { cards, updateCard } = useFlashcardData();
+  const { filteredGetLessonsByLevel: getLessonsByLevel, filteredGetChildLessons: getChildLessons } = useLessonFiltering();
+  const { settings, updateSetting } = useSettings();
+  const { addStudySession: onSaveStudySession } = useUserData();
+  const onGoHome = () => navigate('/');
+  const onUpdateSetting = updateSetting;
   const [viewMode, setViewMode] = useState<ViewMode>('select');
   const [selectedLevel, setSelectedLevel] = useState<JLPTLevel>('N5');
   const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>([]);

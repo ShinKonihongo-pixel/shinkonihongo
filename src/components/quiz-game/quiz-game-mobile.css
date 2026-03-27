@@ -1,0 +1,117 @@
+/*
+ * quiz-game-mobile.css
+ * Responsive mobile overrides for all game play screens.
+ * Contains @media (max-width: 600px) rules that shrink the top bar,
+ * timer, question card, answer grid, podium, and powerup grid for
+ * narrow viewports.
+ */
+
+@media (max-width: 600px) {
+  .game-top-bar {
+    padding: 0.6rem 0.75rem;
+  }
+
+  .timer-circle {
+    width: 55px;
+    height: 55px;
+  }
+
+  .timer-value {
+    font-size: 1.3rem;
+  }
+
+  .question-area {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .question-card {
+    padding: 1.25rem 1rem;
+    border-radius: 16px;
+  }
+
+  .question-card .question-text {
+    font-size: 1.3rem !important;
+  }
+
+  .answers-grid {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+    padding: 0.5rem;
+  }
+
+  .answer-card {
+    min-height: 56px;
+    padding: 0.9rem 0.75rem;
+    border-radius: 12px;
+  }
+
+  .podium-stand {
+    width: 70px;
+  }
+
+  .podium-place.first .podium-stand {
+    height: 80px;
+  }
+
+  .podium-place.second .podium-stand {
+    height: 55px;
+  }
+
+  .podium-place.third .podium-stand {
+    height: 40px;
+  }
+
+  .powerup-grid {
+    gap: 0.6rem;
+  }
+
+  .powerup-grid > :last-child:nth-child(odd) {
+    max-width: 100%;
+  }
+
+  .powerup-card {
+    padding: 0.9rem 0.5rem;
+  }
+
+  .game-powerup-screen {
+    padding: 1rem 0.5rem;
+  }
+
+  .game-reveal-screen {
+    padding: 1rem 0.5rem;
+  }
+
+  .game-leaderboard-screen {
+    padding: 1rem 0.5rem;
+  }
+
+  .result-banner {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1.25rem;
+  }
+
+  .result-text {
+    font-size: 1.4rem;
+  }
+
+  .starting-title {
+    font-size: 1.6rem;
+  }
+
+  .starting-countdown {
+    width: 130px;
+    height: 130px;
+  }
+
+  .countdown-number {
+    font-size: 4rem;
+  }
+
+  /* Premium question/reveal/leaderboard screens */
+  .gq-grid { grid-template-columns: 1fr; gap: 0.4rem; }
+  .gq-question { padding: 1rem; border-radius: 16px; }
+  .gq-opt { padding: 0.75rem 0.9rem; }
+  .gl-podium { gap: 0.25rem; }
+  .gl-pod-stand { width: 52px; }
+}

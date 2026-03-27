@@ -1,13 +1,9 @@
 // Exercise Page Type Definitions
 
 import type { Exercise, ExerciseSession } from '../../../types/exercise';
-import type { Flashcard, JLPTLevel } from '../../../types/flashcard';
+import type { JLPTLevel } from '../../../types/flashcard';
 
-export interface ExercisePageProps {
-  exercises: Exercise[];
-  flashcards: Flashcard[];
-  onGoHome: () => void;
-}
+export interface ExercisePageProps {}
 
 export type ViewState = 'level-select' | 'list' | 'session' | 'result';
 

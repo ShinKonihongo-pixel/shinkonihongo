@@ -8,7 +8,12 @@ import { ConfirmModal } from '../ui/confirm-modal';
 import { useLectures } from '../../hooks/use-lectures';
 import { LectureCard } from '../lecture/lecture-card';
 import { JLPT_LEVELS } from '../../constants/jlpt';
-import './admin-page.css';
+import './admin-page-chat.css';
+import './admin-page-pptx-import.css';
+import './admin-page-slide-editor.css';
+import './admin-page-panels.css';
+import './admin-page-branch.css';
+import './admin-page-utilities.css';
 
 interface AdminPageProps {
   users: User[];

@@ -1,7 +1,7 @@
 // Chat page for user communication and exchange
 
 import { useState, useEffect, useRef } from 'react';
-import type { CurrentUser } from '../../types/user';
+import { useUserData } from '../../contexts/user-data-context';
 
 interface ChatMessage {
   id: string;
@@ -13,10 +13,6 @@ interface ChatMessage {
   role?: string;
   message: string;
   timestamp: string;
-}
-
-interface ChatPageProps {
-  currentUser: CurrentUser;
 }
 
 // Local storage key for chat messages (demo purposes)
@@ -46,7 +42,9 @@ const EMOJI_CATEGORIES = [
   }
 ];
 
-export function ChatPage({ currentUser }: ChatPageProps) {
+export function ChatPage() {
+  const { currentUser } = useUserData();
+  if (!currentUser) return null;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);

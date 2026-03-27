@@ -1,5 +1,5 @@
 // Grammar card wrapper with flip animation
-import { useRef } from 'react';
+import { useRef, memo, useMemo } from 'react';
 import type { GrammarCard, JLPTLevel, GrammarLesson } from '../../../types/flashcard';
 import type { GrammarStudySettings } from './types';
 import { GrammarCardFront } from './grammar-card-front';
@@ -18,7 +18,7 @@ interface GrammarCardComponentProps {
   // Remove ref props - manage touch state locally
 }
 
-export function GrammarCardComponent({
+export const GrammarCardComponent = memo(function GrammarCardComponent({
   card,
   isFlipped,
   settings,
@@ -34,15 +34,15 @@ export function GrammarCardComponent({
   const touchStartY = useRef<number | null>(null);
   const levelTheme = LEVEL_THEMES[selectedLevel];
 
-  const getLessonName = (lessonId: string): string => {
-    const lesson = lessons.find(l => l.id === lessonId);
+  const lessonName = useMemo(() => {
+    const lesson = lessons.find(l => l.id === card.lessonId);
     if (!lesson) return '';
     if (lesson.parentId) {
       const parent = lessons.find(l => l.id === lesson.parentId);
       return parent ? `${parent.name} > ${lesson.name}` : lesson.name;
     }
     return lesson.name;
-  };
+  }, [lessons, card.lessonId]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
@@ -92,11 +92,11 @@ export function GrammarCardComponent({
         <GrammarCardFront
           card={card}
           settings={settings}
-          lessonName={getLessonName(card.lessonId)}
+          lessonName={lessonName}
           selectedLevel={selectedLevel}
         />
         <GrammarCardBack card={card} settings={settings} />
       </div>
     </div>
   );
-}
+});

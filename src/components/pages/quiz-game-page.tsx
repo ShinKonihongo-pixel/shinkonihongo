@@ -14,7 +14,17 @@ import { GameLobby } from '../quiz-game/game-lobby';
 import { GamePlay } from '../quiz-game/game-play';
 import { GameResults } from '../quiz-game/game-results';
 import { GameFriendInvite } from '../quiz-game/game-friend-invite';
-import '../quiz-game/quiz-game.css';
+import '../quiz-game/quiz-game-base.css';
+import '../quiz-game/quiz-game-kickout.css';
+import '../quiz-game/quiz-game-starting.css';
+import '../quiz-game/quiz-game-question.css';
+import '../quiz-game/quiz-game-reveal.css';
+import '../quiz-game/quiz-game-powerups.css';
+import '../quiz-game/quiz-game-leaderboard.css';
+import '../quiz-game/quiz-game-results.css';
+import '../quiz-game/quiz-game-mobile.css';
+import '../quiz-game/quiz-game-lobby.css';
+import '../quiz-game/quiz-game-premium.css';
 
 interface QuizGamePageProps {
   currentUserId: string;

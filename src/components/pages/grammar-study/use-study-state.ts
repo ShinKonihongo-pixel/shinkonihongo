@@ -97,19 +97,29 @@ export function useStudyState({ grammarCards, getChildLessons }: UseStudyStatePr
     setIsFlipped(false);
   };
 
+  const displayCardsLenRef = useRef(displayCards.length);
+  displayCardsLenRef.current = displayCards.length;
+
+  // Use functional updaters so callbacks don't depend on currentIndex — avoids re-renders of children
   const handleNext = useCallback(() => {
-    if (currentIndex < displayCards.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-      setIsFlipped(false);
-    }
-  }, [currentIndex, displayCards.length]);
+    setCurrentIndex(prev => {
+      if (prev < displayCardsLenRef.current - 1) {
+        setIsFlipped(false);
+        return prev + 1;
+      }
+      return prev;
+    });
+  }, []);
 
   const handlePrev = useCallback(() => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-      setIsFlipped(false);
-    }
-  }, [currentIndex]);
+    setCurrentIndex(prev => {
+      if (prev > 0) {
+        setIsFlipped(false);
+        return prev - 1;
+      }
+      return prev;
+    });
+  }, []);
 
   const handleStart = (lessonIds: string[], level: JLPTLevel) => {
     setSelectedLessonIds(lessonIds);

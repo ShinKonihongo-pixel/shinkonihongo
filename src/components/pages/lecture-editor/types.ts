@@ -3,12 +3,9 @@
 import type { SlideFormData, SlideElement, AdminNote, LectureFormData } from '../../../types/lecture';
 import type { JLPTLevel } from '../../../types/flashcard';
 
-export interface LectureEditorPageProps {
-  lectureId?: string;
-  initialFolderId?: string;
-  initialLevel?: JLPTLevel;
-  onBack: () => void;
-}
+// LectureEditorPageProps removed — LectureEditorPage is zero-prop (Phase 3 migration)
+// lectureId, initialFolderId, initialLevel read from NavigationContext
+// onBack handled internally via NavigationContext
 
 export interface LectureFormState {
   title: string;

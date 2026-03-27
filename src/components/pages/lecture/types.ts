@@ -6,7 +6,7 @@ import type { Lecture, LectureFolder } from '../../../types/lecture';
 export type ViewMode = 'levels' | 'folders' | 'lectures' | 'view' | 'present' | 'grid';
 
 export interface LecturePageProps {
-  onNavigateToEditor?: (lectureId?: string) => void;
+  // zero-prop: uses NavigationContext directly
 }
 
 export interface LevelConfig {

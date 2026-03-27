@@ -1,0 +1,404 @@
+/*
+ * kaiwa-tab-input.css
+ * Input area, microphone button, send button, voice status indicators,
+ * and the error display banner for the Kaiwa conversation view.
+ * Covers .kaiwa-error, .kaiwa-controls, .kaiwa-mic-btn,
+ * .kaiwa-mic-group, .mic-mode-selector, .kaiwa-input-wrapper,
+ * .kaiwa-interim, .kaiwa-send-btn, .kaiwa-status, and auto-send countdown.
+ */
+
+/* Error Display - Premium Glass */
+.kaiwa-error {
+  background: linear-gradient(145deg, rgba(254, 226, 226, 0.95) 0%, rgba(254, 202, 202, 0.85) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #991B1B;
+  padding: 0.875rem 1.25rem;
+  border-radius: 14px;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
+  animation: slideDown 0.25s ease-out;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.kaiwa-error button {
+  background: none;
+  border: none;
+  color: #991B1B;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  padding: 0.25rem;
+}
+
+.kaiwa-error button:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.kaiwa-error button:active {
+  transform: scale(0.88);
+}
+
+/* Input Controls - Premium Design */
+.kaiwa-controls {
+  display: flex;
+  gap: 0.875rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 253, 250, 0.95) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 20px;
+  align-items: center;
+  border: 1px solid rgba(13, 148, 136, 0.12);
+  box-shadow:
+    0 -4px 20px rgba(13, 148, 136, 0.06),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  position: relative;
+}
+
+.kaiwa-controls::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 30px;
+  right: 30px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(13, 148, 136, 0.15), transparent);
+  border-radius: 0 0 2px 2px;
+}
+
+/* Mic Button - Premium Circular Design */
+.kaiwa-mic-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  border: 2px solid rgba(13, 148, 136, 0.15);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 253, 250, 0.9) 100%);
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0D9488;
+  box-shadow:
+    0 2px 8px rgba(13, 148, 136, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
+}
+
+.kaiwa-mic-btn:hover {
+  border-color: #0D9488;
+  background: linear-gradient(145deg, #F0FDFA 0%, #E6FFFA 100%);
+  transform: scale(1.06);
+  box-shadow:
+    0 4px 16px rgba(13, 148, 136, 0.15),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
+}
+
+.kaiwa-mic-btn:active:not(:disabled) {
+  transform: scale(0.92);
+  box-shadow: 0 1px 4px rgba(13, 148, 136, 0.1);
+}
+
+.kaiwa-mic-btn.listening {
+  background: linear-gradient(145deg, #EF4444 0%, #F87171 100%);
+  border-color: #EF4444;
+  color: white;
+  box-shadow:
+    0 4px 20px rgba(239, 68, 68, 0.3),
+    0 1px 0 rgba(255, 255, 255, 0.15) inset;
+  animation: mic-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes mic-pulse {
+  0%, 100% { box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3), 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3), 0 0 0 14px rgba(239, 68, 68, 0); }
+}
+
+/* Mic Mode Selector - Reading Practice Mode */
+.kaiwa-mic-group {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  position: relative;
+}
+
+.mic-mode-selector {
+  position: relative;
+}
+
+.mic-mode-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid rgba(13, 148, 136, 0.15);
+  background: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: #0D9488;
+  transition: all 0.2s ease;
+}
+
+.mic-mode-btn:hover {
+  background: #F0FDFA;
+  border-color: #0D9488;
+}
+
+.mic-mode-btn .rotated {
+  transform: rotate(180deg);
+}
+
+.mic-mode-menu {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(13, 148, 136, 0.1);
+  overflow: hidden;
+  z-index: 100;
+  min-width: 160px;
+  animation: menu-appear 0.2s ease;
+}
+
+@keyframes menu-appear {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.mic-mode-option {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.mic-mode-option:hover {
+  background: #F0FDFA;
+}
+
+.mic-mode-option.active {
+  background: linear-gradient(145deg, #F0FDFA 0%, #E6FFFA 100%);
+  color: #0D9488;
+}
+
+.mic-mode-option svg {
+  color: #0D9488;
+  flex-shrink: 0;
+}
+
+.mic-mode-option .mode-label {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #1E293B;
+}
+
+.mic-mode-option .mode-label-ja {
+  font-size: 0.7rem;
+  color: #64748B;
+}
+
+.kaiwa-mic-btn.reading-mode {
+  background: linear-gradient(145deg, #8B5CF6 0%, #A78BFA 100%);
+  border-color: #8B5CF6;
+  color: white;
+}
+
+.kaiwa-mic-btn.reading-mode:hover {
+  background: linear-gradient(145deg, #7C3AED 0%, #8B5CF6 100%);
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
+}
+
+.kaiwa-mic-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.kaiwa-input-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+.kaiwa-interim {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  right: 0;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 253, 250, 0.95) 100%);
+  padding: 0.625rem 1rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  color: #1E293B;
+  box-shadow:
+    0 4px 16px rgba(13, 148, 136, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  border: 1px solid rgba(13, 148, 136, 0.15);
+  animation: interim-slide-down 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes interim-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Input Field - Premium Design */
+.kaiwa-input-wrapper input {
+  width: 100%;
+  padding: 0.9375rem 1.375rem;
+  border: 2px solid rgba(13, 148, 136, 0.12);
+  border-radius: 16px;
+  font-size: 1rem;
+  outline: none;
+  background: rgba(255, 255, 255, 0.9);
+  color: #1E293B;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(13, 148, 136, 0.04) inset;
+}
+
+.kaiwa-input-wrapper input:hover {
+  border-color: rgba(13, 148, 136, 0.25);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.kaiwa-input-wrapper input:focus {
+  border-color: #0D9488;
+  background: white;
+  box-shadow:
+    0 0 0 4px rgba(13, 148, 136, 0.1),
+    0 1px 3px rgba(13, 148, 136, 0.04) inset;
+}
+
+.kaiwa-input-wrapper input::placeholder {
+  color: #94A3B8;
+}
+
+/* Send Button - Premium Gradient */
+.kaiwa-send-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  flex-shrink: 0;
+  background: linear-gradient(145deg, #0D9488 0%, #14B8A6 60%, #2DD4BF 100%);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  box-shadow:
+    0 2px 12px rgba(13, 148, 136, 0.25),
+    0 1px 0 rgba(255, 255, 255, 0.15) inset;
+}
+
+.kaiwa-send-btn:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow:
+    0 6px 20px rgba(13, 148, 136, 0.35),
+    0 1px 0 rgba(255, 255, 255, 0.2) inset;
+}
+
+.kaiwa-send-btn:active:not(:disabled) {
+  transform: scale(0.92);
+  box-shadow: 0 1px 6px rgba(13, 148, 136, 0.2);
+}
+
+.kaiwa-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Voice Status - Premium Glass Pill */
+.kaiwa-status {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.status-listening {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #EF4444;
+  padding: 0.375rem 0.875rem;
+  background: linear-gradient(145deg, rgba(254, 226, 226, 0.9) 0%, rgba(254, 202, 202, 0.7) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 20px;
+  animation: status-blink 1s ease-in-out infinite;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
+}
+
+.status-speaking {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #0D9488;
+  padding: 0.375rem 0.875rem;
+  background: linear-gradient(145deg, rgba(240, 253, 250, 0.9) 0%, rgba(204, 251, 241, 0.7) 100%);
+  border: 1px solid rgba(13, 148, 136, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.1);
+}
+
+@keyframes status-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Auto-send countdown in practice modal */
+.kaiwa-auto-send-countdown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: var(--white);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  margin-top: 1rem;
+  box-shadow: 0 2px 12px rgba(245, 158, 11, 0.3);
+  animation: countdownPulse 1s ease-in-out infinite;
+}
+
+@keyframes countdownPulse {
+  0%, 100% { box-shadow: 0 2px 12px rgba(245, 158, 11, 0.3); }
+  50% { box-shadow: 0 2px 20px rgba(245, 158, 11, 0.5); }
+}
+
+.kaiwa-auto-send-countdown .countdown-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+}

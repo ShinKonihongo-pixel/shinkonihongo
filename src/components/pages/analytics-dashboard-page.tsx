@@ -3,9 +3,8 @@
 
 import { BarChart3, TrendingUp, Target, Gamepad2, BookOpen, Brain, Calendar } from 'lucide-react';
 import { useAnalyticsData } from '../../hooks/use-analytics-data';
-import type { StudySession, GameSession, JLPTSession, UserStats } from '../../types/user';
-import type { Flashcard, GrammarCard } from '../../types/flashcard';
-import type { KanjiCard } from '../../types/kanji';
+import { useUserData } from '../../contexts/user-data-context';
+import { useFlashcardData } from '../../contexts/flashcard-data-context';
 import {
   HorizontalBarChart,
   AreaChart,
@@ -18,25 +17,9 @@ import {
 } from '../analytics/svg-charts';
 import './analytics-dashboard-page.css';
 
-interface AnalyticsDashboardPageProps {
-  studySessions: StudySession[];
-  gameSessions: GameSession[];
-  jlptSessions: JLPTSession[];
-  userStats: UserStats;
-  cards: Flashcard[];
-  grammarCards: GrammarCard[];
-  kanjiCards: KanjiCard[];
-}
-
-export function AnalyticsDashboardPage({
-  studySessions,
-  gameSessions,
-  jlptSessions,
-  userStats,
-  cards,
-  grammarCards,
-  kanjiCards,
-}: AnalyticsDashboardPageProps) {
+export function AnalyticsDashboardPage() {
+  const { studySessions, gameSessions, jlptSessions, userStats } = useUserData();
+  const { cards, grammarCards, kanjiCards } = useFlashcardData();
   const data = useAnalyticsData({
     studySessions,
     gameSessions,

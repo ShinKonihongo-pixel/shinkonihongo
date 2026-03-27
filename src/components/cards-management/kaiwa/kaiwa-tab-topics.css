@@ -1,0 +1,398 @@
+/*
+ * kaiwa-tab-topics.css
+ * Custom and advanced topics session styles, selected topic preview,
+ * vocabulary chips, and question selectors for the Kaiwa tab.
+ * Covers .kaiwa-advanced-session, .kaiwa-custom-session,
+ * .advanced-topic-card, .custom-topic-card, .custom-topic-selected,
+ * .topic-vocab-preview, .vocab-chip, .topic-questions-selector,
+ * and related start / clear buttons.
+ */
+
+/* Advanced & Custom Topics Session - Full Width */
+.kaiwa-advanced-session,
+.kaiwa-custom-session {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(240, 253, 250, 0.8) 100%);
+  border-radius: 20px;
+  padding: 1.5rem;
+  margin: 0 0 1.5rem;
+  border: 1px solid rgba(13, 148, 136, 0.1);
+  box-shadow: 0 4px 16px rgba(13, 148, 136, 0.04);
+}
+
+.advanced-session-header,
+.custom-session-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.advanced-session-header h3,
+.custom-session-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--kaiwa-text, #334155);
+}
+
+.kaiwa-clear-selection-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  color: #64748b;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.kaiwa-clear-selection-btn:hover {
+  border-color: #f87171;
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+.kaiwa-clear-selection-btn:active {
+  transform: scale(0.93);
+}
+
+/* Topics Grid */
+.advanced-topics-grid,
+.custom-topics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.advanced-topic-card,
+.custom-topic-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.advanced-topic-card:hover,
+.custom-topic-card:hover {
+  border-color: var(--topic-color, #0d9488);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.advanced-topic-card:active,
+.custom-topic-card:active {
+  transform: scale(0.97);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.custom-topic-card.selected {
+  border-color: var(--topic-color, #0d9488);
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.05) 0%, rgba(13, 148, 136, 0.1) 100%);
+  box-shadow: 0 4px 16px rgba(13, 148, 136, 0.2);
+}
+
+/* Custom Topic Start Section */
+.custom-start-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.kaiwa-start-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.kaiwa-start-btn.active {
+  background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+  color: white;
+  box-shadow: 0 4px 16px rgba(13, 148, 136, 0.3);
+}
+
+.kaiwa-start-btn.active:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(13, 148, 136, 0.4);
+}
+
+.kaiwa-start-btn.active:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.25);
+}
+
+.kaiwa-start-btn.disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.start-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+  text-align: center;
+}
+
+.advanced-topic-card .topic-icon,
+.custom-topic-card .topic-icon {
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.advanced-topic-card .topic-info,
+.custom-topic-card .topic-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.advanced-topic-card .topic-name,
+.custom-topic-card .topic-name {
+  font-weight: 600;
+  color: #334155;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.advanced-topic-card .topic-meta,
+.custom-topic-card .topic-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+}
+
+.advanced-topic-card .topic-level,
+.custom-topic-card .topic-level {
+  font-weight: 600;
+  color: var(--topic-color, #0d9488);
+}
+
+.advanced-topic-card .topic-count,
+.custom-topic-card .topic-count {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Selected Topic Preview */
+.advanced-topic-selected,
+.custom-topic-selected {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 2px solid var(--topic-color, #0d9488);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.selected-topic-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.selected-topic-header .topic-icon {
+  font-size: 2rem;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.selected-topic-header .topic-details {
+  flex: 1;
+}
+
+.selected-topic-header .topic-details h4 {
+  margin: 0 0 0.25rem;
+  font-size: 1.2rem;
+  color: #1e293b;
+}
+
+.selected-topic-header .topic-details p {
+  margin: 0 0 0.5rem;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.selected-topic-header .topic-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.selected-topic-header .badge {
+  padding: 0.25rem 0.5rem;
+  background: rgba(13, 148, 136, 0.1);
+  color: #0d9488;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Topic Vocabulary Preview */
+.topic-vocab-preview {
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+  margin-bottom: 1rem;
+}
+
+.topic-vocab-preview h5 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+.vocab-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.vocab-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  background: #f1f5f9;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  color: #334155;
+}
+
+.vocab-chip .vocab-meaning {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-left: 0.25rem;
+}
+
+.vocab-chip.more {
+  background: #e2e8f0;
+  color: #64748b;
+}
+
+/* Topic Questions Selector */
+.topic-questions-selector {
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.topic-questions-selector h5 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+.topic-questions-selector .questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.topic-questions-selector .question-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.topic-questions-selector .question-item:hover {
+  border-color: var(--topic-color, #0d9488);
+  background: white;
+}
+
+.topic-questions-selector .question-item:active {
+  transform: scale(0.98);
+}
+
+.topic-questions-selector .question-item.selected {
+  border-color: var(--topic-color, #0d9488);
+  background: rgba(13, 148, 136, 0.05);
+}
+
+.topic-questions-selector .question-num {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.topic-questions-selector .question-item.selected .question-num {
+  background: var(--topic-color, #0d9488);
+  color: white;
+}
+
+.topic-questions-selector .question-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.topic-questions-selector .question-text .ja {
+  display: block;
+  font-size: 0.9rem;
+  color: #334155;
+}
+
+.topic-questions-selector .question-text .vi {
+  display: block;
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+}

@@ -2,8 +2,8 @@
 // Provides CRUD operations for custom conversation topics
 
 import { useState, useCallback, useEffect } from 'react';
-import type {
 import { handleError } from '../utils/error-handler';
+import type {
   KaiwaAdvancedTopic,
   KaiwaAdvancedQuestion,
   KaiwaAdvancedTopicFormData,

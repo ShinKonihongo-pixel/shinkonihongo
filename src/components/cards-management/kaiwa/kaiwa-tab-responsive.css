@@ -1,0 +1,217 @@
+/*
+ * kaiwa-tab-responsive.css
+ * Responsive breakpoint overrides specific to the Kaiwa tab UI.
+ * Adjusts mode cards, hero icon, topic grid, header, pills,
+ * setup cards, and the CTA button at tablet and mobile widths.
+ */
+
+/* Kaiwa Responsive - Tablet */
+@media (max-width: 768px) {
+  .kaiwa-mode-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.625rem;
+  }
+
+  .kaiwa-mode-card {
+    padding: 1rem 0.75rem;
+  }
+
+  .mode-card-icon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .kaiwa-hero-icon-wrap {
+    width: 68px;
+    height: 68px;
+  }
+
+  .kaiwa-hero-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 1.75rem;
+    border-radius: 16px;
+  }
+
+  .kaiwa-hero-ring { inset: -6px; border-radius: 20px; }
+  .kaiwa-hero-ring.ring-2 { inset: -14px; border-radius: 24px; }
+
+  .kaiwa-topic-grid {
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .kaiwa-topic-btn {
+    padding: 1rem 0.5rem;
+  }
+
+  .kaiwa-topic-btn .topic-icon {
+    font-size: 1.75rem;
+  }
+
+  .kaiwa-topic-btn .topic-label {
+    font-size: 0.65rem;
+  }
+
+  .kaiwa-header-left h2 {
+    font-size: 1rem;
+  }
+
+  .kaiwa-badge {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  .kaiwa-cta-btn {
+    font-size: 0.95rem;
+    padding: 0.875rem 1.5rem;
+  }
+
+  .kaiwa-options-bar {
+    flex-wrap: wrap;
+  }
+
+  .kaiwa-launch-section {
+    padding: 1rem;
+    border-radius: 16px;
+  }
+
+  .kaiwa-setup {
+    padding: 1.25rem 1rem;
+    border-radius: 16px;
+  }
+}
+
+/* Kaiwa Responsive — Mobile */
+@media (max-width: 480px) {
+  .kaiwa-setup-row,
+  .kaiwa-setup-row-inline {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .kaiwa-start-screen {
+    padding: 1.25rem 0.75rem 2rem;
+  }
+
+  .kaiwa-topic-grid {
+    grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+  }
+
+  .kaiwa-launch-section {
+    padding: 0.875rem;
+    border-radius: 14px;
+  }
+
+  .kaiwa-setup {
+    padding: 1rem 0.75rem;
+    border-radius: 14px;
+  }
+
+  .kaiwa-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .kaiwa-header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .kaiwa-level-pills,
+  .kaiwa-style-pills {
+    gap: 0.375rem;
+  }
+
+  .kaiwa-pill {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8rem;
+    min-height: 40px;
+  }
+
+  .kaiwa-start-screen h2 {
+    font-size: 1.75rem;
+  }
+
+  .kaiwa-hero-subtitle {
+    font-size: 0.82rem;
+  }
+
+  .kaiwa-hero .kaiwa-description {
+    font-size: 0.82rem;
+  }
+
+  .kaiwa-toggle-option span {
+    font-size: 0.78rem;
+  }
+}
+
+/* Kaiwa Start Screen — Mobile scrollable fix */
+@media (max-width: 768px) {
+  .kaiwa-page-start > .kaiwa-container {
+    height: auto;
+    min-height: calc(100vh - 1rem);
+    overflow-y: auto;
+  }
+
+  .kaiwa-start-screen {
+    padding: 1.25rem 0.875rem;
+    padding-bottom: 2rem;
+  }
+
+  .kaiwa-start-screen h2 {
+    font-size: 1.5rem;
+  }
+
+  .kaiwa-description {
+    font-size: 0.85rem;
+  }
+
+  .kaiwa-eval-btn {
+    border-left: none;
+    padding-left: 0.875rem;
+    margin-left: 0;
+  }
+}
+
+/* Kaiwa Responsive — Small Mobile */
+@media (max-width: 380px) {
+  .kaiwa-mode-cards {
+    gap: 0.5rem;
+  }
+
+  .kaiwa-mode-card {
+    padding: 0.875rem 0.5rem;
+  }
+
+  .mode-card-desc {
+    font-size: 0.65rem;
+  }
+
+  .kaiwa-pill {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.76rem;
+    min-height: 36px;
+  }
+
+  .kaiwa-hero-icon-wrap {
+    width: 56px;
+    height: 56px;
+  }
+
+  .kaiwa-hero-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.4rem;
+    border-radius: 14px;
+  }
+
+  .kaiwa-hero-ring { inset: -5px; border-radius: 17px; }
+  .kaiwa-hero-ring.ring-2 { inset: -12px; border-radius: 20px; }
+
+  .kaiwa-cta-btn {
+    font-size: 0.9rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 14px;
+  }
+}

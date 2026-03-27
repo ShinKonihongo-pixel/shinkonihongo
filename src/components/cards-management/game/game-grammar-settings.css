@@ -1,0 +1,151 @@
+/* ============================================================
+   game-grammar-settings.css
+   Grammar game display/toggle section, preset buttons,
+   and example-level pills used on flashcard back sides.
+   ============================================================ */
+
+/* ==================== GRAMMAR SETTINGS ==================== */
+.grammar-display-section {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.grammar-display-section h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.grammar-toggles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.setting-item.compact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.setting-item.compact label:first-child {
+  font-size: 0.875rem;
+  color: #475569;
+  font-weight: 500;
+}
+
+.grammar-presets {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.grammar-presets h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.preset-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.preset-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.preset-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: #f0f9ff;
+  transform: translateY(-1px);
+}
+
+.preset-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 640px) {
+  .grammar-toggles-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .preset-buttons {
+    flex-direction: column;
+  }
+
+  .preset-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* === Example Level Pills (flashcard back side) === */
+.example-level-pills {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.example-level-pill {
+  padding: 2px 8px;
+  border: 1.5px solid rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.03);
+  color: rgba(0, 0, 0, 0.45);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.65rem;
+  font-weight: 700;
+  transition: all 0.15s ease;
+  line-height: 1.3;
+  letter-spacing: 0.3px;
+}
+
+.example-level-pill.active {
+  background: #c53d43;
+  color: white;
+  border-color: #c53d43;
+  box-shadow: 0 1px 4px rgba(197, 61, 67, 0.35);
+}
+
+.example-level-pill:hover:not(.active):not(.empty) {
+  background: rgba(197, 61, 67, 0.1);
+  border-color: #c53d43;
+  color: #c53d43;
+}
+
+.example-level-pill.empty {
+  opacity: 0.2;
+  cursor: default;
+  pointer-events: none;
+}

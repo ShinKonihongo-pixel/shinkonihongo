@@ -20,17 +20,22 @@ export async function endGame(gameId: string): Promise<void> {
   const playerList = Object.values(game.players).filter(p => !p.isSpectator);
   const sortedPlayers = [...playerList].sort((a, b) => b.score - a.score);
 
-  const rankings: PlayerResult[] = sortedPlayers.map((player, index) => ({
-    playerId: player.id,
-    playerName: player.name,
-    rank: index + 1,
-    score: player.score,
-    correctAnswers: 0, // Would need to track this separately
-    totalAnswers: game.totalRounds,
-    accuracy: 0,
-    longestStreak: player.streak,
-    powerUpsUsed: 0,
-  }));
+  const rankings: PlayerResult[] = sortedPlayers.map((player, index) => {
+    const correct = player.correctAnswers || 0;
+    const total = game.totalRounds;
+    const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
+    return {
+      playerId: player.id,
+      playerName: player.name,
+      rank: index + 1,
+      score: player.score,
+      correctAnswers: correct,
+      totalAnswers: total,
+      accuracy,
+      longestStreak: player.streak,
+      powerUpsUsed: 0,
+    };
+  });
 
   const results: GameResults = {
     gameId: game.id,

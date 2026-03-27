@@ -1,20 +1,7 @@
 // JLPT page types - Local types for the JLPT practice page
 // Extracted from jlpt-page.tsx for better maintainability
 
-import type { JLPTQuestion, JLPTLevel, QuestionCategory } from '../../../types/jlpt-question';
-import type { JLPTSession } from '../../../types/user';
-import type { AppSettings } from '../../../hooks/use-settings';
-import type { CustomTopic, CustomTopicQuestion } from '../../../types/custom-topic';
-
-// Main component props
-export interface JLPTPageProps {
-  questions: JLPTQuestion[];
-  onSaveJLPTSession?: (data: Omit<JLPTSession, 'id' | 'userId'>) => void;
-  settings?: AppSettings;
-  // Custom topics support
-  customTopics?: CustomTopic[];
-  customTopicQuestions?: CustomTopicQuestion[];
-}
+import type { JLPTLevel, QuestionCategory } from '../../../types/jlpt-question';
 
 // Practice state machine
 export type PracticeState = 'setup' | 'practicing' | 'result';

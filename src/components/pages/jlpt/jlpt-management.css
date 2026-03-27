@@ -1,0 +1,562 @@
+/* ============================================================
+ * jlpt-management.css
+ * JLPT management tab: breadcrumb, back button, folder list
+ * with level-color accents, export/import actions, question
+ * form fields (inputs, answers grid, audio upload group),
+ * question card pro styles, and management responsive.
+ * ============================================================ */
+
+/* ============ JLPT MANAGEMENT TAB - PROFESSIONAL DESIGN ============ */
+.jlpt-management {
+  padding: 1.5rem;
+}
+
+/* Breadcrumb Pro */
+.jlpt-management .breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.jlpt-management .breadcrumb .clickable {
+  color: var(--primary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.jlpt-management .breadcrumb .clickable:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+.jlpt-management .breadcrumb .current {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Back Button Pro */
+.jlpt-management .btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.jlpt-management .btn-back:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+  border-color: var(--text-muted);
+}
+
+/* Export/Import Actions */
+.jlpt-management .export-import-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+  background: linear-gradient(135deg, var(--jp-washi), var(--jp-sakura-light));
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.jlpt-management .export-import-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Folder List Pro */
+.jlpt-management .folder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin-bottom: 1.5rem;
+}
+
+.jlpt-management .folder-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.jlpt-management .folder-item:hover {
+  background: var(--jp-sakura-light);
+  border-color: var(--jp-sakura);
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.jlpt-management .folder-icon {
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--jp-washi);
+  border-radius: var(--radius-sm);
+}
+
+.jlpt-management .folder-name {
+  flex: 1;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.jlpt-management .folder-count {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  background: var(--bg);
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--radius-full);
+}
+
+.jlpt-management .edit-btn,
+.jlpt-management .delete-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  opacity: 0;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.jlpt-management .folder-item:hover .edit-btn,
+.jlpt-management .folder-item:hover .delete-btn {
+  opacity: 1;
+}
+
+.jlpt-management .edit-btn {
+  background: var(--jp-ai);
+  color: white;
+  border: none;
+}
+
+.jlpt-management .edit-btn:hover {
+  background: var(--jp-ai-dark);
+  transform: scale(1.1);
+}
+
+.jlpt-management .delete-btn {
+  background: #fee2e2;
+  color: #dc2626;
+  border: none;
+}
+
+.jlpt-management .delete-btn:hover {
+  background: #dc2626;
+  color: white;
+  transform: scale(1.1);
+}
+
+/* Folder Actions */
+.jlpt-management .folder-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  justify-content: flex-start;
+}
+
+.jlpt-management .folder-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Add Category Inline */
+.jlpt-management .add-category-inline {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  border: 2px dashed var(--primary);
+}
+
+.jlpt-management .category-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.jlpt-management .category-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(227, 66, 52, 0.1);
+}
+
+/* JLPT Form Pro */
+.jlpt-management .jlpt-form {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.jlpt-management .jlpt-form h3 {
+  margin: 0;
+  padding: 1.25rem 1.5rem;
+  font-size: 1.1rem;
+  color: var(--text);
+  background: linear-gradient(135deg, var(--jp-washi), var(--jp-sakura-light));
+  border-bottom: 1px solid var(--border);
+}
+
+.jlpt-management .jlpt-form .form-group {
+  padding: 0 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.jlpt-management .jlpt-form .form-group:first-of-type {
+  padding-top: 1.5rem;
+}
+
+.jlpt-management .jlpt-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.jlpt-management .jlpt-form textarea,
+.jlpt-management .jlpt-form input[type="text"] {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  background: var(--bg);
+  color: var(--text);
+  transition: all 0.2s;
+}
+
+.jlpt-management .jlpt-form textarea:focus,
+.jlpt-management .jlpt-form input[type="text"]:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(227, 66, 52, 0.1);
+}
+
+/* Answers Grid Pro */
+.jlpt-management .answers-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 1rem;
+  background: var(--bg);
+  border-radius: var(--radius-md);
+}
+
+.jlpt-management .answer-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  background: var(--card-bg);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+}
+
+.jlpt-management .answer-input-row:has(input[type="text"].correct-answer) {
+  border-color: #22c55e;
+  background: #f0fdf4;
+}
+
+.jlpt-management .answer-input-row input[type="radio"] {
+  width: 20px;
+  height: 20px;
+  accent-color: #22c55e;
+  cursor: pointer;
+}
+
+.jlpt-management .answer-input-row input[type="text"] {
+  flex: 1;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.jlpt-management .answer-input-row input[type="text"]:focus {
+  outline: none;
+  border-color: var(--jp-ai);
+}
+
+.jlpt-management .answer-input-row input[type="text"].correct-answer {
+  border-color: #22c55e;
+  background: white;
+}
+
+/* Audio Upload Group */
+.jlpt-management .audio-upload-group {
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #dbeafe, #eff6ff);
+  border-radius: var(--radius-md);
+  margin: 0 1.5rem 1.25rem;
+}
+
+.jlpt-management .audio-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+}
+
+.jlpt-management .audio-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: white;
+  border-radius: var(--radius-sm);
+  border: 1px solid #93c5fd;
+}
+
+.jlpt-management .audio-status {
+  flex: 1;
+  font-size: 0.9rem;
+  color: #1d4ed8;
+}
+
+.jlpt-management .form-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* Form Actions */
+.jlpt-management .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  background: var(--jp-washi);
+  border-top: 1px solid var(--border);
+}
+
+/* Questions List Pro */
+.jlpt-management .questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.jlpt-management .empty-message {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--border);
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+/* Question Card Pro */
+.jlpt-management .question-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.jlpt-management .question-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--jp-sakura);
+}
+
+.jlpt-management .question-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  background: linear-gradient(135deg, var(--jp-ai) 0%, var(--jp-ai-light) 100%);
+}
+
+.jlpt-management .question-header .audio-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.jlpt-management .question-actions {
+  display: flex;
+  gap: 0.375rem;
+  margin-left: auto;
+}
+
+.jlpt-management .question-actions .btn-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.jlpt-management .question-actions .btn-icon:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(1.1);
+}
+
+.jlpt-management .question-actions .btn-icon.danger:hover {
+  background: #dc2626;
+}
+
+/* Question Content */
+.jlpt-management .question-content {
+  padding: 1.25rem;
+}
+
+.jlpt-management .question-content .question-text {
+  font-size: 1.1rem;
+  color: var(--text);
+  margin-bottom: 1rem;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.jlpt-management .question-audio-player {
+  width: 100%;
+  margin-bottom: 1rem;
+  border-radius: var(--radius-md);
+}
+
+/* Question Answers Grid */
+.jlpt-management .question-answers {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.625rem;
+  margin-bottom: 1rem;
+}
+
+.jlpt-management .answer-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  font-size: 0.95rem;
+  transition: all 0.2s;
+}
+
+.jlpt-management .answer-item.correct {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
+.jlpt-management .answer-letter {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--border);
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.jlpt-management .answer-item.correct .answer-letter {
+  background: #22c55e;
+  color: white;
+}
+
+.jlpt-management .answer-text {
+  flex: 1;
+  color: var(--text);
+}
+
+.jlpt-management .correct-mark {
+  color: #22c55e;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+/* Question Explanation */
+.jlpt-management .question-explanation {
+  padding: 1rem;
+  background: linear-gradient(135deg, #fef3c7, #fffbeb);
+  border-radius: var(--radius-md);
+  border-left: 4px solid #f59e0b;
+  font-size: 0.9rem;
+  color: #92400e;
+  line-height: 1.5;
+}
+
+.jlpt-management .question-explanation strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: #b45309;
+}
+
+/* JLPT Level Colors for Folder Items */
+.jlpt-management .folder-item[data-level="N5"] { border-left: 4px solid #22c55e; }
+.jlpt-management .folder-item[data-level="N4"] { border-left: 4px solid #06b6d4; }
+.jlpt-management .folder-item[data-level="N3"] { border-left: 4px solid #3b82f6; }
+.jlpt-management .folder-item[data-level="N2"] { border-left: 4px solid #8b5cf6; }
+.jlpt-management .folder-item[data-level="N1"] { border-left: 4px solid #f59e0b; }
+
+/* Responsive JLPT Management */
+@media (max-width: 768px) {
+  .jlpt-management { padding: 1rem; }
+  .jlpt-management .folder-item { padding: 0.875rem 1rem; }
+  .jlpt-management .folder-icon { width: 36px; height: 36px; font-size: 1.25rem; }
+  .jlpt-management .question-answers { grid-template-columns: 1fr; }
+  .jlpt-management .form-actions { flex-direction: column; }
+  .jlpt-management .form-actions .btn { width: 100%; justify-content: center; }
+}

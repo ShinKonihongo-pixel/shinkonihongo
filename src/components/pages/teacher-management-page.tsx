@@ -15,14 +15,12 @@ import { hashPassword } from '../../utils/password-hash';
 import type { BranchMember, BranchMemberRole } from '../../types/branch';
 import type { TeacherSchedule as TSchedule, TeacherScheduleFormData } from '../../types/teacher';
 import type { User } from '../../types/user';
+import { useUserData } from '../../contexts/user-data-context';
 
 type ViewMode = 'list' | 'schedule' | 'log';
 
-interface TeacherManagementPageProps {
-  users: User[];
-}
-
-export function TeacherManagementPage({ users }: TeacherManagementPageProps) {
+export function TeacherManagementPage() {
+  const { users } = useUserData();
   const { currentUser } = useAuth();
   const isBranchAdmin = currentUser?.role === 'branch_admin' || currentUser?.role === 'director' || currentUser?.role === 'super_admin';
 

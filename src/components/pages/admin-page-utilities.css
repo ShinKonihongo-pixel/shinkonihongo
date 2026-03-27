@@ -1,0 +1,154 @@
+/*
+ * admin-page-utilities.css
+ *
+ * Japanese-themed utility classes and decorative helpers used across admin pages.
+ * Covers:
+ *   - .jp-title / .jp-kanji-display / .jp-body-text — Japanese typography utilities
+ *   - .jp-divider — decorative gradient divider with shu-red center
+ *   - .hanko-badge — circular stamp-style badge (判子)
+ *   - .jp-accent-bar — left red accent bar (calligraphy-inspired)
+ *   - Japanese animation keyframes: jp-brush-reveal, jp-zen-float, jp-sakura-sway
+ *   - .animate-brush-reveal / .animate-zen-float — animation utility classes
+ *   - .bg-washi / .bg-washi-pattern — washi paper texture backgrounds
+ *   - .hover-sakura — sakura pink hover highlight
+ *   - a.jp-link — shu-red link style
+ *   - Print styles for salary slip
+ */
+
+/* ============ JAPANESE UTILITY CLASSES (和) ============ */
+
+/* Japanese Typography */
+.jp-title {
+  font-family: var(--font-jp-display);
+  color: var(--jp-shu);
+  font-weight: 700;
+}
+
+.jp-kanji-display {
+  font-family: var(--font-jp-kanji);
+  font-weight: 700;
+}
+
+.jp-body-text {
+  font-family: var(--font-jp-body);
+  line-height: var(--line-height-jp);
+}
+
+/* Japanese Divider */
+.jp-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--border) 20%,
+    var(--jp-shu) 50%,
+    var(--border) 80%,
+    transparent 100%
+  );
+  margin: var(--space-lg) 0;
+}
+
+/* Hanko (Stamp) Style Badge */
+.hanko-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--jp-shu);
+  color: var(--jp-washi);
+  font-family: var(--font-jp-kanji);
+  font-size: 1.25rem;
+  border-radius: 50%;
+  transform: rotate(-5deg);
+  box-shadow: inset 0 0 0 2px var(--jp-washi), inset 0 0 0 4px var(--jp-shu);
+}
+
+/* Shu Red accent bar */
+.jp-accent-bar {
+  position: relative;
+  padding-left: 12px;
+}
+
+.jp-accent-bar::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--jp-shu);
+  border-radius: 2px;
+}
+
+/* Japanese Animations */
+@keyframes jp-brush-reveal {
+  0% { clip-path: inset(0 100% 0 0); }
+  100% { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes jp-zen-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes jp-sakura-sway {
+  0%, 100% { transform: rotate(-2deg) translateX(0); }
+  50% { transform: rotate(2deg) translateX(5px); }
+}
+
+.animate-brush-reveal {
+  animation: jp-brush-reveal 0.5s ease-out;
+}
+
+.animate-zen-float {
+  animation: jp-zen-float 3s ease-in-out infinite;
+}
+
+/* Washi Paper texture background */
+.bg-washi {
+  background: var(--jp-washi-warm);
+}
+
+.bg-washi-pattern {
+  background: var(--jp-washi-warm);
+  background-image:
+    radial-gradient(circle at 25% 25%, rgba(0, 0, 0, 0.01) 0%, transparent 2%),
+    radial-gradient(circle at 75% 75%, rgba(0, 0, 0, 0.01) 0%, transparent 2%);
+  background-size: 20px 20px;
+}
+
+/* Sakura highlight on hover */
+.hover-sakura:hover {
+  background: var(--jp-sakura-light);
+  border-color: var(--jp-sakura);
+}
+
+/* Shu link style */
+a.jp-link {
+  color: var(--jp-shu);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a.jp-link:hover {
+  color: var(--jp-shu-dark);
+  text-decoration: underline;
+}
+
+/* Print styles for salary slip */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .salary-slip-print {
+    background: white !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  body {
+    background: white !important;
+  }
+}

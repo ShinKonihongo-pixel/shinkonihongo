@@ -1,0 +1,1269 @@
+/* ============================================================
+   image-word-game.css
+   Image-Word Matching game (Nối Hình Ảnh - Từ Vựng):
+   main page, menu screen, lesson select, game play, results,
+   legacy management page, and common button/modal utilities.
+   ============================================================ */
+
+/* ========================================
+   Image-Word Matching Game Styles
+   Nối Hình Ảnh - Từ Vựng
+   ======================================== */
+
+/* Main page container */
+.image-word-page {
+  min-height: 100%;
+  background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 50%, #f5d0fe 100%);
+}
+
+/* Menu Screen */
+.image-word-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.image-word-menu .menu-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.image-word-menu .menu-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.image-word-menu .menu-icon {
+  font-size: 2.5rem;
+}
+
+.image-word-menu h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.image-word-menu .menu-description {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.image-word-menu .menu-description p {
+  font-size: 1.1rem;
+  color: #4b5563;
+  margin: 0 0 0.5rem 0;
+}
+
+.image-word-menu .lesson-count {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  background: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+}
+
+.image-word-menu .menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.image-word-menu .menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-radius: 16px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.image-word-menu .menu-btn.primary {
+  background: linear-gradient(135deg, #E91E63 0%, #F06292 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(233, 30, 99, 0.3);
+}
+
+.image-word-menu .menu-btn.primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(233, 30, 99, 0.4);
+}
+
+.image-word-menu .menu-btn.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.image-word-menu .menu-btn.secondary {
+  background: white;
+  color: #374151;
+  border: 2px solid #e5e7eb;
+}
+
+.image-word-menu .menu-btn.secondary:hover {
+  border-color: #E91E63;
+  color: #E91E63;
+}
+
+.image-word-menu .menu-btn.tertiary {
+  background: transparent;
+  color: #6b7280;
+}
+
+.image-word-menu .menu-btn.tertiary:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.image-word-menu .menu-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: #fef3c7;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  color: #92400e;
+}
+
+/* Lesson Select Screen */
+.image-word-lesson-select {
+  padding: 1.5rem;
+}
+
+.image-word-lesson-select .lesson-select-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.image-word-lesson-select .lesson-select-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.image-word-lesson-select .btn-manage {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.image-word-lesson-select .btn-manage:hover {
+  border-color: #E91E63;
+  color: #E91E63;
+}
+
+.image-word-lesson-select .empty-lessons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+  color: #9ca3af;
+}
+
+.image-word-lesson-select .empty-lessons h3 {
+  margin: 1rem 0 0.5rem 0;
+  color: #374151;
+}
+
+.image-word-lesson-select .empty-lessons p {
+  margin: 0 0 1.5rem 0;
+}
+
+.image-word-lesson-select .lessons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.image-word-lesson-select .lesson-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.image-word-lesson-select .lesson-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.image-word-lesson-select .lesson-thumbnail {
+  position: relative;
+  aspect-ratio: 16/10;
+  background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+}
+
+.image-word-lesson-select .lesson-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-word-lesson-select .lesson-thumbnail .pair-count {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-size: 0.75rem;
+  border-radius: 6px;
+}
+
+.image-word-lesson-select .lesson-info {
+  padding: 1rem;
+}
+
+.image-word-lesson-select .lesson-info h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.25rem 0;
+}
+
+.image-word-lesson-select .lesson-info p {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Game Play Screen */
+.image-word-game-play {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.image-word-game-play .game-play-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.image-word-game-play .game-play-header h2 {
+  flex: 1;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.image-word-game-play .game-stats {
+  display: flex;
+  gap: 1rem;
+}
+
+.image-word-game-play .game-stats .stat {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  background: white;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.image-word-game-play .game-stats .stat.wrong {
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+.image-word-game-play .game-progress-bar {
+  height: 6px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.image-word-game-play .game-progress-bar .progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #E91E63 0%, #F06292 100%);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.image-word-game-play .game-area {
+  display: flex;
+  flex: 1;
+  gap: 1rem;
+}
+
+.image-word-game-play .items-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.image-word-game-play .column-title {
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin: 0 0 1rem 0;
+  padding: 0.5rem;
+  background: white;
+  border-radius: 8px;
+}
+
+.image-word-game-play .items-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.image-word-game-play .connector-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+}
+
+.image-word-game-play .connector-line {
+  width: 2px;
+  height: 80%;
+  background: linear-gradient(180deg, transparent 0%, #e5e7eb 20%, #e5e7eb 80%, transparent 100%);
+}
+
+.image-word-game-play .item-card {
+  padding: 0.75rem;
+  background: white;
+  border: 3px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.image-word-game-play .item-card:hover:not(:disabled) {
+  transform: scale(1.02);
+}
+
+.image-word-game-play .item-card.selected {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+}
+
+.image-word-game-play .item-card.matched {
+  border-color: #10b981;
+  background: #ecfdf5;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.image-word-game-play .item-card.wrong {
+  border-color: #ef4444;
+  animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+
+.image-word-game-play .item-card.matched .match-check {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  background: #10b981;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+}
+
+.image-word-game-play .image-card {
+  aspect-ratio: 1;
+  max-height: 120px;
+}
+
+.image-word-game-play .image-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.image-word-game-play .word-card {
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem;
+  text-align: center;
+}
+
+.image-word-game-play .word-card .vocabulary {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.image-word-game-play .word-card .reading {
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.image-word-game-play .word-card .meaning {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.image-word-game-play .game-hint {
+  text-align: center;
+  padding: 1rem;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+/* Results Screen */
+.image-word-results {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.image-word-results .results-card {
+  background: white;
+  border-radius: 24px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  text-align: center;
+}
+
+.image-word-results .results-header {
+  margin-bottom: 1.5rem;
+}
+
+.image-word-results .trophy-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1rem;
+  background: linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #d97706;
+}
+
+.image-word-results .results-header h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+}
+
+.image-word-results .lesson-name {
+  color: #6b7280;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.image-word-results .stars-rating {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.image-word-results .star-filled {
+  color: #fbbf24;
+}
+
+.image-word-results .star-empty {
+  color: #d1d5db;
+}
+
+.image-word-results .rating-label {
+  font-weight: 600;
+  color: #374151;
+  margin-left: 0.5rem;
+}
+
+.image-word-results .score-display {
+  background: linear-gradient(135deg, #E91E63 0%, #F06292 100%);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 16px;
+  margin-bottom: 1.5rem;
+}
+
+.image-word-results .score-value {
+  display: block;
+  font-size: 3rem;
+  font-weight: 800;
+}
+
+.image-word-results .score-label {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.image-word-results .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.image-word-results .stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 12px;
+}
+
+.image-word-results .stat-item svg {
+  color: #6b7280;
+}
+
+.image-word-results .stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.image-word-results .stat-label {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.image-word-results .stat-item.accuracy {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+}
+
+.image-word-results .results-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.image-word-results .btn-play-again,
+.image-word-results .btn-back-menu {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.image-word-results .btn-play-again {
+  background: linear-gradient(135deg, #E91E63 0%, #F06292 100%);
+  color: white;
+}
+
+.image-word-results .btn-play-again:hover {
+  transform: translateY(-2px);
+}
+
+.image-word-results .btn-back-menu {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.image-word-results .btn-back-menu:hover {
+  background: #e5e7eb;
+}
+
+/* Management Page (legacy) */
+.image-word-management-page {
+  padding: 1.5rem;
+  min-height: 100vh;
+  background: #f9fafb;
+}
+
+.image-word-management-page .management-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.image-word-management-page .management-header h1 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.image-word-management-page .btn-create {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: linear-gradient(135deg, #E91E63 0%, #F06292 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.image-word-management-page .btn-create:hover {
+  transform: translateY(-2px);
+}
+
+.image-word-management-page .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: #9ca3af;
+}
+
+.image-word-management-page .empty-state h3 {
+  margin: 1rem 0 0.5rem 0;
+  color: #374151;
+}
+
+.image-word-management-page .lessons-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.image-word-management-page .lesson-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.image-word-management-page .lesson-preview {
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.image-word-management-page .lesson-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-word-management-page .lesson-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.image-word-management-page .lesson-details h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.25rem 0;
+}
+
+.image-word-management-page .lesson-details p {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.image-word-management-page .lesson-details .desc {
+  display: block;
+  font-size: 0.85rem;
+  color: #9ca3af;
+  margin-top: 0.25rem;
+}
+
+.image-word-management-page .lesson-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.image-word-management-page .btn-edit,
+.image-word-management-page .btn-delete {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.image-word-management-page .btn-edit {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.image-word-management-page .btn-edit:hover {
+  background: #e5e7eb;
+}
+
+.image-word-management-page .btn-delete {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.image-word-management-page .btn-delete:hover {
+  background: #fee2e2;
+}
+
+/* Lesson Editor Modal */
+.lesson-editor-modal {
+  background: white;
+  border-radius: 20px;
+  width: 95%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.lesson-editor-modal .editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.lesson-editor-modal .editor-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.lesson-editor-modal .btn-close {
+  padding: 0.5rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.lesson-editor-modal .btn-close:hover {
+  background: #f3f4f6;
+}
+
+.lesson-editor-modal .editor-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+.lesson-editor-modal .error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #fef2f2;
+  border-radius: 10px;
+  color: #dc2626;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.lesson-editor-modal .form-group {
+  margin-bottom: 1.25rem;
+}
+
+.lesson-editor-modal .form-group label {
+  display: block;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.lesson-editor-modal .form-group input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.lesson-editor-modal .form-group input:focus {
+  outline: none;
+  border-color: #E91E63;
+}
+
+.lesson-editor-modal .pairs-section {
+  margin-top: 1.5rem;
+}
+
+.lesson-editor-modal .pairs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.lesson-editor-modal .pairs-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.lesson-editor-modal .btn-add-pair {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1rem;
+  background: #ecfdf5;
+  color: #059669;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lesson-editor-modal .btn-add-pair:hover {
+  background: #d1fae5;
+}
+
+.lesson-editor-modal .pairs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.lesson-editor-modal .no-pairs {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.lesson-editor-modal .pair-editor {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 12px;
+}
+
+.lesson-editor-modal .pair-index {
+  width: 28px;
+  height: 28px;
+  background: #E91E63;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.lesson-editor-modal .pair-image-upload {
+  flex-shrink: 0;
+}
+
+.lesson-editor-modal .upload-btn {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  background: white;
+  border: 2px dashed #d1d5db;
+  border-radius: 10px;
+  color: #9ca3af;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lesson-editor-modal .upload-btn:hover {
+  border-color: #E91E63;
+  color: #E91E63;
+}
+
+.lesson-editor-modal .image-preview {
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+}
+
+.lesson-editor-modal .image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lesson-editor-modal .image-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  color: white;
+  font-size: 0.7rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.lesson-editor-modal .image-preview:hover .image-overlay {
+  opacity: 1;
+}
+
+.lesson-editor-modal .pair-inputs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.lesson-editor-modal .pair-inputs input {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.lesson-editor-modal .pair-inputs input:focus {
+  outline: none;
+  border-color: #E91E63;
+}
+
+.lesson-editor-modal .btn-delete-pair {
+  padding: 0.5rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #dc2626;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lesson-editor-modal .btn-delete-pair:hover {
+  background: #fef2f2;
+}
+
+.lesson-editor-modal .editor-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.lesson-editor-modal .btn-cancel {
+  padding: 0.75rem 1.5rem;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+}
+
+.lesson-editor-modal .btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+.lesson-editor-modal .btn-save {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #E91E63 0%, #F06292 100%);
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lesson-editor-modal .btn-save:hover {
+  transform: translateY(-2px);
+}
+
+/* Confirm Dialog */
+.image-word-management-page .confirm-dialog {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  max-width: 360px;
+  text-align: center;
+}
+
+.image-word-management-page .confirm-dialog h3 {
+  margin: 1rem 0 0.5rem 0;
+  font-size: 1.25rem;
+  color: #1f2937;
+}
+
+.image-word-management-page .confirm-dialog p {
+  color: #6b7280;
+  margin: 0 0 1.5rem 0;
+}
+
+.image-word-management-page .dialog-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.image-word-management-page .dialog-actions button {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 10px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+
+.image-word-management-page .btn-confirm-delete {
+  background: #dc2626;
+  color: white;
+}
+
+.image-word-management-page .btn-confirm-delete:hover {
+  background: #b91c1c;
+}
+
+/* Guide Screen */
+.image-word-guide {
+  padding: 1.5rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.image-word-guide .guide-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.image-word-guide .guide-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.image-word-guide .guide-content {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+}
+
+.image-word-guide .guide-section {
+  margin-bottom: 2rem;
+}
+
+.image-word-guide .guide-section:last-child {
+  margin-bottom: 0;
+}
+
+.image-word-guide .guide-section h3 {
+  font-size: 1.1rem;
+  color: #1f2937;
+  margin: 0 0 0.75rem 0;
+}
+
+.image-word-guide .guide-section p {
+  color: #4b5563;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.image-word-guide .guide-section ol,
+.image-word-guide .guide-section ul {
+  color: #4b5563;
+  line-height: 1.8;
+  padding-left: 1.5rem;
+  margin: 0;
+}
+
+/* Common buttons */
+.image-word-page .btn-back,
+.image-word-lesson-select .btn-back,
+.image-word-game-play .btn-back {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.image-word-page .btn-back:hover,
+.image-word-lesson-select .btn-back:hover,
+.image-word-game-play .btn-back:hover {
+  background: #f3f4f6;
+}
+
+.image-word-page .btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #E91E63 0%, #F06292 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.image-word-page .btn-primary:hover {
+  transform: translateY(-2px);
+}
+
+/* Modal overlay */
+.image-word-management-page .modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .image-word-game-play .game-area {
+    flex-direction: column;
+  }
+
+  .image-word-game-play .connector-area {
+    width: 100%;
+    height: 40px;
+  }
+
+  .image-word-game-play .connector-line {
+    width: 80%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, #e5e7eb 20%, #e5e7eb 80%, transparent 100%);
+  }
+
+  .image-word-game-play .items-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .image-word-game-play .image-card {
+    width: calc(33.33% - 0.5rem);
+    max-height: 80px;
+  }
+
+  .image-word-game-play .word-card {
+    width: calc(50% - 0.5rem);
+  }
+
+  .lesson-editor-modal .pair-editor {
+    flex-wrap: wrap;
+  }
+
+  .lesson-editor-modal .pair-inputs {
+    width: 100%;
+    order: 1;
+  }
+}

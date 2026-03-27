@@ -1,5 +1,8 @@
 // Refactored Settings Page - thin wrapper orchestrating modular components
-import type { SettingsPageProps } from './settings/settings-types';
+import { useSettings, useGlobalTheme, THEME_PRESETS } from '../../hooks/use-settings';
+import { useUserData } from '../../contexts/user-data-context';
+import { useFlashcardData } from '../../contexts/flashcard-data-context';
+import { useNavigation } from '../../contexts/navigation-context';
 import { useSettingsState } from './settings/hooks/use-settings-state';
 import { SettingsHeader } from './settings/settings-header';
 import { SettingsTabs } from './settings/settings-tabs';
@@ -13,46 +16,78 @@ import { ListeningSettings } from './settings/listening-settings';
 import { SystemSettings } from './settings/system-settings';
 import { ProfileSection } from './settings/profile-section';
 import { FriendsSection } from './settings/friends-section';
-import './settings/settings.css';
+import './settings/settings-layout.css';
+import './settings/settings-tabs.css';
+import './settings/settings-sections.css';
+import './settings/settings-controls.css';
+import './settings/settings-frames.css';
+import './settings/settings-flashcard-studio.css';
+import './settings/settings-display.css';
 
-export type { SettingsPageProps } from './settings/settings-types';
-
-export function SettingsPage(props: SettingsPageProps) {
+export function SettingsPage() {
+  const { settings, updateSetting, resetSettings } = useSettings();
+  const { theme, applyPreset, resetTheme } = useGlobalTheme();
   const {
-    settings,
-    onUpdateSetting,
-    onReset,
-    initialTab,
     currentUser,
-    onUpdateDisplayName,
-    onChangePassword,
-    onUpdateAvatar,
-    onUpdateProfileBackground,
-    onUpdateJlptLevel,
-    studySessions = [],
-    gameSessions = [],
-    jlptSessions = [],
-    stats,
+    users,
+    studySessions,
+    gameSessions,
+    jlptSessions,
+    userStats: stats,
     historyLoading,
-    theme,
-    themePresets = [],
-    onApplyThemePreset,
-    onResetTheme,
-    flashcards = [],
-    lessons = [],
-    onImportData,
-    allUsers = [],
-    friends = [],
-    pendingRequests = [],
+    updateDisplayName,
+    changePassword,
+    updateAvatar,
+    updateProfileBackground,
+    updateJlptLevel,
+    friendsWithUsers: friends,
+    pendingRequests,
+    friendsLoading,
+    sendFriendRequest,
+    respondFriendRequest,
+    removeFriend,
+    sendBadge,
+    isFriend,
     badgeStats,
-    receivedBadges = [],
-    friendsLoading = false,
-    onSendFriendRequest,
-    onRespondFriendRequest,
-    onRemoveFriend,
-    onSendBadge,
-    isFriend = () => false,
-  } = props;
+    receivedBadges,
+  } = useUserData();
+  const { cards: flashcards, lessons, addCard } = useFlashcardData();
+  const { currentPage } = useNavigation();
+
+  const initialTab = currentPage === 'profile' ? ('profile' as const) : undefined;
+
+  const onUpdateDisplayName = async (name: string) => {
+    if (!currentUser) return { success: false, error: 'Chưa đăng nhập' };
+    return updateDisplayName(currentUser.id, name);
+  };
+
+  const onChangePassword = async (oldPwd: string, newPwd: string) => {
+    if (!currentUser) return { success: false, error: 'Chưa đăng nhập' };
+    const u = users.find(u => u.id === currentUser.id);
+    if (!u || u.password !== oldPwd) return { success: false, error: 'Mật khẩu hiện tại không đúng' };
+    return changePassword(currentUser.id, newPwd);
+  };
+
+  const onUpdateAvatar = async (avatar: string) => {
+    if (!currentUser) return { success: false, error: 'Chưa đăng nhập' };
+    return updateAvatar(currentUser.id, avatar);
+  };
+
+  const onUpdateProfileBackground = async (bg: string) => {
+    if (!currentUser) return { success: false, error: 'Chưa đăng nhập' };
+    return updateProfileBackground(currentUser.id, bg);
+  };
+
+  const onUpdateJlptLevel = async (level: string) => {
+    if (!currentUser) return { success: false, error: 'Chưa đăng nhập' };
+    return updateJlptLevel(currentUser.id, level);
+  };
+
+  const onImportData = async (data: import('../../lib/data-export').ExportData) => {
+    for (const card of data.flashcards) {
+      await addCard({ vocabulary: card.vocabulary, kanji: card.kanji, sinoVietnamese: card.sinoVietnamese, meaning: card.meaning, examples: card.examples, jlptLevel: card.jlptLevel, lessonId: card.lessonId });
+    }
+  };
 
   const {
     activeTab,
@@ -94,7 +129,7 @@ export function SettingsPage(props: SettingsPageProps) {
             {generalSubTab === 'flashcard' && (
               <FlashcardSettings
                 settings={settings}
-                onUpdateSetting={onUpdateSetting}
+                onUpdateSetting={updateSetting}
                 frameCategory={frameCategory}
                 setFrameCategory={setFrameCategory}
                 gradientCategory={gradientCategory}
@@ -108,21 +143,21 @@ export function SettingsPage(props: SettingsPageProps) {
             {generalSubTab === 'study' && (
               <StudySettings
                 settings={settings}
-                onUpdateSetting={onUpdateSetting}
+                onUpdateSetting={updateSetting}
               />
             )}
 
             {generalSubTab === 'grammar' && (
               <GrammarSettings
                 settings={settings}
-                onUpdateSetting={onUpdateSetting}
+                onUpdateSetting={updateSetting}
               />
             )}
 
             {generalSubTab === 'game' && (
               <GameSettings
                 settings={settings}
-                onUpdateSetting={onUpdateSetting}
+                onUpdateSetting={updateSetting}
                 flashcards={flashcards}
                 lessons={lessons}
               />
@@ -131,7 +166,7 @@ export function SettingsPage(props: SettingsPageProps) {
             {generalSubTab === 'kaiwa' && (
               <KaiwaSettings
                 settings={settings}
-                onUpdateSetting={onUpdateSetting}
+                onUpdateSetting={updateSetting}
               />
             )}
 
@@ -142,13 +177,13 @@ export function SettingsPage(props: SettingsPageProps) {
             {generalSubTab === 'system' && (
               <SystemSettings
                 settings={settings}
-                onUpdateSetting={onUpdateSetting}
-                onReset={onReset}
+                onUpdateSetting={updateSetting}
+                onReset={resetSettings}
                 currentUser={currentUser}
                 theme={theme}
-                themePresets={themePresets}
-                onApplyThemePreset={onApplyThemePreset}
-                onResetTheme={onResetTheme}
+                themePresets={THEME_PRESETS}
+                onApplyThemePreset={applyPreset}
+                onResetTheme={resetTheme}
                 flashcards={flashcards}
                 lessons={lessons}
                 onImportData={onImportData}
@@ -176,16 +211,16 @@ export function SettingsPage(props: SettingsPageProps) {
         {activeTab === 'friends' && (
           <FriendsSection
             currentUser={currentUser}
-            allUsers={allUsers}
+            allUsers={users}
             friends={friends}
             pendingRequests={pendingRequests}
             badgeStats={badgeStats}
             receivedBadges={receivedBadges}
             friendsLoading={friendsLoading}
-            onSendFriendRequest={onSendFriendRequest}
-            onRespondFriendRequest={onRespondFriendRequest}
-            onRemoveFriend={onRemoveFriend}
-            onSendBadge={onSendBadge}
+            onSendFriendRequest={sendFriendRequest}
+            onRespondFriendRequest={respondFriendRequest}
+            onRemoveFriend={removeFriend}
+            onSendBadge={sendBadge}
             isFriend={isFriend}
           />
         )}

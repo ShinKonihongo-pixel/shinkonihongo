@@ -1,0 +1,470 @@
+/*
+ * quiz-game-reveal.css
+ * Reveal screen — shows correct answer, per-player results list,
+ * answer stats progress bar, and auto-advance timer bar.
+ * Also includes legacy light-theme reveal stubs.
+ * Classes: .game-reveal-screen, .reveal-header, .result-banner,
+ *          .correct-answer-card, .answer-stats-*, .reveal-players,
+ *          .reveal-item, .reveal-score, .reveal-timer-bar, .timer-fill,
+ *          legacy reveal section classes.
+ */
+
+/* Reveal Screen — Premium */
+.game-reveal-screen {
+  background: linear-gradient(180deg, #0a0818 0%, #12102e 50%, #0a1628 100%);
+  padding: 1.25rem 0.75rem;
+  align-items: center;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.reveal-header {
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 1rem;
+}
+
+.result-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 16px;
+  animation: resultPop 0.5s ease-out;
+}
+@keyframes resultPop {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.result-banner.correct {
+  background: linear-gradient(135deg, #059669, #047857);
+  color: white;
+  box-shadow: 0 8px 30px rgba(5,150,105,0.3);
+}
+.result-banner.wrong {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: white;
+  box-shadow: 0 8px 30px rgba(220,38,38,0.3);
+}
+.result-icon { font-size: 2.5rem; }
+.result-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.result-text { font-size: 1.6rem; font-weight: 800; }
+.score-gained {
+  background: rgba(255,255,255,0.2);
+  padding: 0.3rem 0.8rem;
+  border-radius: 16px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  width: fit-content;
+}
+.streak-gained {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: rgba(255,255,255,0.8);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Correct answer card */
+.correct-answer-card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 1.25rem;
+  border-radius: 14px;
+  text-align: center;
+  max-width: 100%;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+.correct-label {
+  display: block;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+.correct-answer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.5rem;
+  border-radius: 12px;
+  color: white;
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+
+/* Answer stats progress bar */
+.answer-stats-bar {
+  position: relative;
+  height: 28px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+.answer-stats-fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(52,211,153,0.3), rgba(52,211,153,0.15));
+  border-radius: 14px;
+  transition: width 0.6s ease-out;
+}
+.answer-stats {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.6);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Reveal players list */
+.reveal-players {
+  max-width: 100%;
+  width: 100%;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.reveal-players h3 {
+  color: white;
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+.reveal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.reveal-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  color: white;
+  animation: revealItemIn 0.3s ease-out both;
+}
+@keyframes revealItemIn {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.reveal-item.is-me {
+  background: rgba(102, 126, 234, 0.3);
+  border: 1px solid rgba(102, 126, 234, 0.5);
+}
+
+.reveal-item.correct {
+  border-left: 3px solid #2ecc71;
+}
+
+.reveal-item.wrong {
+  border-left: 3px solid #e74c3c;
+}
+
+.reveal-rank {
+  width: 32px;
+  display: flex;
+  justify-content: center;
+  color: rgba(255,255,255,0.7);
+}
+
+.reveal-rank svg {
+  color: #ffd700;
+}
+
+.reveal-name {
+  flex: 1;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.me-tag {
+  background: rgba(102, 126, 234, 0.5);
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  font-size: 0.75rem;
+}
+
+.reveal-status {
+  width: 24px;
+  text-align: center;
+}
+
+.reveal-item.correct .reveal-status {
+  color: #2ecc71;
+}
+
+.reveal-item.wrong .reveal-status {
+  color: #e74c3c;
+}
+
+.reveal-score {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.reveal-score .change {
+  font-size: 0.8rem;
+}
+
+.reveal-score .change.positive {
+  color: #2ecc71;
+}
+
+/* Timer bar */
+.reveal-timer-bar {
+  width: 100%;
+  max-width: 100%;
+  height: 38px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  margin-top: 1rem;
+}
+
+.timer-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #8b5cf6, #6d28d9);
+  border-radius: 20px;
+  transition: width 1s linear;
+}
+
+.timer-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ── Legacy light-theme reveal stubs (pre-overhaul) ── */
+.reveal-scores {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--gray-light);
+}
+
+.reveal-scores h3 {
+  text-align: center;
+  margin-bottom: 1rem;
+  color: var(--dark);
+}
+
+.mini-leaderboard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mini-rank {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: var(--light);
+  border-radius: 6px;
+}
+
+.mini-rank .rank {
+  font-weight: bold;
+  color: var(--primary);
+  min-width: 30px;
+}
+
+.mini-rank .name {
+  flex: 1;
+}
+
+.mini-rank .score {
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.streak-badge {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+/* Answer Reveal - New detailed view */
+.reveal-answer-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.correct-answer-display {
+  margin-bottom: 0.5rem;
+}
+
+.correct-text {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.reveal-players-section {
+  margin-top: 1rem;
+}
+
+.reveal-players-section h3 {
+  font-size: 1rem;
+  color: var(--dark);
+  margin-bottom: 0.75rem;
+}
+
+.reveal-players-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.reveal-player-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: var(--light);
+  transition: transform 0.2s;
+}
+
+.reveal-player-item.correct {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  border-left: 4px solid var(--success);
+}
+
+.reveal-player-item.wrong {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  border-left: 4px solid var(--danger);
+}
+
+.reveal-player-item.is-me {
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+.reveal-player-rank {
+  font-weight: bold;
+  font-size: 1.1rem;
+  min-width: 35px;
+  text-align: center;
+}
+
+.reveal-player-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.reveal-player-name {
+  font-weight: 600;
+  color: var(--dark);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.me-badge {
+  font-size: 0.75rem;
+  color: var(--primary);
+  margin-left: 0.25rem;
+}
+
+.reveal-player-status {
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.status-correct {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.status-wrong {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.status-blocked {
+  color: var(--warning);
+}
+
+.status-no-answer {
+  color: var(--gray);
+}
+
+.reveal-player-score {
+  text-align: right;
+  min-width: 70px;
+}
+
+.score-total {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: var(--dark);
+  display: block;
+}
+
+.score-change {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.score-change.positive {
+  color: var(--success);
+}
+
+.score-change.negative {
+  color: var(--danger);
+}
+
+.reveal-player-bonuses {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.bonus-badge {
+  font-size: 0.9rem;
+  cursor: help;
+}
+
+.btn-next {
+  width: 100%;
+  margin-top: 1rem;
+}

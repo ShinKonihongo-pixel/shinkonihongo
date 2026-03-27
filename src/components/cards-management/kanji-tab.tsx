@@ -1,23 +1,21 @@
 // Kanji Tab - Level-based lesson structure
 // Navigation: Level → Parent Lesson → Child Lesson → Cards
 
-import { useState, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
-import { Download, Upload, BookOpen, FolderOpen, FileText, ChevronRight, Plus, Trash2, Edit2, GripVertical, Search, X, AlertTriangle, Copy, ArrowRightLeft, Puzzle } from 'lucide-react';
+import { useState, useRef, useCallback, useMemo } from 'react';
+import { Download, Upload, BookOpen, FolderOpen, FileText, Plus } from 'lucide-react';
 import { KanjiCardForm } from '../flashcard/kanji-card-form';
 import { KanjiCardList } from '../flashcard/kanji-card-list';
-
-const KanjiDecomposerModal = lazy(() => import('../flashcard/kanji-decomposer-modal').then(m => ({ default: m.KanjiDecomposerModal })));
-import { KanjiMoveModal } from './kanji-move-modal';
+import { KanjiLessonList } from './kanji-tab-lesson-list';
+import { KanjiTabSearch } from './kanji-tab-search';
+import { KanjiTabModals } from './kanji-tab-modals';
 import { LevelGrid } from './level-grid';
 import type { JLPTLevel } from './cards-management-types';
 import type { KanjiCard, KanjiCardFormData, KanjiLesson } from '../../types/kanji';
 import type { CurrentUser } from '../../types/user';
-import { LEVEL_COLORS } from '../../constants/themes';
+import { exportKanjiData, importKanjiData } from './kanji-tab-import-export';
 
-// BT levels array (includes Bộ thủ)
 const KANJI_LEVELS: JLPTLevel[] = ['BT', 'N5', 'N4', 'N3', 'N2', 'N1'];
 
-// Seed config for each level
 const SEED_CONFIG: Record<JLPTLevel, { start: number; end: number; folders: string[] }> = {
   BT: { start: 1, end: 17, folders: [] },
   N5: { start: 1, end: 10, folders: ['Kanji', 'Luyện tập'] },
@@ -32,8 +30,6 @@ type NavState =
   | { type: 'level'; level: JLPTLevel }
   | { type: 'parent'; level: JLPTLevel; lessonId: string; lessonName: string }
   | { type: 'child'; level: JLPTLevel; parentId: string; parentName: string; lessonId: string; lessonName: string };
-
-import { downloadAsJSON, readJSONFileRaw, generateExportFilename } from '../../utils/data-export-import';
 
 interface KanjiTabProps {
   kanjiCards: KanjiCard[];
@@ -82,13 +78,9 @@ export function KanjiTab({
   const [searchFilter, setSearchFilter] = useState<'all' | 'duplicates' | 'no-mnemonic' | 'no-words'>('all');
   const [decomposingCard, setDecomposingCard] = useState<KanjiCard | null>(null);
 
-  // Search results across all kanji cards
   const searchResults = useMemo(() => {
     if (!searchQuery && searchFilter === 'all') return null;
-
     let results = kanjiCards;
-
-    // Text search: match character, sinoVietnamese, meaning
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       results = results.filter(c =>
@@ -99,8 +91,6 @@ export function KanjiTab({
         c.kunYomi.some(r => r.includes(q))
       );
     }
-
-    // Filter by issue type
     if (searchFilter === 'duplicates') {
       const charCount = new Map<string, number>();
       kanjiCards.forEach(c => charCount.set(c.character, (charCount.get(c.character) || 0) + 1));
@@ -111,11 +101,9 @@ export function KanjiTab({
     } else if (searchFilter === 'no-words') {
       results = results.filter(c => !c.sampleWords || c.sampleWords.length === 0);
     }
-
     return results;
   }, [searchQuery, searchFilter, kanjiCards]);
 
-  // Duplicate count for badge
   const duplicateCount = useMemo(() => {
     const charCount = new Map<string, number>();
     kanjiCards.forEach(c => charCount.set(c.character, (charCount.get(c.character) || 0) + 1));
@@ -125,12 +113,14 @@ export function KanjiTab({
   const noMnemonicCount = useMemo(() => kanjiCards.filter(c => !c.mnemonic).length, [kanjiCards]);
   const noWordsCount = useMemo(() => kanjiCards.filter(c => !c.sampleWords || c.sampleWords.length === 0).length, [kanjiCards]);
 
-  // Find lesson name for a card
   const getLessonName = useCallback((lessonId: string) => {
     return kanjiLessons.find(l => l.id === lessonId)?.name || '';
   }, [kanjiLessons]);
 
-  // Move kanji cards to a different lesson/level
+  const getIsDuplicate = useCallback((character: string) => {
+    return kanjiCards.filter(c => c.character === character).length > 1;
+  }, [kanjiCards]);
+
   const handleMoveCards = useCallback(async (cardIds: string[], targetLevel: JLPTLevel, targetLessonId: string) => {
     for (const id of cardIds) {
       await onUpdateKanjiCard(id, { jlptLevel: targetLevel, lessonId: targetLessonId });
@@ -149,9 +139,7 @@ export function KanjiTab({
     return kanjiCards.filter(c => c.lessonId === lessonId);
   };
 
-  const getCardCountByLevel = (level: JLPTLevel): number => {
-    return kanjiCards.filter(c => c.jlptLevel === level).length;
-  };
+  const getCardCountByLevel = (level: JLPTLevel): number => kanjiCards.filter(c => c.jlptLevel === level).length;
 
   const getCardCountForLesson = (lessonId: string): number => {
     const direct = kanjiCards.filter(c => c.lessonId === lessonId).length;
@@ -160,19 +148,28 @@ export function KanjiTab({
     return direct + childCount;
   };
 
+  const getKanjiLessonIds = (): string[] => {
+    if (navState.type !== 'level') return [];
+    const parentLessons = getParentLessonsByLevel(navState.level);
+    const ids: string[] = [];
+    parentLessons.forEach(parent => {
+      const children = getChildLessons(parent.id);
+      const kanjiChild = children.find(c => c.name === 'Kanji');
+      if (kanjiChild) ids.push(kanjiChild.id);
+      else if (children.length === 0) ids.push(parent.id);
+    });
+    return ids;
+  };
+
   const handleSeed = async () => {
     if (navState.type !== 'level') return;
     setIsSeeding(true);
     try {
       if (navState.level === 'BT') {
-        // BT: create stroke-count lessons "1 nét" through "17 nét"
         let created = 0;
         for (let i = 1; i <= 17; i++) {
           const existing = getParentLessonsByLevel('BT').find(l => l.name === `${i} nét`);
-          if (!existing) {
-            await onAddLesson(`${i} nét`, 'BT', null, currentUser.id);
-            created++;
-          }
+          if (!existing) { await onAddLesson(`${i} nét`, 'BT', null, currentUser.id); created++; }
         }
         alert(`Đã tạo ${created} bài mới!`);
       } else {
@@ -184,25 +181,10 @@ export function KanjiTab({
     setIsSeeding(false);
   };
 
-  // Seed kanji cards from built-in data
   const handleSeedKanjiCards = async () => {
     if (navState.type !== 'level' || !onSeedKanjiCards) return;
-    const parentLessons = getParentLessonsByLevel(navState.level);
-    // Collect all "Kanji" child lesson IDs (or parent lesson IDs if no children)
-    const kanjiLessonIds: string[] = [];
-    parentLessons.forEach(parent => {
-      const children = getChildLessons(parent.id);
-      const kanjiChild = children.find(c => c.name === 'Kanji');
-      if (kanjiChild) {
-        kanjiLessonIds.push(kanjiChild.id);
-      } else if (children.length === 0) {
-        kanjiLessonIds.push(parent.id);
-      }
-    });
-    if (kanjiLessonIds.length === 0) {
-      alert('Chưa có bài học! Hãy "Tạo bài tự động" trước.');
-      return;
-    }
+    const kanjiLessonIds = getKanjiLessonIds();
+    if (kanjiLessonIds.length === 0) { alert('Chưa có bài học! Hãy "Tạo bài tự động" trước.'); return; }
     const seedCount = getKanjiSeedCount?.(navState.level) ?? 0;
     const levelLabel = navState.level === 'BT' ? 'Bộ thủ' : navState.level;
     if (!confirm(`Tạo ${seedCount} chữ ${levelLabel} vào ${kanjiLessonIds.length} bài?`)) return;
@@ -214,17 +196,9 @@ export function KanjiTab({
     setIsSeedingCards(false);
   };
 
-  // Refresh existing kanji cards with mnemonic + sampleWords from seed
   const handleRefreshFromSeed = async () => {
     if (navState.type !== 'level' || !onRefreshKanjiFromSeed) return;
-    const parentLessons = getParentLessonsByLevel(navState.level);
-    const kanjiLessonIds: string[] = [];
-    parentLessons.forEach(parent => {
-      const children = getChildLessons(parent.id);
-      const kanjiChild = children.find(c => c.name === 'Kanji');
-      if (kanjiChild) kanjiLessonIds.push(kanjiChild.id);
-      else if (children.length === 0) kanjiLessonIds.push(parent.id);
-    });
+    const kanjiLessonIds = getKanjiLessonIds();
     if (kanjiLessonIds.length === 0) { alert('Chưa có bài học!'); return; }
     const levelLabel = navState.level === 'BT' ? 'Bộ thủ' : navState.level;
     if (!confirm(`Cập nhật mẹo nhớ & từ mẫu cho tất cả chữ ${levelLabel}?`)) return;
@@ -238,10 +212,8 @@ export function KanjiTab({
 
   const handleExport = () => {
     setIsExporting(true);
-    try {
-      const data = { kanjiCards, kanjiLessons };
-      downloadAsJSON(data, `kanji-export-${new Date().toISOString().split('T')[0]}.json`);
-    } catch { alert('Lỗi khi xuất dữ liệu!'); }
+    try { exportKanjiData(kanjiCards, kanjiLessons); }
+    catch { alert('Lỗi khi xuất dữ liệu!'); }
     setIsExporting(false);
   };
 
@@ -250,12 +222,7 @@ export function KanjiTab({
     if (!file || !onImportKanjiCard) return;
     setIsImporting(true);
     try {
-      const data = await readJSONFileRaw(file) as { kanjiCards?: Omit<KanjiCard, 'id'>[] };
-      let imported = 0;
-      for (const card of data.kanjiCards || []) {
-        await onImportKanjiCard(card);
-        imported++;
-      }
+      const imported = await importKanjiData(file, onImportKanjiCard);
       alert(`Đã nhập ${imported} thẻ kanji!`);
     } catch { alert('Lỗi khi nhập dữ liệu!'); }
     setIsImporting(false);
@@ -298,7 +265,16 @@ export function KanjiTab({
     setDragOverLesson(null);
   };
 
-  // Breadcrumb
+  const handleLessonClick = (lesson: KanjiLesson, isChild: boolean) => {
+    if (isChild) {
+      const parentName = navState.type === 'parent' ? navState.lessonName : '';
+      const parentId = navState.type === 'parent' ? navState.lessonId : '';
+      setNavState({ type: 'child', level: navState.type === 'parent' ? navState.level : 'N5' as JLPTLevel, parentId, parentName, lessonId: lesson.id, lessonName: lesson.name });
+    } else {
+      setNavState({ type: 'parent', level: navState.type === 'level' ? navState.level : 'N5' as JLPTLevel, lessonId: lesson.id, lessonName: lesson.name });
+    }
+  };
+
   const renderBreadcrumb = () => {
     const crumbs: { label: string; onClick: () => void }[] = [
       { label: 'Hán Tự', onClick: () => setNavState({ type: 'root' }) },
@@ -315,12 +291,11 @@ export function KanjiTab({
     if (navState.type === 'child') {
       crumbs.push({ label: navState.lessonName, onClick: () => {} });
     }
-
     return (
       <div className="breadcrumb">
         {crumbs.map((c, i) => (
           <span key={i}>
-            {i > 0 && <ChevronRight size={14} className="breadcrumb-sep" />}
+            {i > 0 && <span className="breadcrumb-sep">›</span>}
             <button className={`breadcrumb-item ${i === crumbs.length - 1 ? 'active' : ''}`} onClick={c.onClick}>{c.label}</button>
           </span>
         ))}
@@ -328,53 +303,31 @@ export function KanjiTab({
     );
   };
 
-  // Lesson list with drag-and-drop
-  const renderLessonList = (lessons: KanjiLesson[], isChild: boolean) => (
-    <div className="lesson-list">
-      {lessons.map(lesson => (
-        <div
-          key={lesson.id}
-          className={`lesson-item ${dragOverLesson === lesson.id ? 'drag-over' : ''}`}
-          draggable
-          onDragStart={() => handleDragStart(lesson)}
-          onDragOver={(e) => handleDragOver(e, lesson.id)}
-          onDragLeave={handleDragLeave}
-          onDrop={() => handleDrop(lesson)}
-        >
-          <GripVertical size={16} className="grip-icon" />
-          {editingLesson?.id === lesson.id ? (
-            <input className="inline-edit-input" autoFocus value={editingLesson.name}
-              onChange={e => setEditingLesson({ ...editingLesson, name: e.target.value })}
-              onKeyDown={e => { if (e.key === 'Enter') { onUpdateLesson(lesson.id, editingLesson.name); setEditingLesson(null); } if (e.key === 'Escape') setEditingLesson(null); }}
-              onBlur={() => { onUpdateLesson(lesson.id, editingLesson.name); setEditingLesson(null); }}
-            />
-          ) : (
-            <button className="lesson-item-btn" onClick={() => {
-              if (isChild) {
-                const parentName = navState.type === 'parent' ? navState.lessonName : '';
-                const parentId = navState.type === 'parent' ? navState.lessonId : '';
-                setNavState({ type: 'child', level: navState.type === 'parent' ? navState.level : 'N5' as JLPTLevel, parentId, parentName, lessonId: lesson.id, lessonName: lesson.name });
-              } else {
-                setNavState({ type: 'parent', level: navState.type === 'level' ? navState.level : 'N5' as JLPTLevel, lessonId: lesson.id, lessonName: lesson.name });
-              }
-            }}>
-              {isChild ? <FileText size={16} /> : <FolderOpen size={16} />}
-              <span className="lesson-item-name">{lesson.name}</span>
-              <span className="lesson-item-count">{getCardCountForLesson(lesson.id)} chữ</span>
-            </button>
-          )}
-          {isSuperAdmin && (
-            <div className="lesson-item-actions">
-              <button className="btn btn-icon btn-sm" onClick={() => setEditingLesson(lesson)}><Edit2 size={14} /></button>
-              <button className="btn btn-icon btn-sm btn-danger" onClick={() => { if (confirm(`Xóa "${lesson.name}"?`)) onDeleteLesson(lesson.id); }}><Trash2 size={14} /></button>
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
+  const sharedLessonListProps = {
+    isSuperAdmin,
+    dragOverLessonId: dragOverLesson,
+    editingLesson,
+    navStateLevel: navState.type !== 'root' ? navState.level : 'N5' as JLPTLevel,
+    navStateType: navState.type,
+    getCardCountForLesson,
+    onDragStart: handleDragStart,
+    onDragOver: handleDragOver,
+    onDragLeave: handleDragLeave,
+    onDrop: handleDrop,
+    onEditLesson: setEditingLesson,
+    onEditingNameChange: (lesson: KanjiLesson, name: string) => setEditingLesson({ ...lesson, name }),
+    onEditingConfirm: (lesson: KanjiLesson) => { onUpdateLesson(lesson.id, lesson.name); setEditingLesson(null); },
+    onEditingCancel: () => setEditingLesson(null),
+    onDeleteLesson: (id: string) => onDeleteLesson(id),
+  };
 
-  // Main render
+  const cardViewProps = {
+    onEdit: (card: KanjiCard) => { setEditingCard(card); setShowForm(false); },
+    onDelete: onDeleteKanjiCard,
+    onUpdateCard: onUpdateKanjiCard,
+    canEdit: isSuperAdmin,
+  };
+
   return (
     <div className="management-tab">
       {renderBreadcrumb()}
@@ -393,143 +346,111 @@ export function KanjiTab({
         )}
       </div>
 
-      {/* Search Bar - always visible */}
-      <div className="kanji-search-section">
-        <div className="kanji-search-bar">
-          <Search size={16} className="kanji-search-icon" />
-          <input
-            type="text"
-            placeholder="Tìm kanji, Hán Việt, nghĩa..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="kanji-search-input"
-          />
-          {(searchQuery || searchFilter !== 'all') && (
-            <button className="kanji-search-clear" onClick={() => { setSearchQuery(''); setSearchFilter('all'); }}>
-              <X size={14} />
-            </button>
-          )}
-        </div>
-        <div className="kanji-search-filters">
-          <button className={`kanji-filter-chip ${searchFilter === 'duplicates' ? 'active danger' : ''}`} onClick={() => setSearchFilter(searchFilter === 'duplicates' ? 'all' : 'duplicates')}>
-            <Copy size={12} /> Trùng {duplicateCount > 0 && <span className="kanji-filter-badge">{duplicateCount}</span>}
-          </button>
-          <button className={`kanji-filter-chip ${searchFilter === 'no-mnemonic' ? 'active warning' : ''}`} onClick={() => setSearchFilter(searchFilter === 'no-mnemonic' ? 'all' : 'no-mnemonic')}>
-            <AlertTriangle size={12} /> Thiếu mẹo nhớ {noMnemonicCount > 0 && <span className="kanji-filter-badge">{noMnemonicCount}</span>}
-          </button>
-          <button className={`kanji-filter-chip ${searchFilter === 'no-words' ? 'active warning' : ''}`} onClick={() => setSearchFilter(searchFilter === 'no-words' ? 'all' : 'no-words')}>
-            <AlertTriangle size={12} /> Thiếu từ mẫu {noWordsCount > 0 && <span className="kanji-filter-badge">{noWordsCount}</span>}
-          </button>
-        </div>
-      </div>
+      <KanjiTabSearch
+        searchQuery={searchQuery}
+        searchFilter={searchFilter}
+        searchResults={searchResults}
+        duplicateCount={duplicateCount}
+        noMnemonicCount={noMnemonicCount}
+        noWordsCount={noWordsCount}
+        isSuperAdmin={isSuperAdmin}
+        getLessonName={getLessonName}
+        getIsDuplicate={getIsDuplicate}
+        onSearchQueryChange={setSearchQuery}
+        onSearchFilterChange={setSearchFilter}
+        onClearSearch={() => { setSearchQuery(''); setSearchFilter('all'); }}
+        onDecomposeCard={setDecomposingCard}
+        onEditCard={setEditingCard}
+        onMoveCard={(card) => setMovingCards([card])}
+        onDeleteCard={(id) => onDeleteKanjiCard(id)}
+      />
 
-      {/* Search Results */}
-      {searchResults && (
-        <div className="kanji-search-results">
-          <div className="kanji-search-results-header">
-            <span>Tìm thấy {searchResults.length} kết quả</span>
-            <button className="btn btn-secondary btn-sm" onClick={() => { setSearchQuery(''); setSearchFilter('all'); }}>Đóng</button>
-          </div>
-          {searchResults.length === 0 ? (
-            <div style={{ textAlign: 'center', color: '#999', padding: '2rem' }}>Không tìm thấy kết quả</div>
-          ) : (
-            <div className="kanji-search-results-list">
-              {searchResults.map(card => (
-                <div key={card.id} className="kanji-search-result-item" style={{ borderLeft: `3px solid ${LEVEL_COLORS[card.jlptLevel]}` }}>
-                  <span className="kanji-result-char" style={{ cursor: 'pointer' }} onClick={() => setDecomposingCard(card)} title="Phân tích bộ thủ">{card.character}</span>
-                  <div className="kanji-result-info">
-                    <div className="kanji-result-main">
-                      <span className="kanji-result-hv">{card.sinoVietnamese}</span>
-                      <span className="kanji-result-meaning">{card.meaning}</span>
-                    </div>
-                    <div className="kanji-result-meta">
-                      <span className="kanji-result-level">{card.jlptLevel}</span>
-                      <span className="kanji-result-lesson">{getLessonName(card.lessonId)}</span>
-                      {!card.mnemonic && <span className="kanji-result-tag warning">Thiếu mẹo nhớ</span>}
-                      {(!card.sampleWords || card.sampleWords.length === 0) && <span className="kanji-result-tag warning">Thiếu từ mẫu</span>}
-                      {kanjiCards.filter(c => c.character === card.character).length > 1 && <span className="kanji-result-tag danger">Trùng</span>}
-                    </div>
-                  </div>
-                  <div className="kanji-result-actions">
-                    <button className="btn btn-icon btn-sm" title="Phân tích bộ thủ" onClick={() => setDecomposingCard(card)} style={{ color: '#8b5cf6' }}><Puzzle size={14} /></button>
-                    {isSuperAdmin && (
-                      <>
-                        <button className="btn btn-icon btn-sm" title="Sửa" onClick={() => setEditingCard(card)}><Edit2 size={14} /></button>
-                        <button className="btn btn-icon btn-sm" title="Di chuyển" onClick={() => setMovingCards([card])}><ArrowRightLeft size={14} /></button>
-                        <button className="btn btn-icon btn-sm btn-danger" title="Xoá" onClick={() => { if (confirm(`Xóa "${card.character}"?`)) onDeleteKanjiCard(card.id); }}><Trash2 size={14} /></button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Normal views - hidden when search is active */}
-      {!searchResults && <>
-      {/* Root: Level Grid */}
-      {navState.type === 'root' && (
-        <LevelGrid levels={KANJI_LEVELS} onSelectLevel={(level) => setNavState({ type: 'level', level })} getCount={getCardCountByLevel} countLabel="chữ" />
-      )}
-
-      {/* Level: Lesson List */}
-      {navState.type === 'level' && (
+      {!searchResults && (
         <>
-          <div className="section-header-row">
-            <h3><BookOpen size={18} /> {navState.level === 'BT' ? 'Bộ thủ' : navState.level} - Bài học</h3>
-            {isSuperAdmin && (
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button className="btn btn-primary btn-sm" onClick={() => setShowAddLesson(true)}><Plus size={14} /> Thêm bài</button>
-                <button className="btn btn-secondary btn-sm" onClick={handleSeed} disabled={isSeeding}>
-                  {isSeeding ? 'Đang tạo...' : 'Tạo bài tự động'}
-                </button>
-                {onSeedKanjiCards && (
-                  <button className="btn btn-secondary btn-sm" onClick={handleSeedKanjiCards} disabled={isSeedingCards} style={{ background: 'linear-gradient(135deg, #8b5cf6, #ec4899)', color: 'white', border: 'none' }}>
-                    {isSeedingCards ? 'Đang tạo Kanji...' : `Tạo Kanji tự động (${getKanjiSeedCount?.(navState.level) ?? 0})`}
-                  </button>
-                )}
-                {onRefreshKanjiFromSeed && (
-                  <button className="btn btn-secondary btn-sm" onClick={handleRefreshFromSeed} disabled={isRefreshing} style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', color: 'white', border: 'none' }}>
-                    {isRefreshing ? 'Đang cập nhật...' : 'Cập nhật mẹo nhớ & từ mẫu'}
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-          {showAddLesson && (
-            <div className="inline-add-form">
-              <input placeholder="Tên bài..." value={newLessonName} onChange={e => setNewLessonName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAddLesson()} autoFocus />
-              <button className="btn btn-primary btn-sm" onClick={handleAddLesson}>Tạo</button>
-              <button className="btn btn-secondary btn-sm" onClick={() => { setShowAddLesson(false); setNewLessonName(''); }}>Huỷ</button>
-            </div>
+          {navState.type === 'root' && (
+            <LevelGrid levels={KANJI_LEVELS} onSelectLevel={(level) => setNavState({ type: 'level', level })} getCount={getCardCountByLevel} countLabel="chữ" />
           )}
-          {renderLessonList(getParentLessonsByLevel(navState.level), false)}
-        </>
-      )}
 
-      {/* Parent: Child Lessons or Cards */}
-      {navState.type === 'parent' && (
-        <>
-          {hasChildren(navState.lessonId) ? (
+          {navState.type === 'level' && (
             <>
               <div className="section-header-row">
-                <h3><FolderOpen size={18} /> {navState.lessonName}</h3>
+                <h3><BookOpen size={18} /> {navState.level === 'BT' ? 'Bộ thủ' : navState.level} - Bài học</h3>
                 {isSuperAdmin && (
-                  <button className="btn btn-primary btn-sm" onClick={() => setShowAddLesson(true)}><Plus size={14} /> Thêm thư mục</button>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button className="btn btn-primary btn-sm" onClick={() => setShowAddLesson(true)}><Plus size={14} /> Thêm bài</button>
+                    <button className="btn btn-secondary btn-sm" onClick={handleSeed} disabled={isSeeding}>
+                      {isSeeding ? 'Đang tạo...' : 'Tạo bài tự động'}
+                    </button>
+                    {onSeedKanjiCards && (
+                      <button className="btn btn-secondary btn-sm" onClick={handleSeedKanjiCards} disabled={isSeedingCards} style={{ background: 'linear-gradient(135deg, #8b5cf6, #ec4899)', color: 'white', border: 'none' }}>
+                        {isSeedingCards ? 'Đang tạo Kanji...' : `Tạo Kanji tự động (${getKanjiSeedCount?.(navState.level) ?? 0})`}
+                      </button>
+                    )}
+                    {onRefreshKanjiFromSeed && (
+                      <button className="btn btn-secondary btn-sm" onClick={handleRefreshFromSeed} disabled={isRefreshing} style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', color: 'white', border: 'none' }}>
+                        {isRefreshing ? 'Đang cập nhật...' : 'Cập nhật mẹo nhớ & từ mẫu'}
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
               {showAddLesson && (
                 <div className="inline-add-form">
-                  <input placeholder="Tên thư mục..." value={newLessonName} onChange={e => setNewLessonName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAddLesson()} autoFocus />
+                  <input placeholder="Tên bài..." value={newLessonName} onChange={e => setNewLessonName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAddLesson()} autoFocus />
                   <button className="btn btn-primary btn-sm" onClick={handleAddLesson}>Tạo</button>
                   <button className="btn btn-secondary btn-sm" onClick={() => { setShowAddLesson(false); setNewLessonName(''); }}>Huỷ</button>
                 </div>
               )}
-              {renderLessonList(getChildLessons(navState.lessonId), true)}
+              <KanjiLessonList
+                {...sharedLessonListProps}
+                lessons={getParentLessonsByLevel(navState.level)}
+                isChild={false}
+                onClick={(lesson) => handleLessonClick(lesson, false)}
+              />
             </>
-          ) : (
+          )}
+
+          {navState.type === 'parent' && (
+            <>
+              {hasChildren(navState.lessonId) ? (
+                <>
+                  <div className="section-header-row">
+                    <h3><FolderOpen size={18} /> {navState.lessonName}</h3>
+                    {isSuperAdmin && (
+                      <button className="btn btn-primary btn-sm" onClick={() => setShowAddLesson(true)}><Plus size={14} /> Thêm thư mục</button>
+                    )}
+                  </div>
+                  {showAddLesson && (
+                    <div className="inline-add-form">
+                      <input placeholder="Tên thư mục..." value={newLessonName} onChange={e => setNewLessonName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAddLesson()} autoFocus />
+                      <button className="btn btn-primary btn-sm" onClick={handleAddLesson}>Tạo</button>
+                      <button className="btn btn-secondary btn-sm" onClick={() => { setShowAddLesson(false); setNewLessonName(''); }}>Huỷ</button>
+                    </div>
+                  )}
+                  <KanjiLessonList
+                    {...sharedLessonListProps}
+                    lessons={getChildLessons(navState.lessonId)}
+                    isChild={true}
+                    onClick={(lesson) => handleLessonClick(lesson, true)}
+                  />
+                </>
+              ) : (
+                <>
+                  <div className="section-header-row">
+                    <h3><FileText size={18} /> {navState.lessonName} ({getCardsForCurrentView().length} chữ)</h3>
+                    {isSuperAdmin && (
+                      <button className="btn btn-primary btn-sm" onClick={() => { setEditingCard(null); setShowForm(true); }}><Plus size={14} /> Thêm Kanji</button>
+                    )}
+                  </div>
+                  {showForm && <KanjiCardForm onSubmit={handleAddCard} onCancel={() => setShowForm(false)} fixedLevel={navState.level} fixedLessonId={getCurrentLessonId()} />}
+                  {editingCard && <KanjiCardForm onSubmit={handleUpdateCard} onCancel={() => setEditingCard(null)} initialData={editingCard} fixedLevel={navState.level} fixedLessonId={getCurrentLessonId()} />}
+                  <KanjiCardList cards={getCardsForCurrentView()} {...cardViewProps} onMove={cards => setMovingCards(cards)} />
+                </>
+              )}
+            </>
+          )}
+
+          {navState.type === 'child' && (
             <>
               <div className="section-header-row">
                 <h3><FileText size={18} /> {navState.lessonName} ({getCardsForCurrentView().length} chữ)</h3>
@@ -539,71 +460,28 @@ export function KanjiTab({
               </div>
               {showForm && <KanjiCardForm onSubmit={handleAddCard} onCancel={() => setShowForm(false)} fixedLevel={navState.level} fixedLessonId={getCurrentLessonId()} />}
               {editingCard && <KanjiCardForm onSubmit={handleUpdateCard} onCancel={() => setEditingCard(null)} initialData={editingCard} fixedLevel={navState.level} fixedLessonId={getCurrentLessonId()} />}
-              <KanjiCardList cards={getCardsForCurrentView()} onEdit={card => { setEditingCard(card); setShowForm(false); }} onDelete={onDeleteKanjiCard} onMove={cards => setMovingCards(cards)} onUpdateCard={onUpdateKanjiCard} canEdit={isSuperAdmin} />
+              <KanjiCardList cards={getCardsForCurrentView()} {...cardViewProps} />
             </>
           )}
         </>
       )}
 
-      {/* Child: Cards */}
-      {navState.type === 'child' && (
-        <>
-          <div className="section-header-row">
-            <h3><FileText size={18} /> {navState.lessonName} ({getCardsForCurrentView().length} chữ)</h3>
-            {isSuperAdmin && (
-              <button className="btn btn-primary btn-sm" onClick={() => { setEditingCard(null); setShowForm(true); }}><Plus size={14} /> Thêm Kanji</button>
-            )}
-          </div>
-          {showForm && <KanjiCardForm onSubmit={handleAddCard} onCancel={() => setShowForm(false)} fixedLevel={navState.level} fixedLessonId={getCurrentLessonId()} />}
-          {editingCard && <KanjiCardForm onSubmit={handleUpdateCard} onCancel={() => setEditingCard(null)} initialData={editingCard} fixedLevel={navState.level} fixedLessonId={getCurrentLessonId()} />}
-          <KanjiCardList cards={getCardsForCurrentView()} onEdit={card => { setEditingCard(card); setShowForm(false); }} onDelete={onDeleteKanjiCard} onUpdateCard={onUpdateKanjiCard} canEdit={isSuperAdmin} />
-        </>
-      )}
-      </>}
-      {/* Edit modal from search results */}
-      {searchResults && editingCard && (
-        <div className="kanji-edit-modal-overlay" onClick={() => setEditingCard(null)}>
-          <div className="kanji-edit-modal" onClick={e => e.stopPropagation()}>
-            <div className="kanji-edit-modal-header">
-              <div className="kanji-edit-modal-title">
-                <span className="kanji-edit-modal-char" style={{ borderColor: LEVEL_COLORS[editingCard.jlptLevel] }}>{editingCard.character}</span>
-                <div className="kanji-edit-modal-info">
-                  <h3>{editingCard.sinoVietnamese} - {editingCard.meaning}</h3>
-                  <div className="kanji-edit-modal-meta">
-                    <span className="kanji-edit-modal-level" style={{ background: LEVEL_COLORS[editingCard.jlptLevel] }}>{editingCard.jlptLevel}</span>
-                    <span className="kanji-edit-modal-lesson">{getLessonName(editingCard.lessonId)}</span>
-                  </div>
-                </div>
-              </div>
-              <button className="kanji-edit-modal-close" onClick={() => setEditingCard(null)}><X size={18} /></button>
-            </div>
-            <KanjiCardForm onSubmit={handleUpdateCard} onCancel={() => setEditingCard(null)} initialData={editingCard} fixedLevel={editingCard.jlptLevel} fixedLessonId={editingCard.lessonId} />
-          </div>
-        </div>
-      )}
-
-      {/* Decomposer modal */}
-      {decomposingCard && (
-        <Suspense fallback={null}>
-          <KanjiDecomposerModal
-            kanjiCard={decomposingCard}
-            onClose={() => setDecomposingCard(null)}
-          />
-        </Suspense>
-      )}
-
-      {/* Move modal */}
-      {movingCards && (
-        <KanjiMoveModal
-          cards={movingCards}
-          lessons={kanjiLessons}
-          getParentLessonsByLevel={getParentLessonsByLevel}
-          getChildLessons={getChildLessons}
-          hasChildren={hasChildren}
-          onMove={handleMoveCards}
-          onClose={() => setMovingCards(null)}
-        />
-      )}
+      <KanjiTabModals
+        editingCard={editingCard}
+        decomposingCard={decomposingCard}
+        movingCards={movingCards}
+        showEditModalOverSearch={!!searchResults && !!editingCard}
+        kanjiLessons={kanjiLessons}
+        getParentLessonsByLevel={getParentLessonsByLevel}
+        getChildLessons={getChildLessons}
+        hasChildren={hasChildren}
+        getLessonName={getLessonName}
+        onUpdateCard={handleUpdateCard}
+        onCancelEdit={() => setEditingCard(null)}
+        onCloseDecomposer={() => setDecomposingCard(null)}
+        onMoveCards={handleMoveCards}
+        onCloseMove={() => setMovingCards(null)}
+      />
     </div>
   );
 }

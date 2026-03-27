@@ -2,12 +2,12 @@
 // Modular architecture with separate tab components
 
 import { useState } from 'react';
-import type { Flashcard, FlashcardFormData, Lesson, JLPTLevel } from '../../types/flashcard';
-import type { CurrentUser, User, UserRole } from '../../types/user';
-import type { JLPTQuestion, JLPTQuestionFormData, JLPTLevel as JLPTQuestionLevel, QuestionCategory, JLPTFolder } from '../../types/jlpt-question';
-import type { KaiwaDefaultQuestion, KaiwaQuestionFormData, KaiwaFolder } from '../../types/kaiwa-question';
-import type { JLPTLevel as KaiwaJLPTLevel, ConversationTopic } from '../../types/kaiwa';
-import type { KaiwaAdvancedTopic, KaiwaAdvancedQuestion, KaiwaAdvancedTopicFormData, KaiwaAdvancedQuestionFormData } from '../../types/kaiwa-advanced';
+import type { JLPTLevel } from '../../types/flashcard';
+import { useUserData } from '../../contexts/user-data-context';
+import { useFlashcardData } from '../../contexts/flashcard-data-context';
+import { useJLPTData } from '../../contexts/jlpt-data-context';
+import { useLessonFiltering } from '../../hooks/use-lesson-filtering';
+import { useNavigation } from '../../contexts/navigation-context';
 import { useLectures } from '../../hooks/use-lectures';
 import { useTestTemplates } from '../../hooks/use-classrooms';
 import { useCustomTopics } from '../../hooks/use-custom-topics';
@@ -44,83 +44,24 @@ import { useListening } from '../../hooks/use-listening';
 import { RolePermissionsPage } from './role-permissions-page';
 import '../cards-management/cards-management.css';
 
-interface CardsPageProps {
-  cards: Flashcard[];
-  onAddCard: (data: FlashcardFormData, createdBy?: string) => void;
-  onUpdateCard: (id: string, data: Partial<Flashcard>) => void;
-  onDeleteCard: (id: string) => void;
-  lessons: Lesson[];
-  getLessonsByLevel: (level: JLPTLevel) => Lesson[];
-  getChildLessons: (parentId: string) => Lesson[];
-  onAddLesson: (name: string, level: JLPTLevel, parentId?: string | null, createdBy?: string) => void;
-  onUpdateLesson: (id: string, name: string) => void;
-  onDeleteLesson: (id: string) => void;
-  currentUser: CurrentUser;
-  // JLPT props
-  jlptQuestions: JLPTQuestion[];
-  jlptFolders: JLPTFolder[];
-  onAddJLPTQuestion: (data: JLPTQuestionFormData) => Promise<void>;
-  onUpdateJLPTQuestion: (id: string, data: Partial<JLPTQuestion>) => Promise<void>;
-  onDeleteJLPTQuestion: (id: string) => Promise<void>;
-  onAddJLPTFolder: (name: string, level: JLPTQuestionLevel, category: QuestionCategory) => Promise<void>;
-  onUpdateJLPTFolder: (id: string, data: Partial<JLPTFolder>) => Promise<void>;
-  onDeleteJLPTFolder: (id: string) => Promise<void>;
-  getFoldersByLevelAndCategory: (level: JLPTQuestionLevel, category: QuestionCategory) => JLPTFolder[];
-  getQuestionsByFolder: (folderId: string) => JLPTQuestion[];
-  // User props
-  users: User[];
-  onUpdateUserRole: (userId: string, role: UserRole) => void;
-  onDeleteUser: (userId: string) => void;
-  onUpdateVipExpiration: (userId: string, expirationDate: string | undefined) => void;
-  onRegister: (username: string, password: string, role: UserRole, createdBy?: string) => Promise<{ success: boolean; error?: string }>;
-  // Lesson lock/hide props
-  onToggleLock: (lessonId: string) => void;
-  onToggleHide: (lessonId: string) => void;
-  onReorderLessons: (reorderedLessons: { id: string; order: number }[]) => Promise<void>;
-  // Lecture props
-  onNavigateToLectureEditor?: (lectureId?: string, folderId?: string, level?: JLPTLevel) => void;
-  // Kaiwa props
-  kaiwaQuestions?: KaiwaDefaultQuestion[];
-  kaiwaFolders?: KaiwaFolder[];
-  onAddKaiwaQuestion?: (data: KaiwaQuestionFormData, createdBy?: string) => Promise<KaiwaDefaultQuestion>;
-  onUpdateKaiwaQuestion?: (id: string, data: Partial<KaiwaDefaultQuestion>) => Promise<void>;
-  onDeleteKaiwaQuestion?: (id: string) => Promise<void>;
-  onAddKaiwaFolder?: (name: string, level: KaiwaJLPTLevel, topic: ConversationTopic, createdBy?: string) => Promise<KaiwaFolder>;
-  onUpdateKaiwaFolder?: (id: string, data: Partial<KaiwaFolder>) => Promise<void>;
-  onDeleteKaiwaFolder?: (id: string) => Promise<void>;
-  getFoldersByLevelAndTopic?: (level: KaiwaJLPTLevel, topic: ConversationTopic) => KaiwaFolder[];
-  getQuestionsByKaiwaFolder?: (folderId: string) => KaiwaDefaultQuestion[];
-  // Kaiwa Advanced Topics props
-  advancedKaiwaTopics?: KaiwaAdvancedTopic[];
-  advancedKaiwaQuestions?: KaiwaAdvancedQuestion[];
-  onAddAdvancedKaiwaTopic?: (data: KaiwaAdvancedTopicFormData) => Promise<KaiwaAdvancedTopic | null>;
-  onUpdateAdvancedKaiwaTopic?: (id: string, data: Partial<KaiwaAdvancedTopicFormData>) => Promise<boolean>;
-  onDeleteAdvancedKaiwaTopic?: (id: string) => Promise<boolean>;
-  onAddAdvancedKaiwaQuestion?: (data: KaiwaAdvancedQuestionFormData) => Promise<KaiwaAdvancedQuestion | null>;
-  onUpdateAdvancedKaiwaQuestion?: (id: string, data: Partial<KaiwaAdvancedQuestionFormData>) => Promise<boolean>;
-  onDeleteAdvancedKaiwaQuestion?: (id: string) => Promise<boolean>;
-}
-
-export function CardsPage({
-  cards, onAddCard, onUpdateCard, onDeleteCard,
-  lessons, getLessonsByLevel, getChildLessons, onAddLesson, onUpdateLesson, onDeleteLesson,
-  currentUser,
-  jlptQuestions, jlptFolders, onAddJLPTQuestion, onUpdateJLPTQuestion, onDeleteJLPTQuestion,
-  onAddJLPTFolder, onUpdateJLPTFolder, onDeleteJLPTFolder,
-  getFoldersByLevelAndCategory, getQuestionsByFolder,
-  users, onUpdateUserRole, onDeleteUser, onUpdateVipExpiration, onRegister,
-  onToggleLock, onToggleHide, onReorderLessons,
-  onNavigateToLectureEditor,
-  kaiwaQuestions = [], kaiwaFolders = [],
-  onAddKaiwaQuestion, onUpdateKaiwaQuestion, onDeleteKaiwaQuestion,
-  onAddKaiwaFolder, onUpdateKaiwaFolder, onDeleteKaiwaFolder,
-  getFoldersByLevelAndTopic, getQuestionsByKaiwaFolder,
-  // Advanced Kaiwa Topics
-  advancedKaiwaTopics = [], advancedKaiwaQuestions = [],
-  onAddAdvancedKaiwaTopic, onUpdateAdvancedKaiwaTopic, onDeleteAdvancedKaiwaTopic,
-  onAddAdvancedKaiwaQuestion, onUpdateAdvancedKaiwaQuestion, onDeleteAdvancedKaiwaQuestion,
-}: CardsPageProps) {
-  const isSuperAdmin = currentUser.role === 'super_admin';
+export function CardsPage() {
+  const { currentUser, users, register, updateUserRole, deleteUser, updateVipExpiration } = useUserData();
+  const { cards, addCard, updateCard, deleteCard, lessons, addLesson, updateLesson, deleteLesson, toggleLock, toggleLessonHide, reorderLessons } = useFlashcardData();
+  const { filteredGetLessonsByLevel: getLessonsByLevel, filteredGetChildLessons: getChildLessons } = useLessonFiltering();
+  const {
+    jlptQuestions, jlptFolders,
+    addJLPTQuestion, updateJLPTQuestion, deleteJLPTQuestion,
+    addJLPTFolder, updateJLPTFolder, deleteJLPTFolder,
+    getFoldersByLevelAndCategory, getQuestionsByFolder,
+    kaiwaQuestions, kaiwaFolders,
+    addKaiwaQuestion, updateKaiwaQuestion, deleteKaiwaQuestion,
+    addKaiwaFolder, updateKaiwaFolder, deleteKaiwaFolder,
+    getFoldersByLevelAndTopic, getQuestionsByKaiwaFolder,
+    advancedKaiwaTopics, advancedKaiwaQuestions,
+    addAdvancedKaiwaTopic, updateAdvancedKaiwaTopic, deleteAdvancedKaiwaTopic,
+    addAdvancedKaiwaQuestion, updateAdvancedKaiwaQuestion, deleteAdvancedKaiwaQuestion,
+  } = useJLPTData();
+  const nav = useNavigation();
   const [activeTab, setActiveTab] = useState<ManagementTab>('vocabulary');
 
   // Lectures hook
@@ -234,6 +175,64 @@ export function CardsPage({
     getAudiosByFolder: getListeningAudiosByFolder,
     getAudioUrl: getListeningAudioUrl,
   } = useListening();
+
+  if (!currentUser) return null;
+
+  const isSuperAdmin = currentUser.role === 'super_admin';
+
+  // Wrapper callbacks — align prop names used in JSX with hook returns
+  const onAddCard = addCard;
+  const onUpdateCard = updateCard;
+  const onDeleteCard = deleteCard;
+  const onUpdateLesson = updateLesson;
+  const onDeleteLesson = deleteLesson;
+  const onToggleLock = toggleLock;
+  const onToggleHide = toggleLessonHide;
+  const onReorderLessons = reorderLessons;
+  const onUpdateJLPTQuestion = updateJLPTQuestion;
+  const onDeleteJLPTQuestion = deleteJLPTQuestion;
+  const onUpdateJLPTFolder = updateJLPTFolder;
+  const onDeleteJLPTFolder = deleteJLPTFolder;
+  const onUpdateKaiwaQuestion = updateKaiwaQuestion;
+  const onDeleteKaiwaQuestion = deleteKaiwaQuestion;
+  const onUpdateKaiwaFolder = updateKaiwaFolder;
+  const onDeleteKaiwaFolder = deleteKaiwaFolder;
+  const onAddAdvancedKaiwaTopic = addAdvancedKaiwaTopic;
+  const onUpdateAdvancedKaiwaTopic = updateAdvancedKaiwaTopic;
+  const onDeleteAdvancedKaiwaTopic = deleteAdvancedKaiwaTopic;
+  const onAddAdvancedKaiwaQuestion = addAdvancedKaiwaQuestion;
+  const onUpdateAdvancedKaiwaQuestion = updateAdvancedKaiwaQuestion;
+  const onDeleteAdvancedKaiwaQuestion = deleteAdvancedKaiwaQuestion;
+  const onUpdateUserRole = updateUserRole;
+  const onDeleteUser = deleteUser;
+  const onUpdateVipExpiration = updateVipExpiration;
+  const onRegister = register;
+
+  const onAddLesson = async (name: string, level: JLPTLevel, parentId?: string | null) => {
+    await addLesson(name, level, parentId ?? null, currentUser.id);
+  };
+  const onAddJLPTQuestion = async (data: Parameters<typeof addJLPTQuestion>[0]) => {
+    await addJLPTQuestion(data, currentUser.id);
+  };
+  const onAddJLPTFolder = async (name: string, level: Parameters<typeof addJLPTFolder>[1], category: Parameters<typeof addJLPTFolder>[2]) => {
+    await addJLPTFolder(name, level, category, currentUser.id);
+  };
+  const onAddKaiwaQuestion = async (data: Parameters<typeof addKaiwaQuestion>[0]) => {
+    const r = await addKaiwaQuestion(data, currentUser.id);
+    if (!r) throw new Error('Failed');
+    return r;
+  };
+  const onAddKaiwaFolder = async (name: string, level: Parameters<typeof addKaiwaFolder>[1], topic: Parameters<typeof addKaiwaFolder>[2]) => {
+    const r = await addKaiwaFolder(name, level as any, topic, currentUser.id);
+    if (!r) throw new Error('Failed');
+    return r;
+  };
+  const onNavigateToLectureEditor = (lectureId?: string, folderId?: string, level?: JLPTLevel) => {
+    nav.setEditingLectureId(lectureId);
+    nav.setEditingLectureFolderId(folderId);
+    nav.setEditingLectureLevel(level);
+    nav.setCurrentPage('lecture-editor');
+  };
 
   return (
     <div className="cards-page">

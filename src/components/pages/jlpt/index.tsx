@@ -6,13 +6,14 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import type { JLPTQuestion, JLPTLevel, QuestionCategory } from '../../../types/jlpt-question';
 import type { CustomTopicQuestion } from '../../../types/custom-topic';
 import type {
-  JLPTPageProps,
   PracticeState,
   PracticeResult,
   SectionConfig,
   QuestionHistory,
   WeakAreaData,
 } from './jlpt-types';
+import { useJLPTData } from '../../../contexts/jlpt-data-context';
+import { useUserData } from '../../../contexts/user-data-context';
 import {
   JLPT_LEVELS,
   QUESTION_CATEGORIES,
@@ -26,15 +27,19 @@ import {
 import { JLPTSetupView } from './jlpt-setup-view';
 import { JLPTPracticeView } from './jlpt-practice-view';
 import { JLPTResultView } from './jlpt-result-view';
-import './jlpt.css';
+import './jlpt-base.css';
+import './jlpt-audio-upload.css';
+import './jlpt-dictation.css';
+import './jlpt-setup.css';
+import './jlpt-kaiwa-questions.css';
+import './jlpt-practice.css';
+import './jlpt-results.css';
+import './jlpt-management.css';
+import './jlpt-responsive.css';
 
-export function JLPTPage({
-  questions,
-  onSaveJLPTSession,
-  settings,
-  customTopics = [],
-  customTopicQuestions = [],
-}: JLPTPageProps) {
+export function JLPTPage() {
+  const { jlptQuestions: questions, customTopics = [], customTopicQuestions = [] } = useJLPTData();
+  const { addJLPTSession: onSaveJLPTSession } = useUserData();
   const [practiceState, setPracticeState] = useState<PracticeState>('setup');
 
   // Multi-select states
@@ -46,8 +51,8 @@ export function JLPTPage({
   const [sectionConfigs, setSectionConfigs] = useState<SectionConfig[]>([]);
   const [showAdvancedSetup, setShowAdvancedSetup] = useState(false);
 
-  // Simple mode - uses settings default or 20
-  const [simpleQuestionCount, setSimpleQuestionCount] = useState(settings?.jlptDefaultQuestionCount ?? 20);
+  // Simple mode - uses default of 20
+  const [simpleQuestionCount, setSimpleQuestionCount] = useState(20);
 
   // Practice state
   const [practiceQuestions, setPracticeQuestions] = useState<JLPTQuestion[]>([]);
@@ -68,13 +73,13 @@ export function JLPTPage({
   const sessionSaved = useRef<boolean>(false);
 
   // Settings with defaults
-  const showExplanation = settings?.jlptShowExplanation ?? true;
-  const autoNextDelay = settings?.jlptAutoNextDelay ?? 0;
-  const preventRepetition = settings?.jlptPreventRepetition ?? true;
-  const repetitionCooldown = settings?.jlptRepetitionCooldown ?? 3;
-  const coverageMode = settings?.jlptCoverageMode ?? 'balanced';
-  const showLevelAssessment = settings?.jlptShowLevelAssessment ?? true;
-  const trackWeakAreas = settings?.jlptTrackWeakAreas ?? true;
+  const showExplanation = true;
+  const autoNextDelay = 0;
+  const preventRepetition = true;
+  const repetitionCooldown = 3;
+  const coverageMode: 'balanced' | 'weak_first' = 'balanced';
+  const showLevelAssessment = true;
+  const trackWeakAreas = true;
 
   // Toggle level selection
   const toggleLevel = (level: JLPTLevel) => {

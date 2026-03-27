@@ -1,0 +1,578 @@
+/* ============================================================
+ * jlpt-setup.css
+ * JLPT test setup page: header banner, level-grid, category-grid,
+ * question count controls, advanced per-section config, and
+ * sticky summary bar with start button.
+ * Includes setup-specific responsive breakpoints.
+ * ============================================================ */
+
+/* ============ JLPT SETUP PAGE - Professional Redesign ============ */
+.jlpt-setup-container {
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.jlpt-setup-header {
+  background: linear-gradient(135deg, var(--jlpt-darkest) 0%, var(--jlpt-darker) 40%, var(--jlpt-primary-dark) 100%);
+  padding: 2.5rem 2rem 2rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.jlpt-setup-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 50% 80% at 20% 50%, color-mix(in srgb, var(--jlpt-primary) 30%, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 80% 30%, rgba(168, 85, 247, 0.2) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.jlpt-setup-header h1 {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: var(--space-sm);
+  position: relative;
+  z-index: 1;
+}
+
+.jlpt-title-jp {
+  font-family: var(--font-jp-display);
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+.jlpt-title-vi {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.jlpt-subtitle {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: var(--font-size-md);
+  position: relative;
+  z-index: 1;
+}
+
+/* JLPT Sections */
+.jlpt-section {
+  padding: 1.5rem 2rem;
+  margin-bottom: 0;
+}
+
+.jlpt-section:nth-child(even) {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.jlpt-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.jlpt-section-header h3 {
+  font-family: var(--font-jp-body);
+  font-size: 1.1rem;
+  color: var(--jp-sumi);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.jlpt-section-header h3::before {
+  content: '';
+  width: 3px;
+  height: 18px;
+  background: linear-gradient(180deg, var(--jlpt-primary), #8b5cf6);
+  border-radius: 2px;
+}
+
+.btn-link-sm {
+  background: none;
+  border: none;
+  color: var(--jlpt-primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+
+.btn-link-sm:hover {
+  color: var(--jlpt-primary-dark);
+  text-decoration: underline;
+}
+
+/* Level Grid */
+.jlpt-level-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.75rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.jlpt-level-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.25rem 1rem;
+  background: #fff;
+  border: 2px solid #e5e7eb;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.jlpt-level-card:hover {
+  border-color: var(--jlpt-300);
+  background: var(--jlpt-50);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--jlpt-primary) 12%, transparent);
+}
+
+.jlpt-level-card.selected {
+  border-color: var(--jlpt-primary);
+  background: linear-gradient(135deg, var(--jlpt-50), var(--jlpt-100));
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--jlpt-primary) 20%, transparent);
+}
+
+.jlpt-level-card .level-badge {
+  font-family: var(--font-jp-body);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--jlpt-primary-dark);
+}
+
+.jlpt-level-card.selected .level-badge {
+  color: var(--jlpt-primary-dark);
+}
+
+.jlpt-level-card .level-count {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.jlpt-level-card .check-icon {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: var(--jlpt-primary);
+}
+
+/* Category Grid */
+.jlpt-category-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.jlpt-category-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.5rem 1rem;
+  background: #fff;
+  border: 2px solid #e5e7eb;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.jlpt-category-card:hover {
+  border-color: var(--jlpt-300);
+  background: var(--jlpt-50);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--jlpt-primary) 12%, transparent);
+}
+
+.jlpt-category-card.selected {
+  border-color: var(--jlpt-primary);
+  background: linear-gradient(135deg, var(--jlpt-50), var(--jlpt-100));
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--jlpt-primary) 20%, transparent);
+}
+
+.jlpt-category-card .category-icon {
+  font-family: var(--font-jp-kanji);
+  font-size: 2rem;
+  color: var(--jlpt-primary);
+  line-height: 1;
+}
+
+.jlpt-category-card.selected .category-icon {
+  color: var(--jlpt-primary-dark);
+}
+
+.jlpt-category-card .category-name {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.95rem;
+}
+
+.jlpt-category-card .category-count {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.jlpt-category-card .check-icon {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: var(--jlpt-primary);
+}
+
+/* Question Count - Toggle Button */
+.btn-toggle-advanced {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-toggle-advanced:hover {
+  background: var(--jlpt-50);
+  border-color: var(--jlpt-300);
+  color: var(--jlpt-primary-dark);
+}
+
+/* Simple Count Options */
+.jlpt-simple-count {
+  background: #fff;
+  padding: 1.25rem;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  max-width: 1100px;
+  margin: 0 auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.count-options {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.count-option {
+  padding: 0.65rem 1.5rem;
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.count-option:hover {
+  border-color: var(--jlpt-300);
+  background: var(--jlpt-50);
+}
+
+.count-option.selected {
+  border-color: var(--jlpt-primary);
+  background: var(--jlpt-primary);
+  color: #fff;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--jlpt-primary) 30%, transparent);
+}
+
+.count-note {
+  color: #9ca3af;
+  font-size: 0.85rem;
+}
+
+.count-note strong {
+  color: var(--jlpt-primary);
+}
+
+/* Advanced Setup - Per Section Config */
+.jlpt-advanced-setup {
+  background: #fff;
+  padding: 1.25rem;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  max-width: 1100px;
+  margin: 0 auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.no-sections {
+  text-align: center;
+  color: #9ca3af;
+  padding: 1.5rem;
+}
+
+.section-config-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.section-config-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #f9fafb;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  transition: border-color 0.2s;
+}
+
+.section-config-item:hover {
+  border-color: var(--jlpt-200);
+}
+
+.section-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.section-icon {
+  font-family: var(--font-jp-kanji);
+  font-size: 1.5rem;
+  color: var(--jlpt-primary);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--jlpt-50);
+  border-radius: 10px;
+}
+
+.section-name {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.section-available {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.section-count-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-count-control .count-btn {
+  width: 40px;
+  height: 36px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: #374151;
+}
+
+.section-count-control .count-btn:hover:not(:disabled) {
+  background: var(--jlpt-50);
+  border-color: var(--jlpt-300);
+  color: var(--jlpt-primary-dark);
+}
+
+.section-count-control .count-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.count-input {
+  width: 60px;
+  height: 36px;
+  text-align: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  background: #fff;
+  color: #1e293b;
+}
+
+.count-input:focus {
+  outline: none;
+  border-color: var(--jlpt-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--jlpt-primary) 12%, transparent);
+}
+
+/* Summary Section - sticky bar at bottom */
+.jlpt-summary {
+  background: linear-gradient(135deg, var(--jlpt-darker) 0%, var(--jlpt-primary-dark) 50%, var(--jlpt-primary) 100%);
+  padding: 1.5rem 2rem;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.summary-stats {
+  display: flex;
+  gap: 2.5rem;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.summary-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.summary-label {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-start {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.9rem 2rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  background: #fff;
+  color: var(--jlpt-primary-dark);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-start:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.btn-start:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive - JLPT Setup */
+@media (max-width: 768px) {
+  .jlpt-setup-header {
+    padding: 2rem 1.25rem 1.5rem;
+  }
+
+  .jlpt-title-vi {
+    font-size: 1.4rem;
+  }
+
+  .jlpt-section {
+    padding: 1.25rem 1rem;
+  }
+
+  .jlpt-level-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .jlpt-category-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .jlpt-summary {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+    padding: 1.25rem 1rem;
+    position: static;
+  }
+
+  .summary-stats {
+    width: 100%;
+    justify-content: space-around;
+  }
+
+  .section-config-item {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: stretch;
+  }
+
+  .section-count-control {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .jlpt-setup-header {
+    padding: 1.5rem 1rem 1.25rem;
+  }
+
+  .jlpt-title-vi {
+    font-size: 1.25rem;
+  }
+
+  .jlpt-section {
+    padding: 1rem 0.75rem;
+  }
+
+  .jlpt-level-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+
+  .jlpt-category-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .count-options {
+    justify-content: center;
+  }
+
+  .count-option {
+    flex: 1;
+    min-width: 70px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+}

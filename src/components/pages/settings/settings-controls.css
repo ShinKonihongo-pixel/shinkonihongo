@@ -1,0 +1,507 @@
+/* ============================================================
+   SETTINGS CONTROLS
+   Individual setting rows, sliders, selects, toggles,
+   font preview, gradient preview grid, color picker,
+   and URL input controls.
+   Covers: .setting-item, .setting-control, .setting-value,
+           .font-select, .font-preview, .toggle, .toggle-slider,
+           .gradient-preview-*, .color-picker, .url-input,
+           .device-multiplier, .btn-logout, .btn-full,
+           .btn-danger, .btn-small, .btn-orange, .error-message
+   ============================================================ */
+
+/* ============ SETTING ITEMS - Clean Style ============ */
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  margin: 0.25rem 0;
+  transition: all 0.2s ease;
+  border-radius: 10px;
+}
+
+.setting-item:last-child {
+  margin-bottom: 0;
+}
+
+.setting-item:first-child {
+  margin-top: 0;
+}
+
+.setting-item:hover {
+  background: rgba(99, 102, 241, 0.04);
+}
+
+.setting-item label {
+  color: #334155;
+  font-size: 0.925rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.setting-item label svg {
+  color: var(--jlpt-primary);
+  opacity: 0.9;
+}
+
+.setting-control {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Custom Range Slider */
+.setting-control input[type="range"] {
+  width: 160px;
+  height: 6px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #e2e8f0;
+  border-radius: 3px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.setting-control input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+  background: #e2e8f0;
+}
+
+.setting-control input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+  transition: all 0.2s ease;
+  margin-top: -6px;
+}
+
+.setting-control input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 3px 12px rgba(99, 102, 241, 0.5);
+}
+
+.setting-control input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+}
+
+.setting-control input[type="range"]::-moz-range-progress {
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  border-radius: 3px;
+  height: 6px;
+}
+
+.setting-value {
+  min-width: 65px;
+  text-align: right;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 0.9rem;
+  background: rgba(231, 76, 60, 0.1);
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+}
+
+.setting-value .original-size {
+  color: var(--gray);
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-left: 0.25rem;
+}
+
+.device-multiplier {
+  background: #f1f5f9;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--gray-dark);
+}
+
+/* Custom Select */
+.font-select {
+  padding: 0.6rem 1.25rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  min-width: 200px;
+  background: white;
+  color: var(--dark);
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 2.5rem;
+}
+
+.font-select:hover {
+  border-color: var(--primary);
+}
+
+.font-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.15);
+}
+
+/* Font Preview */
+.font-preview {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.font-preview-label {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.font-preview-text {
+  color: white;
+  font-weight: 900;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+}
+
+.font-preview-samples {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 2.5rem;
+  letter-spacing: 0.5rem;
+}
+
+/* Toggle Switch - Premium iOS-style */
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 28px;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #e2e8f0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 28px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.toggle input:checked + .toggle-slider {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+}
+
+.toggle input:checked + .toggle-slider:before {
+  transform: translateX(24px);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+}
+
+.toggle:hover .toggle-slider {
+  background-color: #cbd5e1;
+}
+
+.toggle:hover input:checked + .toggle-slider {
+  background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+}
+
+/* Gradient preview grid */
+.gradient-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.gradient-preview-item {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: all 0.2s;
+}
+
+.gradient-preview-item:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.gradient-preview-item.active {
+  border-color: var(--dark);
+  box-shadow: 0 0 0 2px var(--white), 0 0 0 4px var(--primary);
+}
+
+/* Color picker */
+.color-picker {
+  width: 50px;
+  height: 40px;
+  padding: 0;
+  border: 2px solid var(--gray-light);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.color-picker::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+.color-picker::-webkit-color-swatch {
+  border-radius: 4px;
+  border: none;
+}
+
+/* URL input */
+.url-input {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--gray-light);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.url-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.setting-control.full-width {
+  flex: 1;
+  width: 100%;
+}
+
+/* Stack layout for URL input */
+.setting-item:has(.setting-control.full-width) {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+/* Setting row divider */
+.setting-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(231, 76, 60, 0.15), transparent);
+  margin: 1.25rem 0;
+  border-radius: 1px;
+}
+
+/* Utility button variants */
+.btn-full {
+  width: 100%;
+}
+
+.btn-orange {
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important;
+  color: white !important;
+  border: none;
+}
+
+.btn-orange:hover:not(:disabled) {
+  background: linear-gradient(135deg, #e67e22 0%, #d35400 100%) !important;
+}
+
+.btn-orange:disabled {
+  background: var(--gray-light) !important;
+  color: var(--gray) !important;
+  cursor: not-allowed;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: var(--white);
+}
+
+.btn-danger:hover {
+  background: #c0392b;
+}
+
+.btn-small {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.btn-sm {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+}
+
+.btn-logout {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  background: var(--light);
+  color: var(--dark);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.btn-logout:hover {
+  background: var(--gray-light);
+}
+
+.error-message {
+  color: var(--danger);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* User Info in Header */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.username {
+  color: var(--dark);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.role-badge {
+  background: var(--primary);
+  color: var(--white);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: bold;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.role-badge.super-admin {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.role-badge.admin {
+  background: var(--secondary);
+}
+
+.role-badge.vip {
+  background: linear-gradient(135deg, #f5af19 0%, #f12711 100%);
+}
+
+.role-super_admin {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.role-admin {
+  background: var(--secondary);
+  color: white;
+}
+
+.role-user {
+  background: var(--gray-light);
+  color: var(--dark);
+}
+
+/* Form messages */
+.form-message {
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+}
+
+.form-message.success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.form-message.error {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* ============ SETTINGS PAGE DARK MODE - Controls ============ */
+[data-theme="dark"] .setting-item:hover {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+[data-theme="dark"] .setting-item label {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .setting-item label svg {
+  color: #818cf8;
+}
+
+[data-theme="dark"] .setting-value {
+  background: rgba(99, 102, 241, 0.2);
+  color: #a5b4fc;
+}
+
+[data-theme="dark"] .toggle-slider {
+  background-color: #475569;
+}
+
+[data-theme="dark"] .toggle:hover .toggle-slider {
+  background-color: #64748b;
+}
+
+[data-theme="dark"] .font-select,
+[data-theme="dark"] .url-input {
+  background: #1e293b;
+  border-color: #475569;
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .font-select:hover,
+[data-theme="dark"] .url-input:focus {
+  border-color: var(--jlpt-primary);
+}
+
+[data-theme="dark"] .font-preview {
+  background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+}

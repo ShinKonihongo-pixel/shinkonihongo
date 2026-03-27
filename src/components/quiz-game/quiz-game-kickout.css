@@ -1,0 +1,61 @@
+/*
+ * quiz-game-kickout.css
+ * Kickout / deletion overlay shown when a player is removed from the game.
+ * Classes: .kicked-overlay, .kicked-modal, .kicked-icon, .kicked-message,
+ *          .kicked-hint, and button overrides inside .kicked-modal.
+ */
+
+/* Kicked/deleted notification overlay */
+.kicked-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.kicked-modal {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 2rem 2.5rem;
+  text-align: center;
+  max-width: 360px;
+  animation: kickedFadeIn 0.3s ease;
+}
+
+.kicked-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.kicked-message {
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.kicked-hint {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.kicked-modal .btn {
+  color: white;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.kicked-modal .btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+@keyframes kickedFadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}

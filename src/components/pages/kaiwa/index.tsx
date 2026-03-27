@@ -1,15 +1,14 @@
 // Kaiwa page orchestrator - Routes between setup and session views
 // Extracted from kaiwa-page.tsx monolith (1,751 lines -> ~100 lines)
 
-import type { KaiwaPageProps } from './kaiwa-page-types';
 import { useKaiwaState } from './use-kaiwa-state';
 import { KaiwaSetupView } from './kaiwa-setup-view';
 import { KaiwaSessionView } from './kaiwa-session-view';
 import '../../kaiwa/kaiwa.css';
 import '../../cards-management/cards-management.css';
 
-export function KaiwaPage(props: KaiwaPageProps) {
-  const state = useKaiwaState(props);
+export function KaiwaPage() {
+  const state = useKaiwaState();
 
   // Route to appropriate view based on session state
   if (!state.isStarted) {
@@ -29,10 +28,10 @@ export function KaiwaPage(props: KaiwaPageProps) {
         selectedScenario={state.selectedScenario}
         userRole={state.userRole}
         // Data
-        defaultQuestions={props.defaultQuestions || []}
-        advancedTopics={props.advancedTopics || []}
-        customTopics={props.customTopics || []}
-        settings={props.settings}
+        defaultQuestions={state.defaultQuestions || []}
+        advancedTopics={state.advancedTopics || []}
+        customTopics={state.customTopics || []}
+        settings={state.settings}
         // Setters
         setSessionMode={state.setSessionMode}
         setLevel={state.setLevel}
@@ -105,7 +104,7 @@ export function KaiwaPage(props: KaiwaPageProps) {
       speech={state.speech}
       groq={state.groq}
       // Settings
-      settings={props.settings}
+      settings={state.settings}
       // Setters
       setInputText={state.setInputText}
       setSlowMode={state.setSlowMode}

@@ -9,7 +9,17 @@ import { ImportView } from './import-view';
 import { SettingsView } from './settings-view';
 import { CustomTopicsTab } from '../custom-topics/index';
 import { DEFAULT_SETTINGS, type KaiwaSubTab, type KaiwaPracticeSettings, type ImportResults } from './kaiwa-tab-types';
-import './kaiwa-tab.css';
+import './kaiwa-tab-layout.css';
+import './kaiwa-tab-start-screen.css';
+import './kaiwa-tab-controls.css';
+import './kaiwa-tab-mode-cards.css';
+import './kaiwa-tab-topics.css';
+import './kaiwa-tab-conversation.css';
+import './kaiwa-tab-messages.css';
+import './kaiwa-tab-input.css';
+import './kaiwa-tab-modals.css';
+import './kaiwa-tab-responsive.css';
+import './kaiwa-tab-responsive-global.css';
 
 export function KaiwaTab({
   questions,

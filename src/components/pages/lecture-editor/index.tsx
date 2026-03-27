@@ -6,9 +6,10 @@ import { useAuth } from '../../../hooks/use-auth';
 import { useLectures, useSlides } from '../../../hooks/use-lectures';
 import { usePPTX } from '../../../hooks/use-pptx';
 import { useGroq } from '../../../hooks/use-groq';
+import { useNavigation } from '../../../contexts/navigation-context';
 import { PPTXImportModal } from '../../lecture/pptx-import-modal';
 import { canUndo, canRedo } from '../../../utils/slide-editor-effects';
-import type { LectureEditorPageProps, SlideFormData } from './types';
+import type { SlideFormData } from './types';
 
 // Modular components
 import {
@@ -36,8 +37,24 @@ import { useEffectsHandlers } from './effects-handlers';
 import { useKeyboardShortcuts } from './keyboard-shortcuts';
 import './lecture.css';
 
-export function LectureEditorPage({ lectureId, initialFolderId, initialLevel, onBack }: LectureEditorPageProps) {
+export function LectureEditorPage() {
   const { currentUser, isAdmin } = useAuth();
+  const {
+    editingLectureId: lectureId,
+    editingLectureFolderId: initialFolderId,
+    editingLectureLevel: initialLevel,
+    setEditingLectureId,
+    setEditingLectureFolderId,
+    setEditingLectureLevel,
+    setCurrentPage,
+  } = useNavigation();
+
+  const onBack = useCallback(() => {
+    setEditingLectureId(undefined);
+    setEditingLectureFolderId(undefined);
+    setEditingLectureLevel(undefined);
+    setCurrentPage('cards');
+  }, [setEditingLectureId, setEditingLectureFolderId, setEditingLectureLevel, setCurrentPage]);
   const { getLecture, createLecture, updateLecture } = useLectures(true);
   const state = useEditorState(initialLevel, initialFolderId);
   const { slides, loading: slidesLoading, addSlide, updateSlide, deleteSlide, duplicateSlide, deleteAllSlides } = useSlides(state.currentLectureId);

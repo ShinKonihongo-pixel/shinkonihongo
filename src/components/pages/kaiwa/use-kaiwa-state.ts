@@ -4,7 +4,8 @@ import type { KaiwaMessage, KaiwaMetrics, KaiwaEvaluation } from '../../../types
 import type { KaiwaDefaultQuestion, KaiwaFolder } from '../../../types/kaiwa-question';
 import type { KaiwaAdvancedQuestion } from '../../../types/kaiwa-advanced';
 import type { CustomTopicQuestion } from '../../../types/custom-topic';
-import type { KaiwaPageProps } from './kaiwa-types';
+import { useSettings } from '../../../hooks/settings/use-app-settings';
+import { useJLPTData } from '../../../contexts/jlpt-data-context';
 import { useGroq } from '../../../hooks/use-groq';
 import { useGroqAdvanced } from '../../../hooks/use-groq-advanced';
 import { removeFurigana } from '../../../lib/furigana-utils';
@@ -13,19 +14,21 @@ import { useKaiwaMessages } from './use-kaiwa-messages';
 import { useKaiwaAudio } from './use-kaiwa-audio';
 import { useKaiwaUi } from './use-kaiwa-ui';
 
-export function useKaiwaState({
-  settings,
-  defaultQuestions: _defaultQuestions = [],
-  getFoldersByLevelAndTopic,
-  getQuestionsByFolder,
-  getQuestionsByLevelAndTopic,
-  advancedTopics: _advancedTopics = [],
-  advancedQuestions = [],
-  getAdvancedQuestionsByTopic,
-  customTopics: _customTopics = [],
-  customTopicQuestions = [],
-  getCustomTopicQuestionsByTopic,
-}: KaiwaPageProps) {
+export function useKaiwaState() {
+  const { settings } = useSettings();
+  const {
+    kaiwaQuestions: defaultQuestions = [],
+    getFoldersByLevelAndTopic,
+    getQuestionsByKaiwaFolder: getQuestionsByFolder,
+    getQuestionsByLevelAndTopic,
+    advancedKaiwaTopics: advancedTopics = [],
+    advancedKaiwaQuestions: advancedQuestions = [],
+    getAdvancedKaiwaQuestionsByTopic: getAdvancedQuestionsByTopic,
+    customTopics = [],
+    customTopicQuestions = [],
+    getCustomTopicQuestionsByTopic,
+  } = useJLPTData();
+
   const groq = useGroq();
   const groqAdvanced = useGroqAdvanced();
   const isAiLoading = groq.isLoading || groqAdvanced.isLoading;
@@ -295,6 +298,12 @@ export function useKaiwaState({
 
   // ── Compose the same public API as before ─────────────────────────────────
   return {
+    // Data (previously props)
+    settings,
+    defaultQuestions,
+    advancedTopics,
+    customTopics,
+
     // State
     messages: msgs.messages,
     answerTemplate: msgs.answerTemplate,

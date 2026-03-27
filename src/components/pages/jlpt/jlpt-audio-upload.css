@@ -1,0 +1,62 @@
+/* ============================================================
+ * jlpt-audio-upload.css
+ * Styles for the audio file upload control group used in
+ * question creation forms: upload button, audio preview bar,
+ * audio indicator badge, and inline audio player.
+ * ============================================================ */
+
+/* Audio Upload Styles */
+.audio-upload-group {
+  background: rgba(59, 130, 246, 0.05);
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border: 1px dashed rgba(59, 130, 246, 0.3);
+}
+
+.audio-upload-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+}
+
+.audio-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  background: white;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.audio-status {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--success);
+}
+
+.form-hint {
+  font-size: 0.75rem;
+  color: var(--gray);
+  margin-top: 0.5rem;
+}
+
+.audio-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.question-audio-player {
+  width: 100%;
+  height: 40px;
+  margin: 0.75rem 0;
+  border-radius: var(--radius-md);
+}

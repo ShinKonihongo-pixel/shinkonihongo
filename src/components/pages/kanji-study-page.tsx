@@ -1,6 +1,6 @@
 // Main kanji study page - entry point
-import type { KanjiCard, KanjiLesson } from '../../types/kanji';
-import type { JLPTLevel } from '../../types/flashcard';
+import { useNavigate } from 'react-router-dom';
+import { useFlashcardData } from '../../contexts/flashcard-data-context';
 import { LevelLessonSelector } from '../study/level-lesson-selector';
 import { useStudyState } from './kanji-study/use-study-state';
 import { StudyView } from './kanji-study/study-view';
@@ -8,25 +8,22 @@ import { EmptyState } from './kanji-study/empty-state';
 import { SettingsModal } from './kanji-study/settings-modal';
 import './kanji-study-page.css';
 
-interface KanjiStudyPageProps {
-  kanjiCards: KanjiCard[];
-  lessons: KanjiLesson[];
-  getLessonsByLevel: (level: JLPTLevel) => KanjiLesson[];
-  getChildLessons: (parentId: string) => KanjiLesson[];
-  onGoHome: () => void;
-  onUpdateKanjiCard: (id: string, data: Partial<KanjiCard>) => void;
-}
-
-export function KanjiStudyPage({
-  kanjiCards, lessons, getLessonsByLevel, getChildLessons, onGoHome, onUpdateKanjiCard,
-}: KanjiStudyPageProps) {
+export function KanjiStudyPage() {
+  const navigate = useNavigate();
+  const {
+    kanjiCards,
+    kanjiLessons: lessons,
+    getKanjiLessonsByLevel: getLessonsByLevel,
+    getKanjiChildLessons: getChildLessons,
+    updateKanjiCard,
+  } = useFlashcardData();
   const state = useStudyState(kanjiCards, lessons, getLessonsByLevel, getChildLessons);
 
   const handleToggleMemorization = (status: 'memorized' | 'not_memorized') => {
     const card = state.displayCards[state.currentIndex];
     if (!card) return;
     const newStatus = card.memorizationStatus === status ? undefined : status;
-    onUpdateKanjiCard(card.id, { memorizationStatus: newStatus });
+    updateKanjiCard(card.id, { memorizationStatus: newStatus });
   };
 
   const handleRestart = () => {
@@ -42,7 +39,7 @@ export function KanjiStudyPage({
         getLessonsByLevel={getLessonsByLevel}
         getChildLessons={getChildLessons}
         onStart={(lessonIds, level) => state.handleStartStudy(level, lessonIds)}
-        onGoHome={onGoHome}
+        onGoHome={() => navigate('/')}
         levels={['BT', 'N5', 'N4', 'N3', 'N2', 'N1']}
       />
     );
@@ -81,7 +78,7 @@ export function KanjiStudyPage({
           onOpenSettings={() => state.setShowSettingsModal(true)}
           onFilterChange={state.setMemorizationFilter}
           onToggleMemorization={handleToggleMemorization}
-          onUpdateCard={onUpdateKanjiCard}
+          onUpdateCard={updateKanjiCard}
         />
       )}
 

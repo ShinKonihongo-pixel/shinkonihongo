@@ -1,0 +1,174 @@
+/* ============================================================
+   SETTINGS LAYOUT
+   Page wrapper, header, logo, and body container styles.
+   Covers: .settings-page, .settings-header, .settings-logo,
+           .settings-header-content, .settings-page-body
+   ============================================================ */
+
+/* Edge-to-edge: cancel parent .main-content padding/margin */
+.main-content:has(.settings-page) {
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.settings-page {
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Settings Header - Compact Slim Design */
+.settings-header {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+  padding: 1rem 1.5rem;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated background orbs - hidden */
+.settings-header-bg {
+  display: none;
+}
+
+.settings-orb {
+  display: none;
+}
+
+/* Bottom wave - hidden */
+.settings-wave {
+  display: none;
+}
+
+.settings-header-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+/* Header top bar with logo */
+.settings-header-top {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.settings-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.settings-logo-icon {
+  font-size: 1.5rem;
+  font-weight: 900;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  font-family: "Noto Serif JP", serif;
+}
+
+.settings-logo-text {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  opacity: 0.9;
+}
+
+/* Main header content - inline */
+.settings-header-main {
+  text-align: left;
+  padding: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.settings-header h2 {
+  color: white;
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.settings-title-jp {
+  font-size: 1.5rem;
+  font-family: "Noto Serif JP", serif;
+  background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.8) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.settings-title-vn {
+  font-size: 1rem;
+  font-weight: 600;
+  opacity: 0.85;
+  letter-spacing: 0.02em;
+}
+
+.settings-header-subtitle {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  margin: 0;
+  font-weight: 400;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.settings-subtitle-jp {
+  font-size: 0.8rem;
+  opacity: 0.5;
+  font-family: "Noto Sans JP", sans-serif;
+}
+
+.settings-page-body {
+  padding: 1rem 1.25rem 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+/* ============ SETTINGS PAGE DARK MODE - Layout ============ */
+[data-theme="dark"] .main-content:has(.settings-page) {
+  background: transparent;
+}
+
+[data-theme="dark"] .settings-page {
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+}
+
+[data-theme="dark"] .settings-header {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .settings-logo-icon {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%);
+  border-color: rgba(255, 255, 255, 0.15);
+}

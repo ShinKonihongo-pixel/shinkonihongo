@@ -1,0 +1,196 @@
+/*
+ * quiz-game-starting.css
+ * Starting / countdown screen — cinematic battle intro with animated rings,
+ * floating particles, battle icons, and SVG countdown ring.
+ * Also includes legacy `.game-starting` and `.countdown` stubs.
+ * Classes: .game-starting-screen, .starting-bg-rings, .ring-*, .starting-particles,
+ *          .starting-content, .starting-battle-icons, .starting-title,
+ *          .starting-countdown, .countdown-ring-*, .countdown-number, .starting-hint,
+ *          legacy .game-starting, .countdown
+ */
+
+/* Starting Screen — Cinematic Battle Intro */
+.game-starting-screen {
+  background: linear-gradient(135deg, #0a0818 0%, #1e1a4a 50%, #16132e 100%);
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Animated background rings */
+.starting-bg-rings {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.starting-bg-rings .ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid rgba(139, 92, 246, 0.12);
+  animation: ringExpand 3s ease-out infinite;
+}
+.ring-1 { width: 200px; height: 200px; animation-delay: 0s; }
+.ring-2 { width: 200px; height: 200px; animation-delay: 1s; }
+.ring-3 { width: 200px; height: 200px; animation-delay: 2s; }
+@keyframes ringExpand {
+  0% { transform: scale(0.5); opacity: 0.8; }
+  100% { transform: scale(4); opacity: 0; }
+}
+
+/* Floating particles */
+.starting-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.starting-particle {
+  position: absolute;
+  bottom: -10px;
+  width: 3px; height: 3px;
+  background: rgba(139, 92, 246, 0.6);
+  border-radius: 50%;
+  animation: particleRise 3s ease-out infinite;
+}
+@keyframes particleRise {
+  0% { transform: translateY(0) scale(1); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(-100vh) scale(0); opacity: 0; }
+}
+
+.starting-content {
+  text-align: center;
+  color: white;
+  animation: fadeInUp 0.5s ease-out;
+  position: relative;
+  z-index: 2;
+}
+
+/* Battle icons */
+.starting-battle-icons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.battle-icon-left,
+.battle-icon-right {
+  color: rgba(255, 255, 255, 0.5);
+  animation: iconFloat 2s ease-in-out infinite alternate;
+}
+.battle-icon-right { animation-delay: 0.5s; }
+.battle-icon-center-wrap {
+  width: 64px; height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle, rgba(255,215,0,0.15), transparent 70%);
+  border-radius: 50%;
+}
+.battle-icon-center {
+  color: #ffd700;
+  filter: drop-shadow(0 0 16px rgba(255, 215, 0, 0.6));
+  animation: iconPulse 1.5s ease-in-out infinite;
+}
+@keyframes iconFloat {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-6px); }
+}
+@keyframes iconPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.starting-title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: linear-gradient(135deg, #fff 0%, #c4b5fd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.starting-countdown {
+  width: 160px; height: 160px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 2rem;
+}
+.countdown-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  transform: rotate(-90deg);
+}
+.countdown-ring-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 6;
+}
+.countdown-ring-progress {
+  fill: none;
+  stroke: #8b5cf6;
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.8s ease;
+  filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.6));
+}
+.countdown-number {
+  font-size: 5rem;
+  font-weight: 900;
+  animation: countdownPop 0.4s ease-out;
+  background: linear-gradient(180deg, #fff 20%, #c4b5fd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 4px 20px rgba(139, 92, 246, 0.4));
+}
+.starting-hint {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.08em;
+}
+@keyframes countdownPop {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Legacy game-starting stubs (light theme, pre-overhaul) ── */
+.game-starting {
+  text-align: center;
+  background: var(--white);
+  padding: 3rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.game-starting h2 {
+  color: var(--dark);
+  margin-bottom: 2rem;
+}
+
+.countdown {
+  font-size: 8rem;
+  font-weight: bold;
+  color: var(--primary);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}

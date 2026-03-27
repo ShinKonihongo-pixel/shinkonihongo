@@ -1,0 +1,131 @@
+/* ============================================================
+   SETTINGS SECTIONS
+   Section card containers, headings, descriptions, and
+   the not-logged-in placeholder state.
+   Covers: .settings-section, .settings-description,
+           .settings-not-logged-in, .settings-actions
+   ============================================================ */
+
+.settings-not-logged-in {
+  text-align: center;
+  color: var(--gray);
+  padding: 3rem;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* ============ SETTINGS SECTION - Clean Card Style ============ */
+.settings-section {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.settings-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.settings-section:hover {
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.06),
+    0 1px 4px rgba(0, 0, 0, 0.03);
+}
+
+.settings-section:hover::before {
+  opacity: 1;
+}
+
+.settings-section:last-of-type {
+  margin-bottom: 0;
+}
+
+.settings-section h3 {
+  color: #1e293b;
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  letter-spacing: -0.01em;
+}
+
+.settings-section h3 .section-icon {
+  font-size: 1.25rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+  filter: grayscale(0);
+}
+
+.settings-section h3::before {
+  display: none;
+}
+
+.settings-description {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+  padding-left: 0;
+}
+
+/* Second .settings-description definition (legacy) */
+.settings-description {
+  color: var(--gray);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.settings-actions {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+/* ============ SETTINGS PAGE DARK MODE - Sections ============ */
+[data-theme="dark"] .settings-section {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border-color: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="dark"] .settings-section:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .settings-section h3 {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .settings-section h3 .section-icon {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+}
+
+[data-theme="dark"] .settings-description {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .settings-not-logged-in {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  color: #94a3b8;
+}

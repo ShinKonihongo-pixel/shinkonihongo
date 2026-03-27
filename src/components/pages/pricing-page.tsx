@@ -1,12 +1,9 @@
 // Pricing page — Freemium comparison (Free vs VIP)
 
+import { useNavigate } from 'react-router-dom';
 import { Check, X, Crown, Sparkles } from 'lucide-react';
+import { useUserData } from '../../contexts/user-data-context';
 import './pricing-page.css';
-
-interface PricingPageProps {
-  isVip: boolean;
-  onUpgrade?: () => void;
-}
 
 interface Feature {
   label: string;
@@ -47,7 +44,10 @@ const FAQ = [
   },
 ];
 
-export function PricingPage({ isVip, onUpgrade }: PricingPageProps) {
+export function PricingPage() {
+  const navigate = useNavigate();
+  const { canAccessLocked: isVip } = useUserData();
+  const onUpgrade = () => navigate('/settings');
   return (
     <div className="pricing">
       <div className="pricing-header">

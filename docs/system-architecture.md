@@ -47,7 +47,8 @@
 │                         │ call Firestore services               │
 │  ┌──────────────────────▼────────────────────────────────────┐ │
 │  │  Firestore service layer  (src/services/firestore/)       │ │
-│  │  flashcard-service, user-service, session-service, ...    │ │
+│  │  flashcard-service, user-service, session-service,        │ │
+│  │  exercise-service, reading-service, listening-service ... │ │
 │  └──────────────────────┬────────────────────────────────────┘ │
 │                         │ Firebase SDK                          │
 │                    Cloud Firestore                              │
@@ -82,6 +83,10 @@ src/
 │   ├── use-progress.ts         # Study progress + stats
 │   ├── use-achievements.ts     # Achievement checking + XP
 │   ├── use-daily-missions.ts   # Daily mission generation + progress (localStorage)
+│   ├── use-exercises.ts        # Exercise data (service-based)
+│   ├── use-reading.ts          # Reading practice data (service-based)
+│   ├── use-listening.ts        # Listening study data (service-based)
+│   ├── settings/               # Settings module (split from monolithic use-settings.ts)
 │   ├── groq/                   # Groq AI conversation hooks
 │   └── ...
 ├── services/
@@ -167,7 +172,7 @@ user (10)                      # standard learner
 admin (60)                     # legacy alias
 ```
 
-Access control is enforced client-side via `hasPermission(userRole, requiredRole)` (see `src/types/user.ts`).
+Access control is enforced client-side via `hasPermission(userRole, requiredRole)` (see `src/types/user.ts`) and centralized in `src/utils/role-permissions.ts` (provides `canAccessPage()` for page-level access control).
 
 ---
 

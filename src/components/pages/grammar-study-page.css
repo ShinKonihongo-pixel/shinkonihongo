@@ -50,7 +50,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
   flex-shrink: 0;
 }
 
@@ -237,7 +237,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
   color: rgba(255, 255, 255, 0.8);
   flex-shrink: 0;
   align-self: center;
@@ -267,6 +267,7 @@
   cursor: pointer;
   touch-action: pan-y;
   min-height: 0;
+  contain: layout style;
 }
 
 .grammar-card {
@@ -276,6 +277,7 @@
   min-height: 400px;
   transform-style: preserve-3d;
   transition: transform 0.5s ease;
+  will-change: transform;
 }
 
 .grammar-card-front,
@@ -283,8 +285,8 @@
   position: absolute;
   inset: 0;
   backface-visibility: hidden;
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(20px);
+  /* Use solid dark bg instead of backdrop-filter: blur(20px) — blur on animated elements causes severe lag */
+  background: linear-gradient(135deg, rgba(15, 15, 30, 0.95), rgba(26, 26, 50, 0.95));
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   padding: 1.5rem;
@@ -292,6 +294,7 @@
   flex-direction: column;
   overflow: auto;
   transition: box-shadow 0.4s ease;
+  will-change: transform, opacity;
 }
 
 .grammar-card:hover .grammar-card-front,

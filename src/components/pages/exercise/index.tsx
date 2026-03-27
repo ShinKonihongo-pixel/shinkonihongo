@@ -2,7 +2,7 @@
 // Flow: Level Selection → Exercise List → Session → Result
 
 import { PenTool } from 'lucide-react';
-import type { ExercisePageProps } from './exercise-types';
+import { useFlashcardData } from '../../../contexts/flashcard-data-context';
 import { JLPTLevelSelector } from '../../ui/jlpt-level-selector';
 import { useExerciseState } from './use-exercise-state';
 import { ExerciseListView } from './exercise-list-view';
@@ -10,7 +10,9 @@ import { ExerciseSessionView } from './exercise-session-view';
 import { ExerciseResultView } from './exercise-result-view';
 import './exercise.css';
 
-export function ExercisePage({ exercises, flashcards }: ExercisePageProps) {
+export function ExercisePage() {
+  const { getPublishedExercises, cards: flashcards } = useFlashcardData();
+  const exercises = getPublishedExercises();
   const state = useExerciseState(exercises, flashcards);
 
   // Render level select view

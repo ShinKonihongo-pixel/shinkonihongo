@@ -1,0 +1,294 @@
+/* ============================================================
+   game-tab-base.css
+   Core game tab layout: page wrapper, header, section titles,
+   game card grid, card hover states, and admin lesson tree.
+   ============================================================ */
+
+/* ============ Game Tab Styles ============ */
+.game-tab {
+  padding: 1.5rem 2rem;
+}
+
+.game-tab-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.game-tab-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, var(--jp-shu) 0%, var(--jp-shu-light) 100%);
+  border-radius: 12px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.game-tab-title h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.game-tab-title p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--gray);
+}
+
+.game-tab-section {
+  margin-bottom: 2rem;
+}
+
+.game-tab-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--jp-matcha-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 1rem;
+}
+
+.game-tab-section-title.disabled {
+  color: var(--gray);
+}
+
+.game-tab-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.game-tab-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.game-tab-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: transparent;
+  transition: background 0.25s ease;
+}
+
+.game-tab-card:hover:not(.disabled) {
+  border-color: transparent;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-3px);
+}
+
+.game-tab-card:hover:not(.disabled)::before {
+  background: var(--jp-shu);
+}
+
+.game-tab-card.disabled {
+  opacity: 0.7;
+  cursor: default;
+  background: var(--jp-kinari);
+}
+
+.game-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  flex-shrink: 0;
+  font-size: 1.75rem;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.game-card-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.game-card-content h4 {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.game-card-content p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--gray);
+  line-height: 1.4;
+}
+
+.game-card-arrow {
+  color: var(--gray-light);
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+
+.game-tab-card:hover:not(.disabled) .game-card-arrow {
+  color: var(--jp-shu);
+  transform: translateX(4px);
+}
+
+.game-card-badge {
+  padding: 0.35rem 0.75rem;
+  background: var(--jp-kinari);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* Admin Lessons */
+.admin-lessons {
+  margin-top: 1rem;
+}
+
+.admin-hint {
+  color: var(--gray);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.lesson-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.lesson-level {
+  border: 1px solid var(--gray-light);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.lesson-level-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--light);
+  cursor: pointer;
+}
+
+.lesson-level-header:hover {
+  background: #e8e8e8;
+}
+
+.expand-icon {
+  font-size: 0.8rem;
+  color: var(--gray);
+}
+
+.level-name {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.level-count {
+  color: var(--gray);
+  font-size: 0.9rem;
+}
+
+.lesson-categories {
+  padding: 0.5rem;
+}
+
+.no-categories {
+  color: var(--gray);
+  font-style: italic;
+  padding: 0.5rem 1rem;
+}
+
+.lesson-category {
+  margin-bottom: 0.25rem;
+}
+
+.lesson-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+}
+
+.lesson-row:hover {
+  background: var(--light);
+}
+
+.lesson-row.sub {
+  margin-left: 2rem;
+}
+
+.lesson-row.child {
+  margin-left: 1.5rem;
+}
+
+.child-lessons {
+  margin-left: 1rem;
+  border-left: 2px solid var(--gray-light);
+  padding-left: 0.5rem;
+}
+
+.lock-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.lock-btn:hover {
+  background: var(--light);
+  transform: scale(1.1);
+}
+
+.lock-btn.locked {
+  color: var(--danger);
+}
+
+.lesson-name {
+  flex: 1;
+  color: var(--dark);
+}
+
+.locked-badge {
+  background: var(--danger);
+  color: var(--white);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.lesson-subcategories {
+  margin-left: 1rem;
+  border-left: 2px solid var(--gray-light);
+}

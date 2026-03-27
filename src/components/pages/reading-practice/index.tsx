@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
 import { BookOpen } from 'lucide-react';
 import type { JLPTLevel } from '../../../types/flashcard';
-import type { ReadingPassage, ReadingFolder } from '../../../types/reading';
 import { ReadingSettingsModal } from '../../ui/reading-settings';
 import { useReadingSettings } from '../../../contexts/reading-settings-context';
+import { useFlashcardData } from '../../../contexts/flashcard-data-context';
 import { JLPTLevelSelector, LEVEL_THEMES } from '../../ui/jlpt-level-selector';
 import { usePracticeState } from './use-practice-state';
 import { useAudioControls } from './use-audio-controls';
@@ -14,19 +14,12 @@ import { CompletedView } from './completed-view';
 import { PracticeView } from './practice-view';
 import '../reading-practice-page.css';
 
-interface ReadingPracticePageProps {
-  passages: ReadingPassage[];
-  folders: ReadingFolder[];
-  getFoldersByLevel: (level: JLPTLevel) => ReadingFolder[];
-  getPassagesByFolder: (folderId: string) => ReadingPassage[];
-  onGoHome?: () => void;
-}
-
-export function ReadingPracticePage({
-  passages,
-  getFoldersByLevel,
-  getPassagesByFolder,
-}: ReadingPracticePageProps) {
+export function ReadingPracticePage() {
+  const {
+    readingPassages: passages,
+    getReadingFoldersByLevel: getFoldersByLevel,
+    getReadingPassagesByFolder: getPassagesByFolder,
+  } = useFlashcardData();
   const { settings } = useReadingSettings();
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 

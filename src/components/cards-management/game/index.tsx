@@ -1,6 +1,11 @@
 // Game Tab - Orchestrator with State Management and View Routing
 
-import './game-tab.css';
+import './game-tab-base.css';
+import './game-management-dashboard.css';
+import './game-visibility-states.css';
+import './game-grammar-settings.css';
+import './image-word-game.css';
+import './image-word-management.css';
 import { useState, useEffect, useCallback } from 'react';
 import {
   getGameVisibilitySettings,

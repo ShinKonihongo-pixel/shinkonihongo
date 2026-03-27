@@ -1,6 +1,6 @@
 // Grammar study page - Main entry point
-import type { GrammarCard, JLPTLevel, GrammarLesson } from '../../types/flashcard';
-import type { AppSettings } from '../../hooks/use-settings';
+import { useNavigate } from 'react-router-dom';
+import { useFlashcardData } from '../../contexts/flashcard-data-context';
 import { LevelLessonSelector } from '../study/level-lesson-selector';
 import { useStudyState } from './grammar-study/use-study-state';
 import { EmptyState } from './grammar-study/empty-state';
@@ -8,30 +8,21 @@ import { StudyView } from './grammar-study/study-view';
 import { SettingsModal } from './grammar-study/settings-modal';
 import './grammar-study-page.css';
 
-interface GrammarStudyPageProps {
-  grammarCards: GrammarCard[];
-  lessons: GrammarLesson[];
-  getLessonsByLevel: (level: JLPTLevel) => GrammarLesson[];
-  getChildLessons: (parentId: string) => GrammarLesson[];
-  onGoHome: () => void;
-  settings?: AppSettings;
-  onUpdateGrammarCard?: (id: string, data: Partial<GrammarCard>) => void;
-}
-
-export function GrammarStudyPage({
-  grammarCards,
-  lessons,
-  getLessonsByLevel,
-  getChildLessons,
-  onGoHome,
-  onUpdateGrammarCard,
-}: GrammarStudyPageProps) {
+export function GrammarStudyPage() {
+  const navigate = useNavigate();
+  const {
+    grammarCards,
+    grammarLessons: lessons,
+    getGrammarLessonsByLevel: getLessonsByLevel,
+    getGrammarChildLessons: getChildLessons,
+    updateGrammarCard,
+  } = useFlashcardData();
   const state = useStudyState({ grammarCards, getChildLessons });
 
   const handleToggleMemorization = (status: 'memorized' | 'not_memorized') => {
     const currentCard = state.displayCards[state.currentIndex];
-    if (currentCard && onUpdateGrammarCard) {
-      onUpdateGrammarCard(currentCard.id, { memorizationStatus: status });
+    if (currentCard) {
+      updateGrammarCard(currentCard.id, { memorizationStatus: status });
     }
   };
 
@@ -48,7 +39,7 @@ export function GrammarStudyPage({
         getLessonsByLevel={getLessonsByLevel}
         getChildLessons={getChildLessons}
         onStart={state.handleStart}
-        onGoHome={onGoHome}
+        onGoHome={() => navigate('/')}
       />
     );
   }

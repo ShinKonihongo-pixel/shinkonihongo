@@ -1,0 +1,531 @@
+/* ============================================================
+   game-hub-leaderboard.css
+   Player leaderboard panel and VIP role styling used inside
+   multiplayer game views.
+   Covers: .player-leaderboard, .leaderboard-*, .player-*,
+           .answer-indicator, VIP avatar frames
+   ============================================================ */
+
+/* --- Player Leaderboard Component - Premium Edition --- */
+.player-leaderboard {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
+  backdrop-filter: blur(15px);
+  border-radius: 20px;
+  padding: 1.25rem;
+  min-width: 280px;
+  max-width: 320px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  animation: leaderboardAppear 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  position: relative;
+  overflow-x: hidden;
+}
+
+@keyframes leaderboardAppear {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.player-leaderboard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7);
+  border-radius: 20px 20px 0 0;
+}
+
+.player-leaderboard.compact {
+  min-width: 220px;
+  max-width: 260px;
+  padding: 0.75rem;
+}
+
+.leaderboard-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  margin-bottom: 1rem;
+  color: white;
+}
+
+.leaderboard-header svg {
+  color: #fbbf24;
+  filter: drop-shadow(0 2px 4px rgba(251, 191, 36, 0.4));
+}
+
+.leaderboard-header h4 {
+  flex: 1;
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.leaderboard-header .player-count {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3));
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.leaderboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.leaderboard-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.85rem;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  animation: itemSlideIn 0.4s ease forwards;
+  opacity: 0;
+  transform: translateX(10px);
+}
+
+.leaderboard-item:nth-child(1) { animation-delay: 0.05s; }
+.leaderboard-item:nth-child(2) { animation-delay: 0.1s; }
+.leaderboard-item:nth-child(3) { animation-delay: 0.15s; }
+.leaderboard-item:nth-child(4) { animation-delay: 0.2s; }
+.leaderboard-item:nth-child(5) { animation-delay: 0.25s; }
+.leaderboard-item:nth-child(6) { animation-delay: 0.3s; }
+.leaderboard-item:nth-child(7) { animation-delay: 0.35s; }
+.leaderboard-item:nth-child(8) { animation-delay: 0.4s; }
+.leaderboard-item:nth-child(9) { animation-delay: 0.45s; }
+.leaderboard-item:nth-child(10) { animation-delay: 0.5s; }
+
+@keyframes itemSlideIn {
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.leaderboard-item:hover {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.1));
+  transform: translateX(3px);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.leaderboard-item.current-user {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.35), rgba(139, 92, 246, 0.35));
+  border: 1px solid rgba(139, 92, 246, 0.5);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.leaderboard-item.current-user:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.45), rgba(139, 92, 246, 0.45));
+}
+
+.leaderboard-item.eliminated {
+  opacity: 0.45;
+  filter: grayscale(0.5);
+}
+
+.leaderboard-item.eliminated .player-name {
+  text-decoration: line-through;
+}
+
+.leaderboard-item.just-correct {
+  animation: itemSlideIn 0.4s ease forwards, flashCorrect 0.6s ease;
+}
+
+.leaderboard-item.just-wrong {
+  animation: itemSlideIn 0.4s ease forwards, flashWrong 0.6s ease;
+}
+
+@keyframes flashCorrect {
+  0%, 100% { box-shadow: none; }
+  50% {
+    background: linear-gradient(145deg, rgba(34, 197, 94, 0.35), rgba(34, 197, 94, 0.2));
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.5);
+    border-color: rgba(34, 197, 94, 0.6);
+  }
+}
+
+@keyframes flashWrong {
+  0%, 100% { box-shadow: none; }
+  50% {
+    background: linear-gradient(145deg, rgba(239, 68, 68, 0.35), rgba(239, 68, 68, 0.2));
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+    border-color: rgba(239, 68, 68, 0.6);
+  }
+}
+
+.player-rank {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.player-rank.rank-1 {
+  background: linear-gradient(145deg, rgba(255, 215, 0, 0.3), rgba(255, 180, 0, 0.2));
+  border: 1px solid rgba(255, 215, 0, 0.4);
+}
+
+.player-rank.rank-2 {
+  background: linear-gradient(145deg, rgba(192, 192, 192, 0.3), rgba(150, 150, 150, 0.2));
+  border: 1px solid rgba(192, 192, 192, 0.4);
+}
+
+.player-rank.rank-3 {
+  background: linear-gradient(145deg, rgba(205, 127, 50, 0.3), rgba(180, 100, 30, 0.2));
+  border: 1px solid rgba(205, 127, 50, 0.4);
+}
+
+.player-rank .rank-number {
+  font-size: 0.8rem;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.player-rank .rank-icon.gold {
+  color: #ffd700;
+  filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.5));
+}
+.player-rank .rank-icon.silver {
+  color: #e0e0e0;
+  filter: drop-shadow(0 2px 4px rgba(200, 200, 200, 0.5));
+}
+.player-rank .rank-icon.bronze {
+  color: #cd7f32;
+  filter: drop-shadow(0 2px 4px rgba(205, 127, 50, 0.5));
+}
+
+.player-avatar {
+  position: relative;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.player-avatar .avatar-emoji {
+  font-size: 1.6rem;
+  line-height: 1;
+  display: block;
+}
+
+.player-avatar .bot-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -6px;
+  background: linear-gradient(135deg, rgba(107, 114, 128, 0.95), rgba(75, 85, 99, 0.95));
+  color: white;
+  font-size: 0.5rem;
+  padding: 2px 4px;
+  border-radius: 6px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Avatar image support */
+.player-avatar .avatar-emoji img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* ====== VIP Player Styling ====== */
+/* VIP Avatar Frame Effects */
+.player-avatar.vip-avatar {
+  position: relative;
+}
+
+.player-avatar.vip-avatar .vip-frame {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* VIP User - Purple shimmer (border ring only via mask) */
+.player-avatar.role-vip_user .vip-frame {
+  background: conic-gradient(from 0deg, #a855f7, #ec4899, #a855f7);
+  animation: vipFrameSpin 3s linear infinite;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 3px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 3px));
+}
+
+/* Super Admin - Rainbow border ring */
+.player-avatar.role-super_admin .vip-frame {
+  background: conic-gradient(from 0deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff, #9b59b6, #ff6b6b);
+  animation: vipFrameSpin 2s linear infinite;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 3px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 3px));
+}
+
+/* Crown removed — HOST badge on avatar handles host indicator */
+
+/* Director - Gold border ring */
+.player-avatar.role-director .vip-frame {
+  background: conic-gradient(from 0deg, #ffd700, #ffb347, #ffd700);
+  animation: vipFrameSpin 2.5s linear infinite, vipGlow 1.5s ease infinite;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 3px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 3px));
+}
+
+/* Admin - Red border ring */
+.player-avatar.role-admin .vip-frame {
+  background: conic-gradient(from 0deg, #e34234, #ff6b6b, #e34234);
+  animation: vipFrameSpin 3s linear infinite;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 3px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 3px));
+}
+
+@keyframes vipFrameSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes vipGlow {
+  0%, 100% { filter: brightness(1) drop-shadow(0 0 5px currentColor); }
+  50% { filter: brightness(1.2) drop-shadow(0 0 15px currentColor); }
+}
+
+/* crownBounce removed */
+
+/* VIP Player Item highlight */
+.leaderboard-item.vip-player {
+  position: relative;
+}
+
+.leaderboard-item.vip-player::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 3px 0 0 3px;
+}
+
+.leaderboard-item.vip-player:has(.role-vip_user)::before {
+  background: linear-gradient(180deg, #a855f7, #ec4899);
+}
+
+.leaderboard-item.vip-player:has(.role-super_admin)::before {
+  background: linear-gradient(180deg, #ff6b6b, #ffd93d, #6bcb77);
+}
+
+.leaderboard-item.vip-player:has(.role-director)::before {
+  background: linear-gradient(180deg, #ffd700, #ffb347);
+}
+
+.leaderboard-item.vip-player:has(.role-admin)::before {
+  background: linear-gradient(180deg, #e34234, #ff6b6b);
+}
+
+/* VIP Name Styles in Leaderboard (reuse sidebar styles) */
+.player-name.vip-name.role-name-super_admin {
+  background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff, #9b59b6);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: rainbow-text 3s ease infinite;
+  font-weight: 800;
+}
+
+.player-name.vip-name.role-name-director {
+  background: linear-gradient(135deg, #ffd700, #ffb347);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+}
+
+.player-name.vip-name.role-name-admin {
+  color: #e34234;
+  font-weight: 700;
+}
+
+.player-name.vip-name.role-name-vip_user {
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+}
+
+.player-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.player-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-extra {
+  font-size: 0.7rem;
+  opacity: 0.65;
+  font-weight: 500;
+}
+
+.player-score {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.player-score .score-value {
+  font-weight: 800;
+  font-size: 0.95rem;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.player-score .streak-badge {
+  font-size: 0.7rem;
+  background: linear-gradient(135deg, #f97316, #ef4444);
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.4);
+  animation: streakPulse 1.5s ease infinite;
+}
+
+@keyframes streakPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.answer-indicator {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.answer-indicator.correct {
+  background: linear-gradient(145deg, rgba(34, 197, 94, 0.4), rgba(22, 163, 74, 0.3));
+  color: #4ade80;
+  border: 2px solid rgba(34, 197, 94, 0.5);
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
+  animation: indicatorBounce 0.4s ease;
+}
+
+.answer-indicator.wrong {
+  background: linear-gradient(145deg, rgba(239, 68, 68, 0.4), rgba(220, 38, 38, 0.3));
+  color: #f87171;
+  border: 2px solid rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+  animation: indicatorShake 0.4s ease;
+}
+
+.answer-indicator.pending {
+  background: linear-gradient(145deg, rgba(250, 204, 21, 0.35), rgba(234, 179, 8, 0.25));
+  color: #fde047;
+  border: 2px solid rgba(250, 204, 21, 0.4);
+  animation: pendingPulse 1.2s ease infinite;
+}
+
+@keyframes indicatorBounce {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+@keyframes indicatorShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-3px); }
+  40% { transform: translateX(3px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+}
+
+@keyframes pendingPulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(250, 204, 21, 0.3);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(250, 204, 21, 0.5);
+    opacity: 0.8;
+  }
+}
+
+.leaderboard-more {
+  text-align: center;
+  padding: 0.75rem;
+  font-size: 0.8rem;
+  opacity: 0.65;
+  color: white;
+  font-weight: 500;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 0.5rem;
+}
+
+/* Compact mode adjustments */
+.player-leaderboard.compact .leaderboard-item {
+  padding: 0.4rem 0.6rem;
+}
+
+.player-leaderboard.compact .player-avatar .avatar-emoji {
+  font-size: 1.3rem;
+}
+
+.player-leaderboard.compact .player-name {
+  font-size: 0.8rem;
+}
+
+.player-leaderboard.compact .player-score .score-value {
+  font-size: 0.85rem;
+}
+
+.player-leaderboard.compact .player-rank {
+  width: 24px;
+  height: 24px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .player-leaderboard {
+    min-width: unset;
+    max-width: unset;
+    width: 100%;
+    max-height: 300px;
+    animation: none;
+  }
+
+  .leaderboard-item {
+    animation-delay: 0s !important;
+    opacity: 1;
+    transform: none;
+  }
+}

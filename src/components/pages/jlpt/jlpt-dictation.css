@@ -1,0 +1,454 @@
+/* ============================================================
+ * jlpt-dictation.css
+ * Dictation game styles: setup screen, playing screen,
+ * result screen, timer, level-grid, category-grid,
+ * answer form, and result list.
+ * ============================================================ */
+
+/* ============ DICTATION GAME STYLES ============ */
+.dictation-game {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: var(--space-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dictation-setup,
+.dictation-result,
+.dictation-playing {
+  background: white;
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.setup-header,
+.result-header {
+  text-align: center;
+  margin-bottom: var(--space-xl);
+}
+
+.setup-icon,
+.trophy-icon {
+  color: var(--jlpt-primary);
+  margin-bottom: var(--space-md);
+}
+
+.setup-header h2,
+.result-header h2 {
+  font-size: var(--font-size-2xl);
+  color: var(--jp-sumi);
+  margin-bottom: var(--space-sm);
+}
+
+.setup-header p {
+  color: var(--gray);
+  font-size: var(--font-size-sm);
+}
+
+.setup-options {
+  margin-bottom: var(--space-xl);
+}
+
+.option-group {
+  margin-bottom: var(--space-lg);
+}
+
+.option-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: var(--space-sm);
+  color: var(--jp-sumi);
+}
+
+.count-buttons {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.count-btn {
+  flex: 1;
+  padding: 0.75rem;
+  border: 2px solid var(--border);
+  background: white;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.count-btn:hover:not(:disabled) {
+  border-color: var(--jlpt-primary);
+  color: var(--jlpt-primary);
+}
+
+.count-btn.active {
+  background: var(--jlpt-primary);
+  border-color: var(--jlpt-primary);
+  color: white;
+}
+
+.count-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.option-hint {
+  font-size: var(--font-size-xs);
+  color: var(--gray);
+  margin-top: var(--space-xs);
+}
+
+.setup-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.btn-large {
+  padding: 1rem 2rem;
+  font-size: var(--font-size-lg);
+}
+
+/* Dictation Playing */
+.dictation-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.dictation-header .progress-text {
+  font-size: var(--font-size-sm);
+  color: var(--gray);
+  white-space: nowrap;
+}
+
+.dictation-header .progress-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.dictation-header .progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--jlpt-primary), #764ba2);
+  transition: width var(--transition-normal);
+}
+
+.dictation-header .score-display {
+  display: flex;
+  gap: var(--space-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.dictation-header .correct {
+  color: var(--success);
+}
+
+.dictation-header .wrong {
+  color: var(--danger);
+}
+
+.dictation-question {
+  text-align: center;
+}
+
+.timer {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-md) var(--space-lg);
+  background: linear-gradient(135deg, var(--jlpt-primary) 0%, #764ba2 100%);
+  border-radius: 50%;
+  color: white;
+  margin-bottom: var(--space-lg);
+  width: 80px;
+  height: 80px;
+  justify-content: center;
+}
+
+.timer.urgent {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  animation: pulse 0.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.timer-value {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.timer-label {
+  font-size: var(--font-size-xs);
+  opacity: 0.8;
+}
+
+.reading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+  color: var(--jlpt-primary);
+}
+
+.reading-indicator svg.pulsing {
+  animation: pulsing 1s ease-in-out infinite;
+}
+
+@keyframes pulsing {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.1); }
+}
+
+.reading-count {
+  font-weight: 600;
+}
+
+.replay-btn {
+  padding: 0.5rem;
+  border-radius: 50%;
+}
+
+.meaning-hint {
+  background: color-mix(in srgb, var(--jlpt-primary) 10%, transparent);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+}
+
+.hint-label {
+  font-size: var(--font-size-xs);
+  color: var(--gray);
+  margin-right: var(--space-xs);
+}
+
+.hint-text {
+  font-weight: 600;
+  color: var(--jp-sumi);
+}
+
+.answer-form {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.answer-input {
+  flex: 1;
+  padding: 1rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-lg);
+  font-family: 'Noto Sans JP', sans-serif;
+  text-align: center;
+  transition: border-color var(--transition-fast);
+}
+
+.answer-input:focus {
+  outline: none;
+  border-color: var(--jlpt-primary);
+}
+
+.answer-input.correct {
+  border-color: var(--success);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.answer-input.wrong {
+  border-color: var(--danger);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.submit-btn {
+  padding: 1rem 1.5rem;
+}
+
+.answer-reveal {
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-md);
+}
+
+.answer-reveal.correct {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid var(--success);
+}
+
+.answer-reveal.wrong {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--danger);
+}
+
+.answer-label {
+  font-size: var(--font-size-xs);
+  color: var(--gray);
+  display: block;
+  margin-bottom: var(--space-xs);
+}
+
+.answer-text {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  font-family: 'Noto Sans JP', sans-serif;
+  color: var(--jp-sumi);
+}
+
+.answer-kanji {
+  font-size: var(--font-size-md);
+  color: var(--gray);
+  margin-left: var(--space-xs);
+}
+
+/* Dictation Result */
+.result-stats {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-xl);
+  margin-bottom: var(--space-xl);
+  padding-bottom: var(--space-xl);
+  border-bottom: 1px solid var(--border);
+}
+
+.result-stats .stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.result-stats .stat-item.correct svg,
+.result-stats .stat-item.correct .stat-value {
+  color: var(--success);
+}
+
+.result-stats .stat-item.wrong svg,
+.result-stats .stat-item.wrong .stat-value {
+  color: var(--danger);
+}
+
+.result-stats .stat-item.accuracy .stat-value {
+  color: var(--jlpt-primary);
+}
+
+.result-stats .stat-value {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+}
+
+.result-stats .stat-label {
+  font-size: var(--font-size-xs);
+  color: var(--gray);
+}
+
+.result-details {
+  margin-bottom: var(--space-xl);
+}
+
+.result-details h3 {
+  font-size: var(--font-size-md);
+  margin-bottom: var(--space-md);
+  color: var(--jp-sumi);
+}
+
+.result-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.result-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-xs);
+}
+
+.result-item.correct {
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.result-item.wrong {
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.result-num {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--border);
+  border-radius: 50%;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--gray);
+}
+
+.result-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.result-answer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.your-answer {
+  font-size: var(--font-size-sm);
+  font-family: 'Noto Sans JP', sans-serif;
+}
+
+.correct-answer {
+  font-size: var(--font-size-xs);
+  color: var(--success);
+}
+
+.result-meaning {
+  font-size: var(--font-size-xs);
+  color: var(--gray);
+}
+
+.result-status {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.result-status.correct {
+  color: var(--success);
+}
+
+.result-status.wrong {
+  color: var(--danger);
+}
+
+.result-actions {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.result-actions .btn {
+  flex: 1;
+  min-width: 120px;
+}

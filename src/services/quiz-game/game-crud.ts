@@ -5,6 +5,7 @@ import {
   doc,
   getDocs,
   getDoc,
+  getDocFromServer,
   addDoc,
   updateDoc,
   deleteDoc,
@@ -238,6 +239,7 @@ export async function createGame(
     currentAnswer: null,
     answerTime: null,
     streak: 0,
+    correctAnswers: 0,
     joinedAt: new Date().toISOString(),
   };
 
@@ -268,9 +270,17 @@ export async function createGame(
 
 export async function getGame(gameId: string): Promise<QuizGame | null> {
   const docRef = doc(db, COLLECTIONS.GAMES, gameId);
-  const snapshot = await getDoc(docRef);
-  if (!snapshot.exists()) return null;
-  return { id: snapshot.id, ...snapshot.data() } as QuizGame;
+  // Always fetch from server to avoid stale cache (critical for power-up writes)
+  try {
+    const snapshot = await getDocFromServer(docRef);
+    if (!snapshot.exists()) return null;
+    return { id: snapshot.id, ...snapshot.data() } as QuizGame;
+  } catch {
+    // Fallback to cache if offline
+    const snapshot = await getDoc(docRef);
+    if (!snapshot.exists()) return null;
+    return { id: snapshot.id, ...snapshot.data() } as QuizGame;
+  }
 }
 
 export async function getGameByCode(code: string): Promise<QuizGame | null> {

@@ -7,14 +7,12 @@ import { useCenterMembers, type CenterMemberInfo } from '../../hooks/use-center-
 import { BRANCH_MEMBER_ROLE_LABELS, BRANCH_MEMBER_ROLE_COLORS } from '../../types/branch';
 import type { User } from '../../types/user';
 import { isImageAvatar } from '../../utils/avatar-icons';
-
-interface CenterMembersPageProps {
-  users: User[];
-}
+import { useUserData } from '../../contexts/user-data-context';
 
 type FilterTab = 'all' | 'student' | 'teacher' | 'admin';
 
-export function CenterMembersPage({ users }: CenterMembersPageProps) {
+export function CenterMembersPage() {
+  const { users } = useUserData();
   const { center, isAdmin } = useCenter();
   const { members, loading, removeMember } = useCenterMembers(center.id, users);
   const [search, setSearch] = useState('');

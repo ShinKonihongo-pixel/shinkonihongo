@@ -1,0 +1,642 @@
+/*
+ * kaiwa-tab-start-screen.css
+ * Start screen, hero section, and setup card styles for the Kaiwa tab.
+ * Covers .kaiwa-start-screen, .kaiwa-hero, .kaiwa-setup and all their
+ * child elements including topic grids, section dividers, role selector,
+ * and launch section wrapper.
+ */
+
+/* Start Screen - Full-Width Edge-to-Edge Design */
+.kaiwa-start-screen {
+  text-align: center;
+  padding: 2rem 1.5rem 3rem;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+  animation: kaiwa-fade-in 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes kaiwa-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Hero section — Premium branded entrance */
+.kaiwa-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  margin-bottom: 1.5rem;
+  animation: kaiwa-hero-entrance 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes kaiwa-hero-entrance {
+  from { opacity: 0; transform: translateY(-20px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Icon wrapper with pulsing rings */
+.kaiwa-hero-icon-wrap {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.kaiwa-hero-ring {
+  position: absolute;
+  inset: -8px;
+  border-radius: 24px;
+  border: 2px solid rgba(13, 148, 136, 0.12);
+  animation: kaiwa-ring-pulse 3s ease-in-out infinite;
+}
+
+.kaiwa-hero-ring.ring-2 {
+  inset: -18px;
+  border-radius: 30px;
+  border-color: rgba(13, 148, 136, 0.06);
+  animation-delay: 0.5s;
+}
+
+@keyframes kaiwa-ring-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+.kaiwa-hero-icon {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  background: linear-gradient(145deg, #F0FDFA 0%, #CCFBF1 50%, #99F6E4 100%);
+  border-radius: 22px;
+  border: 2px solid rgba(13, 148, 136, 0.18);
+  box-shadow:
+    0 8px 32px rgba(13, 148, 136, 0.15),
+    0 2px 8px rgba(13, 148, 136, 0.08),
+    inset 0 -2px 4px rgba(13, 148, 136, 0.06);
+  animation: kaiwa-hero-bounce 3s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes kaiwa-hero-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.kaiwa-start-screen h2 {
+  font-size: 2.75rem;
+  margin-bottom: 0;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #0F766E 0%, #0D9488 40%, #14B8A6 70%, #2DD4BF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 2px 20px rgba(13, 148, 136, 0.15);
+  position: relative;
+  display: inline-block;
+  line-height: 1.2;
+}
+
+.kaiwa-start-screen h2::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 56px;
+  height: 3.5px;
+  background: linear-gradient(90deg, #0D9488, #2DD4BF);
+  border-radius: 2px;
+  animation: kaiwa-underline-grow 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s backwards;
+}
+
+@keyframes kaiwa-underline-grow {
+  from { width: 0; opacity: 0; }
+  to { width: 56px; opacity: 1; }
+}
+
+.kaiwa-hero-subtitle {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #64748B;
+  letter-spacing: 0.04em;
+  margin-top: 0.5rem;
+  text-transform: uppercase;
+}
+
+.kaiwa-hero .kaiwa-description,
+.kaiwa-description {
+  color: #64748B;
+  margin: 0.75rem auto 0;
+  line-height: 1.6;
+  font-size: 0.92rem;
+  max-width: 460px;
+}
+
+/* Setup Card — Premium Glassmorphism */
+.kaiwa-setup {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 253, 250, 0.88) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 1.75rem 1.5rem;
+  margin: 0 0 1.5rem;
+  text-align: left;
+  border: 1px solid rgba(13, 148, 136, 0.1);
+  box-shadow:
+    0 12px 40px rgba(13, 148, 136, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  position: relative;
+  overflow: hidden;
+  animation: kaiwa-card-entrance 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s backwards;
+}
+
+.kaiwa-setup::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #0D9488, #2DD4BF, #5EEAD4, #2DD4BF, #0D9488);
+  background-size: 200% 100%;
+  border-radius: 24px 24px 0 0;
+  animation: kaiwa-gradient-flow 4s ease-in-out infinite;
+}
+
+@keyframes kaiwa-gradient-flow {
+  0%, 100% { background-position: 0% 0%; }
+  50% { background-position: 100% 0%; }
+}
+
+.kaiwa-setup-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.kaiwa-setup-row .kaiwa-setup-item {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.kaiwa-setup-item {
+  margin-bottom: 1rem;
+}
+
+.kaiwa-setup-item:last-child {
+  margin-bottom: 0;
+}
+
+.kaiwa-setup-item label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: #0F766E;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.kaiwa-setup-item select {
+  width: 100%;
+  padding: 0.875rem 1.125rem;
+  border: 1.5px solid rgba(13, 148, 136, 0.2);
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 500;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 253, 250, 0.6) 100%);
+  color: #1E293B;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230D9488'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.875rem center;
+  background-size: 1.25rem;
+  box-shadow: 0 2px 6px rgba(13, 148, 136, 0.05);
+}
+
+.kaiwa-setup-item select:hover {
+  border-color: rgba(13, 148, 136, 0.4);
+  box-shadow: 0 3px 10px rgba(13, 148, 136, 0.08);
+}
+
+.kaiwa-setup-item select:focus {
+  outline: none;
+  border-color: #0D9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12), 0 2px 6px rgba(13, 148, 136, 0.08);
+}
+
+/* Topic selection grid */
+.kaiwa-topic-section {
+  margin-top: 1.25rem;
+}
+
+.kaiwa-topic-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 0.75rem;
+}
+
+.kaiwa-topic-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.375rem 0.75rem;
+  border: 1.5px solid rgba(13, 148, 136, 0.1);
+  border-radius: 18px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F7FFFE 100%);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 2px 8px rgba(13, 148, 136, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.03),
+    inset 0 -1px 2px rgba(13, 148, 136, 0.02);
+  position: relative;
+  overflow: hidden;
+}
+
+.kaiwa-topic-btn:hover {
+  border-color: rgba(13, 148, 136, 0.3);
+  transform: translateY(-4px);
+  box-shadow:
+    0 10px 24px rgba(13, 148, 136, 0.12),
+    0 3px 6px rgba(13, 148, 136, 0.06);
+}
+
+.kaiwa-topic-btn:active {
+  transform: translateY(-1px) scale(0.96);
+  box-shadow: 0 2px 6px rgba(13, 148, 136, 0.08);
+  transition-duration: 0.1s;
+}
+
+.kaiwa-topic-btn.active {
+  border-color: #0D9488;
+  background: linear-gradient(145deg, #E6FFFA 0%, #CCFBF1 100%);
+  box-shadow:
+    0 6px 20px rgba(13, 148, 136, 0.2),
+    0 0 0 3px rgba(13, 148, 136, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transform: translateY(-2px);
+}
+
+/* Active check indicator */
+.kaiwa-topic-btn.active::after {
+  content: '✓';
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #0D9488;
+  color: white;
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  z-index: 2;
+}
+
+.kaiwa-topic-btn.active:active {
+  transform: scale(0.96);
+}
+
+.kaiwa-topic-btn .topic-icon {
+  font-size: 2.25rem;
+  margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 1;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.kaiwa-topic-btn:hover .topic-icon {
+  transform: scale(1.2) rotate(-5deg);
+}
+
+.kaiwa-topic-btn.active .topic-icon {
+  transform: scale(1.08);
+}
+
+.kaiwa-topic-btn .topic-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #475569;
+  text-align: center;
+  line-height: 1.3;
+  position: relative;
+  z-index: 1;
+  transition: color 0.2s ease;
+}
+
+.kaiwa-topic-btn.active .topic-label {
+  color: #0F766E;
+  font-weight: 700;
+}
+
+/* Section dividers with gradient lines */
+.kaiwa-section {
+  margin-bottom: 1.75rem;
+}
+
+.kaiwa-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.kaiwa-section-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(13, 148, 136, 0.06), rgba(13, 148, 136, 0.18), rgba(13, 148, 136, 0.06));
+}
+
+.kaiwa-section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #94A3B8;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+}
+
+.kaiwa-step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(150deg, #0D9488 0%, #14B8A6 100%);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 800;
+  margin-right: 0.375rem;
+  box-shadow: 0 2px 6px rgba(13, 148, 136, 0.25);
+  flex-shrink: 0;
+}
+
+/* Setup card inline row (JLPT + Style side by side) */
+.kaiwa-setup-row-inline {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 0;
+}
+
+.kaiwa-setup-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.kaiwa-setup-col label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  margin-bottom: 0.625rem;
+  color: #0F766E;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Divider inside setup card */
+.kaiwa-setup-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(13, 148, 136, 0.18), transparent);
+  margin: 1.25rem 0;
+}
+
+/* Launch section wrapper */
+.kaiwa-launch-section {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(240, 253, 250, 0.8) 100%);
+  border-radius: 20px;
+  border: 1px solid rgba(13, 148, 136, 0.08);
+  box-shadow: 0 4px 16px rgba(13, 148, 136, 0.04);
+  animation: kaiwa-card-entrance 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.55s backwards;
+}
+
+.kaiwa-setup-hint {
+  font-size: 0.85rem;
+  color: var(--gray);
+}
+
+.kaiwa-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+  color: #92400E;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  margin: 1rem 0;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+/* Kaiwa Role Selector */
+@keyframes kaiwa-role-appear {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.kaiwa-role-section {
+  margin-top: 1rem;
+  animation: kaiwa-role-appear 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.kaiwa-role-section label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.kaiwa-role-grid {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.kaiwa-role-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 1rem 1.5rem;
+  border: 2px solid rgba(13, 148, 136, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 120px;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.05);
+  position: relative;
+  overflow: hidden;
+  animation: kaiwa-role-appear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+.kaiwa-role-btn:nth-child(1) { animation-delay: 0.1s; }
+.kaiwa-role-btn:nth-child(2) { animation-delay: 0.2s; }
+.kaiwa-role-btn:nth-child(3) { animation-delay: 0.3s; }
+
+.kaiwa-role-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #0D9488, #2DD4BF);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.kaiwa-role-btn:hover {
+  border-color: rgba(13, 148, 136, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(13, 148, 136, 0.12);
+}
+
+.kaiwa-role-btn:hover::before {
+  opacity: 0.05;
+}
+
+.kaiwa-role-btn:active {
+  transform: scale(0.96);
+  box-shadow: 0 1px 4px rgba(13, 148, 136, 0.08);
+}
+
+.kaiwa-role-btn.active {
+  border-color: #0D9488;
+  background: linear-gradient(145deg, #0D9488 0%, #14B8A6 100%);
+  color: white;
+  box-shadow: 0 4px 16px rgba(13, 148, 136, 0.3);
+}
+
+.kaiwa-role-btn.active::before {
+  opacity: 0;
+}
+
+.kaiwa-role-btn.active:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.2);
+}
+
+.kaiwa-role-btn .role-emoji {
+  font-size: 2rem;
+  position: relative;
+  z-index: 1;
+  transition: transform 0.2s ease;
+}
+
+.kaiwa-role-btn:hover .role-emoji {
+  transform: scale(1.1);
+}
+
+.kaiwa-role-btn .role-name {
+  font-size: 1rem;
+  font-weight: 600;
+  position: relative;
+  z-index: 1;
+}
+
+.kaiwa-role-btn .role-name-vi {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  position: relative;
+  z-index: 1;
+}
+
+.kaiwa-role-btn.active .role-name-vi {
+  opacity: 0.9;
+}
+
+/* Premium Start Button CTA - Kaiwa (overrides global .btn-primary purple) */
+.kaiwa-start-screen .btn.btn-primary.btn-large,
+.kaiwa-start-screen .btn-primary.btn-large {
+  padding: 1.125rem 3.5rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  background: linear-gradient(145deg, #0D9488 0%, #14B8A6 60%, #2DD4BF 100%);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  box-shadow: 0 6px 24px rgba(13, 148, 136, 0.35);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.02em;
+  position: relative;
+  overflow: hidden;
+}
+
+.kaiwa-start-screen .btn.btn-primary.btn-large::before,
+.kaiwa-start-screen .btn-primary.btn-large::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(145deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.kaiwa-start-screen .btn.btn-primary.btn-large:hover:not(:disabled),
+.kaiwa-start-screen .btn-primary.btn-large:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 35px rgba(13, 148, 136, 0.45);
+}
+
+.kaiwa-start-screen .btn.btn-primary.btn-large:active:not(:disabled),
+.kaiwa-start-screen .btn-primary.btn-large:active:not(:disabled) {
+  transform: scale(0.97);
+  box-shadow: 0 2px 12px rgba(13, 148, 136, 0.25);
+}
+
+.kaiwa-start-screen .btn.btn-primary.btn-large:disabled,
+.kaiwa-start-screen .btn-primary.btn-large:disabled {
+  background: #CBD5E1;
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-large {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+}

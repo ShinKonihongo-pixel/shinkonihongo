@@ -44,6 +44,7 @@ export async function joinGame(
     currentAnswer: null,
     answerTime: null,
     streak: 0,
+    correctAnswers: 0,
     joinedAt: new Date().toISOString(),
   };
 

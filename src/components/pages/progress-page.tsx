@@ -2,9 +2,13 @@
 // Features: XP ring animation, medal showcase, activity chart, level progress
 
 import { useMemo } from 'react';
-import type { ProgressSummary } from '../../types/progress';
-import type { UserStats, UserLevel } from '../../types/user';
+import type { UserLevel } from '../../types/user';
 import { calculateUserLevel } from '../../types/user';
+import { useNavigate } from 'react-router-dom';
+import { useUserData } from '../../contexts/user-data-context';
+import { useFlashcardData } from '../../contexts/flashcard-data-context';
+import { useSettings } from '../../hooks/settings/use-app-settings';
+import { useProgress } from '../../hooks/use-progress';
 import {
   Flame,
   Snowflake,
@@ -22,12 +26,6 @@ import {
   Crown,
 } from 'lucide-react';
 import './progress-page.css';
-
-interface ProgressPageProps {
-  progress: ProgressSummary;
-  stats?: UserStats;
-  onStartStudy: () => void;
-}
 
 // XP Ring Component with animated gradient
 function XPRing({ level, xp, progress, nextLevelXp }: UserLevel & { nextLevelXp: number }) {
@@ -141,7 +139,21 @@ function StatCard({
   );
 }
 
-export function ProgressPage({ progress, stats, onStartStudy }: ProgressPageProps) {
+export function ProgressPage() {
+  const navigate = useNavigate();
+  const { studySessions, gameSessions, jlptSessions, userStats: stats } = useUserData();
+  const { cards } = useFlashcardData();
+  const { settings } = useSettings();
+  const progress = useProgress(
+    studySessions,
+    gameSessions,
+    jlptSessions,
+    stats,
+    cards,
+    settings.weeklyCardsTarget || 50,
+    settings.weeklyMinutesTarget || 60
+  );
+  const onStartStudy = () => navigate('/study');
   const { dailyActivity, streak, levelProgress, weeklyGoal, cardsDueToday, totalXP, currentLevel, levelTitle } = progress;
 
   // Calculate user level from stats

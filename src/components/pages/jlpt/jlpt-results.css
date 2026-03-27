@@ -1,0 +1,438 @@
+/* ============================================================
+ * jlpt-results.css
+ * JLPT level assessment panel: category breakdown bars,
+ * assessment feedback sections (strengths, weaknesses,
+ * recommendations), historical weak-areas list, and the
+ * JLPT level selection modal.
+ * ============================================================ */
+
+/* ===== JLPT LEVEL ASSESSMENT ===== */
+.level-assessment {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.level-assessment h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #1e293b;
+  margin-bottom: 1.25rem;
+  font-size: 1.1rem;
+}
+
+.level-assessment h3 svg {
+  color: #f59e0b;
+}
+
+/* Category Breakdown */
+.category-breakdown {
+  margin-bottom: 1.5rem;
+}
+
+.category-breakdown h4 {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.breakdown-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.breakdown-item {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  border: 1px solid #f3f4f6;
+  transition: border-color 0.2s;
+}
+
+.breakdown-item:hover {
+  border-color: #e5e7eb;
+}
+
+.breakdown-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.breakdown-icon {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.breakdown-name {
+  font-weight: 500;
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+.breakdown-bar {
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 0.3rem;
+}
+
+.breakdown-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.breakdown-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.breakdown-percent {
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Assessment Feedback */
+.assessment-feedback {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.assessment-feedback .feedback-section.recommendations {
+  grid-column: 1 / -1;
+}
+
+.feedback-section {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  border: 1px solid #f3f4f6;
+}
+
+.feedback-section h4 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+
+.feedback-section.strengths {
+  background: #f0fdf4;
+  border-color: #dcfce7;
+}
+
+.feedback-section.strengths h4 {
+  color: #059669;
+}
+
+.feedback-section.strengths h4 svg {
+  color: #10b981;
+}
+
+.feedback-section.weaknesses {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.feedback-section.weaknesses h4 {
+  color: #dc2626;
+}
+
+.feedback-section.weaknesses h4 svg {
+  color: #ef4444;
+}
+
+.feedback-section.recommendations {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.feedback-section.recommendations h4 {
+  color: #d97706;
+}
+
+.feedback-section.recommendations h4 svg {
+  color: #f59e0b;
+}
+
+.feedback-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.feedback-section li {
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  font-size: 0.88rem;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.feedback-section li:last-child {
+  border-bottom: none;
+}
+
+/* Historical Weak Areas */
+.historical-weak-areas {
+  margin-top: 1.25rem;
+  padding: 1.25rem;
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #fecaca;
+}
+
+.historical-weak-areas h4 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1rem 0;
+  font-size: 0.95rem;
+  color: #dc2626;
+}
+
+.historical-weak-areas h4 svg {
+  color: #ef4444;
+}
+
+.weak-areas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.weak-area-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  background: #fef2f2;
+  border-radius: 10px;
+  border: 1px solid #fee2e2;
+  transition: background 0.15s;
+}
+
+.weak-area-item:hover {
+  background: #fce7e7;
+}
+
+.weak-rank {
+  font-weight: 700;
+  color: #dc2626;
+  min-width: 2rem;
+  font-size: 0.85rem;
+}
+
+.weak-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.weak-level {
+  padding: 0.2rem 0.5rem;
+  background: var(--jlpt-primary);
+  color: white;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.weak-category {
+  font-size: 0.88rem;
+  color: #374151;
+}
+
+.weak-stats {
+  font-size: 0.8rem;
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.weak-hint {
+  margin-top: 0.75rem;
+  font-size: 0.78rem;
+  color: #9ca3af;
+  text-align: center;
+  font-style: italic;
+}
+
+/* ============ JLPT Level Selection Modal ============ */
+.jlpt-level-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+}
+
+.jlpt-level-modal {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  max-width: 480px;
+  width: 100%;
+  padding: 2rem;
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.jlpt-level-modal-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.jlpt-level-modal-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--jp-shu) 0%, var(--jp-sakura) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  color: white;
+}
+
+.jlpt-level-modal-header h2 {
+  font-size: 1.5rem;
+  color: var(--jp-sumi);
+  margin-bottom: 0.5rem;
+}
+
+.jlpt-level-modal-header p {
+  color: var(--jp-sumi-medium);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.jlpt-level-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.jlpt-level-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 1rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--jp-washi);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.jlpt-level-option:hover {
+  border-color: var(--level-color, var(--primary));
+  background: white;
+}
+
+.jlpt-level-option.selected {
+  border-color: var(--level-color, var(--primary));
+  background: white;
+  box-shadow: 0 0 0 3px rgba(var(--level-color), 0.1);
+}
+
+.jlpt-level-option-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.jlpt-level-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.jlpt-level-label {
+  font-weight: 600;
+  color: var(--jp-sumi);
+  flex: 1;
+}
+
+.jlpt-level-option .selected-icon {
+  color: var(--level-color, var(--primary));
+}
+
+.jlpt-level-description {
+  font-size: 0.8rem;
+  color: var(--jp-sumi-medium);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.jlpt-level-modal-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.jlpt-level-modal-actions .btn-primary {
+  width: 100%;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.jlpt-level-modal-actions .btn-link {
+  color: var(--jp-sumi-medium);
+  font-size: 0.875rem;
+}
+
+.jlpt-level-note {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--jp-sumi-medium);
+  margin-top: 1rem;
+}
+
+@media (max-width: 480px) {
+  .jlpt-level-modal {
+    padding: 1.5rem;
+  }
+
+  .jlpt-level-modal-header h2 {
+    font-size: 1.25rem;
+  }
+}

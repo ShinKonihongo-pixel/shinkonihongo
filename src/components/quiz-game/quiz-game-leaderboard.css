@@ -1,0 +1,292 @@
+/*
+ * quiz-game-leaderboard.css
+ * Leaderboard screen — dark premium podium with gold/silver/bronze stands,
+ * ranked player rows, and loading screen.
+ * Also includes legacy light-theme leaderboard stubs.
+ * Classes: .game-leaderboard-screen, .leaderboard-header, .trophy-icon,
+ *          .podium, .podium-place, .podium-stand, .leaderboard-rest,
+ *          .leaderboard-row, .row-rank/.row-name/.row-score,
+ *          .game-loading-screen, .leave-btn,
+ *          legacy .game-leaderboard, .leaderboard-item etc.
+ */
+
+/* Leaderboard Screen — Premium */
+.game-leaderboard-screen {
+  background: linear-gradient(180deg, #0a0818 0%, #12102e 50%, #0a1628 100%);
+  padding: 1.25rem 0.75rem;
+  align-items: center;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.leaderboard-header {
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+.trophy-icon {
+  color: #fbbf24;
+  margin-bottom: 0.5rem;
+  filter: drop-shadow(0 0 12px rgba(251, 191, 36, 0.5));
+  animation: iconPulse 2s ease-in-out infinite;
+}
+
+.leaderboard-header h2 {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+  background: linear-gradient(135deg, #fff 0%, #fbbf24 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.round-progress {
+  color: rgba(255,255,255,0.5);
+  font-size: 0.9rem;
+}
+
+/* Podium */
+.podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  max-width: 100%;
+  width: 100%;
+}
+
+.podium-place {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: podiumRise 0.5s ease-out both;
+}
+@keyframes podiumRise {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.podium-player {
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.podium-player .crown {
+  color: #ffd700;
+  margin-bottom: 0.25rem;
+}
+
+.podium-player .medal {
+  margin-bottom: 0.25rem;
+}
+
+.medal.silver {
+  color: #bdc3c7;
+}
+
+.medal.bronze {
+  color: #cd7f32;
+}
+
+.podium-name {
+  display: block;
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.podium-score {
+  display: block;
+  color: rgba(255,255,255,0.8);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.streak-fire {
+  display: block;
+  font-size: 0.8rem;
+  color: #f39c12;
+  margin-top: 0.25rem;
+}
+
+.podium-stand {
+  width: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 1.5rem;
+  border-radius: 8px 8px 0 0;
+}
+
+.podium-place.first .podium-stand {
+  height: 100px;
+  background: linear-gradient(180deg, #ffd700, #f39c12);
+  box-shadow: 0 -4px 20px rgba(255,215,0,0.25);
+}
+
+.podium-place.second .podium-stand {
+  height: 70px;
+  background: linear-gradient(180deg, #bdc3c7, #95a5a6);
+}
+
+.podium-place.third .podium-stand {
+  height: 50px;
+  background: linear-gradient(180deg, #cd7f32, #a0522d);
+}
+
+/* Leaderboard rest */
+.leaderboard-rest {
+  max-width: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.leaderboard-row {
+  display: flex;
+  align-items: center;
+  padding: 0.7rem 1rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  color: white;
+  animation: revealItemIn 0.3s ease-out both;
+}
+
+.leaderboard-row.is-me {
+  background: rgba(102, 126, 234, 0.3);
+  border: 1px solid rgba(102, 126, 234, 0.5);
+}
+
+.row-rank {
+  width: 40px;
+  color: rgba(255,255,255,0.6);
+  font-weight: 500;
+}
+
+.row-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.row-score {
+  font-weight: 700;
+}
+
+/* Loading Screen */
+.game-loading-screen {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  color: white;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.leave-btn {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.leave-btn:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+/* ── Legacy light-theme leaderboard stubs (pre-overhaul) ── */
+.game-leaderboard {
+  background: var(--white);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+}
+
+.game-leaderboard h2 {
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+}
+
+.game-leaderboard p {
+  color: var(--gray);
+  margin-bottom: 1.5rem;
+}
+
+.leaderboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.leaderboard-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--light);
+  border-radius: 8px;
+  transition: transform 0.2s;
+}
+
+.leaderboard-item.first {
+  background: linear-gradient(135deg, #ffd700 0%, #ffec8b 100%);
+  font-size: 1.1rem;
+}
+
+.leaderboard-item.second {
+  background: linear-gradient(135deg, #c0c0c0 0%, #e0e0e0 100%);
+}
+
+.leaderboard-item.third {
+  background: linear-gradient(135deg, #cd7f32 0%, #daa520 100%);
+}
+
+.leaderboard-item.is-me {
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+.leaderboard-item .rank {
+  font-size: 1.25rem;
+  min-width: 40px;
+}
+
+.leaderboard-item .name {
+  flex: 1;
+  text-align: left;
+  font-weight: 500;
+}
+
+.leaderboard-item .score {
+  font-weight: bold;
+  color: var(--dark);
+}

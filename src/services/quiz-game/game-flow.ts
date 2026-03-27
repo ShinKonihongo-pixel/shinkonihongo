@@ -92,6 +92,7 @@ export async function revealAnswer(gameId: string, hostId: string): Promise<void
         ...player,
         score: player.score + points,
         streak: newStreak,
+        correctAnswers: (player.correctAnswers || 0) + 1,
         hasDoublePoints: false, // Reset after use
         hasTimeFreeze: false,
       };

@@ -32,49 +32,6 @@ export interface PendingFriendRequest {
   createdAt: string;
 }
 
-// Main settings page props
-export interface SettingsPageProps {
-  settings: AppSettings;
-  onUpdateSetting: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
-  onReset: () => void;
-  // Initial tab to show (for navigation from profile page)
-  initialTab?: SettingsTab;
-  // Profile management props
-  currentUser?: CurrentUser | null;
-  onUpdateDisplayName?: (displayName: string) => Promise<{ success: boolean; error?: string }>;
-  onChangePassword?: (oldPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
-  onUpdateAvatar?: (avatar: string) => Promise<{ success: boolean; error?: string }>;
-  onUpdateProfileBackground?: (background: string) => Promise<{ success: boolean; error?: string }>;
-  onUpdateJlptLevel?: (level: string) => Promise<{ success: boolean; error?: string }>;
-  // History props
-  studySessions?: StudySession[];
-  gameSessions?: GameSession[];
-  jlptSessions?: JLPTSession[];
-  stats?: UserStats;
-  historyLoading?: boolean;
-  // Theme settings (super_admin only)
-  theme?: GlobalTheme;
-  themePresets?: ThemePreset[];
-  onApplyThemePreset?: (preset: ThemePreset) => void;
-  onResetTheme?: () => void;
-  // Export/Import props
-  flashcards?: Flashcard[];
-  lessons?: Lesson[];
-  onImportData?: (data: ExportData) => Promise<void>;
-  // Friends & Badges props
-  allUsers?: User[];
-  friends?: FriendWithUser[];
-  pendingRequests?: PendingFriendRequest[];
-  badgeStats?: UserBadgeStats | null;
-  receivedBadges?: Array<BadgeGift & { fromUserName: string }>;
-  friendsLoading?: boolean;
-  onSendFriendRequest?: (toUserId: string, message?: string) => Promise<{ success: boolean; error?: string }>;
-  onRespondFriendRequest?: (requestId: string, accept: boolean) => Promise<boolean>;
-  onRemoveFriend?: (friendshipId: string) => Promise<boolean>;
-  onSendBadge?: (badgeType: BadgeType, toUserId: string, message?: string) => Promise<boolean>;
-  isFriend?: (userId: string) => boolean;
-}
-
 // Flashcard settings tab props
 export interface FlashcardSettingsProps {
   settings: AppSettings;

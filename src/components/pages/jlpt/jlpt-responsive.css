@@ -1,0 +1,1257 @@
+/* ============================================================
+ * jlpt-responsive.css
+ * Shared responsive media queries (quiz game, practice, daily
+ * words page, level modal), the daily-words flashcard task
+ * screen, the game search section, and all dark-mode
+ * [data-theme="dark"] overrides for every JLPT sub-view.
+ * ============================================================ */
+
+/* JLPT Practice/Result Responsive */
+@media (max-width: 768px) {
+  .jlpt-practice {
+    padding: 1rem;
+  }
+
+  .jlpt-practice-result {
+    padding: 1rem;
+  }
+
+  .jlpt-practice-result .result-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .practice-question-card {
+    padding: 1.25rem;
+    border-radius: 14px;
+  }
+
+  .practice-question-card .question-text {
+    font-size: 1.1rem;
+  }
+
+  .assessment-feedback {
+    grid-template-columns: 1fr;
+  }
+
+  .jlpt-practice-result .result-header {
+    flex-direction: column;
+    gap: 0.75rem;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .jlpt-practice {
+    padding: 0.75rem;
+  }
+
+  .jlpt-practice-result {
+    padding: 0.75rem;
+  }
+
+  .jlpt-practice-result .result-stats {
+    gap: 0.5rem;
+  }
+
+  .jlpt-practice-result .result-stats .stat-value {
+    font-size: 1.4rem;
+  }
+
+  .practice-question-card {
+    padding: 1rem;
+  }
+
+  .practice-actions {
+    flex-direction: column;
+  }
+
+  .practice-actions .btn {
+    width: 100%;
+  }
+}
+
+/* Quiz Game Responsive - Tablet */
+@media (max-width: 768px) {
+  .game-create,
+  .game-menu,
+  .game-join {
+    margin: 0.5rem;
+    width: calc(100% - 1rem);
+  }
+
+  .answer-options {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .answer-btn {
+    min-height: 60px;
+    font-size: 1rem;
+  }
+}
+
+/* Quiz Game Responsive - Mobile */
+@media (max-width: 600px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .answer-options {
+    grid-template-columns: 1fr;
+  }
+
+  .answer-btn {
+    min-height: 56px;
+    padding: 1rem;
+  }
+
+  .question-text {
+    font-size: 1.75rem;
+  }
+
+  /* Game question text - larger on mobile */
+  .game-question .question-text {
+    font-size: 4rem;
+  }
+
+  /* Timer centered on mobile */
+  .game-timer-center {
+    top: 60px;
+    font-size: 3rem;
+    padding: 0.75rem 1.5rem;
+    min-width: 80px;
+  }
+
+  .question-header-combined {
+    margin-top: 50px;
+  }
+
+  .podium {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .podium-item {
+    width: 100%;
+    height: auto !important;
+    order: unset !important;
+  }
+
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-bar-inline {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-btn {
+    width: 100%;
+    min-height: 35px;
+  }
+}
+
+
+/* =============================================== */
+/* Game Selector - Improved Search Section        */
+/* =============================================== */
+
+.game-search-section {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.game-search-wrapper input {
+  padding-right: 3rem;
+}
+
+/* =============================================== */
+/* Daily Words Page - Flashcard Task Screen       */
+/* =============================================== */
+
+.daily-words-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  padding: 1rem;
+  gap: 1rem;
+}
+
+.daily-words-page-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+
+.daily-words-page-header .btn-back {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.daily-words-page-header .btn-back:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.daily-words-page-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.daily-words-page-title h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.daily-words-page-title svg {
+  color: #f59e0b;
+}
+
+.daily-words-page-streak {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 20px;
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+/* Progress section */
+.daily-words-page-progress {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.daily-words-page-progress .progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.daily-words-page-progress .progress-text {
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.daily-words-page-progress .progress-percent {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #10b981;
+}
+
+.daily-words-page-progress .progress-bar {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.daily-words-page-progress .progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.daily-words-page-progress .progress-dots {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.daily-words-page-progress .progress-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #cbd5e1;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.daily-words-page-progress .progress-dot.active {
+  border-color: #3b82f6;
+  background: #3b82f6;
+  transform: scale(1.2);
+}
+
+.daily-words-page-progress .progress-dot.completed {
+  border-color: #10b981;
+  background: #10b981;
+}
+
+.daily-words-page-progress .progress-dot:hover {
+  transform: scale(1.1);
+}
+
+/* Flashcard area */
+.daily-words-page-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-height: 300px;
+}
+
+.daily-words-page-card .flashcard-container {
+  width: 100%;
+  max-width: 500px;
+}
+
+.daily-words-page-card .card-learned-badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  background: #10b981;
+  color: white;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  animation: badgePop 0.3s ease;
+}
+
+@keyframes badgePop {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Controls */
+.daily-words-page-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.daily-words-page-controls .btn-nav {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: white;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: all 0.2s;
+}
+
+.daily-words-page-controls .btn-nav:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: #334155;
+  transform: scale(1.05);
+}
+
+.daily-words-page-controls .btn-nav:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.daily-words-page-controls .control-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.daily-words-page-controls .btn-speak {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.daily-words-page-controls .btn-speak:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.daily-words-page-controls .btn-mark-learned {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 30px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.daily-words-page-controls .btn-mark-learned:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.daily-words-page-controls .already-learned {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #d1fae5;
+  color: #059669;
+  border-radius: 30px;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* Quick actions */
+.daily-words-page-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  padding: 0.5rem 0;
+}
+
+.daily-words-page-actions .btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.daily-words-page-actions .btn-secondary {
+  background: white;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.daily-words-page-actions .btn-secondary:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.daily-words-page-actions .btn-primary {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+}
+
+.daily-words-page-actions .btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+/* Card counter */
+.daily-words-page-counter {
+  text-align: center;
+  font-size: 0.875rem;
+  color: #94a3b8;
+  padding: 0.5rem 0 1rem;
+}
+
+/* Completed state */
+.daily-words-page.completed {
+  justify-content: center;
+  align-items: center;
+}
+
+.daily-words-page-complete {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2rem;
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  max-width: 400px;
+  animation: completeSlideUp 0.5s ease;
+}
+
+@keyframes completeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.daily-words-page-complete .complete-trophy-large {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.daily-words-page-complete .complete-trophy-large svg {
+  color: #f59e0b;
+}
+
+.daily-words-page-complete .trophy-glow-large {
+  position: absolute;
+  inset: -20px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.2) 0%, transparent 70%);
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+.daily-words-page-complete h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.5rem;
+}
+
+.daily-words-page-complete p {
+  font-size: 1rem;
+  color: #64748b;
+  margin: 0 0 1.5rem;
+}
+
+.daily-words-page-complete .streak-display-large {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: #fefce8;
+  border: 2px solid;
+  border-radius: 16px;
+  margin-bottom: 1.5rem;
+}
+
+.daily-words-page-complete .streak-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.daily-words-page-complete .streak-info-large {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.daily-words-page-complete .streak-count-large {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.daily-words-page-complete .streak-tier-large {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.daily-words-page-complete .streak-record-large {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-left: auto;
+}
+
+.daily-words-page-complete .complete-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.daily-words-page-complete .complete-actions .btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.daily-words-page-complete .complete-actions .btn-secondary {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.daily-words-page-complete .complete-actions .btn-secondary:hover {
+  background: #e2e8f0;
+}
+
+.daily-words-page-complete .complete-actions .btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+.daily-words-page-complete .complete-actions .btn-primary:hover {
+  transform: translateY(-2px);
+}
+
+/* Empty state */
+.daily-words-page.empty {
+  justify-content: center;
+  align-items: center;
+}
+
+.daily-words-page-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2rem;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.daily-words-page-empty svg {
+  color: #94a3b8;
+  margin-bottom: 1rem;
+}
+
+.daily-words-page-empty h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 0 0 0.5rem;
+}
+
+.daily-words-page-empty p {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0 0 1.5rem;
+}
+
+.daily-words-page-empty .btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.daily-words-page-empty .btn:hover {
+  transform: translateY(-2px);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .daily-words-page {
+    padding: 0.75rem;
+  }
+
+  .daily-words-page-header {
+    flex-wrap: wrap;
+  }
+
+  .daily-words-page-header .btn-back span {
+    display: none;
+  }
+
+  .daily-words-page-title h1 {
+    font-size: 1.1rem;
+  }
+
+  .daily-words-page-controls {
+    gap: 0.5rem;
+  }
+
+  .daily-words-page-controls .btn-mark-learned {
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .daily-words-page-actions {
+    flex-direction: column;
+  }
+
+  .daily-words-page-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .daily-words-page-complete .complete-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .daily-words-page-complete .complete-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ============ JLPT PAGE DARK MODE ============ */
+[data-theme="dark"] .main-content:has(.jlpt-page) {
+  background: transparent;
+}
+
+[data-theme="dark"] .jlpt-page {
+  background: linear-gradient(180deg, #0f172a 0%, var(--jlpt-darkest) 50%, #0f172a 100%);
+}
+
+/* Dark - Setup Header */
+[data-theme="dark"] .jlpt-setup-header {
+  background: linear-gradient(135deg, #0f0d2e 0%, #1a1744 40%, #2e1065 100%);
+}
+
+/* Dark - Sections */
+[data-theme="dark"] .jlpt-section:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+[data-theme="dark"] .jlpt-section-header h3 {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .jlpt-page .btn-link-sm {
+  color: var(--jlpt-300);
+}
+
+/* Dark - Level & Category Cards */
+[data-theme="dark"] .jlpt-level-card,
+[data-theme="dark"] .jlpt-category-card {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .jlpt-level-card:hover,
+[data-theme="dark"] .jlpt-category-card:hover {
+  background: var(--jlpt-darkest);
+  border-color: var(--jlpt-primary);
+}
+
+[data-theme="dark"] .jlpt-level-card.selected,
+[data-theme="dark"] .jlpt-category-card.selected {
+  background: color-mix(in srgb, var(--jlpt-primary) 15%, transparent);
+  border-color: var(--jlpt-primary);
+}
+
+[data-theme="dark"] .jlpt-level-card .level-badge {
+  color: var(--jlpt-300);
+}
+
+[data-theme="dark"] .jlpt-level-card .level-count,
+[data-theme="dark"] .jlpt-category-card .category-count {
+  color: #64748b;
+}
+
+[data-theme="dark"] .jlpt-category-card .category-icon {
+  color: var(--jlpt-300);
+}
+
+[data-theme="dark"] .jlpt-category-card .category-name {
+  color: #e2e8f0;
+}
+
+/* Dark - Count Options */
+[data-theme="dark"] .jlpt-simple-count,
+[data-theme="dark"] .jlpt-advanced-setup {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .count-option {
+  background: #0f172a;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .count-option:hover {
+  background: var(--jlpt-darkest);
+  border-color: var(--jlpt-primary);
+}
+
+[data-theme="dark"] .count-option.selected {
+  background: var(--jlpt-primary);
+  border-color: var(--jlpt-primary);
+  color: #fff;
+}
+
+[data-theme="dark"] .count-note {
+  color: #64748b;
+}
+
+[data-theme="dark"] .count-note strong {
+  color: var(--jlpt-300);
+}
+
+[data-theme="dark"] .btn-toggle-advanced {
+  background: #1e293b;
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .btn-toggle-advanced:hover {
+  background: var(--jlpt-darkest);
+  border-color: var(--jlpt-primary);
+  color: var(--jlpt-300);
+}
+
+/* Dark - Section Config */
+[data-theme="dark"] .section-config-item {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .section-icon {
+  background: color-mix(in srgb, var(--jlpt-primary) 15%, transparent);
+  color: var(--jlpt-300);
+}
+
+[data-theme="dark"] .section-name {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .section-available {
+  color: #64748b;
+}
+
+[data-theme="dark"] .section-count-control .count-btn {
+  background: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .count-input {
+  background: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .count-input:focus {
+  border-color: var(--jlpt-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--jlpt-primary) 20%, transparent);
+}
+
+/* Dark - Summary Bar */
+[data-theme="dark"] .jlpt-summary {
+  background: linear-gradient(135deg, var(--jlpt-darkest) 0%, var(--jlpt-darker) 50%, var(--jlpt-primary-dark) 100%);
+}
+
+/* Dark - Practice View */
+[data-theme="dark"] .practice-header {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .practice-progress {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .practice-question-card {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .practice-question-card .question-text {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .question-level {
+  background: color-mix(in srgb, var(--jlpt-primary) 20%, transparent);
+  color: var(--jlpt-300);
+}
+
+[data-theme="dark"] .question-category {
+  background: #334155;
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .practice-answer-btn {
+  background: #0f172a;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .practice-answer-btn:hover:not(:disabled) {
+  background: var(--jlpt-darkest);
+  border-color: var(--jlpt-primary);
+}
+
+[data-theme="dark"] .practice-answer-btn.selected {
+  background: color-mix(in srgb, var(--jlpt-primary) 15%, transparent);
+  border-color: var(--jlpt-primary);
+}
+
+[data-theme="dark"] .practice-answer-btn.correct {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: #10b981;
+}
+
+[data-theme="dark"] .practice-answer-btn.wrong {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+}
+
+[data-theme="dark"] .practice-answer-btn .answer-text {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .practice-explanation {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .practice-actions .btn-secondary {
+  background: #1e293b;
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+/* Dark - Result View */
+[data-theme="dark"] .jlpt-practice-result .result-header {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .jlpt-practice-result .result-header h2 {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .jlpt-practice-result .result-stats .stat-item {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .jlpt-practice-result .result-stats .stat-label {
+  color: #64748b;
+}
+
+/* Dark - Level Assessment */
+[data-theme="dark"] .level-assessment {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .level-assessment h3 {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .category-breakdown h4 {
+  color: #64748b;
+}
+
+[data-theme="dark"] .breakdown-item {
+  background: #0f172a;
+  border-color: #1e293b;
+}
+
+[data-theme="dark"] .breakdown-name {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .breakdown-bar {
+  background: #334155;
+}
+
+[data-theme="dark"] .breakdown-stats {
+  color: #64748b;
+}
+
+[data-theme="dark"] .breakdown-percent {
+  color: #e2e8f0;
+}
+
+/* Dark - Feedback Sections */
+[data-theme="dark"] .feedback-section {
+  background: #0f172a;
+  border-color: #1e293b;
+}
+
+[data-theme="dark"] .feedback-section.strengths {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+[data-theme="dark"] .feedback-section.weaknesses {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+[data-theme="dark"] .feedback-section.recommendations {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+[data-theme="dark"] .feedback-section li {
+  color: #cbd5e1;
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Dark - Weak Areas */
+[data-theme="dark"] .historical-weak-areas {
+  background: #1e293b;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+[data-theme="dark"] .weak-area-item {
+  background: rgba(239, 68, 68, 0.06);
+  border-color: rgba(239, 68, 68, 0.15);
+}
+
+[data-theme="dark"] .weak-category {
+  color: #cbd5e1;
+}
+
+/* Dark - Review Items */
+[data-theme="dark"] .review-item {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .review-item.correct {
+  border-left-color: #10b981;
+}
+
+[data-theme="dark"] .review-item.wrong {
+  border-left-color: #ef4444;
+}
+
+[data-theme="dark"] .review-number {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .review-question {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .review-status.correct {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+[data-theme="dark"] .review-status.wrong {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+}
+
+[data-theme="dark"] .review-level {
+  background: color-mix(in srgb, var(--jlpt-primary) 20%, transparent);
+  color: var(--jlpt-300);
+}
+
+[data-theme="dark"] .review-category {
+  background: #334155;
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .review-answer {
+  background: #0f172a;
+}
+
+[data-theme="dark"] .review-answer.correct {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="dark"] .review-answer.selected-wrong {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+[data-theme="dark"] .review-explanation {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .result-review h3 {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .result-review h3 svg {
+  color: var(--jlpt-300);
+}
+
+[data-theme="dark"] .jlpt-practice-result .result-actions .btn-secondary {
+  background: #1e293b;
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+/* Dark Mode for JLPT Management */
+[data-theme="dark"] .jlpt-management .folder-item {
+  background: var(--card-bg);
+}
+
+[data-theme="dark"] .jlpt-management .folder-item:hover {
+  background: rgba(255, 183, 197, 0.1);
+}
+
+[data-theme="dark"] .jlpt-management .jlpt-form h3,
+[data-theme="dark"] .jlpt-management .export-import-actions {
+  background: linear-gradient(135deg, rgba(30, 30, 30, 0.9), rgba(40, 30, 35, 0.9));
+}
+
+[data-theme="dark"] .jlpt-management .question-header {
+  background: linear-gradient(135deg, #1e3a5f 0%, #234a72 100%);
+}
+
+[data-theme="dark"] .jlpt-management .answer-item {
+  background: var(--card-bg);
+}
+
+[data-theme="dark"] .jlpt-management .answer-item.correct {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: rgba(134, 239, 172, 0.4);
+}
+
+[data-theme="dark"] .jlpt-management .question-explanation {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(253, 230, 138, 0.1));
+  border-left-color: #f59e0b;
+  color: #fcd34d;
+}
+
+[data-theme="dark"] .jlpt-management .question-explanation strong {
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .jlpt-management .audio-upload-group {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(96, 165, 250, 0.1));
+}
+
+[data-theme="dark"] .jlpt-management .add-category-inline {
+  background: var(--card-bg);
+  border-color: var(--primary);
+}
+
+[data-theme="dark"] .jlpt-management .answer-input-row:has(input[type="text"].correct-answer) {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: rgba(134, 239, 172, 0.4);
+}
+
+[data-theme="dark"] .jlpt-management .answer-input-row input[type="text"].correct-answer {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(134, 239, 172, 0.5);
+}
+
+/* ============ EXERCISES TAB ENHANCEMENTS ============ */
+/* Dark mode fixes for exercises tab */
+[data-theme="dark"] .level-folder {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .exercises-stats .stat-item.published {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+[data-theme="dark"] .exercises-stats .stat-item.draft {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+[data-theme="dark"] .exercise-form-pro .form-header {
+  background: linear-gradient(135deg, rgba(30, 30, 30, 0.95), rgba(40, 30, 35, 0.95));
+}
+
+[data-theme="dark"] .exercise-form-pro .form-footer {
+  background: rgba(30, 30, 30, 0.8);
+}
+
+[data-theme="dark"] .type-option.active {
+  background: rgba(227, 66, 52, 0.15);
+}
+
+[data-theme="dark"] .lesson-item:hover {
+  background: rgba(255, 183, 197, 0.1);
+}
+
+[data-theme="dark"] .info-box-pro {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(56, 189, 248, 0.1));
+  border-color: rgba(125, 211, 252, 0.4);
+  color: #7dd3fc;
+}
+
+[data-theme="dark"] .warning-box-pro {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(252, 211, 77, 0.1));
+  border-color: rgba(252, 211, 77, 0.4);
+  color: #fcd34d;
+}
+
+[data-theme="dark"] .info-box-pro.sentence-translation {
+  background: linear-gradient(135deg, rgba(232, 121, 249, 0.15), rgba(253, 244, 255, 0.05));
+  border-color: rgba(232, 121, 249, 0.4);
+  color: #e879f9;
+}
+
+[data-theme="dark"] .exercise-tags .tag.type {
+  background: rgba(124, 58, 237, 0.2);
+  color: #a78bfa;
+}
+
+[data-theme="dark"] .exercise-tags .tag.level {
+  background: rgba(37, 99, 235, 0.2);
+  color: #93c5fd;
+}
+
+[data-theme="dark"] .publish-badge.published {
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+}
+
+[data-theme="dark"] .publish-badge.draft {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fcd34d;
+}

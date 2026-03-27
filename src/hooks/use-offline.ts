@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { Flashcard, Lesson } from '../types/flashcard';
-import {
 import { handleError } from '../utils/error-handler';
+import {
   saveFlashcardsOffline,
   loadFlashcardsOffline,
   saveLessonsOffline,
