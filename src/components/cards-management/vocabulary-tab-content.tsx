@@ -2,6 +2,7 @@
 // Renders the folder tree (root level grid, lesson lists, flashcard list)
 
 import { LevelGrid } from './level-grid';
+import { EmptyState } from '../ui/empty-state';
 import { FlashcardList } from '../flashcard/flashcard-list';
 import { VocabLessonItem } from './vocabulary-tab-lesson-item';
 import type { Flashcard, Lesson, FlashcardNavState, JLPTLevel } from './cards-management-types';
@@ -124,7 +125,7 @@ export function VocabTabContent({
             />
           ))}
           {getLessonsByLevel(navState.level).length === 0 && (
-            <p className="empty-message">Chưa có bài học nào. Nhấn "+ Tạo bài học" để thêm.</p>
+            <EmptyState compact title="Chưa có bài học nào" description='Nhấn "+ Tạo bài học" để thêm' />
           )}
           {isSuperAdmin && navState.level === 'N5' && (
             <div className="admin-actions" style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -170,7 +171,7 @@ export function VocabTabContent({
                 canDelete={canModifyCard}
               />
             ) : (
-              <p className="empty-message">Chưa có thẻ nào. Nhấn "+ Tạo thẻ" để thêm hoặc tạo bài học con.</p>
+              <EmptyState compact title="Chưa có thẻ nào" description='Nhấn "+ Tạo thẻ" để thêm hoặc tạo bài học con' />
             )
           )}
         </div>
@@ -186,7 +187,7 @@ export function VocabTabContent({
             canDelete={canModifyCard}
           />
         ) : (
-          <p className="empty-message">Chưa có thẻ nào. Nhấn "+ Tạo thẻ" để thêm.</p>
+          <EmptyState compact title="Chưa có thẻ nào" description='Nhấn "+ Tạo thẻ" để thêm' />
         )
       )}
     </div>

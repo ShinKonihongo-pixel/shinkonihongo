@@ -1,7 +1,9 @@
 // Branch Staff Tab - Manage branch administrators and staff members
 
+import { Users } from 'lucide-react';
 import { BRANCH_MEMBER_ROLE_LABELS } from '../../types/branch';
 import type { BranchStaffTabProps } from './branch-management-types';
+import { EmptyState } from '../ui/empty-state';
 
 export function BranchStaffTab({
   members,
@@ -41,7 +43,7 @@ export function BranchStaffTab({
       {loading ? (
         <div className="loading-state">Đang tải...</div>
       ) : members.length === 0 ? (
-        <div className="empty-state"><p>Chưa có nhân sự</p></div>
+        <EmptyState compact icon={<Users size={36} strokeWidth={1.5} />} title="Chưa có nhân sự" />
       ) : (
         <div className="staff-table">
           <table>

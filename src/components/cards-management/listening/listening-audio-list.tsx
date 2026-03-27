@@ -3,6 +3,7 @@ import React from 'react';
 import {
   Trash2, Edit2, Save, X, Music, Play, Pause, Type, Users, Wand2, Loader2, Plus
 } from 'lucide-react';
+import { EmptyState } from '../../ui/empty-state';
 import { FuriganaText } from '../../common/furigana-text';
 import { hasFurigana } from '../../../lib/furigana-utils';
 import { getPresetForCharacter } from '../../../hooks/use-kaiwa-characters';
@@ -46,13 +47,7 @@ export function ListeningAudioList({
   if (allAudios.length === 0) {
     return (
       <div className="audio-list">
-        <div className="empty-state">
-          <div className="empty-icon">
-            <Music size={48} strokeWidth={1} />
-          </div>
-          <p>Chưa có file nghe nào</p>
-          <span className="empty-hint">Nhấn "Tạo từ text" để thêm nội dung mới</span>
-        </div>
+        <EmptyState icon={<Music size={48} strokeWidth={1} />} title="Chưa có file nghe nào" description='Nhấn "Tạo từ text" để thêm nội dung mới' />
       </div>
     );
   }

@@ -20,6 +20,7 @@ import {
   GraduationCap,
   Languages,
 } from 'lucide-react';
+import { ModalShell } from '../ui/modal-shell';
 import type { Flashcard } from '../../types/flashcard';
 
 // Motivational messages based on progress
@@ -301,11 +302,9 @@ export function DailyWordsTask({
       </button>
 
       {/* Modal */}
-      {isModalOpen && (
-        <div className="dw-modal-overlay" onClick={() => closeModal()}>
-          <div className="dw-modal" onClick={(e) => e.stopPropagation()}>
-            {/* Confetti */}
-            {showConfetti && (
+      <ModalShell isOpen={isModalOpen} onClose={closeModal} maxWidth={560} className="dw-modal" hideClose>
+          {/* Confetti */}
+          {showConfetti && (
               <div className="dw-confetti" aria-hidden="true">
                 {Array.from({ length: 24 }).map((_, i) => (
                   <span key={i} className="dw-confetti-piece" style={{
@@ -462,9 +461,7 @@ export function DailyWordsTask({
                 </>
               )}
             </div>
-          </div>
-        </div>
-      )}
+      </ModalShell>
     </>
   );
 }

@@ -1,7 +1,9 @@
 // Branch List View - Shows all branches in a grid with summary stats
 
+import { Building2 } from 'lucide-react';
 import { BranchCard } from '../branch/branch-card';
 import type { BranchListViewProps } from './branch-management-types';
+import { EmptyState } from '../ui/empty-state';
 
 export function BranchListView({
   branches,
@@ -38,11 +40,12 @@ export function BranchListView({
 
       {/* Branch grid */}
       {branches.length === 0 ? (
-        <div className="branch-mgmt-empty">
-          <span className="empty-icon">🏛️</span>
-          <p>Chưa có chi nhánh nào</p>
-          {isDirector && <p className="hint">Bấm "Tạo chi nhánh" để bắt đầu</p>}
-        </div>
+        <EmptyState
+          icon={<Building2 size={48} strokeWidth={1.5} />}
+          title="Chưa có chi nhánh nào"
+          description={isDirector ? 'Bấm "Tạo chi nhánh" để bắt đầu' : undefined}
+          action={isDirector ? { label: 'Tạo chi nhánh', onClick: onCreateBranch } : undefined}
+        />
       ) : (
         <div className="branch-mgmt-grid">
           {branches.map(branch => (

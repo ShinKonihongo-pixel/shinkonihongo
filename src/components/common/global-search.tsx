@@ -6,6 +6,7 @@ import type { GrammarCard } from '../../types/flashcard';
 import type { KanjiCard } from '../../types/kanji';
 import type { ReadingPassage } from '../../types/reading';
 import './global-search.css';
+import { ModalShell } from '../ui/modal-shell';
 
 interface GlobalSearchProps {
   cards: Flashcard[];
@@ -125,8 +126,6 @@ export function GlobalSearch({
     onClose();
   }
 
-  if (!isOpen) return null;
-
   // Group results by type in order
   const grouped = TYPE_ORDER.map(type => ({
     type,
@@ -138,8 +137,7 @@ export function GlobalSearch({
   let itemCounter = 0;
 
   return (
-    <div className="global-search-overlay" onClick={onClose}>
-      <div className="global-search-modal" onClick={e => e.stopPropagation()}>
+    <ModalShell isOpen={isOpen} onClose={onClose} maxWidth={620} hideClose className="global-search-modal">
         <div className="global-search-input-wrapper">
           <Search size={20} />
           <input
@@ -194,7 +192,6 @@ export function GlobalSearch({
           <span><kbd>Enter</kbd> chọn</span>
           <span><kbd>ESC</kbd> đóng</span>
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

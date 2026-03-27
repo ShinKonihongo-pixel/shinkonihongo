@@ -4,6 +4,7 @@ import { useState } from 'react';
 import {
   Plus, Eye, EyeOff, MessageCircle, BookOpen, X,
 } from 'lucide-react';
+import { ModalShell } from '../../ui/modal-shell';
 import type {
   KaiwaAdvancedTopic,
   KaiwaAdvancedTopicFormData,
@@ -62,8 +63,6 @@ export function TopicFormModal({
     level: 'N4',
     tags: [],
   });
-
-  if (!isOpen) return null;
 
   // Handlers
   const handleUseTemplate = (template: typeof KAIWA_TOPIC_TEMPLATES[number]) => {
@@ -134,13 +133,12 @@ export function TopicFormModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="kaiwa-topic-modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h3>{editingTopic ? 'Chỉnh sửa chủ đề' : 'Tạo chủ đề mới'}</h3>
-          <button className="btn-close" onClick={onClose}>×</button>
-        </div>
-
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      title={editingTopic ? 'Chỉnh sửa chủ đề' : 'Tạo chủ đề mới'}
+      maxWidth={640}
+    >
         <div className="modal-body">
           {/* Quick Templates */}
           {!editingTopic && (
@@ -488,7 +486,6 @@ export function TopicFormModal({
             {editingTopic ? 'Cập nhật' : 'Tạo chủ đề'}
           </button>
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

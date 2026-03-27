@@ -2,8 +2,10 @@
 import { useState, useEffect } from 'react';
 import {
   X, Check, FileText, ClipboardList, Clock, Tag, Send,
-  Search, CalendarClock, Eye, Zap, BookOpen, Award,
+  CalendarClock, Eye, Zap, BookOpen, Award,
 } from 'lucide-react';
+import { SearchInput } from '../ui/search-input';
+import { ModalShell } from '../ui/modal-shell';
 import type { TestTemplate, ClassroomTest, TestType } from '../../types/classroom';
 import './assign-test-modal.css';
 
@@ -111,29 +113,25 @@ export function AssignTestModal({
   // Resolve the full template object for the selected id (used in options panel)
   const selected = templates.find(t => t.id === selectedTemplate);
 
-  if (!isOpen) return null;
-
   return (
-    <div className="atm-overlay" onClick={handleClose}>
-      {/* Stop propagation so clicking inside the modal doesn't close it */}
-      <div className="atm-modal" onClick={e => e.stopPropagation()}>
-        {/* Header */}
-        <div className="atm-header">
-          <div className="atm-header-left">
-            <div className="atm-header-icon">
-              <BookOpen size={20} />
-            </div>
-            <div>
-              <h2 className="atm-title">Giao bài từ ngân hàng</h2>
-              {/* Subtitle shows the target classroom name for confirmation context */}
-              {classroomName && <p className="atm-subtitle">→ {classroomName}</p>}
-            </div>
+    <ModalShell isOpen={isOpen} onClose={handleClose} maxWidth={640} hideClose className="atm-shell">
+      {/* Header */}
+      <div className="atm-header">
+        <div className="atm-header-left">
+          <div className="atm-header-icon">
+            <BookOpen size={20} />
           </div>
-          <button className="atm-close" onClick={handleClose} aria-label="Đóng"><X size={18} /></button>
+          <div>
+            <h2 className="atm-title">Giao bài từ ngân hàng</h2>
+            {/* Subtitle shows the target classroom name for confirmation context */}
+            {classroomName && <p className="atm-subtitle">→ {classroomName}</p>}
+          </div>
         </div>
+        <button className="atm-close" onClick={handleClose} aria-label="Đóng"><X size={18} /></button>
+      </div>
 
-        {/* Success state — replaces the full modal body; auto-closes after timeout */}
-        {successMessage ? (
+      {/* Success state — replaces the full modal body; auto-closes after timeout */}
+      {successMessage ? (
           <div className="atm-success">
             <div className="atm-success-icon">
               <Check size={36} />
@@ -148,17 +146,12 @@ export function AssignTestModal({
               {/* Search + type filter bar */}
               <div className="atm-toolbar">
                 {/* Live search — filters by title substring as the teacher types */}
-                <div className="atm-search">
-                  <Search size={15} />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="Tìm kiếm..."
-                    className="atm-search-input"
-                    aria-label="Tìm kiếm mẫu bài"
-                  />
-                </div>
+                <SearchInput
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder="Tìm kiếm..."
+                  className="atm-search"
+                />
                 {/* Type filter tabs with live counts — switching resets selection */}
                 <div className="atm-filters">
                   {[
@@ -303,7 +296,6 @@ export function AssignTestModal({
             </div>
           </>
         )}
-      </div>
-    </div>
+    </ModalShell>
   );
 }

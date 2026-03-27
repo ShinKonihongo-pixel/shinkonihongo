@@ -1,9 +1,10 @@
 // Modal to move kanji cards between lessons/levels
 import { useState, useMemo } from 'react';
-import { X, FolderOpen, FileText, ChevronRight, ArrowRightLeft } from 'lucide-react';
+import { FolderOpen, FileText, ChevronRight, ArrowRightLeft } from 'lucide-react';
 import type { JLPTLevel } from './cards-management-types';
 import type { KanjiCard, KanjiLesson } from '../../types/kanji';
 import { LEVEL_COLORS } from '../../constants/themes';
+import { ModalShell } from '../ui/modal-shell';
 import './kanji-move-modal.css';
 
 const LEVELS: JLPTLevel[] = ['BT', 'N5', 'N4', 'N3', 'N2', 'N1'];
@@ -60,98 +61,93 @@ export function KanjiMoveModal({
     setIsMoving(false);
   };
 
+  const title = cards.length > 1
+    ? `Chuyển ${cards.length} chữ Kanji`
+    : `Chuyển "${firstCard?.character}"`;
+
   return (
-    <div className="kanji-move-overlay" onClick={onClose}>
-      <div className="kanji-move-modal" onClick={e => e.stopPropagation()}>
-        {/* Header */}
-        <div className="kanji-move-header">
-          <ArrowRightLeft size={20} />
-          <h3>Chuyển {cards.length > 1 ? `${cards.length} chữ Kanji` : `"${firstCard?.character}"`}</h3>
-          <button className="btn-close-move" onClick={onClose}><X size={18} /></button>
-        </div>
+    <ModalShell isOpen={true} onClose={onClose} title={title} maxWidth={480}>
+      {/* Current location */}
+      <div className="kanji-move-current">
+        <span className="move-label">Vị trí hiện tại:</span>
+        <span className="move-badge" style={{ background: LEVEL_COLORS[firstCard?.jlptLevel ?? 'N5'] }}>
+          {currentLevelLabel}
+        </span>
+        <ChevronRight size={14} />
+        <span className="move-location">{currentLesson?.name ?? 'Không rõ'}</span>
+      </div>
 
-        {/* Current location */}
-        <div className="kanji-move-current">
-          <span className="move-label">Vị trí hiện tại:</span>
-          <span className="move-badge" style={{ background: LEVEL_COLORS[firstCard?.jlptLevel ?? 'N5'] }}>
-            {currentLevelLabel}
-          </span>
-          <ChevronRight size={14} />
-          <span className="move-location">{currentLesson?.name ?? 'Không rõ'}</span>
+      {/* Step 1: Select level */}
+      <div className="move-step">
+        <div className="move-step-label">1. Chọn level</div>
+        <div className="move-level-grid">
+          {LEVELS.map(level => (
+            <button
+              key={level}
+              className={`move-level-btn ${selectedLevel === level ? 'active' : ''}`}
+              style={{ '--level-color': LEVEL_COLORS[level] } as React.CSSProperties}
+              onClick={() => { setSelectedLevel(level); setSelectedParent(null); setSelectedLesson(null); }}
+            >
+              {level === 'BT' ? 'Bộ thủ' : level}
+            </button>
+          ))}
         </div>
+      </div>
 
-        {/* Step 1: Select level */}
+      {/* Step 2: Select parent lesson */}
+      {selectedLevel && parentLessons.length > 0 && (
         <div className="move-step">
-          <div className="move-step-label">1. Chọn level</div>
-          <div className="move-level-grid">
-            {LEVELS.map(level => (
+          <div className="move-step-label">2. Chọn bài</div>
+          <div className="move-lesson-list">
+            {parentLessons.map(lesson => (
               <button
-                key={level}
-                className={`move-level-btn ${selectedLevel === level ? 'active' : ''}`}
-                style={{ '--level-color': LEVEL_COLORS[level] } as React.CSSProperties}
-                onClick={() => { setSelectedLevel(level); setSelectedParent(null); setSelectedLesson(null); }}
+                key={lesson.id}
+                className={`move-lesson-btn ${selectedParent?.id === lesson.id ? 'active' : ''}`}
+                onClick={() => { setSelectedParent(lesson); setSelectedLesson(null); }}
               >
-                {level === 'BT' ? 'Bộ thủ' : level}
+                <FolderOpen size={14} />
+                <span>{lesson.name}</span>
               </button>
             ))}
           </div>
         </div>
+      )}
 
-        {/* Step 2: Select parent lesson */}
-        {selectedLevel && parentLessons.length > 0 && (
-          <div className="move-step">
-            <div className="move-step-label">2. Chọn bài</div>
-            <div className="move-lesson-list">
-              {parentLessons.map(lesson => (
-                <button
-                  key={lesson.id}
-                  className={`move-lesson-btn ${selectedParent?.id === lesson.id ? 'active' : ''}`}
-                  onClick={() => { setSelectedParent(lesson); setSelectedLesson(null); }}
-                >
-                  <FolderOpen size={14} />
-                  <span>{lesson.name}</span>
-                </button>
-              ))}
-            </div>
+      {/* Step 3: Select child lesson (if parent has children) */}
+      {selectedParent && childLessons.length > 0 && (
+        <div className="move-step">
+          <div className="move-step-label">3. Chọn thư mục</div>
+          <div className="move-lesson-list">
+            {childLessons.map(lesson => (
+              <button
+                key={lesson.id}
+                className={`move-lesson-btn ${selectedLesson?.id === lesson.id ? 'active' : ''}`}
+                onClick={() => setSelectedLesson(lesson)}
+              >
+                <FileText size={14} />
+                <span>{lesson.name}</span>
+              </button>
+            ))}
           </div>
-        )}
-
-        {/* Step 3: Select child lesson (if parent has children) */}
-        {selectedParent && childLessons.length > 0 && (
-          <div className="move-step">
-            <div className="move-step-label">3. Chọn thư mục</div>
-            <div className="move-lesson-list">
-              {childLessons.map(lesson => (
-                <button
-                  key={lesson.id}
-                  className={`move-lesson-btn ${selectedLesson?.id === lesson.id ? 'active' : ''}`}
-                  onClick={() => setSelectedLesson(lesson)}
-                >
-                  <FileText size={14} />
-                  <span>{lesson.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* No lessons warning */}
-        {selectedLevel && parentLessons.length === 0 && (
-          <div className="move-empty">Chưa có bài học nào ở level này</div>
-        )}
-
-        {/* Actions */}
-        <div className="kanji-move-actions">
-          <button className="btn btn-secondary btn-sm" onClick={onClose}>Huỷ</button>
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={handleMove}
-            disabled={!canMove || isMoving}
-          >
-            {isMoving ? 'Đang chuyển...' : `Chuyển ${cards.length > 1 ? `${cards.length} chữ` : ''}`}
-          </button>
         </div>
+      )}
+
+      {/* No lessons warning */}
+      {selectedLevel && parentLessons.length === 0 && (
+        <div className="move-empty">Chưa có bài học nào ở level này</div>
+      )}
+
+      {/* Actions */}
+      <div className="kanji-move-actions">
+        <button className="btn btn-secondary btn-sm" onClick={onClose}>Huỷ</button>
+        <button
+          className="btn btn-primary btn-sm"
+          onClick={handleMove}
+          disabled={!canMove || isMoving}
+        >
+          {isMoving ? 'Đang chuyển...' : `Chuyển ${cards.length > 1 ? `${cards.length} chữ` : ''}`}
+        </button>
       </div>
-    </div>
+    </ModalShell>
   );
 }

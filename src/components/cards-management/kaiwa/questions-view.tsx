@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { Search, Filter, ChevronRight, ChevronLeft, Edit2, Trash2, Plus, FolderOpen, MessageSquare } from 'lucide-react';
 import { CONVERSATION_TOPICS, CONVERSATION_STYLES } from '../../../constants/kaiwa';
 import { ConfirmModal } from '../../ui/confirm-modal';
+import { EmptyState } from '../../ui/empty-state';
 import type {
   KaiwaDefaultQuestion,
   KaiwaFolder,
@@ -581,10 +582,7 @@ export function QuestionsView({
             {getQuestionsForCurrentView().map(renderQuestionItem)}
           </div>
           {getQuestionsForCurrentView().length === 0 && (
-            <div className="empty-state">
-              <MessageSquare size={48} />
-              <p>Chưa có câu hỏi nào trong thư mục này</p>
-            </div>
+            <EmptyState compact icon={<MessageSquare size={48} />} title="Chưa có câu hỏi nào trong thư mục này" />
           )}
         </div>
       )}

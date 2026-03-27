@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { ClassroomTest, ClassroomSubmission, SubmissionAnswer } from '../../types/classroom';
 import { ANSWER_OPTIONS } from '../../constants/answer-options';
+import { ModalShell } from '../ui/modal-shell';
 
 interface TestTakeProps {
   test: ClassroomTest;
@@ -249,28 +250,29 @@ export function TestTake({ test, submission, onSubmit, onCancel }: TestTakeProps
       </div>
 
       {/* Confirm dialog */}
-      {showConfirm && (
-        <div className="modal-overlay" onClick={() => setShowConfirm(false)}>
-          <div className="modal-content confirm-modal" onClick={e => e.stopPropagation()}>
-            <h3>Xác nhận nộp bài</h3>
-            <p>
-              Bạn đã trả lời {answeredCount}/{totalQuestions} câu hỏi.
-              {answeredCount < totalQuestions && (
-                <span className="warning-text"> Còn {totalQuestions - answeredCount} câu chưa trả lời!</span>
-              )}
-            </p>
-            <p>Bạn có chắc muốn nộp bài?</p>
-            <div className="confirm-buttons">
-              <button className="btn btn-secondary" onClick={() => setShowConfirm(false)}>
-                Tiếp tục làm
-              </button>
-              <button className="btn btn-primary" onClick={() => handleSubmit(true)}>
-                Nộp bài
-              </button>
-            </div>
-          </div>
+      <ModalShell
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        title="Xác nhận nộp bài"
+        maxWidth={400}
+        accent="danger"
+      >
+        <p>
+          Bạn đã trả lời {answeredCount}/{totalQuestions} câu hỏi.
+          {answeredCount < totalQuestions && (
+            <span className="warning-text"> Còn {totalQuestions - answeredCount} câu chưa trả lời!</span>
+          )}
+        </p>
+        <p>Bạn có chắc muốn nộp bài?</p>
+        <div className="confirm-buttons">
+          <button className="btn btn-secondary" onClick={() => setShowConfirm(false)}>
+            Tiếp tục làm
+          </button>
+          <button className="btn btn-primary" onClick={() => handleSubmit(true)}>
+            Nộp bài
+          </button>
         </div>
-      )}
+      </ModalShell>
     </div>
   );
 }

@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import type { BadgeType } from '../../types/friendship';
 import { BADGE_DEFINITIONS } from '../../types/friendship';
-import { X, Gift, Send } from 'lucide-react';
+import { Send } from 'lucide-react';
+import { ModalShell } from '../ui/modal-shell';
 
 interface BadgeGiftModalProps {
   isOpen: boolean;
@@ -50,25 +51,12 @@ export function BadgeGiftModal({
     onClose();
   };
 
-  if (!isOpen) return null;
-
   const selectedBadgeDef = selectedBadge
     ? BADGE_DEFINITIONS.find(b => b.type === selectedBadge)
     : null;
 
   return (
-    <div className="modal-overlay" onClick={handleClose}>
-      <div className="badge-gift-modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h3>
-            <Gift size={20} />
-            Tặng huy hiệu cho {friendName}
-          </h3>
-          <button className="btn-close" onClick={handleClose}>
-            <X size={20} />
-          </button>
-        </div>
-
+    <ModalShell isOpen={isOpen} onClose={handleClose} title={`Tặng huy hiệu cho ${friendName}`} maxWidth={480}>
         {success ? (
           <div className="success-message">
             <span className="success-icon">🎉</span>
@@ -133,7 +121,6 @@ export function BadgeGiftModal({
             </div>
           </>
         )}
-      </div>
-    </div>
+    </ModalShell>
   );
 }

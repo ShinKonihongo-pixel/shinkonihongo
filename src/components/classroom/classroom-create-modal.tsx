@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, GraduationCap, Calendar, Clock, Sparkles } from 'lucide-react';
+import { ModalShell } from '../ui/modal-shell';
 import type { Classroom, ClassroomFormData, ClassSchedule, ClassroomLevel } from '../../types/classroom';
 import { CLASSROOM_LEVELS, DAY_OF_WEEK_LABELS } from '../../types/classroom';
 
@@ -168,13 +169,10 @@ export function ClassroomCreateModal({
     setSaving(false);
   };
 
-  if (!isOpen) return null;
-
   const selectedDays = new Set(schedule.map(s => s.dayOfWeek));
 
   return (
-    <div className="rm-overlay" onClick={onClose}>
-      <div className="rm-modal" onClick={e => e.stopPropagation()}>
+    <ModalShell isOpen={isOpen} onClose={onClose} maxWidth={560} hideClose className="rm-shell">
         {/* Header */}
         <header className="rm-header">
           <div
@@ -372,7 +370,6 @@ export function ClassroomCreateModal({
             )}
           </button>
         </footer>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

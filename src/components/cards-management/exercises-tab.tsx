@@ -8,6 +8,7 @@ import type { JLPTLevel, Lesson, Flashcard } from '../../types/flashcard';
 import type { CurrentUser } from '../../types/user';
 import { EXERCISE_TYPE_LABELS, EXERCISE_TYPE_ICONS, QUESTION_COUNT_OPTIONS, TIME_PER_QUESTION_OPTIONS, getTotalQuestionCount, initQuestionCountByType } from '../../types/exercise';
 import { ConfirmModal } from '../ui/confirm-modal';
+import { EmptyState } from '../ui/empty-state';
 import { LevelGrid } from './level-grid';
 import { JLPT_LEVELS } from '../../constants/jlpt';
 import { LEVEL_COLORS_EXTENDED } from '../../constants/themes';
@@ -380,7 +381,7 @@ export function ExercisesTab({
                 </div>
                 <div className="lesson-selector-pro">
                   {parentLessons.length === 0 ? (
-                    <p className="empty-lessons">Không có bài học nào ở cấp độ đã chọn</p>
+                    <EmptyState compact title="Không có bài học nào ở cấp độ đã chọn" />
                   ) : (
                     parentLessons.map(parent => {
                       const children = getChildLessons(parent.id);
@@ -480,11 +481,7 @@ export function ExercisesTab({
       {!showForm && selectedLevel && (
         <div className="exercises-list-grid">
           {filteredExercises.length === 0 ? (
-            <div className="empty-state-pro">
-              <BookOpen size={48} strokeWidth={1.5} />
-              <h3>Chưa có bài tập nào cho {selectedLevel}</h3>
-              <p>Nhấn "Tạo bài tập mới" để bắt đầu</p>
-            </div>
+            <EmptyState icon={<BookOpen size={48} strokeWidth={1.5} />} title={`Chưa có bài tập nào cho ${selectedLevel}`} description='Nhấn "Tạo bài tập mới" để bắt đầu' />
           ) : (
             filteredExercises.map(exercise => {
               const types = getExerciseTypes(exercise);

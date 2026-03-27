@@ -1,5 +1,6 @@
 // Settings modal component
-import { Settings, X, Eye, EyeOff, Type, Sparkles } from 'lucide-react';
+import { Settings, Eye, EyeOff, Type, Sparkles } from 'lucide-react';
+import { ModalShell } from '../../ui/modal-shell';
 import type { GrammarStudySettings } from './types';
 
 const FLIP_STYLES: { value: GrammarStudySettings['cardFlipStyle']; label: string }[] = [
@@ -39,18 +40,7 @@ export function SettingsModal({ settings, onClose, onUpdateSettings }: SettingsM
   };
 
   return (
-    <div className="settings-modal-overlay" onClick={onClose}>
-      <div className="settings-modal" onClick={e => e.stopPropagation()}>
-        <div className="settings-modal-header">
-          <div className="modal-header-icon">
-            <Settings size={20} />
-          </div>
-          <h3>Cài đặt hiển thị</h3>
-          <button className="btn-close" onClick={onClose}>
-            <X size={20} />
-          </button>
-        </div>
-
+    <ModalShell isOpen={true} onClose={onClose} title="Cài đặt hiển thị" maxWidth={480}>
         <div className="settings-modal-content">
           <div className="settings-section">
             <div className="section-header">
@@ -179,7 +169,6 @@ export function SettingsModal({ settings, onClose, onUpdateSettings }: SettingsM
             </div>
           </div>
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

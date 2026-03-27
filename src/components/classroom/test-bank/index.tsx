@@ -5,6 +5,7 @@
 
 import { useState, useMemo } from 'react';
 import { Plus, Edit2, Trash2, FolderOpen, ArrowLeft } from 'lucide-react';
+import { EmptyState } from '../../ui/empty-state';
 import { JLPT_LEVELS } from '../../../constants/jlpt';
 import { DEFAULT_QUESTION_POINTS } from '../../../types/classroom';
 import type { TestTemplate, TestType, TestQuestion, DifficultyLevel } from '../../../types/classroom';
@@ -375,7 +376,7 @@ export function TestBankPanel({
               </div>
             ))}
             {folders.filter(f => f.level === navState.level).length === 0 && (
-              <p className="empty-message">Chưa có thư mục nào. Nhấn "+ Tạo thư mục" để thêm.</p>
+              <EmptyState compact icon={<FolderOpen size={36} strokeWidth={1.5} />} title="Chưa có thư mục nào" description='Nhấn "+ Tạo thư mục" để thêm' />
             )}
           </div>
         )}

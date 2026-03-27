@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { X, RefreshCw, Sparkles } from 'lucide-react';
+import { ModalShell } from '../ui/modal-shell';
 import type { Flashcard } from '../../types/flashcard';
 import type { Radical } from '../../types/kanji';
 import { useKanjiAnalysis } from '../../hooks/use-kanji-analysis';
@@ -21,10 +22,9 @@ export function KanjiDetailModal({ flashcard, onClose, readOnly = false }: Kanji
   const [selectedRadical, setSelectedRadical] = useState<Radical | null>(null);
 
   return (
-    <div className="kd-overlay" onClick={onClose}>
-      <div className="kd-modal" onClick={(e) => e.stopPropagation()}>
-        {/* Header with gradient accent */}
-        <div className="kd-header">
+    <ModalShell isOpen onClose={onClose} maxWidth={560} hideClose className="kd-shell">
+      {/* Header with gradient accent */}
+      <div className="kd-header">
           <div className="kd-title">
             <Sparkles size={18} className="kd-title-icon" />
             <h3>{flashcard.kanji || flashcard.vocabulary}</h3>
@@ -161,7 +161,6 @@ export function KanjiDetailModal({ flashcard, onClose, readOnly = false }: Kanji
             </>
           )}
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

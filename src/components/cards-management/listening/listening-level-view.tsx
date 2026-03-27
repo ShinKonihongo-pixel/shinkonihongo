@@ -1,6 +1,7 @@
 // Level view showing lesson number grid
 import { ChevronLeft, Music } from 'lucide-react';
 import { LEVEL_THEMES } from '../../../constants/themes';
+import { EmptyState } from '../../ui/empty-state';
 import { LISTENING_LESSONS } from '../../../hooks/use-listening';
 import type { JLPTLevel } from '../../../types/flashcard';
 import './listening-shared.css';
@@ -50,13 +51,7 @@ export function ListeningLevelView({
       </div>
 
       {lessonNumbers.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-icon">
-            <Music size={48} strokeWidth={1} />
-          </div>
-          <p>Chưa có bài học cho cấp độ này</p>
-          <span className="empty-hint">N3, N2, N1 sẽ được thêm sau</span>
-        </div>
+        <EmptyState icon={<Music size={48} strokeWidth={1} />} title="Chưa có bài học cho cấp độ này" description="N3, N2, N1 sẽ được thêm sau" />
       ) : (
         <div className="lesson-grid">
           {lessonNumbers.map((num, idx) => {

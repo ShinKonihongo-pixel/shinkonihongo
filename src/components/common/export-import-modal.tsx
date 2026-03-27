@@ -1,6 +1,7 @@
 // Export/Import Modal for data backup and restore
 
 import { useState, useRef } from 'react';
+import { ModalShell } from '../ui/modal-shell';
 import type { Flashcard, Lesson } from '../../types/flashcard';
 import type { StudySession, GameSession, JLPTSession } from '../../types/user';
 import {
@@ -41,8 +42,6 @@ export function ExportImportModal({
   const [importError, setImportError] = useState<string | null>(null);
   const [importSuccess, setImportSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  if (!isOpen) return null;
 
   // Handle export
   const handleExportJSON = () => {
@@ -107,13 +106,7 @@ export function ExportImportModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="export-import-modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h3>Sao lưu & Khôi phục dữ liệu</h3>
-          <button className="modal-close" onClick={onClose}>×</button>
-        </div>
-
+    <ModalShell isOpen={isOpen} onClose={onClose} title="Sao lưu & Khôi phục dữ liệu" maxWidth={520}>
         <div className="modal-tabs">
           <button
             className={`modal-tab ${activeTab === 'export' ? 'active' : ''}`}
@@ -243,7 +236,6 @@ export function ExportImportModal({
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

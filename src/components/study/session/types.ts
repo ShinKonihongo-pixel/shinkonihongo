@@ -31,6 +31,7 @@ export interface StudySessionProps {
 }
 
 export interface StudySettingsModalProps {
+  isOpen: boolean;
   filterMemorization: MemorizationStatus | 'all';
   onFilterMemorizationChange: (status: MemorizationStatus | 'all') => void;
   frontFontSize?: number;

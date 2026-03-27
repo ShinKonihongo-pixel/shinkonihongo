@@ -5,6 +5,7 @@ import { Upload, X, Volume2, Download } from 'lucide-react';
 import { ConfirmModal } from '../ui/confirm-modal';
 import type { JLPTTabProps, JLPTNavState, JLPTQuestion, JLPTFolder, JLPTQuestionFormData } from './cards-management-types';
 import { JLPT_QUESTION_LEVELS, QUESTION_CATEGORIES, defaultAnswers } from './cards-management-types';
+import { EmptyState } from '../ui/empty-state';
 import {
   exportJLPTData,
   downloadAsJSON,
@@ -491,7 +492,7 @@ export function JLPTTab({
               {!categoryHasFolders() && (
                 <div className="questions-list">
                   {getQuestionsForCurrentView().length === 0 ? (
-                    <div className="empty-message">Chưa có câu hỏi nào. Tạo thư mục hoặc thêm câu hỏi trực tiếp.</div>
+                    <EmptyState compact title="Chưa có câu hỏi nào" description="Tạo thư mục hoặc thêm câu hỏi trực tiếp" />
                   ) : getQuestionsForCurrentView().map(renderQuestionCard)}
                 </div>
               )}
@@ -505,7 +506,7 @@ export function JLPTTab({
               </div>
               <div className="questions-list">
                 {getQuestionsForCurrentView().length === 0 ? (
-                  <div className="empty-message">Chưa có câu hỏi nào. Nhấn "+ Thêm câu hỏi" để thêm.</div>
+                  <EmptyState compact title="Chưa có câu hỏi nào" description='Nhấn "+ Thêm câu hỏi" để thêm' />
                 ) : getQuestionsForCurrentView().map(renderQuestionCard)}
               </div>
             </>

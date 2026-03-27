@@ -1,9 +1,9 @@
 // KanjiTab - Modal overlays (edit modal from search, decomposer, move modal)
 
 import { Suspense, lazy } from 'react';
-import { X } from 'lucide-react';
 import { KanjiCardForm } from '../flashcard/kanji-card-form';
 import { KanjiMoveModal } from './kanji-move-modal';
+import { ModalShell } from '../ui/modal-shell';
 import type { KanjiCard, KanjiCardFormData, KanjiLesson } from '../../types/kanji';
 import type { JLPTLevel } from './cards-management-types';
 import { LEVEL_COLORS } from '../../constants/themes';
@@ -45,41 +45,39 @@ export function KanjiTabModals({
 }: KanjiTabModalsProps) {
   return (
     <>
-      {showEditModalOverSearch && editingCard && (
-        <div className="kanji-edit-modal-overlay" onClick={onCancelEdit}>
-          <div className="kanji-edit-modal" onClick={e => e.stopPropagation()}>
-            <div className="kanji-edit-modal-header">
-              <div className="kanji-edit-modal-title">
-                <span
-                  className="kanji-edit-modal-char"
-                  style={{ borderColor: LEVEL_COLORS[editingCard.jlptLevel as JLPTLevel] }}
-                >
-                  {editingCard.character}
-                </span>
-                <div className="kanji-edit-modal-info">
-                  <h3>{editingCard.sinoVietnamese} - {editingCard.meaning}</h3>
-                  <div className="kanji-edit-modal-meta">
-                    <span
-                      className="kanji-edit-modal-level"
-                      style={{ background: LEVEL_COLORS[editingCard.jlptLevel as JLPTLevel] }}
-                    >
-                      {editingCard.jlptLevel}
-                    </span>
-                    <span className="kanji-edit-modal-lesson">{getLessonName(editingCard.lessonId)}</span>
-                  </div>
-                </div>
-              </div>
-              <button className="kanji-edit-modal-close" onClick={onCancelEdit}><X size={18} /></button>
+      {editingCard && (
+        <ModalShell
+          isOpen={showEditModalOverSearch}
+          onClose={onCancelEdit}
+          title={`${editingCard.sinoVietnamese} - ${editingCard.meaning}`}
+          maxWidth={560}
+          className="kanji-edit-modal"
+        >
+          <div className="kanji-edit-modal-char-row">
+            <span
+              className="kanji-edit-modal-char"
+              style={{ borderColor: LEVEL_COLORS[editingCard.jlptLevel as JLPTLevel] }}
+            >
+              {editingCard.character}
+            </span>
+            <div className="kanji-edit-modal-meta">
+              <span
+                className="kanji-edit-modal-level"
+                style={{ background: LEVEL_COLORS[editingCard.jlptLevel as JLPTLevel] }}
+              >
+                {editingCard.jlptLevel}
+              </span>
+              <span className="kanji-edit-modal-lesson">{getLessonName(editingCard.lessonId)}</span>
             </div>
-            <KanjiCardForm
-              onSubmit={onUpdateCard}
-              onCancel={onCancelEdit}
-              initialData={editingCard}
-              fixedLevel={editingCard.jlptLevel as JLPTLevel}
-              fixedLessonId={editingCard.lessonId}
-            />
           </div>
-        </div>
+          <KanjiCardForm
+            onSubmit={onUpdateCard}
+            onCancel={onCancelEdit}
+            initialData={editingCard}
+            fixedLevel={editingCard.jlptLevel as JLPTLevel}
+            fixedLessonId={editingCard.lessonId}
+          />
+        </ModalShell>
       )}
 
       {decomposingCard && (

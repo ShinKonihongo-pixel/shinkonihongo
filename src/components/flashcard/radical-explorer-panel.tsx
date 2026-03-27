@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Plus, RefreshCw, X, Save, Search, BookOpen } from 'lucide-react';
+import { ModalShell } from '../ui/modal-shell';
 import type { JLPTLevel } from '../../types/flashcard';
 import type { Radical } from '../../types/kanji';
 import {
@@ -315,10 +316,8 @@ export function RadicalExplorerPanel({ radical, onBack, asModal = false, readOnl
   if (!asModal) return content;
 
   return (
-    <div className="rep-overlay" onClick={onBack}>
-      <div className="rep-modal" onClick={e => e.stopPropagation()}>
-        {content}
-      </div>
-    </div>
+    <ModalShell isOpen onClose={onBack} maxWidth={700} hideClose className="rep-modal-shell">
+      {content}
+    </ModalShell>
   );
 }

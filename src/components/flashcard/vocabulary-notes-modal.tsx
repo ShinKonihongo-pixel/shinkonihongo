@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { X, Trash2, Save, RefreshCw, PenLine } from 'lucide-react';
 import type { Flashcard } from '../../types/flashcard';
 import { getVocabularyNote, saveVocabularyNote, deleteVocabularyNote } from '../../services/firestore';
+import { ModalShell } from '../ui/modal-shell';
 import './vocabulary-notes-modal.css';
 
 interface VocabularyNotesModalProps {
@@ -78,19 +79,18 @@ export function VocabularyNotesModal({ flashcard, userId, onClose, onSaved, onTo
   };
 
   return (
-    <div className="vn-overlay" onClick={onClose}>
-      <div className="vn-modal" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <div className="vn-header">
-          <div className="vn-title">
-            <PenLine size={18} className="vn-title-icon" />
-            <h3>{flashcard.kanji || flashcard.vocabulary}</h3>
-            <span className="vn-subtitle">Ghi chú</span>
-          </div>
-          <button className="vn-icon-btn" onClick={onClose}>
-            <X size={18} />
-          </button>
+    <ModalShell isOpen onClose={onClose} maxWidth={460} hideClose className="vn-shell">
+      {/* Header */}
+      <div className="vn-header">
+        <div className="vn-title">
+          <PenLine size={18} className="vn-title-icon" />
+          <h3>{flashcard.kanji || flashcard.vocabulary}</h3>
+          <span className="vn-subtitle">Ghi chú</span>
         </div>
+        <button className="vn-icon-btn" onClick={onClose}>
+          <X size={18} />
+        </button>
+      </div>
 
         {/* Body */}
         <div className="vn-body">
@@ -136,8 +136,6 @@ export function VocabularyNotesModal({ flashcard, userId, onClose, onSaved, onTo
             <span>Lưu</span>
           </button>
         </div>
-
-      </div>
-    </div>
+    </ModalShell>
   );
 }

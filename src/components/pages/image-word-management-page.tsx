@@ -7,6 +7,7 @@ import {
   ArrowLeft, Plus, Trash2, Edit3, Save, X, ImageIcon, Upload, Layers,
   AlertTriangle, GripVertical, Eye, Calendar, Hash, Sparkles, FolderOpen
 } from 'lucide-react';
+import { ModalShell } from '../ui/modal-shell';
 import type { ImageWordLesson, ImageWordPair } from '../../types/image-word';
 import {
   getImageWordLessons,
@@ -208,52 +209,52 @@ export const ImageWordManagementPage: React.FC<ImageWordManagementPageProps> = (
       )}
 
       {/* Preview Modal */}
-      {previewLesson && (
-        <div className="iw-modal-overlay" onClick={() => setPreviewLesson(null)}>
-          <div className="iw-preview-modal" onClick={e => e.stopPropagation()}>
-            <div className="iw-preview-header">
-              <h2>{previewLesson.name}</h2>
-              <button className="iw-close-btn" onClick={() => setPreviewLesson(null)}>
-                <X size={20} />
-              </button>
+      <ModalShell
+        isOpen={!!previewLesson}
+        onClose={() => setPreviewLesson(null)}
+        title={previewLesson?.name ?? ''}
+        maxWidth={680}
+        accent="purple"
+      >
+        <div className="iw-preview-grid">
+          {previewLesson?.pairs.map((pair) => (
+            <div key={pair.id} className="iw-preview-item">
+              <img src={pair.imageUrl} alt="" loading="lazy" />
+              <div className="iw-preview-word">
+                <span className="vocab">{pair.vocabulary}</span>
+                {pair.reading && <span className="reading">{pair.reading}</span>}
+                <span className="meaning">{pair.meaning}</span>
+              </div>
             </div>
-            <div className="iw-preview-grid">
-              {previewLesson.pairs.map((pair) => (
-                <div key={pair.id} className="iw-preview-item">
-                  <img src={pair.imageUrl} alt="" loading="lazy" />
-                  <div className="iw-preview-word">
-                    <span className="vocab">{pair.vocabulary}</span>
-                    {pair.reading && <span className="reading">{pair.reading}</span>}
-                    <span className="meaning">{pair.meaning}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
-      )}
+      </ModalShell>
 
       {/* Delete Confirmation */}
-      {deleteConfirm && (
-        <div className="iw-modal-overlay" onClick={() => setDeleteConfirm(null)}>
-          <div className="iw-confirm-dialog" onClick={e => e.stopPropagation()}>
-            <div className="iw-confirm-icon">
-              <AlertTriangle size={32} />
-            </div>
-            <h3>Xóa bài học này?</h3>
-            <p>Hành động này không thể hoàn tác. Tất cả dữ liệu của bài học sẽ bị xóa vĩnh viễn.</p>
-            <div className="iw-confirm-actions">
-              <button className="iw-cancel-btn" onClick={() => setDeleteConfirm(null)}>
-                Hủy bỏ
-              </button>
-              <button className="iw-delete-btn" onClick={() => handleDeleteLesson(deleteConfirm)}>
-                <Trash2 size={16} />
-                Xóa
-              </button>
-            </div>
+      <ModalShell
+        isOpen={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        maxWidth={400}
+        accent="danger"
+        hideClose
+      >
+        <div className="iw-confirm-dialog">
+          <div className="iw-confirm-icon">
+            <AlertTriangle size={32} />
+          </div>
+          <h3>Xóa bài học này?</h3>
+          <p>Hành động này không thể hoàn tác. Tất cả dữ liệu của bài học sẽ bị xóa vĩnh viễn.</p>
+          <div className="iw-confirm-actions">
+            <button className="iw-cancel-btn" onClick={() => setDeleteConfirm(null)}>
+              Hủy bỏ
+            </button>
+            <button className="iw-delete-btn" onClick={() => deleteConfirm && handleDeleteLesson(deleteConfirm)}>
+              <Trash2 size={16} />
+              Xóa
+            </button>
           </div>
         </div>
-      )}
+      </ModalShell>
     </div>
   );
 };
@@ -338,16 +339,13 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onSave, onCancel })
   };
 
   return (
-    <div className="iw-modal-overlay" onClick={onCancel}>
-      <div className="iw-editor-modal" onClick={e => e.stopPropagation()}>
-        {/* Header */}
-        <div className="iw-editor-header">
-          <h2>{lesson.id ? 'Chỉnh Sửa Bài Học' : 'Tạo Bài Học Mới'}</h2>
-          <button className="iw-close-btn" onClick={onCancel}>
-            <X size={20} />
-          </button>
-        </div>
-
+    <ModalShell
+      isOpen
+      onClose={onCancel}
+      title={lesson.id ? 'Chỉnh Sửa Bài Học' : 'Tạo Bài Học Mới'}
+      maxWidth={740}
+      accent="purple"
+    >
         {/* Body */}
         <div className="iw-editor-body">
           {error && (
@@ -433,8 +431,7 @@ const LessonEditor: React.FC<LessonEditorProps> = ({ lesson, onSave, onCancel })
             {lesson.id ? 'Lưu thay đổi' : 'Tạo bài học'}
           </button>
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 };
 

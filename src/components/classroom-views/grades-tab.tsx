@@ -1,6 +1,8 @@
 // Grades Tab - Student grades table
 
+import { BarChart2 } from 'lucide-react';
 import type { GradesTabProps } from './classroom-types';
+import { EmptyState } from '../ui/empty-state';
 
 export function GradesTab({ studentGrades, loading }: GradesTabProps) {
   return (
@@ -12,9 +14,7 @@ export function GradesTab({ studentGrades, loading }: GradesTabProps) {
       {loading ? (
         <p>Đang tải...</p>
       ) : studentGrades.length === 0 ? (
-        <div className="empty-state">
-          <p>Chưa có dữ liệu điểm</p>
-        </div>
+        <EmptyState icon={<BarChart2 size={48} strokeWidth={1.5} />} title="Chưa có dữ liệu điểm" />
       ) : (
         <div className="grades-table-wrapper">
           <table className="grades-table">

@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from 'react';
 import type { ImportProgress, PPTXImportOptions } from '../../types/pptx';
 import type { SlideFormData } from '../../types/lecture';
 import { MAX_FILE_SIZE } from '../../lib/pptx/pptx-constants';
+import { ModalShell } from '../ui/modal-shell';
 
 interface PPTXImportModalProps {
   isOpen: boolean;
@@ -145,218 +146,209 @@ export function PPTXImportModal({
     onClose();
   };
 
-  if (!isOpen) return null;
-
   const isImporting = importProgress.state !== 'idle' && importProgress.state !== 'complete' && importProgress.state !== 'error';
   const currentStepIndex = IMPORT_STEPS.findIndex(s => s.key === importProgress.state);
 
   return (
-    <div className="modal-overlay" onClick={handleClose}>
-      <div className="modal pptx-import-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>📊 Import PowerPoint</h2>
-          <button className="btn-close" onClick={handleClose} disabled={isImporting}>&times;</button>
-        </div>
-
-        <div className="modal-body">
-          {/* File Drop Zone */}
-          {!selectedFile && (
-            <div
-              className={`drop-zone ${isDragging ? 'dragging' : ''}`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pptx"
-                onChange={handleInputChange}
-                style={{ display: 'none' }}
-              />
-              <div className="drop-zone-content">
-                <span className="drop-icon">📂</span>
-                <p className="drop-title">Kéo thả file .pptx vào đây</p>
-                <p className="drop-hint">hoặc click để chọn file</p>
-                <span className="drop-limit">Giới hạn: 50MB</span>
-              </div>
+    <ModalShell isOpen={isOpen} onClose={handleClose} title="📊 Import PowerPoint" maxWidth={560}>
+      <div className="modal-body">
+        {/* File Drop Zone */}
+        {!selectedFile && (
+          <div
+            className={`drop-zone ${isDragging ? 'dragging' : ''}`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pptx"
+              onChange={handleInputChange}
+              style={{ display: 'none' }}
+            />
+            <div className="drop-zone-content">
+              <span className="drop-icon">📂</span>
+              <p className="drop-title">Kéo thả file .pptx vào đây</p>
+              <p className="drop-hint">hoặc click để chọn file</p>
+              <span className="drop-limit">Giới hạn: 50MB</span>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Selected File Info */}
-          {selectedFile && preview && !isImporting && importProgress.state !== 'complete' && (
-            <div className="file-info">
-              <div className="file-header">
-                <span className="file-icon">📊</span>
-                <div className="file-details">
-                  <span className="file-name">{selectedFile.name}</span>
-                  <span className="file-size">
-                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                  </span>
-                </div>
-                <button
-                  className="btn-remove"
-                  onClick={() => {
-                    setSelectedFile(null);
-                    setPreview(null);
-                    setImportResult(null);
-                    resetImport();
-                  }}
-                >
-                  ×
-                </button>
+        {/* Selected File Info */}
+        {selectedFile && preview && !isImporting && importProgress.state !== 'complete' && (
+          <div className="file-info">
+            <div className="file-header">
+              <span className="file-icon">📊</span>
+              <div className="file-details">
+                <span className="file-name">{selectedFile.name}</span>
+                <span className="file-size">
+                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                </span>
               </div>
-
-              {preview.errors.length > 0 ? (
-                <div className="preview-errors">
-                  {preview.errors.map((err, i) => (
-                    <p key={i} className="error">{err}</p>
-                  ))}
-                </div>
-              ) : (
-                <div className="preview-stats">
-                  <div className="stat">
-                    <span className="stat-value">{preview.slideCount}</span>
-                    <span className="stat-label">Slides</span>
-                  </div>
-                  <div className="stat">
-                    <span className="stat-value">{preview.hasImages ? '✓' : '–'}</span>
-                    <span className="stat-label">Hình ảnh</span>
-                  </div>
-                </div>
-              )}
+              <button
+                className="btn-remove"
+                onClick={() => {
+                  setSelectedFile(null);
+                  setPreview(null);
+                  setImportResult(null);
+                  resetImport();
+                }}
+              >
+                ×
+              </button>
             </div>
-          )}
 
-          {/* Import Mode Selection */}
-          {selectedFile && preview && !preview.errors.length && existingSlidesCount > 0 && !isImporting && importProgress.state !== 'complete' && (
-            <div className="import-mode">
-              <label>Chế độ import:</label>
-              <div className="mode-options">
-                <label className={`mode-option ${importMode === 'append' ? 'selected' : ''}`}>
-                  <input
-                    type="radio"
-                    name="importMode"
-                    value="append"
-                    checked={importMode === 'append'}
-                    onChange={() => setImportMode('append')}
-                  />
-                  <span className="mode-icon">➕</span>
-                  <span className="mode-text">
-                    <strong>Thêm vào cuối</strong>
-                    <small>Giữ {existingSlidesCount} slides hiện tại</small>
-                  </span>
-                </label>
-                <label className={`mode-option ${importMode === 'replace' ? 'selected' : ''}`}>
-                  <input
-                    type="radio"
-                    name="importMode"
-                    value="replace"
-                    checked={importMode === 'replace'}
-                    onChange={() => setImportMode('replace')}
-                  />
-                  <span className="mode-icon">🔄</span>
-                  <span className="mode-text">
-                    <strong>Thay thế</strong>
-                    <small>Xóa {existingSlidesCount} slides cũ</small>
-                  </span>
-                </label>
-              </div>
-            </div>
-          )}
-
-          {/* Import Progress with Steps */}
-          {isImporting && (
-            <div className="import-progress-container">
-              <div className="progress-steps">
-                {IMPORT_STEPS.slice(0, -1).map((step, idx) => (
-                  <div
-                    key={step.key}
-                    className={`progress-step ${idx < currentStepIndex ? 'completed' : ''} ${idx === currentStepIndex ? 'active' : ''}`}
-                  >
-                    <span className="step-icon">{step.icon}</span>
-                    <span className="step-label">{step.label}</span>
-                  </div>
+            {preview.errors.length > 0 ? (
+              <div className="preview-errors">
+                {preview.errors.map((err, i) => (
+                  <p key={i} className="error">{err}</p>
                 ))}
               </div>
-              <div className="progress-bar">
-                <div
-                  className="progress-fill"
-                  style={{ width: `${importProgress.percent}%` }}
+            ) : (
+              <div className="preview-stats">
+                <div className="stat">
+                  <span className="stat-value">{preview.slideCount}</span>
+                  <span className="stat-label">Slides</span>
+                </div>
+                <div className="stat">
+                  <span className="stat-value">{preview.hasImages ? '✓' : '–'}</span>
+                  <span className="stat-label">Hình ảnh</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Import Mode Selection */}
+        {selectedFile && preview && !preview.errors.length && existingSlidesCount > 0 && !isImporting && importProgress.state !== 'complete' && (
+          <div className="import-mode">
+            <label>Chế độ import:</label>
+            <div className="mode-options">
+              <label className={`mode-option ${importMode === 'append' ? 'selected' : ''}`}>
+                <input
+                  type="radio"
+                  name="importMode"
+                  value="append"
+                  checked={importMode === 'append'}
+                  onChange={() => setImportMode('append')}
                 />
-              </div>
-              <div className="progress-info">
-                <span className="progress-percent">{Math.round(importProgress.percent)}%</span>
-                <span className="progress-text">{importProgress.currentStep}</span>
-              </div>
+                <span className="mode-icon">➕</span>
+                <span className="mode-text">
+                  <strong>Thêm vào cuối</strong>
+                  <small>Giữ {existingSlidesCount} slides hiện tại</small>
+                </span>
+              </label>
+              <label className={`mode-option ${importMode === 'replace' ? 'selected' : ''}`}>
+                <input
+                  type="radio"
+                  name="importMode"
+                  value="replace"
+                  checked={importMode === 'replace'}
+                  onChange={() => setImportMode('replace')}
+                />
+                <span className="mode-icon">🔄</span>
+                <span className="mode-text">
+                  <strong>Thay thế</strong>
+                  <small>Xóa {existingSlidesCount} slides cũ</small>
+                </span>
+              </label>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Error Display with Retry */}
-          {(importError || importProgress.state === 'error') && (
-            <div className="import-error">
-              <span className="error-icon">⚠️</span>
-              <p>{importError || 'Có lỗi xảy ra trong quá trình import'}</p>
-              <button className="btn btn-small btn-secondary" onClick={handleRetry}>
-                Thử lại
-              </button>
+        {/* Import Progress with Steps */}
+        {isImporting && (
+          <div className="import-progress-container">
+            <div className="progress-steps">
+              {IMPORT_STEPS.slice(0, -1).map((step, idx) => (
+                <div
+                  key={step.key}
+                  className={`progress-step ${idx < currentStepIndex ? 'completed' : ''} ${idx === currentStepIndex ? 'active' : ''}`}
+                >
+                  <span className="step-icon">{step.icon}</span>
+                  <span className="step-label">{step.label}</span>
+                </div>
+              ))}
             </div>
-          )}
-
-          {/* Success - Saving to database */}
-          {importProgress.state === 'complete' && importResult && importResult.slides.length > 0 && (
-            <div className="import-success">
-              {savingSlides ? (
-                <>
-                  <span className="success-icon">💾</span>
-                  <p>Đang lưu <strong>{importResult.slides.length}</strong> slides vào database...</p>
-                  <div className="saving-spinner"></div>
-                </>
-              ) : (
-                <>
-                  <span className="success-icon">🎉</span>
-                  <p>Đã lưu thành công <strong>{importResult.slides.length}</strong> slides!</p>
-                </>
-              )}
+            <div className="progress-bar">
+              <div
+                className="progress-fill"
+                style={{ width: `${importProgress.percent}%` }}
+              />
             </div>
-          )}
-
-          {/* Import finished but no slides */}
-          {importProgress.state === 'complete' && importResult && importResult.slides.length === 0 && (
-            <div className="import-warning">
-              <span className="warning-icon">⚠️</span>
-              <p><strong>Không tìm thấy slide nào!</strong></p>
-              {importResult.warnings.length > 0 && (
-                <ul className="warning-list">
-                  {importResult.warnings.map((w, i) => <li key={i}>{w}</li>)}
-                </ul>
-              )}
-              <p className="hint">
-                File cần có định dạng .pptx (PowerPoint 2007+). Kiểm tra lại file và thử lại.
-              </p>
-              <button className="btn btn-small btn-secondary" onClick={handleRetry}>
-                Thử lại
-              </button>
+            <div className="progress-info">
+              <span className="progress-percent">{Math.round(importProgress.percent)}%</span>
+              <span className="progress-text">{importProgress.currentStep}</span>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        <div className="modal-footer">
-          <button className="btn btn-secondary" onClick={handleClose} disabled={isImporting}>
-            {isImporting ? 'Đang xử lý...' : 'Đóng'}
-          </button>
-          {!isImporting && importProgress.state !== 'complete' && (
-            <button
-              className="btn btn-primary"
-              onClick={handleImport}
-              disabled={!selectedFile || !preview || preview.errors.length > 0 || preview.slideCount === 0}
-            >
-              Import {preview?.slideCount ? `(${preview.slideCount} slides)` : ''}
+        {/* Error Display with Retry */}
+        {(importError || importProgress.state === 'error') && (
+          <div className="import-error">
+            <span className="error-icon">⚠️</span>
+            <p>{importError || 'Có lỗi xảy ra trong quá trình import'}</p>
+            <button className="btn btn-small btn-secondary" onClick={handleRetry}>
+              Thử lại
             </button>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* Success - Saving to database */}
+        {importProgress.state === 'complete' && importResult && importResult.slides.length > 0 && (
+          <div className="import-success">
+            {savingSlides ? (
+              <>
+                <span className="success-icon">💾</span>
+                <p>Đang lưu <strong>{importResult.slides.length}</strong> slides vào database...</p>
+                <div className="saving-spinner"></div>
+              </>
+            ) : (
+              <>
+                <span className="success-icon">🎉</span>
+                <p>Đã lưu thành công <strong>{importResult.slides.length}</strong> slides!</p>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Import finished but no slides */}
+        {importProgress.state === 'complete' && importResult && importResult.slides.length === 0 && (
+          <div className="import-warning">
+            <span className="warning-icon">⚠️</span>
+            <p><strong>Không tìm thấy slide nào!</strong></p>
+            {importResult.warnings.length > 0 && (
+              <ul className="warning-list">
+                {importResult.warnings.map((w, i) => <li key={i}>{w}</li>)}
+              </ul>
+            )}
+            <p className="hint">
+              File cần có định dạng .pptx (PowerPoint 2007+). Kiểm tra lại file và thử lại.
+            </p>
+            <button className="btn btn-small btn-secondary" onClick={handleRetry}>
+              Thử lại
+            </button>
+          </div>
+        )}
       </div>
-    </div>
+
+      <div className="modal-footer">
+        <button className="btn btn-secondary" onClick={handleClose} disabled={isImporting}>
+          {isImporting ? 'Đang xử lý...' : 'Đóng'}
+        </button>
+        {!isImporting && importProgress.state !== 'complete' && (
+          <button
+            className="btn btn-primary"
+            onClick={handleImport}
+            disabled={!selectedFile || !preview || preview.errors.length > 0 || preview.slideCount === 0}
+          >
+            Import {preview?.slideCount ? `(${preview.slideCount} slides)` : ''}
+          </button>
+        )}
+      </div>
+    </ModalShell>
   );
 }

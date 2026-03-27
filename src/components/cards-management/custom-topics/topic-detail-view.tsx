@@ -1,5 +1,6 @@
 // Topic Detail View Component
 import { ArrowLeft, Settings, BookOpen, FileQuestion, Plus, Circle, CheckCircle } from 'lucide-react';
+import { EmptyState } from '../../ui/empty-state';
 import { JLPT_LEVELS } from '../../../constants/jlpt';
 import { QuestionCard } from './question-card';
 import { renderTopicIcon } from './custom-topics-types';
@@ -132,9 +133,7 @@ export function TopicDetailView({
               );
             })}
             {levelLessons.length === 0 && (
-              <div className="empty-message">
-                Chưa có bài học nào ở cấp độ {selectedSourceLevel}
-              </div>
+              <EmptyState compact title={`Chưa có bài học nào ở cấp độ ${selectedSourceLevel}`} />
             )}
           </div>
 
@@ -163,9 +162,7 @@ export function TopicDetailView({
 
           <div className="questions-list">
             {questions.length === 0 ? (
-              <div className="empty-message">
-                Chưa có câu hỏi. Bấm "Thêm câu hỏi" để tạo.
-              </div>
+              <EmptyState compact title="Chưa có câu hỏi" description='Bấm "Thêm câu hỏi" để tạo' />
             ) : (
               questions.map((q, i) => (
                 <QuestionCard

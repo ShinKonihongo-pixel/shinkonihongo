@@ -1,6 +1,7 @@
 // Modal for adding/editing a teacher in branch
 
 import { useState, useEffect } from 'react';
+import { SearchInput } from '../ui/search-input';
 import type { BranchMember, BranchMemberFormData, BranchMemberRole, SalaryType } from '../../types/branch';
 import type { User } from '../../types/user';
 import {
@@ -212,19 +213,10 @@ export function TeacherAddModal({
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
                 Chọn giáo viên
               </label>
-              <input
-                type="text"
-                placeholder="Tìm kiếm theo tên..."
+              <SearchInput
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  borderRadius: '8px',
-                  border: '1px solid #ddd',
-                  marginBottom: '12px',
-                  boxSizing: 'border-box',
-                }}
+                onChange={setSearchQuery}
+                placeholder="Tìm kiếm theo tên..."
               />
               <div style={{
                 maxHeight: '200px',

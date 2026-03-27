@@ -1,7 +1,9 @@
 // Tests Tab - Tests and assignments listing
 
+import { ClipboardList } from 'lucide-react';
 import type { TestsTabProps } from './classroom-types';
 import type { ClassroomTest } from '../../types/classroom';
+import { EmptyState } from '../ui/empty-state';
 
 export function TestsTab({
   tests, testsList, assignmentsList, submissions, isAdmin, loading,
@@ -62,9 +64,10 @@ export function TestsTab({
       {loading ? (
         <p>Đang tải...</p>
       ) : tests.length === 0 ? (
-        <div className="empty-state">
-          <p>Chưa có bài kiểm tra hoặc bài tập nào</p>
-        </div>
+        <EmptyState
+          icon={<ClipboardList size={48} strokeWidth={1.5} />}
+          title="Chưa có bài kiểm tra hoặc bài tập nào"
+        />
       ) : (
         <>
           {testsList.length > 0 && (

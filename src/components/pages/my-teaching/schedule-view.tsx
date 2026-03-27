@@ -1,6 +1,8 @@
+import { CalendarDays } from 'lucide-react';
 import { DAY_OF_WEEK_LABELS } from '../../../types/classroom';
 import { BRANCH_MEMBER_ROLE_COLORS } from '../../../types/branch';
 import type { TeacherSchedule } from '../../../types/teacher';
+import { EmptyState } from '../../ui/empty-state';
 
 interface ScheduleViewProps {
   schedules: TeacherSchedule[];
@@ -18,10 +20,11 @@ export function ScheduleView({ schedules, schedulesLoading, schedulesByDay }: Sc
       {schedulesLoading ? (
         <div style={{ padding: '40px', textAlign: 'center', color: '#999' }}>Đang tải...</div>
       ) : schedules.length === 0 ? (
-        <div className="empty-state">
-          <p>Chưa có lịch dạy</p>
-          <p className="hint">Liên hệ Admin để được phân công lịch dạy</p>
-        </div>
+        <EmptyState
+          icon={<CalendarDays size={48} strokeWidth={1.5} />}
+          title="Chưa có lịch dạy"
+          description="Liên hệ Admin để được phân công lịch dạy"
+        />
       ) : (
         <div style={{
           display: 'grid',

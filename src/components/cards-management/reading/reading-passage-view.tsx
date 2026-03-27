@@ -1,6 +1,7 @@
 // Reading Tab - Passage Form View
 
 import { FileText, HelpCircle, CheckCircle2, Plus, Wand2, Loader2 } from 'lucide-react';
+import { EmptyState } from '../../ui/empty-state';
 import type { PassageFormProps } from './reading-tab-types';
 
 export function ReadingPassageView({
@@ -220,9 +221,7 @@ export function ReadingPassageView({
           )}
 
           {formData.vocabulary.length === 0 && (
-            <div className="rt-vocab-empty">
-              <span>Chưa có từ vựng. Nhấn "Thêm từ" để bắt đầu.</span>
-            </div>
+            <EmptyState compact title="Chưa có từ vựng" description='Nhấn "Thêm từ" để bắt đầu' />
           )}
         </div>
 

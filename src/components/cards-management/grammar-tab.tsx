@@ -3,6 +3,7 @@
 
 import { useState, useRef } from 'react';
 import { Download, Upload, BookOpen, FolderOpen, FileText, ChevronRight, Plus, Trash2, Edit2, GripVertical } from 'lucide-react';
+import { EmptyState } from '../ui/empty-state';
 import { GrammarCardForm } from '../flashcard/grammar-card-form';
 import { GrammarCardList } from '../flashcard/grammar-card-list';
 import { LevelGrid } from './level-grid';
@@ -26,6 +27,7 @@ type NavState =
   | { type: 'child'; level: JLPTLevel; parentId: string; parentName: string; lessonId: string; lessonName: string };
 
 import { downloadAsJSON, readJSONFileRaw, generateExportFilename } from '../../utils/data-export-import';
+import { ModalShell } from '../ui/modal-shell';
 
 export function GrammarTab({
   grammarCards,
@@ -397,38 +399,32 @@ export function GrammarTab({
   );
 
   // Render edit lesson modal
-  const renderEditLessonModal = () => editingLesson && (
-    <div className="modal-overlay" onClick={() => setEditingLesson(null)}>
-      <div className="modal-content small" onClick={e => e.stopPropagation()}>
-        <h3>Sửa tên</h3>
-        <input
-          type="text"
-          value={newLessonName}
-          onChange={e => setNewLessonName(e.target.value)}
-          className="input"
-          autoFocus
-          onKeyDown={e => e.key === 'Enter' && handleUpdateLesson()}
-        />
-        <div className="modal-actions">
-          <button className="btn btn-secondary" onClick={() => { setEditingLesson(null); setNewLessonName(''); }}>
-            Huỷ
-          </button>
-          <button className="btn btn-primary" onClick={handleUpdateLesson} disabled={!newLessonName.trim()}>
-            Lưu
-          </button>
-        </div>
+  const renderEditLessonModal = () => (
+    <ModalShell
+      isOpen={!!editingLesson}
+      onClose={() => { setEditingLesson(null); setNewLessonName(''); }}
+      title="Sửa tên"
+      maxWidth={400}
+    >
+      <input
+        type="text"
+        value={newLessonName}
+        onChange={e => setNewLessonName(e.target.value)}
+        className="input"
+        autoFocus
+        onKeyDown={e => e.key === 'Enter' && handleUpdateLesson()}
+      />
+      <div className="modal-actions">
+        <button className="btn btn-secondary" onClick={() => { setEditingLesson(null); setNewLessonName(''); }}>
+          Huỷ
+        </button>
+        <button className="btn btn-primary" onClick={handleUpdateLesson} disabled={!newLessonName.trim()}>
+          Lưu
+        </button>
       </div>
-    </div>
+    </ModalShell>
   );
 
-  // Empty state
-  const renderEmptyState = (message: string, description?: string) => (
-    <div className="grammar-empty-state">
-      <BookOpen size={64} className="empty-icon" />
-      <div className="empty-title">{message}</div>
-      {description && <div className="empty-desc">{description}</div>}
-    </div>
-  );
 
   return (
     <div className="grammar-tab-container">
@@ -517,9 +513,8 @@ export function GrammarTab({
           {navState.type === 'level' && (
             <div className="grammar-lesson-list">
               {getParentLessonsByLevel(navState.level).map(lesson => renderLessonCard(lesson, false, getParentLessonsByLevel(navState.level)))}
-              {getParentLessonsByLevel(navState.level).length === 0 && renderEmptyState(
-                'Chưa có bài học',
-                isSuperAdmin ? `Nhấn "Tạo Bài ${SEED_CONFIG[navState.level].start}-${SEED_CONFIG[navState.level].end}" để tạo tự động` : 'Chưa có bài học nào'
+              {getParentLessonsByLevel(navState.level).length === 0 && (
+                <EmptyState icon={<BookOpen size={64} />} title="Chưa có bài học" description={isSuperAdmin ? `Nhấn "Tạo Bài ${SEED_CONFIG[navState.level].start}-${SEED_CONFIG[navState.level].end}" để tạo tự động` : 'Chưa có bài học nào'} />
               )}
             </div>
           )}
@@ -539,7 +534,7 @@ export function GrammarTab({
                     canDelete={canModifyCard}
                   />
                 ) : (
-                  renderEmptyState('Chưa có nội dung', 'Thêm thư mục con hoặc tạo thẻ ngữ pháp')
+                  <EmptyState icon={<BookOpen size={64} />} title="Chưa có nội dung" description="Thêm thư mục con hoặc tạo thẻ ngữ pháp" />
                 )
               )}
             </div>
@@ -556,7 +551,7 @@ export function GrammarTab({
                 canDelete={canModifyCard}
               />
             ) : (
-              renderEmptyState('Chưa có thẻ ngữ pháp', 'Nhấn "Tạo thẻ ngữ pháp" để thêm')
+              <EmptyState icon={<BookOpen size={64} />} title="Chưa có thẻ ngữ pháp" description='Nhấn "Tạo thẻ ngữ pháp" để thêm' />
             )
           )}
         </>

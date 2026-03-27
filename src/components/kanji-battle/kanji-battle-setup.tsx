@@ -6,6 +6,7 @@ import type { CreateKanjiBattleData, KanjiBattleMode, JLPTLevel } from '../../ty
 import { getKanjiSeedCount } from '../../data/kanji-seed/index';
 import { useBodyScrollLock } from '../../hooks/use-body-scroll-lock';
 import { JLPT_LEVELS_WITH_BT } from '../../constants/jlpt';
+import { ModalShell } from '../ui/modal-shell';
 
 const JLPT_LEVEL_OPTIONS = JLPT_LEVELS_WITH_BT.map(level => ({ level, label: level }));
 
@@ -64,10 +65,9 @@ export function KanjiBattleSetup({
   };
 
   return (
-    <div className="rm-overlay" onClick={onBack}>
-      <div className="rm-modal large" onClick={e => e.stopPropagation()}>
-        {/* Header */}
-        <header className="rm-header">
+    <ModalShell isOpen onClose={onBack} maxWidth={600} hideClose>
+      {/* Header */}
+      <header className="rm-header">
           <div
             className="rm-header-gradient"
             style={{ background: 'linear-gradient(135deg, #FF5722 0%, #FF9800 100%)' }}
@@ -310,7 +310,6 @@ export function KanjiBattleSetup({
             )}
           </button>
         </footer>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

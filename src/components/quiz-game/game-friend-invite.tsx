@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import type { FriendWithUser } from '../../types/friendship';
-import { X, UserPlus, Send, Check } from 'lucide-react';
+import { UserPlus, Send, Check } from 'lucide-react';
+import { ModalShell } from '../ui/modal-shell';
 
 interface GameFriendInviteProps {
   isOpen: boolean;
@@ -40,21 +41,8 @@ export function GameFriendInvite({
     onClose();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal-overlay" onClick={handleClose}>
-      <div className="game-friend-invite-modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h3>
-            <UserPlus size={20} />
-            Mời bạn bè chơi game
-          </h3>
-          <button className="btn-close" onClick={handleClose}>
-            <X size={20} />
-          </button>
-        </div>
-
+    <ModalShell isOpen={isOpen} onClose={handleClose} title="Mời bạn bè chơi game" maxWidth={480}>
         <div className="invite-info">
           <p className="game-title">{gameTitle || 'Quiz Game'}</p>
           <div className="game-code-display">
@@ -106,7 +94,6 @@ export function GameFriendInvite({
             Hoặc chia sẻ mã phòng <strong>{gameCode}</strong> cho bạn bè để tham gia
           </p>
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

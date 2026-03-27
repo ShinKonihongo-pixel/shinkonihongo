@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { User, Lock, KeyRound, Check, AlertCircle, Eye, EyeOff, ArrowRight, BookOpen, Gamepad2, Headphones } from 'lucide-react';
 import './login-page.css';
+import { ModalShell } from '../ui/modal-shell';
 
 interface LoginPageProps {
   onLogin: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -237,18 +238,16 @@ export function LoginPage({ onLogin, onRegister }: LoginPageProps) {
       </div>
 
       {/* Success modal */}
-      {showSuccessModal && (
-        <div className="lp-modal-overlay" onClick={handleGoToLogin}>
-          <div className="lp-modal" onClick={e => e.stopPropagation()}>
-            <div className="lp-modal-icon"><Check size={28} /></div>
-            <h3>Chào mừng bạn!</h3>
-            <p>Tài khoản đã sẵn sàng. Đăng nhập để bắt đầu hành trình chinh phục tiếng Nhật.</p>
-            <button className="lp-modal-btn" onClick={handleGoToLogin}>
-              Bắt đầu ngay
-            </button>
-          </div>
+      <ModalShell isOpen={showSuccessModal} onClose={handleGoToLogin} maxWidth={380} accent="purple" hideClose>
+        <div className="lp-modal">
+          <div className="lp-modal-icon"><Check size={28} /></div>
+          <h3>Chào mừng bạn!</h3>
+          <p>Tài khoản đã sẵn sàng. Đăng nhập để bắt đầu hành trình chinh phục tiếng Nhật.</p>
+          <button className="lp-modal-btn" onClick={handleGoToLogin}>
+            Bắt đầu ngay
+          </button>
         </div>
-      )}
+      </ModalShell>
     </div>
   );
 }

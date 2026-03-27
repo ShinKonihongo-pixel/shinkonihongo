@@ -8,6 +8,7 @@ import { RoomHeader } from './room-header';
 import { FormFields } from './form-fields';
 import { RulesSection } from './rules-section';
 import { RoomFooter } from './room-footer';
+import { ModalShell } from '../../ui/modal-shell';
 
 export function GameRoomSetup({
   gameType,
@@ -144,60 +145,58 @@ export function GameRoomSetup({
   }
 
   return (
-    <div className="rm-overlay" onClick={onBack}>
-      <div className="rm-modal large" onClick={e => e.stopPropagation()}>
-        <RoomHeader gameInfo={gameInfo} onBack={onBack} />
+    <ModalShell isOpen onClose={onBack} maxWidth={600} hideClose className="rm-modal-shell">
+      <RoomHeader gameInfo={gameInfo} onBack={onBack} />
 
-        <form className="rm-body" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rm-error">
-              <span>⚠️</span>
-              <span>{error}</span>
-            </div>
-          )}
+      <form className="rm-body" onSubmit={handleSubmit}>
+        {error && (
+          <div className="rm-error">
+            <span>⚠️</span>
+            <span>{error}</span>
+          </div>
+        )}
 
-          <FormFields
-            config={config}
-            title={title}
-            setTitle={setTitle}
-            jlptLevel={jlptLevel}
-            setJlptLevel={setJlptLevel}
-            selectedCategories={selectedCategories}
-            setSelectedCategories={setSelectedCategories}
-            maxPlayers={maxPlayers}
-            setMaxPlayers={setMaxPlayers}
-            totalRounds={totalRounds}
-            setTotalRounds={setTotalRounds}
-            timePerQuestion={timePerQuestion}
-            setTimePerQuestion={setTimePerQuestion}
-            toggleStates={toggleStates}
-            handleToggle={handleToggle}
-            selectedLessons={selectedLessons}
-            setSelectedLessons={setSelectedLessons}
-            getLessonsByLevel={getLessonsByLevel}
-            gameInfoName={gameInfo.name}
-            gameMode={gameMode}
-            setGameMode={setGameMode}
-            teamCount={teamCount}
-            setTeamCount={setTeamCount}
-            maxPlayersPerTeam={maxPlayersPerTeam}
-            setMaxPlayersPerTeam={setMaxPlayersPerTeam}
-            userRole={userRole}
-          />
-
-          {config.rules && <RulesSection rules={config.rules} />}
-        </form>
-
-        <RoomFooter
-          gameInfo={gameInfo}
-          loading={loading}
-          onBack={onBack}
-          onSubmit={handleCreate}
-          disabled={!hasEnoughQuestions}
-          availableCount={availableCount}
-          requiredCount={requiredCount}
+        <FormFields
+          config={config}
+          title={title}
+          setTitle={setTitle}
+          jlptLevel={jlptLevel}
+          setJlptLevel={setJlptLevel}
+          selectedCategories={selectedCategories}
+          setSelectedCategories={setSelectedCategories}
+          maxPlayers={maxPlayers}
+          setMaxPlayers={setMaxPlayers}
+          totalRounds={totalRounds}
+          setTotalRounds={setTotalRounds}
+          timePerQuestion={timePerQuestion}
+          setTimePerQuestion={setTimePerQuestion}
+          toggleStates={toggleStates}
+          handleToggle={handleToggle}
+          selectedLessons={selectedLessons}
+          setSelectedLessons={setSelectedLessons}
+          getLessonsByLevel={getLessonsByLevel}
+          gameInfoName={gameInfo.name}
+          gameMode={gameMode}
+          setGameMode={setGameMode}
+          teamCount={teamCount}
+          setTeamCount={setTeamCount}
+          maxPlayersPerTeam={maxPlayersPerTeam}
+          setMaxPlayersPerTeam={setMaxPlayersPerTeam}
+          userRole={userRole}
         />
-      </div>
-    </div>
+
+        {config.rules && <RulesSection rules={config.rules} />}
+      </form>
+
+      <RoomFooter
+        gameInfo={gameInfo}
+        loading={loading}
+        onBack={onBack}
+        onSubmit={handleCreate}
+        disabled={!hasEnoughQuestions}
+        availableCount={availableCount}
+        requiredCount={requiredCount}
+      />
+    </ModalShell>
   );
 }

@@ -1,3 +1,4 @@
+import { CalendarDays, BookOpen } from 'lucide-react';
 import { DAY_OF_WEEK_LABELS } from '../../../types/classroom';
 import { formatCurrency } from '../../../types/teacher';
 import type { TeacherSchedule, TeachingSession, Salary } from '../../../types/teacher';
@@ -5,6 +6,7 @@ import { SummaryCard } from './summary-card';
 import { ScheduleItem } from './schedule-item';
 import { SessionItem } from './session-item';
 import { getSalaryStatusLabel } from './utils';
+import { EmptyState } from '../../ui/empty-state';
 
 interface OverviewViewProps {
   schedules: TeacherSchedule[];
@@ -69,9 +71,7 @@ export function OverviewView({
           Lịch dạy hôm nay ({DAY_OF_WEEK_LABELS[today]})
         </h3>
         {todaySchedules.length === 0 ? (
-          <div style={{ padding: '20px', textAlign: 'center', color: '#999', background: '#f9f9f9', borderRadius: '8px' }}>
-            Không có tiết học nào hôm nay
-          </div>
+          <EmptyState compact icon={<CalendarDays size={36} strokeWidth={1.5} />} title="Không có tiết học nào hôm nay" />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {todaySchedules.map(schedule => (
@@ -88,9 +88,7 @@ export function OverviewView({
           Buổi dạy gần đây
         </h3>
         {completedSessions.length === 0 ? (
-          <div style={{ padding: '20px', textAlign: 'center', color: '#999', background: '#f9f9f9', borderRadius: '8px' }}>
-            Chưa có buổi dạy nào trong tháng này
-          </div>
+          <EmptyState compact icon={<BookOpen size={36} strokeWidth={1.5} />} title="Chưa có buổi dạy nào trong tháng này" />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {completedSessions.slice(0, 5).map(session => (

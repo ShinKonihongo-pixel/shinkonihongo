@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Edit2, Trash2, ChevronRight, FolderOpen } from 'lucide-react';
 import { LEVEL_THEMES } from './reading-tab-types';
 import type { LevelViewProps } from './reading-tab-types';
+import { EmptyState } from '../../ui/empty-state';
 
 export function ReadingLevelView({
   level,
@@ -78,11 +79,7 @@ export function ReadingLevelView({
           </div>
         ))}
         {folders.length === 0 && (
-          <div className="rt-empty">
-            <FolderOpen size={48} />
-            <h4>Chưa có thư mục</h4>
-            <p>Nhấn "Tạo thư mục" để bắt đầu</p>
-          </div>
+          <EmptyState icon={<FolderOpen size={48} />} title="Chưa có thư mục" description='Nhấn "Tạo thư mục" để bắt đầu' />
         )}
       </div>
     </div>

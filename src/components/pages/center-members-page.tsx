@@ -1,7 +1,8 @@
 // Center members page - member list with roles, search, filters, admin actions
 
 import { useState, useMemo } from 'react';
-import { Search, UserMinus, Users, GraduationCap, BookOpen, Shield, UserX } from 'lucide-react';
+import { UserMinus, Users, GraduationCap, BookOpen, Shield, UserX } from 'lucide-react';
+import { SearchInput } from '../ui/search-input';
 import { useCenter } from '../../contexts/center-context';
 import { useCenterMembers, type CenterMemberInfo } from '../../hooks/use-center-members';
 import { BRANCH_MEMBER_ROLE_LABELS, BRANCH_MEMBER_ROLE_COLORS } from '../../types/branch';
@@ -98,15 +99,12 @@ export function CenterMembersPage() {
 
       {/* Toolbar */}
       <div className="center-members-toolbar">
-        <div className="center-members-search">
-          <Search size={16} />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm theo tên..."
-          />
-        </div>
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Tìm theo tên..."
+          className="center-members-search"
+        />
 
         <div className="center-members-filters">
           {([

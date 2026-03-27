@@ -32,6 +32,7 @@ import {
   Pencil,
   type LucideIcon,
 } from 'lucide-react';
+import { ModalShell } from '../ui/modal-shell';
 import './onboarding-tour.css';
 
 interface TourStep {
@@ -200,8 +201,8 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
   const isFirst = currentStep === 0;
 
   return (
-    <div className="ob-overlay" onClick={onComplete}>
-      <div className="ob-modal" onClick={e => e.stopPropagation()}>
+    <ModalShell isOpen onClose={onComplete} maxWidth={480} hideClose className="ob-modal-shell">
+      <div className="ob-modal">
         {/* Close button */}
         <button className="ob-close" onClick={onComplete} aria-label="Đóng">
           <X size={18} />
@@ -286,6 +287,6 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
           </div>
         </div>
       </div>
-    </div>
+    </ModalShell>
   );
 }

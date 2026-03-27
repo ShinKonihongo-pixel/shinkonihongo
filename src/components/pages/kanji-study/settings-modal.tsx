@@ -1,5 +1,6 @@
 // Settings modal for kanji study
-import { X, Eye, Type, Settings, Sparkles } from 'lucide-react';
+import { Eye, Type, Settings, Sparkles } from 'lucide-react';
+import { ModalShell } from '../../ui/modal-shell';
 import type { KanjiStudySettings, FontSettings, CardFlipStyle } from './types';
 
 const FLIP_STYLES: { value: CardFlipStyle; label: string }[] = [
@@ -65,13 +66,7 @@ export function SettingsModal({ settings, onClose, onUpdateSettings }: SettingsM
   );
 
   return (
-    <div className="settings-modal-overlay" onClick={onClose}>
-      <div className="settings-modal" onClick={e => e.stopPropagation()}>
-        <div className="settings-modal-header">
-          <span className="settings-header-icon-box"><Settings size={20} /></span>
-          <h3>Cài đặt hiển thị</h3>
-          <button className="btn-close" onClick={onClose}><X size={18} /></button>
-        </div>
+    <ModalShell isOpen={true} onClose={onClose} title="Cài đặt hiển thị" maxWidth={480}>
         <div className="settings-modal-content">
           {/* Mặt trước */}
           <div className="settings-section">
@@ -158,7 +153,6 @@ export function SettingsModal({ settings, onClose, onUpdateSettings }: SettingsM
             </div>
           </div>
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

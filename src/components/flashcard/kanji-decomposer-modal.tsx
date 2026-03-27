@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { X, Shuffle, RotateCcw, Sparkles, Save } from 'lucide-react';
 import HanziWriter from 'hanzi-writer';
+import { ModalShell } from '../ui/modal-shell';
 import type { KanjiCard } from '../../types/kanji';
 import { getRadicalInfo, getKanjiByRadical, getSeedRadicals } from '../../utils/radical-kanji-index';
 import { getDecomposition } from '../../data/kanji-decomposition';
@@ -139,12 +140,12 @@ export function KanjiDecomposerModal({ kanjiCard, onClose, onSaveRadicals, onSav
     [radicals, decomposition]
   );
 
-  useEffect(() => { document.body.style.overflow = 'hidden'; return () => { document.body.style.overflow = ''; }; }, []);
+  // ESC key: close stroke preview first, then close modal
   useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { if (strokeChar) setStrokeChar(null); else onClose(); } };
-    document.addEventListener('keydown', h);
-    return () => document.removeEventListener('keydown', h);
-  }, [onClose, strokeChar]);
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape' && strokeChar) { e.stopImmediatePropagation(); setStrokeChar(null); } };
+    document.addEventListener('keydown', h, true);
+    return () => document.removeEventListener('keydown', h, true);
+  }, [strokeChar]);
 
   // Result kanji is always the current card's character — editing radicals only changes the decomposition, not the kanji
   const resultKanji = kanjiCard.character;
@@ -238,8 +239,7 @@ export function KanjiDecomposerModal({ kanjiCard, onClose, onSaveRadicals, onSav
   }, [strokeChar, kanjiCard, radicals, mnemonic]);
 
   return (
-    <div className="kdc-overlay" onClick={onClose}>
-      <div className="kdc-modal" onClick={e => e.stopPropagation()}>
+    <ModalShell isOpen onClose={onClose} maxWidth={720} hideClose className="kdc-modal-shell">
         <div className="kdc-header">
           <div className="kdc-header-left">
             <Sparkles size={18} className="kdc-header-icon" />
@@ -458,13 +458,11 @@ export function KanjiDecomposerModal({ kanjiCard, onClose, onSaveRadicals, onSav
             }
           </div>
         </div>
-      </div>
-
-      {/* Stroke preview */}
-      {strokeChar && strokeInfo && (
-        <StrokePreview char={strokeChar} info={strokeInfo} onClose={() => setStrokeChar(null)} />
-      )}
-    </div>
+        {/* Stroke preview */}
+        {strokeChar && strokeInfo && (
+          <StrokePreview char={strokeChar} info={strokeInfo} onClose={() => setStrokeChar(null)} />
+        )}
+    </ModalShell>
   );
 }
 
@@ -564,9 +562,7 @@ function StrokePreview({ char, info, onClose }: {
   const play = () => { writer.current?.hideCharacter(); writer.current?.animateCharacter({ strokeAnimationSpeed: 20, delayBetweenStrokes: 30 }); };
 
   return (
-    <div className="kdc-stroke-overlay" onClick={onClose}>
-      <div className="kdc-stroke-modal" onClick={e => e.stopPropagation()}>
-        <button className="kdc-stroke-close" onClick={onClose}><X size={18} /></button>
+    <ModalShell isOpen onClose={onClose} maxWidth={420} className="kdc-stroke-modal-shell">
         <div ref={ref} className="kdc-stroke-canvas" />
         <div className="kdc-stroke-info">
           <span className="kdc-stroke-hv">{info.hv}</span>
@@ -587,7 +583,6 @@ function StrokePreview({ char, info, onClose }: {
           </div>
         )}
         {info.mnemonic && <div className="kdc-stroke-mnemonic">💡 {info.mnemonic}</div>}
-      </div>
-    </div>
+    </ModalShell>
   );
 }

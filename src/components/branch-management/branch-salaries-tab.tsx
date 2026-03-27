@@ -1,10 +1,12 @@
 // Branch Salaries Tab - Manage salary calculations, reports, and slips
 
 import { useState } from 'react';
+import { FileText } from 'lucide-react';
 import { SalaryCalculator } from '../salary/salary-calculator';
 import { SalaryReport } from '../salary/salary-report';
 import { SalarySlipPreview } from '../salary/salary-slip';
 import type { BranchSalariesTabProps, SalarySubTab } from './branch-management-types';
+import { EmptyState } from '../ui/empty-state';
 
 export function BranchSalariesTab({
   salaries,
@@ -93,10 +95,11 @@ export function BranchSalariesTab({
           {loading ? (
             <div className="loading-state">Đang tải...</div>
           ) : salaries.length === 0 ? (
-            <div className="empty-state">
-              <p>Chưa có phiếu lương cho tháng này</p>
-              <p className="hint">Vào tab "Bảng lương" và bấm "Tạo lương cho tất cả" để bắt đầu</p>
-            </div>
+            <EmptyState
+              icon={<FileText size={48} strokeWidth={1.5} />}
+              title="Chưa có phiếu lương cho tháng này"
+              description='Vào tab "Bảng lương" và bấm "Tạo lương cho tất cả" để bắt đầu'
+            />
           ) : (
             <div className="slips-grid">
               {salaries.map(salary => (

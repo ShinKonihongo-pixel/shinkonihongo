@@ -1,8 +1,10 @@
 // Lectures Management Tab - Lecture folder navigation and management
 
 import { useState } from 'react';
+import { FolderOpen, FileText } from 'lucide-react';
 import { LectureCard } from '../lecture/lecture-card';
 import { ConfirmModal } from '../ui/confirm-modal';
+import { EmptyState } from '../ui/empty-state';
 import type { LecturesTabProps, LectureNavState, Lecture, LectureFolder } from './cards-management-types';
 import { JLPT_LEVELS } from './cards-management-types';
 
@@ -150,14 +152,14 @@ export function LecturesTab({
                   )}
                 </div>
               ))}
-              {getFoldersByLevel(navState.level).length === 0 && <p className="empty-message">Chưa có thư mục nào. Nhấn "+ Tạo thư mục" để thêm.</p>}
+              {getFoldersByLevel(navState.level).length === 0 && <EmptyState compact icon={<FolderOpen size={36} strokeWidth={1.5} />} title="Chưa có thư mục nào" description='Nhấn "+ Tạo thư mục" để thêm' />}
             </div>
           )}
 
           {navState.type === 'folder' && (
             <div className="lecture-grid" style={{ marginTop: '1rem' }}>
               {getLecturesByFolder(navState.folderId).length === 0 ? (
-                <p className="empty-message">Chưa có bài giảng nào. Nhấn "+ Tạo bài giảng" để thêm.</p>
+                <EmptyState compact icon={<FileText size={36} strokeWidth={1.5} />} title="Chưa có bài giảng nào" description='Nhấn "+ Tạo bài giảng" để thêm' />
               ) : (
                 getLecturesByFolder(navState.folderId).map(lecture => (
                   <LectureCard

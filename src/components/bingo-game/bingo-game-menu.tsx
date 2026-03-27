@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Plus, Users, HelpCircle } from 'lucide-react';
 import type { BingoGame } from '../../types/bingo-game';
+import { ModalShell } from '../ui/modal-shell';
 
 interface BingoGameMenuProps {
   availableRooms: BingoGame[];
@@ -97,34 +98,34 @@ export function BingoGameMenu({
       )}
 
       {/* Join modal */}
-      {showJoinModal && (
-        <div className="bingo-modal-overlay" onClick={() => setShowJoinModal(false)}>
-          <div className="bingo-modal" onClick={e => e.stopPropagation()}>
-            <h3>Nhập Mã Phòng</h3>
-            <input
-              type="text"
-              className="bingo-code-input"
-              value={joinCode}
-              onChange={e => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))}
-              placeholder="XXXXXX"
-              maxLength={6}
-              autoFocus
-            />
-            <div className="bingo-modal-actions">
-              <button className="btn-cancel" onClick={() => setShowJoinModal(false)}>
-                Hủy
-              </button>
-              <button
-                className="btn-join"
-                onClick={handleJoin}
-                disabled={joinCode.length < 4}
-              >
-                Tham Gia
-              </button>
-            </div>
-          </div>
+      <ModalShell
+        isOpen={showJoinModal}
+        onClose={() => setShowJoinModal(false)}
+        title="Nhập Mã Phòng"
+        maxWidth={360}
+      >
+        <input
+          type="text"
+          className="bingo-code-input"
+          value={joinCode}
+          onChange={e => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))}
+          placeholder="XXXXXX"
+          maxLength={6}
+          autoFocus
+        />
+        <div className="bingo-modal-actions">
+          <button className="btn-cancel" onClick={() => setShowJoinModal(false)}>
+            Hủy
+          </button>
+          <button
+            className="btn-join"
+            onClick={handleJoin}
+            disabled={joinCode.length < 4}
+          >
+            Tham Gia
+          </button>
         </div>
-      )}
+      </ModalShell>
     </div>
   );
 }

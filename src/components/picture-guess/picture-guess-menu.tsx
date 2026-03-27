@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import { Play, Users, BookOpen, Trophy, Image, HelpCircle, Sparkles } from 'lucide-react';
+import { ModalShell } from '../ui/modal-shell';
 
 interface PictureGuessMenuProps {
   onStartSingle: () => void;
@@ -109,83 +110,82 @@ export function PictureGuessMenu({
       </div>
 
       {/* Join Game Modal */}
-      {showJoinModal && (
-        <div className="pg-modal-overlay" onClick={() => setShowJoinModal(false)}>
-          <div className="pg-modal" onClick={e => e.stopPropagation()}>
-            <h3>Tham Gia Phòng</h3>
-            <p>Nhập mã phòng 6 chữ số</p>
-            <input
-              type="text"
-              className="pg-code-input"
-              value={joinCode}
-              onChange={e => setJoinCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              placeholder="000000"
-              maxLength={6}
-              autoFocus
-            />
-            <div className="pg-modal-actions">
-              <button className="btn btn-secondary" onClick={() => setShowJoinModal(false)}>
-                Hủy
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={handleJoin}
-                disabled={joinCode.length !== 6 || loading}
-              >
-                {loading ? 'Đang tham gia...' : 'Tham Gia'}
-              </button>
-            </div>
-          </div>
+      <ModalShell
+        isOpen={showJoinModal}
+        onClose={() => setShowJoinModal(false)}
+        title="Tham Gia Phòng"
+        maxWidth={360}
+      >
+        <p>Nhập mã phòng 6 chữ số</p>
+        <input
+          type="text"
+          className="pg-code-input"
+          value={joinCode}
+          onChange={e => setJoinCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+          placeholder="000000"
+          maxLength={6}
+          autoFocus
+        />
+        <div className="pg-modal-actions">
+          <button className="btn btn-secondary" onClick={() => setShowJoinModal(false)}>
+            Hủy
+          </button>
+          <button
+            className="btn btn-primary"
+            onClick={handleJoin}
+            disabled={joinCode.length !== 6 || loading}
+          >
+            {loading ? 'Đang tham gia...' : 'Tham Gia'}
+          </button>
         </div>
-      )}
+      </ModalShell>
 
       {/* Instructions Modal */}
-      {showInstructions && (
-        <div className="pg-modal-overlay" onClick={() => setShowInstructions(false)}>
-          <div className="pg-modal instructions-modal" onClick={e => e.stopPropagation()}>
-            <h3>Cách Chơi Đuổi Hình Bắt Chữ</h3>
-
-            <div className="instruction-section">
-              <h4>🎯 Mục tiêu</h4>
-              <p>Nhìn vào hình ảnh/emoji và đoán từ tiếng Nhật tương ứng.</p>
-            </div>
-
-            <div className="instruction-section">
-              <h4>🎮 Cách chơi</h4>
-              <ol>
-                <li>Quan sát hình ảnh/emoji hiển thị trên màn hình</li>
-                <li>Gõ từ tiếng Nhật bạn nghĩ là đáp án</li>
-                <li>Nhấn Enter hoặc nút "Trả lời" để gửi câu trả lời</li>
-                <li>Trả lời đúng để ghi điểm!</li>
-              </ol>
-            </div>
-
-            <div className="instruction-section">
-              <h4>💡 Gợi ý</h4>
-              <p>Bạn có thể sử dụng các gợi ý nếu gặp khó khăn:</p>
-              <ul>
-                <li><strong>🔤 Chữ đầu:</strong> Hiển thị ký tự đầu tiên (-10 điểm)</li>
-                <li><strong>📏 Độ dài:</strong> Hiển thị số ký tự của từ (-5 điểm)</li>
-                <li><strong>💡 Gợi ý nghĩa:</strong> Hiển thị một phần nghĩa (-15 điểm)</li>
-                <li><strong>🈳 Hán Việt:</strong> Hiển thị âm Hán Việt (-10 điểm)</li>
-              </ul>
-            </div>
-
-            <div className="instruction-section">
-              <h4>⭐ Tính điểm</h4>
-              <ul>
-                <li>Điểm cơ bản: 100-200 điểm tùy độ khó</li>
-                <li>Điểm thưởng tốc độ: Trả lời nhanh hơn = nhiều điểm hơn</li>
-                <li>Điểm streak: Trả lời đúng liên tiếp để nhận thưởng</li>
-              </ul>
-            </div>
-
-            <button className="btn btn-primary" onClick={() => setShowInstructions(false)}>
-              Đã hiểu!
-            </button>
-          </div>
+      <ModalShell
+        isOpen={showInstructions}
+        onClose={() => setShowInstructions(false)}
+        title="Cách Chơi Đuổi Hình Bắt Chữ"
+        maxWidth={520}
+      >
+        <div className="instruction-section">
+          <h4>🎯 Mục tiêu</h4>
+          <p>Nhìn vào hình ảnh/emoji và đoán từ tiếng Nhật tương ứng.</p>
         </div>
-      )}
+
+        <div className="instruction-section">
+          <h4>🎮 Cách chơi</h4>
+          <ol>
+            <li>Quan sát hình ảnh/emoji hiển thị trên màn hình</li>
+            <li>Gõ từ tiếng Nhật bạn nghĩ là đáp án</li>
+            <li>Nhấn Enter hoặc nút "Trả lời" để gửi câu trả lời</li>
+            <li>Trả lời đúng để ghi điểm!</li>
+          </ol>
+        </div>
+
+        <div className="instruction-section">
+          <h4>💡 Gợi ý</h4>
+          <p>Bạn có thể sử dụng các gợi ý nếu gặp khó khăn:</p>
+          <ul>
+            <li><strong>🔤 Chữ đầu:</strong> Hiển thị ký tự đầu tiên (-10 điểm)</li>
+            <li><strong>📏 Độ dài:</strong> Hiển thị số ký tự của từ (-5 điểm)</li>
+            <li><strong>💡 Gợi ý nghĩa:</strong> Hiển thị một phần nghĩa (-15 điểm)</li>
+            <li><strong>🈳 Hán Việt:</strong> Hiển thị âm Hán Việt (-10 điểm)</li>
+          </ul>
+        </div>
+
+        <div className="instruction-section">
+          <h4>⭐ Tính điểm</h4>
+          <ul>
+            <li>Điểm cơ bản: 100-200 điểm tùy độ khó</li>
+            <li>Điểm thưởng tốc độ: Trả lời nhanh hơn = nhiều điểm hơn</li>
+            <li>Điểm streak: Trả lời đúng liên tiếp để nhận thưởng</li>
+          </ul>
+        </div>
+
+        <button className="btn btn-primary" onClick={() => setShowInstructions(false)}>
+          Đã hiểu!
+        </button>
+      </ModalShell>
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { Edit2, Trash2, FileText } from 'lucide-react';
 import { LEVEL_THEMES } from './reading-tab-types';
 import type { FolderViewProps } from './reading-tab-types';
+import { EmptyState } from '../../ui/empty-state';
 
 export function ReadingFolderView({
   level,
@@ -44,11 +45,7 @@ export function ReadingFolderView({
           </div>
         ))}
         {passages.length === 0 && (
-          <div className="rt-empty rt-empty-wide">
-            <FileText size={48} />
-            <h4>Chưa có bài đọc</h4>
-            <p>Nhấn "Tạo bài đọc" để thêm mới</p>
-          </div>
+          <EmptyState icon={<FileText size={48} />} title="Chưa có bài đọc" description='Nhấn "Tạo bài đọc" để thêm mới' />
         )}
       </div>
     </div>

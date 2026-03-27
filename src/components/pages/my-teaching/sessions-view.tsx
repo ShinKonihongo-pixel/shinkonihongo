@@ -1,5 +1,7 @@
+import { BookOpen } from 'lucide-react';
 import type { TeachingSession } from '../../../types/teacher';
 import { SessionCard } from './session-card';
+import { EmptyState } from '../../ui/empty-state';
 
 interface SessionsViewProps {
   sessions: TeachingSession[];
@@ -26,9 +28,7 @@ export function SessionsView({ sessions, totalHours, selectedMonth, sessionsLoad
       {sessionsLoading ? (
         <div style={{ padding: '40px', textAlign: 'center', color: '#999' }}>Đang tải...</div>
       ) : sessions.length === 0 ? (
-        <div className="empty-state">
-          <p>Chưa có buổi dạy nào trong tháng này</p>
-        </div>
+        <EmptyState icon={<BookOpen size={48} strokeWidth={1.5} />} title="Chưa có buổi dạy nào trong tháng này" />
       ) : (
         <div style={{
           display: 'flex',

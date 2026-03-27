@@ -13,6 +13,7 @@ import { useJLPTData } from '../../contexts/jlpt-data-context';
 import { useSettings } from '../../hooks/settings/use-app-settings';
 import { useLessonFiltering } from '../../hooks/use-lesson-filtering';
 import { useNavigation } from '../../contexts/navigation-context';
+import { ModalShell } from '../ui/modal-shell';
 import { GameSelector } from '../game-hub/game-selector';
 import { GameRoomSetup } from '../game-hub/room-setup/game-room-setup';
 import {
@@ -58,33 +59,30 @@ class ModalErrorBoundary extends Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div className="rm-overlay" onClick={this.props.onClose}>
-          <div className="rm-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
-            <div style={{ padding: '2rem', textAlign: 'center' }}>
-              <h3 style={{ margin: '0 0 0.75rem', color: '#f87171' }}>Lỗi hiển thị modal</h3>
-              <p style={{ margin: '0 0 0.5rem', color: '#94A3B8', fontSize: '0.875rem' }}>
-                {this.state.error?.message || 'Lỗi không xác định'}
-              </p>
-              <pre style={{
-                margin: '0 0 1rem', padding: '0.5rem', borderRadius: '6px',
-                background: 'rgba(0,0,0,0.3)', color: '#fca5a5', fontSize: '0.7rem',
-                textAlign: 'left', overflow: 'auto', maxHeight: '120px', whiteSpace: 'pre-wrap',
-              }}>
-                {this.state.error?.stack?.split('\n').slice(0, 5).join('\n')}
-              </pre>
-              <button
-                onClick={this.props.onClose}
-                style={{
-                  padding: '0.625rem 1.5rem', borderRadius: '0.5rem', border: 'none',
-                  background: 'linear-gradient(135deg, #7C3AED, #A78BFA)',
-                  color: 'white', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600,
-                }}
-              >
-                Đóng
-              </button>
-            </div>
+        <ModalShell isOpen onClose={this.props.onClose} title="Lỗi hiển thị modal" maxWidth={420} accent="danger">
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ margin: '0 0 0.5rem', color: '#94A3B8', fontSize: '0.875rem' }}>
+              {this.state.error?.message || 'Lỗi không xác định'}
+            </p>
+            <pre style={{
+              margin: '0 0 1rem', padding: '0.5rem', borderRadius: '6px',
+              background: 'rgba(0,0,0,0.3)', color: '#fca5a5', fontSize: '0.7rem',
+              textAlign: 'left', overflow: 'auto', maxHeight: '120px', whiteSpace: 'pre-wrap',
+            }}>
+              {this.state.error?.stack?.split('\n').slice(0, 5).join('\n')}
+            </pre>
+            <button
+              onClick={this.props.onClose}
+              style={{
+                padding: '0.625rem 1.5rem', borderRadius: '0.5rem', border: 'none',
+                background: 'linear-gradient(135deg, #7C3AED, #A78BFA)',
+                color: 'white', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600,
+              }}
+            >
+              Đóng
+            </button>
           </div>
-        </div>
+        </ModalShell>
       );
     }
     return this.props.children;

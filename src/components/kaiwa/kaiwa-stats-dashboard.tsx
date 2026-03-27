@@ -12,9 +12,9 @@ import {
   Calendar,
   ChevronRight,
   Award,
-  X,
   BarChart3,
 } from 'lucide-react';
+import { ModalShell } from '../ui/modal-shell';
 import type { KaiwaStats, KaiwaSession, KaiwaDailyRecord } from '../../types/kaiwa-session';
 import type { JLPTLevel } from '../../types/kaiwa';
 
@@ -89,13 +89,10 @@ export function KaiwaStatsDashboard({
   };
 
   return (
-    <div className="kaiwa-stats-modal-overlay" onClick={onClose}>
-      <div className="kaiwa-stats-modal" onClick={e => e.stopPropagation()}>
+    <ModalShell isOpen onClose={onClose} maxWidth={680} hideClose className="kaiwa-stats-modal">
         <div className="stats-modal-header">
           <h2><BarChart3 size={24} /> Thống kê học tập</h2>
-          <button className="stats-close-btn" onClick={onClose}>
-            <X size={20} />
-          </button>
+          <button className="stats-close-btn" onClick={onClose}>✕</button>
         </div>
 
         {/* Tabs */}
@@ -361,7 +358,6 @@ export function KaiwaStatsDashboard({
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

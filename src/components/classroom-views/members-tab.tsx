@@ -1,6 +1,8 @@
 // Members Tab - Classroom members management
 
+import { Users } from 'lucide-react';
 import type { MembersTabProps } from './classroom-types';
+import { EmptyState } from '../ui/empty-state';
 
 export function MembersTab({ classroom, students, loading, onInviteClick, onRemoveMember }: MembersTabProps) {
   return (
@@ -25,7 +27,7 @@ export function MembersTab({ classroom, students, loading, onInviteClick, onRemo
         {loading ? (
           <p>Đang tải...</p>
         ) : students.length === 0 ? (
-          <p className="empty-text">Chưa có học viên</p>
+          <EmptyState compact icon={<Users size={36} strokeWidth={1.5} />} title="Chưa có học viên" />
         ) : (
           <div className="members-list">
             {students.map(member => (

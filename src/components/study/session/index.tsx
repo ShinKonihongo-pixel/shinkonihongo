@@ -47,18 +47,17 @@ export function StudySession({
           onBack={onBack}
           onSettingsClick={() => setShowSettingsModal(true)}
         />
-        {showSettingsModal && (
-          <StudySettingsModal
-            filterMemorization={filterMemorization}
-            onFilterMemorizationChange={onFilterMemorizationChange}
-            frontFontSize={frontFontSize}
-            onFrontFontSizeChange={onFrontFontSizeChange}
-            settings={settings}
-            onSettingsChange={onSettingsChange}
-            onClose={() => setShowSettingsModal(false)}
-            isMobile={isMobile}
-          />
-        )}
+        <StudySettingsModal
+          isOpen={showSettingsModal}
+          filterMemorization={filterMemorization}
+          onFilterMemorizationChange={onFilterMemorizationChange}
+          frontFontSize={frontFontSize}
+          onFrontFontSizeChange={onFrontFontSizeChange}
+          settings={settings}
+          onSettingsChange={onSettingsChange}
+          onClose={() => setShowSettingsModal(false)}
+          isMobile={isMobile}
+        />
       </>
     );
   }
@@ -104,18 +103,17 @@ export function StudySession({
         isMobile={isMobile}
       />
 
-      {showSettingsModal && (
-        <StudySettingsModal
-          filterMemorization={filterMemorization}
-          onFilterMemorizationChange={onFilterMemorizationChange}
-          frontFontSize={frontFontSize}
-          onFrontFontSizeChange={onFrontFontSizeChange}
-          settings={settings}
-          onSettingsChange={onSettingsChange}
-          onClose={() => setShowSettingsModal(false)}
-          isMobile={isMobile}
-        />
-      )}
+      <StudySettingsModal
+        isOpen={showSettingsModal}
+        filterMemorization={filterMemorization}
+        onFilterMemorizationChange={onFilterMemorizationChange}
+        frontFontSize={frontFontSize}
+        onFrontFontSizeChange={onFrontFontSizeChange}
+        settings={settings}
+        onSettingsChange={onSettingsChange}
+        onClose={() => setShowSettingsModal(false)}
+        isMobile={isMobile}
+      />
     </div>
   );
 }

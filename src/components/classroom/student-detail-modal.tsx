@@ -19,7 +19,6 @@ import {
   DEFAULT_EVALUATION_CRITERIA,
 } from '../../types/classroom';
 import {
-  X,
   User as UserIcon,
   BarChart3,
   Calendar,
@@ -36,6 +35,7 @@ import {
 import { exportStudentReportPDF } from '../../utils/student-report-pdf-export';
 import { ScoreSparkline, AttendanceDonut, CriteriaRadar } from './student-detail/student-charts';
 import { ReportHistoryTab } from './student-detail/report-history-tab';
+import { ModalShell } from '../ui/modal-shell';
 
 interface StudentDetailModalProps {
   isOpen: boolean;
@@ -162,8 +162,6 @@ export function StudentDetailModal({
     return buckets;
   }, [submissionsWithTest]);
 
-  if (!isOpen) return null;
-
   const displayName = user?.displayName || user?.username || 'Unknown';
   const trendIcon =
     performanceTrend === 'up'   ? <TrendingUp size={14} className="trend-up" /> :
@@ -175,8 +173,7 @@ export function StudentDetailModal({
   const bucketLabels = ['<50', '50–69', '70–89', '≥90'];
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content student-detail-modal" onClick={e => e.stopPropagation()}>
+    <ModalShell isOpen={isOpen} onClose={onClose} maxWidth={860} hideClose className="student-detail-modal">
 
         {/* Header */}
         <div className="modal-header student-header">
@@ -201,7 +198,7 @@ export function StudentDetailModal({
                 {exporting ? 'Đang xuất...' : 'Xuất PDF'}
               </button>
             )}
-            <button className="btn-close" onClick={onClose}><X size={20} /></button>
+            <button className="btn-close" onClick={onClose}>✕</button>
           </div>
         </div>
 
@@ -588,7 +585,6 @@ export function StudentDetailModal({
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

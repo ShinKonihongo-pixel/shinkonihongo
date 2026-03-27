@@ -1,6 +1,7 @@
 // Lecture Editor Modals - Symbol picker, admin notes, settings
 
 import { ConfirmModal } from '../ui/confirm-modal';
+import { ModalShell } from '../ui/modal-shell';
 import type { JLPTLevel } from '../../types/flashcard';
 import type { TextSelection, LectureFormState } from './editor-types';
 import { LECTURE_SYMBOLS } from './editor-constants';
@@ -13,36 +14,28 @@ interface SymbolPickerModalProps {
 }
 
 export function SymbolPickerModal({ isOpen, onClose, onInsertSymbol }: SymbolPickerModalProps) {
-  if (!isOpen) return null;
-
   return (
-    <div className="ppt-modal-overlay" onClick={onClose}>
-      <div className="ppt-symbol-modal" onClick={e => e.stopPropagation()}>
-        <div className="ppt-modal-header">
-          <h3>Chèn Biểu tượng</h3>
-          <button className="ppt-modal-close" onClick={onClose}>×</button>
-        </div>
-        <div className="ppt-symbol-categories">
-          {Object.entries(LECTURE_SYMBOLS).map(([category, symbols]) => (
-            <div key={category} className="ppt-symbol-category">
-              <h4>{category}</h4>
-              <div className="ppt-symbol-grid">
-                {symbols.map((s, i) => (
-                  <button
-                    key={i}
-                    className="ppt-symbol-item"
-                    onClick={() => onInsertSymbol(s)}
-                    title={s}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
+    <ModalShell isOpen={isOpen} onClose={onClose} title="Chèn Biểu tượng" maxWidth={480} accent="purple">
+      <div className="ppt-symbol-categories">
+        {Object.entries(LECTURE_SYMBOLS).map(([category, symbols]) => (
+          <div key={category} className="ppt-symbol-category">
+            <h4>{category}</h4>
+            <div className="ppt-symbol-grid">
+              {symbols.map((s, i) => (
+                <button
+                  key={i}
+                  className="ppt-symbol-item"
+                  onClick={() => onInsertSymbol(s)}
+                  title={s}
+                >
+                  {s}
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
-    </div>
+    </ModalShell>
   );
 }
 
@@ -61,45 +54,37 @@ export function AdminNoteModal({
   isOpen, textSelection, editingNoteId, noteContent,
   onNoteContentChange, onClose, onSave,
 }: AdminNoteModalProps) {
-  if (!isOpen) return null;
-
   return (
-    <div className="ppt-modal-overlay" onClick={onClose}>
-      <div className="ppt-note-modal" onClick={e => e.stopPropagation()}>
-        <div className="ppt-modal-header">
-          <h3>{editingNoteId ? 'Sửa ghi chú' : 'Thêm ghi chú Admin'}</h3>
-          <button className="ppt-modal-close" onClick={onClose}>×</button>
+    <ModalShell isOpen={isOpen} onClose={onClose} title={editingNoteId ? 'Sửa ghi chú' : 'Thêm ghi chú Admin'} maxWidth={480} accent="purple">
+      <div className="ppt-note-modal-content">
+        {textSelection && !editingNoteId && (
+          <div className="ppt-note-selected-text">
+            <label>Đoạn văn bản đã chọn:</label>
+            <div className="ppt-note-highlight">"{textSelection.text}"</div>
+          </div>
+        )}
+        <div className="ppt-note-input-group">
+          <label>Nội dung ghi chú (chỉ admin thấy):</label>
+          <textarea
+            value={noteContent}
+            onChange={(e) => onNoteContentChange(e.target.value)}
+            placeholder="Nhập ghi chú cho đoạn văn bản này..."
+            rows={4}
+            autoFocus
+          />
         </div>
-        <div className="ppt-note-modal-content">
-          {textSelection && !editingNoteId && (
-            <div className="ppt-note-selected-text">
-              <label>Đoạn văn bản đã chọn:</label>
-              <div className="ppt-note-highlight">"{textSelection.text}"</div>
-            </div>
-          )}
-          <div className="ppt-note-input-group">
-            <label>Nội dung ghi chú (chỉ admin thấy):</label>
-            <textarea
-              value={noteContent}
-              onChange={(e) => onNoteContentChange(e.target.value)}
-              placeholder="Nhập ghi chú cho đoạn văn bản này..."
-              rows={4}
-              autoFocus
-            />
-          </div>
-          <div className="ppt-note-modal-actions">
-            <button className="ppt-btn" onClick={onClose}>Hủy</button>
-            <button
-              className="ppt-btn ppt-btn-primary"
-              onClick={onSave}
-              disabled={!noteContent.trim()}
-            >
-              {editingNoteId ? 'Cập nhật' : 'Thêm ghi chú'}
-            </button>
-          </div>
+        <div className="ppt-note-modal-actions">
+          <button className="ppt-btn" onClick={onClose}>Hủy</button>
+          <button
+            className="ppt-btn ppt-btn-primary"
+            onClick={onSave}
+            disabled={!noteContent.trim()}
+          >
+            {editingNoteId ? 'Cập nhật' : 'Thêm ghi chú'}
+          </button>
         </div>
       </div>
-    </div>
+    </ModalShell>
   );
 }
 

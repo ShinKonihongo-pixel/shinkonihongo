@@ -1,6 +1,7 @@
 // KanjiTab - Search bar and search results panel
 
-import { Search, X, Copy, AlertTriangle, Puzzle, Edit2, ArrowRightLeft, Trash2 } from 'lucide-react';
+import { Copy, AlertTriangle, Puzzle, Edit2, ArrowRightLeft, Trash2 } from 'lucide-react';
+import { SearchInput } from '../ui/search-input';
 import type { KanjiCard } from '../../types/kanji';
 import type { JLPTLevel } from './cards-management-types';
 import { LEVEL_COLORS } from '../../constants/themes';
@@ -45,21 +46,12 @@ export function KanjiTabSearch({
   return (
     <>
       <div className="kanji-search-section">
-        <div className="kanji-search-bar">
-          <Search size={16} className="kanji-search-icon" />
-          <input
-            type="text"
-            placeholder="Tìm kanji, Hán Việt, nghĩa..."
-            value={searchQuery}
-            onChange={e => onSearchQueryChange(e.target.value)}
-            className="kanji-search-input"
-          />
-          {(searchQuery || searchFilter !== 'all') && (
-            <button className="kanji-search-clear" onClick={onClearSearch}>
-              <X size={14} />
-            </button>
-          )}
-        </div>
+        <SearchInput
+          value={searchQuery}
+          onChange={onSearchQueryChange}
+          placeholder="Tìm kanji, Hán Việt, nghĩa..."
+          className="kanji-search-bar"
+        />
         <div className="kanji-search-filters">
           <button
             className={`kanji-filter-chip ${searchFilter === 'duplicates' ? 'active danger' : ''}`}

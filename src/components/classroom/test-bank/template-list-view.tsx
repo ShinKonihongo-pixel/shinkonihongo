@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { FileText, ClipboardList, Clock, Edit2, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import type { TestTemplate } from '../../../types/classroom';
+import { EmptyState } from '../../ui/empty-state';
 
 interface TemplateListViewProps {
   templates: TestTemplate[];
@@ -22,10 +23,11 @@ export function TemplateListView({ templates, onEdit, onDelete, saving }: Templa
 
   if (templates.length === 0) {
     return (
-      <div className="empty-state">
-        <p>Chưa có bài kiểm tra/bài tập nào</p>
-        <p className="hint">Sử dụng nút ở góc trên để thêm mới</p>
-      </div>
+      <EmptyState
+        icon={<ClipboardList size={48} strokeWidth={1.5} />}
+        title="Chưa có bài kiểm tra/bài tập nào"
+        description="Sử dụng nút ở góc trên để thêm mới"
+      />
     );
   }
 

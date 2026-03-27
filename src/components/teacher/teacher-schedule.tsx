@@ -1,11 +1,13 @@
 // Teacher schedule component - Weekly view of teaching schedule
 
 import { useState, useMemo } from 'react';
+import { CalendarDays } from 'lucide-react';
 import type { TeacherSchedule } from '../../types/teacher';
 import type { Classroom } from '../../types/classroom';
 import type { User } from '../../types/user';
 import { BRANCH_MEMBER_ROLE_LABELS, BRANCH_MEMBER_ROLE_COLORS, type BranchMemberRole } from '../../types/branch';
 import { DAY_OF_WEEK_LABELS } from '../../types/classroom';
+import { EmptyState } from '../ui/empty-state';
 
 interface ScheduleWithDetails extends TeacherSchedule {
   classroom?: Classroom;
@@ -164,15 +166,7 @@ export function TeacherScheduleView({
           </h4>
 
           {(schedulesByDay.get(selectedDay) || []).length === 0 ? (
-            <div style={{
-              padding: '20px',
-              textAlign: 'center',
-              color: '#999',
-              background: '#fff',
-              borderRadius: '8px',
-            }}>
-              Không có tiết học nào
-            </div>
+            <EmptyState compact title="Không có tiết học nào" />
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {(schedulesByDay.get(selectedDay) || []).map(schedule => (
@@ -220,18 +214,11 @@ export function TeacherScheduleView({
 
       {/* Empty state */}
       {enrichedSchedules.length === 0 && (
-        <div style={{
-          padding: '60px 20px',
-          textAlign: 'center',
-          background: '#f9f9f9',
-          borderRadius: '12px',
-        }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>📅</div>
-          <h4 style={{ margin: '0 0 8px 0', color: '#333' }}>Chưa có lịch dạy</h4>
-          <p style={{ margin: 0, color: '#999', fontSize: '14px' }}>
-            Bấm "Thêm lịch dạy" để tạo lịch dạy cho giáo viên
-          </p>
-        </div>
+        <EmptyState
+          icon={<CalendarDays size={48} strokeWidth={1.5} />}
+          title="Chưa có lịch dạy"
+          description='Bấm "Thêm lịch dạy" để tạo lịch dạy cho giáo viên'
+        />
       )}
     </div>
   );

@@ -2,11 +2,11 @@
 // Handles user profile display and editing
 
 import { useMemo, useEffect } from 'react';
-import { X } from 'lucide-react';
 import type { ProfileSettingsProps } from './settings-types';
 import { useProfileHandlers } from './hooks/use-profile-handlers';
 import { AVATAR_CATEGORIES, isImageAvatar } from '../../../utils/avatar-icons';
 import { calculateUserLevel } from '../../../types/user';
+import { ModalShell } from '../../ui/modal-shell';
 
 export function ProfileSection(props: ProfileSettingsProps) {
   const {
@@ -28,15 +28,6 @@ export function ProfileSection(props: ProfileSettingsProps) {
     return calculateUserLevel(stats);
   }, [stats]);
 
-  // Body scroll lock when avatar modal is open
-  useEffect(() => {
-    if (profileHandlers.showAvatarPicker) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => { document.body.style.overflow = ''; };
-  }, [profileHandlers.showAvatarPicker]);
 
   if (!currentUser) {
     return (
@@ -111,61 +102,54 @@ export function ProfileSection(props: ProfileSettingsProps) {
           </div>
         </div>
 
-        {profileHandlers.showAvatarPicker && (
-          <div className="avatar-picker-overlay" onClick={() => { profileHandlers.setShowAvatarPicker(false); profileHandlers.setSelectedAvatar(null); }}>
-            <div className="avatar-picker-modal" onClick={e => e.stopPropagation()}>
-              <div className="avatar-picker-modal-header">
-                <p className="avatar-picker-title">Chọn avatar (100 biểu tượng)</p>
-                <button
-                  className="avatar-picker-close"
-                  onClick={() => { profileHandlers.setShowAvatarPicker(false); profileHandlers.setSelectedAvatar(null); }}
-                >
-                  <X size={20} />
-                </button>
+        <ModalShell
+          isOpen={profileHandlers.showAvatarPicker}
+          onClose={() => { profileHandlers.setShowAvatarPicker(false); profileHandlers.setSelectedAvatar(null); }}
+          title="Chọn avatar (100 biểu tượng)"
+          maxWidth={560}
+          accent="purple"
+        >
+          <div className="avatar-picker-modal-body">
+            {AVATAR_CATEGORIES.map((category) => (
+              <div key={category.key} className="avatar-category">
+                <p className="avatar-category-label">{category.label}</p>
+                <div className={`avatar-options ${category.isImage ? 'avatar-options-images' : ''}`}>
+                  {category.icons.map((avatar) => (
+                    <button
+                      key={avatar}
+                      className={`avatar-option ${category.isImage ? 'avatar-option-image' : ''} ${(profileHandlers.selectedAvatar || currentUser.avatar) === avatar ? 'active' : ''}`}
+                      onClick={() => profileHandlers.setSelectedAvatar(avatar)}
+                    >
+                      {isImageAvatar(avatar) ? (
+                        <img src={avatar} alt="avatar" loading="lazy" />
+                      ) : (
+                        avatar
+                      )}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="avatar-picker-modal-body">
-                {AVATAR_CATEGORIES.map((category) => (
-                  <div key={category.key} className="avatar-category">
-                    <p className="avatar-category-label">{category.label}</p>
-                    <div className={`avatar-options ${category.isImage ? 'avatar-options-images' : ''}`}>
-                      {category.icons.map((avatar) => (
-                        <button
-                          key={avatar}
-                          className={`avatar-option ${category.isImage ? 'avatar-option-image' : ''} ${(profileHandlers.selectedAvatar || currentUser.avatar) === avatar ? 'active' : ''}`}
-                          onClick={() => profileHandlers.setSelectedAvatar(avatar)}
-                        >
-                          {isImageAvatar(avatar) ? (
-                            <img src={avatar} alt="avatar" loading="lazy" />
-                          ) : (
-                            avatar
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="avatar-picker-actions">
-                <button
-                  className="btn btn-primary"
-                  onClick={() => profileHandlers.selectedAvatar && profileHandlers.handleUpdateAvatar(profileHandlers.selectedAvatar)}
-                  disabled={!profileHandlers.selectedAvatar || profileHandlers.selectedAvatar === currentUser.avatar}
-                >
-                  Lưu avatar
-                </button>
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => { profileHandlers.setShowAvatarPicker(false); profileHandlers.setSelectedAvatar(null); }}
-                >
-                  Hủy
-                </button>
-              </div>
-              {profileHandlers.avatarMessage && (
-                <p className={`form-message ${profileHandlers.avatarMessage.type}`}>{profileHandlers.avatarMessage.text}</p>
-              )}
-            </div>
+            ))}
           </div>
-        )}
+          <div className="avatar-picker-actions">
+            <button
+              className="btn btn-primary"
+              onClick={() => profileHandlers.selectedAvatar && profileHandlers.handleUpdateAvatar(profileHandlers.selectedAvatar)}
+              disabled={!profileHandlers.selectedAvatar || profileHandlers.selectedAvatar === currentUser.avatar}
+            >
+              Lưu avatar
+            </button>
+            <button
+              className="btn btn-secondary"
+              onClick={() => { profileHandlers.setShowAvatarPicker(false); profileHandlers.setSelectedAvatar(null); }}
+            >
+              Hủy
+            </button>
+          </div>
+          {profileHandlers.avatarMessage && (
+            <p className={`form-message ${profileHandlers.avatarMessage.type}`}>{profileHandlers.avatarMessage.text}</p>
+          )}
+        </ModalShell>
       </section>
 
       {/* Additional sections would go here - display name, password, etc. */}

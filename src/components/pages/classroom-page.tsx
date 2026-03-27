@@ -3,6 +3,7 @@
 
 import { useState, useCallback } from 'react';
 import { ConfirmModal } from '../ui/confirm-modal';
+import { ModalShell } from '../ui/modal-shell';
 import {
   useClassrooms,
   useClassroomMembers,
@@ -219,29 +220,23 @@ export function ClassroomPage() {
       <ClassroomInviteModal isOpen={showInviteModal} onClose={() => setShowInviteModal(false)} classroomCode={selectedClassroom?.code || ''} users={users.filter(u => u.id !== currentUser?.id && (u.role === 'user' || u.role === 'vip_user'))} existingMemberIds={membersWithUsers.map(m => m.userId)} onInviteUser={handleInviteUser} />
       <AssignTestModal isOpen={showAssignTestModal} onClose={() => setShowAssignTestModal(false)} templates={testTemplates} onAssign={async (templateId, options) => { if (!selectedClassroom || !currentUser) return null; return assignToClassroom(templateId, selectedClassroom.id, currentUser.id, options); }} classroomName={selectedClassroom?.name} filterType={assignFilterType} />
 
-      {activeTest && mySubmission && (
-        <div className="modal-overlay">
-          <div className="modal-content test-take-modal">
-            <TestTake test={activeTest} submission={mySubmission} onSubmit={handleSubmitTest} onCancel={() => setActiveTest(null)} />
-          </div>
-        </div>
-      )}
+      <ModalShell isOpen={!!(activeTest && mySubmission)} onClose={() => setActiveTest(null)} maxWidth={860} hideClose className="test-take-modal">
+        {activeTest && mySubmission && (
+          <TestTake test={activeTest} submission={mySubmission} onSubmit={handleSubmitTest} onCancel={() => setActiveTest(null)} />
+        )}
+      </ModalShell>
 
-      {reviewingTest && mySubmission && !isAdmin && (
-        <div className="modal-overlay">
-          <div className="modal-content review-modal">
-            <SubmissionReview test={reviewingTest} submission={mySubmission} isAdmin={false} onClose={() => setReviewingTest(null)} />
-          </div>
-        </div>
-      )}
+      <ModalShell isOpen={!!(reviewingTest && mySubmission && !isAdmin)} onClose={() => setReviewingTest(null)} maxWidth={860} hideClose className="review-modal">
+        {reviewingTest && mySubmission && (
+          <SubmissionReview test={reviewingTest} submission={mySubmission} isAdmin={false} onClose={() => setReviewingTest(null)} />
+        )}
+      </ModalShell>
 
-      {reviewingSubmission && isAdmin && (
-        <div className="modal-overlay" onClick={() => setReviewingSubmission(null)}>
-          <div className="modal-content review-modal" onClick={e => e.stopPropagation()}>
-            <SubmissionReview test={reviewingSubmission.test} submission={reviewingSubmission.submission} isAdmin={true} onGrade={async (answers, feedback) => { if (!currentUser) return false; try { const { gradeSubmission } = await import('../../services/classroom-firestore'); await gradeSubmission(reviewingSubmission.submission.id, answers, feedback, currentUser.id); setReviewingSubmission(null); return true; } catch { return false; } }} onClose={() => setReviewingSubmission(null)} />
-          </div>
-        </div>
-      )}
+      <ModalShell isOpen={!!(reviewingSubmission && isAdmin)} onClose={() => setReviewingSubmission(null)} maxWidth={860} hideClose className="review-modal">
+        {reviewingSubmission && (
+          <SubmissionReview test={reviewingSubmission.test} submission={reviewingSubmission.submission} isAdmin={true} onGrade={async (answers, feedback) => { if (!currentUser) return false; try { const { gradeSubmission } = await import('../../services/classroom-firestore'); await gradeSubmission(reviewingSubmission.submission.id, answers, feedback, currentUser.id); setReviewingSubmission(null); return true; } catch { return false; } }} onClose={() => setReviewingSubmission(null)} />
+        )}
+      </ModalShell>
 
       {selectedStudentId && (
         <StudentDetailModal isOpen={!!selectedStudentId} onClose={() => setSelectedStudentId(null)} userId={selectedStudentId} user={users.find(u => u.id === selectedStudentId)} classroom={selectedClassroom || undefined} studentGrade={studentGrades.find(g => g.userId === selectedStudentId)} attendanceSummary={studentSummaries.find(s => s.userId === selectedStudentId)} attendanceRecords={recordsWithUsers.filter(r => r.userId === selectedStudentId)} evaluations={evaluations.filter(e => e.userId === selectedStudentId)} submissions={allSubmissions.filter(s => s.userId === selectedStudentId)} tests={tests} />

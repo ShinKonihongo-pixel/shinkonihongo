@@ -1,10 +1,11 @@
 // Topics List View - Grid/List display of all topics
 
 import {
-  Plus, Edit2, Trash2, Search, Grid, List,
+  Plus, Edit2, Trash2, Grid, List,
   Eye, EyeOff, MessageCircle, BookOpen,
 } from 'lucide-react';
 import { ConfirmModal } from '../../ui/confirm-modal';
+import { SearchInput } from '../../ui/search-input';
 import type { KaiwaAdvancedTopic } from '../../../types/kaiwa-advanced';
 import type { ViewMode, CanModifyTopicFn } from './topics-management-types';
 
@@ -99,15 +100,12 @@ export function TopicsListView({
           <p className="topics-subtitle">Tạo chủ đề và câu hỏi riêng cho luyện tập hội thoại</p>
         </div>
         <div className="topics-actions">
-          <div className="search-box">
-            <Search size={18} />
-            <input
-              type="text"
-              placeholder="Tìm chủ đề..."
-              value={searchQuery}
-              onChange={e => onSetSearchQuery(e.target.value)}
-            />
-          </div>
+          <SearchInput
+            value={searchQuery}
+            onChange={onSetSearchQuery}
+            placeholder="Tìm chủ đề..."
+            className="search-box"
+          />
           <div className="view-toggle">
             <button
               className={`btn-icon ${viewMode === 'grid' ? 'active' : ''}`}

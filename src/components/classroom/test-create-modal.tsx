@@ -5,6 +5,7 @@ import {
   AlignLeft, Clock, CalendarClock, Award, FileQuestion, Save, Sparkles,
 } from 'lucide-react';
 import type { TestFormData, TestQuestion, TestType, QuestionType } from '../../types/classroom';
+import { ModalShell } from '../ui/modal-shell';
 import './test-create-modal.css';
 
 interface TestCreateModalProps {
@@ -209,14 +210,10 @@ export function TestCreateModal({
     setSaving(false);
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="tcm-overlay" onClick={onClose}>
-      {/* Stop propagation so clicking inside the modal doesn't close it */}
-      <div className="tcm-modal" onClick={e => e.stopPropagation()}>
-        {/* Header */}
-        <div className="tcm-header">
+    <ModalShell isOpen={isOpen} onClose={onClose} maxWidth={680} hideClose className="tcm-shell">
+      {/* Header */}
+      <div className="tcm-header">
           <div className="tcm-header-left">
             <div className={`tcm-header-icon ${isTest ? 'test' : 'assign'}`}>
               {isTest ? <FileQuestion size={20} /> : <CalendarClock size={20} />}
@@ -483,7 +480,6 @@ export function TestCreateModal({
             </div>
           </div>
         </form>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

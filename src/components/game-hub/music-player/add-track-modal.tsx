@@ -1,6 +1,7 @@
 // Modal for adding custom tracks
 
-import { Plus, X, Link, ExternalLink } from 'lucide-react';
+import { Plus, Link, ExternalLink } from 'lucide-react';
+import { ModalShell } from '../../ui/modal-shell';
 import { MUSIC_SOURCES, EMOJI_OPTIONS } from './types';
 
 interface AddTrackModalProps {
@@ -30,21 +31,8 @@ export function AddTrackModal({
   onSetTrackEmoji,
   onSubmit,
 }: AddTrackModalProps) {
-  if (!show) return null;
-
   return (
-    <div className="fp-modal-overlay" onClick={onClose}>
-      <div className="fp-modal" onClick={e => e.stopPropagation()}>
-        <div className="fp-modal-header">
-          <h3>
-            <Plus size={18} />
-            Thêm nhạc tuỳ chỉnh
-          </h3>
-          <button className="fp-modal-close" onClick={onClose}>
-            <X size={18} />
-          </button>
-        </div>
-
+    <ModalShell isOpen={show} onClose={onClose} title="Thêm nhạc tuỳ chỉnh" maxWidth={440}>
         <div className="fp-modal-body">
           {/* Track name */}
           <div className="fp-form-group">
@@ -128,7 +116,6 @@ export function AddTrackModal({
             )}
           </button>
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

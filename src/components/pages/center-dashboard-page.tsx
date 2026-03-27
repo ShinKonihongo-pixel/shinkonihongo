@@ -4,9 +4,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   Building2, Layers, GraduationCap, BookOpen, Users, UserPlus,
-  Settings, Search, School, UserMinus, Calendar, ChevronRight,
+  Settings, School, UserMinus, Calendar, ChevronRight,
   Sparkles, Plus, TrendingUp, UserCheck, Clock, BarChart3,
 } from 'lucide-react';
+import { SearchInput } from '../ui/search-input';
 import { useCenter } from '../../contexts/center-context';
 import { DashboardLeaderboard } from '../dashboard/dashboard-leaderboard';
 import { useClassrooms } from '../../hooks/use-classrooms';
@@ -354,14 +355,12 @@ export function CenterDashboardPage() {
         {activeTab === 'classes' && (
           <>
             <div className="cdash-toolbar">
-              <div className="cdash-search">
-                <Search size={15} />
-                <input
-                  value={classSearch}
-                  onChange={e => setClassSearch(e.target.value)}
-                  placeholder="Tìm lớp theo tên hoặc mã..."
-                />
-              </div>
+              <SearchInput
+                value={classSearch}
+                onChange={setClassSearch}
+                placeholder="Tìm lớp theo tên hoặc mã..."
+                className="cdash-search"
+              />
               {isAdmin && (
                 <button className="cdash-btn-add" onClick={() => onNavigate('classroom')}>
                   <Plus size={14} /> Tạo lớp
@@ -457,14 +456,12 @@ export function CenterDashboardPage() {
             </div>
 
             <div className="cdash-toolbar">
-              <div className="cdash-search">
-                <Search size={15} />
-                <input
-                  value={memberSearch}
-                  onChange={e => setMemberSearch(e.target.value)}
-                  placeholder="Tìm theo tên..."
-                />
-              </div>
+              <SearchInput
+                value={memberSearch}
+                onChange={setMemberSearch}
+                placeholder="Tìm theo tên..."
+                className="cdash-search"
+              />
             </div>
 
             <div className="cdash-filters">

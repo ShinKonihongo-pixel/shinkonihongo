@@ -6,7 +6,6 @@ import type { StudentReportConfig } from '../../types/student-report';
 import { DEFAULT_REPORT_CONFIG, REPORT_SETTINGS_STORAGE_KEY } from '../../types/student-report';
 import {
   X,
-  Settings,
   Building,
   Mail,
   Image,
@@ -15,6 +14,7 @@ import {
   HelpCircle,
   ExternalLink,
 } from 'lucide-react';
+import { ModalShell } from '../ui/modal-shell';
 
 interface ReportSettingsModalProps {
   isOpen: boolean;
@@ -149,26 +149,8 @@ export function ReportSettingsModal({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div
-        className="modal-content report-settings-modal"
-        onClick={e => e.stopPropagation()}
-        style={{ maxWidth: '550px', maxHeight: '90vh', overflow: 'auto' }}
-      >
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
-          <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, fontSize: '1.25rem' }}>
-            <Settings size={24} />
-            Cài đặt báo cáo
-          </h2>
-          <button className="btn-close" onClick={onClose}>
-            <X size={20} />
-          </button>
-        </div>
-
+    <ModalShell isOpen={isOpen} onClose={onClose} title="Cài đặt báo cáo" maxWidth={550}>
         {/* School Info Section */}
         <div style={{ marginBottom: '1.5rem' }}>
           <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', fontSize: '1rem', color: 'var(--jp-ai)' }}>
@@ -421,7 +403,6 @@ export function ReportSettingsModal({
             {isSaving ? 'Đang lưu...' : 'Lưu cài đặt'}
           </button>
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

@@ -27,6 +27,7 @@ import { JLPTPicker } from './game-create-jlpt-picker';
 import { DifficultyPicker } from './game-create-difficulty-picker';
 import { GameCreateSliders } from './game-create-sliders';
 import { GameCreateFooter } from './game-create-footer';
+import { ModalShell } from '../ui/modal-shell';
 
 /**
  * Props for GameCreate.
@@ -159,9 +160,8 @@ export function GameCreate({
   const playersPercent = ((maxPlayers - 2) / (VIP_MAX_PLAYERS - 2)) * 100;
 
   return (
-    <div className="rm-overlay" onClick={onCancel}>
-      <div className="rm-modal large" onClick={e => e.stopPropagation()}>
-        <GameCreateHeader
+    <ModalShell isOpen onClose={onCancel} maxWidth={600} hideClose>
+      <GameCreateHeader
           title={title}
           source={source}
           isFlashcardSource={isFlashcardSource}
@@ -238,7 +238,6 @@ export function GameCreate({
           onCancel={onCancel}
           onSubmit={handleSubmit}
         />
-      </div>
-    </div>
+    </ModalShell>
   );
 }

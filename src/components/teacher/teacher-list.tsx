@@ -1,6 +1,8 @@
 // Teacher list component for displaying branch teachers
 
 import { useState } from 'react';
+import { UserRound } from 'lucide-react';
+import { SearchInput } from '../ui/search-input';
 import type { BranchMember, BranchMemberRole } from '../../types/branch';
 import type { User } from '../../types/user';
 import {
@@ -10,6 +12,7 @@ import {
   SALARY_TYPE_LABELS,
 } from '../../types/branch';
 import { formatCurrency } from '../../types/teacher';
+import { EmptyState } from '../ui/empty-state';
 
 interface TeacherWithUser extends BranchMember {
   user?: User;
@@ -71,18 +74,10 @@ export function TeacherList({
         gap: '12px',
       }}>
         {/* Search */}
-        <input
-          type="text"
-          placeholder="Tìm kiếm giáo viên..."
+        <SearchInput
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          style={{
-            padding: '10px 14px',
-            borderRadius: '8px',
-            border: '1px solid #ddd',
-            fontSize: '14px',
-            minWidth: '200px',
-          }}
+          onChange={setSearchQuery}
+          placeholder="Tìm kiếm giáo viên..."
         />
 
         {/* Role filter tabs */}
@@ -108,17 +103,10 @@ export function TeacherList({
 
       {/* Teacher cards */}
       {filteredTeachers.length === 0 ? (
-        <div style={{
-          padding: '40px',
-          textAlign: 'center',
-          color: '#999',
-          background: '#f9f9f9',
-          borderRadius: '12px',
-        }}>
-          {searchQuery || filter !== 'all'
-            ? 'Không tìm thấy giáo viên phù hợp'
-            : 'Chưa có giáo viên nào'}
-        </div>
+        <EmptyState
+          icon={<UserRound size={48} strokeWidth={1.5} />}
+          title={searchQuery || filter !== 'all' ? 'Không tìm thấy giáo viên phù hợp' : 'Chưa có giáo viên nào'}
+        />
       ) : (
         <div style={{
           display: 'grid',

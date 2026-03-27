@@ -1,0 +1,69 @@
+/* EmptyState — shared empty/no-data display */
+
+.es-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  min-height: 180px;
+}
+
+.es-container--compact {
+  padding: 1.25rem 1rem;
+  min-height: 100px;
+}
+
+.es-icon {
+  color: rgba(255, 255, 255, 0.25);
+  margin-bottom: 0.75rem;
+}
+
+.es-icon svg {
+  width: 40px;
+  height: 40px;
+}
+
+.es-container--compact .es-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.es-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 0.35rem;
+  line-height: 1.4;
+}
+
+.es-container--compact .es-title {
+  font-size: 0.85rem;
+}
+
+.es-desc {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.35);
+  margin: 0 0 1rem;
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+.es-action {
+  padding: 0.5rem 1.25rem;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 8px;
+  background: rgba(139, 92, 246, 0.1);
+  color: #a78bfa;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.es-action:hover {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.5);
+  transform: translateY(-1px);
+}

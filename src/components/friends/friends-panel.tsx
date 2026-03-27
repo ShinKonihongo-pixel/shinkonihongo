@@ -5,6 +5,7 @@ import type { User } from '../../types/user';
 import type { FriendWithUser } from '../../types/friendship';
 import { Users, UserPlus, UserMinus, MessageCircle, Gamepad2, Gift, Search } from 'lucide-react';
 import { ConfirmModal } from '../ui/confirm-modal';
+import { EmptyState } from '../ui/empty-state';
 import './friends.css';
 
 interface FriendsPanelProps {
@@ -119,13 +120,11 @@ export function FriendsPanel({
       {activeTab === 'friends' && (
         <div className="friends-list">
           {friends.length === 0 ? (
-            <div className="empty-state">
-              <Users size={48} />
-              <p>Chưa có bạn bè</p>
-              <button className="btn btn-primary" onClick={() => setActiveTab('find')}>
-                Tìm bạn mới
-              </button>
-            </div>
+            <EmptyState
+              icon={<Users size={48} />}
+              title="Chưa có bạn bè"
+              action={{ label: 'Tìm bạn mới', onClick: () => setActiveTab('find') }}
+            />
           ) : (
             friends.map(f => (
               <div key={f.friendship.id} className="friend-item">
@@ -170,10 +169,7 @@ export function FriendsPanel({
       {activeTab === 'requests' && (
         <div className="requests-list">
           {pendingRequests.length === 0 ? (
-            <div className="empty-state">
-              <MessageCircle size={48} />
-              <p>Không có lời mời kết bạn</p>
-            </div>
+            <EmptyState icon={<MessageCircle size={48} />} title="Không có lời mời kết bạn" />
           ) : (
             pendingRequests.map(req => (
               <div key={req.id} className="request-item">

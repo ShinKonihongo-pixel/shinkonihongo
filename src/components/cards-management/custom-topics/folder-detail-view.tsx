@@ -1,6 +1,7 @@
 // Folder Detail View Component
 import { ArrowLeft, Plus } from 'lucide-react';
 import { QuestionCard } from './question-card';
+import { EmptyState } from '../../ui/empty-state';
 import { renderTopicIcon } from './custom-topics-types';
 import type { CustomTopic, CustomTopicFolder, CustomTopicQuestion } from './custom-topics-types';
 
@@ -54,7 +55,7 @@ export function FolderDetailView({
       {/* Questions List */}
       <div className="questions-list">
         {questions.length === 0 ? (
-          <div className="empty-message">Chưa có câu hỏi. Nhấn "Thêm câu hỏi" để thêm.</div>
+          <EmptyState compact title="Chưa có câu hỏi" description='Nhấn "Thêm câu hỏi" để thêm' />
         ) : (
           questions.map((q, i) => (
             <QuestionCard

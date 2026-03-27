@@ -3,6 +3,8 @@
 import { useState, useMemo } from 'react';
 import type { User } from '../../types/user';
 import type { ClassroomMember } from '../../types/classroom';
+import { SearchInput } from '../ui/search-input';
+import { ModalShell } from '../ui/modal-shell';
 
 interface ClassroomInviteModalProps {
   isOpen: boolean;
@@ -53,16 +55,8 @@ export function ClassroomInviteModal({
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content invite-modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Mời học viên</h2>
-          <button className="btn-close" onClick={onClose}>×</button>
-        </div>
-
+    <ModalShell isOpen={isOpen} onClose={onClose} title="Mời học viên" maxWidth={480}>
         <div className="modal-body">
           {/* Share code section */}
           <div className="invite-section">
@@ -84,12 +78,11 @@ export function ClassroomInviteModal({
           {/* Direct invite section */}
           <div className="invite-section">
             <h3>Mời trực tiếp</h3>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="Tìm kiếm người dùng..."
+            <SearchInput
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              onChange={setSearchQuery}
+              placeholder="Tìm kiếm người dùng..."
+              className="form-input"
             />
 
             <div className="invite-user-list">
@@ -134,7 +127,6 @@ export function ClassroomInviteModal({
             Đóng
           </button>
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

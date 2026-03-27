@@ -1,5 +1,7 @@
 // Topics List View Component
-import { Plus, Search, Grid, List, Upload, Star } from 'lucide-react';
+import { Plus, Grid, List, Upload, Star } from 'lucide-react';
+import { SearchInput } from '../../ui/search-input';
+import { EmptyState } from '../../ui/empty-state';
 import { TopicCard } from './topic-card';
 import type { CustomTopic, ViewMode } from './custom-topics-types';
 
@@ -46,15 +48,12 @@ export function TopicsListView({
           <p className="topics-subtitle">Tạo bộ câu hỏi theo chủ đề riêng ngoài JLPT</p>
         </div>
         <div className="topics-actions">
-          <div className="search-box">
-            <Search size={18} />
-            <input
-              type="text"
-              placeholder="Tìm chủ đề..."
-              value={searchQuery}
-              onChange={e => onSearchChange(e.target.value)}
-            />
-          </div>
+          <SearchInput
+            value={searchQuery}
+            onChange={onSearchChange}
+            placeholder="Tìm chủ đề..."
+            className="search-box"
+          />
           <div className="view-toggle">
             <button
               className={`btn-icon ${viewMode === 'grid' ? 'active' : ''}`}
@@ -84,14 +83,12 @@ export function TopicsListView({
 
       {/* Topics Grid/List */}
       {topics.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-icon">📚</div>
-          <h3>Chưa có chủ đề nào</h3>
-          <p>Tạo chủ đề đầu tiên để bắt đầu xây dựng bộ câu hỏi riêng của bạn</p>
-          <button className="btn btn-primary" onClick={onAddTopic}>
-            <Plus size={16} /> Tạo chủ đề mới
-          </button>
-        </div>
+        <EmptyState
+          icon={<Star size={48} strokeWidth={1.5} />}
+          title="Chưa có chủ đề nào"
+          description="Tạo chủ đề đầu tiên để bắt đầu xây dựng bộ câu hỏi riêng của bạn"
+          action={{ label: 'Tạo chủ đề mới', onClick: onAddTopic }}
+        />
       ) : (
         <div className={`topics-grid ${viewMode}`}>
           {topics.map(topic => (

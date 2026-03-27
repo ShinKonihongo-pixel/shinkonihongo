@@ -1,0 +1,56 @@
+/* SearchInput — shared search bar */
+
+.si-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.si-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+}
+
+.si-input {
+  width: 100%;
+  padding: 0.6rem 2.25rem 0.6rem 2.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #f1f5f9;
+  font-size: 0.88rem;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.si-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.si-input:focus {
+  border-color: rgba(139, 92, 246, 0.4);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.si-clear {
+  position: absolute;
+  right: 0.5rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.si-clear:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}

@@ -19,7 +19,6 @@ import {
 import { saveReportToStorage } from '../../services/report-storage-service';
 import { sendReportEmail, isValidEmail } from '../../services/email-service';
 import {
-  X,
   FileText,
   Download,
   Mail,
@@ -33,6 +32,7 @@ import {
   Eye,
 } from 'lucide-react';
 import './student-report-modal.css';
+import { ModalShell } from '../ui/modal-shell';
 
 interface StudentReportModalProps {
   isOpen: boolean;
@@ -302,11 +302,8 @@ export function StudentReportModal({
     setShowEmailInput(false);
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content student-report-modal" onClick={e => e.stopPropagation()}>
+    <ModalShell isOpen={isOpen} onClose={onClose} maxWidth={640} hideClose className="student-report-modal">
 
         {/* Header */}
         <div className="report-modal-header">
@@ -319,7 +316,7 @@ export function StudentReportModal({
             >
               <Settings size={17} />
             </button>
-            <button className="btn-close" onClick={onClose}><X size={20} /></button>
+            <button className="btn-close" onClick={onClose}>✕</button>
           </div>
         </div>
 
@@ -572,7 +569,6 @@ export function StudentReportModal({
           </div>
 
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

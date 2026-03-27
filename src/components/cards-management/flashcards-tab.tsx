@@ -9,6 +9,7 @@ import { GrammarCardList } from '../flashcard/grammar-card-list';
 import { ConfirmModal } from '../ui/confirm-modal';
 import type { FlashcardsTabProps, FlashcardNavState, Flashcard, Lesson, JLPTLevel, GrammarCard, FlashcardFormData, GrammarCardFormData } from './cards-management-types';
 import { JLPT_LEVELS } from './cards-management-types';
+import { EmptyState } from '../ui/empty-state';
 import { seedN5Lessons, seedN4Lessons, fixLessonOrder } from '../../scripts/seed-n5-lessons';
 import {
   exportFlashcardsData,
@@ -480,7 +481,7 @@ export function FlashcardsTab({
           {navState.type === 'level' && (
             <div className="folder-list">
               {getLessonsByLevel(navState.level).map(lesson => renderLessonItem(lesson))}
-              {getLessonsByLevel(navState.level).length === 0 && <p className="empty-message">Chưa có bài học nào. Nhấn "+ Tạo bài học" để thêm.</p>}
+              {getLessonsByLevel(navState.level).length === 0 && <EmptyState compact title="Chưa có bài học nào" description='Nhấn "+ Tạo bài học" để thêm' />}
               {/* Admin buttons */}
               {isSuperAdmin && navState.level === 'N5' && (
                 <div className="admin-actions" style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -518,7 +519,7 @@ export function FlashcardsTab({
                     )}
                   </>
                 ) : (
-                  <p className="empty-message">Chưa có thẻ nào. Nhấn "+ Tạo thẻ" để thêm hoặc tạo bài học con.</p>
+                  <EmptyState compact title="Chưa có thẻ nào" description='Nhấn "+ Tạo thẻ" để thêm hoặc tạo bài học con' />
                 )
               )}
             </div>
@@ -535,7 +536,7 @@ export function FlashcardsTab({
                 )}
               </>
             ) : (
-              <p className="empty-message">Chưa có thẻ nào. Nhấn "+ Tạo thẻ" để thêm.</p>
+              <EmptyState compact title="Chưa có thẻ nào" description='Nhấn "+ Tạo thẻ" để thêm' />
             )
           )}
         </div>

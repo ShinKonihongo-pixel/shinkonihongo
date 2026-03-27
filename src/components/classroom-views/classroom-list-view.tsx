@@ -3,6 +3,7 @@
 import { School, Plus } from 'lucide-react';
 import { ClassroomCard } from '../classroom/classroom-card';
 import type { ClassroomListViewProps } from './classroom-types';
+import { EmptyState } from '../ui/empty-state';
 
 export function ClassroomListView({
   classrooms, isAdmin, unreadCount,
@@ -41,16 +42,12 @@ export function ClassroomListView({
 
       {/* Classroom list */}
       {classrooms.length === 0 ? (
-        <div className="empty-state">
-          <School size={52} strokeWidth={1.2} />
-          <h3>{isAdmin ? 'Chưa có lớp học nào' : 'Bạn chưa tham gia lớp học nào'}</h3>
-          <p>{isAdmin ? 'Tạo lớp học đầu tiên để bắt đầu giảng dạy' : 'Nhập mã lớp để tham gia hoặc liên hệ giáo viên để được mời'}</p>
-          {isAdmin && (
-            <button className="btn btn-primary" onClick={onCreateClick} style={{ marginTop: '1rem' }}>
-              <Plus size={16} /> Tạo lớp học
-            </button>
-          )}
-        </div>
+        <EmptyState
+          icon={<School size={52} strokeWidth={1.2} />}
+          title={isAdmin ? 'Chưa có lớp học nào' : 'Bạn chưa tham gia lớp học nào'}
+          description={isAdmin ? 'Tạo lớp học đầu tiên để bắt đầu giảng dạy' : 'Nhập mã lớp để tham gia hoặc liên hệ giáo viên để được mời'}
+          action={isAdmin ? { label: 'Tạo lớp học', onClick: onCreateClick } : undefined}
+        />
       ) : (
         <div className="classroom-grid">
           {classrooms.map(classroom => (
