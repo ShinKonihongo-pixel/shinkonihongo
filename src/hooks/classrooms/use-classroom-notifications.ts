@@ -57,12 +57,12 @@ export function useClassroomNotifications(userId: string | null) {
     return notifications.filter(n => !n.isRead);
   }, [notifications]);
 
-  return {
+  return useMemo(() => ({
     notifications,
     unreadNotifications,
     unreadCount,
     loading,
     markAsRead,
     markAllAsRead,
-  };
+  }), [notifications, unreadNotifications, unreadCount, loading, markAsRead, markAllAsRead]);
 }

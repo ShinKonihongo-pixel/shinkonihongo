@@ -135,7 +135,7 @@ export function useFriendships(userId: string | null, users: User[]) {
     return friendsWithUsers.some(f => f.friendId === otherUserId);
   }, [friendsWithUsers]);
 
-  return {
+  return useMemo(() => ({
     friendships,
     friendsWithUsers,
     pendingRequests: pendingRequestsWithUsers,
@@ -144,7 +144,7 @@ export function useFriendships(userId: string | null, users: User[]) {
     respondToRequest,
     removeFriend,
     isFriend,
-  };
+  }), [friendships, friendsWithUsers, pendingRequestsWithUsers, loading, sendRequest, respondToRequest, removeFriend, isFriend]);
 }
 
 // ============ GAME INVITATIONS HOOK ============
@@ -196,12 +196,12 @@ export function useGameInvitations(userId: string | null) {
     }
   }, []);
 
-  return {
+  return useMemo(() => ({
     invitations,
     loading,
     sendInvitation,
     respondToInvitation,
-  };
+  }), [invitations, loading, sendInvitation, respondToInvitation]);
 }
 
 // ============ BADGES HOOK ============
@@ -276,12 +276,12 @@ export function useBadges(userId: string | null, users: User[]) {
     }
   }, [userId, users]);
 
-  return {
+  return useMemo(() => ({
     receivedBadges: receivedBadgesWithUsers,
     badgeStats,
     loading,
     sendBadge,
-  };
+  }), [receivedBadgesWithUsers, badgeStats, loading, sendBadge]);
 }
 
 // ============ FRIEND NOTIFICATIONS HOOK ============
@@ -332,11 +332,11 @@ export function useFriendNotifications(userId: string | null) {
     return notifications.filter(n => !n.isRead).length;
   }, [notifications]);
 
-  return {
+  return useMemo(() => ({
     notifications,
     unreadCount,
     loading,
     markAsRead,
     markAllAsRead,
-  };
+  }), [notifications, unreadCount, loading, markAsRead, markAllAsRead]);
 }

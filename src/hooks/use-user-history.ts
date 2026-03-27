@@ -114,7 +114,7 @@ export function useUserHistory(userId: string | undefined) {
     }
   }, [userId]);
 
-  return {
+  return useMemo(() => ({
     studySessions,
     gameSessions,
     jlptSessions,
@@ -123,5 +123,5 @@ export function useUserHistory(userId: string | undefined) {
     addStudySession,
     addGameSession,
     addJLPTSession,
-  };
+  }), [studySessions, gameSessions, jlptSessions, stats, loading, addStudySession, addGameSession, addJLPTSession]);
 }

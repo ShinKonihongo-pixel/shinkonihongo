@@ -1,6 +1,6 @@
 // Hook for authentication with Firestore
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import type { User, CurrentUser, UserRole } from '../types/user';
 import * as firestoreService from '../services/firestore';
 import { handleError } from '../utils/error-handler';
@@ -320,7 +320,7 @@ export function useAuth() {
     }
   }, [users]);
 
-  return {
+  return useMemo(() => ({
     currentUser,
     users,
     loading,
@@ -338,5 +338,5 @@ export function useAuth() {
     updateProfileBackground,
     updateJlptLevel,
     updateVipExpiration,
-  };
+  }), [currentUser, users, loading, login, logout, register, updateUserRole, deleteUser, changePassword, updateDisplayName, updateAvatar, updateProfileBackground, updateJlptLevel, updateVipExpiration]);
 }

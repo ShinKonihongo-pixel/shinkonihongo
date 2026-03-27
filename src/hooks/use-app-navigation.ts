@@ -1,7 +1,7 @@
 // App-level navigation state + URL bridge effects
 // Extracted from App.tsx AppContent to reduce monolith complexity
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { trackPageView } from '../lib/analytics';
 import { ROUTES, URL_TO_PAGE } from '../routes';
@@ -120,7 +120,7 @@ export function useAppNavigation(): AppNavigationState {
   // Expose setInitialFilterLevel for HomePage callbacks
   void setInitialFilterLevel; // Used indirectly by page render callbacks
 
-  return {
+  return useMemo(() => ({
     currentPage, setCurrentPage,
     initialGameType, initialGameJoinCode,
     editingLectureId, setEditingLectureId,
@@ -130,5 +130,5 @@ export function useAppNavigation(): AppNavigationState {
     isAiChatOpen, setIsAiChatOpen,
     sidebarCollapsed, setSidebarCollapsed,
     isSearchOpen, setIsSearchOpen,
-  };
+  }), [currentPage, initialGameType, initialGameJoinCode, editingLectureId, editingLectureFolderId, editingLectureLevel, isChatOpen, isAiChatOpen, sidebarCollapsed, isSearchOpen]);
 }
