@@ -5,12 +5,7 @@ import {
 } from 'lucide-react';
 import { FuriganaText } from '../../common/furigana-text';
 import { hasFurigana } from '../../../lib/furigana-utils';
-import type { KaiwaLine, TtsMode } from '../../../types/listening';
-
-interface KaiwaCharacter {
-  id: string;
-  name: string;
-}
+import type { KaiwaLine, TtsMode, KaiwaCharacter } from '../../../types/listening';
 
 interface ListeningTtsFormProps {
   ttsTitle: string;

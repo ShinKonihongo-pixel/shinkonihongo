@@ -100,7 +100,7 @@ export function BingoGameLobby({
         <LobbyHostCard
           displayName={hostPlayer.displayName}
           avatar={hostPlayer.avatar}
-          role={(hostPlayer as any).role}
+          role={hostPlayer.role}
         />
       )}
       <LobbyJoinSection

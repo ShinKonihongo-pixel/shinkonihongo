@@ -399,12 +399,6 @@ export function HomePage() {
                 Thành tựu
               </button>
             )}
-            {onShowTour && (
-              <button className="hp-tour-btn" onClick={onShowTour}>
-                <Sparkles size={14} />
-                Hướng dẫn
-              </button>
-            )}
           </div>
         </section>
 

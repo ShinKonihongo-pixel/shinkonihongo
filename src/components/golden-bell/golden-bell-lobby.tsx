@@ -82,7 +82,7 @@ export function GoldenBellLobby({
   const leftContent = (
     <>
       {lobby.hostPlayer && (
-        <LobbyHostCard displayName={lobby.hostPlayer.displayName} avatar={lobby.hostPlayer.avatar} role={(lobby.hostPlayer as any).role} />
+        <LobbyHostCard displayName={lobby.hostPlayer.displayName} avatar={lobby.hostPlayer.avatar} role={lobby.hostPlayer.role} />
       )}
       <LobbyJoinSection code={game.code} joinUrl={lobby.joinUrl} shareText={`Tham gia Rung Chuông Vàng: ${game.title}`} qrVisible={lobby.qrVisible} onToggleQr={() => lobby.setQrVisible(v => !v)} />
       <div className="pl-lobby-rules">

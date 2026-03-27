@@ -135,7 +135,7 @@ export function LectureEditorPage() {
     state.setError,
     updateSlide,
     addSlide,
-    deleteSlide as any,
+    deleteSlide,
     updateEditingSlide
   );
 

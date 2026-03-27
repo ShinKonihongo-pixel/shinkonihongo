@@ -1,6 +1,8 @@
 // Topic Detail View Component
 import { ArrowLeft, Settings, BookOpen, FileQuestion, Plus, Circle, CheckCircle } from 'lucide-react';
 import { EmptyState } from '../../ui/empty-state';
+import { TabBar } from '../../ui/tab-bar';
+import { LevelBadge } from '../../ui/level-badge';
 import { JLPT_LEVELS } from '../../../constants/jlpt';
 import { QuestionCard } from './question-card';
 import { renderTopicIcon } from './custom-topics-types';
@@ -77,20 +79,16 @@ export function TopicDetailView({
       </div>
 
       {/* Session Tabs */}
-      <div className="detail-session-tabs">
-        <button
-          className={`session-tab-btn ${detailSessionTab === 'sources' ? 'active' : ''}`}
-          onClick={() => onTabChange('sources')}
-        >
-          <BookOpen size={16} /> Nguồn từ vựng / Ngữ pháp
-        </button>
-        <button
-          className={`session-tab-btn ${detailSessionTab === 'questions' ? 'active' : ''}`}
-          onClick={() => onTabChange('questions')}
-        >
-          <FileQuestion size={16} /> Câu hỏi ({getQuestionCount(topic.id)})
-        </button>
-      </div>
+      <TabBar
+        tabs={[
+          { key: 'sources' as const, icon: <BookOpen size={16} />, label: 'Nguồn từ vựng / Ngữ pháp' },
+          { key: 'questions' as const, icon: <FileQuestion size={16} />, label: `Câu hỏi (${getQuestionCount(topic.id)})` },
+        ]}
+        active={detailSessionTab}
+        onChange={onTabChange}
+        size="sm"
+        className="detail-session-tabs"
+      />
 
       {/* Sources Session */}
       {detailSessionTab === 'sources' && (
@@ -127,7 +125,7 @@ export function TopicDetailView({
                   </div>
                   <div className="lesson-info">
                     <span className="lesson-name">{lesson.name}</span>
-                    <span className="lesson-level">{lesson.jlptLevel}</span>
+                    <LevelBadge level={lesson.jlptLevel} size="xs" />
                   </div>
                 </div>
               );

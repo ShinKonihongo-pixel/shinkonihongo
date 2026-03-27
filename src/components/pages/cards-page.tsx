@@ -223,7 +223,7 @@ export function CardsPage() {
     return r;
   };
   const onAddKaiwaFolder = async (name: string, level: Parameters<typeof addKaiwaFolder>[1], topic: Parameters<typeof addKaiwaFolder>[2]) => {
-    const r = await addKaiwaFolder(name, level as any, topic, currentUser.id);
+    const r = await addKaiwaFolder(name, level, topic, currentUser.id);
     if (!r) throw new Error('Failed');
     return r;
   };

@@ -2,6 +2,9 @@
 // Extracted from kaiwa-page.tsx for better maintainability
 // Note: KaiwaPageProps removed — KaiwaPage is now zero-prop (uses contexts internally)
 
+import type { JLPTLevel } from '../../../types/kaiwa';
+import type { ConversationTopic } from '../../../types/kaiwa';
+
 // Session mode type - determines which question bank to use
 export type SessionMode = 'default' | 'advanced' | 'custom' | 'speaking';
 

@@ -57,7 +57,7 @@ export const WordMatchLobby: React.FC<WordMatchLobbyProps> = ({
   const leftContent = (
     <>
       {lobby.hostPlayer && (
-        <LobbyHostCard displayName={lobby.hostPlayer.displayName} avatar={lobby.hostPlayer.avatar} role={(lobby.hostPlayer as any).role} />
+        <LobbyHostCard displayName={lobby.hostPlayer.displayName} avatar={lobby.hostPlayer.avatar} role={lobby.hostPlayer.role} />
       )}
       <LobbyJoinSection code={game.code} joinUrl={lobby.joinUrl} shareText={`Tham gia Nối Từ Thách Đấu: ${game.title}`} qrVisible={lobby.qrVisible} onToggleQr={() => lobby.setQrVisible(v => !v)} />
       {lobby.isHost && lobby.playerCount < game.settings.maxPlayers && (

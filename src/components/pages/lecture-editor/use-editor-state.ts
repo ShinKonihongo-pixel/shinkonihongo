@@ -6,8 +6,9 @@ import type {
   LectureFormState, DragState, TextSelection, DeleteSlideConfirm,
   RibbonTab, SlideFormData, SlideElement
 } from './types';
+import type { JLPTLevel } from '../../../types/flashcard';
 
-export function useEditorState(initialLevel?: string, initialFolderId?: string) {
+export function useEditorState(initialLevel?: JLPTLevel, initialFolderId?: string) {
   // Core state
   const [currentLectureId, setCurrentLectureId] = useState<string | null>(null);
   const [selectedSlideIndex, setSelectedSlideIndex] = useState<number>(0);
@@ -39,7 +40,7 @@ export function useEditorState(initialLevel?: string, initialFolderId?: string) 
     title: '',
     description: '',
     coverImage: '',
-    jlptLevel: (initialLevel as any) || 'N5',
+    jlptLevel: initialLevel ?? 'N5',
     folderId: initialFolderId,
     isPublished: false,
   });

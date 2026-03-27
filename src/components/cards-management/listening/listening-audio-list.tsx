@@ -7,14 +7,9 @@ import { EmptyState } from '../../ui/empty-state';
 import { FuriganaText } from '../../common/furigana-text';
 import { hasFurigana } from '../../../lib/furigana-utils';
 import { getPresetForCharacter } from '../../../hooks/use-kaiwa-characters';
-import type { ListeningAudio } from '../../../types/listening';
+import type { ListeningAudio, KaiwaCharacter } from '../../../types/listening';
 import type { EditingAudio } from './listening-audio-view-types';
 import type { JLPTLevel } from '../../../types/flashcard';
-
-interface KaiwaCharacter {
-  id: string;
-  name: string;
-}
 
 interface ListeningAudioListProps {
   allAudios: ListeningAudio[];

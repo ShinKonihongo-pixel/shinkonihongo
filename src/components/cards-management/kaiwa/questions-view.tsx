@@ -5,6 +5,7 @@ import { Search, Filter, ChevronRight, ChevronLeft, Edit2, Trash2, Plus, FolderO
 import { CONVERSATION_TOPICS, CONVERSATION_STYLES } from '../../../constants/kaiwa';
 import { ConfirmModal } from '../../ui/confirm-modal';
 import { EmptyState } from '../../ui/empty-state';
+import { LevelBadge } from '../../ui/level-badge';
 import type {
   KaiwaDefaultQuestion,
   KaiwaFolder,
@@ -427,7 +428,7 @@ export function QuestionsView({
               className={`level-card level-${level.toLowerCase()}`}
               onClick={() => setNavState({ type: 'level', level })}
             >
-              <span className="level-badge">{level}</span>
+              <LevelBadge level={level} />
               <span className="level-count">{getQuestionCountByLevel(level)} câu hỏi</span>
               <ChevronRight size={20} className="level-arrow" />
             </div>

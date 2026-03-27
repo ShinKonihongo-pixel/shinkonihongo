@@ -3,3 +3,8 @@
 
 export { PremiumButton, IconButton, ButtonGroup } from './premium-button';
 export type { ButtonVariant, ButtonSize } from './premium-button';
+
+export { TabBar } from './tab-bar';
+export type { Tab as TabBarTab } from './tab-bar';
+
+export { LevelBadge } from './level-badge';

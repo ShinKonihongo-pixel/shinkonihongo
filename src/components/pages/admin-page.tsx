@@ -5,6 +5,7 @@ import type { User, UserRole } from '../../types/user';
 import type { Lesson, JLPTLevel } from '../../types/flashcard';
 import type { Lecture } from '../../types/lecture';
 import { ConfirmModal } from '../ui/confirm-modal';
+import { TabBar } from '../ui/tab-bar';
 import { useLectures } from '../../hooks/use-lectures';
 import { LectureCard } from '../lecture/lecture-card';
 import { JLPT_LEVELS } from '../../constants/jlpt';
@@ -92,26 +93,15 @@ export function AdminPage({
     <div className="admin-page">
       <h2>Quản trị</h2>
 
-      <div className="tab-buttons">
-        <button
-          className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
-          onClick={() => setActiveTab('users')}
-        >
-          {isSuperAdmin ? 'Quản lý tài khoản' : 'Người dùng'} ({visibleUsers.length})
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'lessons' ? 'active' : ''}`}
-          onClick={() => setActiveTab('lessons')}
-        >
-          Quản lí bài học
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'lectures' ? 'active' : ''}`}
-          onClick={() => setActiveTab('lectures')}
-        >
-          Quản lí bài giảng ({lectures.length})
-        </button>
-      </div>
+      <TabBar
+        tabs={[
+          { key: 'users' as const, label: `${isSuperAdmin ? 'Quản lý tài khoản' : 'Người dùng'} (${visibleUsers.length})` },
+          { key: 'lessons' as const, label: 'Quản lí bài học' },
+          { key: 'lectures' as const, label: `Quản lí bài giảng (${lectures.length})` },
+        ]}
+        active={activeTab}
+        onChange={setActiveTab}
+      />
 
       {activeTab === 'users' && (
         <div className="admin-users">

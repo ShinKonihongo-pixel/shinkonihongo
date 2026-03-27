@@ -2,7 +2,8 @@
  * useGameCreateHandlers — all state mutation and submit logic for GameCreate.
  */
 
-import { useCallback, Dispatch, SetStateAction } from 'react';
+import { useCallback } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import type { JLPTLevel } from '../../types/flashcard';
 import type { CreateGameData, GameQuestionSource, GameDifficultyLevel, HostMode } from '../../types/quiz-game';
 import type { AppSettings } from '../../hooks/use-settings';

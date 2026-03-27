@@ -8,6 +8,7 @@ import {
   Sparkles, Plus, TrendingUp, UserCheck, Clock, BarChart3,
 } from 'lucide-react';
 import { SearchInput } from '../ui/search-input';
+import { TabBar } from '../ui/tab-bar';
 import { useCenter } from '../../contexts/center-context';
 import { DashboardLeaderboard } from '../dashboard/dashboard-leaderboard';
 import { useClassrooms } from '../../hooks/use-classrooms';
@@ -181,25 +182,18 @@ export function CenterDashboardPage() {
       </div>
 
       {/* ===== TABS ===== */}
-      <div className="cdash-tabs">
-        {([
-          { key: 'overview', icon: <TrendingUp size={14} />, label: 'Tổng quan' },
-          { key: 'analytics', icon: <BarChart3 size={14} />, label: 'Phân tích' },
-          { key: 'classes', icon: <School size={14} />, label: 'Lớp học', badge: classrooms.length },
-          { key: 'students', icon: <Users size={14} />, label: 'Thành viên', badge: members.length },
-          ...(isAdmin ? [{ key: 'settings', icon: <Settings size={14} />, label: 'Cài đặt' }] : []),
-        ] as { key: DashTab; icon: React.ReactNode; label: string; badge?: number }[]).map(tab => (
-          <button
-            key={tab.key}
-            className={`cdash-tab ${activeTab === tab.key ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.key)}
-          >
-            {tab.icon}
-            <span>{tab.label}</span>
-            {tab.badge != null && <span className="cdash-tab-badge">{tab.badge}</span>}
-          </button>
-        ))}
-      </div>
+      <TabBar
+        tabs={[
+          { key: 'overview' as const, icon: <TrendingUp size={14} />, label: 'Tổng quan' },
+          { key: 'analytics' as const, icon: <BarChart3 size={14} />, label: 'Phân tích' },
+          { key: 'classes' as const, icon: <School size={14} />, label: 'Lớp học', badge: classrooms.length },
+          { key: 'students' as const, icon: <Users size={14} />, label: 'Thành viên', badge: members.length },
+          ...(isAdmin ? [{ key: 'settings' as const, icon: <Settings size={14} />, label: 'Cài đặt' }] : []),
+        ]}
+        active={activeTab}
+        onChange={setActiveTab}
+        className="cdash-tabs"
+      />
 
       {/* ===== CONTENT ===== */}
       <div className="cdash-content">

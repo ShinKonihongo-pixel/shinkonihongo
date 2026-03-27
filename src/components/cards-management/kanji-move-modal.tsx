@@ -5,6 +5,7 @@ import type { JLPTLevel } from './cards-management-types';
 import type { KanjiCard, KanjiLesson } from '../../types/kanji';
 import { LEVEL_COLORS } from '../../constants/themes';
 import { ModalShell } from '../ui/modal-shell';
+import { LevelBadge } from '../ui/level-badge';
 import './kanji-move-modal.css';
 
 const LEVELS: JLPTLevel[] = ['BT', 'N5', 'N4', 'N3', 'N2', 'N1'];
@@ -70,9 +71,7 @@ export function KanjiMoveModal({
       {/* Current location */}
       <div className="kanji-move-current">
         <span className="move-label">Vị trí hiện tại:</span>
-        <span className="move-badge" style={{ background: LEVEL_COLORS[firstCard?.jlptLevel ?? 'N5'] }}>
-          {currentLevelLabel}
-        </span>
+        <LevelBadge level={firstCard?.jlptLevel ?? 'N5'} />
         <ChevronRight size={14} />
         <span className="move-location">{currentLesson?.name ?? 'Không rõ'}</span>
       </div>

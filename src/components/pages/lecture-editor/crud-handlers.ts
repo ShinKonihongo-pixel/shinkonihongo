@@ -70,7 +70,7 @@ export function useSlideHandlers(
   const handleSaveSlide = useCallback(async () => {
     if (!editingSlide || selectedSlideIndex < 0 || selectedSlideIndex >= slides.length) return;
     const slide = slides[selectedSlideIndex];
-    await updateSlide(slide.id, editingSlide as any);
+    await updateSlide(slide.id, editingSlide);
     setHasUnsavedChanges(false);
   }, [editingSlide, selectedSlideIndex, slides, updateSlide, setHasUnsavedChanges]);
 

@@ -1,0 +1,76 @@
+/* LevelBadge — JLPT level indicator pill */
+
+.lb-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  border-radius: 999px;
+  letter-spacing: 0.03em;
+  line-height: 1;
+}
+
+/* Sizes */
+.lb-badge--xs {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.45rem;
+}
+
+.lb-badge--sm {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.55rem;
+}
+
+.lb-badge--md {
+  font-size: 0.85rem;
+  padding: 0.3rem 0.7rem;
+}
+
+/* N1 — red/warm */
+.lb-level--n1 {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+/* N2 — orange */
+.lb-level--n2 {
+  background: rgba(249, 115, 22, 0.2);
+  color: #fdba74;
+  border: 1px solid rgba(249, 115, 22, 0.35);
+}
+
+/* N3 — green */
+.lb-level--n3 {
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+/* N4 — blue */
+.lb-level--n4 {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+/* N5 — purple */
+.lb-level--n5 {
+  background: rgba(139, 92, 246, 0.2);
+  color: #c4b5fd;
+  border: 1px solid rgba(139, 92, 246, 0.35);
+}
+
+/* BT (Bộ thủ) — gray */
+.lb-level--bt {
+  background: rgba(148, 163, 184, 0.15);
+  color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+/* Fallback for unknown levels */
+.lb-badge:not(.lb-level--n1):not(.lb-level--n2):not(.lb-level--n3):not(.lb-level--n4):not(.lb-level--n5):not(.lb-level--bt) {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
