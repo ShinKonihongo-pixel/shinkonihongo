@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import type { PathStep } from '../../data/learning-path';
 import { STEP_TYPE_INFO } from '../../data/learning-path';
+import { LevelBadge } from '../ui/level-badge';
 import './learning-path-widget.css';
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -63,7 +64,7 @@ export function LearningPathWidget({
     <div className="lp-widget">
       <div className="lp-header">
         <div className="lp-header-left">
-          <span className="lp-badge">{level}</span>
+          <LevelBadge level={level} size="xs" />
           <span className="lp-title">Lộ Trình Học</span>
         </div>
         <span className="lp-progress-text">{completedCount}/{totalSteps}</span>

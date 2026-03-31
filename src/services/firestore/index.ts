@@ -55,6 +55,7 @@ export {
   addUser,
   updateUser,
   deleteUser,
+  getUserPassword,
   getUserSettings,
   saveUserSettings,
 } from './user-service';

@@ -195,8 +195,6 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
     pointerStart.current = null;
   };
 
-  const step = TOUR_STEPS[currentStep];
-  const Icon = step.icon;
   const isLast = currentStep === totalSteps - 1;
   const isFirst = currentStep === 0;
 

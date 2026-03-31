@@ -2,6 +2,7 @@
 
 import { BookOpen, Plus, Search } from 'lucide-react';
 import { LectureCard } from '../../lecture/lecture-card';
+import { SearchInput } from '../../ui/search-input';
 import type { JLPTLevel } from '../../../types/flashcard';
 import type { Lecture, LectureFolder } from '../../../types/lecture';
 import { LEVEL_CONFIG } from './constants';
@@ -59,12 +60,10 @@ export function LecturesView({
       </div>
 
       <div className="lecture-filters">
-        <input
-          type="text"
-          placeholder="Tìm kiếm bài giảng..."
+        <SearchInput
           value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="search-input"
+          onChange={onSearchChange}
+          placeholder="Tìm kiếm bài giảng..."
         />
       </div>
 

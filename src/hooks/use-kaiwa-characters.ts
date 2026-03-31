@@ -167,5 +167,6 @@ export function useKaiwaCharacters() {
     updateCharacter,
     deleteCharacter,
     getCharacterByName,
+    getPresetForCharacter,
   };
 }

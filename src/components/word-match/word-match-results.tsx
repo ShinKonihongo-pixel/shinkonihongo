@@ -1,5 +1,6 @@
 // Word Match Results - Final game results
 import React from 'react';
+import { StatCard } from '../ui/stat-card';
 import type { WordMatchResults as Results } from '../../types/word-match';
 import { Podium, RankingsTable, ResultsActionBar, type BaseRankedPlayer } from '../shared/game-results';
 
@@ -63,26 +64,11 @@ export const WordMatchResults: React.FC<WordMatchResultsProps> = ({
         <div className="your-final-result">
           <h3>📊 Kết Quả Của Bạn</h3>
           <div className="result-stats">
-            <div className="stat">
-              <span className="stat-value">#{currentPlayerResult.rank}</span>
-              <span className="stat-label">Xếp hạng</span>
-            </div>
-            <div className="stat">
-              <span className="stat-value">{currentPlayerResult.score}</span>
-              <span className="stat-label">Điểm</span>
-            </div>
-            <div className="stat">
-              <span className="stat-value">{currentPlayerResult.correctPairs}</span>
-              <span className="stat-label">Cặp đúng</span>
-            </div>
-            <div className="stat">
-              <span className="stat-value">{currentPlayerResult.perfectRounds}</span>
-              <span className="stat-label">Câu hoàn hảo</span>
-            </div>
-            <div className="stat">
-              <span className="stat-value">{currentPlayerResult.accuracy}%</span>
-              <span className="stat-label">Độ chính xác</span>
-            </div>
+            <StatCard value={`#${currentPlayerResult.rank}`} label="Xếp hạng" />
+            <StatCard value={currentPlayerResult.score} label="Điểm" />
+            <StatCard value={currentPlayerResult.correctPairs} label="Cặp đúng" />
+            <StatCard value={currentPlayerResult.perfectRounds} label="Câu hoàn hảo" />
+            <StatCard value={`${currentPlayerResult.accuracy}%`} label="Độ chính xác" />
           </div>
         </div>
       )}

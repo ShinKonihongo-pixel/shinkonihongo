@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { SearchInput } from '../ui/search-input';
 import { ModalShell } from '../ui/modal-shell';
+import { LevelBadge } from '../ui/level-badge';
 import type { TestTemplate, ClassroomTest, TestType } from '../../types/classroom';
 import './assign-test-modal.css';
 
@@ -204,7 +205,7 @@ export function AssignTestModal({
                             <span className={`atm-type-badge ${template.type}`}>
                               {isTestType ? 'Kiểm tra' : 'Bài tập'}
                             </span>
-                            {template.level && <span className="atm-level-badge">{template.level}</span>}
+                            {template.level && <LevelBadge level={template.level} size="xs" />}
                             <span className="atm-meta-item">
                               <FileText size={11} /> {template.questions.length} câu
                             </span>

@@ -1,5 +1,4 @@
 // TTS (text-to-speech) creation form for ListeningAudioView
-import React from 'react';
 import {
   Save, X, Type, Users, Settings, Wand2, Loader2, Volume2, Square, Plus
 } from 'lucide-react';

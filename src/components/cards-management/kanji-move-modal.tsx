@@ -1,6 +1,6 @@
 // Modal to move kanji cards between lessons/levels
 import { useState, useMemo } from 'react';
-import { FolderOpen, FileText, ChevronRight, ArrowRightLeft } from 'lucide-react';
+import { FolderOpen, FileText, ChevronRight } from 'lucide-react';
 import type { JLPTLevel } from './cards-management-types';
 import type { KanjiCard, KanjiLesson } from '../../types/kanji';
 import { LEVEL_COLORS } from '../../constants/themes';
@@ -32,7 +32,7 @@ export function KanjiMoveModal({
   // Current location info
   const firstCard = cards[0];
   const currentLesson = lessons.find(l => l.id === firstCard?.lessonId);
-  const currentLevelLabel = firstCard?.jlptLevel === 'BT' ? 'Bộ thủ' : firstCard?.jlptLevel;
+
 
   // Parent lessons for selected level
   const parentLessons = useMemo(() => {

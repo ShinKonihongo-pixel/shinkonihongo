@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Edit3, Trash2, ChevronDown, ChevronUp, BookOpen } from 'lucide-react';
 import type { GrammarCard } from '../../types/flashcard';
 import { ConfirmModal } from '../ui/confirm-modal';
+import { LevelBadge } from '../ui/level-badge';
 
 interface GrammarCardListProps {
   cards: GrammarCard[];
@@ -30,7 +31,6 @@ export function GrammarCardList({ cards, onEdit, onDelete, canEdit, canDelete }:
   };
 
   const getLevelClass = (level: string) => `level-${level.toLowerCase()}`;
-  const getBadgeClass = (level: string) => `badge-${level.toLowerCase()}`;
 
   if (cards.length === 0) {
     return (
@@ -50,7 +50,7 @@ export function GrammarCardList({ cards, onEdit, onDelete, canEdit, canDelete }:
         {cards.map(card => {
           const isExpanded = expandedId === card.id;
           const levelClass = getLevelClass(card.jlptLevel);
-          const badgeClass = getBadgeClass(card.jlptLevel);
+
 
           return (
             <div
@@ -64,7 +64,7 @@ export function GrammarCardList({ cards, onEdit, onDelete, canEdit, canDelete }:
                   {card.formula && <span className="grammar-formula">{card.formula}</span>}
                 </div>
                 <div className="grammar-card-actions">
-                  <span className={`grammar-jlpt-badge ${badgeClass}`}>{card.jlptLevel}</span>
+                  <LevelBadge level={card.jlptLevel} size="xs" />
                   {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                 </div>
               </div>

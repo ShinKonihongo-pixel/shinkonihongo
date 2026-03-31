@@ -34,7 +34,7 @@ describe('TOPIC_PROMPTS', () => {
   it('each topic prompt is a non-empty string', () => {
     Object.entries(TOPIC_PROMPTS).forEach(([key, value]) => {
       expect(typeof value).toBe('string');
-      expect(value.length).toBeGreaterThan(0, `Prompt for "${key}" is empty`);
+      expect(value.length, `Prompt for "${key}" is empty`).toBeGreaterThan(0);
     });
   });
 

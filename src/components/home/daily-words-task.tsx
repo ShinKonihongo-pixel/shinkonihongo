@@ -21,6 +21,7 @@ import {
   Languages,
 } from 'lucide-react';
 import { ModalShell } from '../ui/modal-shell';
+import { LevelBadge } from '../ui/level-badge';
 import type { Flashcard } from '../../types/flashcard';
 
 // Motivational messages based on progress
@@ -90,7 +91,7 @@ const FlashcardCard = memo(function FlashcardCard({
       <div className="dw-card-inner" onClick={onFlip}>
         {/* Front - Japanese */}
         <div className="dw-card-front">
-          <div className="dw-card-level-badge">{word.jlptLevel}</div>
+          <LevelBadge level={word.jlptLevel} size="xs" />
           <div className="dw-card-main-text">{word.vocabulary}</div>
           {word.kanji && word.kanji !== word.vocabulary && (
             <div className="dw-card-kanji">{word.kanji}</div>

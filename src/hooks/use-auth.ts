@@ -5,14 +5,13 @@ import type { User, CurrentUser, UserRole } from '../types/user';
 import * as firestoreService from '../services/firestore';
 import { handleError } from '../utils/error-handler';
 import { authReady } from '../lib/firebase';
-import { hashPassword, verifyPassword } from '../utils/password-hash';
+import { hashPassword, verifyPassword, isLegacyHash } from '../utils/password-hash';
 
 const CURRENT_USER_KEY = 'flashcard-current-user';
 
-// SHA-256 of 'shinko_v1_superadmin' — pre-computed to avoid async at module level
-// Generated via: hashPassword('superadmin')
-// This is replaced at runtime if the account doesn't exist yet
-const DEFAULT_SUPER_ADMIN_PASSWORD_PLAINTEXT = 'superadmin';
+// Default admin password — env var required; falls back to 'superadmin' ONLY in dev
+const DEFAULT_ADMIN_PW = import.meta.env.VITE_DEFAULT_ADMIN_PW
+  || (import.meta.env.DEV ? 'superadmin' : '');
 
 export function useAuth() {
   const [users, setUsers] = useState<User[]>([]);
@@ -43,7 +42,7 @@ export function useAuth() {
         const superAdminExists = usersData.some(u => u.username === 'superadmin');
         if (!superAdminExists) {
           try {
-            const hashedPw = await hashPassword(DEFAULT_SUPER_ADMIN_PASSWORD_PLAINTEXT);
+            const hashedPw = await hashPassword(DEFAULT_ADMIN_PW);
             const defaultSuperAdmin: Omit<User, 'id'> = {
               username: 'superadmin',
               password: hashedPw,
@@ -79,6 +78,30 @@ export function useAuth() {
     }
   }, [currentUser]);
 
+  // Re-validate cached user against Firestore on load (prevents localStorage role tampering)
+  useEffect(() => {
+    if (!currentUser || !users.length) return;
+    const freshUser = users.find(u => u.id === currentUser.id);
+    if (!freshUser) {
+      // User deleted from Firestore — force logout
+      setCurrentUser(null);
+      return;
+    }
+    // Sync role + profile from Firestore truth
+    if (freshUser.role !== currentUser.role || freshUser.displayName !== currentUser.displayName) {
+      setCurrentUser(prev => prev ? {
+        ...prev,
+        role: freshUser.role,
+        displayName: freshUser.displayName,
+        avatar: freshUser.avatar,
+        profileBackground: freshUser.profileBackground,
+        jlptLevel: freshUser.jlptLevel,
+        branchId: freshUser.branchId,
+        branchIds: freshUser.branchIds,
+      } : null);
+    }
+  }, [users]); // Only re-run when Firestore users update, not on currentUser change
+
   // Login
   const login = useCallback(async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     const user = users.find(u => u.username === username);
@@ -86,22 +109,44 @@ export function useAuth() {
       return { success: false, error: 'Tên đăng nhập hoặc mật khẩu không đúng' };
     }
 
-    // Try hash comparison first, then fall back to plaintext (backward compat for old accounts)
-    const hashed = await hashPassword(password);
-    const matchesHash = await verifyPassword(password, user.password);
-    const matchesPlaintext = !matchesHash && user.password === password;
+    // Read password from private subcollection first, fallback to legacy field
+    const storedPassword = await firestoreService.getUserPassword(user.id) || user.password;
+    if (!storedPassword) {
+      return { success: false, error: 'Tên đăng nhập hoặc mật khẩu không đúng' };
+    }
+
+    // Verify password (supports PBKDF2, legacy SHA-256, and plaintext fallback)
+    const matchesHash = await verifyPassword(password, storedPassword);
+    const matchesPlaintext = !matchesHash && storedPassword === password;
 
     if (!matchesHash && !matchesPlaintext) {
       return { success: false, error: 'Tên đăng nhập hoặc mật khẩu không đúng' };
     }
 
-    // Silent migration: upgrade plaintext password to hash
-    if (matchesPlaintext) {
+    // Silent migration: upgrade to PBKDF2 in private subcollection
+    if (matchesPlaintext || isLegacyHash(storedPassword)) {
       try {
-        await firestoreService.updateUser(user.id, { password: hashed });
+        const newHash = await hashPassword(password);
+        await firestoreService.updateUser(user.id, { password: newHash });
       } catch (err) {
         handleError(err, { context: 'useAuth/passwordMigration', silent: true });
       }
+    }
+
+    // Force password change if still using default password
+    if (matchesPlaintext && password === DEFAULT_ADMIN_PW && user.role === 'super_admin') {
+      setCurrentUser({
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        displayName: user.displayName,
+        avatar: user.avatar,
+        profileBackground: user.profileBackground,
+        jlptLevel: user.jlptLevel,
+        branchId: user.branchId,
+        branchIds: user.branchIds,
+      });
+      return { success: true, error: 'FORCE_PASSWORD_CHANGE' };
     }
 
     setCurrentUser({
@@ -136,8 +181,8 @@ export function useAuth() {
     if (username.length < 3) {
       return { success: false, error: 'Tên đăng nhập phải có ít nhất 3 ký tự' };
     }
-    if (password.length < 4) {
-      return { success: false, error: 'Mật khẩu phải có ít nhất 4 ký tự' };
+    if (password.length < 8) {
+      return { success: false, error: 'Mật khẩu phải có ít nhất 8 ký tự' };
     }
 
     try {
@@ -204,10 +249,15 @@ export function useAuth() {
     }
   }, [users, currentUser]);
 
-  // Change password
+  // Change password — only own password or admin can change any
   const changePassword = useCallback(async (userId: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
-    if (newPassword.length < 4) {
-      return { success: false, error: 'Mật khẩu phải có ít nhất 4 ký tự' };
+    if (!currentUser) return { success: false, error: 'Chưa đăng nhập' };
+    const isAdminRole = ['admin', 'super_admin'].includes(currentUser.role);
+    if (currentUser.id !== userId && !isAdminRole) {
+      return { success: false, error: 'Không có quyền đổi mật khẩu người khác' };
+    }
+    if (newPassword.length < 8) {
+      return { success: false, error: 'Mật khẩu phải có ít nhất 8 ký tự' };
     }
     try {
       const hashedPw = await hashPassword(newPassword);
@@ -217,7 +267,7 @@ export function useAuth() {
       const msg = handleError(err, { context: 'useAuth/changePassword', userMessage: 'Đổi mật khẩu thất bại' });
       return { success: false, error: msg };
     }
-  }, []);
+  }, [currentUser]);
 
   // Update display name
   const updateDisplayName = useCallback(async (userId: string, displayName: string): Promise<{ success: boolean; error?: string }> => {
@@ -291,34 +341,32 @@ export function useAuth() {
     }
   }, []);
 
-  // Check and convert expired VIP users to regular users
+  // Check and convert expired VIP users — only runs for admin users
+  // VIP expiration check — only super_admin runs this to avoid N admin clients × M users writes
+  const isSuperAdminUser = currentUser?.role === 'super_admin';
   useEffect(() => {
-    const checkExpiredVips = async () => {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+    if (!isSuperAdminUser || users.length === 0) return;
 
-      for (const user of users) {
-        if (user.role === 'vip_user' && user.vipExpirationDate) {
-          const expirationDate = new Date(user.vipExpirationDate);
-          expirationDate.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    // Use a session flag to run only once per browser session
+    const sessionKey = `vip_expiry_checked_${today.toISOString().split('T')[0]}`;
+    if (sessionStorage.getItem(sessionKey)) return;
+    sessionStorage.setItem(sessionKey, '1');
 
-          if (expirationDate < today) {
-            // VIP has expired, convert to regular user
-            try {
-              await firestoreService.updateUser(user.id, { role: 'user' });
-              console.log(`VIP expired for user ${user.username}, converted to regular user`);
-            } catch (err) {
-              handleError(err, { context: 'useAuth/expireVip', silent: true });
-            }
-          }
+    for (const user of users) {
+      if (user.role === 'vip_user' && user.vipExpirationDate) {
+        const expirationDate = new Date(user.vipExpirationDate);
+        expirationDate.setHours(0, 0, 0, 0);
+
+        if (expirationDate < today) {
+          firestoreService.updateUser(user.id, { role: 'user' }).catch(err => {
+            handleError(err, { context: 'useAuth/expireVip', silent: true });
+          });
         }
       }
-    };
-
-    if (users.length > 0) {
-      checkExpiredVips();
     }
-  }, [users]);
+  }, [users, isSuperAdminUser]);
 
   return useMemo(() => ({
     currentUser,

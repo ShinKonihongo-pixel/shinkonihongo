@@ -4,9 +4,8 @@
 import type { KanjiCharacterAnalysis } from '../types/flashcard';
 import { getSeedRadicals } from '../utils/radical-kanji-index';
 import { RADICAL_MAP } from '../data/radicals';
-import { handleError } from '../utils/error-handler';
 
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_API_URL = import.meta.env.VITE_GROQ_PROXY_URL || 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL = 'llama-3.3-70b-versatile';
 
 // Common sub-components that appear in kanji decomposition
@@ -66,6 +65,7 @@ function validateRadicals(radicals: string[], character: string): string[] {
 }
 
 function getApiKey(): string | null {
+  if (import.meta.env.VITE_GROQ_PROXY_URL) return 'proxy';
   return import.meta.env.VITE_GROQ_API_KEY || null;
 }
 
@@ -168,7 +168,7 @@ JSON array:`;
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        ...(apiKey !== 'proxy' && { 'Authorization': `Bearer ${apiKey}` }),
       },
       body: JSON.stringify({
         model: MODEL,

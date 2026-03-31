@@ -4,12 +4,8 @@
 
 import { useMemo } from 'react';
 import { useReadingSettings } from '../../contexts/reading-settings-context';
+import { convertFuriganaToRuby } from '../../lib/furigana-utils';
 import './furigana-text.css';
-
-// Convert [kanji|reading] format to ruby HTML
-function convertManualFuriganaToHtml(text: string): string {
-  return text.replace(/\[([^\]|]+)\|([^\]]+)\]/g, '<ruby>$1<rt>$2</rt></ruby>');
-}
 
 // Strip [kanji|reading] format, keep only kanji part
 function stripFurigana(text: string): string {
@@ -48,8 +44,8 @@ export function FuriganaText({ text, className = '' }: FuriganaTextProps) {
     );
   }
 
-  // Convert [kanji|reading] to <ruby> tags
-  const furiganaHtml = convertManualFuriganaToHtml(text);
+  // Convert [kanji|reading] to <ruby> tags (sanitized via DOMPurify)
+  const furiganaHtml = convertFuriganaToRuby(text);
 
   return (
     <span

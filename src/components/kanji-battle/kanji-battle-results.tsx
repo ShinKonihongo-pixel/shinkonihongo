@@ -1,5 +1,6 @@
 // Kanji Battle Results - Final game results
 import React from 'react';
+import { StatCard } from '../ui/stat-card';
 import type { KanjiBattleResults as Results } from '../../types/kanji-battle';
 import { Podium, RankingsTable, ResultsActionBar, type BaseRankedPlayer } from '../shared/game-results';
 
@@ -58,27 +59,12 @@ export const KanjiBattleResults: React.FC<KanjiBattleResultsProps> = ({
         <div className="your-final-result">
           <h3>📊 Kết Quả Của Bạn</h3>
           <div className="result-stats">
-            <div className="stat">
-              <span className="stat-value">#{currentPlayerResult.rank}</span>
-              <span className="stat-label">Xếp hạng</span>
-            </div>
-            <div className="stat">
-              <span className="stat-value">{currentPlayerResult.score}</span>
-              <span className="stat-label">Điểm</span>
-            </div>
-            <div className="stat">
-              <span className="stat-value">{currentPlayerResult.correctAnswers}</span>
-              <span className="stat-label">Đúng</span>
-            </div>
-            <div className="stat">
-              <span className="stat-value">{currentPlayerResult.accuracy.toFixed(0)}%</span>
-              <span className="stat-label">Độ chính xác</span>
-            </div>
+            <StatCard value={`#${currentPlayerResult.rank}`} label="Xếp hạng" />
+            <StatCard value={currentPlayerResult.score} label="Điểm" />
+            <StatCard value={currentPlayerResult.correctAnswers} label="Đúng" />
+            <StatCard value={`${currentPlayerResult.accuracy.toFixed(0)}%`} label="Độ chính xác" />
             {currentPlayerResult.avgStrokeScore !== undefined && (
-              <div className="stat">
-                <span className="stat-value">{currentPlayerResult.avgStrokeScore?.toFixed(0)}%</span>
-                <span className="stat-label">TB nét vẽ</span>
-              </div>
+              <StatCard value={`${currentPlayerResult.avgStrokeScore?.toFixed(0)}%`} label="TB nét vẽ" />
             )}
           </div>
         </div>

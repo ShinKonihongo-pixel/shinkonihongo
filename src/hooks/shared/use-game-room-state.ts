@@ -8,7 +8,6 @@ import {
   deleteGameRoom,
   subscribeToGameRoom,
 } from '../../services/game-rooms';
-import { handleError } from '../../utils/error-handler';
 
 const DEFAULT_SYNC_DEBOUNCE_MS = 300;
 

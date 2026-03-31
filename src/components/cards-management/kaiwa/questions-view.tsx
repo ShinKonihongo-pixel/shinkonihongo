@@ -1,10 +1,11 @@
 // Kaiwa Questions View - Question management with folder navigation
 
 import { useState, useMemo } from 'react';
-import { Search, Filter, ChevronRight, ChevronLeft, Edit2, Trash2, Plus, FolderOpen, MessageSquare } from 'lucide-react';
+import { Filter, ChevronRight, ChevronLeft, Edit2, Trash2, Plus, FolderOpen, MessageSquare } from 'lucide-react';
 import { CONVERSATION_TOPICS, CONVERSATION_STYLES } from '../../../constants/kaiwa';
 import { ConfirmModal } from '../../ui/confirm-modal';
 import { EmptyState } from '../../ui/empty-state';
+import { SearchInput } from '../../ui/search-input';
 import { LevelBadge } from '../../ui/level-badge';
 import type {
   KaiwaDefaultQuestion,
@@ -218,7 +219,7 @@ export function QuestionsView({
         <div className="kaiwa-question-ja">{question.questionJa}</div>
         {question.questionVi && <div className="kaiwa-question-vi">{question.questionVi}</div>}
         <div className="kaiwa-question-meta">
-          <span className="meta-badge level">{question.level}</span>
+          <LevelBadge level={question.level} size="xs" />
           <span className="meta-badge style">
             {question.style === 'casual' ? 'タメ口' : question.style === 'polite' ? 'です/ます' : '敬語'}
           </span>
@@ -374,15 +375,11 @@ export function QuestionsView({
     <div className="kaiwa-questions-tab">
       {/* Search & Filter Bar */}
       <div className="questions-toolbar">
-        <div className="search-box">
-          <Search size={18} />
-          <input
-            type="text"
-            placeholder="Tìm kiếm câu hỏi..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+        <SearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Tìm kiếm câu hỏi..."
+        />
         <div className="filter-group">
           <Filter size={18} />
           <select value={filterLevel} onChange={(e) => setFilterLevel(e.target.value)}>

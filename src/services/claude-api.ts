@@ -3,7 +3,6 @@
 // Set VITE_ANTHROPIC_PROXY_URL in .env to your proxy endpoint
 
 const PROXY_URL = import.meta.env.VITE_ANTHROPIC_PROXY_URL || '/api/claude';
-const API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
 const MODEL = import.meta.env.VITE_ANTHROPIC_MODEL || 'claude-sonnet-4-20250514';
 
 export interface ClaudeMessage {
@@ -48,8 +47,8 @@ export async function sendMessage(
   systemPrompt: string,
   signal?: AbortSignal
 ): Promise<string> {
-  if (!API_KEY && !PROXY_URL.startsWith('/')) {
-    throw new Error('Chưa cấu hình API key. Vui lòng thêm VITE_ANTHROPIC_API_KEY vào file .env');
+  if (!PROXY_URL || PROXY_URL === '/api/claude') {
+    throw new Error('Chưa cấu hình proxy URL. Vui lòng thêm VITE_ANTHROPIC_PROXY_URL vào file .env');
   }
 
   const { claudeLimiter } = await import('../utils/rate-limiter');
@@ -57,17 +56,10 @@ export async function sendMessage(
     throw new Error('Bạn gửi tin nhắn quá nhanh. Vui lòng đợi một chút.');
   }
 
+  // SECURITY: API key is kept on proxy server, never sent from browser
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
-
-  // If calling Anthropic directly (via proxy), include API key and version
-  if (API_KEY) {
-    headers['x-api-key'] = API_KEY;
-    headers['anthropic-version'] = '2023-06-01';
-    // Allow browser CORS via proxy
-    headers['anthropic-dangerous-direct-browser-access'] = 'true';
-  }
 
   const response = await fetch(PROXY_URL, {
     method: 'POST',
@@ -82,8 +74,11 @@ export async function sendMessage(
   });
 
   if (!response.ok) {
-    const errorText = await response.text().catch(() => 'Unknown error');
-    throw new Error(`API error ${response.status}: ${errorText}`);
+    // Don't leak raw proxy/API error details to users
+    const status = response.status;
+    if (status === 429) throw new Error('Vượt giới hạn tần suất. Thử lại sau.');
+    if (status >= 500) throw new Error('Lỗi máy chủ AI. Thử lại sau.');
+    throw new Error(`Lỗi API (${status})`);
   }
 
   const data: ClaudeResponse = await response.json();

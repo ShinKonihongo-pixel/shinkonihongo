@@ -1,6 +1,7 @@
 // JLPT Test Question types
 
-export type JLPTLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1';
+import type { JLPTLevel } from './flashcard';
+export type { JLPTLevel };
 
 export type QuestionCategory =
   | 'vocabulary'      // Từ vựng

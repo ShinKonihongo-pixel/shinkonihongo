@@ -1,7 +1,7 @@
 // Utility functions for AI Challenge
 // Storage, question generation, and helper functions
 
-import type { Flashcard } from '../../types/flashcard';
+import type { Flashcard, JLPTLevel } from '../../types/flashcard';
 import type { AIChallengeQuestion } from '../../types/ai-challenge';
 import { shuffleArray } from '../../lib/game-utils';
 import { generateMultipleChoiceOptions } from '../../lib/game-question-utils';
@@ -9,8 +9,8 @@ import { generateMultipleChoiceOptions } from '../../lib/game-question-utils';
 // Storage key for player progress (per JLPT level)
 export const STORAGE_KEY_PREFIX = 'ai_challenge_progress_';
 
-// JLPT levels
-export type JLPTLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | 'BT';
+// Re-export canonical JLPTLevel from shared types
+export type { JLPTLevel } from '../../types/flashcard';
 
 // Generate unique ID
 export function generateId(): string {

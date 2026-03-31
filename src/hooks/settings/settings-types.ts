@@ -30,12 +30,13 @@ export type GameAnswerContent = 'kanji' | 'vocabulary' | 'meaning' | 'vocabulary
 
 // Game question source types
 export type GameQuestionSource = 'all' | 'jlpt_level' | 'lesson' | 'memorization';
+/** JLPT level option for game question sources (canonical: types/flashcard.JLPTLevel) */
 export type JLPTLevelOption = 'N5' | 'N4' | 'N3' | 'N2' | 'N1';
 export type MemorizationFilter = 'all' | 'memorized' | 'not_memorized';
 export type AutoAddDifficulty = 'random' | 'easy' | 'medium' | 'hard';
 
-// JLPT Level keys
-export type JLPTLevelKey = 'N5' | 'N4' | 'N3' | 'N2' | 'N1';
+/** Alias for per-level config keys (same as JLPTLevelOption, kept for semantic clarity) */
+export type JLPTLevelKey = JLPTLevelOption;
 
 // Per-AI custom settings
 export type FlashcardDifficulty = 'easy' | 'medium' | 'hard' | 'super_hard';

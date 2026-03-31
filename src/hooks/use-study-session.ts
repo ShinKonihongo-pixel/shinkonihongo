@@ -1,7 +1,7 @@
 // Hook for managing study session with spaced repetition
 
 import { useState, useCallback, useMemo } from 'react';
-import type { Flashcard, StudyStats, JLPTLevel, MemorizationStatus } from '../types/flashcard';
+import type { Flashcard, StudyStats, JLPTLevel, MemorizationStatus, DifficultyLevel } from '../types/flashcard';
 import { getCardsForReview } from '../lib/spaced-repetition';
 import { shuffleArray } from '../lib/game-utils';
 

@@ -27,7 +27,7 @@ export function ConcentricRings({ data }: ConcentricRingsProps) {
   return (
     <svg viewBox={`0 0 ${RING_SIZE} ${TOTAL_H}`} style={{ width: '100%' }}>
       <defs>
-        {data.map((item, i) => (
+        {data.map((_item, i) => (
           <filter key={i} id={`ring-glow-${i}`} x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="3" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />

@@ -10,7 +10,6 @@ import type {
 } from '../../types/classroom';
 import type { User } from '../../types/user';
 import * as classroomService from '../../services/classroom-firestore';
-import { handleError } from '../../utils/error-handler';
 
 export function useClassroomGrades(
   classroomId: string | null,

@@ -2,6 +2,7 @@
 // Allows viewing rooms, configuring defaults, and viewing statistics
 
 import { useState } from 'react';
+import { StatCard } from '../ui/stat-card';
 import { ArrowLeft, Settings, Users, History, Trash2, Eye, Check } from 'lucide-react';
 import type { BingoGameSettings } from '../../types/bingo-game';
 import { DEFAULT_BINGO_SETTINGS } from '../../types/bingo-game';
@@ -106,18 +107,9 @@ export function BingoGameManager({ onClose }: BingoGameManagerProps) {
       <div className="manager-stats">
         <h4>Thống Kê</h4>
         <div className="stats-grid">
-          <div className="stat-item">
-            <span className="stat-value">{activeRooms.length}</span>
-            <span className="stat-label">Phòng Đang Chơi</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-value">{gameHistory.length}</span>
-            <span className="stat-label">Ván Đã Chơi</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-value">0</span>
-            <span className="stat-label">Người Chơi Online</span>
-          </div>
+          <StatCard value={activeRooms.length} label="Phòng Đang Chơi" />
+          <StatCard value={gameHistory.length} label="Ván Đã Chơi" />
+          <StatCard value={0} label="Người Chơi Online" />
         </div>
       </div>
 

@@ -1,5 +1,4 @@
 // Audio list view with TTS forms and audio management
-import React from 'react';
 import { LEVEL_THEMES } from '../../../constants/themes';
 import { LESSON_TYPES } from './listening-tab-types';
 import { useGroq } from '../../../hooks/use-groq';

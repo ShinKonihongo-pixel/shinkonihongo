@@ -112,8 +112,8 @@ export interface QuizBattleRating {
   odinhId: string;
   displayName: string;
   avatar: string;
-  ratings: Record<JLPTLevel, number>;
-  stats: Record<JLPTLevel, QuizBattleLevelStats>;
+  ratings: Partial<Record<JLPTLevel, number>>;
+  stats: Partial<Record<JLPTLevel, QuizBattleLevelStats>>;
   createdAt: string;
   updatedAt: string;
 }

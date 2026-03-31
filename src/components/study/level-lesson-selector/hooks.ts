@@ -8,17 +8,16 @@ export function useCardCountByLevel(
   levels?: JLPTLevel[]
 ) {
   return useMemo(() => {
+    // Single pass through all cards instead of N passes per level
     const counts: Record<string, number> = {};
     const displayLevels = levels ?? JLPT_LEVELS;
-    displayLevels.forEach(level => {
-      if (type === 'vocabulary') {
-        counts[level] = (cards as Flashcard[]).filter(c => c.jlptLevel === level).length;
-      } else {
-        counts[level] = (cards as GrammarCard[]).filter(c => c.jlptLevel === level).length;
-      }
-    });
+    displayLevels.forEach(level => { counts[level] = 0; });
+    for (const card of cards) {
+      const level = (card as Flashcard).jlptLevel;
+      if (level in counts) counts[level]++;
+    }
     return counts;
-  }, [cards, type, levels]);
+  }, [cards, levels]);
 }
 
 export function useLevelLessons(
@@ -39,16 +38,21 @@ export function useCardsPerLesson(
   type: 'vocabulary' | 'grammar' | 'kanji'
 ) {
   return useMemo(() => {
+    // Build a reverse map: lessonId → parent lesson id (for O(1) lookup)
+    const lessonToParent = new Map<string, string>();
     const counts: Record<string, number> = {};
     levelLessons.forEach(lesson => {
+      counts[lesson.id] = 0;
+      lessonToParent.set(lesson.id, lesson.id);
       const childLessons = getChildLessons(lesson.id);
-      const lessonIds = [lesson.id, ...childLessons.map(l => l.id)];
-      if (type === 'vocabulary') {
-        counts[lesson.id] = (cards as Flashcard[]).filter(c => lessonIds.includes(c.lessonId)).length;
-      } else {
-        counts[lesson.id] = (cards as GrammarCard[]).filter(c => lessonIds.includes(c.lessonId)).length;
-      }
+      childLessons.forEach(child => lessonToParent.set(child.id, lesson.id));
     });
+    // Single pass through cards
+    for (const card of cards) {
+      const cardLessonId = (card as Flashcard).lessonId;
+      const parentId = lessonToParent.get(cardLessonId);
+      if (parentId) counts[parentId]++;
+    }
     return counts;
   }, [levelLessons, cards, getChildLessons, type]);
 }

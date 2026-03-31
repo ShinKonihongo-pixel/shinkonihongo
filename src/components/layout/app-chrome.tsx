@@ -4,7 +4,7 @@
 
 import { useState, useEffect, Suspense, type ReactNode } from 'react';
 import { useNavigation } from '../../contexts/navigation-context';
-import { useUserData } from '../../contexts/user-data-context';
+import { useAuthData } from '../../contexts/auth-context';
 import { useFlashcardData } from '../../contexts/flashcard-data-context';
 import { useAchievementContextOptional } from '../../contexts/achievement-context';
 import { useSettings } from '../../hooks/use-settings';
@@ -25,7 +25,7 @@ import type { UserJLPTLevel } from '../../types/user';
 
 export function AppChrome({ children }: { children: ReactNode }) {
   const nav = useNavigation();
-  const { currentUser, logout, updateJlptLevel } = useUserData();
+  const { currentUser, logout, updateJlptLevel } = useAuthData();
   const { cards, lessons, grammarCards, kanjiCards, readingPassages } = useFlashcardData();
   const achievementCtx = useAchievementContextOptional();
   const { settings } = useSettings();
@@ -60,6 +60,31 @@ export function AppChrome({ children }: { children: ReactNode }) {
       resetAnalytics();
     }
   }, [currentUser]);
+
+  // Content protection — block copy/print/save/view-source shortcuts + context menu
+  useEffect(() => {
+    const blockKeys = (e: KeyboardEvent) => {
+      // Ctrl/Cmd + C (copy), S (save), U (view source), P (print)
+      if ((e.ctrlKey || e.metaKey) && ['c', 's', 'u', 'p'].includes(e.key.toLowerCase())) {
+        // Allow copy inside inputs/textareas
+        if (e.key.toLowerCase() === 'c' && (e.target as HTMLElement)?.tagName?.match(/^(INPUT|TEXTAREA)$/)) return;
+        e.preventDefault();
+      }
+      // F12 + Ctrl+Shift+I/J (dev tools) — temporarily allowed for debugging
+      // TODO: Re-enable before production deploy
+    };
+    const blockContext = (e: MouseEvent) => e.preventDefault();
+    const blockDrag = (e: DragEvent) => e.preventDefault();
+
+    document.addEventListener('keydown', blockKeys);
+    document.addEventListener('contextmenu', blockContext);
+    document.addEventListener('dragstart', blockDrag);
+    return () => {
+      document.removeEventListener('keydown', blockKeys);
+      document.removeEventListener('contextmenu', blockContext);
+      document.removeEventListener('dragstart', blockDrag);
+    };
+  }, []);
 
   return (
     <div className={`app app-with-sidebar ${nav.sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>

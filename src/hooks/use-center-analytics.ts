@@ -71,7 +71,7 @@ function getWeekLabel(weeksAgo: number): string {
 // ========== Hook ==========
 
 export function useCenterAnalytics(
-  centerId: string,
+  _centerId: string,
   members: CenterMemberInfo[],
   classrooms: Classroom[],
 ) {

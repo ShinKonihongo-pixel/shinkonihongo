@@ -30,7 +30,12 @@ export async function getAllUsers(): Promise<User[]> {
 export function subscribeToUsers(callback: (users: User[]) => void, limitCount = 500): Unsubscribe {
   const q = query(collection(db, COLLECTIONS.USERS), limit(limitCount));
   return onSnapshot(q, (snapshot) => {
-    const users = snapshot.docs.map(doc => mapDoc<User>(doc));
+    const users = snapshot.docs.map(d => {
+      const user = mapDoc<User>(d);
+      // Strip password hash from client-side user objects — passwords live in private subcollection
+      user.password = '';
+      return user;
+    });
     callback(users);
   });
 }
@@ -44,18 +49,44 @@ export async function getUserByUsername(username: string): Promise<User | null> 
 }
 
 export async function addUser(data: Omit<User, 'id'>): Promise<User> {
-  const docRef = await addDoc(collection(db, COLLECTIONS.USERS), data);
+  // Separate password into private subcollection
+  const { password, ...publicData } = data;
+  const docRef = await addDoc(collection(db, COLLECTIONS.USERS), { ...publicData, password: '' });
+  // Store password hash in private subcollection
+  if (password) {
+    await setDoc(doc(db, COLLECTIONS.USERS, docRef.id, 'private', 'auth'), { password });
+  }
   return { id: docRef.id, ...data };
 }
 
 export async function updateUser(id: string, data: Partial<User>): Promise<void> {
-  const docRef = doc(db, COLLECTIONS.USERS, id);
-  await updateDoc(docRef, data);
+  // If password is being updated, write to private subcollection instead
+  if (data.password) {
+    const { password, ...publicData } = data;
+    await setDoc(doc(db, COLLECTIONS.USERS, id, 'private', 'auth'), { password }, { merge: true });
+    if (Object.keys(publicData).length > 0) {
+      await updateDoc(doc(db, COLLECTIONS.USERS, id), publicData);
+    }
+  } else {
+    await updateDoc(doc(db, COLLECTIONS.USERS, id), data);
+  }
+}
+
+/** Read password hash from private subcollection */
+export async function getUserPassword(userId: string): Promise<string | null> {
+  const docSnap = await getDoc(doc(db, COLLECTIONS.USERS, userId, 'private', 'auth'));
+  if (docSnap.exists()) {
+    return (docSnap.data() as { password: string }).password;
+  }
+  return null;
 }
 
 export async function deleteUser(id: string): Promise<void> {
-  const docRef = doc(db, COLLECTIONS.USERS, id);
-  await deleteDoc(docRef);
+  // Delete private subcollection first, then user doc
+  try {
+    await deleteDoc(doc(db, COLLECTIONS.USERS, id, 'private', 'auth'));
+  } catch { /* subcollection may not exist for old users */ }
+  await deleteDoc(doc(db, COLLECTIONS.USERS, id));
 }
 
 // ============ SETTINGS ============

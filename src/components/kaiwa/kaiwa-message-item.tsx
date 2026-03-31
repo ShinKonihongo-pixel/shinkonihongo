@@ -1,6 +1,6 @@
 // Individual message item in Kaiwa conversation
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import type { KaiwaMessage } from '../../types/kaiwa';
 import { FuriganaText } from '../common/furigana-text';
 import { removeFurigana } from '../../lib/furigana-utils';
@@ -18,7 +18,7 @@ interface KaiwaMessageItemProps {
   onSaveSentence?: (text: string) => void;
 }
 
-export function KaiwaMessageItem({
+export const KaiwaMessageItem = React.memo(function KaiwaMessageItem({
   message,
   speakingMessageId,
   speakingMode,
@@ -133,4 +133,4 @@ export function KaiwaMessageItem({
       </div>
     </div>
   );
-}
+});

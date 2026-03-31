@@ -2,7 +2,8 @@
 
 export type JapaneseVoiceGender = 'male' | 'female';
 
-export type JLPTLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | 'BT';
+import type { JLPTLevel } from './flashcard';
+export type { JLPTLevel };
 
 export type ConversationStyle = 'casual' | 'polite' | 'formal';
 

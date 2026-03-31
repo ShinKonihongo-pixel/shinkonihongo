@@ -7,8 +7,8 @@ import { Lock, Swords, ChevronLeft, Crown, Sparkles, Trophy } from 'lucide-react
 import type { AIDifficulty, AIOpponent } from '../../types/ai-challenge';
 import { getAllAIsSorted } from '../../types/ai-challenge';
 import { useSettings } from '../../hooks/use-settings';
-const JLPT_LEVELS = ['N5', 'N4', 'N3', 'N2', 'N1'] as const;
-type JLPTLevel = typeof JLPT_LEVELS[number];
+import type { JLPTLevel } from '../../types/flashcard';
+import { JLPT_LEVELS } from '../../constants/jlpt';
 
 // Session configuration (sub-tabs within each JLPT level)
 const SESSIONS = [
@@ -97,7 +97,7 @@ export function AIChallengeMenu({
     })), []);
 
   // Handle JLPT level change
-  const handleLevelChange = (level: JLPTLevel) => {
+  const handleLevelChange = (level: 'N5' | 'N4' | 'N3' | 'N2' | 'N1') => {
     updateSetting('aiChallengeLevel', level);
     setSelectedAI(null); // Clear selection when changing level
     setCurrentSession(1); // Reset to first session
@@ -168,7 +168,7 @@ export function AIChallengeMenu({
             <button
               key={level}
               className={`asp-level-tab ${currentLevel === level ? 'active' : ''}`}
-              onClick={() => handleLevelChange(level)}
+              onClick={() => handleLevelChange(level as 'N5' | 'N4' | 'N3' | 'N2' | 'N1')}
             >
               <span className="asp-level-name">{level}</span>
             </button>

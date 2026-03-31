@@ -3,7 +3,7 @@
 
 import { useState, useCallback } from 'react';
 import {
-  Shield, Check, X, ChevronDown, Save, RotateCcw,
+  Shield, Check, ChevronDown, Save, RotateCcw,
   BookOpen, Gamepad2, GraduationCap, Settings, Users,
 } from 'lucide-react';
 import type { UserRole } from '../../types/user';

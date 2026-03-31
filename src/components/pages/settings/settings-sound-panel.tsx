@@ -2,9 +2,9 @@
 // Game Sound Settings Panel - Audio and music configuration
 // Extracted from settings-page.tsx for better maintainability
 
-import { useState, useMemo, useRef } from 'react';
-import { useGameSounds, MUSIC_CATEGORY_LABELS, type MusicCategory, type CustomSoundEffect } from '../../../hooks/use-game-sounds';
-import { Volume2, VolumeX, Music, Music2, Upload, Trash2 } from 'lucide-react';
+import React, { useRef } from 'react';
+import { useGameSounds, type CustomSoundEffect } from '../../../hooks/use-game-sounds';
+import { Volume2, VolumeX, Upload, Trash2 } from 'lucide-react';
 
 /**
  * Game Sound Settings Component
@@ -17,104 +17,14 @@ export function GameSoundSettings() {
     playCorrect,
     playWrong,
     playVictory,
-    startMusic,
-    stopMusic,
-    isMusicPlaying,
-    currentTrack,
-    addCustomTrack,
-    removeCustomTrack,
-    allTracks,
     setCustomSound,
     getCustomSound,
   } = useGameSounds();
-
-  const [showAddCustom, setShowAddCustom] = useState(false);
-  const [customTrackName, setCustomTrackName] = useState('');
-  const [customTrackUrl, setCustomTrackUrl] = useState('');
-  const [customTrackEmoji, setCustomTrackEmoji] = useState('🎵');
-  const [uploadMode, setUploadMode] = useState<'url' | 'file'>('url');
-  const [uploadedFileName, setUploadedFileName] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sound effect upload refs
   const correctSoundRef = useRef<HTMLInputElement>(null);
   const wrongSoundRef = useRef<HTMLInputElement>(null);
   const victorySoundRef = useRef<HTMLInputElement>(null);
-
-  // Get current selected track info
-  const selectedTrack = useMemo(() => {
-    return allTracks.find(t => t.id === soundSettings.musicTrack);
-  }, [allTracks, soundSettings.musicTrack]);
-
-  // Group tracks by category
-  const tracksByCategory = useMemo(() => {
-    const categories: MusicCategory[] = ['epic', 'chill', 'action', 'fun', 'japanese', 'custom'];
-    return categories.map(cat => ({
-      category: cat,
-      label: MUSIC_CATEGORY_LABELS[cat],
-      tracks: allTracks.filter(t => t.category === cat),
-    })).filter(g => g.tracks.length > 0);
-  }, [allTracks]);
-
-
-  const handleAddCustomTrack = () => {
-    if (!customTrackName.trim() || !customTrackUrl.trim()) return;
-
-    const trackId = `custom-${Date.now()}`;
-    addCustomTrack({
-      id: trackId,
-      name: customTrackName.trim(),
-      emoji: customTrackEmoji,
-      url: customTrackUrl.trim(),
-    });
-
-    // Reset form
-    resetCustomForm();
-  };
-
-  const resetCustomForm = () => {
-    setCustomTrackName('');
-    setCustomTrackUrl('');
-    setCustomTrackEmoji('🎵');
-    setUploadedFileName('');
-    setUploadMode('url');
-    setShowAddCustom(false);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/ogg', 'audio/wav', 'audio/webm', 'audio/aac'];
-    if (!validTypes.includes(file.type) && !file.name.match(/\.(mp3|ogg|wav|webm|aac|m4a)$/i)) {
-      alert('Chỉ hỗ trợ file âm thanh: MP3, OGG, WAV, WebM, AAC');
-      return;
-    }
-
-    // Max 10MB
-    if (file.size > 10 * 1024 * 1024) {
-      alert('File quá lớn! Tối đa 10MB');
-      return;
-    }
-
-    setUploadedFileName(file.name);
-
-    // Auto-fill name from filename if empty
-    if (!customTrackName.trim()) {
-      const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
-      setCustomTrackName(nameWithoutExt);
-    }
-
-    // Convert to data URL
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
-      setCustomTrackUrl(dataUrl);
-    };
-    reader.readAsDataURL(file);
-  };
 
   // Handle sound effect file upload
   const handleSoundEffectUpload = (type: 'correct' | 'wrong' | 'victory' | 'defeat', e: React.ChangeEvent<HTMLInputElement>) => {

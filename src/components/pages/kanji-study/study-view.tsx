@@ -36,7 +36,7 @@ export function StudyView({
   displayCards, allCards, currentIndex, isFlipped, isShuffled, selectedLevel,
   memorizationFilter, lessons, studySettings,
   onNext, onPrev, onFlip, onShuffle, onRestart, onBack, onOpenSettings,
-  onFilterChange, onToggleMemorization, onUpdateCard,
+  onFilterChange, onToggleMemorization, onUpdateCard: _onUpdateCard,
 }: StudyViewProps) {
   const currentCard = displayCards[currentIndex];
   const [showDecomposer, setShowDecomposer] = useState(false);

@@ -2,6 +2,7 @@
 
 import './evaluation-panel.css';
 import React, { useState, useMemo } from 'react';
+import { StatCard } from '../ui/stat-card';
 import type { User } from '../../types/user';
 import type {
   AttendanceSession,
@@ -201,22 +202,10 @@ export function AttendancePanel({
             <>
               {/* Stats */}
               <div className="attendance-stats">
-                <div className="stat-item present">
-                  <span className="stat-value">{sessionStats.present}</span>
-                  <span className="stat-label">Có mặt</span>
-                </div>
-                <div className="stat-item late">
-                  <span className="stat-value">{sessionStats.late}</span>
-                  <span className="stat-label">Đi muộn</span>
-                </div>
-                <div className="stat-item absent">
-                  <span className="stat-value">{sessionStats.absent}</span>
-                  <span className="stat-label">Vắng</span>
-                </div>
-                <div className="stat-item excused">
-                  <span className="stat-value">{sessionStats.excused}</span>
-                  <span className="stat-label">Có phép</span>
-                </div>
+                <StatCard value={sessionStats.present} label="Có mặt" className="present" />
+                <StatCard value={sessionStats.late} label="Đi muộn" className="late" />
+                <StatCard value={sessionStats.absent} label="Vắng" className="absent" />
+                <StatCard value={sessionStats.excused} label="Có phép" className="excused" />
               </div>
 
               {/* Quick actions */}

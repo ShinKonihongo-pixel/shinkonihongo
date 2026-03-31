@@ -13,6 +13,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useUserData } from '../../contexts/user-data-context';
+import { TabBar, type Tab } from '../ui/tab-bar';
 
 // Combined notification type for display
 interface CombinedNotification {
@@ -112,6 +113,14 @@ export function NotificationsPage() {
       byUser: Object.entries(byUser).sort((a, b) => b[1] - a[1]),
     };
   }, [friendNotifications]);
+
+  // Tab bar config
+  const tabs = useMemo((): Tab<TabType>[] => [
+    { key: 'all', label: 'Tất cả', icon: <Bell size={18} />, badge: combinedNotifications.filter(n => !n.isRead).length || undefined },
+    { key: 'classroom', label: 'Lớp học', icon: <School size={18} />, badge: classroomNotifications.filter(n => !n.isRead).length || undefined },
+    { key: 'gifts', label: 'Quà tặng', icon: <Gift size={18} />, badge: giftStats.unread || undefined },
+    { key: 'settings', label: 'Cài đặt', icon: <Settings size={18} /> },
+  ], [combinedNotifications, classroomNotifications, giftStats.unread]);
 
   // Filter notifications based on tab and filter
   const filteredNotifications = useMemo(() => {
@@ -231,45 +240,7 @@ export function NotificationsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="notifications-tabs">
-        <button
-          className={`tab-btn ${activeTab === 'all' ? 'active' : ''}`}
-          onClick={() => setActiveTab('all')}
-        >
-          <Bell size={18} />
-          <span>Tất cả</span>
-          {combinedNotifications.filter(n => !n.isRead).length > 0 && (
-            <span className="tab-badge">{combinedNotifications.filter(n => !n.isRead).length}</span>
-          )}
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'classroom' ? 'active' : ''}`}
-          onClick={() => setActiveTab('classroom')}
-        >
-          <School size={18} />
-          <span>Lớp học</span>
-          {classroomNotifications.filter(n => !n.isRead).length > 0 && (
-            <span className="tab-badge">{classroomNotifications.filter(n => !n.isRead).length}</span>
-          )}
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'gifts' ? 'active' : ''}`}
-          onClick={() => setActiveTab('gifts')}
-        >
-          <Gift size={18} />
-          <span>Quà tặng</span>
-          {giftStats.unread > 0 && (
-            <span className="tab-badge">{giftStats.unread}</span>
-          )}
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
-          onClick={() => setActiveTab('settings')}
-        >
-          <Settings size={18} />
-          <span>Cài đặt</span>
-        </button>
-      </div>
+      <TabBar tabs={tabs} active={activeTab} onChange={setActiveTab} />
 
       {/* Content */}
       <div className="notifications-content">

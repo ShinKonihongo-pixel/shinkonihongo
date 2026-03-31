@@ -17,8 +17,8 @@ export interface UseKaiwaMessagesReturn {
   startTime: Date | null;
   savedSentences: string[];
   conversationStats: { exchanges: number; duration: number };
-  messagesEndRef: React.RefObject<HTMLDivElement>;
-  inputRef: React.RefObject<HTMLInputElement>;
+  messagesEndRef: React.RefObject<HTMLDivElement | null>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
   setMessages: React.Dispatch<React.SetStateAction<KaiwaMessage[]>>;
   setInputText: (v: string) => void;
   setAnswerTemplate: (v: AnswerTemplate | null) => void;

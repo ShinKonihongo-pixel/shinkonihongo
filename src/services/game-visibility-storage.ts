@@ -2,7 +2,6 @@
 // Manages which games are hidden/visible in the game hub
 
 import type { GameType } from '../types/game-hub';
-import { handleError } from '../utils/error-handler';
 
 const STORAGE_KEY = 'game_visibility_settings';
 
@@ -19,7 +18,7 @@ export function getGameVisibilitySettings(): GameVisibilitySettings {
       return JSON.parse(data);
     }
   } catch (e) {
-    console.error('Failed to load game visibility settings:', e);
+    console.warn('Failed to load game visibility settings:', e);
   }
   return { hiddenGames: [], updatedAt: Date.now() };
 }
@@ -32,7 +31,7 @@ export function saveGameVisibilitySettings(settings: GameVisibilitySettings): vo
       updatedAt: Date.now(),
     }));
   } catch (e) {
-    console.error('Failed to save game visibility settings:', e);
+    console.warn('Failed to save game visibility settings:', e);
   }
 }
 

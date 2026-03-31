@@ -5,6 +5,7 @@ import type { ImportProgress, PPTXImportOptions } from '../../types/pptx';
 import type { SlideFormData } from '../../types/lecture';
 import { MAX_FILE_SIZE } from '../../lib/pptx/pptx-constants';
 import { ModalShell } from '../ui/modal-shell';
+import { StatCard } from '../ui/stat-card';
 
 interface PPTXImportModalProps {
   isOpen: boolean;
@@ -209,14 +210,8 @@ export function PPTXImportModal({
               </div>
             ) : (
               <div className="preview-stats">
-                <div className="stat">
-                  <span className="stat-value">{preview.slideCount}</span>
-                  <span className="stat-label">Slides</span>
-                </div>
-                <div className="stat">
-                  <span className="stat-value">{preview.hasImages ? '✓' : '–'}</span>
-                  <span className="stat-label">Hình ảnh</span>
-                </div>
+                <StatCard value={preview.slideCount} label="Slides" />
+                <StatCard value={preview.hasImages ? '✓' : '–'} label="Hình ảnh" />
               </div>
             )}
           </div>

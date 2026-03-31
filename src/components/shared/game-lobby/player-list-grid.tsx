@@ -1,6 +1,7 @@
 // Player List Grid - Reusable player list with VIP styling, host badge, kick button
 // Extracted from common pattern across all game lobbies
 
+import React from 'react';
 import { X } from 'lucide-react';
 import type { BaseLobbyPlayer } from './types';
 import { isImageAvatar } from '../../../utils/avatar-icons';
@@ -18,7 +19,7 @@ interface PlayerListGridProps {
   renderExtra?: (player: BaseLobbyPlayer) => React.ReactNode;
 }
 
-export function PlayerListGrid({
+export const PlayerListGrid = React.memo(function PlayerListGrid({
   players,
   hostId,
   currentPlayerId,
@@ -83,4 +84,4 @@ export function PlayerListGrid({
       ))}
     </div>
   );
-}
+});

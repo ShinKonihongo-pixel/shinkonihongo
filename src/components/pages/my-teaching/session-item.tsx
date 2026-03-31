@@ -1,6 +1,7 @@
+import React from 'react';
 import type { TeachingSession } from '../../../types/teacher';
 
-export function SessionItem({ session }: { session: TeachingSession }) {
+export const SessionItem = React.memo(function SessionItem({ session }: { session: TeachingSession }) {
   return (
     <div style={{
       display: 'flex',
@@ -22,4 +23,4 @@ export function SessionItem({ session }: { session: TeachingSession }) {
       </div>
     </div>
   );
-}
+});

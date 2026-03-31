@@ -16,6 +16,7 @@ const DEFAULT_LINES: MultiLineChartProps['lines'] = [
 export function MultiLineChart({ data, lines }: MultiLineChartProps) {
   const resolvedLines = lines ?? DEFAULT_LINES;
 
+  if (!resolvedLines) return null;
   if (!data.length) return <EmptyState />;
 
   const W = 340;

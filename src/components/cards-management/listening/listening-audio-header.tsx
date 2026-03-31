@@ -1,5 +1,4 @@
 // Navigation header for ListeningAudioView
-import React from 'react';
 import { ChevronLeft, Upload, Type } from 'lucide-react';
 import { LEVEL_THEMES } from '../../../constants/themes';
 import { LESSON_TYPES, LESSON_TYPE_THEMES } from './listening-tab-types';

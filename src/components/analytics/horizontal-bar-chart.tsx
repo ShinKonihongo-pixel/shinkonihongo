@@ -1,4 +1,4 @@
-import { CHART_COLORS, GRID_LINE, LABEL_COLOR, VALUE_COLOR } from './chart-constants';
+import { CHART_COLORS, GRID_LINE, VALUE_COLOR } from './chart-constants';
 import { EmptyState } from './chart-empty-state';
 
 // ─── 1. HorizontalBarChart ────────────────────────────────────────────────────
@@ -47,7 +47,7 @@ export function HorizontalBarChart({ data }: HorizontalBarChartProps) {
             <stop offset="100%" stopColor={item.color} stopOpacity="1" />
           </linearGradient>
         ))}
-        {items.map((item, i) => (
+        {items.map((_item, i) => (
           <filter key={`f${i}`} id={`hbar-glow-${i}`} x="-20%" y="-100%" width="140%" height="300%">
             <feGaussianBlur stdDeviation="3" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />

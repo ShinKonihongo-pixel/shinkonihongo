@@ -31,12 +31,27 @@ service cloud.firestore {
       return isAuth() && getUserRole() in ['admin', 'super_admin', 'director', 'branch_admin'];
     }
 
-    // Users collection
+    // VIP or admin can access locked content
+    function canAccessLocked() {
+      return isAuth() && getUserRole() in ['admin', 'super_admin', 'vip_user'];
+    }
+
+    // Users collection — public profile data (no passwords)
     match /users/{userId} {
       allow read: if isAuth();
       allow create: if isAuth();
-      allow update: if isOwner(userId) || isAdmin();
+      // Owner can only update profile fields, not role/permissions
+      allow update: if (isOwner(userId)
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['displayName', 'avatar', 'profileBackground', 'jlptLevel', 'password', 'settings']))
+        || isAdmin();
       allow delete: if isSuperAdmin();
+
+      // Private subcollection — password hashes (owner + admin only)
+      match /private/{docId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow write: if isOwner(userId) || isAdmin();
+      }
     }
 
     // Content collections
@@ -56,17 +71,17 @@ service cloud.firestore {
     }
 
     match /lessons/{docId} {
-      allow read: if isAuth();
+      allow read: if isAuth() && (!resource.data.isLocked || canAccessLocked());
       allow write: if isAdmin();
     }
 
     match /grammarLessons/{docId} {
-      allow read: if isAuth();
+      allow read: if isAuth() && (!resource.data.isLocked || canAccessLocked());
       allow write: if isAdmin();
     }
 
     match /kanjiLessons/{docId} {
-      allow read: if isAuth();
+      allow read: if isAuth() && (!resource.data.isLocked || canAccessLocked());
       allow write: if isAdmin();
     }
 
@@ -76,7 +91,8 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Game rooms — any authenticated user can create/join/update
+    // Game rooms — all players need read/write for multiplayer gameplay
+    // NOTE: Consider Cloud Functions for game state validation to prevent cheating
     match /game_rooms/{docId} {
       allow read, write: if isAuth();
     }
@@ -149,16 +165,22 @@ service cloud.firestore {
 
     // User personal kanji analysis (scoped by userId field)
     match /kanjiAnalysis/{docId} {
-      allow read, write: if (isAuth() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow read: if (isAuth() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if (isAuth() && resource.data.userId == request.auth.uid) || isAdmin();
     }
 
-    // Vocabulary notes and notebooks — any authenticated user (personal data)
+    // Vocabulary notes — scoped to document owner
     match /vocabularyNotes/{docId} {
-      allow read, write: if isAuth();
+      allow read: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
     match /vocabularyNotebooks/{docId} {
-      allow read, write: if isAuth();
+      allow read: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
     // Radical kanji custom data — read for all auth; write for admin+

@@ -1,5 +1,6 @@
 // Shared Rankings Table Component - Full rankings list with configurable columns
 
+import React from 'react';
 import { Crown } from 'lucide-react';
 import { isImageAvatar } from '../../../utils/avatar-icons';
 import type { BaseRankedPlayer } from './types';
@@ -13,7 +14,7 @@ interface RankingsTableProps {
   medalEmojis?: string[];
 }
 
-export function RankingsTable({
+export const RankingsTable = React.memo(function RankingsTable({
   rankings,
   currentPlayerId,
   className = '',
@@ -64,4 +65,4 @@ export function RankingsTable({
       </div>
     </div>
   );
-}
+});

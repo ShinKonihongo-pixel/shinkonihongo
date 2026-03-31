@@ -36,6 +36,7 @@ import { exportStudentReportPDF } from '../../utils/student-report-pdf-export';
 import { ScoreSparkline, AttendanceDonut, CriteriaRadar } from './student-detail/student-charts';
 import { ReportHistoryTab } from './student-detail/report-history-tab';
 import { ModalShell } from '../ui/modal-shell';
+import { TabBar, type Tab } from '../ui/tab-bar';
 
 interface StudentDetailModalProps {
   isOpen: boolean;
@@ -52,6 +53,14 @@ interface StudentDetailModalProps {
 }
 
 type TabType = 'overview' | 'grades' | 'attendance' | 'evaluations' | 'reports';
+
+const STUDENT_TABS: Tab<TabType>[] = [
+  { key: 'overview',    label: 'Tổng quan',  icon: <UserIcon size={15} /> },
+  { key: 'grades',      label: 'Điểm số',    icon: <BarChart3 size={15} /> },
+  { key: 'attendance',  label: 'Chuyên cần', icon: <Calendar size={15} /> },
+  { key: 'evaluations', label: 'Đánh giá',   icon: <Star size={15} /> },
+  { key: 'reports',     label: 'Báo cáo',    icon: <FileText size={15} /> },
+];
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -203,23 +212,7 @@ export function StudentDetailModal({
         </div>
 
         {/* Tabs */}
-        <div className="student-tabs">
-          {([
-            { id: 'overview',    icon: <UserIcon size={15} />,  label: 'Tổng quan' },
-            { id: 'grades',      icon: <BarChart3 size={15} />, label: 'Điểm số' },
-            { id: 'attendance',  icon: <Calendar size={15} />,  label: 'Chuyên cần' },
-            { id: 'evaluations', icon: <Star size={15} />,      label: 'Đánh giá' },
-            { id: 'reports',     icon: <FileText size={15} />,  label: 'Báo cáo' },
-          ] as const).map(tab => (
-            <button
-              key={tab.id}
-              className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              {tab.icon} {tab.label}
-            </button>
-          ))}
-        </div>
+        <TabBar tabs={STUDENT_TABS} active={activeTab} onChange={setActiveTab} />
 
         {/* Tab Content */}
         <div className="modal-body student-body">

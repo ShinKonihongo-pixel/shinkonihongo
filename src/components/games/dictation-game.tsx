@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Volume2, Play, RotateCcw, CheckCircle, XCircle, Trophy, Settings } from 'lucide-react';
+import { StatCard } from '../ui/stat-card';
 import type { Flashcard } from '../../types/flashcard';
 
 interface DictationGameProps {
@@ -286,20 +287,9 @@ export function DictationGame({ cards, onExit }: DictationGameProps) {
           </div>
 
           <div className="result-stats">
-            <div className="stat-item correct">
-              <CheckCircle size={24} />
-              <span className="stat-value">{correctCount}</span>
-              <span className="stat-label">Đúng</span>
-            </div>
-            <div className="stat-item wrong">
-              <XCircle size={24} />
-              <span className="stat-value">{results.length - correctCount}</span>
-              <span className="stat-label">Sai</span>
-            </div>
-            <div className="stat-item accuracy">
-              <span className="stat-value">{accuracy}%</span>
-              <span className="stat-label">Chính xác</span>
-            </div>
+            <StatCard value={correctCount} label="Đúng" icon={<CheckCircle size={24} />} className="correct" />
+            <StatCard value={results.length - correctCount} label="Sai" icon={<XCircle size={24} />} className="wrong" />
+            <StatCard value={`${accuracy}%`} label="Chính xác" className="accuracy" />
           </div>
 
           <div className="result-details">

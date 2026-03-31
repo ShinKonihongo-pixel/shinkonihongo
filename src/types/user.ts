@@ -69,7 +69,7 @@ export const USER_JLPT_LEVEL_LABELS: Record<UserJLPTLevel, string> = {
 export interface User {
   id: string;
   username: string;
-  password: string; // In real app, this would be hashed
+  password: string; // DEPRECATED: migrating to private subcollection (see user-service.ts)
   role: UserRole;
   displayName?: string; // Optional display name
   email?: string; // User email

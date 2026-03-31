@@ -1,6 +1,7 @@
 // Lecture card component for displaying lecture in list
 
 import type { Lecture } from '../../types/lecture';
+import { LevelBadge } from '../ui/level-badge';
 
 interface LectureCardProps {
   lecture: Lecture;
@@ -36,7 +37,7 @@ export function LectureCard({
             <span>📚</span>
           </div>
         )}
-        <span className="lecture-level-badge">{lecture.jlptLevel}</span>
+        <LevelBadge level={lecture.jlptLevel} size="xs" />
         {!lecture.isPublished && (
           <span className="lecture-draft-badge">Nháp</span>
         )}

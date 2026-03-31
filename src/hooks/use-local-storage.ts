@@ -1,6 +1,7 @@
 // Custom hook for LocalStorage with React state sync
 
 import { useState, useEffect, useCallback } from 'react';
+import { handleError } from '../utils/error-handler';
 
 export function useLocalStorage<T>(key: string, initialValue: T) {
   // Get initial value from localStorage or use provided initial

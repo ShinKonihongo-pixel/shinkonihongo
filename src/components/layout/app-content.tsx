@@ -4,7 +4,7 @@
 
 import { lazy, useEffect } from 'react';
 import { useNavigation } from '../../contexts/navigation-context';
-import { useUserData } from '../../contexts/user-data-context';
+import { useAuthData } from '../../contexts/auth-context';
 import { canAccessPage } from '../../utils/role-permissions';
 
 // Lazy-loaded page components
@@ -40,7 +40,7 @@ const AnalyticsDashboardPage = lazy(() => import('../pages/analytics-dashboard-p
 
 export function AppContent() {
   const { currentPage, setCurrentPage, initialGameJoinCode } = useNavigation();
-  const { currentUser, canAccessLocked } = useUserData();
+  const { currentUser, canAccessLocked } = useAuthData();
 
   // Reset to home page when user logs in (unless joining via QR code)
   useEffect(() => {

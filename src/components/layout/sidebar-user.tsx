@@ -21,9 +21,9 @@ interface SidebarUserProps {
   friendNotifications: FriendNotification[];
   dailyWordsNotification: DailyWordsNotification | undefined;
   hasDailyWordsReminder: boolean;
-  markClassroomRead: (id: string) => void;
+  markClassroomRead: (id: string) => Promise<boolean>;
   markAllClassroomRead: () => void;
-  markFriendRead: (id: string) => void;
+  markFriendRead: (id: string) => Promise<boolean>;
   markAllFriendRead: () => void;
   onToggleNotifications: () => void;
   onToggleAvatarMenu: () => void;

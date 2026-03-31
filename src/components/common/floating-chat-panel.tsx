@@ -49,16 +49,17 @@ export function FloatingChatPanel({ currentUser, isOpen, onClose }: FloatingChat
     } catch { /* ignore */ }
   }, [isOpen]);
 
-  // Poll for new messages
+  // Listen for cross-tab storage changes instead of polling
   useEffect(() => {
     if (!isOpen) return;
-    const interval = setInterval(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key !== CHAT_STORAGE_KEY || !e.newValue) return;
       try {
-        const stored = localStorage.getItem(CHAT_STORAGE_KEY);
-        if (stored) setMessages(JSON.parse(stored));
+        setMessages(JSON.parse(e.newValue));
       } catch { /* ignore */ }
-    }, 2000);
-    return () => clearInterval(interval);
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, [isOpen]);
 
   // Auto scroll

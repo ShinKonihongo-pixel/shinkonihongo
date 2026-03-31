@@ -62,7 +62,7 @@ export function KanjiDisplayCard({
         outlineColor: 'rgba(255,255,255,0.1)',
         // Cached loader — fetches once, stores in IndexedDB
         charDataLoader: (char, onComplete) => {
-          cachedCharDataLoader(char, onComplete, showFallback);
+          cachedCharDataLoader(char, onComplete as (data: unknown) => void, showFallback);
         },
       });
       writerInstance.current = writer;

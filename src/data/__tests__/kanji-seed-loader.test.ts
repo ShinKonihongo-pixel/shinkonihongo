@@ -38,7 +38,7 @@ describe('kanji-seed/loader', () => {
   it('each level has kanji data', async () => {
     const allSeeds = await loadAllKanjiSeeds();
     for (const [level, seeds] of Object.entries(allSeeds)) {
-      expect(seeds.length).toBeGreaterThan(0, `${level} should have kanji`);
+      expect(seeds.length, `${level} should have kanji`).toBeGreaterThan(0);
     }
   });
 });

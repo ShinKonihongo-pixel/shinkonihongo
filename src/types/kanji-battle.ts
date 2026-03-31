@@ -153,7 +153,8 @@ export interface KanjiBattleRoundResult {
 }
 
 // JLPT Level type for selection
-export type JLPTLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | 'BT';
+import type { JLPTLevel } from './flashcard';
+export type { JLPTLevel };
 
 // Game settings
 export interface KanjiBattleSettings {

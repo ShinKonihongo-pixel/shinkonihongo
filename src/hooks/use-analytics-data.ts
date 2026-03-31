@@ -209,7 +209,6 @@ export function useAnalyticsData({
 
     if (sorted.length === 0) {
       // Generate last 4 weeks as empty
-      const now = new Date();
       const res: AnalyticsWeeklyTrend[] = [];
       for (let i = 3; i >= 0; i--) {
         res.push({ week: `T${4 - i}`, studyMinutes: 0, gameMinutes: 0, jlptMinutes: 0 });

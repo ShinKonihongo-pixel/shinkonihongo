@@ -5,6 +5,7 @@ import type { Flashcard, StructuredExample } from '../../types/flashcard';
 import type { AppSettings } from '../../hooks/use-settings';
 import { CARD_FRAME_PRESETS } from '../../hooks/use-settings';
 import { useTextToSpeech } from '../../hooks/use-text-to-speech';
+import { useIsMobile } from '../study/session/use-is-mobile';
 import { Volume2 } from 'lucide-react';
 
 interface FlashcardItemProps {
@@ -264,19 +265,6 @@ function renderStructuredExample(
 
 const EXAMPLE_LEVELS = ['N5', 'N4', 'N3', 'N2', 'N1'] as const;
 
-// Check if current screen is mobile
-function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
-
-  React.useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  return isMobile;
-}
-
 // Get background style based on settings
 function getCardBackgroundStyle(settings: AppSettings): React.CSSProperties {
   switch (settings.cardBackgroundType) {
@@ -297,7 +285,7 @@ function getCardBackgroundStyle(settings: AppSettings): React.CSSProperties {
 }
 
 
-export function FlashcardItem({
+export const FlashcardItem = React.memo(function FlashcardItem({
   card,
   isFlipped,
   onFlip,
@@ -457,4 +445,4 @@ export function FlashcardItem({
       )}
     </div>
   );
-}
+});

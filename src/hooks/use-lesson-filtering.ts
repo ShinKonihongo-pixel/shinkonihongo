@@ -3,11 +3,11 @@
 
 import { useMemo, useCallback } from 'react';
 import type { JLPTLevel, Lesson } from '../types/flashcard';
-import { useUserData } from '../contexts/user-data-context';
+import { useAuthData } from '../contexts/auth-context';
 import { useFlashcardData } from '../contexts/flashcard-data-context';
 
 export function useLessonFiltering() {
-  const { currentUser, isSuperAdmin, canAccessLocked } = useUserData();
+  const { currentUser, isSuperAdmin, canAccessLocked } = useAuthData();
   const { getLessonsByLevel, getChildLessons } = useFlashcardData();
 
   // Check if user can see hidden lessons (creator or super_admin)

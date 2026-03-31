@@ -1,6 +1,6 @@
 // AI service for auto-generating kanji info and examples using Groq
 
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_API_URL = import.meta.env.VITE_GROQ_PROXY_URL || 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL = 'llama-3.3-70b-versatile';
 
 export interface KanjiInfo {
@@ -23,6 +23,7 @@ export interface VocabularyMeaning {
 
 // Get API key from environment
 function getApiKey(): string | null {
+  if (import.meta.env.VITE_GROQ_PROXY_URL) return 'proxy';
   return import.meta.env.VITE_GROQ_API_KEY || null;
 }
 
@@ -62,7 +63,7 @@ Lưu ý:
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        ...(apiKey !== 'proxy' && { 'Authorization': `Bearer ${apiKey}` }),
       },
       body: JSON.stringify({
         model: MODEL,
@@ -142,7 +143,7 @@ Ví dụ với きれい:
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        ...(apiKey !== 'proxy' && { 'Authorization': `Bearer ${apiKey}` }),
       },
       body: JSON.stringify({
         model: MODEL,
@@ -215,7 +216,7 @@ Ví dụ output:
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        ...(apiKey !== 'proxy' && { 'Authorization': `Bearer ${apiKey}` }),
       },
       body: JSON.stringify({
         model: MODEL,
@@ -310,7 +311,7 @@ Trả về JSON (không markdown):
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        ...(apiKey !== 'proxy' && { 'Authorization': `Bearer ${apiKey}` }),
       },
       body: JSON.stringify({
         model: MODEL,
@@ -391,7 +392,7 @@ Trả về JSON (không markdown):
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        ...(apiKey !== 'proxy' && { 'Authorization': `Bearer ${apiKey}` }),
       },
       body: JSON.stringify({
         model: MODEL,
@@ -484,7 +485,7 @@ Trả về JSON (không markdown):
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        ...(apiKey !== 'proxy' && { 'Authorization': `Bearer ${apiKey}` }),
       },
       body: JSON.stringify({
         model: MODEL,

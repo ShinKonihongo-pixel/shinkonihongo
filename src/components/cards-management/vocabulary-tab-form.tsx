@@ -4,7 +4,7 @@
 import { PenLine, Languages } from 'lucide-react';
 import { FlashcardForm } from '../flashcard/flashcard-form';
 import { KanjiAnalysisEditor } from '../flashcard/kanji-analysis-editor';
-import type { Flashcard, FlashcardFormData, Lesson } from './cards-management-types';
+import type { Flashcard, FlashcardFormData, Lesson, GrammarCard } from './cards-management-types';
 
 interface VocabTabFormProps {
   editingCard: Flashcard | null;
@@ -13,7 +13,7 @@ interface VocabTabFormProps {
   lessons: Lesson[];
   fixedLevel: string | null;
   fixedLessonId: string | null;
-  grammarCards: Flashcard[];
+  grammarCards: GrammarCard[];
   onSubmit: (data: Partial<Flashcard>) => void;
   onCancel: () => void;
   onSubTabChange: (tab: 'vocabulary' | 'kanji') => void;

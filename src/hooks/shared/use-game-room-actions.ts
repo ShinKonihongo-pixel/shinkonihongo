@@ -13,7 +13,7 @@ interface UseGameRoomActionsConfig<TGame extends BaseGame, TPlayer extends BaseP
   /** Human-readable game name for error messages, e.g. 'Nối Hình - Từ' */
   gameName: string;
   /** Create the player record added when joining a room */
-  createJoinPlayer: (user: GameUser, roomData: TGame) => TPlayer;
+  createJoinPlayer: (user: GameUser, roomData: TGame) => TPlayer | Promise<TPlayer>;
   /** Called after 3s countdown instead of default `status: 'playing'` */
   onAfterStart?: () => void;
   /** Function to clear all game-specific timers */
@@ -91,7 +91,7 @@ export function useGameRoomActions<
       }
 
       // Add player to the room via Firestore (field-level: only write new player)
-      const player = createJoinPlayer(currentUser, roomData);
+      const player = await Promise.resolve(createJoinPlayer(currentUser, roomData));
       const updatedPlayers = { ...players, [currentUser.id]: player } as Record<string, TPlayer>;
 
       const updateData: Record<string, unknown> = {

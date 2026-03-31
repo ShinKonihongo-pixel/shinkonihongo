@@ -1,7 +1,7 @@
 // Japanese text analysis hooks (translation, furigana, analysis)
 
 import { useCallback } from 'react';
-import { GROQ_API_URL, MODEL } from './constants';
+import { groqFetch } from './groq-fetch';
 
 interface UseAnalysisOptions {
   getApiKey: () => string | undefined;
@@ -23,30 +23,16 @@ export function useAnalysis({ getApiKey }: UseAnalysisOptions) {
 
 Format your response in Vietnamese, clearly and concisely. Use simple formatting.`;
 
-    const response = await fetch(GROQ_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Phân tích câu: ${sentence}` },
-        ],
-        temperature: 0.3,
-        max_tokens: 800,
-      }),
+    const result = await groqFetch({
+      apiKey,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Phân tích câu: ${sentence}` },
+      ],
+      temperature: 0.3,
+      maxTokens: 800,
     });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error?.message || `HTTP ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content || 'Không thể phân tích câu';
+    return result || 'Không thể phân tích câu';
   }, [getApiKey]);
 
   // Generate furigana for Japanese text (kanji → [kanji|reading] format)
@@ -71,29 +57,15 @@ Example output: [私|わたし]はコーヒーを[飲|の]みながら[日本語
 
 Return ONLY the text with furigana added, nothing else.`;
 
-    const response = await fetch(GROQ_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: text },
-        ],
-        temperature: 0.1,
-        max_tokens: 2000,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Lỗi tạo furigana');
-    }
-
-    const data = await response.json();
-    const result = data.choices?.[0]?.message?.content?.trim() || text;
+    const result = await groqFetch({
+      apiKey,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: text },
+      ],
+      temperature: 0.1,
+      maxTokens: 2000,
+    }) || text;
     // Post-process: strip furigana from non-kanji text (hiragana/katakana only brackets)
     // Kanji Unicode range: \u4e00-\u9faf, \u3400-\u4dbf (CJK unified)
     return result.replace(/\[([^\]|]+)\|[^\]]+\]/g, (match: string, kanjiPart: string) => {
@@ -110,29 +82,16 @@ Return ONLY the text with furigana added, nothing else.`;
       throw new Error('Chưa cấu hình API key');
     }
 
-    const response = await fetch(GROQ_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: 'system', content: 'Translate Japanese to Vietnamese. Return ONLY the translation, nothing else.' },
-          { role: 'user', content: sentence },
-        ],
-        temperature: 0.1,
-        max_tokens: 200,
-      }),
+    const result = await groqFetch({
+      apiKey,
+      messages: [
+        { role: 'system', content: 'Translate Japanese to Vietnamese. Return ONLY the translation, nothing else.' },
+        { role: 'user', content: sentence },
+      ],
+      temperature: 0.1,
+      maxTokens: 200,
     });
-
-    if (!response.ok) {
-      throw new Error('Lỗi dịch');
-    }
-
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content?.trim() || 'Không thể dịch';
+    return result || 'Không thể dịch';
   }, [getApiKey]);
 
   return {

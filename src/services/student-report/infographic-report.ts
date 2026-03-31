@@ -58,7 +58,6 @@ function drawDonutSegment(
   const span = endDeg - startDeg - gapDeg;
   if (span < 0.5) return;
   const sD = startDeg + gapDeg / 2;
-  const eD = sD + span;
 
   setColor(doc, color, 'fill');
   setColor(doc, color, 'draw');
@@ -287,7 +286,6 @@ export async function generateInfographicReport(
   doc.text('/ 100', cx, cy + 8.5, { align: 'center' });
 
   // Trend arrow
-  const attR = data.attendance?.attendanceRate ?? 0;
   const trendArrow = avg >= 80 ? '^ Xuat sac' : avg >= 50 ? '> Dat yeu cau' : 'v Can co gang';
   const trendColor = avg >= 80 ? C.green : avg >= 50 ? C.amber : C.red;
   doc.setFontSize(7);

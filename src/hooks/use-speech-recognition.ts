@@ -5,6 +5,45 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useAudioRecorder } from './use-audio-recorder';
 import { recognizeSpeech, isGoogleSTTConfigured } from '../services/google-speech';
 
+// ========== Web Speech API type declarations ==========
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+interface SpeechRecognitionResult {
+  readonly length: number;
+  readonly isFinal: boolean;
+  [index: number]: SpeechRecognitionAlternative;
+}
+interface SpeechRecognitionAlternative {
+  readonly transcript: string;
+  readonly confidence: number;
+}
+interface SpeechRecognitionResultList {
+  readonly length: number;
+  [index: number]: SpeechRecognitionResult;
+}
+interface SpeechRecognitionEvent extends Event {
+  readonly resultIndex: number;
+  readonly results: SpeechRecognitionResultList;
+}
+interface SpeechRecognitionErrorEvent extends Event {
+  readonly error: string;
+  readonly message: string;
+}
+declare class SpeechRecognition extends EventTarget {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  maxAlternatives: number;
+  onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
+  onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any) | null;
+  onend: ((this: SpeechRecognition, ev: Event) => any) | null;
+  start(): void;
+  stop(): void;
+  abort(): void;
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
 // ========== Types ==========
 
 export type RecognitionEngine = 'google' | 'webspeech';

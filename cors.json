@@ -1,7 +1,7 @@
 [
   {
-    "origin": ["*"],
-    "method": ["GET", "HEAD"],
+    "origin": ["https://flashcard-a96f1.web.app", "https://flashcard-a96f1.firebaseapp.com", "http://localhost:5173"],
+    "method": ["GET", "HEAD", "PUT"],
     "maxAgeSeconds": 3600,
     "responseHeader": ["Content-Type", "Content-Range", "Accept-Ranges"]
   }

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import type { KaiwaContext, KaiwaMessage, KaiwaMetrics, KaiwaEvaluation } from '../../types/kaiwa';
-import { GROQ_API_URL, MODEL } from './constants';
+import { groqFetch } from './groq-fetch';
 
 interface UseEvaluationOptions {
   getApiKey: () => string | undefined;
@@ -84,30 +84,15 @@ Scores are 1-10. Include Japanese with Vietnamese translations in parentheses fo
 recommendedLevel should be N5/N4/N3/N2/N1 based on demonstrated ability.
 encouragement should be a warm, personalized message in Vietnamese.`;
 
-      const response = await fetch(GROQ_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: `Please evaluate this conversation:\n\n${conversationText}` },
-          ],
-          temperature: 0.3,
-          max_tokens: 1000,
-        }),
+      const responseText = await groqFetch({
+        apiKey,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Please evaluate this conversation:\n\n${conversationText}` },
+        ],
+        temperature: 0.3,
+        maxTokens: 1000,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || `HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-      const responseText = data.choices?.[0]?.message?.content?.trim();
 
       if (!responseText) {
         throw new Error('Không nhận được phản hồi từ AI');

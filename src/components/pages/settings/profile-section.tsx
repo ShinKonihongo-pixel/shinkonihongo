@@ -1,7 +1,7 @@
 // Profile section component - extracted from settings-page.tsx
 // Handles user profile display and editing
 
-import { useMemo, useEffect } from 'react';
+import { useMemo } from 'react';
 import type { ProfileSettingsProps } from './settings-types';
 import { useProfileHandlers } from './hooks/use-profile-handlers';
 import { AVATAR_CATEGORIES, isImageAvatar } from '../../../utils/avatar-icons';

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { FriendWithUser } from '../../types/friendship';
-import { UserPlus, Send, Check } from 'lucide-react';
+import { Send, Check } from 'lucide-react';
 import { ModalShell } from '../ui/modal-shell';
 
 interface GameFriendInviteProps {

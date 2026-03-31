@@ -114,6 +114,7 @@ export function ReportSettingsModal({
       showGrades: true,
       showEvaluation: true,
       showSignatures: true,
+      reportStyle: 'classic',
       emailServiceId: emailServiceId || undefined,
       emailTemplateId: emailTemplateId || undefined,
       emailPublicKey: emailPublicKey || undefined,

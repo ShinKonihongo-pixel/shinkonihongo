@@ -6,9 +6,7 @@ import type { GeminiKaiwaResponse, KaiwaContext } from '../../types/kaiwa';
 import type { KaiwaAdvancedTopic, KaiwaQuestionBankItem } from '../../types/kaiwa-advanced';
 import { buildAdvancedTeacherPrompt } from './groq-advanced-prompts';
 import { parseAdvancedResponse } from './groq-advanced-parser';
-
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL = 'llama-3.3-70b-versatile';
+import { groqFetch } from './groq-fetch';
 
 // Advanced topic context for the AI
 export interface AdvancedTopicContext {
@@ -28,6 +26,7 @@ export function useGroqAdvanced(options: UseGroqAdvancedOptions = {}) {
   const topicContextRef = useRef<AdvancedTopicContext | null>(null);
 
   const getApiKey = useCallback(() => {
+    if (import.meta.env.VITE_GROQ_PROXY_URL) return 'proxy';
     return options.apiKey || import.meta.env.VITE_GROQ_API_KEY;
   }, [options.apiKey]);
 
@@ -45,27 +44,12 @@ export function useGroqAdvanced(options: UseGroqAdvancedOptions = {}) {
     setError(null);
 
     try {
-      const response = await fetch(GROQ_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          messages,
-          temperature: 0.75,
-          max_tokens: 1000,
-        }),
+      const responseText = await groqFetch({
+        apiKey,
+        messages,
+        temperature: 0.75,
+        maxTokens: 1000,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || `HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-      const responseText = data.choices?.[0]?.message?.content;
 
       if (!responseText) {
         throw new Error('Không nhận được phản hồi từ AI');

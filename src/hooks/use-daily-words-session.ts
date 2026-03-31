@@ -15,7 +15,7 @@ interface UseDailyWordsSessionOptions {
 }
 
 export function useDailyWordsSession({
-  state,
+  state: _state,
   setState,
   allCards,
   targetCount,

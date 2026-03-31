@@ -9,7 +9,6 @@ import type {
   StudentOverallSummary,
 } from '../../types/classroom';
 import type { User } from '../../types/user';
-import { handleError } from '../../utils/error-handler';
 
 export function useStudentOverallSummary(
   _classroomId: string | null,

@@ -1,6 +1,7 @@
 // API and configuration constants for Groq integration
+// Uses proxy to keep API key server-side (never exposed in browser bundle)
 
-export const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+export const GROQ_API_URL = import.meta.env.VITE_GROQ_PROXY_URL || 'https://api.groq.com/openai/v1/chat/completions';
 export const MODEL = 'llama-3.3-70b-versatile';
 
 // Topic descriptions for system prompt

@@ -15,6 +15,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { ModalShell } from '../ui/modal-shell';
+import { TabBar, type Tab } from '../ui/tab-bar';
 import type { KaiwaStats, KaiwaSession, KaiwaDailyRecord } from '../../types/kaiwa-session';
 import type { JLPTLevel } from '../../types/kaiwa';
 
@@ -33,6 +34,13 @@ interface KaiwaStatsDashboardProps {
 }
 
 type DashboardTab = 'overview' | 'achievements' | 'history' | 'levels';
+
+const STATS_TABS: Tab<DashboardTab>[] = [
+  { key: 'overview', label: 'Tổng quan', icon: <TrendingUp size={16} /> },
+  { key: 'achievements', label: 'Thành tựu', icon: <Trophy size={16} /> },
+  { key: 'levels', label: 'Cấp độ', icon: <Star size={16} /> },
+  { key: 'history', label: 'Lịch sử', icon: <Calendar size={16} /> },
+];
 
 const JLPT_COLORS: Record<JLPTLevel, string> = {
   BT: '#8b5cf6',
@@ -96,32 +104,7 @@ export function KaiwaStatsDashboard({
         </div>
 
         {/* Tabs */}
-        <div className="stats-tabs">
-          <button
-            className={`stats-tab ${activeTab === 'overview' ? 'active' : ''}`}
-            onClick={() => setActiveTab('overview')}
-          >
-            <TrendingUp size={16} /> Tổng quan
-          </button>
-          <button
-            className={`stats-tab ${activeTab === 'achievements' ? 'active' : ''}`}
-            onClick={() => setActiveTab('achievements')}
-          >
-            <Trophy size={16} /> Thành tựu
-          </button>
-          <button
-            className={`stats-tab ${activeTab === 'levels' ? 'active' : ''}`}
-            onClick={() => setActiveTab('levels')}
-          >
-            <Star size={16} /> Cấp độ
-          </button>
-          <button
-            className={`stats-tab ${activeTab === 'history' ? 'active' : ''}`}
-            onClick={() => setActiveTab('history')}
-          >
-            <Calendar size={16} /> Lịch sử
-          </button>
-        </div>
+        <TabBar tabs={STATS_TABS} active={activeTab} onChange={setActiveTab} />
 
         <div className="stats-content">
           {/* Overview Tab */}

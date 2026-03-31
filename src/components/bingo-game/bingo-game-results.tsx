@@ -1,6 +1,7 @@
 // Bingo Game Results - Show winner and rankings after game ends
 
 import { Trophy } from 'lucide-react';
+import { StatCard } from '../ui/stat-card';
 import type { BingoResults } from '../../types/bingo-game';
 import { RankingsTable, ResultsActionBar, type BaseRankedPlayer } from '../shared/game-results';
 
@@ -47,18 +48,9 @@ export function BingoGameResults({
 
       {/* Game stats */}
       <div className="game-stats">
-        <div className="stat-item">
-          <span className="stat-value">{totalTurns}</span>
-          <span className="stat-label">Lượt Chơi</span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-value">{totalPlayers}</span>
-          <span className="stat-label">Người Chơi</span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-value">{results.drawnNumbers.length}</span>
-          <span className="stat-label">Số Đã Bốc</span>
-        </div>
+        <StatCard value={totalTurns} label="Lượt Chơi" />
+        <StatCard value={totalPlayers} label="Người Chơi" />
+        <StatCard value={results.drawnNumbers.length} label="Số Đã Bốc" />
       </div>
 
       {/* Rankings */}

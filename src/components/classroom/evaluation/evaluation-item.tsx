@@ -1,5 +1,6 @@
 // Individual evaluation display component
 
+import React from 'react';
 import { Edit2, Trash2, Send } from 'lucide-react';
 import type { StudentEvaluation } from '../../../types/classroom';
 import { RatingStars } from './rating-components';
@@ -17,7 +18,7 @@ interface EvaluationItemProps {
   saving: boolean;
 }
 
-export function EvaluationItem({
+export const EvaluationItem = React.memo(function EvaluationItem({
   evaluation,
   onEdit,
   onDelete,
@@ -135,4 +136,4 @@ export function EvaluationItem({
       </div>
     </div>
   );
-}
+});

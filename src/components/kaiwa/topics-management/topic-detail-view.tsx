@@ -4,6 +4,7 @@ import {
   Plus, Edit2, ArrowLeft, MessageCircle, BookOpen,
   Volume2, Copy,
 } from 'lucide-react';
+import { LevelBadge } from '../../ui/level-badge';
 import type {
   KaiwaAdvancedTopic,
   KaiwaAdvancedQuestion,
@@ -83,7 +84,7 @@ export function TopicDetailView({
             <div className="bank-display-list">
               {topic.questionBank.map(item => (
                 <div key={item.id} className="bank-display-item">
-                  <span className="bank-level-badge">{item.level}</span>
+                  <LevelBadge level={item.level} size="xs" />
                   <div className="bank-text">
                     <span className="bank-ja">{item.questionJa}</span>
                     {item.questionVi && <span className="bank-vi">{item.questionVi}</span>}
@@ -109,7 +110,7 @@ export function TopicDetailView({
             <div className="bank-display-list">
               {topic.answerBank.map(item => (
                 <div key={item.id} className="bank-display-item answer">
-                  <span className="bank-level-badge">{item.level}</span>
+                  <LevelBadge level={item.level} size="xs" />
                   <div className="bank-text">
                     <span className="bank-ja">{item.answerJa}</span>
                     {item.answerVi && <span className="bank-vi">{item.answerVi}</span>}

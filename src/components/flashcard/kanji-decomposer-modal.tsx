@@ -549,7 +549,7 @@ function StrokePreview({ char, info, onClose }: {
         width: SIZE, height: SIZE, padding: 12,
         strokeColor: '#e2e8f0', radicalColor: '#e2e8f0',
         showOutline: true, outlineColor: 'rgba(255,255,255,0.08)',
-        charDataLoader: (c, done) => cachedCharDataLoader(c, done, () => {
+        charDataLoader: (c, done) => cachedCharDataLoader(c, done as (data: unknown) => void, () => {
           if (ref.current) ref.current.innerHTML = `<div style="font-size:10rem;color:#e2e8f0;font-family:'Noto Serif JP',serif;text-align:center;line-height:${SIZE}px">${c}</div>`;
         }),
       });

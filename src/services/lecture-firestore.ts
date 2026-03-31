@@ -18,7 +18,6 @@ import {
 import { db } from '../lib/firebase';
 import type { Lecture, LectureFormData, Slide, SlideFormData, LectureView, LectureFolder } from '../types/lecture';
 import type { JLPTLevel } from '../types/flashcard';
-import { handleError } from '../utils/error-handler';
 
 // Collection names
 const COLLECTIONS = {

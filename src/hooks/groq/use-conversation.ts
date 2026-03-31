@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import type { KaiwaContext, GeminiKaiwaResponse } from '../../types/kaiwa';
-import { GROQ_API_URL, MODEL } from './constants';
+import { groqFetch } from './groq-fetch';
 import { buildSystemPrompt } from './system-prompt';
 import { parseResponse } from './response-parser';
 
@@ -48,27 +48,12 @@ export function useConversation({ getApiKey }: UseConversationOptions) {
         { role: 'user' as const, content: userMessage },
       ];
 
-      const response = await fetch(GROQ_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          messages,
-          temperature: 0.7,
-          max_tokens: 800,
-        }),
+      const responseText = await groqFetch({
+        apiKey,
+        messages,
+        temperature: 0.7,
+        maxTokens: 800,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || `HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-      const responseText = data.choices?.[0]?.message?.content;
 
       if (!responseText) {
         throw new Error('Không nhận được phản hồi từ AI');

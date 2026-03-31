@@ -1,6 +1,6 @@
 // Classroom List View - Grid of classroom cards with join functionality
 
-import { School, Plus } from 'lucide-react';
+import { School } from 'lucide-react';
 import { ClassroomCard } from '../classroom/classroom-card';
 import type { ClassroomListViewProps } from './classroom-types';
 import { EmptyState } from '../ui/empty-state';

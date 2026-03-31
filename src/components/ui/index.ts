@@ -8,3 +8,5 @@ export { TabBar } from './tab-bar';
 export type { Tab as TabBarTab } from './tab-bar';
 
 export { LevelBadge } from './level-badge';
+
+export { StatCard } from './stat-card';

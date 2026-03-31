@@ -6,14 +6,13 @@ import { SearchInput } from '../ui/search-input';
 import { useCenter } from '../../contexts/center-context';
 import { useCenterMembers, type CenterMemberInfo } from '../../hooks/use-center-members';
 import { BRANCH_MEMBER_ROLE_LABELS, BRANCH_MEMBER_ROLE_COLORS } from '../../types/branch';
-import type { User } from '../../types/user';
 import { isImageAvatar } from '../../utils/avatar-icons';
-import { useUserData } from '../../contexts/user-data-context';
+import { useAuthData } from '../../contexts/auth-context';
 
 type FilterTab = 'all' | 'student' | 'teacher' | 'admin';
 
 export function CenterMembersPage() {
-  const { users } = useUserData();
+  const { users } = useAuthData();
   const { center, isAdmin } = useCenter();
   const { members, loading, removeMember } = useCenterMembers(center.id, users);
   const [search, setSearch] = useState('');

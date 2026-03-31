@@ -2,14 +2,13 @@
 // Study session page - Vocabulary flashcard study with level/lesson selection
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import type { Flashcard, JLPTLevel, MemorizationStatus, Lesson } from '../../types/flashcard';
-import type { AppSettings } from '../../hooks/use-settings';
+import type { Flashcard, JLPTLevel, MemorizationStatus } from '../../types/flashcard';
 import type { StudyMode } from '../study/level-lesson-selector/types';
 import { useStudySession } from '../../hooks/use-study-session';
-import { useAuth } from '../../hooks/use-auth';
 import { useVocabularyNotebooks } from '../../hooks/use-vocabulary-notebooks';
 import { useNavigate } from 'react-router-dom';
 import { useFlashcardData } from '../../contexts/flashcard-data-context';
+import { useAuthData } from '../../contexts/auth-context';
 import { useLessonFiltering } from '../../hooks/use-lesson-filtering';
 import { useSettings } from '../../hooks/settings/use-app-settings';
 import { useUserData } from '../../contexts/user-data-context';
@@ -38,24 +37,26 @@ export function StudyPage() {
   const sessionSaved = useRef<boolean>(false);
 
   // Notebook hook
-  const { currentUser } = useAuth();
+  const { currentUser } = useAuthData();
   const notebookHook = useVocabularyNotebooks(currentUser?.id);
+
+  // Build lesson ID set once (including children) for O(1) card lookup
+  const selectedLessonIdSet = useMemo(() => {
+    if (selectedLessonIds.length === 0) return new Set<string>();
+    const ids = new Set<string>();
+    selectedLessonIds.forEach(lessonId => {
+      ids.add(lessonId);
+      getChildLessons(lessonId).forEach(child => ids.add(child.id));
+    });
+    return ids;
+  }, [selectedLessonIds, getChildLessons]);
 
   // Filter cards based on selected lessons (or notebook cards)
   const filteredCards = useMemo(() => {
     if (viewMode === 'notebook-study') return notebookStudyCards;
-    if (selectedLessonIds.length === 0) return [];
-
-    // Get all child lesson IDs for each selected lesson
-    const allLessonIds = new Set<string>();
-    selectedLessonIds.forEach(lessonId => {
-      allLessonIds.add(lessonId);
-      const children = getChildLessons(lessonId);
-      children.forEach(child => allLessonIds.add(child.id));
-    });
-
-    return cards.filter(card => allLessonIds.has(card.lessonId));
-  }, [cards, selectedLessonIds, getChildLessons, viewMode, notebookStudyCards]);
+    if (selectedLessonIdSet.size === 0) return [];
+    return cards.filter(card => selectedLessonIdSet.has(card.lessonId));
+  }, [cards, selectedLessonIdSet, viewMode, notebookStudyCards]);
 
   const {
     currentCard,
@@ -67,7 +68,6 @@ export function StudyPage() {
     startSession,
     flipCard,
     setMemorizationStatus,
-    setDifficultyLevel,
     resetAll,
     shuffleCards,
     resetOrder,

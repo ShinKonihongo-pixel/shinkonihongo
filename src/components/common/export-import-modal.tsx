@@ -2,6 +2,8 @@
 
 import { useState, useRef } from 'react';
 import { ModalShell } from '../ui/modal-shell';
+import { StatCard } from '../ui/stat-card';
+import { TabBar, type Tab } from '../ui/tab-bar';
 import type { Flashcard, Lesson } from '../../types/flashcard';
 import type { StudySession, GameSession, JLPTSession } from '../../types/user';
 import {
@@ -42,6 +44,11 @@ export function ExportImportModal({
   const [importError, setImportError] = useState<string | null>(null);
   const [importSuccess, setImportSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const TABS: Tab<'export' | 'import'>[] = [
+    { key: 'export', label: 'Xuất dữ liệu' },
+    { key: 'import', label: 'Nhập dữ liệu' },
+  ];
 
   // Handle export
   const handleExportJSON = () => {
@@ -107,20 +114,7 @@ export function ExportImportModal({
 
   return (
     <ModalShell isOpen={isOpen} onClose={onClose} title="Sao lưu & Khôi phục dữ liệu" maxWidth={520}>
-        <div className="modal-tabs">
-          <button
-            className={`modal-tab ${activeTab === 'export' ? 'active' : ''}`}
-            onClick={() => setActiveTab('export')}
-          >
-            Xuất dữ liệu
-          </button>
-          <button
-            className={`modal-tab ${activeTab === 'import' ? 'active' : ''}`}
-            onClick={() => setActiveTab('import')}
-          >
-            Nhập dữ liệu
-          </button>
-        </div>
+        <TabBar tabs={TABS} active={activeTab} onChange={setActiveTab} size="sm" />
 
         <div className="modal-content">
           {activeTab === 'export' ? (
@@ -130,18 +124,9 @@ export function ExportImportModal({
               </p>
 
               <div className="export-stats">
-                <div className="stat-item">
-                  <span className="stat-label">Flashcards</span>
-                  <span className="stat-value">{flashcards.length}</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-label">Bài học</span>
-                  <span className="stat-value">{lessons.length}</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-label">Lịch sử học</span>
-                  <span className="stat-value">{studySessions?.length || 0}</span>
-                </div>
+                <StatCard value={flashcards.length} label="Flashcards" />
+                <StatCard value={lessons.length} label="Bài học" />
+                <StatCard value={studySessions?.length || 0} label="Lịch sử học" />
               </div>
 
               <div className="export-buttons">
@@ -201,14 +186,8 @@ export function ExportImportModal({
                     <div className="import-preview">
                       <h4>Xem trước dữ liệu</h4>
                       <div className="preview-stats">
-                        <div className="stat-item">
-                          <span className="stat-label">Flashcards</span>
-                          <span className="stat-value">{importPreview.flashcardCount}</span>
-                        </div>
-                        <div className="stat-item">
-                          <span className="stat-label">Bài học</span>
-                          <span className="stat-value">{importPreview.lessonCount}</span>
-                        </div>
+                        <StatCard value={importPreview.flashcardCount} label="Flashcards" />
+                        <StatCard value={importPreview.lessonCount} label="Bài học" />
                       </div>
                       <div className="preview-levels">
                         {Object.entries(importPreview.byLevel).map(([level, count]) => (

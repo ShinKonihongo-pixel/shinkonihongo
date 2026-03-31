@@ -15,12 +15,12 @@ import { hashPassword } from '../../utils/password-hash';
 import type { BranchMember, BranchMemberRole } from '../../types/branch';
 import type { TeacherSchedule as TSchedule, TeacherScheduleFormData } from '../../types/teacher';
 import type { User } from '../../types/user';
-import { useUserData } from '../../contexts/user-data-context';
+import { useAuthData } from '../../contexts/auth-context';
 
 type ViewMode = 'list' | 'schedule' | 'log';
 
 export function TeacherManagementPage() {
-  const { users } = useUserData();
+  const { users } = useAuthData();
   const { currentUser } = useAuth();
   const isBranchAdmin = currentUser?.role === 'branch_admin' || currentUser?.role === 'director' || currentUser?.role === 'super_admin';
 
@@ -97,7 +97,7 @@ export function TeacherManagementPage() {
           username: data.newUser.username,
           displayName: data.newUser.displayName || data.newUser.username,
           password: hashedPw,
-          role,
+          role: role as import('../../types/user').UserRole,
           createdBy: currentUser?.id,
           createdAt: new Date().toISOString().split('T')[0],
         });

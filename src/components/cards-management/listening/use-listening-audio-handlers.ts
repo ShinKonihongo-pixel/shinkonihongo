@@ -2,11 +2,9 @@
 import React from 'react';
 import { removeFurigana } from '../../../lib/furigana-utils';
 import { createUtteranceForCharacter } from '../../../hooks/use-kaiwa-characters';
-import type { ListeningAudio, ListeningLessonType, KaiwaLine, TtsMode } from '../../../types/listening';
+import type { ListeningAudio, ListeningLessonType, KaiwaLine, TtsMode, KaiwaCharacter } from '../../../types/listening';
 import type { JLPTLevel } from '../../../types/flashcard';
 import type { EditingAudio } from './listening-audio-view-types';
-
-interface KaiwaCharacter { id: string; name: string; }
 
 interface UseListeningAudioHandlersParams {
   level: JLPTLevel;

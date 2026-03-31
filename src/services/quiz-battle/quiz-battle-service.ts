@@ -9,8 +9,7 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-
-type JLPTLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1';
+import type { JLPTLevel } from '../../types/flashcard';
 
 interface QuizBattleLevelStats {
   totalMatches: number;
@@ -26,8 +25,8 @@ interface QuizBattleRating {
   odinhId: string;
   displayName: string;
   avatar: string;
-  ratings: Record<JLPTLevel, number>;
-  stats: Record<JLPTLevel, QuizBattleLevelStats>;
+  ratings: Partial<Record<JLPTLevel, number>>;
+  stats: Partial<Record<JLPTLevel, QuizBattleLevelStats>>;
   createdAt: string;
   updatedAt: string;
 }
@@ -83,7 +82,7 @@ export async function updateRatingAfterMatch(
       ratingDelta: number,
       outcome: 'win' | 'loss' | 'draw'
     ): Partial<QuizBattleRating> => {
-      const stats = { ...data.stats[level] };
+      const stats = { ...(data.stats[level] ?? defaultStats()) };
       stats.totalMatches++;
       if (outcome === 'win') { stats.wins++; stats.currentStreak++; stats.bestStreak = Math.max(stats.bestStreak, stats.currentStreak); }
       else if (outcome === 'loss') { stats.losses++; stats.currentStreak = 0; }
@@ -91,7 +90,7 @@ export async function updateRatingAfterMatch(
       stats.winRate = stats.totalMatches > 0 ? Math.round((stats.wins / stats.totalMatches) * 100) : 0;
 
       return {
-        ratings: { ...data.ratings, [level]: data.ratings[level] + ratingDelta },
+        ratings: { ...data.ratings, [level]: (data.ratings[level] ?? 1000) + ratingDelta },
         stats: { ...data.stats, [level]: stats },
         updatedAt: now,
       };

@@ -5,9 +5,9 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { Trophy } from 'lucide-react';
 import { subscribeToLeaderboard } from '../../services/quiz-battle/quiz-battle-service';
 import { isImageAvatar } from '../../utils/avatar-icons';
+import type { JLPTLevel } from '../../types/flashcard';
 import './dashboard-leaderboard.css';
 
-type JLPTLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1';
 const LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 const MEDALS = ['👑', '🥈', '🥉'];
 

@@ -1,8 +1,6 @@
 // Free conversation settings + slow mode + start button for kaiwa-start-screen
 
 import type { JLPTLevel, ConversationStyle, ConversationTopic, KaiwaScenario } from '../../types/kaiwa';
-import type { KaiwaAdvancedTopic } from '../../types/kaiwa-advanced';
-import type { KaiwaDefaultQuestion } from '../../types/kaiwa-question';
 import { JLPT_LEVELS, CONVERSATION_STYLES, CONVERSATION_TOPICS } from '../../constants/kaiwa';
 
 interface KaiwaStartSettingsProps {

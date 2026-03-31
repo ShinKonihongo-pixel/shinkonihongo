@@ -3,7 +3,6 @@
 
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { storage } from '../lib/firebase';
-import { handleError } from '../utils/error-handler';
 
 // Storage path: lectures/{lectureId}/media/{filename}
 function getMediaPath(lectureId: string, filename: string): string {

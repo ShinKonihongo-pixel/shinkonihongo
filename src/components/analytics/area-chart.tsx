@@ -80,7 +80,7 @@ export function AreaChart({ data, colors, labels }: AreaChartProps) {
       {/* Area layers — drawn bottom to top, reverse order so top layer is in front */}
       {layers.map((layer, li) => {
         const topPts: [number, number][] = layer.map(p => [p.x, p.yAbove]);
-        const botPts: [number, number][] = layer.map(p => [p.x, p.yBelow]).reverse();
+        const botPts: [number, number][] = (layer.map(p => [p.x, p.yBelow]) as [number, number][]).reverse();
         const allPts = [...topPts, ...botPts];
         const polyD = allPts.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ') + ' Z';
         const lineD = smoothPath(topPts);

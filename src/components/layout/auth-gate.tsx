@@ -3,7 +3,7 @@
 // Wraps children in CenterProvider when in center app mode
 
 import type { ReactNode } from 'react';
-import { useUserData } from '../../contexts/user-data-context';
+import { useAuthData } from '../../contexts/auth-context';
 import { useUrlRouter } from '../../hooks/use-url-router';
 import { useCenterData } from '../../hooks/use-center-data';
 import { LoginPage } from '../pages/login-page';
@@ -12,7 +12,7 @@ import { CenterRouter } from '../center/center-router';
 import { CenterProvider } from '../../contexts/center-context';
 
 export function AuthGate({ children }: { children: ReactNode }) {
-  const { currentUser, isLoggedIn, login, register } = useUserData();
+  const { currentUser, isLoggedIn, login, register } = useAuthData();
   const urlRouter = useUrlRouter();
 
   const isCenterApp = urlRouter.isCenterApp && !!urlRouter.centerSlug;

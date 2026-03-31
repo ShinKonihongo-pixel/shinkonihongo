@@ -77,7 +77,7 @@ export function JLPTPage() {
   const autoNextDelay = 0;
   const preventRepetition = true;
   const repetitionCooldown = 3;
-  const coverageMode: 'balanced' | 'weak_first' = 'balanced';
+  const coverageMode: string = 'balanced';
   const showLevelAssessment = true;
   const trackWeakAreas = true;
 

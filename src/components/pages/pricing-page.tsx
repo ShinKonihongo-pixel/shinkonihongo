@@ -2,7 +2,7 @@
 
 import { useNavigate } from 'react-router-dom';
 import { Check, X, Crown, Sparkles } from 'lucide-react';
-import { useUserData } from '../../contexts/user-data-context';
+import { useAuthData } from '../../contexts/auth-context';
 import './pricing-page.css';
 
 interface Feature {
@@ -46,7 +46,7 @@ const FAQ = [
 
 export function PricingPage() {
   const navigate = useNavigate();
-  const { canAccessLocked: isVip } = useUserData();
+  const { canAccessLocked: isVip } = useAuthData();
   const onUpgrade = () => navigate('/settings');
   return (
     <div className="pricing">

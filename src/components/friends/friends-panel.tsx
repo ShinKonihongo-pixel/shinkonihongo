@@ -1,11 +1,13 @@
 // Friends panel component - manage friends and send requests
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { User } from '../../types/user';
 import type { FriendWithUser } from '../../types/friendship';
 import { Users, UserPlus, UserMinus, MessageCircle, Gamepad2, Gift, Search } from 'lucide-react';
 import { ConfirmModal } from '../ui/confirm-modal';
+import { TabBar } from '../ui/tab-bar';
 import { EmptyState } from '../ui/empty-state';
+import { SearchInput } from '../ui/search-input';
 import './friends.css';
 
 interface FriendsPanelProps {
@@ -52,6 +54,12 @@ export function FriendsPanel({
   // Remove friend confirmation state
   const [removeFriendConfirm, setRemoveFriendConfirm] = useState<{ friendshipId: string; friendName: string } | null>(null);
 
+  const tabs = useMemo(() => [
+    { key: 'friends' as const, label: `Bạn bè (${friends.length})`, icon: <Users size={16} /> },
+    { key: 'requests' as const, label: `Lời mời (${pendingRequests.length})`, icon: <UserPlus size={16} />, badge: pendingRequests.length },
+    { key: 'find' as const, label: 'Tìm bạn', icon: <Search size={16} /> },
+  ], [friends.length, pendingRequests.length]);
+
   // Filter users for search (exclude self and existing friends)
   const searchableUsers = allUsers.filter(u =>
     u.id !== currentUserId &&
@@ -91,30 +99,7 @@ export function FriendsPanel({
   return (
     <div className="friends-panel">
       {/* Tabs */}
-      <div className="friends-tabs">
-        <button
-          className={`tab-btn ${activeTab === 'friends' ? 'active' : ''}`}
-          onClick={() => setActiveTab('friends')}
-        >
-          <Users size={16} />
-          <span>Bạn bè ({friends.length})</span>
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'requests' ? 'active' : ''}`}
-          onClick={() => setActiveTab('requests')}
-        >
-          <UserPlus size={16} />
-          <span>Lời mời ({pendingRequests.length})</span>
-          {pendingRequests.length > 0 && <span className="badge-count">{pendingRequests.length}</span>}
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'find' ? 'active' : ''}`}
-          onClick={() => setActiveTab('find')}
-        >
-          <Search size={16} />
-          <span>Tìm bạn</span>
-        </button>
-      </div>
+      <TabBar tabs={tabs} active={activeTab} onChange={setActiveTab} />
 
       {/* Friends List */}
       {activeTab === 'friends' && (
@@ -206,16 +191,11 @@ export function FriendsPanel({
       {/* Find Friends */}
       {activeTab === 'find' && (
         <div className="find-friends">
-          <div className="search-box">
-            <Search size={18} />
-            <input
-              type="text"
-              placeholder="Tìm theo tên..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="search-input"
-            />
-          </div>
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Tìm theo tên..."
+          />
 
           {error && <div className="error-message">{error}</div>}
 

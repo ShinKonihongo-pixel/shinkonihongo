@@ -1,6 +1,7 @@
 // Race Player Stats - Bottom bar showing current player statistics
 // Shows speed, streak, accuracy, and active power-ups
 
+import React from 'react';
 import { Zap, Target, Flame, Shield } from 'lucide-react';
 import type { RacingPlayer, VehicleType } from '../../../types/racing-game';
 import { SPECIAL_FEATURES } from '../../../types/racing-game';
@@ -13,7 +14,7 @@ interface RacePlayerStatsProps {
   totalPlayers?: number;
 }
 
-export function RacePlayerStats({
+export const RacePlayerStats = React.memo(function RacePlayerStats({
   player,
   raceType,
   position,
@@ -135,4 +136,4 @@ export function RacePlayerStats({
       </div>
     </div>
   );
-}
+});

@@ -1,11 +1,12 @@
-// Context for user authentication and social data
+// Context for user data: auth + history + social + notifications
+// For auth-only consumers, prefer useAuthData() from auth-context.tsx
 
 import { createContext, useContext, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import type { User, CurrentUser, UserRole, StudySession, GameSession, JLPTSession, UserStats } from '../types/user';
 import type { FriendWithUser, BadgeGift, UserBadgeStats, BadgeType, FriendNotification, FriendRequest } from '../types/friendship';
 import type { ClassroomNotification } from '../types/classroom';
-import { useAuth } from '../hooks/use-auth';
+import { AuthProvider, useAuthData } from './auth-context';
 import { useUserHistory } from '../hooks/use-user-history';
 import { useFriendships, useBadges, useGameInvitations, useFriendNotifications } from '../hooks/use-friendships';
 import { useClassroomNotifications } from '../hooks/use-classrooms';
@@ -22,7 +23,7 @@ export interface UserDataContextValue {
   isAdmin: boolean;
   isVip: boolean;
   canAccessLocked: boolean;
-  login: (username: string, password: string) => { success: boolean; error?: string };
+  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   register: (username: string, password: string, role?: UserRole, createdBy?: string) => Promise<{ success: boolean; error?: string }>;
   updateUserRole: (userId: string, role: UserRole) => Promise<void>;
@@ -85,55 +86,21 @@ interface UserDataProviderProps {
   children: ReactNode;
 }
 
-export function UserDataProvider({ children }: UserDataProviderProps) {
-  // Auth hook
-  const auth = useAuth();
+/** Inner provider that reads from AuthContext and adds history/social/notification data */
+function UserDataInnerProvider({ children }: UserDataProviderProps) {
+  const auth = useAuthData();
 
-  // User history hook
+  // History + social hooks (depend on auth.currentUser)
   const userHistory = useUserHistory(auth.currentUser?.id);
-
-  // Friendships hook
   const friendships = useFriendships(auth.currentUser?.id ?? null, auth.users);
-
-  // Badges hook
   const badges = useBadges(auth.currentUser?.id ?? null, auth.users);
-
-  // Game invitations hook
   const gameInvitations = useGameInvitations(auth.currentUser?.id ?? null);
-
-  // Classroom notifications hook
   const classroomNotifs = useClassroomNotifications(auth.currentUser?.id ?? null);
-
-  // Friend notifications hook
   const friendNotifs = useFriendNotifications(auth.currentUser?.id ?? null);
 
-  // Derived values
-  const isVip = auth.currentUser?.role === 'vip_user';
-  const isSuperAdmin = auth.currentUser?.role === 'super_admin';
-  const canAccessLocked = auth.isAdmin || isVip;
-
-  // Memoize context value to prevent unnecessary re-renders
   const value = useMemo<UserDataContextValue>(() => ({
-    // Auth
-    currentUser: auth.currentUser,
-    users: auth.users,
-    loading: auth.loading,
-    isLoggedIn: auth.isLoggedIn,
-    isSuperAdmin: auth.isSuperAdmin,
-    isAdmin: auth.isAdmin,
-    isVip,
-    canAccessLocked,
-    login: auth.login,
-    logout: auth.logout,
-    register: auth.register,
-    updateUserRole: auth.updateUserRole,
-    deleteUser: auth.deleteUser,
-    changePassword: auth.changePassword,
-    updateDisplayName: auth.updateDisplayName,
-    updateAvatar: auth.updateAvatar,
-    updateProfileBackground: auth.updateProfileBackground,
-    updateJlptLevel: auth.updateJlptLevel,
-    updateVipExpiration: auth.updateVipExpiration,
+    // Auth (pass-through from AuthContext)
+    ...auth,
 
     // User history
     studySessions: userHistory.studySessions,
@@ -179,15 +146,22 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
     gameInvitations,
     classroomNotifs,
     friendNotifs,
-    isVip,
-    isSuperAdmin,
-    canAccessLocked,
   ]);
 
   return (
     <UserDataContext.Provider value={value}>
       {children}
     </UserDataContext.Provider>
+  );
+}
+
+/** Wraps children with AuthProvider + UserDataContext.
+ *  Auth-only consumers can use useAuthData() to avoid social/notification re-renders. */
+export function UserDataProvider({ children }: UserDataProviderProps) {
+  return (
+    <AuthProvider>
+      <UserDataInnerProvider>{children}</UserDataInnerProvider>
+    </AuthProvider>
   );
 }
 

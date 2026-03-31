@@ -6,6 +6,7 @@ import type { Lesson, JLPTLevel } from '../../types/flashcard';
 import type { Lecture } from '../../types/lecture';
 import { ConfirmModal } from '../ui/confirm-modal';
 import { TabBar } from '../ui/tab-bar';
+import { SearchInput } from '../ui/search-input';
 import { useLectures } from '../../hooks/use-lectures';
 import { LectureCard } from '../lecture/lecture-card';
 import { JLPT_LEVELS } from '../../constants/jlpt';
@@ -315,13 +316,11 @@ export function AdminPage({
           </div>
 
           <div className="lecture-filters" style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
-            <input
-              type="text"
-              placeholder="Tìm kiếm bài giảng..."
+            <SearchInput
               value={lectureSearchQuery}
-              onChange={(e) => setLectureSearchQuery(e.target.value)}
-              className="search-input"
-              style={{ flex: 1 }}
+              onChange={setLectureSearchQuery}
+              placeholder="Tìm kiếm bài giảng..."
+              className="lecture-search-input"
             />
             <select
               value={lectureFilterLevel}

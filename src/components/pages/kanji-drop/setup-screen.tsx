@@ -2,6 +2,7 @@
 
 import { Home, Play, Target, Star, Crown, BookOpen } from 'lucide-react';
 import type { JLPTLevel } from '../../../types/flashcard';
+import { JLPT_LEVELS } from '../../../constants/jlpt';
 import type { SetupConfig } from './kanji-drop-types';
 
 interface LessonInfo {
@@ -24,8 +25,6 @@ interface SetupScreenProps {
   onToggleLesson: (lessonId: string) => void;
   onSetStartLevel: (level: number) => void;
 }
-
-const JLPT_LEVELS: JLPTLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 
 export function SetupScreen({
   config, availableKanjiCount, countByLevel, kanjiLessons, lessonNames,

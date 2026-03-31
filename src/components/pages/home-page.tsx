@@ -43,23 +43,6 @@ export interface StudySelection {
   lessonIds: string[];
 }
 
-interface DailyWordsProps {
-  todayWords: Flashcard[];
-  progress: { completed: number; target: number; percent: number };
-  isCompleted: boolean;
-  streak: number;
-  longestStreak: number;
-  markWordLearned: (wordId: string) => void;
-  markAllLearned: () => void;
-  refreshWords: () => void;
-  enabled: boolean;
-  justCompleted: boolean;
-  completedWordIds: Set<string>;
-  isModalOpen: boolean;
-  openModal: () => void;
-  closeModal: () => void;
-}
-
 
 const ACTIVITIES = [
   { id: 'study', icon: BookOpen, label: 'Từ vựng', desc: '単語', color: '#3b82f6' },

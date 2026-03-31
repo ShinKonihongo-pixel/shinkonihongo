@@ -1,7 +1,8 @@
 // Puzzle list component with search and filtering
 
 import { useState } from 'react';
-import { Plus, Search, Edit3, Copy, Trash2, Image } from 'lucide-react';
+import { Plus, Edit3, Copy, Trash2, Image } from 'lucide-react';
+import { SearchInput } from '../../ui/search-input';
 import type { CustomPicturePuzzle } from '../../../types/picture-guess';
 
 interface PuzzleListProps {
@@ -70,15 +71,11 @@ export function PuzzleList({
     <div className="pg-editor-list-panel pg-editor-list-full">
       {/* Search and filter */}
       <div className="pg-editor-toolbar">
-        <div className="pg-search-box">
-          <Search size={18} />
-          <input
-            type="text"
-            placeholder="Tìm kiếm..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-          />
-        </div>
+        <SearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Tìm kiếm..."
+        />
         <select
           value={selectedCategory}
           onChange={e => setSelectedCategory(e.target.value)}

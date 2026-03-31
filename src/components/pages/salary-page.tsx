@@ -9,13 +9,12 @@ import { SalarySlip, SalarySlipPreview } from '../salary/salary-slip';
 import { SalaryReport } from '../salary/salary-report';
 import { BranchSelector } from '../branch/branch-selector';
 import type { Salary } from '../../types/teacher';
-import type { User } from '../../types/user';
-import { useUserData } from '../../contexts/user-data-context';
+import { useAuthData } from '../../contexts/auth-context';
 
 type ViewMode = 'calculator' | 'report' | 'slips';
 
 export function SalaryPage() {
-  const { users } = useUserData();
+  const { users } = useAuthData();
   const { currentUser } = useAuth();
   const isBranchAdmin = currentUser?.role === 'branch_admin' || currentUser?.role === 'director' || currentUser?.role === 'super_admin';
 

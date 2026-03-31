@@ -1,9 +1,9 @@
 // Cards Management Page - Unified management interface
 // Modular architecture with separate tab components
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { JLPTLevel } from '../../types/flashcard';
-import { useUserData } from '../../contexts/user-data-context';
+import { useAuthData } from '../../contexts/auth-context';
 import { useFlashcardData } from '../../contexts/flashcard-data-context';
 import { useJLPTData } from '../../contexts/jlpt-data-context';
 import { useLessonFiltering } from '../../hooks/use-lesson-filtering';
@@ -43,9 +43,10 @@ import { useReading } from '../../hooks/use-reading';
 import { useListening } from '../../hooks/use-listening';
 import { RolePermissionsPage } from './role-permissions-page';
 import '../cards-management/cards-management.css';
+import { TabBar, type Tab } from '../ui/tab-bar';
 
 export function CardsPage() {
-  const { currentUser, users, register, updateUserRole, deleteUser, updateVipExpiration } = useUserData();
+  const { currentUser, users, register, updateUserRole, deleteUser, updateVipExpiration } = useAuthData();
   const { cards, addCard, updateCard, deleteCard, lessons, addLesson, updateLesson, deleteLesson, toggleLock, toggleLessonHide, reorderLessons } = useFlashcardData();
   const { filteredGetLessonsByLevel: getLessonsByLevel, filteredGetChildLessons: getChildLessons } = useLessonFiltering();
   const {
@@ -176,9 +177,28 @@ export function CardsPage() {
     getAudioUrl: getListeningAudioUrl,
   } = useListening();
 
-  if (!currentUser) return null;
+  const isSuperAdmin = currentUser?.role === 'super_admin';
 
-  const isSuperAdmin = currentUser.role === 'super_admin';
+  const tabs = useMemo((): Tab<ManagementTab>[] => {
+    const base: Tab<ManagementTab>[] = [
+      { key: 'vocabulary', label: 'Từ Vựng' },
+      { key: 'grammar', label: 'Ngữ Pháp' },
+      { key: 'kanji', label: 'Hán Tự' },
+      { key: 'reading', label: 'Đọc Hiểu' },
+      { key: 'listening', label: 'Nghe Hiểu' },
+      { key: 'lectures', label: 'Bài giảng' },
+      { key: 'jlpt', label: 'JLPT' },
+      { key: 'kaiwa', label: 'Kaiwa' },
+      { key: 'game', label: 'Game' },
+      { key: 'assignments', label: 'Bài tập' },
+      { key: 'tests', label: 'Bài kiểm tra' },
+      { key: 'users', label: 'Tài khoản' },
+    ];
+    if (isSuperAdmin) base.push({ key: 'permissions', label: 'Phân quyền' });
+    return base;
+  }, [isSuperAdmin]);
+
+  if (!currentUser) return null;
 
   // Wrapper callbacks — align prop names used in JSX with hook returns
   const onAddCard = addCard;
@@ -238,23 +258,7 @@ export function CardsPage() {
     <div className="cards-page">
       <div className="page-header">
         <h2>Quản Lí</h2>
-        <div className="tab-buttons">
-          <button className={`tab-btn ${activeTab === 'vocabulary' ? 'active' : ''}`} onClick={() => setActiveTab('vocabulary')}>Từ Vựng</button>
-          <button className={`tab-btn ${activeTab === 'grammar' ? 'active' : ''}`} onClick={() => setActiveTab('grammar')}>Ngữ Pháp</button>
-          <button className={`tab-btn ${activeTab === 'kanji' ? 'active' : ''}`} onClick={() => setActiveTab('kanji')}>Hán Tự</button>
-          <button className={`tab-btn ${activeTab === 'reading' ? 'active' : ''}`} onClick={() => setActiveTab('reading')}>Đọc Hiểu</button>
-          <button className={`tab-btn ${activeTab === 'listening' ? 'active' : ''}`} onClick={() => setActiveTab('listening')}>Nghe Hiểu</button>
-          <button className={`tab-btn ${activeTab === 'lectures' ? 'active' : ''}`} onClick={() => setActiveTab('lectures')}>Bài giảng</button>
-          <button className={`tab-btn ${activeTab === 'jlpt' ? 'active' : ''}`} onClick={() => setActiveTab('jlpt')}>JLPT</button>
-          <button className={`tab-btn ${activeTab === 'kaiwa' ? 'active' : ''}`} onClick={() => setActiveTab('kaiwa')}>Kaiwa</button>
-          <button className={`tab-btn ${activeTab === 'game' ? 'active' : ''}`} onClick={() => setActiveTab('game')}>Game</button>
-          <button className={`tab-btn ${activeTab === 'assignments' ? 'active' : ''}`} onClick={() => setActiveTab('assignments')}>Bài tập</button>
-          <button className={`tab-btn ${activeTab === 'tests' ? 'active' : ''}`} onClick={() => setActiveTab('tests')}>Bài kiểm tra</button>
-          <button className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>Tài khoản</button>
-          {isSuperAdmin && (
-            <button className={`tab-btn ${activeTab === 'permissions' ? 'active' : ''}`} onClick={() => setActiveTab('permissions')}>Phân quyền</button>
-          )}
-        </div>
+        <TabBar tabs={tabs} active={activeTab} onChange={setActiveTab} />
       </div>
 
       {/* Vocabulary Tab */}

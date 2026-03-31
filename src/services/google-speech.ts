@@ -1,9 +1,15 @@
 // Google Cloud Speech-to-Text API service
 // Uses REST API with WebM/Opus audio from MediaRecorder
-// Configure VITE_GOOGLE_STT_API_KEY in .env or use proxy URL
+// SECURITY: Prefer VITE_GOOGLE_STT_PROXY_URL to keep API key server-side
+// VITE_GOOGLE_STT_API_KEY is INSECURE (exposed in browser bundle) — use only for local dev
 
 const API_KEY = import.meta.env.VITE_GOOGLE_STT_API_KEY || '';
 const PROXY_URL = import.meta.env.VITE_GOOGLE_STT_PROXY_URL || '';
+
+// Warn in production if using direct API key instead of proxy
+if (API_KEY && !PROXY_URL && !import.meta.env.DEV) {
+  console.warn('[SECURITY] VITE_GOOGLE_STT_API_KEY is exposed in browser bundle. Use VITE_GOOGLE_STT_PROXY_URL instead.');
+}
 
 // Use proxy if configured, otherwise direct API with key
 function getEndpoint(): string {

@@ -15,7 +15,7 @@ import {
   useStudentEvaluations,
   useTestTemplates,
 } from '../../hooks/use-classrooms';
-import { useUserData } from '../../contexts/user-data-context';
+import { useAuthData } from '../../contexts/auth-context';
 import { useCenterOptional } from '../../contexts/center-context';
 import { ClassroomCreateModal } from '../classroom/classroom-create-modal';
 import { ClassroomInviteModal } from '../classroom/classroom-invite-modal';
@@ -38,11 +38,10 @@ import {
   type ViewMode,
 } from '../classroom-views';
 import type { Classroom, ClassroomFormData, ClassroomMember, ClassroomTest, ClassroomSubmission, TestType, SubmissionAnswer } from '../../types/classroom';
-import type { User } from '../../types/user';
 import '../classroom/classroom.css';
 
 export function ClassroomPage() {
-  const { currentUser, users, isAdmin: isAppAdmin } = useUserData();
+  const { currentUser, users, isAdmin: isAppAdmin } = useAuthData();
   const centerCtx = useCenterOptional();
   const isAdmin = centerCtx ? (centerCtx.isAdmin || centerCtx.isTeacher) : isAppAdmin;
   const branchId = centerCtx?.centerId ?? null;

@@ -2,7 +2,7 @@
 // Uses canAccessPage() from role-permissions utility
 
 import { Navigate, Outlet } from 'react-router-dom';
-import { useUserData } from '../../contexts/user-data-context';
+import { useAuthData } from '../../contexts/auth-context';
 import { canAccessPage } from '../../utils/role-permissions';
 
 interface ProtectedRouteProps {
@@ -13,7 +13,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ page, redirectTo = '/' }: ProtectedRouteProps) {
-  const { currentUser, isLoggedIn } = useUserData();
+  const { currentUser, isLoggedIn } = useAuthData();
 
   if (!isLoggedIn || !currentUser) {
     return <Navigate to="/" replace />;

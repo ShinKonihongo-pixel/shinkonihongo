@@ -11,7 +11,7 @@ import { removeFurigana } from '../lib/furigana-utils';
 import { handleError } from '../utils/error-handler';
 import { buildDialoguePrompt } from './use-speaking-dialogue-prompt';
 
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_API_URL = import.meta.env.VITE_GROQ_PROXY_URL || 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL = 'llama-3.3-70b-versatile';
 
 function parseDialogueResponse(responseText: string, topicId: SpeakingTopicId, level: JLPTLevel): SpeakingDialogue | null {
@@ -55,6 +55,7 @@ export function useSpeakingDialogue({ apiKey }: UseSpeakingDialogueOptions) {
   const [dialogue, setDialogue] = useState<SpeakingDialogue | null>(null);
 
   const getApiKey = useCallback(() => {
+    if (import.meta.env.VITE_GROQ_PROXY_URL) return 'proxy';
     return apiKey || import.meta.env.VITE_GROQ_API_KEY;
   }, [apiKey]);
 
@@ -76,7 +77,7 @@ export function useSpeakingDialogue({ apiKey }: UseSpeakingDialogueOptions) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${key}`,
+          ...(key !== 'proxy' && { 'Authorization': `Bearer ${key}` }),
         },
         body: JSON.stringify({
           model: MODEL,

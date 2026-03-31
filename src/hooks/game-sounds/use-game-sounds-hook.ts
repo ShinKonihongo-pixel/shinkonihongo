@@ -146,9 +146,9 @@ export function useGameSounds(): UseGameSoundsReturn {
       if (!track) return;
       setCurrentTrack(track);
 
-      if (track.url) {
-        if (htmlAudioRef.current) htmlAudioRef.current.pause();
-        const audio = new Audio(track.url);
+      if (track!.url) {
+        htmlAudioRef.current?.pause();
+        const audio = new Audio(track!.url);
         audio.loop = true;
         audio.volume = settings.musicVolume / 100;
         audio.play().catch(err => console.warn('Audio playback failed:', err));

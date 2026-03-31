@@ -253,7 +253,7 @@ export async function generateAcademicReport(
   autoTable(doc, {
     startY: y,
     head: [['Chi tieu', 'Ket qua', 'TB Lop', 'Muc tieu', 'Xep loai', 'Dat/Chua dat']],
-    body: perfRows.map(r => [r[0], r[1], r[2], r[3], classifyScore(r[6] as number), r[4]]),
+    body: perfRows.map(r => [r[0], r[1], r[2], r[3], classifyScore(r[6] as number), r[4]]) as import('jspdf-autotable').RowInput[],
     theme: 'grid',
     headStyles: {
       fillColor: [AC.navy.r, AC.navy.g, AC.navy.b],
@@ -385,7 +385,7 @@ export async function generateAcademicReport(
       return [
         (idx + 1).toString(),
         toASCII(sub.testId.length > 25 ? sub.testId.substring(0, 23) + '..' : sub.testId),
-        sub.type === 'test' ? 'Kiem tra' : 'Bai tap',
+        (sub as Record<string, unknown>)['type'] === 'test' ? 'Kiem tra' : 'Bai tap',
         `${sub.score}/${sub.totalPoints}`,
         `${pct.toFixed(0)}%`,
         rank,

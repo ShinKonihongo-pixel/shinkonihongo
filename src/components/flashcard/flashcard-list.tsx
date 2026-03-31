@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { Flashcard, DifficultyLevel } from '../../types/flashcard';
 import { ConfirmModal } from '../ui/confirm-modal';
+import { LevelBadge } from '../ui/level-badge';
 import { Edit3, Trash2, LayoutGrid, List } from 'lucide-react';
 
 type ViewMode = 'grid' | 'by-difficulty';
@@ -66,7 +67,7 @@ export function FlashcardList({ cards, onEdit, onDelete, canEdit, canDelete }: F
           style={borderStyle}
         >
           <div className="mini-card-front">
-            <span className="jlpt-badge-small">{card.jlptLevel}</span>
+            <LevelBadge level={card.jlptLevel} size="xs" />
             {card.kanji && <div className="mini-kanji">{card.kanji}</div>}
             <div className="mini-vocab">{card.vocabulary}</div>
           </div>

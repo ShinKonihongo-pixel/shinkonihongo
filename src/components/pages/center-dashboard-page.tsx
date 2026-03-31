@@ -22,10 +22,9 @@ import { BRANCH_MEMBER_ROLE_LABELS, BRANCH_MEMBER_ROLE_COLORS } from '../../type
 import { CLASSROOM_LEVEL_LABELS, DAY_OF_WEEK_LABELS } from '../../types/classroom';
 import type { BranchStats } from '../../types/branch';
 import type { Classroom, ClassroomLevel } from '../../types/classroom';
-import type { User } from '../../types/user';
 import { isImageAvatar } from '../../utils/avatar-icons';
 import { useAuth } from '../../hooks/use-auth';
-import { useUserData } from '../../contexts/user-data-context';
+import { useAuthData } from '../../contexts/auth-context';
 import { useNavigation } from '../../contexts/navigation-context';
 import './center-dashboard-page.css';
 
@@ -72,7 +71,7 @@ function ActivityRing({ value, max, label, gradientId }: {
 
 export function CenterDashboardPage() {
   const { currentUser } = useAuth();
-  const { users } = useUserData();
+  const { users } = useAuthData();
   const { setCurrentPage: onNavigate } = useNavigation();
   const { center, isAdmin, branding, userRole } = useCenter();
   const [stats, setStats] = useState<BranchStats | null>(null);
